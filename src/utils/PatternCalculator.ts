@@ -563,11 +563,11 @@ export class PatternCalculator {
         color: '#FFD700',
         style: 'dashed'
       },
-      // Target projection
+      // Target projection - correct methodology
       {
         type: 'target',
-        points: [{ x: 22, y: necklineLevel }, { x: 22, y: basePrice + 20 }],
-        label: 'Target: ' + (basePrice + 20).toFixed(0),
+        points: [{ x: 22, y: necklineLevel }, { x: 22, y: necklineLevel + (necklineLevel - headLow) }],
+        label: 'Target: ' + (necklineLevel + (necklineLevel - headLow)).toFixed(0),
         color: '#4ECDC4',
         style: 'dashed'
       }
@@ -579,7 +579,7 @@ export class PatternCalculator {
       description: "Classic bullish reversal with three troughs - left shoulder, head (lowest), right shoulder. Neckline break confirms pattern.",
       keyLevels: {
         breakout: necklineLevel,
-        target: basePrice + 20,
+        target: necklineLevel + (necklineLevel - headLow),
         stopLoss: rightShoulderLow - 1
       }
     };
