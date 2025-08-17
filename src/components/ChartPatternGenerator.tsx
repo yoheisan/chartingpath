@@ -19,6 +19,11 @@ const PATTERNS: Record<string, PatternConfig> = {
     type: "reversal",
     description: "Classic bearish reversal with three peaks - left shoulder, head (highest), right shoulder. Volume decreases at right shoulder."
   },
+  "inverted-head-shoulders": {
+    name: "Inverted Head and Shoulders",
+    type: "reversal",
+    description: "Classic bullish reversal with three troughs - left shoulder, head (lowest), right shoulder. Neckline break confirms upward momentum."
+  },
   "double-top": {
     name: "Double Top",
     type: "reversal",

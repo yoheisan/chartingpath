@@ -482,10 +482,115 @@ export class PatternCalculator {
     };
   }
 
+  // Inverted Head and Shoulders - precise geometric formation
+  static generateInvertedHeadAndShoulders(): PatternData {
+    const basePrice = 100;
+    const leftShoulderLow = basePrice - 15;
+    const headLow = basePrice - 25;
+    const rightShoulderLow = basePrice - 14;
+    const necklineLevel = basePrice - 5;
+    
+    const candles: CandlestickData[] = [
+      // Setup phase
+      { open: basePrice, high: basePrice + 2, low: basePrice - 3, close: basePrice - 2, volume: 1000 },
+      { open: basePrice - 2, high: basePrice - 1, low: basePrice - 5, close: basePrice - 4, volume: 1100 },
+      
+      // Left shoulder formation
+      { open: basePrice - 4, high: basePrice - 3, low: basePrice - 8, close: basePrice - 7, volume: 1300 },
+      { open: basePrice - 7, high: basePrice - 6, low: leftShoulderLow, close: basePrice - 13, volume: 1600 },
+      { open: basePrice - 13, high: basePrice - 11, low: leftShoulderLow - 1, close: basePrice - 12, volume: 1400 },
+      
+      // Rise to neckline
+      { open: basePrice - 12, high: basePrice - 8, low: basePrice - 13, close: basePrice - 9, volume: 1200 },
+      { open: basePrice - 9, high: necklineLevel, low: basePrice - 10, close: necklineLevel - 1, volume: 1000 },
+      { open: necklineLevel - 1, high: necklineLevel + 1, low: basePrice - 8, close: necklineLevel - 2, volume: 900 },
+      
+      // Head formation - highest volume
+      { open: necklineLevel - 2, high: necklineLevel - 1, low: basePrice - 12, close: basePrice - 10, volume: 1500 },
+      { open: basePrice - 10, high: basePrice - 9, low: basePrice - 18, close: basePrice - 16, volume: 2000 },
+      { open: basePrice - 16, high: basePrice - 15, low: headLow, close: basePrice - 23, volume: 2200 }, // Head bottom
+      { open: basePrice - 23, high: basePrice - 20, low: headLow - 1, close: basePrice - 21, volume: 1900 },
+      
+      // Rise from head to neckline
+      { open: basePrice - 21, high: basePrice - 16, low: basePrice - 22, close: basePrice - 17, volume: 1600 },
+      { open: basePrice - 17, high: basePrice - 12, low: basePrice - 19, close: basePrice - 13, volume: 1400 },
+      { open: basePrice - 13, high: necklineLevel, low: basePrice - 15, close: necklineLevel - 2, volume: 1200 },
+      { open: necklineLevel - 2, high: necklineLevel + 1, low: basePrice - 8, close: necklineLevel - 1, volume: 1000 },
+      
+      // Right shoulder - lower volume
+      { open: necklineLevel - 1, high: necklineLevel, low: basePrice - 10, close: basePrice - 8, volume: 1100 },
+      { open: basePrice - 8, high: basePrice - 7, low: basePrice - 14, close: basePrice - 12, volume: 1300 },
+      { open: basePrice - 12, high: basePrice - 11, low: basePrice - 13, close: basePrice - 12.5, volume: 1150 }, 
+      { open: basePrice - 12.5, high: basePrice - 11, low: rightShoulderLow, close: basePrice - 13, volume: 1200 }, // Right shoulder bottom
+      
+      // Final rise and neckline break
+      { open: basePrice - 11, high: basePrice - 6, low: basePrice - 12, close: basePrice - 7, volume: 1500 },
+      { open: basePrice - 7, high: necklineLevel + 1, low: basePrice - 9, close: necklineLevel, volume: 1400 },
+      { open: necklineLevel, high: basePrice + 2, low: necklineLevel - 2, close: basePrice + 1, volume: 1800 }, // Neckline break
+      { open: basePrice + 1, high: basePrice + 5, low: basePrice - 1, close: basePrice + 4, volume: 2000 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      // Left Shoulder marker
+      {
+        type: 'peak',
+        points: [{ x: 3, y: leftShoulderLow }],
+        label: 'Left Shoulder',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      // Head marker
+      {
+        type: 'peak', 
+        points: [{ x: 10, y: headLow }],
+        label: 'Head',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      // Right Shoulder marker
+      {
+        type: 'peak',
+        points: [{ x: 19, y: rightShoulderLow }],
+        label: 'Right Shoulder', 
+        color: '#45B7D1',
+        style: 'solid'
+      },
+      // Neckline
+      {
+        type: 'neckline',
+        points: [{ x: 6, y: necklineLevel }, { x: 15, y: necklineLevel }, { x: 21, y: necklineLevel }],
+        label: 'Neckline',
+        color: '#FFD700',
+        style: 'dashed'
+      },
+      // Target projection
+      {
+        type: 'target',
+        points: [{ x: 22, y: necklineLevel }, { x: 22, y: basePrice + 20 }],
+        label: 'Target: ' + (basePrice + 20).toFixed(0),
+        color: '#4ECDC4',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Classic bullish reversal with three troughs - left shoulder, head (lowest), right shoulder. Neckline break confirms pattern.",
+      keyLevels: {
+        breakout: necklineLevel,
+        target: basePrice + 20,
+        stopLoss: rightShoulderLow - 1
+      }
+    };
+  }
+
   static getPatternData(patternKey: string): PatternData {
     switch (patternKey) {
       case 'head-shoulders':
         return this.generateHeadAndShoulders();
+      case 'inverted-head-shoulders':
+        return this.generateInvertedHeadAndShoulders();
       case 'double-top':
         return this.generateDoubleTop();
       case 'double-bottom':

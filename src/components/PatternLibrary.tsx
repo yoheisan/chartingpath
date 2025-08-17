@@ -21,6 +21,13 @@ const PATTERN_LIBRARY: Pattern[] = [
     difficulty: "Intermediate"
   },
   {
+    name: "Inverted Head and Shoulders",
+    type: "reversal",
+    description: "Bullish reversal pattern with three troughs - mirror of Head and Shoulders",
+    accuracy: "85%",
+    difficulty: "Intermediate"
+  },
+  {
     name: "Double Top",
     type: "reversal", 
     description: "Bearish reversal with two peaks at same level",
