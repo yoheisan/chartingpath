@@ -469,26 +469,29 @@ export const ChartPatternGenerator = () => {
         </div>
         
         <div className="flex gap-3">
-          <Select value={selectedPattern} onValueChange={setSelectedPattern}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select a pattern" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PATTERNS).map(([key, pattern]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="text-[11px] leading-none h-5 px-2 py-0 rounded-full uppercase inline-flex items-center justify-center"
-                    >
-                      {pattern.type}
-                    </Badge>
-                    {pattern.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Select a chart pattern</label>
+            <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select a pattern" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PATTERNS).map(([key, pattern]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                        className="text-[11px] leading-none h-5 px-2 py-0 rounded-full uppercase inline-flex items-center justify-center"
+                      >
+                        {pattern.type}
+                      </Badge>
+                      {pattern.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <Button onClick={downloadChart} className="hidden bg-gradient-to-r from-primary to-yellow-500 hover:from-primary/90 hover:to-yellow-500/90">
             Download PNG
