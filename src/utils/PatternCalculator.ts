@@ -66,8 +66,8 @@ export class PatternCalculator {
       // Right shoulder - lower volume
       { open: necklineLevel + 1, high: basePrice + 10, low: necklineLevel, close: basePrice + 8, volume: 1100 },
       { open: basePrice + 8, high: basePrice + 14, low: basePrice + 7, close: basePrice + 12, volume: 1300 },
-      { open: basePrice + 12, high: rightShoulderHigh, low: basePrice + 11, close: basePrice + 13, volume: 1200 }, // Right shoulder peak
-      { open: basePrice + 13, high: rightShoulderHigh + 1, low: basePrice + 10, close: basePrice + 11, volume: 1000 },
+      { open: basePrice + 12, high: basePrice + 13, low: basePrice + 11, close: basePrice + 12.5, volume: 1150 }, 
+      { open: basePrice + 12.5, high: rightShoulderHigh, low: basePrice + 11, close: basePrice + 13, volume: 1200 }, // Right shoulder peak
       
       // Final decline and neckline break
       { open: basePrice + 11, high: basePrice + 12, low: basePrice + 6, close: basePrice + 7, volume: 1500 },
@@ -96,7 +96,7 @@ export class PatternCalculator {
       // Right Shoulder marker
       {
         type: 'peak',
-        points: [{ x: 16, y: rightShoulderHigh }],
+        points: [{ x: 18, y: rightShoulderHigh }],
         label: 'Right Shoulder', 
         color: '#45B7D1',
         style: 'solid'
