@@ -52,6 +52,20 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Trading specific colors
+				bullish: {
+					DEFAULT: 'hsl(var(--bullish))',
+					foreground: 'hsl(var(--bullish-foreground))'
+				},
+				bearish: {
+					DEFAULT: 'hsl(var(--bearish))',
+					foreground: 'hsl(var(--bearish-foreground))'
+				},
+				chart: {
+					grid: 'hsl(var(--chart-grid))',
+					background: 'hsl(var(--chart-background))',
+					volume: 'hsl(var(--volume-bar))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
