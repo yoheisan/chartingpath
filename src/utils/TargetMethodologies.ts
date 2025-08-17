@@ -498,6 +498,7 @@ Descending Triangle Target Price Methodologies:
 
 4. **Descending Triangle**: Target = Breakout Level - Triangle Height
    Target = 90 - 10 = 80
+   Rule: Measure the widest part of the triangle (base), then project that distance below the breakout point.
 
 **Key Success Factors**:
 - Volume confirmation on support break (minimum 1.5x average)
