@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Professional Trading Education Design System - Dark Theme */
+/* ChartingPath Design System - Orange/Red Theme */
 
 @layer base {
   :root {
-    /* Core Trading Interface Colors */
+    /* Core ChartingPath Colors */
     --background: 223 39% 5%;
     --foreground: 210 40% 98%;
 
@@ -16,9 +16,10 @@
     --popover: 224 44% 7%;
     --popover-foreground: 210 40% 98%;
 
-    /* Trading Accent Colors */
-    --primary: 46 96% 64%;
-    --primary-foreground: 223 39% 5%;
+    /* ChartingPath Brand Colors - Orange/Red Theme */
+    --primary: 16 100% 60%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 24 100% 65%;
 
     --secondary: 215 25% 15%;
     --secondary-foreground: 210 40% 98%;
@@ -26,8 +27,8 @@
     --muted: 215 25% 15%;
     --muted-foreground: 217 10% 65%;
 
-    --accent: 215 25% 15%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 24 100% 50%;
+    --accent-foreground: 0 0% 98%;
 
     /* Trading Specific Colors */
     --bullish: 142 76% 36%;
@@ -40,7 +41,7 @@
 
     --border: 215 25% 15%;
     --input: 215 25% 15%;
-    --ring: 46 96% 64%;
+    --ring: 16 100% 60%;
 
     --radius: 0.75rem;
 
@@ -49,15 +50,17 @@
     --chart-background: 223 39% 4%;
     --volume-bar: 215 20% 25%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(46 96% 64%), hsl(43 89% 58%));
+    /* ChartingPath Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(16 100% 60%), hsl(24 100% 50%));
     --gradient-card: linear-gradient(135deg, hsl(224 44% 7%), hsl(224 44% 9%));
     --gradient-bullish: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 42%));
     --gradient-bearish: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 77% 66%));
+    --gradient-brand: linear-gradient(135deg, hsl(16 100% 60%), hsl(24 100% 65%), hsl(30 100% 55%));
 
     /* Shadows */
     --shadow-trading: 0 25px 50px -12px hsl(223 39% 3% / 0.8);
-    --shadow-pattern: 0 10px 40px -10px hsl(46 96% 64% / 0.2);
+    --shadow-pattern: 0 10px 40px -10px hsl(16 100% 60% / 0.3);
+    --shadow-glow: 0 0 40px hsl(16 100% 60% / 0.4);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

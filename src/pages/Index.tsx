@@ -15,10 +15,14 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-yellow-500">
-              <BarChart3 className="h-8 w-8 text-primary-foreground" />
+            <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
+              <img 
+                src="/lovable-uploads/ec53698c-ffbe-4a54-93a2-1f451d8eadd1.png" 
+                alt="ChartingPath Logo" 
+                className="h-8 w-8 object-contain"
+              />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               ChartingPath
             </h1>
           </div>

@@ -26,7 +26,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -81,6 +82,11 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'glow': '0 0 40px hsl(var(--primary) / 0.4)',
+				'pattern': '0 10px 40px -10px hsl(var(--primary) / 0.3)',
+				'trading': '0 25px 50px -12px hsl(223 39% 3% / 0.8)'
 			},
 			keyframes: {
 				'accordion-down': {
