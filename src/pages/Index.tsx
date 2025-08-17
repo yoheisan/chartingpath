@@ -72,22 +72,6 @@ const Index = () => {
           {activeTab === "generator" && <ChartPatternGenerator />}
           {activeTab === "library" && <PatternLibrary />}
         </div>
-
-        {/* Stats Footer */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-          <Card className="p-6">
-            <div className="text-3xl font-bold text-primary mb-2">25+</div>
-            <div className="text-muted-foreground">Chart Patterns</div>
-          </Card>
-          <Card className="p-6">
-            <div className="text-3xl font-bold text-bullish mb-2">95%</div>
-            <div className="text-muted-foreground">Pattern Accuracy</div>
-          </Card>
-          <Card className="p-6">
-            <div className="text-3xl font-bold text-bearish mb-2">PNG</div>
-            <div className="text-muted-foreground">Export Format</div>
-          </Card>
-        </div>
       </div>
     </div>
   );
