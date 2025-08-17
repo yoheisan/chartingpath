@@ -318,7 +318,7 @@ export const ChartPatternGenerator = () => {
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2 - 1);
+    ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2 - 2);
     
     // Reset text properties
     ctx.textAlign = "left";
@@ -373,7 +373,7 @@ export const ChartPatternGenerator = () => {
                   <div className="flex items-center gap-2">
                     <Badge 
                       variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="text-[11px] leading-none h-5 px-2 rounded-full uppercase inline-flex items-center justify-center"
+                      className="text-[11px] leading-none h-5 px-2 py-0 rounded-full uppercase inline-flex items-center justify-center"
                     >
                       {pattern.type}
                     </Badge>
@@ -396,7 +396,7 @@ export const ChartPatternGenerator = () => {
             <h3 className="text-xl font-semibold text-foreground">{currentPattern.name}</h3>
             <Badge 
               variant={currentPattern.type === "reversal" ? "destructive" : currentPattern.type === "continuation" ? "default" : "secondary"}
-              className="h-6 px-3 rounded-full uppercase text-[11px] leading-none inline-flex items-center justify-center"
+              className="h-6 px-3 py-0 rounded-full uppercase text-[11px] leading-none inline-flex items-center justify-center"
             >
               {currentPattern.type}
             </Badge>
