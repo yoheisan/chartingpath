@@ -510,3 +510,184 @@ Descending Triangle Target Price Methodologies:
     `;
   }
 }
+
+export class SymmetricalTriangleTargetMethodologies {
+  
+  /**
+   * Calculate comprehensive target levels for Symmetrical Triangle pattern
+   * @param breakoutLevel - The level where breakout occurs (triangle apex area)
+   * @param triangleHeight - The distance between highest and lowest points at triangle base
+   * @param direction - 'bullish' or 'bearish' based on breakout direction
+   * @param stopLoss - Recommended stop loss level
+   * @returns Complete target analysis
+   */
+  static calculateTargets(breakoutLevel: number, triangleHeight: number, direction: 'bullish' | 'bearish', stopLoss: number): TargetMethodologyResult {
+    
+    // 1. Classic Measured Move (Primary Method)
+    const classicTarget = direction === 'bullish' 
+      ? breakoutLevel + triangleHeight 
+      : breakoutLevel - triangleHeight;
+    
+    // 2. Fibonacci Extension Targets
+    const fibTargets = this.calculateFibonacciTargets(breakoutLevel, triangleHeight, direction);
+    
+    // 3. Percentage-based Targets
+    const percentageTargets = this.calculatePercentageTargets(breakoutLevel, triangleHeight, direction);
+    
+    // 4. Multiple Measured Move Targets
+    const measuredTargets = this.calculateMeasuredMoveTargets(breakoutLevel, triangleHeight, direction);
+    
+    // 5. Volume-weighted Target (momentum adjustment)
+    const volumeAdjustedTarget = this.calculateVolumeAdjustedTarget(classicTarget, triangleHeight, direction);
+    
+    // Compile all alternative targets
+    const alternativeTargets: TargetLevel[] = [
+      ...fibTargets,
+      ...percentageTargets,
+      ...measuredTargets,
+      {
+        price: volumeAdjustedTarget,
+        method: 'Volume-Adjusted',
+        confidence: 'Moderate',
+        description: `Enhanced for typical volume expansion in ${direction} breakouts from neutral patterns`
+      }
+    ];
+    
+    // Calculate risk/reward ratio
+    const entryPrice = breakoutLevel; // Entry on breakout
+    const riskRewardRatio = Math.abs(classicTarget - entryPrice) / Math.abs(stopLoss - entryPrice);
+    
+    return {
+      primaryTarget: classicTarget,
+      alternativeTargets,
+      riskRewardRatio,
+      methodology: 'Classic Measured Move with Fibonacci and Directional Volume-Enhanced Alternatives'
+    };
+  }
+  
+  private static calculateFibonacciTargets(breakoutLevel: number, triangleHeight: number, direction: 'bullish' | 'bearish'): TargetLevel[] {
+    const multiplier = direction === 'bullish' ? 1 : -1;
+    
+    return [
+      {
+        price: breakoutLevel + (triangleHeight * 0.618 * multiplier),
+        method: 'Fibonacci 61.8%',
+        confidence: 'Conservative',
+        description: `First Fibonacci extension - high probability ${direction} target`
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 1.0 * multiplier),
+        method: 'Fibonacci 100%',
+        confidence: 'Moderate',
+        description: 'Equal to triangle height - classic measured move target'
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 1.618 * multiplier),
+        method: 'Fibonacci 161.8%',
+        confidence: 'Aggressive',
+        description: `Golden ratio extension - strong ${direction} momentum target`
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 2.618 * multiplier),
+        method: 'Fibonacci 261.8%',
+        confidence: 'Aggressive',
+        description: `Extended target for major ${direction} trend movements`
+      }
+    ];
+  }
+  
+  private static calculatePercentageTargets(breakoutLevel: number, triangleHeight: number, direction: 'bullish' | 'bearish'): TargetLevel[] {
+    const multiplier = direction === 'bullish' ? 1 : -1;
+    
+    return [
+      {
+        price: breakoutLevel + (triangleHeight * 0.5 * multiplier),
+        method: 'Conservative 50%',
+        confidence: 'Conservative',
+        description: `Half the triangle height - minimum expected ${direction} move`
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 0.75 * multiplier),
+        method: 'Moderate 75%',
+        confidence: 'Moderate',
+        description: `Three-quarters triangle height - balanced ${direction} target`
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 1.25 * multiplier),
+        method: 'Extended 125%',
+        confidence: 'Aggressive',
+        description: `Extended target for strong ${direction} momentum continuation`
+      }
+    ];
+  }
+  
+  private static calculateMeasuredMoveTargets(breakoutLevel: number, triangleHeight: number, direction: 'bullish' | 'bearish'): TargetLevel[] {
+    const multiplier = direction === 'bullish' ? 1 : -1;
+    
+    return [
+      {
+        price: breakoutLevel + (triangleHeight * 0.8 * multiplier),
+        method: 'Statistical 80%',
+        confidence: 'Moderate',
+        description: 'Based on historical pattern completion rates (~80%)'
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 1.15 * multiplier),
+        method: 'Momentum Extension',
+        confidence: 'Moderate',
+        description: `Accounts for breakout momentum and follow-through ${direction === 'bullish' ? 'buying' : 'selling'}`
+      },
+      {
+        price: breakoutLevel + (triangleHeight * 0.9 * multiplier),
+        method: 'Conservative Statistical',
+        confidence: 'Conservative',
+        description: 'Lower-risk target with higher probability of achievement'
+      }
+    ];
+  }
+  
+  private static calculateVolumeAdjustedTarget(classicTarget: number, triangleHeight: number, direction: 'bullish' | 'bearish'): number {
+    // Adjust target based on typical volume expansion in successful breakouts
+    // Symmetrical triangles show strong volume confirmation on breakout
+    const multiplier = direction === 'bullish' ? 1 : -1;
+    return classicTarget + (triangleHeight * 0.12 * multiplier); // 12% more aggressive for volume confirmation
+  }
+  
+  /**
+   * Get target methodology explanation for educational purposes
+   */
+  static getMethodologyExplanation(): string {
+    return `
+Symmetrical Triangle Target Price Methodologies:
+
+1. **Classic Measured Move** (Primary): Target = Breakout Level ± Triangle Height
+   - Most reliable method for neutral continuation patterns  
+   - Triangle Height = Highest Point - Lowest Point (at triangle base)
+   - Success rate: ~76% with volume confirmation
+   - Direction determined by breakout (bullish up, bearish down)
+
+2. **Fibonacci Extensions**: Mathematical ratios for directional projections
+   - 61.8%: Conservative, high-probability target in breakout direction
+   - 100%: Equal to measured move (classic target)
+   - 161.8% & 261.8%: Aggressive momentum targets for strong continuation
+
+3. **Statistical Targets**: Based on historical neutral pattern analysis
+   - 50%: Minimum expected move in breakout direction
+   - 80%: Statistical completion average for confirmed patterns
+   - 125%: Extended scenario with momentum continuation
+
+4. **Symmetrical Triangle**: Target = Breakout Level ± Triangle Height
+   Target = 100 + 18 = 118 (bullish breakout)
+   Target = 100 - 18 = 82 (bearish breakout)
+   Rule: Measure the widest part of the triangle (base), then project that distance in the direction of breakout.
+
+**Key Success Factors**:
+- Volume confirmation on breakout (minimum 1.5x average)
+- Clear converging trend lines with multiple touches
+- Breakout should occur in upper 2/3 of triangle (not at apex)
+- Pattern duration: 3-12 weeks for reliability
+
+**Risk Management**: Use stop loss on opposite side of breakout level, with position sizing based on favorable risk/reward ratio (typically 1:2 or better).
+    `;
+  }
+}
