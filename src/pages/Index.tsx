@@ -19,7 +19,7 @@ const Index = () => {
               <BarChart3 className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent">
-              Professional Trading Education
+              ChartingPath
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
