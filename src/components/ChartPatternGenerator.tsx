@@ -93,6 +93,21 @@ const PATTERNS: Record<string, PatternConfig> = {
     type: "continuation",
     description: "Bullish continuation resembling a cup with rounded bottom followed by small downward handle."
   },
+  "rectangle": {
+    name: "Rectangle",
+    type: "continuation",
+    description: "Price consolidation between horizontal support and resistance levels forming a rectangular box pattern."
+  },
+  "rising-wedge": {
+    name: "Rising Wedge",
+    type: "reversal",
+    description: "Bearish reversal pattern with converging upward sloping trendlines showing weakening momentum."
+  },
+  "falling-wedge": {
+    name: "Falling Wedge", 
+    type: "reversal",
+    description: "Bullish reversal pattern with converging downward sloping trendlines indicating exhaustion of selling pressure."
+  },
 
   // Candlestick Patterns
   "hammer": {

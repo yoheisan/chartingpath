@@ -122,6 +122,27 @@ const PATTERN_LIBRARY: Pattern[] = [
     accuracy: "79%",
     difficulty: "Intermediate"
   },
+  {
+    name: "Rectangle",
+    type: "continuation",
+    description: "Consolidation between horizontal support and resistance",
+    accuracy: "86%",
+    difficulty: "Beginner"
+  },
+  {
+    name: "Rising Wedge",
+    type: "reversal",
+    description: "Bearish reversal with converging upward sloping trendlines",
+    accuracy: "88%",
+    difficulty: "Intermediate"
+  },
+  {
+    name: "Falling Wedge",
+    type: "reversal", 
+    description: "Bullish reversal with converging downward sloping trendlines",
+    accuracy: "88%",
+    difficulty: "Intermediate"
+  },
 
   // Candlestick Patterns
   {

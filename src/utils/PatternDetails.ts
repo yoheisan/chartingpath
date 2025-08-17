@@ -1382,6 +1382,177 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     psychology: "Shows balance between bulls and bears, often preceding significant directional moves.",
     
     additionalNotes: "Most useful at trend extremes or key support/resistance levels. Requires patience for directional confirmation."
+  },
+
+  "rectangle": {
+    name: "Rectangle",
+    type: "continuation",
+    description: "Price consolidation between horizontal support and resistance levels forming a rectangular trading range.",
+    accuracy: "86%",
+    difficulty: "Beginner",
+    
+    characteristics: [
+      "Equal highs forming horizontal resistance",
+      "Equal lows forming horizontal support", 
+      "Price oscillates between boundaries",
+      "Consolidation phase in existing trend",
+      "Volume typically decreases during formation"
+    ],
+    
+    formation: "Forms during trend pauses as buyers and sellers find equilibrium between defined price levels.",
+    
+    confirmation: "Breakout above resistance (bullish) or below support (bearish) with increased volume.",
+    
+    entry: "Enter on decisive breakout beyond rectangle boundaries with volume confirmation",
+    stopLoss: "Place stop loss at opposite side of rectangle from entry",
+    targetMethodology: "Measure rectangle height and project from breakout point.",
+    targetPriceMethodologies: {
+      primary: "Rectangle Height Projection Method",
+      alternative: [
+        "Bullish breakout: Rectangle height added to resistance breakout",
+        "Bearish breakdown: Rectangle height subtracted from support breakdown", 
+        "Conservative target: 50% of rectangle height for partial profits",
+        "Extended target: 1.5x rectangle height for strong breakouts",
+        "Fibonacci extension: 127% and 161% levels from breakout"
+      ],
+      riskReward: "Typically 1:1 to 1:2 ratio with well-defined boundaries",
+      calculation: "Classic continuation pattern with reliable measurement. Height = High - Low of rectangle. Bullish Target = Breakout + Height. Bearish Target = Breakdown - Height."
+    },
+    timeframe: "Effective on all timeframes, most reliable on daily and weekly charts for swing trades.",
+    
+    volumeProfile: "Volume contraction during formation, expansion on breakout confirms direction.",
+    
+    keyFactors: [
+      "Clear horizontal support and resistance levels",
+      "Multiple touches of both boundaries", 
+      "Decreasing volume during consolidation",
+      "Volume spike on breakout"
+    ],
+    
+    commonMistakes: [
+      "Trading false breakouts without volume",
+      "Entering too early during consolidation",
+      "Wrong stop loss placement",
+      "Ignoring overall trend context"
+    ],
+    
+    psychology: "Represents temporary equilibrium between supply and demand before trend continuation.",
+    
+    additionalNotes: "High reliability continuation pattern. Best when formed within strong trending markets. Failure rate only 9-14%."
+  },
+
+  "rising-wedge": {
+    name: "Rising Wedge",
+    type: "reversal", 
+    description: "Bearish reversal pattern with converging upward sloping trendlines showing weakening momentum despite higher highs.",
+    accuracy: "88%",
+    difficulty: "Intermediate",
+    
+    characteristics: [
+      "Higher highs and higher lows that converge",
+      "Both trendlines slope upward", 
+      "Upper trendline has steeper slope",
+      "Volume contracts during formation",
+      "Bearish reversal despite upward appearance"
+    ],
+    
+    formation: "Forms as buying pressure weakens with each new high, creating narrowing price action.",
+    
+    confirmation: "Breakdown below support trendline with increased volume confirms reversal.",
+    
+    entry: "Enter short on decisive breakdown below support line with volume",
+    stopLoss: "Place stop loss above recent high within wedge pattern", 
+    targetMethodology: "Measure wedge height and subtract from breakdown point.",
+    targetPriceMethodologies: {
+      primary: "Wedge Height Projection Method",
+      alternative: [
+        "Bearish target: Wedge height subtracted from breakdown point",
+        "Conservative target: Previous significant support level",
+        "Aggressive target: Full retracement to wedge starting point", 
+        "Fibonacci targets: 61.8% and 100% retracement levels",
+        "Technical levels: Key support zones and round numbers"
+      ],
+      riskReward: "Strong 1:2 to 1:3 ratio due to reliable reversal nature",
+      calculation: "Powerful reversal pattern with high success rate. Height = Wedge high - Wedge low. Target = Breakdown - Height. Often achieves full retracement."
+    },
+    timeframe: "Most significant on daily and weekly charts, reliable reversal signal across timeframes.",
+    
+    volumeProfile: "Declining volume during formation confirms weakening momentum, spike on breakdown.",
+    
+    keyFactors: [
+      "Converging upward sloping trendlines",
+      "Decreasing volume during formation",
+      "At least 5 touches between trendlines", 
+      "Clear breakdown with volume expansion"
+    ],
+    
+    commonMistakes: [
+      "Entering too early during formation",
+      "Missing volume confirmation on breakdown",
+      "Poor stop loss management above pattern",
+      "Confusing with ascending triangle"
+    ],
+    
+    psychology: "Shows exhaustion of buying pressure and shift from bullish to bearish sentiment.",
+    
+    additionalNotes: "Highly reliable bearish reversal with 88% accuracy. Often leads to significant declines. Failure rate only 10-12%."
+  },
+
+  "falling-wedge": {
+    name: "Falling Wedge", 
+    type: "reversal",
+    description: "Bullish reversal pattern with converging downward sloping trendlines indicating exhaustion of selling pressure.",
+    accuracy: "88%",
+    difficulty: "Intermediate",
+    
+    characteristics: [
+      "Lower highs and lower lows that converge",
+      "Both trendlines slope downward",
+      "Lower trendline has steeper slope", 
+      "Volume contracts during formation",
+      "Bullish reversal despite downward appearance"
+    ],
+    
+    formation: "Forms as selling pressure weakens with each new low, creating narrowing price action.",
+    
+    confirmation: "Breakout above resistance trendline with increased volume confirms reversal.",
+    
+    entry: "Enter long on decisive breakout above resistance line with volume",
+    stopLoss: "Place stop loss below recent low within wedge pattern",
+    targetMethodology: "Measure wedge height and add to breakout point.", 
+    targetPriceMethodologies: {
+      primary: "Wedge Height Projection Method",
+      alternative: [
+        "Bullish target: Wedge height added to breakout point",
+        "Conservative target: Previous significant resistance level",
+        "Aggressive target: Full retracement to wedge starting point",
+        "Fibonacci targets: 61.8% and 100% retracement levels", 
+        "Technical levels: Key resistance zones and round numbers"
+      ],
+      riskReward: "Strong 1:2 to 1:3 ratio due to reliable reversal nature",
+      calculation: "Powerful reversal pattern with high success rate. Height = Wedge high - Wedge low. Target = Breakout + Height. Often achieves full retracement."
+    },
+    timeframe: "Most significant on daily and weekly charts, reliable reversal signal across timeframes.",
+    
+    volumeProfile: "Declining volume during formation confirms weakening momentum, spike on breakout.",
+    
+    keyFactors: [
+      "Converging downward sloping trendlines", 
+      "Decreasing volume during formation",
+      "At least 5 touches between trendlines",
+      "Clear breakout with volume expansion"
+    ],
+    
+    commonMistakes: [
+      "Entering too early during formation",
+      "Missing volume confirmation on breakout", 
+      "Poor stop loss management below pattern",
+      "Confusing with descending triangle"
+    ],
+    
+    psychology: "Shows exhaustion of selling pressure and shift from bearish to bullish sentiment.",
+    
+    additionalNotes: "Highly reliable bullish reversal with 88% accuracy. Often leads to significant advances. Failure rate only 10-12%."
   }
 };
 
