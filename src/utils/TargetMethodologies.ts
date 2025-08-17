@@ -341,3 +341,171 @@ Inverted Head and Shoulders Target Price Methodologies:
     `;
   }
 }
+
+export class DescendingTriangleTargetMethodologies {
+  
+  /**
+   * Calculate comprehensive target levels for Descending Triangle pattern
+   * @param supportLevel - The horizontal support level (breakout point)
+   * @param triangleHeight - The distance between highest and lowest points
+   * @param stopLoss - Recommended stop loss level
+   * @returns Complete target analysis
+   */
+  static calculateTargets(supportLevel: number, triangleHeight: number, stopLoss: number): TargetMethodologyResult {
+    
+    // 1. Classic Measured Move (Primary Method)
+    const classicTarget = supportLevel - triangleHeight;
+    
+    // 2. Fibonacci Extension Targets
+    const fibTargets = this.calculateFibonacciTargets(supportLevel, triangleHeight);
+    
+    // 3. Percentage-based Targets
+    const percentageTargets = this.calculatePercentageTargets(supportLevel, triangleHeight);
+    
+    // 4. Multiple Measured Move Targets
+    const measuredTargets = this.calculateMeasuredMoveTargets(supportLevel, triangleHeight);
+    
+    // 5. Volume-weighted Target (momentum adjustment)
+    const volumeAdjustedTarget = this.calculateVolumeAdjustedTarget(classicTarget, triangleHeight);
+    
+    // Compile all alternative targets
+    const alternativeTargets: TargetLevel[] = [
+      ...fibTargets,
+      ...percentageTargets,
+      ...measuredTargets,
+      {
+        price: volumeAdjustedTarget,
+        method: 'Volume-Adjusted',
+        confidence: 'Moderate',
+        description: 'Enhanced for typical volume expansion in continuation breakdowns'
+      }
+    ];
+    
+    // Calculate risk/reward ratio
+    const entryPrice = supportLevel; // Entry on support break
+    const riskRewardRatio = Math.abs(classicTarget - entryPrice) / Math.abs(stopLoss - entryPrice);
+    
+    return {
+      primaryTarget: classicTarget,
+      alternativeTargets,
+      riskRewardRatio,
+      methodology: 'Classic Measured Move with Fibonacci and Volume-Enhanced Alternatives'
+    };
+  }
+  
+  private static calculateFibonacciTargets(supportLevel: number, triangleHeight: number): TargetLevel[] {
+    return [
+      {
+        price: supportLevel - (triangleHeight * 0.618),
+        method: 'Fibonacci 61.8%',
+        confidence: 'Conservative',
+        description: 'First Fibonacci extension - high probability bearish target'
+      },
+      {
+        price: supportLevel - (triangleHeight * 1.0),
+        method: 'Fibonacci 100%',
+        confidence: 'Moderate',
+        description: 'Equal to triangle height - classic measured move target'
+      },
+      {
+        price: supportLevel - (triangleHeight * 1.618),
+        method: 'Fibonacci 161.8%',
+        confidence: 'Aggressive',
+        description: 'Golden ratio extension - strong bearish momentum target'
+      },
+      {
+        price: supportLevel - (triangleHeight * 2.618),
+        method: 'Fibonacci 261.8%',
+        confidence: 'Aggressive',
+        description: 'Extended target for major bearish trend continuation'
+      }
+    ];
+  }
+  
+  private static calculatePercentageTargets(supportLevel: number, triangleHeight: number): TargetLevel[] {
+    return [
+      {
+        price: supportLevel - (triangleHeight * 0.5),
+        method: 'Conservative 50%',
+        confidence: 'Conservative',
+        description: 'Half the triangle height - minimum expected bearish move'
+      },
+      {
+        price: supportLevel - (triangleHeight * 0.75),
+        method: 'Moderate 75%',
+        confidence: 'Moderate',
+        description: 'Three-quarters triangle height - balanced bearish target'
+      },
+      {
+        price: supportLevel - (triangleHeight * 1.25),
+        method: 'Extended 125%',
+        confidence: 'Aggressive',
+        description: 'Extended target for strong bearish momentum continuation'
+      }
+    ];
+  }
+  
+  private static calculateMeasuredMoveTargets(supportLevel: number, triangleHeight: number): TargetLevel[] {
+    return [
+      {
+        price: supportLevel - (triangleHeight * 0.8),
+        method: 'Statistical 80%',
+        confidence: 'Moderate',
+        description: 'Based on historical pattern completion rates (~80%)'
+      },
+      {
+        price: supportLevel - (triangleHeight * 1.15),
+        method: 'Momentum Extension',
+        confidence: 'Moderate',
+        description: 'Accounts for breakdown momentum and follow-through selling'
+      },
+      {
+        price: supportLevel - (triangleHeight * 0.9),
+        method: 'Conservative Statistical',
+        confidence: 'Conservative',
+        description: 'Lower-risk target with higher probability of achievement'
+      }
+    ];
+  }
+  
+  private static calculateVolumeAdjustedTarget(classicTarget: number, triangleHeight: number): number {
+    // Adjust target downward for typical volume expansion in successful breakdowns
+    // Descending triangles often show strong volume confirmation on breakdown
+    return classicTarget - (triangleHeight * 0.12); // 12% more aggressive for volume confirmation
+  }
+  
+  /**
+   * Get target methodology explanation for educational purposes
+   */
+  static getMethodologyExplanation(): string {
+    return `
+Descending Triangle Target Price Methodologies:
+
+1. **Classic Measured Move** (Primary): Target = Support Level - Triangle Height
+   - Most reliable method for bearish continuation patterns  
+   - Triangle Height = Highest Point - Support Level
+   - Success rate: ~75-85% with volume confirmation
+
+2. **Fibonacci Extensions**: Mathematical ratios for bearish projections
+   - 61.8%: Conservative, high-probability bearish target
+   - 100%: Equal to measured move (classic target)
+   - 161.8% & 261.8%: Aggressive momentum targets for strong continuation
+
+3. **Statistical Targets**: Based on historical bearish pattern analysis
+   - 50%: Minimum expected bearish move
+   - 80%: Statistical completion average for confirmed patterns
+   - 125%: Extended bearish scenario with momentum continuation
+
+4. **Descending Triangle**: Target = Breakout Level - Triangle Height
+   Target = 90 - 10 = 80
+
+**Key Success Factors**:
+- Volume confirmation on support break (minimum 1.5x average)
+- Clear horizontal support with descending resistance trend
+- Multiple touches of both support and resistance lines
+- Pattern duration: 2-8 weeks for reliability
+
+**Risk Management**: Use stop loss above the descending trendline, with position sizing based on favorable risk/reward ratio (typically 1:2 or better).
+    `;
+  }
+}
