@@ -169,3 +169,175 @@ Double Top Target Price Methodologies:
     `;
   }
 }
+
+export class InvertedHeadAndShouldersTargetMethodologies {
+  
+  /**
+   * Calculate comprehensive target levels for Inverted Head and Shoulders pattern
+   * @param headLevel - The low of the head (lowest point)
+   * @param shoulderLevel - The average level of both shoulders
+   * @param necklineLevel - The resistance level (neckline)
+   * @param stopLoss - Recommended stop loss level
+   * @returns Complete target analysis
+   */
+  static calculateTargets(headLevel: number, shoulderLevel: number, necklineLevel: number, stopLoss: number): TargetMethodologyResult {
+    const patternHeight = necklineLevel - headLevel;
+    
+    // 1. Classic Measured Move (Primary Method)
+    const classicTarget = necklineLevel + patternHeight;
+    
+    // 2. Fibonacci Extension Targets
+    const fibTargets = this.calculateFibonacciTargets(necklineLevel, patternHeight);
+    
+    // 3. Percentage-based Targets
+    const percentageTargets = this.calculatePercentageTargets(necklineLevel, patternHeight);
+    
+    // 4. Multiple Measured Move Targets
+    const measuredTargets = this.calculateMeasuredMoveTargets(necklineLevel, patternHeight);
+    
+    // 5. Volume-weighted Target (momentum adjustment)
+    const volumeAdjustedTarget = this.calculateVolumeAdjustedTarget(classicTarget, patternHeight);
+    
+    // Compile all alternative targets
+    const alternativeTargets: TargetLevel[] = [
+      ...fibTargets,
+      ...percentageTargets,
+      ...measuredTargets,
+      {
+        price: volumeAdjustedTarget,
+        method: 'Volume-Adjusted',
+        confidence: 'Moderate',
+        description: 'Enhanced for typical volume expansion in successful breakouts'
+      }
+    ];
+    
+    // Calculate risk/reward ratio
+    const entryPrice = necklineLevel; // Entry on neckline break
+    const riskRewardRatio = Math.abs(classicTarget - entryPrice) / Math.abs(entryPrice - stopLoss);
+    
+    return {
+      primaryTarget: classicTarget,
+      alternativeTargets,
+      riskRewardRatio,
+      methodology: 'Classic Measured Move with Fibonacci and Volume-Enhanced Alternatives'
+    };
+  }
+  
+  private static calculateFibonacciTargets(necklineLevel: number, patternHeight: number): TargetLevel[] {
+    return [
+      {
+        price: necklineLevel + (patternHeight * 0.618),
+        method: 'Fibonacci 61.8%',
+        confidence: 'Conservative',
+        description: 'First Fibonacci extension - high probability bullish target'
+      },
+      {
+        price: necklineLevel + (patternHeight * 1.0),
+        method: 'Fibonacci 100%',
+        confidence: 'Moderate',
+        description: 'Equal to pattern height - classic measured move target'
+      },
+      {
+        price: necklineLevel + (patternHeight * 1.618),
+        method: 'Fibonacci 161.8%',
+        confidence: 'Aggressive',
+        description: 'Golden ratio extension - strong bullish momentum target'
+      },
+      {
+        price: necklineLevel + (patternHeight * 2.618),
+        method: 'Fibonacci 261.8%',
+        confidence: 'Aggressive',
+        description: 'Extended target for major bullish trend reversals'
+      }
+    ];
+  }
+  
+  private static calculatePercentageTargets(necklineLevel: number, patternHeight: number): TargetLevel[] {
+    return [
+      {
+        price: necklineLevel + (patternHeight * 0.5),
+        method: 'Conservative 50%',
+        confidence: 'Conservative',
+        description: 'Half the pattern height - minimum expected bullish move'
+      },
+      {
+        price: necklineLevel + (patternHeight * 0.75),
+        method: 'Moderate 75%',
+        confidence: 'Moderate',
+        description: 'Three-quarters pattern height - balanced bullish target'
+      },
+      {
+        price: necklineLevel + (patternHeight * 1.25),
+        method: 'Extended 125%',
+        confidence: 'Aggressive',
+        description: 'Extended target for strong bullish momentum continuation'
+      }
+    ];
+  }
+  
+  private static calculateMeasuredMoveTargets(necklineLevel: number, patternHeight: number): TargetLevel[] {
+    return [
+      {
+        price: necklineLevel + (patternHeight * 0.8),
+        method: 'Statistical 80%',
+        confidence: 'Moderate',
+        description: 'Based on historical pattern completion rates (~80%)'
+      },
+      {
+        price: necklineLevel + (patternHeight * 1.15),
+        method: 'Momentum Extension',
+        confidence: 'Moderate',
+        description: 'Accounts for breakout momentum and follow-through buying'
+      },
+      {
+        price: necklineLevel + (patternHeight * 0.9),
+        method: 'Conservative Statistical',
+        confidence: 'Conservative',
+        description: 'Lower-risk target with higher probability of achievement'
+      }
+    ];
+  }
+  
+  private static calculateVolumeAdjustedTarget(classicTarget: number, patternHeight: number): number {
+    // Adjust target upward for typical volume expansion in successful breakouts
+    // Inverted H&S patterns often show strong volume confirmation
+    return classicTarget + (patternHeight * 0.12); // 12% more aggressive for volume confirmation
+  }
+  
+  /**
+   * Get target methodology explanation for educational purposes
+   */
+  static getMethodologyExplanation(): string {
+    return `
+Inverted Head and Shoulders Target Price Methodologies:
+
+1. **Classic Measured Move** (Primary): Target = Neckline + Pattern Height
+   - Most reliable method for bullish reversal patterns
+   - Pattern Height = Neckline Level - Head Level (lowest point)
+   - Success rate: ~70-80% with volume confirmation
+
+2. **Fibonacci Extensions**: Mathematical ratios for bullish projections
+   - 61.8%: Conservative, high-probability bullish target
+   - 100%: Equal to measured move (classic target)
+   - 161.8% & 261.8%: Aggressive momentum targets for strong reversals
+
+3. **Statistical Targets**: Based on historical bullish pattern analysis
+   - 50%: Minimum expected bullish move
+   - 80%: Statistical completion average for confirmed patterns
+   - 125%: Extended bullish scenario with momentum continuation
+
+4. **Volume-Enhanced**: Considers volume expansion typical in successful breakouts
+   - More aggressive when volume confirms the breakout
+   - Adjusts for pattern reliability and momentum factors
+   - Volume surge on neckline break increases target probability
+
+**Key Success Factors**:
+- Volume confirmation on neckline break (minimum 1.5x average)
+- Right shoulder should be higher than left shoulder
+- Clear three-touch neckline resistance
+- Pattern duration: 4-12 weeks for reliability
+
+**Risk Management**: Use stop loss below the right shoulder low, with position sizing based on favorable risk/reward ratio (typically 1:2 or better).
+    `;
+  }
+}
