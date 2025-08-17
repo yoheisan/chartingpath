@@ -7,7 +7,7 @@ interface CandlestickData {
 }
 
 interface PatternAnnotation {
-  type: 'trendline' | 'support' | 'resistance' | 'neckline' | 'target';
+  type: 'trendline' | 'support' | 'resistance' | 'neckline' | 'target' | 'peak';
   points: { x: number; y: number }[];
   label?: string;
   color: string;
@@ -77,6 +77,30 @@ export class PatternCalculator {
     ];
 
     const annotations: PatternAnnotation[] = [
+      // Left Shoulder marker
+      {
+        type: 'peak',
+        points: [{ x: 3, y: leftShoulderHigh }],
+        label: 'Left Shoulder',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      // Head marker
+      {
+        type: 'peak', 
+        points: [{ x: 10, y: headHigh }],
+        label: 'Head',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      // Right Shoulder marker
+      {
+        type: 'peak',
+        points: [{ x: 16, y: rightShoulderHigh }],
+        label: 'Right Shoulder', 
+        color: '#45B7D1',
+        style: 'solid'
+      },
       // Neckline
       {
         type: 'neckline',

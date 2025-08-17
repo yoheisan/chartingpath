@@ -160,13 +160,42 @@ export const ChartPatternGenerator = () => {
       }
     });
 
-    // Draw pattern annotations (trend lines, support/resistance)
+    // Draw pattern annotations (trend lines, support/resistance, peaks)
     annotations.forEach(annotation => {
       ctx.strokeStyle = annotation.color;
+      ctx.fillStyle = annotation.color;
       ctx.lineWidth = 2;
       ctx.setLineDash(annotation.style === 'dashed' ? [5, 5] : []);
       
-      if (annotation.points.length >= 2) {
+      if (annotation.type === 'peak') {
+        // Draw peak markers with circles and labels
+        const point = annotation.points[0];
+        const x = indexToX(point.x);
+        const y = priceToY(point.y);
+        
+        // Draw circle marker
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw label with background
+        if (annotation.label) {
+          ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "center";
+          const textMetrics = ctx.measureText(annotation.label);
+          const textWidth = textMetrics.width;
+          const textHeight = 14;
+          
+          // Background rectangle
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.fillRect(x - textWidth/2 - 4, y - 25 - textHeight/2, textWidth + 8, textHeight + 4);
+          
+          // Text
+          ctx.fillStyle = annotation.color;
+          ctx.fillText(annotation.label, x, y - 20);
+        }
+      } else if (annotation.points.length >= 2) {
+        // Draw lines for other annotation types
         ctx.beginPath();
         const firstPoint = annotation.points[0];
         ctx.moveTo(indexToX(firstPoint.x), priceToY(firstPoint.y));
