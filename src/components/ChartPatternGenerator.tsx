@@ -490,7 +490,7 @@ export const ChartPatternGenerator = () => {
             </SelectContent>
           </Select>
           
-          <Button onClick={downloadChart} className="bg-gradient-to-r from-primary to-yellow-500 hover:from-primary/90 hover:to-yellow-500/90">
+          <Button onClick={downloadChart} className="hidden bg-gradient-to-r from-primary to-yellow-500 hover:from-primary/90 hover:to-yellow-500/90">
             Download PNG
           </Button>
         </div>
