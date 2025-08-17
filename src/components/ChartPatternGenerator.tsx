@@ -277,11 +277,41 @@ export const ChartPatternGenerator = () => {
       }
     }
 
-    // Title
+    // Title and Pattern Type Badge
     ctx.fillStyle = "hsl(210, 40%, 98%)";
     ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
+    
+    // Measure title text for badge positioning
+    const titleMetrics = ctx.measureText(currentPattern.name);
     ctx.fillText(currentPattern.name, chartLeft, chartTop - 30);
+
+    // Pattern type badge
+    const badgeText = currentPattern.type.toUpperCase();
+    const badgeColor = currentPattern.type === "reversal" ? "#dc2626" : 
+                      currentPattern.type === "continuation" ? "#3b82f6" : "#6b7280";
+    
+    // Measure badge text for proper sizing
+    ctx.font = "bold 12px -apple-system, BlinkMacSystemFont, sans-serif";
+    const badgeTextMetrics = ctx.measureText(badgeText);
+    const badgeWidth = badgeTextMetrics.width + 16; // 8px padding on each side
+    const badgeHeight = 22;
+    const badgeX = chartLeft + titleMetrics.width + 15;
+    const badgeY = chartTop - 42;
+    
+    // Draw badge background with rounded corners effect
+    ctx.fillStyle = badgeColor;
+    ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+    
+    // Draw badge text perfectly centered
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2);
+    
+    // Reset text properties
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
 
     // Subtitle
     ctx.fillStyle = "hsl(217, 10%, 65%)";
