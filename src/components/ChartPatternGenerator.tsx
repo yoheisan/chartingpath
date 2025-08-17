@@ -5,201 +5,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
-
-interface CandlestickData {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
+import { PatternCalculator } from "@/utils/PatternCalculator";
 
 interface PatternConfig {
   name: string;
   type: "reversal" | "continuation" | "candlestick";
   description: string;
-  data: CandlestickData[];
 }
 
 const PATTERNS: Record<string, PatternConfig> = {
   "head-shoulders": {
     name: "Head and Shoulders",
     type: "reversal",
-    description: "A bearish reversal pattern with three peaks, the middle being the highest",
-    data: [
-      { open: 100, high: 105, low: 98, close: 102, volume: 1000 },
-      { open: 102, high: 108, low: 100, close: 106, volume: 1200 },
-      { open: 106, high: 112, low: 104, close: 110, volume: 1400 }, // Left shoulder
-      { open: 110, high: 115, low: 108, close: 113, volume: 1100 },
-      { open: 113, high: 122, low: 111, close: 118, volume: 1800 }, // Head
-      { open: 118, high: 120, low: 115, close: 116, volume: 1300 },
-      { open: 116, high: 118, low: 112, close: 114, volume: 1500 },
-      { open: 114, high: 117, low: 110, close: 112, volume: 1200 }, // Right shoulder
-      { open: 112, high: 114, low: 108, close: 109, volume: 1600 },
-      { open: 109, high: 111, low: 105, close: 107, volume: 1700 }, // Breakdown
-    ]
+    description: "Classic bearish reversal with three peaks - left shoulder, head (highest), right shoulder. Volume decreases at right shoulder."
   },
   "double-top": {
     name: "Double Top",
     type: "reversal",
-    description: "A bearish reversal pattern with two peaks at approximately the same level",
-    data: [
-      { open: 100, high: 105, low: 98, close: 103, volume: 1000 },
-      { open: 103, high: 110, low: 101, close: 108, volume: 1400 },
-      { open: 108, high: 115, low: 106, close: 112, volume: 1600 }, // First peak
-      { open: 112, high: 114, low: 108, close: 110, volume: 1200 },
-      { open: 110, high: 112, low: 105, close: 107, volume: 1300 }, // Valley
-      { open: 107, high: 111, low: 105, close: 109, volume: 1100 },
-      { open: 109, high: 115, low: 107, close: 113, volume: 1500 }, // Second peak
-      { open: 113, high: 114, low: 109, close: 111, volume: 1300 },
-      { open: 111, high: 113, low: 106, close: 108, volume: 1700 }, // Breakdown
-      { open: 108, high: 110, low: 104, close: 105, volume: 1800 },
-    ]
-  },
-  "ascending-triangle": {
-    name: "Ascending Triangle",
-    type: "continuation",
-    description: "A bullish continuation pattern with horizontal resistance and rising support",
-    data: [
-      { open: 95, high: 100, low: 93, close: 98, volume: 1000 },
-      { open: 98, high: 105, low: 96, close: 103, volume: 1200 },
-      { open: 103, high: 105, low: 101, close: 104, volume: 1100 }, // First resistance test
-      { open: 104, high: 106, low: 102, close: 103, volume: 900 },
-      { open: 103, high: 105, low: 103, close: 104, volume: 1000 }, // Second test
-      { open: 104, high: 105, low: 103, close: 104, volume: 800 },
-      { open: 104, high: 105, low: 104, close: 105, volume: 1100 }, // Third test
-      { open: 105, high: 108, low: 104, close: 107, volume: 1500 }, // Breakout
-      { open: 107, high: 110, low: 106, close: 109, volume: 2000 },
-      { open: 109, high: 112, low: 108, close: 111, volume: 1800 },
-    ]
-  },
-  "hammer": {
-    name: "Hammer",
-    type: "candlestick",
-    description: "A bullish reversal candlestick with a long lower shadow and small body",
-    data: [
-      { open: 110, high: 112, low: 108, close: 109, volume: 1000 },
-      { open: 109, high: 110, low: 106, close: 107, volume: 1200 },
-      { open: 107, high: 108, low: 104, close: 105, volume: 1400 },
-      { open: 105, high: 106, low: 102, close: 103, volume: 1600 },
-      { open: 103, high: 104, low: 96, close: 102, volume: 2000 }, // Hammer
-      { open: 102, high: 106, low: 101, close: 105, volume: 1500 },
-      { open: 105, high: 108, low: 104, close: 107, volume: 1300 },
-      { open: 107, high: 110, low: 106, close: 109, volume: 1200 },
-    ]
-  },
-  "doji": {
-    name: "Doji",
-    type: "candlestick",
-    description: "A reversal signal where open and close prices are nearly equal",
-    data: [
-      { open: 105, high: 108, low: 103, close: 107, volume: 1000 },
-      { open: 107, high: 109, low: 105, close: 108, volume: 1100 },
-      { open: 108, high: 110, low: 106, close: 109, volume: 1200 },
-      { open: 109, high: 111, low: 107, close: 110, volume: 1300 },
-      { open: 110, high: 112, low: 108, close: 110, volume: 1500 }, // Doji
-      { open: 110, high: 111, low: 107, close: 108, volume: 1400 },
-      { open: 108, high: 110, low: 105, close: 106, volume: 1600 },
-      { open: 106, high: 108, low: 103, close: 104, volume: 1700 },
-    ]
-  },
-  "cup-handle": {
-    name: "Cup with Handle",
-    type: "continuation",
-    description: "A bullish continuation pattern resembling a cup with a handle",
-    data: [
-      { open: 120, high: 122, low: 118, close: 121, volume: 1000 },
-      { open: 121, high: 123, low: 115, close: 117, volume: 1200 }, // Start of cup
-      { open: 117, high: 119, low: 110, close: 112, volume: 1400 },
-      { open: 112, high: 115, low: 108, close: 110, volume: 1600 }, // Bottom of cup
-      { open: 110, high: 114, low: 109, close: 113, volume: 1300 },
-      { open: 113, high: 118, low: 112, close: 116, volume: 1200 },
-      { open: 116, high: 121, low: 115, close: 120, volume: 1100 }, // Cup formation complete
-      { open: 120, high: 121, low: 117, close: 118, volume: 900 }, // Handle start
-      { open: 118, high: 119, low: 116, close: 117, volume: 800 }, // Handle
-      { open: 117, high: 124, low: 116, close: 123, volume: 1800 }, // Breakout
-    ]
+    description: "Bearish reversal pattern with two equal peaks. Volume divergence at second peak confirms weakness."
   },
   "double-bottom": {
     name: "Double Bottom",
     type: "reversal",
-    description: "A bullish reversal pattern with two troughs at approximately the same level",
-    data: [
-      { open: 120, high: 122, low: 118, close: 119, volume: 1000 },
-      { open: 119, high: 120, low: 114, close: 115, volume: 1400 },
-      { open: 115, high: 117, low: 110, close: 112, volume: 1600 }, // First bottom
-      { open: 112, high: 116, low: 111, close: 115, volume: 1200 },
-      { open: 115, high: 119, low: 114, close: 118, volume: 1100 }, // Peak
-      { open: 118, high: 119, low: 115, close: 116, volume: 1300 },
-      { open: 116, high: 117, low: 110, close: 111, volume: 1500 }, // Second bottom
-      { open: 111, high: 114, low: 110, close: 113, volume: 1300 },
-      { open: 113, high: 118, low: 112, close: 117, volume: 1700 }, // Breakout
-      { open: 117, high: 122, low: 116, close: 121, volume: 1800 },
-    ]
+    description: "Bullish reversal pattern with two equal troughs. Volume expansion on breakout confirms strength."
   },
-  "triple-top": {
-    name: "Triple Top",
-    type: "reversal", 
-    description: "A bearish reversal pattern with three peaks at approximately the same level",
-    data: [
-      { open: 100, high: 105, low: 98, close: 103, volume: 1000 },
-      { open: 103, high: 115, low: 101, close: 113, volume: 1400 }, // First peak
-      { open: 113, high: 115, low: 108, close: 110, volume: 1200 },
-      { open: 110, high: 112, low: 106, close: 108, volume: 1300 }, // First valley
-      { open: 108, high: 115, low: 107, close: 114, volume: 1500 }, // Second peak
-      { open: 114, high: 115, low: 109, close: 111, volume: 1300 },
-      { open: 111, high: 113, low: 107, close: 109, volume: 1200 }, // Second valley
-      { open: 109, high: 115, low: 108, close: 114, volume: 1400 }, // Third peak
-      { open: 114, high: 115, low: 111, close: 112, volume: 1300 },
-      { open: 112, high: 114, low: 106, close: 107, volume: 1700 }, // Breakdown
-    ]
-  },
-  "bull-flag": {
-    name: "Bull Flag",
+  "ascending-triangle": {
+    name: "Ascending Triangle",
     type: "continuation",
-    description: "A brief consolidation in a strong uptrend before continuation",
-    data: [
-      { open: 95, high: 98, low: 94, close: 97, volume: 1000 },
-      { open: 97, high: 102, low: 96, close: 101, volume: 1500 }, // Flag pole start
-      { open: 101, high: 107, low: 100, close: 106, volume: 2000 },
-      { open: 106, high: 112, low: 105, close: 111, volume: 2500 }, // Flag pole end
-      { open: 111, high: 112, low: 108, close: 109, volume: 800 }, // Flag consolidation
-      { open: 109, high: 110, low: 107, close: 108, volume: 700 },
-      { open: 108, high: 109, low: 106, close: 107, volume: 600 },
-      { open: 107, high: 108, low: 105, close: 106, volume: 650 }, // End of flag
-      { open: 106, high: 112, low: 105, close: 111, volume: 1800 }, // Breakout
-      { open: 111, high: 116, low: 110, close: 115, volume: 2000 },
-    ]
+    description: "Bullish continuation with horizontal resistance and ascending support. Volume decreases during consolidation."
+  },
+  "hammer": {
+    name: "Hammer",
+    type: "candlestick",
+    description: "Bullish reversal candlestick with long lower shadow (2-3x body size) and small body at upper range."
   },
   "shooting-star": {
-    name: "Shooting Star", 
-    type: "candlestick",
-    description: "A bearish reversal candlestick with a long upper shadow and small body",
-    data: [
-      { open: 102, high: 105, low: 101, close: 104, volume: 1000 },
-      { open: 104, high: 107, low: 103, close: 106, volume: 1200 },
-      { open: 106, high: 109, low: 105, close: 108, volume: 1400 },
-      { open: 108, high: 111, low: 107, close: 110, volume: 1600 },
-      { open: 110, high: 118, low: 109, close: 111, volume: 2000 }, // Shooting star
-      { open: 111, high: 112, low: 107, close: 108, volume: 1500 },
-      { open: 108, high: 109, low: 105, close: 106, volume: 1300 },
-      { open: 106, high: 107, low: 103, close: 104, volume: 1200 },
-    ]
-  },
-  "engulfing-bullish": {
-    name: "Bullish Engulfing",
-    type: "candlestick",
-    description: "A bullish reversal where a large bullish candle engulfs the previous bearish candle",
-    data: [
-      { open: 108, high: 110, low: 106, close: 107, volume: 1000 },
-      { open: 107, high: 108, low: 104, close: 105, volume: 1200 },
-      { open: 105, high: 106, low: 102, close: 103, volume: 1400 },
-      { open: 103, high: 104, low: 101, close: 102, volume: 1300 }, // Bearish candle
-      { open: 101, high: 106, low: 100, close: 105, volume: 1800 }, // Bullish engulfing
-      { open: 105, high: 108, low: 104, close: 107, volume: 1500 },
-      { open: 107, high: 110, low: 106, close: 109, volume: 1300 },
-      { open: 109, high: 112, low: 108, close: 111, volume: 1200 },
-    ]
+    name: "Shooting Star",
+    type: "candlestick", 
+    description: "Bearish reversal candlestick with long upper shadow and small body at lower range."
   }
 };
 
@@ -217,18 +60,22 @@ export const ChartPatternGenerator = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Get accurate pattern data
+    const patternData = PatternCalculator.getPatternData(selectedPattern);
+    const { candles, annotations, keyLevels } = patternData;
+
     // Set canvas size
-    canvas.width = 800;
-    canvas.height = 500;
+    canvas.width = 1000;
+    canvas.height = 600;
 
     // Clear canvas with dark background
     ctx.fillStyle = "hsl(223, 39%, 4%)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Chart dimensions
-    const padding = 60;
+    const padding = 80;
     const chartWidth = canvas.width - padding * 2;
-    const chartHeight = canvas.height - padding * 2;
+    const chartHeight = canvas.height - padding * 2 - 100; // Leave space for volume
     const chartLeft = padding;
     const chartTop = padding;
 
@@ -255,29 +102,41 @@ export const ChartPatternGenerator = () => {
     }
 
     // Calculate price range
-    const prices = currentPattern.data.flatMap(d => [d.high, d.low]);
+    const prices = candles.flatMap(d => [d.high, d.low]);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const priceRange = maxPrice - minPrice;
     const padding_price = priceRange * 0.1;
+    const adjustedMinPrice = minPrice - padding_price;
+    const adjustedMaxPrice = maxPrice + padding_price;
+    const adjustedRange = adjustedMaxPrice - adjustedMinPrice;
+
+    // Helper function to convert price to Y coordinate
+    const priceToY = (price: number) => {
+      return chartTop + chartHeight - ((price - adjustedMinPrice) / adjustedRange) * chartHeight;
+    };
+
+    // Helper function to convert index to X coordinate
+    const indexToX = (index: number) => {
+      return chartLeft + (index + 0.5) * (chartWidth / candles.length);
+    };
 
     // Draw candlesticks
-    const candleWidth = chartWidth / (currentPattern.data.length * 1.5);
+    const candleWidth = Math.max(8, chartWidth / (candles.length * 1.5));
     
-    currentPattern.data.forEach((candle, index) => {
-      const x = chartLeft + (index + 0.5) * (chartWidth / currentPattern.data.length);
+    candles.forEach((candle, index) => {
+      const x = indexToX(index);
       
-      // Normalize prices to canvas coordinates
-      const yOpen = chartTop + chartHeight - ((candle.open - minPrice + padding_price) / (priceRange + 2 * padding_price)) * chartHeight;
-      const yClose = chartTop + chartHeight - ((candle.close - minPrice + padding_price) / (priceRange + 2 * padding_price)) * chartHeight;
-      const yHigh = chartTop + chartHeight - ((candle.high - minPrice + padding_price) / (priceRange + 2 * padding_price)) * chartHeight;
-      const yLow = chartTop + chartHeight - ((candle.low - minPrice + padding_price) / (priceRange + 2 * padding_price)) * chartHeight;
+      const yOpen = priceToY(candle.open);
+      const yClose = priceToY(candle.close);
+      const yHigh = priceToY(candle.high);
+      const yLow = priceToY(candle.low);
 
       const isBullish = candle.close > candle.open;
       
       // Draw wick
       ctx.strokeStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(x, yHigh);
       ctx.lineTo(x, yLow);
@@ -288,10 +147,10 @@ export const ChartPatternGenerator = () => {
       const bodyTop = Math.min(yOpen, yClose);
       const bodyHeight = Math.abs(yClose - yOpen);
       
-      if (bodyHeight < 2) {
+      if (bodyHeight < 3) {
         // Doji - draw a line
         ctx.strokeStyle = "hsl(210, 40%, 98%)";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x - candleWidth/2 * 0.8, yOpen);
         ctx.lineTo(x + candleWidth/2 * 0.8, yOpen);
@@ -301,6 +160,51 @@ export const ChartPatternGenerator = () => {
       }
     });
 
+    // Draw pattern annotations (trend lines, support/resistance)
+    annotations.forEach(annotation => {
+      ctx.strokeStyle = annotation.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash(annotation.style === 'dashed' ? [5, 5] : []);
+      
+      if (annotation.points.length >= 2) {
+        ctx.beginPath();
+        const firstPoint = annotation.points[0];
+        ctx.moveTo(indexToX(firstPoint.x), priceToY(firstPoint.y));
+        
+        for (let i = 1; i < annotation.points.length; i++) {
+          const point = annotation.points[i];
+          ctx.lineTo(indexToX(point.x), priceToY(point.y));
+        }
+        ctx.stroke();
+        
+        // Add label
+        if (annotation.label) {
+          ctx.fillStyle = annotation.color;
+          ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "left";
+          const lastPoint = annotation.points[annotation.points.length - 1];
+          ctx.fillText(annotation.label, indexToX(lastPoint.x) + 10, priceToY(lastPoint.y) - 5);
+        }
+      }
+      
+      ctx.setLineDash([]); // Reset line dash
+    });
+
+    // Draw volume histogram
+    const volumeTop = chartTop + chartHeight + 20;
+    const volumeHeight = 80;
+    const maxVolume = Math.max(...candles.map(c => c.volume));
+    
+    candles.forEach((candle, index) => {
+      const x = indexToX(index);
+      const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
+      const isBullish = candle.close > candle.open;
+      
+      ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%, 0.6)" : "hsl(0, 84%, 60%, 0.6)";
+      ctx.fillRect(x - candleWidth/2 * 0.6, volumeTop + volumeHeight - volumeBarHeight, 
+                   candleWidth * 0.6, volumeBarHeight);
+    });
+
     // Draw axes labels
     ctx.fillStyle = "hsl(217, 10%, 65%)";
     ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
@@ -308,16 +212,47 @@ export const ChartPatternGenerator = () => {
     
     // Price labels
     for (let i = 0; i <= 8; i++) {
-      const price = minPrice + (i / 8) * priceRange;
+      const price = adjustedMinPrice + (i / 8) * adjustedRange;
       const y = chartTop + chartHeight - (i * chartHeight) / 8;
       ctx.fillText(price.toFixed(2), chartLeft - 10, y + 4);
     }
 
+    // Volume label
+    ctx.textAlign = "left";
+    ctx.fillText("Volume", chartLeft, volumeTop - 5);
+
+    // Key levels display
+    if (keyLevels.entry || keyLevels.target || keyLevels.stopLoss) {
+      ctx.fillStyle = "hsl(210, 40%, 98%)";
+      ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "left";
+      let labelY = chartTop + 20;
+      
+      if (keyLevels.entry) {
+        ctx.fillText(`Entry: ${keyLevels.entry.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+        labelY += 15;
+      }
+      if (keyLevels.target) {
+        ctx.fillStyle = "hsl(142, 76%, 36%)";
+        ctx.fillText(`Target: ${keyLevels.target.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+        labelY += 15;
+      }
+      if (keyLevels.stopLoss) {
+        ctx.fillStyle = "hsl(0, 84%, 60%)";
+        ctx.fillText(`Stop Loss: ${keyLevels.stopLoss.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+      }
+    }
+
     // Title
     ctx.fillStyle = "hsl(210, 40%, 98%)";
-    ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText(currentPattern.name, chartLeft, chartTop - 20);
+    ctx.fillText(currentPattern.name, chartLeft, chartTop - 30);
+
+    // Subtitle
+    ctx.fillStyle = "hsl(217, 10%, 65%)";
+    ctx.font = "14px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText("Professional Trading Education", chartLeft, chartTop - 10);
   };
 
   useEffect(() => {
