@@ -126,9 +126,20 @@ export const ChartPatternGenerator = () => {
       return chartLeft + (index + 0.5) * (chartWidth / candles.length);
     };
 
+    // Helper: draw rounded rectangle (pill)
+    const drawRoundedRect = (x: number, y: number, width: number, height: number, radius: number) => {
+      const r = Math.min(radius, height / 2, width / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + r, r);
+      ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+      ctx.arcTo(x, y + height, x, y + height - r, r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+    };
+
     // Draw candlesticks
     const candleWidth = Math.max(8, chartWidth / (candles.length * 1.5));
-    
     candles.forEach((candle, index) => {
       const x = indexToX(index);
       
@@ -301,8 +312,8 @@ export const ChartPatternGenerator = () => {
     
     // Draw badge background with rounded corners effect
     ctx.fillStyle = badgeColor;
-    ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
-    
+    drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
+    ctx.fill();
     // Draw badge text perfectly centered
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
@@ -385,6 +396,7 @@ export const ChartPatternGenerator = () => {
             <h3 className="text-xl font-semibold text-foreground">{currentPattern.name}</h3>
             <Badge 
               variant={currentPattern.type === "reversal" ? "destructive" : currentPattern.type === "continuation" ? "default" : "secondary"}
+              className="text-xs leading-none h-5 px-2 py-0.5"
             >
               {currentPattern.type}
             </Badge>
