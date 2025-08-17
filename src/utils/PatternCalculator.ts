@@ -177,6 +177,22 @@ export class PatternCalculator {
     ];
 
     const annotations: PatternAnnotation[] = [
+      // First Peak marker
+      {
+        type: 'peak',
+        points: [{ x: 4, y: peakLevel }],
+        label: 'First Peak',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      // Second Peak marker  
+      {
+        type: 'peak',
+        points: [{ x: 13, y: peakLevel }],
+        label: 'Second Peak',
+        color: '#FF6B6B', 
+        style: 'solid'
+      },
       // Support level (valley)
       {
         type: 'support',
