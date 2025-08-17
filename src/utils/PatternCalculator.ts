@@ -111,11 +111,11 @@ export class PatternCalculator {
         color: '#FFD700',
         style: 'dashed'
       },
-      // Target projection
+      // Target projection - correct H&S methodology  
       {
         type: 'target',
-        points: [{ x: 22, y: necklineLevel }, { x: 22, y: basePrice - 20 }],
-        label: 'Target: ' + (basePrice - 20).toFixed(0),
+        points: [{ x: 22, y: necklineLevel }, { x: 22, y: necklineLevel - (headHigh - necklineLevel) }],
+        label: 'Target: ' + (necklineLevel - (headHigh - necklineLevel)).toFixed(0),
         color: '#FF6B6B',
         style: 'dashed'
       }
@@ -127,7 +127,7 @@ export class PatternCalculator {
       description: "Classic bearish reversal with three peaks - left shoulder, head (highest), right shoulder. Neckline break confirms pattern.",
       keyLevels: {
         breakout: necklineLevel,
-        target: basePrice - 20,
+        target: necklineLevel - (headHigh - necklineLevel),
         stopLoss: rightShoulderHigh + 1
       }
     };
