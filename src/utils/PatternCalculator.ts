@@ -1,3 +1,5 @@
+import { DoubleTopTargetMethodologies } from './TargetMethodologies';
+
 interface CandlestickData {
   open: number;
   high: number;
@@ -131,11 +133,18 @@ export class PatternCalculator {
     };
   }
 
-  // Double Top - precise equal peaks
+  // Double Top - precise equal peaks with comprehensive target methodologies
   static generateDoubleTop(): PatternData {
     const basePrice = 100;
     const peakLevel = basePrice + 20;
     const valleyLevel = basePrice + 8;
+    
+    // Calculate comprehensive targets using new methodology
+    const targetAnalysis = DoubleTopTargetMethodologies.calculateTargets(
+      peakLevel, 
+      valleyLevel, 
+      peakLevel + 1
+    );
     
     const candles: CandlestickData[] = [
       // Uptrend leading to first peak
@@ -184,12 +193,28 @@ export class PatternCalculator {
         color: '#FF6B6B',
         style: 'solid'
       },
-      // Target
+      // Primary Target (Classic Measured Move)
       {
         type: 'target',
-        points: [{ x: 18, y: valleyLevel }, { x: 18, y: valleyLevel - (peakLevel - valleyLevel) }],
-        label: 'Target: ' + (valleyLevel - (peakLevel - valleyLevel)).toFixed(0),
+        points: [{ x: 18, y: valleyLevel }, { x: 18, y: targetAnalysis.primaryTarget }],
+        label: `Primary Target: ${targetAnalysis.primaryTarget.toFixed(0)}`,
         color: '#FFD700',
+        style: 'solid'
+      },
+      // Conservative Fibonacci Target (61.8%)
+      {
+        type: 'target',
+        points: [{ x: 19, y: valleyLevel }, { x: 19, y: targetAnalysis.alternativeTargets[0].price }],
+        label: `Fib 61.8%: ${targetAnalysis.alternativeTargets[0].price.toFixed(0)}`,
+        color: '#90EE90',
+        style: 'dashed'
+      },
+      // Aggressive Fibonacci Target (161.8%)
+      {
+        type: 'target',
+        points: [{ x: 20, y: valleyLevel }, { x: 20, y: targetAnalysis.alternativeTargets[2].price }],
+        label: `Fib 161.8%: ${targetAnalysis.alternativeTargets[2].price.toFixed(0)}`,
+        color: '#FFA500',
         style: 'dashed'
       }
     ];
@@ -197,10 +222,10 @@ export class PatternCalculator {
     return {
       candles,
       annotations,
-      description: "Bearish reversal with two equal peaks. Volume divergence at second peak confirms weakness.",
+      description: `Bearish reversal with comprehensive target methodologies. Primary: ${targetAnalysis.primaryTarget.toFixed(0)} | Risk/Reward: ${targetAnalysis.riskRewardRatio.toFixed(1)}:1 | Multiple Fibonacci & statistical targets available.`,
       keyLevels: {
         breakout: valleyLevel,
-        target: valleyLevel - (peakLevel - valleyLevel),
+        target: targetAnalysis.primaryTarget,
         stopLoss: peakLevel + 1
       }
     };
