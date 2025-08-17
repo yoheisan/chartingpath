@@ -17,7 +17,7 @@ const Index = () => {
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
               <img 
-                src="/lovable-uploads/ec53698c-ffbe-4a54-93a2-1f451d8eadd1.png" 
+                src="/lovable-uploads/580e72d2-457e-4e16-8d46-2a0bd9299238.png" 
                 alt="ChartingPath Logo" 
                 className="h-8 w-8 object-contain"
               />
