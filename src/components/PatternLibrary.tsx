@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { PatternDetailModal } from "@/components/PatternDetailModal";
 
 interface Pattern {
   name: string;
@@ -188,6 +190,8 @@ const PATTERN_LIBRARY: Pattern[] = [
 ];
 
 export const PatternLibrary = () => {
+  const [selectedPatternForDetails, setSelectedPatternForDetails] = useState<string | null>(null);
+
   const getPatternIcon = (type: string) => {
     switch (type) {
       case "reversal":
@@ -275,7 +279,12 @@ export const PatternLibrary = () => {
                       </div>
                     </div>
                     
-                    <Button variant="outline" size="sm" className="text-xs">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs"
+                      onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
+                    >
                       Learn More
                     </Button>
                   </div>
@@ -285,6 +294,46 @@ export const PatternLibrary = () => {
           </div>
         </div>
       ))}
+
+      {selectedPatternForDetails && (
+        <PatternDetailModal
+          isOpen={!!selectedPatternForDetails}
+          onClose={() => setSelectedPatternForDetails(null)}
+          patternKey={selectedPatternForDetails}
+        />
+      )}
     </div>
   );
+
+  // Helper function to convert pattern name to key
+  function getPatternKey(patternName: string): string {
+    const keyMap: Record<string, string> = {
+      "Head and Shoulders": "head-shoulders",
+      "Inverted Head and Shoulders": "inverted-head-shoulders",
+      "Double Top": "double-top",
+      "Double Bottom": "double-bottom",
+      "Triple Top": "triple-top",
+      "Triple Bottom": "triple-bottom",
+      "Bump-and-Run Reversal": "bump-run-reversal",
+      "Island Reversal": "island-reversal",
+      "Ascending Triangle": "ascending-triangle",
+      "Descending Triangle": "descending-triangle",
+      "Symmetrical Triangle": "symmetrical-triangle",
+      "Bull Flag": "bull-flag",
+      "Bear Flag": "bear-flag",
+      "Pennant": "pennant",
+      "Cup with Handle": "cup-handle",
+      "Hammer": "hammer",
+      "Hanging Man": "hanging-man",
+      "Shooting Star": "shooting-star",
+      "Doji": "doji",
+      "Bullish Harami": "bullish-harami",
+      "Bearish Harami": "bearish-harami",
+      "Bullish Engulfing": "bullish-engulfing",
+      "Bearish Engulfing": "bearish-engulfing",
+      "Spinning Top": "spinning-top"
+    };
+    
+    return keyMap[patternName] || patternName.toLowerCase().replace(/\s+/g, '-');
+  }
 };

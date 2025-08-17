@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { PatternCalculator } from "@/utils/PatternCalculator";
+import { PatternDetailsSection } from "@/components/PatternDetailsSection";
 
 interface PatternConfig {
   name: string;
@@ -503,6 +504,9 @@ export const ChartPatternGenerator = () => {
           />
         </div>
       </Card>
+
+      {/* Pattern Details Section */}
+      <PatternDetailsSection patternKey={selectedPattern} />
     </div>
   );
 };
