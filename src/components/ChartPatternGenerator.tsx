@@ -314,11 +314,11 @@ export const ChartPatternGenerator = () => {
     ctx.fillStyle = badgeColor;
     drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
     ctx.fill();
-    // Draw badge text perfectly centered
+    // Draw badge text perfectly centered (nudged up 1px for optical centering)
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2);
+    ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2 - 1);
     
     // Reset text properties
     ctx.textAlign = "left";
