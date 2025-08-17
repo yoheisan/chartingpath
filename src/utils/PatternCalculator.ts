@@ -1535,6 +1535,222 @@ export class PatternCalculator {
     };
   }
 
+  // Triple Top - Based on Bulkowski's Analysis (80% accuracy as reversal)
+  // Requirements: Three equal peaks, declining volume, support break confirmation
+  static generateTripleTop(): PatternData {
+    const basePrice = 100;
+    const peakLevel = basePrice + 22;
+    const valleyLevel = basePrice + 10;
+    
+    const candles: CandlestickData[] = [
+      // Prior uptrend
+      { open: basePrice - 5, high: basePrice, low: basePrice - 8, close: basePrice - 2, volume: 1000 },
+      { open: basePrice - 2, high: basePrice + 5, low: basePrice - 3, close: basePrice + 3, volume: 1200 },
+      
+      // First peak formation
+      { open: basePrice + 3, high: basePrice + 10, low: basePrice + 2, close: basePrice + 8, volume: 1600 },
+      { open: basePrice + 8, high: basePrice + 15, low: basePrice + 7, close: basePrice + 13, volume: 1900 },
+      { open: basePrice + 13, high: peakLevel, low: basePrice + 12, close: basePrice + 20, volume: 2200 }, // First peak
+      { open: basePrice + 20, high: peakLevel + 1, low: basePrice + 18, close: basePrice + 19, volume: 2000 },
+      
+      // First decline to valley
+      { open: basePrice + 19, high: basePrice + 20, low: basePrice + 15, close: basePrice + 16, volume: 1700 },
+      { open: basePrice + 16, high: basePrice + 18, low: valleyLevel, close: valleyLevel + 2, volume: 1500 },
+      { open: valleyLevel + 2, high: basePrice + 13, low: valleyLevel - 1, close: valleyLevel + 1, volume: 1300 },
+      
+      // Second peak formation
+      { open: valleyLevel + 1, high: basePrice + 14, low: valleyLevel, close: basePrice + 12, volume: 1400 },
+      { open: basePrice + 12, high: basePrice + 18, low: basePrice + 11, close: basePrice + 16, volume: 1800 },
+      { open: basePrice + 16, high: peakLevel, low: basePrice + 15, close: basePrice + 20, volume: 2000 }, // Second peak
+      { open: basePrice + 20, high: peakLevel + 0.5, low: basePrice + 18, close: basePrice + 19, volume: 1900 },
+      
+      // Second decline to valley
+      { open: basePrice + 19, high: basePrice + 20, low: basePrice + 14, close: basePrice + 15, volume: 1600 },
+      { open: basePrice + 15, high: basePrice + 17, low: valleyLevel, close: valleyLevel + 3, volume: 1400 },
+      { open: valleyLevel + 3, high: basePrice + 12, low: valleyLevel - 1, close: valleyLevel + 2, volume: 1200 },
+      
+      // Third peak formation (lower volume - bearish divergence)
+      { open: valleyLevel + 2, high: basePrice + 13, low: valleyLevel + 1, close: basePrice + 11, volume: 1300 },
+      { open: basePrice + 11, high: basePrice + 17, low: basePrice + 10, close: basePrice + 15, volume: 1600 },
+      { open: basePrice + 15, high: peakLevel, low: basePrice + 14, close: basePrice + 20, volume: 1700 }, // Third peak (lowest volume)
+      { open: basePrice + 20, high: peakLevel + 0.2, low: basePrice + 18, close: basePrice + 19, volume: 1500 },
+      
+      // Final breakdown
+      { open: basePrice + 19, high: basePrice + 20, low: basePrice + 13, close: basePrice + 14, volume: 1800 },
+      { open: basePrice + 14, high: basePrice + 16, low: valleyLevel - 1, close: valleyLevel, volume: 2000 },
+      { open: valleyLevel, high: valleyLevel + 2, low: basePrice + 2, close: basePrice + 3, volume: 2400 }, // Support break
+      { open: basePrice + 3, high: basePrice + 5, low: basePrice - 2, close: basePrice - 1, volume: 2600 },
+    ];
+
+    const patternHeight = peakLevel - valleyLevel;
+    const primaryTarget = valleyLevel - patternHeight;
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: peakLevel }],
+        label: 'Peak 1 (High Vol)',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      {
+        type: 'peak',
+        points: [{ x: 11, y: peakLevel }],
+        label: 'Peak 2 (Med Vol)',
+        color: '#FFA500',
+        style: 'solid'
+      },
+      {
+        type: 'peak',
+        points: [{ x: 18, y: peakLevel }],
+        label: 'Peak 3 (Low Vol)',
+        color: '#FFD700',
+        style: 'solid'
+      },
+      {
+        type: 'support',
+        points: [{ x: 7, y: valleyLevel }, { x: 15, y: valleyLevel }],
+        label: 'Support Level',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      {
+        type: 'resistance',
+        points: [{ x: 4, y: peakLevel }, { x: 18, y: peakLevel }],
+        label: 'Triple Top Resistance',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      {
+        type: 'target',
+        points: [{ x: 22, y: valleyLevel }, { x: 22, y: primaryTarget }],
+        label: `Target: ${primaryTarget.toFixed(0)}`,
+        color: '#FFD700',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Bulkowski Analysis: 80% accuracy | Bearish reversal | Requirements: 3 equal peaks, volume decline at peak 3, support break. More reliable than double top. Average decline: 16%",
+      keyLevels: {
+        breakout: valleyLevel,
+        target: primaryTarget,
+        stopLoss: peakLevel + 1,
+        entry: valleyLevel - 0.5
+      }
+    };
+  }
+
+  // Triple Bottom - Based on Bulkowski's Analysis (80% accuracy as reversal)
+  // Requirements: Three equal troughs, volume expansion on breakout
+  static generateTripleBottom(): PatternData {
+    const basePrice = 100;
+    const troughLevel = basePrice - 22;
+    const peakLevel = basePrice - 10;
+    
+    const candles: CandlestickData[] = [
+      // Prior downtrend
+      { open: basePrice + 5, high: basePrice + 8, low: basePrice + 2, close: basePrice + 3, volume: 1000 },
+      { open: basePrice + 3, high: basePrice + 5, low: basePrice - 3, close: basePrice - 1, volume: 1200 },
+      
+      // First trough formation
+      { open: basePrice - 1, high: basePrice + 2, low: basePrice - 8, close: basePrice - 6, volume: 1600 },
+      { open: basePrice - 6, high: basePrice - 3, low: basePrice - 15, close: basePrice - 12, volume: 1900 },
+      { open: basePrice - 12, high: basePrice - 10, low: troughLevel, close: basePrice - 20, volume: 2200 }, // First trough
+      { open: basePrice - 20, high: basePrice - 18, low: troughLevel - 1, close: basePrice - 19, volume: 2000 },
+      
+      // First rally to peak
+      { open: basePrice - 19, high: basePrice - 15, low: basePrice - 20, close: basePrice - 16, volume: 1700 },
+      { open: basePrice - 16, high: peakLevel, low: basePrice - 18, close: peakLevel - 2, volume: 1500 },
+      { open: peakLevel - 2, high: peakLevel + 1, low: basePrice - 13, close: peakLevel - 1, volume: 1300 },
+      
+      // Second trough formation
+      { open: peakLevel - 1, high: peakLevel, low: basePrice - 14, close: basePrice - 12, volume: 1400 },
+      { open: basePrice - 12, high: basePrice - 11, low: basePrice - 18, close: basePrice - 16, volume: 1800 },
+      { open: basePrice - 16, high: basePrice - 15, low: troughLevel, close: basePrice - 20, volume: 2000 }, // Second trough
+      { open: basePrice - 20, high: basePrice - 18, low: troughLevel - 0.5, close: basePrice - 19, volume: 1900 },
+      
+      // Second rally to peak
+      { open: basePrice - 19, high: basePrice - 14, low: basePrice - 20, close: basePrice - 15, volume: 1600 },
+      { open: basePrice - 15, high: peakLevel, low: basePrice - 17, close: peakLevel - 3, volume: 1400 },
+      { open: peakLevel - 3, high: peakLevel + 1, low: basePrice - 12, close: peakLevel - 2, volume: 1200 },
+      
+      // Third trough formation (lower volume - bullish divergence)
+      { open: peakLevel - 2, high: peakLevel - 1, low: basePrice - 13, close: basePrice - 11, volume: 1300 },
+      { open: basePrice - 11, high: basePrice - 10, low: basePrice - 17, close: basePrice - 15, volume: 1600 },
+      { open: basePrice - 15, high: basePrice - 14, low: troughLevel, close: basePrice - 20, volume: 1700 }, // Third trough (lowest volume)
+      { open: basePrice - 20, high: basePrice - 18, low: troughLevel - 0.2, close: basePrice - 19, volume: 1500 },
+      
+      // Final breakout
+      { open: basePrice - 19, high: basePrice - 13, low: basePrice - 20, close: basePrice - 14, volume: 1800 },
+      { open: basePrice - 14, high: peakLevel + 1, low: basePrice - 16, close: peakLevel, volume: 2000 },
+      { open: peakLevel, high: basePrice - 2, low: peakLevel - 2, close: basePrice - 3, volume: 2400 }, // Resistance break
+      { open: basePrice - 3, high: basePrice + 2, low: basePrice - 5, close: basePrice + 1, volume: 2600 },
+    ];
+
+    const patternHeight = peakLevel - troughLevel;
+    const primaryTarget = peakLevel + patternHeight;
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: troughLevel }],
+        label: 'Trough 1 (High Vol)',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      {
+        type: 'peak',
+        points: [{ x: 11, y: troughLevel }],
+        label: 'Trough 2 (Med Vol)',
+        color: '#90EE90',
+        style: 'solid'
+      },
+      {
+        type: 'peak',
+        points: [{ x: 18, y: troughLevel }],
+        label: 'Trough 3 (Low Vol)',
+        color: '#FFD700',
+        style: 'solid'
+      },
+      {
+        type: 'resistance',
+        points: [{ x: 7, y: peakLevel }, { x: 15, y: peakLevel }],
+        label: 'Resistance Level',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      {
+        type: 'support',
+        points: [{ x: 4, y: troughLevel }, { x: 18, y: troughLevel }],
+        label: 'Triple Bottom Support',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      {
+        type: 'target',
+        points: [{ x: 22, y: peakLevel }, { x: 22, y: primaryTarget }],
+        label: `Target: ${primaryTarget.toFixed(0)}`,
+        color: '#4ECDC4',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Bulkowski Analysis: 80% accuracy | Bullish reversal | Requirements: 3 equal troughs, volume expansion on breakout. More reliable than double bottom. Average rise: 18%",
+      keyLevels: {
+        breakout: peakLevel,
+        target: primaryTarget,
+        stopLoss: troughLevel - 1,
+        entry: peakLevel + 0.5
+      }
+    };
+  }
+
   static getPatternData(patternKey: string): PatternData {
     switch (patternKey) {
       case 'head-shoulders':
