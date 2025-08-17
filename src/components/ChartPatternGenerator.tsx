@@ -14,6 +14,7 @@ interface PatternConfig {
 }
 
 const PATTERNS: Record<string, PatternConfig> = {
+  // Reversal Patterns
   "head-shoulders": {
     name: "Head and Shoulders",
     type: "reversal",
@@ -34,6 +35,28 @@ const PATTERNS: Record<string, PatternConfig> = {
     type: "reversal",
     description: "Bullish reversal pattern with two equal troughs. Volume expansion on breakout confirms strength."
   },
+  "triple-top": {
+    name: "Triple Top",
+    type: "reversal",
+    description: "Strong bearish reversal with three equal peaks. More reliable than double top with higher volume requirements."
+  },
+  "triple-bottom": {
+    name: "Triple Bottom",
+    type: "reversal",
+    description: "Strong bullish reversal with three equal troughs. More reliable than double bottom with volume confirmation needed."
+  },
+  "bump-run-reversal": {
+    name: "Bump-and-Run Reversal",
+    type: "reversal",
+    description: "Three-phase reversal pattern with trend acceleration followed by sharp reversal and trend continuation."
+  },
+  "island-reversal": {
+    name: "Island Reversal",
+    type: "reversal",
+    description: "Gap-based reversal pattern isolated from main trend by exhaustion and breakaway gaps."
+  },
+
+  // Continuation Patterns
   "ascending-triangle": {
     name: "Ascending Triangle",
     type: "continuation",
@@ -44,15 +67,77 @@ const PATTERNS: Record<string, PatternConfig> = {
     type: "continuation", 
     description: "Bearish continuation with horizontal support and descending resistance. Volume decreases during consolidation."
   },
+  "symmetrical-triangle": {
+    name: "Symmetrical Triangle",
+    type: "continuation",
+    description: "Neutral triangle with converging trend lines. Breakout direction determines trend continuation."
+  },
+  "bull-flag": {
+    name: "Bull Flag",
+    type: "continuation",
+    description: "Brief consolidation in strong uptrend with parallel support and resistance lines sloping downward."
+  },
+  "bear-flag": {
+    name: "Bear Flag",
+    type: "continuation",
+    description: "Brief consolidation in strong downtrend with parallel support and resistance lines sloping upward."
+  },
+  "pennant": {
+    name: "Pennant",
+    type: "continuation",
+    description: "Small symmetrical triangle after strong move. Similar to flag but triangular shape with converging lines."
+  },
+  "cup-handle": {
+    name: "Cup with Handle",
+    type: "continuation",
+    description: "Bullish continuation resembling a cup with rounded bottom followed by small downward handle."
+  },
+
+  // Candlestick Patterns
   "hammer": {
     name: "Hammer",
     type: "candlestick",
     description: "Bullish reversal candlestick with long lower shadow (2-3x body size) and small body at upper range."
   },
+  "hanging-man": {
+    name: "Hanging Man",
+    type: "candlestick",
+    description: "Bearish reversal candlestick with long lower shadow appearing at top of uptrend."
+  },
   "shooting-star": {
     name: "Shooting Star",
     type: "candlestick", 
     description: "Bearish reversal candlestick with long upper shadow and small body at lower range."
+  },
+  "doji": {
+    name: "Doji",
+    type: "candlestick",
+    description: "Indecision candlestick with equal or nearly equal open and close prices. Shows market uncertainty."
+  },
+  "bullish-harami": {
+    name: "Bullish Harami",
+    type: "candlestick",
+    description: "Small candle inside previous large bearish candle. Potential bullish reversal signal."
+  },
+  "bearish-harami": {
+    name: "Bearish Harami",
+    type: "candlestick",
+    description: "Small candle inside previous large bullish candle. Potential bearish reversal signal."
+  },
+  "bullish-engulfing": {
+    name: "Bullish Engulfing",
+    type: "candlestick",
+    description: "Large bullish candle completely engulfing previous bearish candle. Strong reversal signal."
+  },
+  "bearish-engulfing": {
+    name: "Bearish Engulfing",
+    type: "candlestick",
+    description: "Large bearish candle completely engulfing previous bullish candle. Strong reversal signal."
+  },
+  "spinning-top": {
+    name: "Spinning Top",
+    type: "candlestick",
+    description: "Small body with long upper and lower shadows indicating indecision and potential reversal."
   }
 };
 
