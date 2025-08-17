@@ -585,6 +585,84 @@ export class PatternCalculator {
     };
   }
 
+  // Descending Triangle - precise geometric formation
+  static generateDescendingTriangle(): PatternData {
+    const basePrice = 100;
+    const supportLevel = basePrice - 10;
+    
+    const candles: CandlestickData[] = [
+      // Initial swing low establishing support
+      { open: basePrice + 10, high: basePrice + 15, low: basePrice + 8, close: basePrice + 12, volume: 1000 },
+      { open: basePrice + 12, high: basePrice + 14, low: basePrice + 5, close: basePrice + 7, volume: 1200 },
+      { open: basePrice + 7, high: basePrice + 9, low: supportLevel, close: supportLevel + 2, volume: 1400 }, // First support test
+      { open: supportLevel + 2, high: basePrice - 5, low: supportLevel - 1, close: supportLevel + 1, volume: 1300 },
+      
+      // First rally - creates high point
+      { open: supportLevel + 1, high: basePrice + 8, low: supportLevel, close: basePrice + 6, volume: 1200 },
+      { open: basePrice + 6, high: basePrice + 12, low: basePrice + 5, close: basePrice + 10, volume: 1100 },
+      
+      // Second test of support - lower high
+      { open: basePrice + 10, high: basePrice + 11, low: basePrice + 4, close: basePrice + 5, volume: 1000 },
+      { open: basePrice + 5, high: basePrice + 7, low: supportLevel + 1, close: supportLevel + 3, volume: 900 }, // Second support test
+      { open: supportLevel + 3, high: basePrice - 6, low: supportLevel, close: supportLevel + 2, volume: 800 },
+      
+      // Second rally - lower high
+      { open: supportLevel + 2, high: basePrice + 4, low: supportLevel + 1, close: basePrice + 2, volume: 900 },
+      { open: basePrice + 2, high: basePrice + 8, low: basePrice + 1, close: basePrice + 6, volume: 800 },
+      
+      // Third test - lower high, decreasing volume
+      { open: basePrice + 6, high: basePrice + 7, low: basePrice, close: basePrice + 1, volume: 700 },
+      { open: basePrice + 1, high: basePrice + 3, low: supportLevel + 1, close: supportLevel + 2, volume: 600 }, // Third support test
+      { open: supportLevel + 2, high: basePrice - 5, low: supportLevel, close: supportLevel + 1, volume: 500 },
+      
+      // Fourth rally - even lower high
+      { open: supportLevel + 1, high: basePrice + 2, low: supportLevel, close: basePrice - 1, volume: 600 },
+      
+      // Breakdown with volume spike
+      { open: basePrice - 1, high: basePrice + 1, low: basePrice - 8, close: basePrice - 6, volume: 1500 }, // Breakdown
+      { open: basePrice - 6, high: basePrice - 4, low: basePrice - 12, close: basePrice - 10, volume: 1800 },
+      { open: basePrice - 10, high: basePrice - 8, low: basePrice - 16, close: basePrice - 14, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      // Support line
+      {
+        type: 'support',
+        points: [{ x: 2, y: supportLevel }, { x: 14, y: supportLevel }],
+        label: 'Horizontal Support',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      // Descending resistance line
+      {
+        type: 'trendline',
+        points: [{ x: 5, y: basePrice + 10 }, { x: 10, y: basePrice + 6 }, { x: 14, y: basePrice - 1 }],
+        label: 'Falling Resistance',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      // Target projection
+      {
+        type: 'target',
+        points: [{ x: 15, y: supportLevel }, { x: 15, y: supportLevel - 10 }],
+        label: 'Target: ' + (supportLevel - 10).toFixed(0),
+        color: '#FFD700',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Bearish continuation pattern with horizontal support and descending resistance. Breakdown confirms downward momentum.",
+      keyLevels: {
+        breakout: supportLevel,
+        target: supportLevel - 10,
+        stopLoss: basePrice + 2
+      }
+    };
+  }
+
   static getPatternData(patternKey: string): PatternData {
     switch (patternKey) {
       case 'head-shoulders':
@@ -597,6 +675,8 @@ export class PatternCalculator {
         return this.generateDoubleBottom();
       case 'ascending-triangle':
         return this.generateAscendingTriangle();
+      case 'descending-triangle':
+        return this.generateDescendingTriangle();
       case 'hammer':
         return this.generateHammer();
       case 'shooting-star':

@@ -39,6 +39,11 @@ const PATTERNS: Record<string, PatternConfig> = {
     type: "continuation",
     description: "Bullish continuation with horizontal resistance and ascending support. Volume decreases during consolidation."
   },
+  "descending-triangle": {
+    name: "Descending Triangle",
+    type: "continuation", 
+    description: "Bearish continuation with horizontal support and descending resistance. Volume decreases during consolidation."
+  },
   "hammer": {
     name: "Hammer",
     type: "candlestick",
