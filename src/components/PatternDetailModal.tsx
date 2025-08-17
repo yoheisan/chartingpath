@@ -124,6 +124,52 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
 
             <Separator />
 
+            {/* Target Price Methodologies */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Target Price Methodologies
+              </h3>
+              <div className="bg-gradient-to-r from-primary/5 to-bullish/5 p-4 rounded-lg border-l-4 border-primary">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-primary mb-2">Primary Target Method</h4>
+                    <p className="text-sm font-medium">{patternDetail.targetPriceMethodologies.primary}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-bullish mb-2">Alternative Target Calculations</h4>
+                    <ul className="space-y-2">
+                      {patternDetail.targetPriceMethodologies.alternative.map((target, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                          {target}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                    <div>
+                      <h5 className="text-sm font-medium text-muted-foreground">Risk/Reward Ratio</h5>
+                      <p className="text-sm font-medium text-primary">{patternDetail.targetPriceMethodologies.riskReward}</p>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-medium text-muted-foreground">Pattern Success Rate</h5>
+                      <p className="text-sm font-medium text-bullish">{patternDetail.accuracy}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <h5 className="text-sm font-medium mb-1">Calculation Method</h5>
+                    <p className="text-sm text-muted-foreground italic">{patternDetail.targetPriceMethodologies.calculation}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Trading Information */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">

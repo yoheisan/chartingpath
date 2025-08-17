@@ -14,6 +14,12 @@ interface PatternDetail {
   entry: string;
   stopLoss: string;
   targetMethodology: string;
+  targetPriceMethodologies: {
+    primary: string;
+    alternative: string[];
+    riskReward: string;
+    calculation: string;
+  };
   timeframe: string;
   
   // Volume analysis
@@ -54,6 +60,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short position on break below neckline with stop loss above right shoulder high",
     stopLoss: "Place stop loss 2-3% above the right shoulder high",
     targetMethodology: "Classic measured move: Target = Neckline - Pattern Height. Alternative targets include Fibonacci extensions at 61.8%, 100%, and 161.8% of pattern height.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Neckline - Pattern Height",
+      alternative: [
+        "Fibonacci 61.8%: Conservative target at neckline - (pattern height × 0.618)",
+        "Fibonacci 100%: Equal to measured move (neckline - pattern height)",
+        "Fibonacci 161.8%: Aggressive target at neckline - (pattern height × 1.618)",
+        "Statistical 80%: Based on historical completion rates",
+        "Volume-Adjusted: More conservative when volume divergence present"
+      ],
+      riskReward: "Typically 1:2 to 1:3 risk-to-reward ratio with proper stop placement",
+      calculation: "Pattern Height = Head Level - Neckline Level. Primary Target = Neckline - Pattern Height. Success rate ~65-75% for classic target achievement."
+    },
     timeframe: "Most reliable on daily and weekly charts. Pattern typically takes 4-12 weeks to form.",
     
     volumeProfile: "Volume should decline from left shoulder to head to right shoulder, indicating weakening buying pressure. Confirmation requires volume expansion on neckline break.",
@@ -98,6 +116,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long position on break above neckline with stop loss below right shoulder low",
     stopLoss: "Place stop loss 2-3% below the right shoulder low",
     targetMethodology: "Classic measured move: Target = Neckline + Pattern Height. Enhanced targets using Fibonacci extensions at 61.8%, 100%, and 161.8% with volume adjustment.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Neckline + Pattern Height",
+      alternative: [
+        "Fibonacci 61.8%: Conservative target at neckline + (pattern height × 0.618)",
+        "Fibonacci 100%: Equal to measured move (neckline + pattern height)",
+        "Fibonacci 161.8%: Aggressive target at neckline + (pattern height × 1.618)",
+        "Statistical 80%: Based on historical bullish completion rates",
+        "Volume-Enhanced: More aggressive when volume confirms breakout (12% adjustment)"
+      ],
+      riskReward: "Typically 1:2 to 1:4 risk-to-reward ratio with volume confirmation",
+      calculation: "Pattern Height = Neckline Level - Head Level (lowest point). Primary Target = Neckline + Pattern Height. Success rate ~70-80% with volume confirmation."
+    },
     timeframe: "Most reliable on daily and weekly charts. Pattern typically takes 4-12 weeks to form for optimal reliability.",
     
     volumeProfile: "Volume should increase from left shoulder through right shoulder formation, showing growing buying interest. Strong volume expansion on neckline break is crucial for confirmation.",
@@ -142,6 +172,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short position on break below support level between the two peaks",
     stopLoss: "Place stop loss above the second peak high",
     targetMethodology: "Primary target = Support level - Pattern height. Additional targets include Fibonacci extensions and statistical targets at 50%, 80%, and 125% of pattern height.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Support Level - Pattern Height",
+      alternative: [
+        "Conservative 50%: Support - (pattern height × 0.5) - minimum expected move",
+        "Fibonacci 61.8%: Support - (pattern height × 0.618)",
+        "Statistical 80%: Support - (pattern height × 0.8) - historical average",
+        "Extended 125%: Support - (pattern height × 1.25) - strong momentum target",
+        "Volume-Adjusted: 15% more conservative when volume divergence present"
+      ],
+      riskReward: "Typically 1:1.5 to 1:3 ratio depending on pattern reliability",
+      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~65-75% for measured move completion."
+    },
     timeframe: "Reliable on all timeframes, but most effective on daily charts with 4+ week formation period.",
     
     volumeProfile: "Volume should be higher on first peak and notably lower on second peak, showing weakening buying interest. Confirmation requires volume expansion on support break.",
@@ -186,6 +228,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long position on break above resistance level between the two troughs",
     stopLoss: "Place stop loss below the second trough low",
     targetMethodology: "Primary target = Resistance level + Pattern height. Fibonacci extensions provide additional targets at 61.8%, 100%, and 161.8% levels.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Resistance Level + Pattern Height", 
+      alternative: [
+        "Conservative 50%: Resistance + (pattern height × 0.5) - minimum expected move",
+        "Fibonacci 61.8%: Resistance + (pattern height × 0.618)",
+        "Statistical 80%: Resistance + (pattern height × 0.8) - historical average",
+        "Extended 125%: Resistance + (pattern height × 1.25) - strong momentum target",
+        "Volume-Enhanced: More aggressive when volume confirms breakout"
+      ],
+      riskReward: "Typically 1:2 to 1:3 ratio with proper volume confirmation",
+      calculation: "Pattern Height = Resistance Level - Trough Level. Primary Target = Resistance + Pattern Height. Success rate ~70-80% with volume confirmation."
+    },
     timeframe: "Most effective on daily and weekly charts with minimum 4-week formation period.",
     
     volumeProfile: "Volume may increase on second trough formation, showing renewed buying interest. Strong volume expansion on resistance break is essential for confirmation.",
@@ -230,6 +284,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short position on decisive break below support level with volume confirmation",
     stopLoss: "Place stop loss above the third (final) peak",
     targetMethodology: "Measured move target = Support level - Pattern height. High reliability warrants aggressive targets using 125% and 161.8% Fibonacci extensions.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Support Level - Pattern Height",
+      alternative: [
+        "Conservative 75%: Support - (pattern height × 0.75)",
+        "Statistical 100%: Support - (pattern height × 1.0) - equal to pattern height",
+        "Extended 125%: Support - (pattern height × 1.25) - high reliability target",
+        "Fibonacci 161.8%: Support - (pattern height × 1.618) - aggressive target",
+        "Maximum 200%: Support - (pattern height × 2.0) - major reversal scenario"
+      ],
+      riskReward: "Superior 1:3 to 1:5 ratio due to high pattern reliability",
+      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~80%+ for measured move due to triple confirmation."
+    },
     timeframe: "Most reliable on daily and weekly charts with extended formation periods.",
     
     volumeProfile: "Volume should progressively decline from first to third peak, showing clear distribution pattern. Heavy volume on support break confirms pattern completion.",
@@ -274,6 +340,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long position on decisive break above resistance level with volume confirmation",
     stopLoss: "Place stop loss below the third (final) trough",
     targetMethodology: "Measured move target = Resistance level + Pattern height. Strong pattern reliability supports aggressive targets at 125% and 161.8% extensions.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Resistance Level + Pattern Height",
+      alternative: [
+        "Conservative 75%: Resistance + (pattern height × 0.75)",
+        "Statistical 100%: Resistance + (pattern height × 1.0) - equal to pattern height",
+        "Extended 125%: Resistance + (pattern height × 1.25) - high reliability target", 
+        "Fibonacci 161.8%: Resistance + (pattern height × 1.618) - aggressive bullish target",
+        "Maximum 200%: Resistance + (pattern height × 2.0) - major reversal scenario"
+      ],
+      riskReward: "Excellent 1:3 to 1:5 ratio due to high pattern reliability",
+      calculation: "Pattern Height = Resistance Level - Trough Level. Primary Target = Resistance + Pattern Height. Success rate ~80%+ for measured move with triple confirmation."
+    },
     timeframe: "Most effective on daily and weekly charts with substantial formation periods.",
     
     volumeProfile: "Volume may increase progressively through trough formation, showing growing buying interest. Strong volume surge on resistance break is crucial.",
@@ -318,6 +396,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter on trend line break with direction of original trend",
     stopLoss: "Place beyond the extreme of the bump phase",
     targetMethodology: "Target based on return to trend line plus projection equal to lead-in phase magnitude. Conservative targets use 50-75% of lead-in range.",
+    targetPriceMethodologies: {
+      primary: "Return to Trend Line + Lead-in Phase Projection",
+      alternative: [
+        "Conservative 50%: Trend line + (lead-in range × 0.5)",
+        "Moderate 75%: Trend line + (lead-in range × 0.75)", 
+        "Full Projection: Trend line + (lead-in range × 1.0)",
+        "Extended 125%: Trend line + (lead-in range × 1.25) - momentum continuation",
+        "Fibonacci 161.8%: Trend line + (lead-in range × 1.618)"
+      ],
+      riskReward: "Variable 1:1 to 1:2.5 ratio depending on phase timing and momentum",
+      calculation: "Lead-in Range = Distance traveled in initial trend phase. Target = Original Trend Line + Lead-in Projection. Success rate ~72% for trend line return."
+    },
     timeframe: "Works on all timeframes but most reliable on daily charts with multi-week formations.",
     
     volumeProfile: "Volume typically increases during bump phase acceleration and expands significantly during run phase reversal.",
@@ -362,6 +452,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter on gap confirmation with tight stop loss beyond island extreme",
     stopLoss: "Place stop loss beyond the island high/low",
     targetMethodology: "Target based on return to pre-gap trend line. Aggressive targets use gap size projection in reversal direction.",
+    targetPriceMethodologies: {
+      primary: "Return to Pre-Gap Trend Line",
+      alternative: [
+        "Conservative: Trend line return (gap fill)",
+        "Gap Projection: Trend line ± gap size in reversal direction",
+        "Double Gap: Trend line ± (2 × gap size)",
+        "Fibonacci 61.8%: Trend line ± (gap size × 0.618)",
+        "Extended: Previous swing level before gap formation"
+      ],
+      riskReward: "High 1:2 to 1:4 ratio due to gap volatility and rapid moves",
+      calculation: "Gap Size = Distance between island highs/lows and main price action. Target varies by reversal direction. Success rate ~75% for trend line return."
+    },
     timeframe: "Most common on daily charts, rare but powerful on weekly charts.",
     
     volumeProfile: "High volume typically accompanies both gap formations, showing intense buying/selling pressure followed by immediate reversal.",
@@ -406,6 +508,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on resistance breakout with volume confirmation",
     stopLoss: "Place stop loss below most recent support low",
     targetMethodology: "Measured move: Target = Resistance + Triangle height. Additional targets using Fibonacci extensions at 61.8% and 100%.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Resistance + Triangle Height",
+      alternative: [
+        "Conservative 61.8%: Resistance + (triangle height × 0.618)",
+        "Statistical 80%: Resistance + (triangle height × 0.8)",
+        "Full Projection: Resistance + (triangle height × 1.0)",
+        "Extended 125%: Resistance + (triangle height × 1.25)",
+        "Fibonacci 161.8%: Resistance + (triangle height × 1.618)"
+      ],
+      riskReward: "Excellent 1:2 to 1:3 ratio with proper volume confirmation",
+      calculation: "Triangle Height = Resistance Level - Lowest Point in Triangle. Primary Target = Resistance + Height. Success rate ~83% for bullish breakouts."
+    },
     timeframe: "Reliable on all timeframes, most common on daily charts.",
     
     volumeProfile: "Volume decreases during triangle formation, then expands significantly on upward breakout, confirming continuation.",
@@ -450,6 +564,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on support breakdown with volume confirmation",
     stopLoss: "Place stop loss above most recent resistance high",
     targetMethodology: "Measured move: Target = Support - Triangle height. Fibonacci extensions at 61.8%, 100%, and 161.8% provide additional targets.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Support - Triangle Height",
+      alternative: [
+        "Conservative 61.8%: Support - (triangle height × 0.618)",
+        "Statistical 80%: Support - (triangle height × 0.8)",
+        "Full Projection: Support - (triangle height × 1.0)",
+        "Extended 125%: Support - (triangle height × 1.25)",
+        "Fibonacci 161.8%: Support - (triangle height × 1.618)"
+      ],
+      riskReward: "Strong 1:2 to 1:3 ratio with volume confirmation on breakdown",
+      calculation: "Triangle Height = Highest Point in Triangle - Support Level. Primary Target = Support - Height. Success rate ~83% for bearish breakdowns."
+    },
     timeframe: "Effective on all timeframes, most reliable on daily charts with adequate formation time.",
     
     volumeProfile: "Volume decreases during pattern formation, then expands on downward breakout, confirming bearish continuation.",
@@ -494,6 +620,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter in direction of breakout with volume confirmation",
     stopLoss: "Place stop loss on opposite side of triangle",
     targetMethodology: "Classic Measured Move: Target = Breakout point ± Triangle height. Fibonacci extensions at 61.8%, 100%, 161.8% provide additional targets. Statistical targets show 80% completion rate.",
+    targetPriceMethodologies: {
+      primary: "Classic Measured Move: Target = Breakout Point ± Triangle Height",
+      alternative: [
+        "Fibonacci 61.8%: Breakout ± (triangle height × 0.618) - conservative target",
+        "Statistical 80%: Breakout ± (triangle height × 0.8) - historical average",
+        "Fibonacci 100%: Breakout ± (triangle height × 1.0) - classic measured move",
+        "Momentum 115%: Breakout ± (triangle height × 1.15) - momentum extension",
+        "Fibonacci 161.8%: Breakout ± (triangle height × 1.618) - aggressive target"
+      ],
+      riskReward: "Variable 1:1.5 to 1:3 ratio depending on breakout direction and volume",
+      calculation: "Triangle Height = Widest Point Between Converging Lines. Target = Breakout Point + (Height × Direction). Success rate ~76% overall, higher with volume confirmation."
+    },
     timeframe: "Works on all timeframes, most reliable on daily charts with 3+ week formation.",
     
     volumeProfile: "Volume decreases throughout formation, creating coiling effect. Strong volume expansion on breakout (2x+ average) confirms direction.",
@@ -538,6 +676,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on break above flag resistance",
     stopLoss: "Place stop loss below flag support",
     targetMethodology: "Target = Flag breakout + Flagpole height. Typically achieves 80% of flagpole projection.",
+    targetPriceMethodologies: {
+      primary: "Flagpole Projection: Target = Flag Breakout + Flagpole Height",
+      alternative: [
+        "Conservative 75%: Flag breakout + (flagpole × 0.75)",
+        "Statistical 80%: Flag breakout + (flagpole × 0.8) - typical achievement",
+        "Full Projection: Flag breakout + (flagpole × 1.0)",
+        "Extended 125%: Flag breakout + (flagpole × 1.25) - strong momentum",
+        "Double Pole: Flag breakout + (flagpole × 2.0) - rare continuation"
+      ],
+      riskReward: "Excellent 1:3 to 1:5 ratio due to brief consolidation period",
+      calculation: "Flagpole Height = Distance of initial strong move before flag formation. Target = Flag Resistance + Flagpole Height. Success rate ~81%."
+    },
     timeframe: "Most common on intraday and daily charts, formation period 1-4 weeks.",
     
     volumeProfile: "High volume on flagpole formation, light volume during flag, heavy volume on breakout continuation.",
@@ -582,6 +732,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on break below flag support",
     stopLoss: "Place stop loss above flag resistance",
     targetMethodology: "Target = Flag breakdown - Flagpole height. Typically achieves 80% of flagpole projection downward.",
+    targetPriceMethodologies: {
+      primary: "Flagpole Projection: Target = Flag Breakdown - Flagpole Height",
+      alternative: [
+        "Conservative 75%: Flag breakdown - (flagpole × 0.75)",
+        "Statistical 80%: Flag breakdown - (flagpole × 0.8) - typical achievement",
+        "Full Projection: Flag breakdown - (flagpole × 1.0)",
+        "Extended 125%: Flag breakdown - (flagpole × 1.25) - strong momentum",
+        "Double Pole: Flag breakdown - (flagpole × 2.0) - major decline"
+      ],
+      riskReward: "Strong 1:3 to 1:4 ratio in established downtrends",
+      calculation: "Flagpole Height = Distance of initial decline before flag formation. Target = Flag Support - Flagpole Height. Success rate ~81%."
+    },
     timeframe: "Common on intraday and daily charts, formation period typically 1-4 weeks.",
     
     volumeProfile: "High volume on flagpole formation, light volume during flag, heavy volume on breakdown continuation.",
@@ -626,6 +788,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter in direction of breakout from pennant",
     stopLoss: "Place stop loss on opposite side of pennant",
     targetMethodology: "Target = Breakout point + Flagpole height in breakout direction. Success rate approximately 78% for full target achievement.",
+    targetPriceMethodologies: {
+      primary: "Flagpole Projection: Target = Breakout Point + Flagpole Height",
+      alternative: [
+        "Conservative 75%: Breakout + (flagpole × 0.75)",
+        "Statistical 78%: Breakout + (flagpole × 0.78) - historical average",
+        "Full Projection: Breakout + (flagpole × 1.0)",
+        "Extended 125%: Breakout + (flagpole × 1.25) - momentum continuation",
+        "Fibonacci 161.8%: Breakout + (flagpole × 1.618)"
+      ],
+      riskReward: "Good 1:2 to 1:3 ratio for quick formation patterns",
+      calculation: "Flagpole Height = Distance of strong move before pennant. Target Direction = Breakout direction from pennant. Success rate ~78%."
+    },
     timeframe: "Most common on daily charts with 1-3 week formation periods.",
     
     volumeProfile: "High volume on initial move, declining volume in pennant, expansion on breakout.",
@@ -670,6 +844,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on breakout above handle resistance",
     stopLoss: "Place stop loss below handle low",
     targetMethodology: "Target = Breakout point + Cup depth. Conservative targets use 75% of cup depth projection.",
+    targetPriceMethodologies: {
+      primary: "Cup Depth Projection: Target = Breakout Point + Cup Depth",
+      alternative: [
+        "Conservative 75%: Breakout + (cup depth × 0.75)",
+        "Statistical 85%: Breakout + (cup depth × 0.85)",
+        "Full Projection: Breakout + (cup depth × 1.0)",
+        "Extended 125%: Breakout + (cup depth × 1.25) - strong momentum",
+        "Double Cup: Breakout + (cup depth × 2.0) - major bull move"
+      ],
+      riskReward: "Strong 1:2 to 1:4 ratio with proper base formation",
+      calculation: "Cup Depth = Highest Point - Lowest Point of Cup Formation. Target = Handle Breakout + Cup Depth. Success rate ~79% for established patterns."
+    },
     timeframe: "Most reliable on weekly and daily charts with 7+ week cup formation.",
     
     volumeProfile: "Volume decreases during cup formation, stays light in handle, expands strongly on breakout.",
@@ -715,6 +901,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on next candle close above hammer high",
     stopLoss: "Place stop loss below hammer low",
     targetMethodology: "Initial target at nearby resistance level. Conservative approach targets previous swing high.",
+    targetPriceMethodologies: {
+      primary: "Nearby Resistance Level or Previous Swing High", 
+      alternative: [
+        "Immediate resistance: Next overhead resistance level",
+        "Previous swing high: Last significant high before decline",
+        "Fibonacci 38.2%: Retracement of prior downtrend",
+        "Fibonacci 50%: Half retracement of decline", 
+        "Fibonacci 61.8%: Deep retracement target"
+      ],
+      riskReward: "Typically 1:1.5 to 1:2 ratio for single candle patterns",
+      calculation: "Target based on nearby technical levels rather than mathematical projection. Focus on risk management and confirmation signals."
+    },
     timeframe: "Effective on all timeframes, most reliable on daily charts.",
     
     volumeProfile: "Higher volume on hammer formation increases reliability of reversal signal.",
@@ -759,6 +957,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on next candle close below hanging man low",
     stopLoss: "Place stop loss above hanging man high",
     targetMethodology: "Initial target at nearby support level. Conservative targets focus on previous swing lows.",
+    targetPriceMethodologies: {
+      primary: "Nearby Support Level or Previous Swing Low",
+      alternative: [
+        "Immediate support: Next significant support level below",
+        "Previous swing low: Last major low before uptrend",
+        "Fibonacci 38.2%: Retracement of prior uptrend", 
+        "Fibonacci 50%: Half retracement of advance",
+        "Fibonacci 61.8%: Deep retracement target"
+      ],
+      riskReward: "Modest 1:1 to 1:2 ratio requiring quick confirmation",
+      calculation: "Target based on nearby technical levels and support zones. Emphasis on confirmation rather than mathematical projections."
+    },
     timeframe: "Works on all timeframes, most significant on daily charts at trend tops.",
     
     volumeProfile: "Higher volume increases significance of potential reversal signal.",
@@ -803,6 +1013,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on break below shooting star low",
     stopLoss: "Place stop loss above shooting star high",
     targetMethodology: "Target nearby support levels or previous swing lows based on market structure.",
+    targetPriceMethodologies: {
+      primary: "Nearby Support Levels and Previous Swing Lows",
+      alternative: [
+        "Immediate support: Next significant support below current level",
+        "Previous swing low: Last major low before current advance",
+        "Fibonacci 38.2%: Shallow retracement of uptrend",
+        "Fibonacci 50%: Moderate retracement target",
+        "Round numbers: Psychological support levels"
+      ],
+      riskReward: "Conservative 1:1 to 1:2 ratio due to single candle nature", 
+      calculation: "Targets based on technical analysis of support levels rather than pattern-specific calculations. Focus on nearby levels."
+    },
     timeframe: "Reliable on all timeframes, particularly significant on daily charts.",
     
     volumeProfile: "High volume on formation increases bearish reversal probability.",
@@ -847,6 +1069,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter based on confirmed breakout direction after doji",
     stopLoss: "Place stop loss beyond doji range",
     targetMethodology: "Target depends on breakout direction and nearby support/resistance levels.",
+    targetPriceMethodologies: {
+      primary: "Directional Target Based on Breakout Confirmation",
+      alternative: [
+        "Bullish breakout: Nearby resistance levels above",
+        "Bearish breakdown: Nearby support levels below", 
+        "Range targets: Previous swing highs/lows",
+        "Fibonacci levels: 38.2%, 50%, 61.8% retracements",
+        "Technical levels: Round numbers and pivot points"
+      ],
+      riskReward: "Variable 1:1 to 1:2 ratio depending on confirmation direction",
+      calculation: "No specific mathematical target due to indecision nature. Targets based on breakout direction and nearby technical levels."
+    },
     timeframe: "Meaningful on all timeframes, most significant on daily charts at key levels.",
     
     volumeProfile: "Volume context helps determine significance of indecision signal.",
@@ -891,6 +1125,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on confirmation candle close above harami high",
     stopLoss: "Place stop loss below harami low",
     targetMethodology: "Conservative targets at nearby resistance levels or previous swing highs.",
+    targetPriceMethodologies: {
+      primary: "Nearby Resistance Levels and Previous Swing Highs",
+      alternative: [
+        "Immediate resistance: Next overhead resistance level",
+        "Previous swing high: Last significant peak before decline",
+        "Fibonacci 38.2%: Conservative retracement target",
+        "Fibonacci 50%: Moderate recovery target",
+        "Pattern high: Break above harami high for continuation"
+      ],
+      riskReward: "Modest 1:1.5 to 1:2.5 ratio with proper confirmation",
+      calculation: "Targets based on technical resistance levels. Requires bullish confirmation for reliability. Success depends on trend context."
+    },
     timeframe: "Effective on daily and weekly charts for trend reversal identification.",
     
     volumeProfile: "Decreasing volume on second candle supports reversal interpretation.",
@@ -935,6 +1181,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on confirmation candle close below harami low",
     stopLoss: "Place stop loss above harami high",
     targetMethodology: "Target nearby support levels or previous swing lows based on market structure.",
+    targetPriceMethodologies: {
+      primary: "Nearby Support Levels and Previous Swing Lows",
+      alternative: [
+        "Immediate support: Next significant support below",
+        "Previous swing low: Last major low before uptrend",
+        "Fibonacci 38.2%: Conservative retracement target",
+        "Fibonacci 50%: Moderate decline target", 
+        "Pattern low: Break below harami low for continuation"
+      ],
+      riskReward: "Modest 1:1.5 to 1:2.5 ratio with bearish confirmation",
+      calculation: "Targets based on technical support levels. Requires bearish confirmation for reliability. Success depends on trend context."
+    },
     timeframe: "Most effective on daily and weekly charts at potential trend tops.",
     
     volumeProfile: "Decreasing volume on second candle strengthens bearish reversal signal.",
@@ -979,6 +1237,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter long on engulfing candle close or next candle open",
     stopLoss: "Place stop loss below engulfing candle low",
     targetMethodology: "Initial targets at nearby resistance levels, extended targets at previous swing highs.",
+    targetPriceMethodologies: {
+      primary: "Nearby Resistance Levels and Previous Swing Highs",
+      alternative: [
+        "Immediate resistance: Next overhead resistance level",
+        "Previous swing high: Last significant peak before decline",
+        "Engulfing high: Price above engulfing candle high",
+        "Fibonacci 38.2%: Conservative bullish retracement",
+        "Fibonacci 61.8%: Aggressive recovery target"
+      ],
+      riskReward: "Good 1:2 to 1:3 ratio due to strong reversal signal",
+      calculation: "Strong pattern allows for more aggressive targets. Engulfing action suggests momentum continuation. High success rate justifies extended targets."
+    },
     timeframe: "Reliable on all timeframes, most significant on daily charts at support levels.",
     
     volumeProfile: "High volume on engulfing candle increases reliability and bullish conviction.",
@@ -1023,6 +1293,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter short on engulfing candle close or next candle open",
     stopLoss: "Place stop loss above engulfing candle high",
     targetMethodology: "Initial targets at nearby support levels, extended targets at previous swing lows.",
+    targetPriceMethodologies: {
+      primary: "Nearby Support Levels and Previous Swing Lows",
+      alternative: [
+        "Immediate support: Next significant support below",
+        "Previous swing low: Last major low before uptrend",
+        "Engulfing low: Price below engulfing candle low",
+        "Fibonacci 38.2%: Conservative bearish retracement", 
+        "Fibonacci 61.8%: Aggressive decline target"
+      ],
+      riskReward: "Strong 1:2 to 1:3 ratio due to powerful reversal signal",
+      calculation: "Strong engulfing pattern supports aggressive targets. Complete reversal of prior session suggests momentum continuation. High reliability pattern."
+    },
     timeframe: "Effective on all timeframes, most impactful on daily charts at resistance levels.",
     
     volumeProfile: "High volume on engulfing candle confirms bearish reversal strength.",
@@ -1067,6 +1349,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     entry: "Enter based on confirmed breakout direction after spinning top",
     stopLoss: "Place stop loss beyond spinning top range",
     targetMethodology: "Target depends on breakout direction and market structure context.",
+    targetPriceMethodologies: {
+      primary: "Directional Targets Based on Confirmed Breakout",
+      alternative: [
+        "Bullish breakout: Nearby resistance levels and previous highs",
+        "Bearish breakdown: Nearby support levels and previous lows",
+        "Range extension: Previous swing points in breakout direction",
+        "Fibonacci targets: 38.2%, 50% levels in breakout direction",
+        "Technical levels: Round numbers and pivot points"
+      ],
+      riskReward: "Variable 1:1 to 1:2 ratio depending on breakout strength and confirmation",
+      calculation: "Indecision pattern requires directional confirmation. Targets based on market structure rather than pattern mathematics. Success depends on momentum follow-through."
+    },
     timeframe: "Meaningful on all timeframes, most significant at trend extremes on daily charts.",
     
     volumeProfile: "Volume context helps determine significance of indecision signal.",

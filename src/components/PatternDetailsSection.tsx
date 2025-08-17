@@ -115,7 +115,48 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
           <Separator />
 
-          {/* Trading Summary */}
+          {/* Target Price Methodologies Section */}
+          <div className="space-y-3">
+            <h4 className="font-medium flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Target Price Methodologies
+            </h4>
+            <div className="bg-gradient-to-r from-primary/5 to-bullish/5 p-4 rounded-lg border border-primary/20">
+              <div className="space-y-3">
+                <div>
+                  <h5 className="font-medium text-sm text-primary mb-1">Primary Target Method</h5>
+                  <p className="text-sm text-muted-foreground">{patternDetail.targetPriceMethodologies.primary}</p>
+                </div>
+                
+                <div>
+                  <h5 className="font-medium text-sm text-bullish mb-2">Alternative Target Calculations</h5>
+                  <div className="grid gap-1">
+                    {patternDetail.targetPriceMethodologies.alternative.slice(0, 3).map((target, index) => (
+                      <div key={index} className="text-xs text-muted-foreground flex items-start gap-1">
+                        <span className="text-primary font-medium">•</span>
+                        {target}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-primary/10">
+                  <div>
+                    <h6 className="text-xs font-medium text-muted-foreground">Risk/Reward</h6>
+                    <p className="text-xs text-primary font-medium">{patternDetail.targetPriceMethodologies.riskReward}</p>
+                  </div>
+                  <div>
+                    <h6 className="text-xs font-medium text-muted-foreground">Success Rate</h6>
+                    <p className="text-xs text-bullish font-medium">{patternDetail.accuracy}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Risk Management */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
