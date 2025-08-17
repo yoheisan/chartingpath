@@ -396,7 +396,8 @@ export const ChartPatternGenerator = () => {
             <h3 className="text-xl font-semibold text-foreground">{currentPattern.name}</h3>
             <Badge 
               variant={currentPattern.type === "reversal" ? "destructive" : currentPattern.type === "continuation" ? "default" : "secondary"}
-              className="h-6 px-3 py-0 rounded-full uppercase text-[11px] leading-none inline-flex items-center justify-center"
+              className="h-6 px-3 py-0 rounded-full uppercase text-[11px] leading-[1] inline-flex items-center justify-center"
+              style={{ paddingTop: '2px', paddingBottom: '4px' }}
             >
               {currentPattern.type}
             </Badge>
