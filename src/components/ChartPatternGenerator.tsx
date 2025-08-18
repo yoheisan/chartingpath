@@ -434,6 +434,13 @@ export const ChartPatternGenerator = () => {
     ctx.fillStyle = "hsl(217, 10%, 65%)";
     ctx.font = "14px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.fillText("Professional Trading Education", chartLeft, chartTop - 10);
+
+    // Watermark - ChartingPath.com branding
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("ChartingPath.com", chartLeft + 10, canvas.height - 15);
   };
 
   useEffect(() => {
