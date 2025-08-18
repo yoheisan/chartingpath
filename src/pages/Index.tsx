@@ -1,6 +1,7 @@
 import { ChartPatternGenerator } from "@/components/ChartPatternGenerator";
 import { PatternLibrary } from "@/components/PatternLibrary";
 import { PatternQuiz } from "@/components/PatternQuiz";
+import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { TrendingUp, BarChart3, BookOpen, Brain } from "lucide-react";
 import { useState } from "react";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"generator" | "library" | "quiz">("generator");
+  const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,6 +72,13 @@ const Index = () => {
               Pattern Library
             </Button>
             <Button
+              variant={activeTab === "strategies" ? "default" : "ghost"}
+              onClick={() => setActiveTab("strategies")}
+              className="px-6"
+            >
+              Trading Strategies
+            </Button>
+            <Button
               variant={activeTab === "quiz" ? "default" : "ghost"}
               onClick={() => setActiveTab("quiz")}
               className="px-6"
@@ -84,6 +92,7 @@ const Index = () => {
         <div className="space-y-8">
           {activeTab === "generator" && <ChartPatternGenerator />}
           {activeTab === "library" && <PatternLibrary />}
+          {activeTab === "strategies" && <TradingStrategies />}
           {activeTab === "quiz" && <PatternQuiz />}
         </div>
       </div>
