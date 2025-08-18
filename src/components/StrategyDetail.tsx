@@ -13,6 +13,7 @@ interface IndicatorData {
   signal?: number[];
   histogram?: number[];
   rsi?: number[];
+  williams?: number[];
   bb_upper?: number[];
   bb_lower?: number[];
   bb_middle?: number[];
@@ -130,6 +131,20 @@ export const StrategyDetail = () => {
       indicators.rsi = candles.map((_, i) => 50 + Math.sin(i * 0.15) * 25 + Math.random() * 10);
     }
     
+    // Williams %R indicator (-100 to 0)
+    if (strategy.indicators.some(ind => ind.includes("Williams %R")) || strategy.category === "Williams %R") {
+      const period = 14;
+      indicators.williams = candles.map((_, i) => {
+        const start = Math.max(0, i - period + 1);
+        const slice = candles.slice(start, i + 1);
+        const highestHigh = Math.max(...slice.map(c => c.high));
+        const lowestLow = Math.min(...slice.map(c => c.low));
+        const range = highestHigh - lowestLow;
+        const value = range === 0 ? -50 : -100 * (highestHigh - candles[i].close) / range;
+        return value;
+      });
+    }
+    
     if (strategy.indicators.some(ind => ind.includes("Bollinger"))) {
       const sma = candles.map((_, i) => {
         const start = Math.max(0, i - 19);
@@ -226,6 +241,20 @@ for (let i = 15; i < candles.length - 5; i++) {
         label: "SELL",
         color: "#ef4444",
       });
+      inPosition = false;
+    }
+  } else if (strategy.category === "Williams %R" && indicators.williams) {
+    // Williams %R Overbought/Oversold signals
+    const prevWR = indicators.williams[i - 1];
+    const currWR = indicators.williams[i];
+    const bullish = candles[i].close > candles[i].open;
+    const bearish = candles[i].close < candles[i].open;
+
+    if (!inPosition && prevWR <= -80 && currWR > -80 && bullish) {
+      signals.push({ type: "entry", x: i, price: candles[i].low - (candles[i].high - candles[i].low) * 0.1, label: "BUY", color: "#22c55e" });
+      inPosition = true;
+    } else if (inPosition && prevWR >= -20 && currWR < -20 && bearish) {
+      signals.push({ type: "exit", x: i, price: candles[i].high + (candles[i].high - candles[i].low) * 0.1, label: "SELL", color: "#ef4444" });
       inPosition = false;
     }
   } else if (
@@ -531,7 +560,7 @@ if (indicators.ema200) {
     });
 
     // Draw indicator panel (MACD/RSI)
-    if (indicators.macd || indicators.rsi) {
+    if (indicators.macd || indicators.rsi || indicators.williams) {
       // Draw indicator panel background
       ctx.fillStyle = "hsl(223, 39%, 6%)";
       ctx.fillRect(chartLeft, indicatorChartTop, chartWidth, indicatorChartHeight);
@@ -645,6 +674,43 @@ if (indicators.ema200) {
         indicators.rsi.forEach((value, index) => {
           const x = indexToX(index);
           const y = rsiToY(value);
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      } else if (indicators.williams) {
+        // Williams %R
+        const wrToY = (value: number) => {
+          // Map -100..0 to 0..100 scale
+          return indicatorChartTop + indicatorChartHeight - ((value + 100) / 100) * indicatorChartHeight;
+        };
+
+        // Overbought (-20) and Oversold (-80) lines
+        ctx.strokeStyle = "hsl(0, 60%, 50%)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        const overboughtY2 = wrToY(-20);
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, overboughtY2);
+        ctx.lineTo(chartLeft + chartWidth, overboughtY2);
+        ctx.stroke();
+
+        const oversoldY2 = wrToY(-80);
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, oversoldY2);
+        ctx.lineTo(chartLeft + chartWidth, oversoldY2);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+
+        // %R line
+        ctx.strokeStyle = "hsl(280, 80%, 60%)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        indicators.williams.forEach((value, index) => {
+          const x = indexToX(index);
+          const y = wrToY(value);
           if (index === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
