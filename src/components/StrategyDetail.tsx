@@ -792,10 +792,6 @@ if (indicators.ema200) {
               </div>
             </div>
           </div>
-          <Button onClick={downloadChart} size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Download Chart
-          </Button>
         </div>
 
         {/* Chart Container */}
