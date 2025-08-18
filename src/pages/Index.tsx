@@ -27,8 +27,9 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Generate accurate chart patterns for educational purposes. Based on Thomas Bulkowski's 
-            "Encyclopedia of Chart Patterns" with TradingView-style candlestick charts.
+            <span className="font-semibold text-foreground">Trading Chart Pattern Made Simple — Learn, Apply, and Trade Smarter</span>
+            <br /><br />
+            Chart pattern analysis is the foundation of technical trading — a skill that helps traders recognize profitable setups with confidence. At ChartingPath, we specialize in teaching chart pattern analysis through beginner-friendly tutorials, expert strategies, and visual breakdowns. Whether you're just starting or advancing your skills, our resources will help you master chart formations, compare trading strategies, and gain confidence in your trades.
           </p>
           
           <div className="flex items-center justify-center gap-6 mt-8">
