@@ -18,6 +18,7 @@ interface IndicatorData {
   bb_middle?: number[];
   ema20?: number[];
   ema50?: number[];
+  ema200?: number[];
   volume_ma?: number[];
 }
 
@@ -98,10 +99,10 @@ export const StrategyDetail = () => {
     }
 
     // Generate indicators based on strategy type
-    if (strategy.indicators.includes("MACD")) {
+    if (strategy.indicators.some(ind => ind.includes("MACD")) || strategy.category === "MACD") {
       // Create realistic MACD with proper crossovers
-      const ema12 = [];
-      const ema26 = [];
+      const ema12: number[] = [];
+      const ema26: number[] = [];
       let ema12Value = candles[0].close;
       let ema26Value = candles[0].close;
       
@@ -125,7 +126,7 @@ export const StrategyDetail = () => {
       indicators.histogram = indicators.macd.map((val, i) => val - indicators.signal![i]);
     }
     
-    if (strategy.indicators.includes("RSI")) {
+    if (strategy.indicators.some(ind => ind.includes("RSI")) || strategy.category === "RSI") {
       indicators.rsi = candles.map((_, i) => 50 + Math.sin(i * 0.15) * 25 + Math.random() * 10);
     }
     
@@ -141,21 +142,27 @@ export const StrategyDetail = () => {
       indicators.bb_lower = sma.map((val, i) => val - (candles[i].high - candles[i].low) * 2);
     }
     
-    if (strategy.indicators.includes("EMA 20") || strategy.indicators.includes("EMA")) {
-      indicators.ema20 = candles.map((_, i) => {
-        const start = Math.max(0, i - 19);
-        const sum = candles.slice(start, i + 1).reduce((acc, c) => acc + c.close, 0);
-        return sum / (i - start + 1);
-      });
-    }
-    
-    if (strategy.indicators.includes("EMA 50")) {
-      indicators.ema50 = candles.map((_, i) => {
-        const start = Math.max(0, i - 49);  
-        const sum = candles.slice(start, i + 1).reduce((acc, c) => acc + c.close, 0);
-        return sum / (i - start + 1);
-      });
-    }
+// EMA calculators
+const ema = (period: number) => {
+  const out: number[] = [];
+  let val = candles[0].close;
+  const k = 2 / (period + 1);
+  for (let i = 0; i < candles.length; i++) {
+    val = val + k * (candles[i].close - val);
+    out.push(val);
+  }
+  return out;
+};
+
+if (strategy.indicators.includes("EMA 20")) {
+  indicators.ema20 = ema(20);
+}
+if (strategy.indicators.includes("EMA 50")) {
+  indicators.ema50 = ema(50);
+}
+if (strategy.indicators.includes("EMA 200")) {
+  indicators.ema200 = ema(200);
+}
     
     if (strategy.indicators.includes("Volume")) {
       indicators.volume_ma = candles.map((_, i) => {
@@ -165,116 +172,138 @@ export const StrategyDetail = () => {
       });
     }
 
-    // Generate entry/exit signals based on strategy logic
-    for (let i = 15; i < candles.length - 5; i++) {
-      if (strategy.category === "MACD" && indicators.macd && indicators.signal) {
-        // MACD crossover signals with additional confirmation
-        const prevMacd = indicators.macd[i-1];
-        const currMacd = indicators.macd[i];
-        const prevSignal = indicators.signal[i-1];
-        const currSignal = indicators.signal[i];
-        
-        // Golden Cross: MACD crosses above signal line
-        if (prevMacd <= prevSignal && currMacd > currSignal && currMacd > 0) {
-          signals.push({
-            type: "entry",
-            x: i,
-            price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
-            label: "BUY",
-            color: "#22c55e"
-          });
-        } 
-        // Death Cross: MACD crosses below signal line
-        else if (prevMacd >= prevSignal && currMacd < currSignal && currMacd < 0) {
-          signals.push({
-            type: "exit", 
-            x: i,
-            price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
-            label: "SELL",
-            color: "#ef4444"
-          });
-        }
-      } else if (strategy.category === "RSI" && indicators.rsi) {
-        // RSI oversold/overbought signals with momentum confirmation
-        const prevRsi = indicators.rsi[i-1];
-        const currRsi = indicators.rsi[i];
-        
-        // RSI crosses above 30 (oversold recovery)
-        if (prevRsi < 30 && currRsi >= 30 && currRsi < 40) {
-          signals.push({
-            type: "entry",
-            x: i,
-            price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
-            label: "BUY",
-            color: "#22c55e"
-          });
-        } 
-        // RSI crosses below 70 (overbought reversal)
-        else if (prevRsi > 70 && currRsi <= 70 && currRsi > 60) {
-          signals.push({
-            type: "exit",
-            x: i, 
-            price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
-            label: "SELL",
-            color: "#ef4444"
-          });
-        }
-      } else if (strategy.category === "Bollinger Bands" && indicators.bb_upper && indicators.bb_lower && indicators.bb_middle) {
-        // Bollinger Band mean reversion signals
-        const prevClose = candles[i-1].close;
-        const currClose = candles[i].close;
-        const bbUpper = indicators.bb_upper[i];
-        const bbLower = indicators.bb_lower[i];
-        const bbMiddle = indicators.bb_middle[i];
-        
-        // Price touches lower band and starts moving back up
-        if (candles[i].low <= bbLower && currClose > prevClose && currClose > bbLower) {
-          signals.push({
-            type: "entry",
-            x: i,
-            price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
-            label: "BUY",
-            color: "#22c55e"
-          });
-        } 
-        // Price touches upper band and starts moving back down
-        else if (candles[i].high >= bbUpper && currClose < prevClose && currClose < bbUpper) {
-          signals.push({
-            type: "exit",
-            x: i,
-            price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
-            label: "SELL", 
-            color: "#ef4444"
-          });
-        }
-      } else if (strategy.indicators.includes("EMA 20") && strategy.indicators.includes("EMA 50") && 
-                 indicators.ema20 && indicators.ema50) {
-        // EMA crossover signals
-        const prevEma20 = indicators.ema20[i-1];
-        const currEma20 = indicators.ema20[i];
-        const prevEma50 = indicators.ema50[i-1];
-        const currEma50 = indicators.ema50[i];
-        
-        // EMA 20 crosses above EMA 50 (golden cross)
-        if (prevEma20 <= prevEma50 && currEma20 > currEma50) {
-          signals.push({
-            type: "entry",
-            x: i,
-            price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
-            label: "BUY",
-            color: "#22c55e"
-          });
-        } 
-        // EMA 20 crosses below EMA 50 (death cross)
-        else if (prevEma20 >= prevEma50 && currEma20 < currEma50) {
-          signals.push({
-            type: "exit",
-            x: i,
-            price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
-            label: "SELL",
-            color: "#ef4444"
-          });
-        }
+// Generate entry/exit signals based on strategy logic
+let inPosition = false;
+for (let i = 15; i < candles.length - 5; i++) {
+  if (strategy.category === "MACD" && indicators.macd && indicators.signal) {
+    // MACD crossover signals – pair entries/exits to reflect indicator
+    const prevMacd = indicators.macd[i - 1];
+    const currMacd = indicators.macd[i];
+    const prevSignal = indicators.signal[i - 1];
+    const currSignal = indicators.signal[i];
+
+    const crossUp = prevMacd <= prevSignal && currMacd > currSignal;
+    const crossDown = prevMacd >= prevSignal && currMacd < currSignal;
+
+    if (!inPosition && crossUp) {
+      signals.push({
+        type: "entry",
+        x: i,
+        price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
+        label: "BUY",
+        color: "#22c55e",
+      });
+      inPosition = true;
+    } else if (inPosition && crossDown) {
+      signals.push({
+        type: "exit",
+        x: i,
+        price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
+        label: "SELL",
+        color: "#ef4444",
+      });
+      inPosition = false;
+    }
+  } else if (strategy.category === "RSI" && indicators.rsi) {
+    // RSI oversold/overbought – ensure proper pairing
+    const prevRsi = indicators.rsi[i - 1];
+    const currRsi = indicators.rsi[i];
+
+    if (!inPosition && prevRsi < 30 && currRsi >= 30) {
+      signals.push({
+        type: "entry",
+        x: i,
+        price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
+        label: "BUY",
+        color: "#22c55e",
+      });
+      inPosition = true;
+    } else if (inPosition && prevRsi > 70 && currRsi <= 70) {
+      signals.push({
+        type: "exit",
+        x: i,
+        price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
+        label: "SELL",
+        color: "#ef4444",
+      });
+      inPosition = false;
+    }
+  } else if (
+    strategy.category === "Bollinger Bands" &&
+    indicators.bb_upper &&
+    indicators.bb_lower &&
+    indicators.bb_middle
+  ) {
+    // Bollinger mean reversion – pair signals
+    const prevClose = candles[i - 1].close;
+    const currClose = candles[i].close;
+    const bbUpper = indicators.bb_upper[i];
+    const bbLower = indicators.bb_lower[i];
+
+    if (!inPosition && candles[i].low <= bbLower && currClose > prevClose && currClose > bbLower) {
+      signals.push({
+        type: "entry",
+        x: i,
+        price: candles[i].low - (candles[i].high - candles[i].low) * 0.1,
+        label: "BUY",
+        color: "#22c55e",
+      });
+      inPosition = true;
+    } else if (inPosition && candles[i].high >= bbUpper && currClose < prevClose && currClose < bbUpper) {
+      signals.push({
+        type: "exit",
+        x: i,
+        price: candles[i].high + (candles[i].high - candles[i].low) * 0.1,
+        label: "SELL",
+        color: "#ef4444",
+      });
+      inPosition = false;
+    }
+  } else if (
+    strategy.category === "Moving Averages" ||
+    (strategy.indicators.includes("EMA 20") && strategy.indicators.includes("EMA 50"))
+  ) {
+    // EMA crossovers – support 20/50 and 50/200
+    if (indicators.ema20 && indicators.ema50) {
+      const prevFast = indicators.ema20[i - 1];
+      const currFast = indicators.ema20[i];
+      const prevSlow = indicators.ema50[i - 1];
+      const currSlow = indicators.ema50[i];
+
+      const crossUp = prevFast <= prevSlow && currFast > currSlow;
+      const crossDown = prevFast >= prevSlow && currFast < currSlow;
+
+      if (!inPosition && crossUp) {
+        signals.push({ type: "entry", x: i, price: candles[i].low - (candles[i].high - candles[i].low) * 0.1, label: "BUY", color: "#22c55e" });
+        inPosition = true;
+      } else if (inPosition && crossDown) {
+        signals.push({ type: "exit", x: i, price: candles[i].high + (candles[i].high - candles[i].low) * 0.1, label: "SELL", color: "#ef4444" });
+        inPosition = false;
+      }
+    } else if (indicators.ema50 && indicators.ema200) {
+      const prevFast = indicators.ema50[i - 1];
+      const currFast = indicators.ema50[i];
+      const prevSlow = indicators.ema200[i - 1]!;
+      const currSlow = indicators.ema200[i]!;
+
+      const crossUp = prevFast <= prevSlow && currFast > currSlow;
+      const crossDown = prevFast >= prevSlow && currFast < currSlow;
+
+      if (!inPosition && crossUp) {
+        signals.push({ type: "entry", x: i, price: candles[i].low - (candles[i].high - candles[i].low) * 0.1, label: "BUY", color: "#22c55e" });
+        inPosition = true;
+      } else if (inPosition && crossDown) {
+        signals.push({ type: "exit", x: i, price: candles[i].high + (candles[i].high - candles[i].low) * 0.1, label: "SELL", color: "#ef4444" });
+        inPosition = false;
+      }
+    }
+  }
+}
+
+    // Ensure signals are in entry-exit pairs
+    if (inPosition) {
+      for (let j = signals.length - 1; j >= 0; j--) {
+        if (signals[j].type === "entry") { signals.splice(j, 1); break; }
       }
     }
 
@@ -402,18 +431,31 @@ export const StrategyDetail = () => {
       ctx.stroke();
     }
 
-    if (indicators.ema50) {
-      ctx.strokeStyle = "hsl(280, 80%, 60%)"; // Purple
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      indicators.ema50.forEach((value, index) => {
-        const x = indexToX(index);
-        const y = priceToY(value);
-        if (index === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    }
+if (indicators.ema50) {
+  ctx.strokeStyle = "hsl(280, 80%, 60%)"; // Purple
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  indicators.ema50.forEach((value, index) => {
+    const x = indexToX(index);
+    const y = priceToY(value);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+if (indicators.ema200) {
+  ctx.strokeStyle = "hsl(160, 70%, 50%)"; // Teal
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  indicators.ema200.forEach((value, index) => {
+    const x = indexToX(index);
+    const y = priceToY(value);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
 
     if (indicators.bb_upper && indicators.bb_lower && indicators.bb_middle) {
       // Bollinger Bands
@@ -668,16 +710,22 @@ export const StrategyDetail = () => {
     ctx.textAlign = "left";
     let legendX = chartLeft + chartWidth - 200;
     
-    if (indicators.ema20) {
-      ctx.fillStyle = "hsl(45, 93%, 47%)";
-      ctx.fillText("● EMA 20", legendX, legendY);
-      legendY += 20;
-    }
-    
-    if (indicators.ema50) {
-      ctx.fillStyle = "hsl(280, 80%, 60%)";
-      ctx.fillText("● EMA 50", legendX, legendY);
-    }
+if (indicators.ema20) {
+  ctx.fillStyle = "hsl(45, 93%, 47%)";
+  ctx.fillText("● EMA 20", legendX, legendY);
+  legendY += 20;
+}
+
+if (indicators.ema50) {
+  ctx.fillStyle = "hsl(280, 80%, 60%)";
+  ctx.fillText("● EMA 50", legendX, legendY);
+  legendY += 20;
+}
+
+if (indicators.ema200) {
+  ctx.fillStyle = "hsl(160, 70%, 50%)";
+  ctx.fillText("● EMA 200", legendX, legendY);
+}
   };
 
   useEffect(() => {
