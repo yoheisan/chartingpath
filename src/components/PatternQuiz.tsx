@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
+import { PatternCalculator } from "@/utils/PatternCalculator";
 
 interface QuizQuestion {
   id: string;
   type: "visual" | "characteristics" | "risk";
   question: string;
   pattern?: string;
+  patternKey?: string; // Key for PatternCalculator
   options: string[];
   correctAnswer: number;
   explanation: string;
@@ -21,7 +23,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v1",
     type: "visual",
     pattern: "Head and Shoulders",
-    question: "What pattern is shown in this chart?",
+    patternKey: "head-shoulders",
+    question: "What pattern is shown in this candlestick chart?",
     options: ["Head and Shoulders", "Double Top", "Triple Top"],
     correctAnswer: 0,
     explanation: "Head and Shoulders has 93% accuracy rate according to Bulkowski, with average decline of 17%."
@@ -30,7 +33,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v2",
     type: "visual",
     pattern: "Double Bottom",
-    question: "Identify this reversal pattern:",
+    patternKey: "double-bottom",
+    question: "Identify this reversal pattern in the candlestick chart:",
     options: ["Cup and Handle", "Double Bottom", "Inverse Head and Shoulders"],
     correctAnswer: 1,
     explanation: "Double Bottom has 79% success rate with average rise of 35% per Bulkowski's research."
@@ -39,7 +43,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v3",
     type: "visual",
     pattern: "Ascending Triangle",
-    question: "What continuation pattern is displayed?",
+    patternKey: "ascending-triangle",
+    question: "What continuation pattern is displayed in this candlestick chart?",
     options: ["Ascending Triangle", "Descending Triangle", "Symmetrical Triangle"],
     correctAnswer: 0,
     explanation: "Ascending triangles break upward 73% of time with 38% average rise (Bulkowski)."
@@ -47,18 +52,20 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "v4",
     type: "visual",
-    pattern: "Flag",
-    question: "This consolidation pattern is called:",
-    options: ["Pennant", "Flag", "Wedge"],
+    pattern: "Bull Flag",
+    patternKey: "bull-flag",
+    question: "This consolidation pattern in the candlestick chart is called:",
+    options: ["Pennant", "Bull Flag", "Wedge"],
     correctAnswer: 1,
     explanation: "Bull flags have 88% success rate and typically last 8 days (Bulkowski)."
   },
   {
     id: "v5",
     type: "visual",
-    pattern: "Cup and Handle",
-    question: "What bullish pattern is shown?",
-    options: ["Rounding Bottom", "Cup and Handle", "Inverse Head and Shoulders"],
+    pattern: "Cup with Handle",
+    patternKey: "cup-handle",
+    question: "What bullish pattern is shown in this candlestick chart?",
+    options: ["Rounding Bottom", "Cup with Handle", "Inverse Head and Shoulders"],
     correctAnswer: 1,
     explanation: "Cup and Handle patterns succeed 86% of time with 45% average gain (Bulkowski)."
   },
@@ -66,7 +73,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v6",
     type: "visual", 
     pattern: "Descending Triangle",
-    question: "This bearish pattern is:",
+    patternKey: "descending-triangle",
+    question: "This bearish pattern in the candlestick chart is:",
     options: ["Descending Triangle", "Falling Wedge", "Rectangle"],
     correctAnswer: 0,
     explanation: "Descending triangles break downward 64% of time with 21% average decline."
@@ -74,8 +82,9 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "v7",
     type: "visual",
-    pattern: "Symmetrical Triangle", 
-    question: "What neutral pattern is shown?",
+    pattern: "Symmetrical Triangle",
+    patternKey: "symmetrical-triangle", 
+    question: "What neutral pattern is shown in this candlestick chart?",
     options: ["Pennant", "Symmetrical Triangle", "Diamond"],
     correctAnswer: 1,
     explanation: "Symmetrical triangles break upward 54% of time, neutral bias per Bulkowski."
@@ -84,7 +93,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v8",
     type: "visual",
     pattern: "Rising Wedge",
-    question: "This bearish reversal pattern is:",
+    patternKey: "rising-wedge",
+    question: "This bearish reversal pattern in the candlestick chart is:",
     options: ["Rising Wedge", "Ascending Triangle", "Bull Flag"],
     correctAnswer: 0,
     explanation: "Rising wedges break downward 68% of time with 19% average decline."
@@ -93,10 +103,71 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v9",
     type: "visual",
     pattern: "Falling Wedge",
-    question: "This bullish reversal pattern is:",
+    patternKey: "falling-wedge",
+    question: "This bullish reversal pattern in the candlestick chart is:",
     options: ["Descending Triangle", "Falling Wedge", "Bear Flag"],
     correctAnswer: 1,
     explanation: "Falling wedges break upward 68% of time with 35% average rise."
+  },
+  {
+    id: "v10",
+    type: "visual",
+    pattern: "Double Top",
+    patternKey: "double-top",
+    question: "What reversal pattern is displayed in this candlestick chart?",
+    options: ["Double Top", "Head and Shoulders", "Triple Top"],
+    correctAnswer: 0,
+    explanation: "Double Top has 79% success rate with average decline of 20% (Bulkowski)."
+  },
+  {
+    id: "v11",
+    type: "visual",
+    pattern: "Hammer",
+    patternKey: "hammer",
+    question: "What single candlestick pattern is shown?",
+    options: ["Doji", "Hammer", "Shooting Star"],
+    correctAnswer: 1,
+    explanation: "Hammer has 60% reversal success rate when appearing after downtrend (Bulkowski)."
+  },
+  {
+    id: "v12",
+    type: "visual",
+    pattern: "Doji",
+    patternKey: "doji",
+    question: "This indecision candlestick pattern is called:",
+    options: ["Spinning Top", "Doji", "Harami"],
+    correctAnswer: 1,
+    explanation: "Doji indicates market indecision with 56% reversal success rate in trending markets."
+  },
+  {
+    id: "v13",
+    type: "visual",
+    pattern: "Bullish Engulfing",
+    patternKey: "bullish-engulfing",
+    question: "What two-candle reversal pattern is shown?",
+    options: ["Bullish Engulfing", "Bullish Harami", "Piercing Pattern"],
+    correctAnswer: 0,
+    explanation: "Bullish Engulfing has 63% success rate with average rise of 12% (Bulkowski)."
+  },
+  {
+    id: "v14",
+    type: "visual",
+    pattern: "Bearish Engulfing",
+    patternKey: "bearish-engulfing",
+    question: "This two-candle bearish pattern is:",
+    options: ["Dark Cloud Cover", "Bearish Engulfing", "Bearish Harami"],
+    correctAnswer: 1,
+    explanation: "Bearish Engulfing has 79% success rate with average decline of 11%."
+  },
+  {
+    id: "v15",
+    type: "visual",
+    pattern: "Rectangle",
+    patternKey: "rectangle",
+    question: "What consolidation pattern is shown in this candlestick chart?",
+    options: ["Rectangle", "Pennant", "Triangle"],
+    correctAnswer: 0,
+    explanation: "Rectangle patterns break upward 54% of time with 42% average move (Bulkowski)."
   },
   {
     id: "v10",
@@ -670,77 +741,183 @@ export const PatternQuiz = () => {
   const currentQ = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
-  // Draw mini chart pattern for visual questions
+  // Draw candlestick chart pattern for visual questions
   useEffect(() => {
-    if (currentQ.type === "visual" && canvasRef.current) {
+    if (currentQ.type === "visual" && canvasRef.current && currentQ.patternKey) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Get pattern data from PatternCalculator
+      const patternData = PatternCalculator.getPatternData(currentQ.patternKey);
+      const { candles, annotations } = patternData;
+
+      // Set canvas dimensions
+      canvas.width = 500;
+      canvas.height = 300;
+
+      // Clear canvas with dark background
+      ctx.fillStyle = "hsl(223, 39%, 4%)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Chart dimensions
+      const padding = 40;
+      const chartWidth = canvas.width - padding * 2;
+      const chartHeight = canvas.height - padding * 2 - 60; // Leave space for volume
+      const chartLeft = padding;
+      const chartTop = padding;
+
+      // Draw grid
+      ctx.strokeStyle = "hsl(215, 15%, 20%)";
+      ctx.lineWidth = 0.5;
       
-      // Set up chart area
-      const chartLeft = 40;
-      const chartRight = canvas.width - 20;
-      const chartTop = 20;
-      const chartBottom = canvas.height - 40;
-      const chartWidth = chartRight - chartLeft;
-      const chartHeight = chartBottom - chartTop;
-
-      // Draw basic chart structure
-      ctx.strokeStyle = "hsl(215, 16%, 47%)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(chartLeft, chartBottom);
-      ctx.lineTo(chartRight, chartBottom);
-      ctx.moveTo(chartLeft, chartTop);
-      ctx.lineTo(chartLeft, chartBottom);
-      ctx.stroke();
-
-      // Draw pattern based on type
-      ctx.strokeStyle = "hsl(220, 91%, 60%)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-
-      switch (currentQ.pattern) {
-        case "Head and Shoulders":
-          ctx.moveTo(chartLeft, chartBottom - chartHeight * 0.3);
-          ctx.lineTo(chartLeft + chartWidth * 0.2, chartBottom - chartHeight * 0.6);
-          ctx.lineTo(chartLeft + chartWidth * 0.4, chartBottom - chartHeight * 0.4);
-          ctx.lineTo(chartLeft + chartWidth * 0.6, chartBottom - chartHeight * 0.8);
-          ctx.lineTo(chartLeft + chartWidth * 0.8, chartBottom - chartHeight * 0.4);
-          ctx.lineTo(chartRight, chartBottom - chartHeight * 0.6);
-          break;
-        case "Double Bottom":
-          ctx.moveTo(chartLeft, chartBottom - chartHeight * 0.8);
-          ctx.lineTo(chartLeft + chartWidth * 0.3, chartBottom - chartHeight * 0.2);
-          ctx.lineTo(chartLeft + chartWidth * 0.5, chartBottom - chartHeight * 0.6);
-          ctx.lineTo(chartLeft + chartWidth * 0.7, chartBottom - chartHeight * 0.2);
-          ctx.lineTo(chartRight, chartBottom - chartHeight * 0.8);
-          break;
-        case "Ascending Triangle":
-          ctx.moveTo(chartLeft, chartBottom - chartHeight * 0.2);
-          ctx.lineTo(chartLeft + chartWidth * 0.25, chartBottom - chartHeight * 0.7);
-          ctx.lineTo(chartLeft + chartWidth * 0.5, chartBottom - chartHeight * 0.4);
-          ctx.lineTo(chartLeft + chartWidth * 0.75, chartBottom - chartHeight * 0.7);
-          ctx.lineTo(chartRight, chartBottom - chartHeight * 0.6);
-          break;
-        default:
-          // Generic pattern
-          ctx.moveTo(chartLeft, chartBottom - chartHeight * 0.5);
-          ctx.lineTo(chartLeft + chartWidth * 0.3, chartBottom - chartHeight * 0.3);
-          ctx.lineTo(chartLeft + chartWidth * 0.7, chartBottom - chartHeight * 0.7);
-          ctx.lineTo(chartRight, chartBottom - chartHeight * 0.5);
+      // Vertical grid lines
+      for (let i = 0; i <= 8; i++) {
+        const x = chartLeft + (i * chartWidth) / 8;
+        ctx.beginPath();
+        ctx.moveTo(x, chartTop);
+        ctx.lineTo(x, chartTop + chartHeight);
+        ctx.stroke();
       }
-      ctx.stroke();
+
+      // Horizontal grid lines
+      for (let i = 0; i <= 6; i++) {
+        const y = chartTop + (i * chartHeight) / 6;
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, y);
+        ctx.lineTo(chartLeft + chartWidth, y);
+        ctx.stroke();
+      }
+
+      // Calculate price range
+      const prices = candles.flatMap(d => [d.high, d.low]);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const priceRange = maxPrice - minPrice;
+      const paddingPrice = priceRange * 0.1;
+      const adjustedMinPrice = minPrice - paddingPrice;
+      const adjustedMaxPrice = maxPrice + paddingPrice;
+      const adjustedRange = adjustedMaxPrice - adjustedMinPrice;
+
+      // Helper functions
+      const priceToY = (price: number) => {
+        return chartTop + chartHeight - ((price - adjustedMinPrice) / adjustedRange) * chartHeight;
+      };
+
+      const indexToX = (index: number) => {
+        return chartLeft + (index + 0.5) * (chartWidth / candles.length);
+      };
+
+      // Draw candlesticks
+      const candleWidth = Math.max(6, chartWidth / (candles.length * 1.5));
+      candles.forEach((candle, index) => {
+        const x = indexToX(index);
+        
+        const yOpen = priceToY(candle.open);
+        const yClose = priceToY(candle.close);
+        const yHigh = priceToY(candle.high);
+        const yLow = priceToY(candle.low);
+
+        const isBullish = candle.close > candle.open;
+        
+        // Draw wick
+        ctx.strokeStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, yHigh);
+        ctx.lineTo(x, yLow);
+        ctx.stroke();
+
+        // Draw body
+        ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+        const bodyTop = Math.min(yOpen, yClose);
+        const bodyHeight = Math.abs(yClose - yOpen);
+        
+        if (bodyHeight < 2) {
+          // Doji - draw a line
+          ctx.strokeStyle = "hsl(210, 40%, 98%)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x - candleWidth/2 * 0.6, yOpen);
+          ctx.lineTo(x + candleWidth/2 * 0.6, yOpen);
+          ctx.stroke();
+        } else {
+          ctx.fillRect(x - candleWidth/2 * 0.6, bodyTop, candleWidth * 0.6, bodyHeight);
+        }
+      });
+
+      // Draw pattern annotations (trend lines, support/resistance)
+      annotations.forEach(annotation => {
+        ctx.strokeStyle = annotation.color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash(annotation.style === 'dashed' ? [4, 4] : []);
+        
+        if (annotation.type === 'peak') {
+          // Draw peak markers
+          const point = annotation.points[0];
+          const x = indexToX(point.x);
+          const y = priceToY(point.y);
+          
+          ctx.fillStyle = annotation.color;
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Draw label
+          if (annotation.label) {
+            ctx.font = "bold 9px -apple-system, BlinkMacSystemFont, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillStyle = annotation.color;
+            ctx.fillText(annotation.label, x, y - 12);
+          }
+        } else if (annotation.points.length >= 2) {
+          // Draw lines
+          ctx.beginPath();
+          const firstPoint = annotation.points[0];
+          ctx.moveTo(indexToX(firstPoint.x), priceToY(firstPoint.y));
+          
+          for (let i = 1; i < annotation.points.length; i++) {
+            const point = annotation.points[i];
+            ctx.lineTo(indexToX(point.x), priceToY(point.y));
+          }
+          ctx.stroke();
+        }
+        
+        ctx.setLineDash([]); // Reset line dash
+      });
+
+      // Draw volume histogram
+      const volumeTop = chartTop + chartHeight + 10;
+      const volumeHeight = 50;
+      const maxVolume = Math.max(...candles.map(c => c.volume));
+      
+      candles.forEach((candle, index) => {
+        const x = indexToX(index);
+        const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
+        const isBullish = candle.close > candle.open;
+        
+        ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%, 0.5)" : "hsl(0, 84%, 60%, 0.5)";
+        ctx.fillRect(x - candleWidth/2 * 0.4, volumeTop + volumeHeight - volumeBarHeight, 
+                     candleWidth * 0.4, volumeBarHeight);
+      });
+
+      // Add price labels
+      ctx.fillStyle = "hsl(217, 10%, 65%)";
+      ctx.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "right";
+      
+      for (let i = 0; i <= 6; i++) {
+        const price = adjustedMinPrice + (i / 6) * adjustedRange;
+        const y = chartTop + chartHeight - (i * chartHeight) / 6;
+        ctx.fillText(price.toFixed(2), chartLeft - 5, y + 3);
+      }
 
       // Add watermark
       ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.font = "bold 10px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "bottom";
-      ctx.fillText("ChartingPath.com", chartLeft + 5, chartBottom - 5);
+      ctx.fillText("ChartingPath.com", chartLeft + 5, canvas.height - 8);
     }
   }, [currentQ]);
 
