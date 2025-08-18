@@ -802,10 +802,6 @@ if (indicators.ema200) {
         <div ref={containerRef} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Strategy Chart with Entry/Exit Signals</CardTitle>
-              <CardDescription>
-                Professional candlestick chart showing {strategy.indicators.join(", ")} with automated entry and exit signals
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="w-full overflow-x-auto">
