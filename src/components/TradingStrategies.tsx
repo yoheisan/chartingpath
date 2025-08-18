@@ -53,6 +53,169 @@ export const TradingStrategies = () => {
         </p>
       </div>
 
+      {/* Trading Setup Guide */}
+      <Card className="p-8 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+        <div className="max-w-6xl mx-auto">
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
+            🎯 How to Execute a Perfect Trading Setup
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-primary">1</span>
+              </div>
+              <h4 className="font-semibold text-foreground mb-2">Wait for Setup</h4>
+              <p className="text-sm text-muted-foreground">Patience is key. Wait for all your strategy conditions to align perfectly.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-accent">2</span>
+              </div>
+              <h4 className="font-semibold text-foreground mb-2">Confirm Entry</h4>
+              <p className="text-sm text-muted-foreground">Double-check all indicators and ensure the setup meets your criteria.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-bullish/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-bullish">3</span>
+              </div>
+              <h4 className="font-semibold text-foreground mb-2">Execute Trade</h4>
+              <p className="text-sm text-muted-foreground">Enter your position with predetermined position size and stop loss.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-bearish/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-bearish">4</span>
+              </div>
+              <h4 className="font-semibold text-foreground mb-2">Manage Exit</h4>
+              <p className="text-sm text-muted-foreground">Follow your exit rules strictly - whether profit target or stop loss.</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="p-6">
+              <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                ⏰ Waiting for the Perfect Setup
+              </h4>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Never force trades</strong> - The market will always provide opportunities</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Check multiple timeframes</strong> - Ensure alignment across 3 timeframes minimum</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Verify all conditions</strong> - Every indicator must confirm the signal</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Consider market context</strong> - Is it trending, ranging, or volatile?</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Wait for confirmation</strong> - Don't enter on the first signal candle</span>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-6">
+              <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                🎯 Entry Execution Rules
+              </h4>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <span className="text-bullish font-bold">•</span>
+                  <span><strong>Position sizing first</strong> - Never risk more than 1-2% per trade</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bullish font-bold">•</span>
+                  <span><strong>Set stop loss immediately</strong> - Before you even enter the trade</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bullish font-bold">•</span>
+                  <span><strong>Use limit orders</strong> - Better execution and avoid slippage</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bullish font-bold">•</span>
+                  <span><strong>Document your reasoning</strong> - Write why you're taking this trade</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bullish font-bold">•</span>
+                  <span><strong>Check economic calendar</strong> - Avoid major news events</span>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-6">
+              <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                🚪 Exit Strategy Mastery
+              </h4>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <span className="text-bearish font-bold">•</span>
+                  <span><strong>Plan exits before entry</strong> - Know your targets and stops in advance</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bearish font-bold">•</span>
+                  <span><strong>Use trailing stops</strong> - Lock in profits as trade moves in your favor</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bearish font-bold">•</span>
+                  <span><strong>Scale out positions</strong> - Take partial profits at key levels</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bearish font-bold">•</span>
+                  <span><strong>Follow the plan religiously</strong> - Emotions are your enemy</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-bearish font-bold">•</span>
+                  <span><strong>Review every trade</strong> - Learn from both wins and losses</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+          
+          <div className="mt-8 p-6 bg-accent/10 rounded-lg border border-accent/20">
+            <h4 className="font-semibold text-foreground mb-3 text-center">⚠️ Golden Rules for New Traders</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full"></span>
+                  <span><strong>Patience over profit</strong> - Wait for A+ setups only</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full"></span>
+                  <span><strong>Risk management is everything</strong> - Protect capital at all costs</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full"></span>
+                  <span><strong>Keep a trading journal</strong> - Track every decision and outcome</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-accent rounded-full"></span>
+                  <span><strong>Start small, grow gradually</strong> - Master the process first</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-accent rounded-full"></span>
+                  <span><strong>Stick to your strategy</strong> - Don't chase shiny new methods</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-accent rounded-full"></span>
+                  <span><strong>Practice with paper trading</strong> - Perfect your execution first</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Filters */}
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
