@@ -175,7 +175,7 @@ const MemberCommunity = () => {
               })}
             </div>
           </CardContent>
-        </div>
+        </Card>
 
         {/* Discord Setup Guide */}
         <Card className="mb-8">
@@ -257,7 +257,6 @@ const MemberCommunity = () => {
                 <strong>Need help?</strong> Contact our community moderators or use the #support channel in Discord for assistance.
               </p>
             </div>
-          </CardContent>
           </CardContent>
         </Card>
       </div>
