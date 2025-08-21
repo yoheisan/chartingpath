@@ -85,6 +85,98 @@ export type Database = {
           },
         ]
       }
+      billing_events: {
+        Row: {
+          billing_reason: string | null
+          created_at: string
+          event_timestamp: string
+          event_type: string
+          from_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          full_amount_cents: number | null
+          id: string
+          metadata: Json | null
+          prorata_amount_cents: number | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          subscription_id: string | null
+          to_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          user_id: string
+        }
+        Insert: {
+          billing_reason?: string | null
+          created_at?: string
+          event_timestamp?: string
+          event_type: string
+          from_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          full_amount_cents?: number | null
+          id?: string
+          metadata?: Json | null
+          prorata_amount_cents?: number | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          to_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          user_id: string
+        }
+        Update: {
+          billing_reason?: string | null
+          created_at?: string
+          event_timestamp?: string
+          event_type?: string
+          from_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          full_amount_cents?: number | null
+          id?: string
+          metadata?: Json | null
+          prorata_amount_cents?: number | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          to_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_pricing: {
+        Row: {
+          created_at: string
+          features: Json | null
+          is_active: boolean | null
+          max_alerts: number
+          monthly_price_cents: number
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          updated_at: string
+          yearly_price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          features?: Json | null
+          is_active?: boolean | null
+          max_alerts?: number
+          monthly_price_cents: number
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          updated_at?: string
+          yearly_price_cents: number
+        }
+        Update: {
+          created_at?: string
+          features?: Json | null
+          is_active?: boolean | null
+          max_alerts?: number
+          monthly_price_cents?: number
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          updated_at?: string
+          yearly_price_cents?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -121,12 +213,80 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          billing_cycle_anchor: string | null
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          current_plan: Database["public"]["Enums"]["subscription_plan"]
+          id: string
+          previous_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_cycle_anchor?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          current_plan?: Database["public"]["Enums"]["subscription_plan"]
+          id?: string
+          previous_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_cycle_anchor?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          current_plan?: Database["public"]["Enums"]["subscription_plan"]
+          id?: string
+          previous_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_prorata_amount: {
+        Args: {
+          billing_cycle_days?: number
+          current_plan: Database["public"]["Enums"]["subscription_plan"]
+          days_remaining: number
+          new_plan: Database["public"]["Enums"]["subscription_plan"]
+        }
+        Returns: number
+      }
+      update_profile_subscription: {
+        Args: {
+          p_plan: Database["public"]["Enums"]["subscription_plan"]
+          p_status?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       alert_status: "active" | "paused" | "deleted"
