@@ -241,7 +241,7 @@ const MemberAlerts = () => {
     switch (plan) {
       case 'pro': return { max: 3, name: 'Pro' };
       case 'elite': return { max: 999999, name: 'Elite' };
-      default: return { max: 0, name: 'Starter' };
+      default: return { max: 1, name: 'Starter' }; // Allow 1 test alert for starter users
     }
   };
 
@@ -278,8 +278,8 @@ const MemberAlerts = () => {
   const activeAlerts = alerts.filter(alert => alert.status === 'active');
   const canCreateMore = planLimits.max === 999999 || activeAlerts.length < planLimits.max;
 
-  // Upsell screen for Starter users
-  if (profile?.subscription_plan === 'starter') {
+  // Show upsell screen for Starter users only if they've used their test alert
+  if (profile?.subscription_plan === 'starter' && activeAlerts.length >= 1) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-8 max-w-4xl">
