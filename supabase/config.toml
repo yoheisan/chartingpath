@@ -1,1 +1,10 @@
 project_id = "dgznlsckoamseqcpzfqm"
+
+[functions.pattern-detector]
+verify_jwt = false
+
+[functions.send-pattern-alert]
+verify_jwt = false
+
+[functions.pattern-scheduler]
+verify_jwt = false

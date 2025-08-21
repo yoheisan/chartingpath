@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Crown, MessageSquare, Users, ArrowLeft, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import MemberNavigation from "@/components/MemberNavigation";
 
 const MemberCommunity = () => {
   const handleDiscordJoin = (channelType: string) => {
@@ -54,6 +55,9 @@ const MemberCommunity = () => {
             Back to Home
           </Link>
         </div>
+
+        {/* Member Navigation */}
+        <MemberNavigation />
 
         {/* Header */}
         <div className="text-center mb-8">

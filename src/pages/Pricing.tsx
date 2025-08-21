@@ -40,6 +40,7 @@ const Pricing = () => {
       features: [
         "Everything in Starter",
         "Advanced Script Library (50+ strategies)",
+        "Chart Pattern Email Alerts (3 active alerts)",
         "Video Course: Automated Trading from Zero to First Bot",
         "Pro Calculators (save profiles, CSV export)",
         'Monthly "New Script of the Month"',
@@ -56,6 +57,7 @@ const Pricing = () => {
       description: "Ultimate access with lifetime benefits",
       features: [
         "Everything in Pro", 
+        "Chart Pattern Email Alerts (Unlimited alerts)",
         "Lifetime access option ($999 one-time)",
         "Premium Discord role & exclusive channels",
         "Early access to strategy packs",

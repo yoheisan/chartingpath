@@ -14,6 +14,8 @@ import MemberScripts from "./pages/MemberScripts";
 import MemberCourses from "./pages/MemberCourses";
 import MemberDownloads from "./pages/MemberDownloads";
 import MemberCommunity from "./pages/MemberCommunity";
+import MemberAlerts from "./pages/MemberAlerts";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,8 @@ const App = () => (
           <Route path="/members/courses" element={<MemberCourses />} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
           <Route path="/members/community" element={<MemberCommunity />} />
+          <Route path="/members/alerts" element={<MemberAlerts />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

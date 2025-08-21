@@ -215,7 +215,11 @@ const Index = () => {
               <CardContent className="p-0 space-y-4">
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-primary" />
-                  <span>Everything in Starter</span>
+                  <span>Everything in Pro</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  <span>Chart Pattern Email Alerts (3 alerts)</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-primary" />
@@ -241,6 +245,10 @@ const Index = () => {
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-primary" />
                   <span>Everything in Pro</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  <span>Unlimited Chart Pattern Alerts</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-primary" />
