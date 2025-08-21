@@ -410,6 +410,11 @@ const Index = () => {
           <p className="text-sm text-muted-foreground">
             Educational purposes only. Not financial advice. Past performance does not guarantee future results.
           </p>
+          <div className="mt-2">
+            <Link to="/admin/login" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+              Admin
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

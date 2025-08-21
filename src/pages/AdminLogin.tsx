@@ -1,0 +1,179 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const AdminLogin = () => {
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user is already logged in as admin
+    const checkAdminUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Check if user has admin role
+        const { data: adminCheck } = await supabase
+          .rpc('is_admin', { _user_id: user.id });
+        
+        if (adminCheck) {
+          navigate("/admin/dashboard");
+        }
+      }
+    };
+    checkAdminUser();
+  }, [navigate]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // First, authenticate with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Check if user has admin privileges
+        const { data: isAdminUser, error: roleError } = await supabase
+          .rpc('is_admin', { _user_id: data.user.id });
+
+        if (roleError) {
+          throw new Error("Failed to verify admin privileges");
+        }
+
+        if (!isAdminUser) {
+          await supabase.auth.signOut();
+          throw new Error("Access denied. Admin privileges required.");
+        }
+
+        // Log admin session
+        const { error: sessionError } = await supabase
+          .from('admin_sessions')
+          .insert({
+            user_id: data.user.id,
+            ip_address: null, // Could be enhanced to capture real IP
+            user_agent: navigator.userAgent
+          });
+
+        if (sessionError) {
+          console.error('Failed to log admin session:', sessionError);
+        }
+
+        toast({
+          title: "Admin Access Granted",
+          description: "Welcome to the admin dashboard",
+        });
+
+        navigate("/admin/dashboard");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Authentication Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-6 py-8 max-w-md">
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </div>
+
+        <Card className="border-2 border-primary/20">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Admin Portal</CardTitle>
+            <CardDescription>
+              Secure access for platform administrators
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleAdminLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Admin Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="adminEmail"
+                    type="email"
+                    placeholder="Enter your admin email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adminPassword">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="adminPassword"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Authenticating...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Login
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground text-center">
+                <Shield className="inline h-4 w-4 mr-1" />
+                Admin access requires special privileges. Contact the super administrator if you need access.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default AdminLogin;

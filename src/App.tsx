@@ -17,6 +17,8 @@ import MemberCommunity from "./pages/MemberCommunity";
 import MemberAlerts from "./pages/MemberAlerts";
 import MemberAccount from "./pages/MemberAccount";
 import Auth from "./pages/Auth";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/members/alerts" element={<MemberAlerts />} />
           <Route path="/members/account" element={<MemberAccount />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -1,0 +1,412 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Users, UserPlus, Shield, Search, Edit, Trash2, Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+
+interface User {
+  id: string;
+  user_id: string;
+  email: string;
+  created_at: string;
+  subscription_plan: string;
+  subscription_status: string;
+  role?: string;
+}
+
+interface UserManagementProps {
+  userRole: string;
+}
+
+const UserManagement = ({ userRole }: UserManagementProps) => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("all");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [newUserRole, setNewUserRole] = useState("");
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      // Get all user profiles with subscription info
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Get user roles for admin users
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError && rolesError.code !== 'PGRST116') { // Ignore "no rows" error
+        console.error('Error loading user roles:', rolesError);
+      }
+
+      // Combine the data
+      const usersWithRoles = profiles?.map(profile => ({
+        ...profile,
+        role: userRoles?.find(role => role.user_id === profile.user_id)?.role
+      })) || [];
+
+      setUsers(usersWithRoles);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeMembership = async (userId: string, newPlan: string, reason?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-change-membership', {
+        body: {
+          user_id: userId,
+          new_plan: newPlan,
+          reason: reason || `Admin changed plan to ${newPlan}`,
+          is_free_assignment: true
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Membership Updated",
+        description: `User plan changed to ${newPlan}`,
+      });
+
+      loadUsers(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update membership",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGrantAdminRole = async (userId: string, role: 'admin' | 'super_admin') => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role,
+          created_by: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Admin Role Granted",
+        description: `User granted ${role} privileges`,
+      });
+
+      loadUsers();
+      setIsRoleDialogOpen(false);
+      setEditingUser(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to grant admin role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRevokeAdminRole = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Admin Role Revoked",
+        description: "User admin privileges removed",
+      });
+
+      loadUsers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to revoke admin role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlan = selectedPlan === "all" || user.subscription_plan === selectedPlan;
+    return matchesSearch && matchesPlan;
+  });
+
+  const getPlanColor = (plan: string) => {
+    switch (plan) {
+      case 'starter': return 'bg-gray-100 text-gray-800';
+      case 'pro': return 'bg-blue-100 text-blue-800';
+      case 'elite': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Users</p>
+                <p className="text-2xl font-bold">{users.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">PRO</Badge>
+              <div>
+                <p className="text-sm text-muted-foreground">Pro Members</p>
+                <p className="text-2xl font-bold">
+                  {users.filter(u => u.subscription_plan === 'pro').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Badge className="text-xs">ELITE</Badge>
+              <div>
+                <p className="text-sm text-muted-foreground">Elite Members</p>
+                <p className="text-2xl font-bold">
+                  {users.filter(u => u.subscription_plan === 'elite').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Admins</p>
+                <p className="text-2xl font-bold">
+                  {users.filter(u => u.role).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* User Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>
+            Manage user accounts, subscriptions, and admin privileges
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Filters */}
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Plans</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="elite">Elite</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Users Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{user.email}</p>
+                        <p className="text-sm text-muted-foreground">{user.id}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getPlanColor(user.subscription_plan)}>
+                        {user.subscription_plan?.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.subscription_status === 'active' ? 'default' : 'secondary'}>
+                        {user.subscription_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.role ? (
+                        <Badge variant="destructive">
+                          <Shield className="h-3 w-3 mr-1" />
+                          {user.role.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">User</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Select onValueChange={(value) => handleChangeMembership(user.user_id, value)}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Change Plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="starter">Starter</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="elite">Elite</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {userRole === 'super_admin' && (
+                          <>
+                            {!user.role ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingUser(user);
+                                  setIsRoleDialogOpen(true);
+                                }}
+                              >
+                                <UserPlus className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRevokeAdminRole(user.user_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Grant Admin Role Dialog */}
+      <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Grant Admin Role</DialogTitle>
+            <DialogDescription>
+              Grant admin privileges to {editingUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Admin Role</Label>
+              <Select value={newUserRole} onValueChange={setNewUserRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select admin role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => editingUser && handleGrantAdminRole(editingUser.user_id, newUserRole as 'admin' | 'super_admin')}
+              disabled={!newUserRole}
+            >
+              Grant Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default UserManagement;

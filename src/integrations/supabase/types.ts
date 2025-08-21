@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_sessions: {
+        Row: {
+          id: string
+          ip_address: unknown | null
+          is_active: boolean | null
+          login_time: string
+          logout_time: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          login_time?: string
+          logout_time?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          login_time?: string
+          logout_time?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           created_at: string | null
@@ -265,6 +295,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -279,6 +333,17 @@ export type Database = {
         }
         Returns: number
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       update_profile_subscription: {
         Args: {
           p_plan: Database["public"]["Enums"]["subscription_plan"]
@@ -290,6 +355,7 @@ export type Database = {
     }
     Enums: {
       alert_status: "active" | "paused" | "deleted"
+      app_role: "admin" | "super_admin"
       chart_pattern:
         | "hammer"
         | "inverted_hammer"
@@ -432,6 +498,7 @@ export const Constants = {
   public: {
     Enums: {
       alert_status: ["active", "paused", "deleted"],
+      app_role: ["admin", "super_admin"],
       chart_pattern: [
         "hammer",
         "inverted_hammer",
