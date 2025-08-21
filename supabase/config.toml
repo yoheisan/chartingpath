@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.pattern-scheduler]
 verify_jwt = false
+
+[functions.admin-change-membership]
+verify_jwt = true
+
+[functions.upgrade-subscription]
+verify_jwt = true
+
+[functions.subscription-webhook]
+verify_jwt = false
