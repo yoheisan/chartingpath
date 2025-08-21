@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          pattern: Database["public"]["Enums"]["chart_pattern"]
+          status: Database["public"]["Enums"]["alert_status"] | null
+          symbol: string
+          timeframe: Database["public"]["Enums"]["timeframe"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pattern: Database["public"]["Enums"]["chart_pattern"]
+          status?: Database["public"]["Enums"]["alert_status"] | null
+          symbol: string
+          timeframe: Database["public"]["Enums"]["timeframe"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pattern?: Database["public"]["Enums"]["chart_pattern"]
+          status?: Database["public"]["Enums"]["alert_status"] | null
+          symbol?: string
+          timeframe?: Database["public"]["Enums"]["timeframe"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alerts_log: {
+        Row: {
+          alert_id: string
+          email_sent: boolean | null
+          email_sent_at: string | null
+          id: string
+          pattern_data: Json | null
+          price_data: Json | null
+          triggered_at: string | null
+        }
+        Insert: {
+          alert_id: string
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          pattern_data?: Json | null
+          price_data?: Json | null
+          triggered_at?: string | null
+        }
+        Update: {
+          alert_id?: string
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          pattern_data?: Json | null
+          price_data?: Json | null
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_log_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          subscription_plan:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          subscription_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          subscription_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          subscription_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +129,21 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      alert_status: "active" | "paused" | "deleted"
+      chart_pattern:
+        | "hammer"
+        | "inverted_hammer"
+        | "bullish_engulfing"
+        | "bearish_engulfing"
+        | "doji"
+        | "morning_star"
+        | "evening_star"
+        | "ema_cross_bullish"
+        | "ema_cross_bearish"
+        | "rsi_divergence_bullish"
+        | "rsi_divergence_bearish"
+      subscription_plan: "starter" | "pro" | "elite"
+      timeframe: "15m" | "1h" | "4h" | "1d"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +270,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_status: ["active", "paused", "deleted"],
+      chart_pattern: [
+        "hammer",
+        "inverted_hammer",
+        "bullish_engulfing",
+        "bearish_engulfing",
+        "doji",
+        "morning_star",
+        "evening_star",
+        "ema_cross_bullish",
+        "ema_cross_bearish",
+        "rsi_divergence_bullish",
+        "rsi_divergence_bearish",
+      ],
+      subscription_plan: ["starter", "pro", "elite"],
+      timeframe: ["15m", "1h", "4h", "1d"],
+    },
   },
 } as const
