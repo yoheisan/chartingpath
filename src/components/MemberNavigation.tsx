@@ -6,7 +6,8 @@ import {
   Download, 
   Users, 
   Bell,
-  Home
+  Home,
+  Settings
 } from "lucide-react";
 
 const MemberNavigation = () => {
@@ -43,6 +44,11 @@ const MemberNavigation = () => {
       to: "/members/community",
       icon: Users,
       label: "Community",
+    },
+    {
+      to: "/members/account",
+      icon: Settings,
+      label: "Account",
     },
   ];
 

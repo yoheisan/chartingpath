@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, Users, Bot, CheckCircle, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import AuthButton from "@/components/AuthButton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
@@ -26,6 +27,43 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-6 py-4 max-w-6xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
+                <img 
+                  src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
+                  alt="ChartingPath Logo" 
+                  className="h-6 w-6 object-contain brightness-0 invert"
+                />
+              </div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                ChartingPath
+              </h1>
+            </div>
+            
+            <nav className="hidden md:flex items-center gap-6">
+              <Link to="/tools/pip-calculator" className="text-muted-foreground hover:text-foreground transition-colors">
+                Calculators
+              </Link>
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </Link>
+              <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
+                Community
+              </Link>
+              <AuthButton />
+            </nav>
+
+            <div className="md:hidden">
+              <AuthButton />
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto max-w-6xl text-center">
