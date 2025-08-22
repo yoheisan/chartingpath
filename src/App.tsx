@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { StrategyDetail } from "./components/StrategyDetail";
+import { StrategyDetail } from "./pages/StrategyDetail";
 import PipCalculator from "./pages/PipCalculator";
 import RiskCalculator from "./pages/RiskCalculator";
 import ScriptGenerator from "./pages/ScriptGenerator";
