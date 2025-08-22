@@ -1,8 +1,10 @@
 import { TradingStrategies } from "@/components/TradingStrategies";
+import Navigation from "@/components/Navigation";
 
 const TradingStrategiesPage = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">Trading Strategies</h1>

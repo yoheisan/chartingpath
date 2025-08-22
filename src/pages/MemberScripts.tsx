@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Download, Search, Filter, Code, ArrowLeft, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import MemberNavigation from "@/components/MemberNavigation";
+import Navigation from "@/components/Navigation";
 
 const MemberScripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,7 +71,10 @@ const MemberScripts = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
+        
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

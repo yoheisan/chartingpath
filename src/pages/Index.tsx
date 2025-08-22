@@ -5,16 +5,10 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, Users, Bot, CheckCircle, ArrowRight, ChevronDown } from "lucide-react";
+import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import AuthButton from "@/components/AuthButton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+import Navigation from "@/components/Navigation";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
@@ -33,91 +27,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-6 py-4 max-w-6xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
-                <img 
-                  src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
-                  alt="ChartingPath Logo" 
-                  className="h-6 w-6 object-contain brightness-0 invert"
-                />
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                ChartingPath
-              </h1>
-            </div>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                  Chart Patterns
-                  <ChevronDown className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/generator" className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4" />
-                      Pattern Generator
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/library" className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4" />
-                      Pattern Library
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Trading Strategies
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
-                      <Brain className="h-4 w-4" />
-                      Pattern Quiz
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                  Calculators
-                  <ChevronDown className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem asChild>
-                    <Link to="/tools/pip-calculator" className="flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
-                      Pip Calculator
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/tools/risk-calculator" className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Risk Calculator
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-              <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
-                Community
-              </Link>
-              <AuthButton />
-            </nav>
-
-            <div className="md:hidden">
-              <AuthButton />
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Hero Section */}
       <section className="py-20 px-6">

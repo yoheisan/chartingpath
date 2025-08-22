@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 
 const Pricing = () => {
   const handlePlanSelect = (planName: string) => {
@@ -74,6 +75,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back Navigation */}
         <div className="mb-6">
