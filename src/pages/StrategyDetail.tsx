@@ -84,42 +84,94 @@ export const StrategyDetail = () => {
   const handleExport = () => {
     if (!selectedExportPlatform) return;
 
-    const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
-    if (!template) return;
+    try {
+      const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
+      if (!template) {
+        toast({
+          title: "Template Not Found",
+          description: "The selected platform template is not available",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
-    const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
-    
-    // Generate code file
-    const code = template.generateCode(strategy, selectedTimeframe);
-    downloadFile(code, `${cleanName}.${platform.extension}`);
-    
-    // Generate README
-    const readme = template.generateReadme(strategy);
-    downloadFile(readme, `${cleanName}_README.txt`);
-    
-    // Generate disclaimer
-    downloadFile(DISCLAIMER_TEXT, `${cleanName}_DISCLAIMER.txt`);
+      const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
+      const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      // Generate code file
+      const code = template.generateCode(strategy, selectedTimeframe);
+      if (!code) {
+        toast({
+          title: "Export Failed",
+          description: "Failed to generate code for export",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      downloadFile(code, `${cleanName}.${platform.extension}`);
+      
+      // Generate README
+      const readme = template.generateReadme(strategy);
+      downloadFile(readme, `${cleanName}_README.txt`);
+      
+      // Generate disclaimer
+      downloadFile(DISCLAIMER_TEXT, `${cleanName}_DISCLAIMER.txt`);
 
-    toast({
-      title: "Export Complete",
-      description: `${strategy.name} exported for ${selectedExportPlatform}`,
-    });
+      toast({
+        title: "Export Complete",
+        description: `${strategy.name} exported for ${selectedExportPlatform}`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Error", 
+        description: "An error occurred during export. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGenerateCode = () => {
     if (!selectedExportPlatform) return;
 
-    const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
-    if (!template) return;
+    try {
+      const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
+      if (!template) {
+        toast({
+          title: "Template Not Found",
+          description: "The selected platform template is not available",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const code = template.generateCode(strategy, selectedTimeframe);
-    setGeneratedCode(code);
-    
-    toast({
-      title: "Code Generated",
-      description: `${strategy.name} script generated for ${selectedExportPlatform}`,
-    });
+      // Generate code with timeout protection
+      const code = template.generateCode(strategy, selectedTimeframe);
+      
+      if (!code || code.trim() === '') {
+        toast({
+          title: "Generation Failed", 
+          description: "Failed to generate code for the selected strategy",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setGeneratedCode(code);
+      
+      toast({
+        title: "Code Generated",
+        description: `${strategy.name} script generated for ${selectedExportPlatform}`,
+      });
+    } catch (error) {
+      console.error('Code generation error:', error);
+      toast({
+        title: "Generation Error",
+        description: "An error occurred while generating the code. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyCode = async () => {
