@@ -476,11 +476,13 @@ export const ChartPatternGenerator = () => {
         </div>
         
         <div className="flex gap-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Select a chart pattern</label>
+          <div className="space-y-3 p-4 bg-card/50 border border-border/50 rounded-lg backdrop-blur-sm">
+            <label className="text-lg font-semibold text-foreground flex items-center gap-2">
+              📊 Select a chart pattern
+            </label>
             <Select value={selectedPattern} onValueChange={setSelectedPattern}>
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select a pattern" />
+              <SelectTrigger className="w-[320px] h-12 text-base border-2 border-primary/20 hover:border-primary/40 focus:border-primary bg-background/90 backdrop-blur-sm">
+                <SelectValue placeholder="Choose your pattern..." />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(PATTERNS).map(([key, pattern]) => (
