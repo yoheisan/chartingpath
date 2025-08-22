@@ -19,6 +19,10 @@ import MemberAccount from "./pages/MemberAccount";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import PatternGenerator from "./pages/PatternGenerator";
+import PatternLibraryPage from "./pages/PatternLibraryPage";
+import TradingStrategiesPage from "./pages/TradingStrategiesPage";
+import PatternQuizPage from "./pages/PatternQuizPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,10 @@ const App = () => (
           <Route path="/tools/pip-calculator" element={<PipCalculator />} />
           <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
           <Route path="/tools/script-generator" element={<ScriptGenerator />} />
+          <Route path="/chart-patterns/generator" element={<PatternGenerator />} />
+          <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
+          <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
+          <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />

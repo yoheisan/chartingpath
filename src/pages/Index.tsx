@@ -57,29 +57,29 @@ const Index = () => {
                   <ChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setActiveTab("generator")}>
-                    <div className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/generator" className="flex items-center gap-2">
                       <BarChart3 className="h-4 w-4" />
                       Pattern Generator
-                    </div>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveTab("library")}>
-                    <div className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/library" className="flex items-center gap-2">
                       <BookOpen className="h-4 w-4" />
                       Pattern Library
-                    </div>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveTab("strategies")}>
-                    <div className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4" />
                       Trading Strategies
-                    </div>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveTab("quiz")}>
-                    <div className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
                       <Brain className="h-4 w-4" />
                       Pattern Quiz
-                    </div>
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
