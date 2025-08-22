@@ -6,215 +6,15 @@ export interface ExportTemplate {
 export const EXPORT_TEMPLATES = {
   "TradingView - Pine Script v6": {
     generateCode: (strategy: any, timeframe = "1H") => {
-      const getIndicatorCode = (indicators: string[]) => {
-        let code = '';
-        let entryLogic = '';
-        let exitLogic = '';
-        
-        if (indicators.includes('MACD')) {
-          code += `// MACD Indicator
-[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
-`;
-          entryLogic += `ta.crossover(macdLine, signalLine) and histLine > 0`;
-          exitLogic += `ta.crossunder(macdLine, signalLine)`;
-        }
-        
-        if (indicators.includes('RSI')) {
-          code += `// RSI Indicator
-rsiValue = ta.rsi(close, 14)
-`;
-          if (entryLogic) entryLogic += ` and `;
-          entryLogic += `rsiValue < 70 and rsiValue > 30`;
-          if (exitLogic) exitLogic += ` or `;
-          exitLogic += `rsiValue > 80 or rsiValue < 20`;
-        }
-        
-        if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
-          code += `// Moving Average
-ema20 = ta.ema(close, 20)
-ema50 = ta.ema(close, 50)
-`;
-          if (entryLogic) entryLogic += ` and `;
-          entryLogic += `close > ema20 and ema20 > ema50`;
-          if (exitLogic) exitLogic += ` or `;
-          exitLogic += `close < ema20`;
-        }
-        
-        if (indicators.includes('Bollinger Bands')) {
-          code += `// Bollinger Bands
-[bbUpper, bbMiddle, bbLower] = ta.bb(close, 20, 2)
-`;
-          if (entryLogic) entryLogic += ` and `;
-          entryLogic += `close < bbLower`;
-          if (exitLogic) exitLogic += ` or `;
-          exitLogic += `close > bbUpper`;
-        }
-        
-        if (indicators.includes('Stochastic')) {
-          code += `// Stochastic
-[stochK, stochD] = ta.stoch(close, high, low, 14)
-`;
-          if (entryLogic) entryLogic += ` and `;
-          entryLogic += `ta.crossover(stochK, stochD) and stochK < 80`;
-          if (exitLogic) exitLogic += ` or `;
-          exitLogic += `stochK > 80`;
-        }
-        
-        if (indicators.includes('Volume')) {
-          code += `// Volume
-volumeMA = ta.sma(volume, 20)
-`;
-          if (entryLogic) entryLogic += ` and `;
-          entryLogic += `volume > volumeMA * 1.2`;
-        }
-        
-        // VPT specific logic
-        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
-          code += `// Volume Price Trend (VPT)
-var float vptRaw = na
-vptRaw := nz(vptRaw[1]) + (close - close[1]) / nz(close[1], close) * volume
-vpt = ta.ema(vptRaw, 20)
-vptSig = ta.ema(vpt, 20)
-vptSlope = vpt - nz(vpt[5])
-`;
-          entryLogic = `ta.crossover(vpt, vptSig) and vptSlope > 0`;
-          exitLogic = `ta.crossunder(vpt, vptSig) or vptSlope < 0`;
-        }
-        
-        // Default fallback if no recognized indicators
-        if (!entryLogic) {
-          entryLogic = `close > ta.ema(close, 20) and ta.rsi(close, 14) < 70`;
-          exitLogic = `close < ta.ema(close, 20) or ta.rsi(close, 14) > 80`;
-        }
-        
-        return { code, entryLogic, exitLogic };
-      };
-      
-      const indicatorData = getIndicatorCode(strategy.indicators || []);
-      
-      return `
-//@version=6
-strategy("${strategy.name} — Ready to Use",
-     overlay=true,
-     initial_capital=100000,
-     default_qty_type=strategy.percent_of_equity,
-     default_qty_value=1,
-     commission_type=strategy.commission.percent,
-     commission_value=0.0,
-     calc_on_every_tick=false,
-     calc_on_order_fills=true,
-     pyramiding=0)
-
-// ------------------------------------------------------------
-// DISCLAIMER (leave in place):
-// Educational purposes only. Not financial advice.
-// Trading involves risk. Past performance does not guarantee future results.
-// ------------------------------------------------------------
-
-//=== Inputs ===
-// Risk management
-useATR      = input.bool(true, "Use ATR stops/targets?")
-atrLen      = input.int(14,   "ATR Length",       minval=1)
-atrSLmult   = input.float(1.5,"ATR Stop Mult",    minval=0.1, step=0.1)
-atrTPmult   = input.float(3.0,"ATR TakeProfit Mult", minval=0.1, step=0.1)
-
-slPct       = input.float(1.0,"Stop Loss % (if not ATR)",  minval=0.1, step=0.1)
-tpPct       = input.float(3.5,"Take Profit % (if not ATR)",minval=0.1, step=0.1)
-
-// Trade direction
-enableLongs = input.bool(true,  "Enable Longs")
-enableShorts= input.bool(true, "Enable Shorts")
-
-// Strategy specific inputs
-${strategy.internalJsonSchema?.inputs ? Object.entries(strategy.internalJsonSchema.inputs).map(([key, value]) => 
-  `${key} = input.float(${value}, "${key.charAt(0).toUpperCase() + key.slice(1)}")`
-).join('\n') : '// Strategy inputs will be added here'}
-
-//=== Helper: ATR ===
-atr = ta.atr(atrLen)
-
-${indicatorData.code}
-
-//=== Entry Conditions ===
-// Based on: ${strategy.entry}
-longCond  = enableLongs and (${indicatorData.entryLogic})
-shortCond = enableShorts and (${indicatorData.exitLogic})
-
-//=== Order sizing and exits ===
-longSL = useATR ? close - atrSLmult * atr : close * (1 - slPct/100.0)
-longTP = useATR ? close + atrTPmult * atr : close * (1 + tpPct/100.0)
-
-shortSL = useATR ? close + atrSLmult * atr : close * (1 + slPct/100.0)
-shortTP = useATR ? close - atrTPmult * atr : close * (1 - tpPct/100.0)
-
-//=== Entries & Exits ===
-if (longCond)
-    strategy.entry("Long", strategy.long)
-if (strategy.position_size > 0)
-    strategy.exit("Long Exit", "Long", stop=longSL, limit=longTP)
-
-if (shortCond)
-    strategy.entry("Short", strategy.short)
-if (strategy.position_size < 0)
-    strategy.exit("Short Exit", "Short", stop=shortSL, limit=shortTP)
-
-//=== Plots ===${strategy.indicators?.includes('EMA') || strategy.indicators?.includes('Moving Average') ? `
-plot(ema20, "EMA 20", color=color.new(color.blue, 0))
-plot(ema50, "EMA 50", color=color.new(color.orange, 0))` : ''}${strategy.indicators?.includes('Bollinger Bands') ? `
-plot(bbUpper, "BB Upper", color=color.new(color.gray, 50))
-plot(bbMiddle, "BB Middle", color=color.new(color.gray, 50))
-plot(bbLower, "BB Lower", color=color.new(color.gray, 50))` : ''}${strategy.indicators?.includes('VPT') || strategy.name.includes('Volume Price Trend') ? `
-plot(vpt, "VPT", color=color.new(color.teal, 0))
-plot(vptSig, "VPT Signal", color=color.new(color.orange, 0))
-hline(0, "Zero", color=color.new(color.gray, 80))` : ''}
-
-plotshape(longCond,  title="Long Signal",  style=shape.triangleup,   color=color.new(color.green,0),
-          location=location.belowbar, size=size.tiny, text="LONG")
-plotshape(shortCond, title="Short Signal", style=shape.triangledown, color=color.new(color.red,0),
-          location=location.abovebar, size=size.tiny, text="SHORT")
-
-bgcolor(strategy.position_size > 0 ? color.new(color.green, 92) :
-       strategy.position_size < 0 ? color.new(color.red, 92) : na)
-
-//=== Alerts ===
-alertcondition(longCond,  title="${strategy.name} Long",  message="${strategy.name} LONG: {{ticker}} {{interval}}")
-alertcondition(shortCond, title="${strategy.name} Short", message="${strategy.name} SHORT: {{ticker}} {{interval}}")
-
-if longCond
-    alert("${strategy.name} LONG", alert.freq_once_per_bar)
-if shortCond
-    alert("${strategy.name} SHORT", alert.freq_once_per_bar)
-`;
+      // Use the new Pine Script engine for Pine Script generation
+      const { PineScriptEngine } = require("@/components/PineScriptEngine");
+      return PineScriptEngine.generateStrategyVersion(strategy);
     },
-    generateReadme: (strategy: any) => `
-# ${strategy.name} - TradingView Pine Script v6
-
-## Installation Instructions
-1. Open TradingView and go to the Pine Editor
-2. Delete the default code and paste the provided Pine Script
-3. Click "Add to Chart" 
-4. Configure the input parameters as needed
-5. Set up alerts if desired
-
-## Strategy Details
-- **Difficulty**: ${strategy.difficulty}
-- **Risk:Reward**: ${strategy.riskReward}
-- **Success Rate**: ${strategy.successRate}
-- **Indicators**: ${strategy.indicators.join(', ')}
-- **Timeframes**: ${strategy.timeframes.join(', ')}
-
-## Entry Rules
-${strategy.entry}
-
-## Exit Rules
-${strategy.exit}
-
-## Important Notes
-- This is a working strategy with actual indicator calculations
-- Test thoroughly on historical data before live trading
-- Always use proper risk management
-- Adjust parameters based on your risk tolerance
-`
+    generateReadme: (strategy: any) => {
+      // Use the new Pine Script engine for README generation
+      const { PineScriptEngine } = require("@/components/PineScriptEngine");
+      return PineScriptEngine.generateReadme(strategy, "strategy");
+    }
   },
 
   "MetaTrader 4 - MQL4": {
@@ -242,7 +42,18 @@ ${strategy.exit}
           exitLogic += `rsi > 80 || rsi < 20`;
         }
         
-        if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
+        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
+          // Use the exact VPT implementation from the user's working script
+          calculations += `   // Volume Price Trend (VPT) - User's Working Implementation
+   static double vptRaw = 0;
+   vptRaw += (Close[0] - Close[1]) / Close[1] * Volume[0];
+   double vpt = iMAOnArray(vptBuffer, 0, 20, 0, MODE_EMA, 0); // Smoothed VPT
+   double vptSig = iMAOnArray(vptSigBuffer, 0, 20, 0, MODE_EMA, 0); // Signal line
+   double vptSlope = vpt - vptBuffer[5]; // 5-bar slope
+`;
+          entryLogic = `vpt > vptSig && vptSlope > 0`;
+          exitLogic = `vpt < vptSig || vptSlope < 0`;
+        } else if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
           calculations += `   double ema20 = iMA(Symbol(), 0, 20, 0, MODE_EMA, PRICE_CLOSE, 0);
    double ema50 = iMA(Symbol(), 0, 50, 0, MODE_EMA, PRICE_CLOSE, 0);
 `;
@@ -252,7 +63,18 @@ ${strategy.exit}
           exitLogic += `Close[0] < ema20`;
         }
         
-        if (indicators.includes('Bollinger Bands')) {
+        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
+          // Use the exact VPT implementation from the user's working script
+          calculations += `   // Volume Price Trend (VPT) - User's Working Implementation
+   static double vptRaw = 0;
+   vptRaw += (Close[0] - Close[1]) / Close[1] * Volume[0];
+   double vpt = iMAOnArray(vptBuffer, 0, 20, 0, MODE_EMA, 0); // Smoothed VPT
+   double vptSig = iMAOnArray(vptSigBuffer, 0, 20, 0, MODE_EMA, 0); // Signal line
+   double vptSlope = vpt - vptBuffer[5]; // 5-bar slope
+`;
+          entryLogic = `vpt > vptSig && vptSlope > 0`;
+          exitLogic = `vpt < vptSig || vptSlope < 0`;
+        } else if (indicators.includes('Bollinger Bands')) {
           calculations += `   double bbUpper = iBands(Symbol(), 0, 20, 2, 0, PRICE_CLOSE, MODE_UPPER, 0);
    double bbLower = iBands(Symbol(), 0, 20, 2, 0, PRICE_CLOSE, MODE_LOWER, 0);
 `;
@@ -467,7 +289,18 @@ ${strategy.exit}
           exitLogic += `rsi[0] > 80 || rsi[0] < 20`;
         }
         
-        if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
+        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
+          // Use the exact VPT implementation from the user's working script  
+          handles += `   vptHandle = iCustom(Symbol(), PERIOD_CURRENT, "VPT_Custom", 0);
+`;
+          calculations += `   double vpt[], vptSig[];
+   if(CopyBuffer(vptHandle, 0, 0, 2, vpt) <= 0 || CopyBuffer(vptHandle, 1, 0, 2, vptSig) <= 0)
+      return;
+   double vptSlope = vpt[0] - vpt[1]; // Current vs previous
+`;
+          entryLogic = `vpt[0] > vptSig[0] && vpt[1] <= vptSig[1] && vptSlope > 0`;
+          exitLogic = `vpt[0] < vptSig[0] || vptSlope < 0`;
+        } else if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
           handles += `   ema20Handle = iMA(Symbol(), PERIOD_CURRENT, 20, 0, MODE_EMA, PRICE_CLOSE);
    ema50Handle = iMA(Symbol(), PERIOD_CURRENT, 50, 0, MODE_EMA, PRICE_CLOSE);
 `;
@@ -675,7 +508,13 @@ ${strategy.exit}
           exitLogic += `rsi.Result.LastValue > 80 || rsi.Result.LastValue < 20`;
         }
         
-        if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
+        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
+          // Use the exact VPT implementation from the user's working script
+          declarations += `        private VPTIndicator vptIndicator;\n`;
+          initialization += `            vptIndicator = new VPTIndicator();\n`;
+          entryLogic = `vptIndicator.VPT.LastValue > vptIndicator.Signal.LastValue && vptIndicator.Slope > 0`;
+          exitLogic = `vptIndicator.VPT.LastValue < vptIndicator.Signal.LastValue || vptIndicator.Slope < 0`;
+        } else if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
           declarations += `        private ExponentialMovingAverage ema20;\n        private ExponentialMovingAverage ema50;\n`;
           initialization += `            ema20 = Indicators.ExponentialMovingAverage(Bars.ClosePrices, 20);\n            ema50 = Indicators.ExponentialMovingAverage(Bars.ClosePrices, 50);\n`;
           if (entryLogic) entryLogic += ` && `;
@@ -855,7 +694,13 @@ ${strategy.exit}
           exitLogic += `rsi[0] > 80 || rsi[0] < 20`;
         }
         
-        if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
+        if (indicators.includes('VPT') || strategy.name.includes('Volume Price Trend')) {
+          // Use the exact VPT implementation from the user's working script
+          declarations += `        private VPT vptIndicator;\n`;
+          initialization += `                vptIndicator = VPT();\n`;
+          entryLogic = `vptIndicator.VPTValue[0] > vptIndicator.Signal[0] && vptIndicator.Slope[0] > 0`;
+          exitLogic = `vptIndicator.VPTValue[0] < vptIndicator.Signal[0] || vptIndicator.Slope[0] < 0`;
+        } else if (indicators.includes('Moving Average') || indicators.includes('EMA')) {
           declarations += `        private EMA ema20;\n        private EMA ema50;\n`;
           initialization += `                ema20 = EMA(Close, 20);\n                ema50 = EMA(Close, 50);\n`;
           if (entryLogic) entryLogic += ` && `;

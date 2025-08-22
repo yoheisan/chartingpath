@@ -8,6 +8,7 @@ import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle, Code, Copy,
 import { useState } from "react";
 import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
+import { PineScriptEngine } from "@/components/PineScriptEngine";
 import { useToast } from "@/hooks/use-toast";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
@@ -209,6 +210,48 @@ export const StrategyDetail = () => {
     });
   };
 
+  const handleDownloadPineScript = (variant: "indicator" | "strategy") => {
+    try {
+      const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      // Generate Pine Script code
+      const pineCode = variant === "indicator" 
+        ? PineScriptEngine.generateIndicatorVersion(strategy)
+        : PineScriptEngine.generateStrategyVersion(strategy);
+      
+      // Generate README
+      const readme = PineScriptEngine.generateReadme(strategy, variant);
+      
+      // Generate disclaimer
+      const disclaimer = PineScriptEngine.generateDisclaimer();
+      
+      // Create ZIP-like bundle by downloading multiple files
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const prefix = `${cleanName}_${variant}_${timestamp}`;
+      
+      // Download Pine Script
+      downloadFile(pineCode, `${prefix}.pine`);
+      
+      // Download README
+      downloadFile(readme, `${prefix}_README.txt`);
+      
+      // Download disclaimer
+      downloadFile(disclaimer, `${prefix}_DISCLAIMER.txt`);
+      
+      toast({
+        title: "Pine Script Downloaded",
+        description: `${strategy.name} ${variant} version exported with documentation`,
+      });
+    } catch (error) {
+      console.error('Pine Script export error:', error);
+      toast({
+        title: "Export Error",
+        description: "An error occurred during Pine Script export. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -292,12 +335,71 @@ export const StrategyDetail = () => {
           </Card>
         </div>
 
-        {/* Export Section */}
+        {/* Pine Script Downloads */}
         <Card className="p-6">
           <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-xl">Export Strategy Code</CardTitle>
+            <CardTitle className="text-xl">Pine Script v6 Downloads</CardTitle>
             <CardDescription>
-              Generate ready-to-use code for your preferred trading platform
+              Download ready-to-use Pine Script files following uniform engine standards
+            </CardDescription>
+          </CardHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card className="p-4 border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+              <div className="text-center space-y-3">
+                <div className="text-lg font-semibold text-primary">Indicator Version</div>
+                <p className="text-sm text-muted-foreground">
+                  Visual signals and alerts only. No trade execution.
+                  Perfect for manual trading and signal confirmation.
+                </p>
+                <Button 
+                  onClick={() => handleDownloadPineScript("indicator")}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Indicator
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-4 border-2 border-dashed border-accent/20 hover:border-accent/40 transition-colors">
+              <div className="text-center space-y-3">
+                <div className="text-lg font-semibold text-accent">Strategy Version</div>
+                <p className="text-sm text-muted-foreground">
+                  Full backtesting strategy with automated entries, exits, and risk management.
+                  Includes opposite-close rules and uniform filters.
+                </p>
+                <Button 
+                  onClick={() => handleDownloadPineScript("strategy")}
+                  className="w-full"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Strategy
+                </Button>
+              </div>
+            </Card>
+          </div>
+
+          <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
+            <h4 className="font-medium text-accent mb-2">Uniform Engine Features</h4>
+            <ul className="text-sm text-muted-foreground space-y-1 grid grid-cols-1 md:grid-cols-2 gap-x-4">
+              <li>• EMA trend filter (configurable)</li>
+              <li>• Volume confirmation (optional)</li>
+              <li>• ATR or % based risk management</li>
+              <li>• No overlapping positions</li>
+              <li>• Real-time alerts support</li>
+              <li>• Date range backtesting</li>
+            </ul>
+          </div>
+        </Card>
+
+        {/* Legacy Export Section */}
+        <Card className="p-6">
+          <CardHeader className="p-0 mb-6">
+            <CardTitle className="text-xl">Multi-Platform Export</CardTitle>
+            <CardDescription>
+              Generate code for other trading platforms (MetaTrader, cTrader, etc.)
             </CardDescription>
           </CardHeader>
           
@@ -401,6 +503,27 @@ export const StrategyDetail = () => {
                   Always test thoroughly and use proper risk management.
                 </p>
               </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Global Disclaimer */}
+        <Card className="p-6 border-2 border-yellow-500/20">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-6 w-6 text-yellow-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-yellow-500 mb-2">Important Disclaimer</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                All scripts are provided for educational purposes only and follow uniform Pine Script v6 standards. 
+                Each download includes detailed documentation and disclaimers.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Educational use only - not financial advice</li>
+                <li>• Always test strategies thoroughly before live trading</li>
+                <li>• Past performance does not guarantee future results</li>
+                <li>• Use proper risk management and position sizing</li>
+                <li>• Comply with all applicable laws and regulations</li>
+              </ul>
             </div>
           </div>
         </Card>
