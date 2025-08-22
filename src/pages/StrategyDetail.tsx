@@ -29,13 +29,13 @@ const COMING_SOON_PLATFORMS = [
 ];
 
 export const StrategyDetail = () => {
-  const { id } = useParams();
+  const { strategyId } = useParams();
   const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
   const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("");
 
-  const strategy = tradingStrategies.find(s => s.id === parseInt(id || "0"));
+  const strategy = tradingStrategies.find(s => s.id === parseInt(strategyId || "0"));
 
   if (!strategy) {
     return (
