@@ -1,35 +1,102 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Rocket, ArrowLeft, Sparkles, Code, Mail } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Code, Copy, Download, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { tradingStrategies } from "@/utils/TradingStrategiesData";
+import { EXPORT_TEMPLATES } from "@/components/StrategyExportTemplates";
+import { useToast } from "@/hooks/use-toast";
+
+const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
+
+const EXPORT_PLATFORMS = {
+  "TradingView - Pine Script v5": { extension: "pine" },
+  "MetaTrader 4 - MQL4": { extension: "mq4" },
+  "MetaTrader 5 - MQL5": { extension: "mq5" },
+  "cTrader - C#": { extension: "cs" },
+  "NinjaTrader 8 - C#": { extension: "cs" }
+};
 
 const ScriptGenerator = () => {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { toast } = useToast();
+  const [selectedStrategy, setSelectedStrategy] = useState<string>("");
+  const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("TradingView - Pine Script v5");
+  const [generatedCode, setGeneratedCode] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
+  const handleGenerateScript = () => {
+    if (!selectedStrategy) return;
 
-    // Analytics event
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'lead_captured', {
-        event_category: 'Waitlist',
-        event_label: 'script_generator'
+    const strategy = tradingStrategies.find(s => s.id === parseInt(selectedStrategy));
+    if (!strategy) return;
+
+    const template = EXPORT_TEMPLATES[selectedPlatform as keyof typeof EXPORT_TEMPLATES];
+    if (!template) return;
+
+    const code = template.generateCode(strategy, selectedTimeframe);
+    setGeneratedCode(code);
+    
+    toast({
+      title: "Script Generated",
+      description: `${strategy.name} script generated for ${selectedPlatform}`,
+    });
+  };
+
+  const handleCopyCode = async () => {
+    if (!generatedCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
+      toast({
+        title: "Code Copied",
+        description: "Script code copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy code to clipboard",
+        variant: "destructive",
       });
     }
-
-    setIsSubmitted(true);
   };
+
+  const handleExportFile = () => {
+    if (!generatedCode || !selectedStrategy) return;
+
+    const strategy = tradingStrategies.find(s => s.id === parseInt(selectedStrategy));
+    if (!strategy) return;
+
+    const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
+    const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
+    
+    const blob = new Blob([generatedCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${cleanName}.${platform.extension}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "File Exported",
+      description: `${strategy.name}.${platform.extension} downloaded`,
+    });
+  };
+
+  const selectedStrategyData = tradingStrategies.find(s => s.id === parseInt(selectedStrategy || "0"));
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -42,238 +109,167 @@ const ScriptGenerator = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
-              <Rocket className="h-6 w-6 text-white" />
+              <Code className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Automated Script Generator
+              Strategy Script Generator
             </h1>
-            <div className="px-3 py-1 bg-accent/20 text-accent text-sm font-semibold rounded-full">
-              Coming Soon 🚀
-            </div>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Soon you'll select candlestick patterns, entry/exit rules, and risk settings — and instantly generate scripts in Pine, Python, or MQL.
+            Generate ready-to-use trading scripts from our strategy library for your preferred platform
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Preview Form (Disabled) */}
-          <Card>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Configuration Panel */}
+          <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
+                <Code className="h-5 w-5" />
                 Script Configuration
               </CardTitle>
               <CardDescription>
-                Preview of the upcoming script generator interface
+                Select strategy, timeframe, and platform to generate your script
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 opacity-60">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label>Pattern(s)</Label>
-                <Select disabled>
+                <Label>Trading Strategy</Label>
+                <Select value={selectedStrategy} onValueChange={setSelectedStrategy}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select patterns..." />
+                    <SelectValue placeholder="Select strategy..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hammer">Hammer</SelectItem>
-                    <SelectItem value="engulfing">Engulfing</SelectItem>
-                    <SelectItem value="doji">Doji</SelectItem>
-                    <SelectItem value="ema-cross">EMA Cross</SelectItem>
-                    <SelectItem value="rsi-divergence">RSI Divergence</SelectItem>
+                    {tradingStrategies.filter(s => !s.hidden).map(strategy => (
+                      <SelectItem key={strategy.id} value={strategy.id.toString()}>
+                        {strategy.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Entry Rule</Label>
-                <Select disabled>
+                <Label>Timeframe</Label>
+                <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select entry rule..." />
+                    <SelectValue placeholder="Select timeframe..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="breakout">Breakout</SelectItem>
-                    <SelectItem value="pullback">Pullback</SelectItem>
-                    <SelectItem value="reversal">Reversal</SelectItem>
+                    {TIMEFRAMES.map(tf => (
+                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Exit Rule</Label>
-                <Select disabled>
+                <Label>Export Platform</Label>
+                <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select exit rule..." />
+                    <SelectValue placeholder="Choose platform..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="tp-sl">TP/SL</SelectItem>
-                    <SelectItem value="trailing-stop">Trailing Stop</SelectItem>
-                    <SelectItem value="opposite-signal">Opposite Signal</SelectItem>
+                    {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                      <SelectItem key={platform} value={platform}>
+                        {platform}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="risk-percent">Risk %</Label>
-                  <Input id="risk-percent" placeholder="2.0" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stop-loss">Stop Loss</Label>
-                  <Input id="stop-loss" placeholder="50 pips" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="take-profit">Take Profit (R:R)</Label>
-                  <Input id="take-profit" placeholder="2:1" disabled />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Output Format</Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="pine" disabled />
-                    <Label htmlFor="pine" className="text-sm">Pine Script</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="python" disabled />
-                    <Label htmlFor="python" className="text-sm">Python</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="mql5" disabled />
-                    <Label htmlFor="mql5" className="text-sm">MQL5</Label>
-                  </div>
-                </div>
-              </div>
-
-              <Button disabled className="w-full">
+              <Button 
+                onClick={handleGenerateScript}
+                disabled={!selectedStrategy}
+                className="w-full"
+              >
                 <Code className="h-4 w-4 mr-2" />
                 Generate Script
               </Button>
+
+              {selectedStrategyData && (
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-medium text-foreground mb-2">{selectedStrategyData.name}</h4>
+                  <p className="text-sm text-muted-foreground mb-2">{selectedStrategyData.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedStrategyData.indicators.slice(0, 3).map((indicator, index) => (
+                      <span key={index} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
+                        {indicator}
+                      </span>
+                    ))}
+                    {selectedStrategyData.indicators.length > 3 && (
+                      <span className="text-xs text-muted-foreground">+{selectedStrategyData.indicators.length - 3} more</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Waitlist Signup */}
-          <Card>
+          {/* Script Output */}
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Join the Waitlist
-              </CardTitle>
-              <CardDescription>
-                Be the first to try the automated script generator when it launches
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!isSubmitted ? (
-                <form onSubmit={handleWaitlistSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={!email}>
-                      Join Waitlist for Early Access
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    Generated Script
+                  </CardTitle>
+                  <CardDescription>
+                    {generatedCode ? `${selectedStrategyData?.name} - ${selectedPlatform}` : "Configure and generate your script"}
+                  </CardDescription>
+                </div>
+                {generatedCode && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleCopyCode}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copied ? "Copied" : "Copy"}
+                    </Button>
+                    <Button
+                      onClick={handleExportFile}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
                     </Button>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                      <h4 className="font-semibold text-foreground mb-2">What You'll Get:</h4>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• First access to the script generator</li>
-                        <li>• Free credits to test the platform</li>
-                        <li>• Exclusive early-bird pricing</li>
-                        <li>• Priority support and feedback channel</li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
-                      <h4 className="font-semibold text-foreground mb-2">Expected Features:</h4>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• Visual pattern selection interface</li>
-                        <li>• Multi-language script output</li>
-                        <li>• Backtesting integration</li>
-                        <li>• Risk management automation</li>
-                        <li>• Custom indicator combinations</li>
-                      </ul>
-                    </div>
-                  </div>
-                </form>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {generatedCode ? (
+                <div className="relative">
+                  <Textarea
+                    value={generatedCode}
+                    readOnly
+                    className="min-h-[500px] font-mono text-sm bg-muted/30 border-muted"
+                    placeholder="Generated script will appear here..."
+                  />
+                </div>
               ) : (
-                <div className="text-center py-8 space-y-4">
-                  <div className="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-primary" />
+                <div className="min-h-[500px] flex items-center justify-center bg-muted/30 rounded-md border border-dashed border-muted-foreground/25">
+                  <div className="text-center space-y-3">
+                    <Code className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <p className="text-muted-foreground">Select a strategy and click "Generate Script" to view the code</p>
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground">You're on the list!</h3>
-                  <p className="text-muted-foreground">
-                    We'll notify you as soon as the script generator is ready. Keep an eye on your inbox!
-                  </p>
-                  <Button variant="outline" asChild className="mt-4">
-                    <Link to="/">Return to Home</Link>
-                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Technology Preview */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Technology Preview</CardTitle>
-            <CardDescription>
-              A glimpse into the advanced automation coming to ChartingPath
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center">
-                  <Code className="h-6 w-6 text-primary" />
-                </div>
-                <h4 className="font-semibold text-foreground">Multi-Platform Output</h4>
-                <p className="text-sm text-muted-foreground">
-                  Generate scripts for TradingView Pine Script, Python (for MT4/MT5), and MQL5 from a single configuration.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-accent/10 w-12 h-12 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-accent" />
-                </div>
-                <h4 className="font-semibold text-foreground">AI-Powered Logic</h4>
-                <p className="text-sm text-muted-foreground">
-                  Advanced algorithms analyze pattern combinations and generate optimized entry/exit logic based on historical performance.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-secondary/10 w-12 h-12 flex items-center justify-center">
-                  <Rocket className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                <h4 className="font-semibold text-foreground">Instant Deployment</h4>
-                <p className="text-sm text-muted-foreground">
-                  One-click deployment to your trading platform with automated backtesting and performance validation.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Disclaimer */}
-        <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+        <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
-            <strong>Disclaimer:</strong> Under development. Educational purposes only. Not financial advice. Past performance does not guarantee future results.
-            Generated scripts should be thoroughly tested before live trading.
+            <strong>Disclaimer:</strong> This code is for educational purposes only and does not constitute financial advice. 
+            Trading involves risk. Past performance does not guarantee future results. 
+            Always test thoroughly and use proper risk management.
           </p>
         </div>
       </div>
