@@ -5,10 +5,16 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, Users, Bot, CheckCircle, ArrowRight } from "lucide-react";
+import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, Users, Bot, CheckCircle, ArrowRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthButton from "@/components/AuthButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
@@ -45,9 +51,26 @@ const Index = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              <Link to="/tools/pip-calculator" className="text-muted-foreground hover:text-foreground transition-colors">
-                Calculators
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                  Calculators
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/pip-calculator" className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4" />
+                      Pip Calculator
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/risk-calculator" className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Risk Calculator
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
               </Link>
