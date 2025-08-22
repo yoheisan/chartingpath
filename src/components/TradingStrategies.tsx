@@ -6,21 +6,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TrendingUp, TrendingDown, Search, Filter, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
+import { tradingStrategies, Strategy, STRATEGY_PACKS } from "@/utils/TradingStrategiesData";
 
 export const TradingStrategies = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
+  const [selectedPack, setSelectedPack] = useState<string>("all");
 
-  // Get unique categories, difficulties, and timeframes
-  const categories = Array.from(new Set(tradingStrategies.map(s => s.category))).sort();
+  // Filter out hidden strategies and get unique categories, difficulties, and timeframes
+  const visibleStrategies = tradingStrategies.filter(s => !s.hidden);
+  const categories = Array.from(new Set(visibleStrategies.map(s => s.category))).sort();
   const difficulties = ["Beginner", "Intermediate", "Advanced", "Expert"];
-  const timeframes = Array.from(new Set(tradingStrategies.flatMap(s => s.timeframes))).sort();
+  const timeframes = Array.from(new Set(visibleStrategies.flatMap(s => s.timeframes))).sort();
+  const packs = Object.keys(STRATEGY_PACKS);
 
   // Filter strategies
-  const filteredStrategies = tradingStrategies.filter(strategy => {
+  const filteredStrategies = visibleStrategies.filter(strategy => {
     const matchesSearch = strategy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          strategy.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          strategy.indicators.some(ind => ind.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -28,8 +31,9 @@ export const TradingStrategies = () => {
     const matchesCategory = selectedCategory === "all" || strategy.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === "all" || strategy.difficulty === selectedDifficulty;
     const matchesTimeframe = selectedTimeframe === "all" || strategy.timeframes.includes(selectedTimeframe);
+    const matchesPack = selectedPack === "all" || strategy.pack === selectedPack;
 
-    return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeframe;
+    return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeframe && matchesPack;
   });
 
   const getDifficultyColor = (difficulty: string) => {
@@ -218,7 +222,7 @@ export const TradingStrategies = () => {
 
       {/* Filters */}
       <Card className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -228,6 +232,20 @@ export const TradingStrategies = () => {
               className="pl-10"
             />
           </div>
+          
+          <Select value={selectedPack} onValueChange={setSelectedPack}>
+            <SelectTrigger>
+              <SelectValue placeholder="Strategy Pack" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Packs</SelectItem>
+              {packs.map(pack => (
+                <SelectItem key={pack} value={pack}>
+                  {pack.replace(" Strategy Pack", "").replace(" & ", " & ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger>
@@ -272,6 +290,7 @@ export const TradingStrategies = () => {
               setSelectedCategory("all");
               setSelectedDifficulty("all");
               setSelectedTimeframe("all");
+              setSelectedPack("all");
             }}
           >
             <Filter className="h-4 w-4 mr-2" />
@@ -283,7 +302,7 @@ export const TradingStrategies = () => {
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground">
-          Showing {filteredStrategies.length} of {tradingStrategies.length} strategies
+          Showing {filteredStrategies.length} of {visibleStrategies.length} strategies
         </p>
       </div>
 
