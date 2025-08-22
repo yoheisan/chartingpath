@@ -9,8 +9,8 @@ import { Link } from "react-router-dom";
 
 const MemberScripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("");
-  const [selectedStrategy, setSelectedStrategy] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [selectedStrategy, setSelectedStrategy] = useState("all");
 
   const scripts = [
     {
@@ -49,8 +49,8 @@ const MemberScripts = () => {
   const filteredScripts = scripts.filter(script => {
     return (
       script.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedLanguage === "" || script.language === selectedLanguage) &&
-      (selectedStrategy === "" || script.strategy === selectedStrategy)
+      (selectedLanguage === "all" || script.language === selectedLanguage) &&
+      (selectedStrategy === "all" || script.strategy === selectedStrategy)
     );
   });
 
@@ -118,7 +118,7 @@ const MemberScripts = () => {
                     <SelectValue placeholder="All Languages" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Languages</SelectItem>
+                    <SelectItem value="all">All Languages</SelectItem>
                     <SelectItem value="Pine Script">Pine Script</SelectItem>
                     <SelectItem value="Python">Python</SelectItem>
                     <SelectItem value="MQL5">MQL5</SelectItem>
@@ -133,7 +133,7 @@ const MemberScripts = () => {
                     <SelectValue placeholder="All Strategies" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Strategies</SelectItem>
+                    <SelectItem value="all">All Strategies</SelectItem>
                     <SelectItem value="Trend Following">Trend Following</SelectItem>
                     <SelectItem value="Breakout">Breakout</SelectItem>
                     <SelectItem value="Reversal">Reversal</SelectItem>
@@ -143,7 +143,15 @@ const MemberScripts = () => {
               </div>
 
               <div className="flex items-end">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedLanguage("all");
+                    setSelectedStrategy("all");
+                  }}
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   Clear Filters
                 </Button>
