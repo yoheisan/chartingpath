@@ -53,6 +53,38 @@ const Index = () => {
             <nav className="hidden md:flex items-center gap-6">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                  Chart Patterns
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setActiveTab("generator")}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <BarChart3 className="h-4 w-4" />
+                      Pattern Generator
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveTab("library")}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <BookOpen className="h-4 w-4" />
+                      Pattern Library
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveTab("strategies")}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <TrendingUp className="h-4 w-4" />
+                      Trading Strategies
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveTab("quiz")}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <Brain className="h-4 w-4" />
+                      Pattern Quiz
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                   Calculators
                   <ChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
