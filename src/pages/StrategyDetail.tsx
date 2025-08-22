@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle, Code, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
@@ -33,7 +34,9 @@ export const StrategyDetail = () => {
   const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
-  const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("");
+  const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("TradingView - Pine Script v5");
+  const [generatedCode, setGeneratedCode] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   const strategy = tradingStrategies.find(s => s.id === parseInt(strategyId || "0"));
 
@@ -101,6 +104,56 @@ export const StrategyDetail = () => {
     toast({
       title: "Export Complete",
       description: `${strategy.name} exported for ${selectedExportPlatform}`,
+    });
+  };
+
+  const handleGenerateCode = () => {
+    if (!selectedExportPlatform) return;
+
+    const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
+    if (!template) return;
+
+    const code = template.generateCode(strategy, selectedTimeframe);
+    setGeneratedCode(code);
+    
+    toast({
+      title: "Code Generated",
+      description: `${strategy.name} script generated for ${selectedExportPlatform}`,
+    });
+  };
+
+  const handleCopyCode = async () => {
+    if (!generatedCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
+      toast({
+        title: "Code Copied",
+        description: "Script code copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy code to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportCodeFile = () => {
+    if (!generatedCode) return;
+
+    const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
+    const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
+    
+    downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
+
+    toast({
+      title: "File Exported",
+      description: `${strategy.name}.${platform.extension} downloaded`,
     });
   };
 
@@ -262,14 +315,26 @@ export const StrategyDetail = () => {
               </Select>
             </div>
 
-            <Button 
-              onClick={handleExport}
-              disabled={!selectedExportPlatform || COMING_SOON_PLATFORMS.includes(selectedExportPlatform)}
-              className="w-full"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Strategy Bundle
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleGenerateCode}
+                disabled={!selectedExportPlatform || COMING_SOON_PLATFORMS.includes(selectedExportPlatform)}
+                className="flex-1"
+              >
+                <Code className="h-4 w-4 mr-2" />
+                Generate Code
+              </Button>
+              
+              <Button 
+                onClick={handleExport}
+                disabled={!selectedExportPlatform || COMING_SOON_PLATFORMS.includes(selectedExportPlatform)}
+                variant="outline"
+                className="flex-1"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Bundle
+              </Button>
+            </div>
           </div>
 
           {/* Disclaimer */}
@@ -287,6 +352,53 @@ export const StrategyDetail = () => {
             </div>
           </div>
         </Card>
+
+        {/* Script Code Window */}
+        {generatedCode && (
+          <Card className="p-6">
+            <CardHeader className="p-0 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    Generated Script Code
+                  </CardTitle>
+                  <CardDescription>
+                    {strategy.name} - {selectedExportPlatform} ({selectedTimeframe})
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCopyCode}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                  <Button
+                    onClick={handleExportCodeFile}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export File
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="relative">
+                <Textarea
+                  value={generatedCode}
+                  readOnly
+                  className="min-h-[400px] font-mono text-sm bg-muted/30 border-muted resize-none"
+                  placeholder="Generated script will appear here..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
