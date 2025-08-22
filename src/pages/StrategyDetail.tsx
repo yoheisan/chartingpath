@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
 const EXPORT_PLATFORMS = {
-  "TradingView - Pine Script v5": { extension: "pine" },
+  "TradingView - Pine Script v6": { extension: "pine" },
   "MetaTrader 4 - MQL4": { extension: "mq4" },
   "MetaTrader 5 - MQL5": { extension: "mq5" },
   "cTrader - C#": { extension: "cs" },
@@ -34,7 +34,7 @@ export const StrategyDetail = () => {
   const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
-  const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("TradingView - Pine Script v5");
+  const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("TradingView - Pine Script v6");
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [copied, setCopied] = useState(false);
 

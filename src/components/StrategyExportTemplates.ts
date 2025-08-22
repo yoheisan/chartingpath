@@ -4,9 +4,9 @@ export interface ExportTemplate {
 }
 
 export const EXPORT_TEMPLATES = {
-  "TradingView - Pine Script v5": {
+  "TradingView - Pine Script v6": {
     generateCode: (strategy: any, timeframe = "1H") => `
-//@version=5
+//@version=6
 strategy("${strategy.name}", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=1)
 
 // Disclaimer
@@ -24,6 +24,9 @@ ${strategy.internalJsonSchema?.inputs ? Object.entries(strategy.internalJsonSche
   `${key} = input.float(${value}, title="${key.charAt(0).toUpperCase() + key.slice(1)}")`
 ).join('\n') : '// Add your input parameters here'}
 
+stop_loss_pct = input.float(1.0, "Stop Loss %", minval=0.1, maxval=5.0, step=0.1)
+take_profit_pct = input.float(2.0, "Take Profit %", minval=0.5, maxval=10.0, step=0.1)
+
 // Entry Conditions
 // ${strategy.entry}
 
@@ -32,14 +35,24 @@ ${strategy.internalJsonSchema?.inputs ? Object.entries(strategy.internalJsonSche
 
 // Strategy Logic (Template - Customize based on your strategy)
 // Add your indicators and conditions here
-longCondition = false // Replace with actual entry logic
+longCondition = false // Replace with actual entry logic based on: ${strategy.indicators.join(', ')}
 shortCondition = false // Replace with actual entry logic
 
+// Strategy execution - Required for Pine Script strategies
 if (longCondition)
     strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=close * (1 - stop_loss_pct/100), limit=close * (1 + take_profit_pct/100))
 
 if (shortCondition)
     strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=close * (1 + stop_loss_pct/100), limit=close * (1 - take_profit_pct/100))
+
+// Plot signals - Required for Pine Script strategies
+plotshape(longCondition, title="Long Entry", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)
+plotshape(shortCondition, title="Short Entry", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small)
+
+// Background color for active positions
+bgcolor(strategy.position_size > 0 ? color.new(color.green, 95) : strategy.position_size < 0 ? color.new(color.red, 95) : na)
 
 // Exit conditions
 // Add your exit logic here
@@ -52,7 +65,7 @@ if (shortCondition)
     alert("${strategy.name} - Short Signal", alert.freq_once_per_bar)
 `,
     generateReadme: (strategy: any) => `
-# ${strategy.name} - TradingView Pine Script
+# ${strategy.name} - TradingView Pine Script v6
 
 ## Installation Instructions
 1. Open TradingView and go to the Pine Editor
