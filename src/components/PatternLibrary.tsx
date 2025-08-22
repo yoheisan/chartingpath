@@ -272,7 +272,12 @@ export const PatternLibrary = () => {
               <Card key={index} className="p-6 hover:bg-card/80 transition-colors border-border/50">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
-                    <h4 className="font-semibold text-foreground text-lg">{pattern.name}</h4>
+                    <h4 
+                      className="font-semibold text-foreground text-lg cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
+                    >
+                      {pattern.name}
+                    </h4>
                     <div className="flex gap-2">
                       <Badge 
                         variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
