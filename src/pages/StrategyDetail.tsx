@@ -295,17 +295,35 @@ Type: ${variant || "strategy"}
 
       if (error) throw error;
 
-      // Get signed URL for download
-      const { data: signedUrlData } = await supabase.storage
+      // Try public URL first (bucket is public)
+      const { data: publicUrlData } = supabase.storage
         .from('strategy-downloads')
-        .createSignedUrl(`temp/${filename}`, 3600);
+        .getPublicUrl(`temp/${filename}`);
 
-      if (signedUrlData?.signedUrl) {
-        // Direct download via signed URL
+      let finalUrl = publicUrlData?.publicUrl || '';
+
+      // If no public URL (or bucket privacy changes), use signed URL
+      if (!finalUrl) {
+        const { data: signedUrlData } = await supabase.storage
+          .from('strategy-downloads')
+          .createSignedUrl(`temp/${filename}`, 3600);
+        const raw = (signedUrlData as any)?.signedUrl || (signedUrlData as any)?.signedURL || '';
+        if (raw) {
+          finalUrl = raw.startsWith('http')
+            ? raw
+            : `https://dgznlsckoamseqcpzfqm.supabase.co/storage/v1${raw}`;
+        }
+      }
+
+      if (finalUrl) {
         const a = document.createElement('a');
-        a.href = signedUrlData.signedUrl;
+        a.href = finalUrl;
         a.download = filename;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
         a.click();
+        if (document.body.contains(a)) document.body.removeChild(a);
         return true;
       }
     } catch (error) {
