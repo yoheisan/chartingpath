@@ -16,11 +16,46 @@ import JSZip from "jszip";
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
 const EXPORT_PLATFORMS = {
-  "TradingView - Pine Script v6": { extension: "pine", indicatorName: "Indicator", strategyName: "Strategy" },
-  "MetaTrader 4 - MQL4": { extension: "mq4", indicatorName: "Indicator", strategyName: "Expert Advisor" },
-  "MetaTrader 5 - MQL5": { extension: "mq5", indicatorName: "Indicator", strategyName: "Expert Advisor" },
-  "cTrader - C#": { extension: "cs", indicatorName: "Indicator", strategyName: "Robot (cBot)" },
-  "NinjaTrader 8 - C#": { extension: "cs", indicatorName: "Indicator", strategyName: "Strategy" }
+  "TradingView - Pine Script v6": { 
+    extension: "pine", 
+    indicatorName: "Indicator", 
+    strategyName: "Strategy",
+    supportsExport: true,
+    supportsIndicator: true,
+    supportsStrategy: true
+  },
+  "MetaTrader 4 - MQL4": { 
+    extension: "mq4", 
+    indicatorName: "Indicator", 
+    strategyName: "Expert Advisor",
+    supportsExport: true,
+    supportsIndicator: true,
+    supportsStrategy: true
+  },
+  "MetaTrader 5 - MQL5": { 
+    extension: "mq5", 
+    indicatorName: "Indicator", 
+    strategyName: "Expert Advisor",
+    supportsExport: true,
+    supportsIndicator: true,
+    supportsStrategy: true
+  },
+  "cTrader - C#": { 
+    extension: "cs", 
+    indicatorName: "Indicator", 
+    strategyName: "Robot (cBot)",
+    supportsExport: true,
+    supportsIndicator: true,
+    supportsStrategy: true
+  },
+  "NinjaTrader 8 - C#": { 
+    extension: "cs", 
+    indicatorName: "Indicator", 
+    strategyName: "Strategy",
+    supportsExport: true,
+    supportsIndicator: true,
+    supportsStrategy: true
+  }
 };
 
 const COMING_SOON_PLATFORMS = [
@@ -37,11 +72,11 @@ export const StrategyDetail = () => {
   const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
-  const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("TradingView - Pine Script v6");
-  const [selectedIndicatorPlatform, setSelectedIndicatorPlatform] = useState<string>("TradingView - Pine Script v6");
-  const [selectedStrategyPlatform, setSelectedStrategyPlatform] = useState<string>("TradingView - Pine Script v6");
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("TradingView - Pine Script v6");
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [copied, setCopied] = useState(false);
+
+  const currentPlatform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
 
   const strategy = tradingStrategies.find(s => s.id === parseInt(strategyId || "0"));
 
@@ -90,10 +125,10 @@ export const StrategyDetail = () => {
   };
 
   const handleExport = async () => {
-    if (!selectedExportPlatform) return;
+    if (!selectedPlatform) return;
 
     try {
-      const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
+      const template = EXPORT_TEMPLATES[selectedPlatform as keyof typeof EXPORT_TEMPLATES];
       if (!template) {
         toast({
           title: "Template Not Found",
@@ -103,7 +138,7 @@ export const StrategyDetail = () => {
         return;
       }
 
-      const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
+      const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
       const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
 
       // Generate content
@@ -129,7 +164,7 @@ export const StrategyDetail = () => {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${cleanName}_${selectedExportPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
+      a.download = `${cleanName}_${selectedPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
       a.rel = 'noopener';
       a.target = '_blank';
       document.body.appendChild(a);
@@ -139,7 +174,7 @@ export const StrategyDetail = () => {
 
       toast({
         title: "Export Complete",
-        description: `${strategy.name} bundle downloaded for ${selectedExportPlatform}`,
+        description: `${strategy.name} bundle downloaded for ${selectedPlatform}`,
       });
     } catch (error) {
       console.error('Export error:', error);
@@ -152,10 +187,10 @@ export const StrategyDetail = () => {
   };
 
   const handleGenerateCode = () => {
-    if (!selectedExportPlatform) return;
+    if (!selectedPlatform) return;
 
     try {
-      const template = EXPORT_TEMPLATES[selectedExportPlatform as keyof typeof EXPORT_TEMPLATES];
+      const template = EXPORT_TEMPLATES[selectedPlatform as keyof typeof EXPORT_TEMPLATES];
       if (!template) {
         toast({
           title: "Template Not Found",
@@ -181,7 +216,7 @@ export const StrategyDetail = () => {
       
       toast({
         title: "Code Generated",
-        description: `${strategy.name} script generated for ${selectedExportPlatform}`,
+        description: `${strategy.name} script generated for ${selectedPlatform}`,
       });
     } catch (error) {
       console.error('Code generation error:', error);
@@ -217,7 +252,7 @@ export const StrategyDetail = () => {
   const handleExportCodeFile = () => {
     if (!generatedCode) return;
 
-    const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
+    const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
     const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
     
     downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
@@ -437,7 +472,7 @@ export const StrategyDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Platform:</label>
-                  <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
+                  <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -480,95 +515,48 @@ export const StrategyDetail = () => {
                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                          {copied ? "Copied!" : "Copy"}
                        </Button>
-                        <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
-                          <SelectTrigger className="w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Available Platforms</div>
-                            {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                              <SelectItem key={platform} value={platform}>
-                                {platform}
-                              </SelectItem>
-                            ))}
-                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Coming Soon</div>
-                            {COMING_SOON_PLATFORMS.map(platform => (
-                              <SelectItem key={platform} value={platform} disabled>
-                                {platform} (Coming Soon)
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button onClick={handleExportCodeFile} variant="outline" size="sm" className="relative">
-                              <Download className="h-4 w-4 mr-2" />
-                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                              Export File
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Downloads the generated code as a file for the selected platform. Perfect for importing directly into your trading platform.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                         <Tooltip>
-                           <TooltipTrigger asChild>
-                             <div className="space-y-2">
-                               <div className="flex items-center gap-2">
-                                 <label className="text-xs font-medium">Indicator Platform:</label>
-                                 <Select value={selectedIndicatorPlatform} onValueChange={setSelectedIndicatorPlatform}>
-                                   <SelectTrigger className="w-32 h-8">
-                                     <SelectValue />
-                                   </SelectTrigger>
-                                   <SelectContent>
-                                     {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                                       <SelectItem key={platform} value={platform}>
-                                         {EXPORT_PLATFORMS[platform as keyof typeof EXPORT_PLATFORMS].indicatorName}
-                                       </SelectItem>
-                                     ))}
-                                   </SelectContent>
-                                 </Select>
-                               </div>
-                               <Button onClick={() => handleDownloadVersioned("indicator", selectedIndicatorPlatform)} variant="outline" size="sm" className="relative w-full">
-                                 <Download className="h-4 w-4 mr-2" />
-                                 <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                                 {EXPORT_PLATFORMS[selectedIndicatorPlatform as keyof typeof EXPORT_PLATFORMS].indicatorName} Version
-                               </Button>
-                             </div>
-                           </TooltipTrigger>
-                           <TooltipContent>
-                             <p className="max-w-xs">Downloads {selectedIndicatorPlatform} indicator version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
-                           </TooltipContent>
-                         </Tooltip>
-                         <Tooltip>
-                           <TooltipTrigger asChild>
-                             <div className="space-y-2">
-                               <div className="flex items-center gap-2">
-                                 <label className="text-xs font-medium">Strategy Platform:</label>
-                                 <Select value={selectedStrategyPlatform} onValueChange={setSelectedStrategyPlatform}>
-                                   <SelectTrigger className="w-32 h-8">
-                                     <SelectValue />
-                                   </SelectTrigger>
-                                   <SelectContent>
-                                     {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                                       <SelectItem key={platform} value={platform}>
-                                         {EXPORT_PLATFORMS[platform as keyof typeof EXPORT_PLATFORMS].strategyName}
-                                       </SelectItem>
-                                     ))}
-                                   </SelectContent>
-                                 </Select>
-                               </div>
-                               <Button onClick={() => handleDownloadVersioned("strategy", selectedStrategyPlatform)} variant="outline" size="sm" className="relative w-full">
-                                 <Download className="h-4 w-4 mr-2" />
-                                 <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                                 {EXPORT_PLATFORMS[selectedStrategyPlatform as keyof typeof EXPORT_PLATFORMS].strategyName} Version
-                               </Button>
-                             </div>
-                           </TooltipTrigger>
-                           <TooltipContent>
-                             <p className="max-w-xs">Downloads complete {selectedStrategyPlatform} strategy with backtesting framework, automatic position management, and performance analytics.</p>
-                           </TooltipContent>
-                         </Tooltip>
+                        {currentPlatform?.supportsExport && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button onClick={handleExportCodeFile} variant="outline" size="sm" className="relative">
+                                <Download className="h-4 w-4 mr-2" />
+                                <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                                Export File
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">Downloads the generated code as a file for {selectedPlatform}. Perfect for importing directly into your trading platform.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {currentPlatform?.supportsIndicator && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button onClick={() => handleDownloadVersioned("indicator", selectedPlatform)} variant="outline" size="sm" className="relative">
+                                <Download className="h-4 w-4 mr-2" />
+                                <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                                {currentPlatform.indicatorName} Version
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">Downloads {selectedPlatform} {currentPlatform.indicatorName.toLowerCase()} version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {currentPlatform?.supportsStrategy && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button onClick={() => handleDownloadVersioned("strategy", selectedPlatform)} variant="outline" size="sm" className="relative">
+                                <Download className="h-4 w-4 mr-2" />
+                                <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                                {currentPlatform.strategyName} Version
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">Downloads complete {selectedPlatform} {currentPlatform.strategyName.toLowerCase()} with backtesting framework, automatic position management, and performance analytics.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                     </div>
                   </div>
                   <Textarea
