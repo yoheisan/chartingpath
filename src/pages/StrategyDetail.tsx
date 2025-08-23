@@ -379,24 +379,100 @@ export const StrategyDetail = () => {
           </div>
         </Card>
 
-        {/* Strategy Code Generator - Main Section */}
+        {/* Code Preview & Generation - Main Section */}
         <Card className="p-6">
           <CardHeader className="p-0 mb-6">
             <div className="flex items-center gap-3 mb-3">
               <Code className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Strategy Code Generator</CardTitle>
+              <CardTitle className="text-2xl">Code Preview & Generation</CardTitle>
             </div>
             <CardDescription className="text-lg">
-              Generate and download trading code for your preferred platform with comprehensive documentation
+              Generate and preview trading code for your preferred platform
+            </CardDescription>
+          </CardHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Platform:</label>
+                <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                      <SelectItem key={platform} value={platform}>
+                        {platform}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Timeframe:</label>
+                <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEFRAMES.map(tf => (
+                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button onClick={handleGenerateCode} className="w-full md:w-auto">
+              <Code className="h-4 w-4 mr-2" />
+              Generate Code Preview
+            </Button>
+
+            {generatedCode && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Generated Code:</h4>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCopyCode} variant="outline" size="sm">
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copied ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button onClick={handleExportCodeFile} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export File
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  value={generatedCode}
+                  readOnly
+                  className="min-h-[400px] font-mono text-sm"
+                  placeholder="Generated code will appear here..."
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Strategy Downloads */}
+        <Card className="p-6">
+          <CardHeader className="p-0 mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Download className="h-6 w-6 text-accent" />
+              <CardTitle className="text-2xl">Download Options</CardTitle>
+            </div>
+            <CardDescription className="text-lg">
+              Download complete trading packages with comprehensive documentation
             </CardDescription>
           </CardHeader>
           
           {/* Download Options */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Choose Your Download Option</h3>
+              <h3 className="text-lg font-semibold mb-4">Choose Your Download Package</h3>
               <p className="text-muted-foreground mb-4">
-                Select the type of code that best fits your trading needs:
+                Select the type of code package that best fits your trading needs:
               </p>
             </div>
 
@@ -522,73 +598,6 @@ export const StrategyDetail = () => {
                   </div>
                 </div>
               </Card>
-            </div>
-
-            {/* Code Preview/Generation Section */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Code Preview & Generation</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Platform:</label>
-                    <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                          <SelectItem key={platform} value={platform}>
-                            {platform}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Timeframe:</label>
-                    <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMEFRAMES.map(tf => (
-                          <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Button onClick={handleGenerateCode} className="w-full md:w-auto">
-                  <Code className="h-4 w-4 mr-2" />
-                  Generate Code Preview
-                </Button>
-
-                {generatedCode && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Generated Code:</h4>
-                      <div className="flex gap-2">
-                        <Button onClick={handleCopyCode} variant="outline" size="sm">
-                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          {copied ? "Copied!" : "Copy"}
-                        </Button>
-                        <Button onClick={handleExportCodeFile} variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Export File
-                        </Button>
-                      </div>
-                    </div>
-                    <Textarea
-                      value={generatedCode}
-                      readOnly
-                      className="min-h-[400px] font-mono text-sm"
-                      placeholder="Generated code will appear here..."
-                    />
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Features Information */}
