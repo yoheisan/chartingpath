@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle, Code, Copy, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle, Code, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
 import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
@@ -318,213 +319,239 @@ export const StrategyDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Link to="/trading-strategies" className="inline-flex items-center gap-2 text-primary hover:underline">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Trading Strategies
-        </Link>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Link to="/trading-strategies" className="inline-flex items-center gap-2 text-primary hover:underline">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Trading Strategies
+          </Link>
 
-        {/* Strategy Header */}
-        <Card className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <CardTitle className="text-2xl mb-2">{strategy.name}</CardTitle>
-              <div className="flex items-center gap-3 mb-3">
-                <Badge className={getDifficultyColor(strategy.difficulty)}>
-                  {strategy.difficulty}
-                </Badge>
-                <Badge variant="outline">{strategy.category}</Badge>
-                <div className="flex items-center gap-1">
-                  {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
-                    <TrendingUp className="h-4 w-4 text-bullish" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-bearish" />
-                  )}
-                  <span className="font-medium">{strategy.successRate}</span>
-                </div>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-accent font-semibold">
-              {strategy.riskReward}
-            </Badge>
-          </div>
-          
-          <CardDescription className="text-base mb-4">
-            {strategy.description}
-          </CardDescription>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Indicators</h4>
-              <div className="flex flex-wrap gap-1">
-                {strategy.indicators.map((indicator, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {indicator}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Timeframes</h4>
-              <div className="flex flex-wrap gap-1">
-                {strategy.timeframes.map((tf, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {tf}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Entry and Exit Rules */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Strategy Header */}
           <Card className="p-6">
-            <CardHeader className="p-0 mb-4">
-              <CardTitle className="text-lg text-bullish">Entry Rules</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <p className="text-muted-foreground">{strategy.entry}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="p-6">
-            <CardHeader className="p-0 mb-4">
-              <CardTitle className="text-lg text-bearish">Exit Rules</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <p className="text-muted-foreground">{strategy.exit}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Code Preview & Generation - Main Section */}
-        <Card className="p-6">
-          <CardHeader className="p-0 mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Code className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Code Preview & Generation</CardTitle>
-            </div>
-            <CardDescription className="text-lg">
-              Generate and preview trading code for your preferred platform
-            </CardDescription>
-          </CardHeader>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Platform:</label>
-                <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                      <SelectItem key={platform} value={platform}>
-                        {platform}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Timeframe:</label>
-                <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEFRAMES.map(tf => (
-                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Button onClick={handleGenerateCode} className="w-full md:w-auto">
-              <Code className="h-4 w-4 mr-2" />
-              Generate Code Preview
-            </Button>
-
-            {generatedCode && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Generated Code:</h4>
-                  <div className="flex gap-2">
-                     <Button onClick={handleCopyCode} variant="outline" size="sm">
-                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                       {copied ? "Copied!" : "Copy"}
-                     </Button>
-                      <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Available Platforms</div>
-                          {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                            <SelectItem key={platform} value={platform}>
-                              {platform}
-                            </SelectItem>
-                          ))}
-                          <div className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Coming Soon</div>
-                          {COMING_SOON_PLATFORMS.map(platform => (
-                            <SelectItem key={platform} value={platform} disabled>
-                              {platform} (Coming Soon)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button onClick={handleExportCodeFile} variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Export File
-                      </Button>
-                      <Button onClick={() => handleDownloadPineScript("indicator")} variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Indicator Version
-                      </Button>
-                      <Button onClick={() => handleDownloadPineScript("strategy")} variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Strategy Version
-                      </Button>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <CardTitle className="text-2xl mb-2">{strategy.name}</CardTitle>
+                <div className="flex items-center gap-3 mb-3">
+                  <Badge className={getDifficultyColor(strategy.difficulty)}>
+                    {strategy.difficulty}
+                  </Badge>
+                  <Badge variant="outline">{strategy.category}</Badge>
+                  <div className="flex items-center gap-1">
+                    {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
+                      <TrendingUp className="h-4 w-4 text-bullish" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-bearish" />
+                    )}
+                    <span className="font-medium">{strategy.successRate}</span>
                   </div>
                 </div>
-                <Textarea
-                  value={generatedCode}
-                  readOnly
-                  className="min-h-[400px] font-mono text-sm"
-                  placeholder="Generated code will appear here..."
-                />
               </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Global Disclaimer */}
-        <Card className="p-6 border-2 border-yellow-500/20">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-6 w-6 text-yellow-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-yellow-500 mb-2">Important Disclaimer</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                All scripts are provided for educational purposes only and follow uniform Pine Script v6 standards. 
-                Each download includes detailed documentation and disclaimers.
-              </p>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Educational use only - not financial advice</li>
-                <li>• Always test strategies thoroughly before live trading</li>
-                <li>• Past performance does not guarantee future results</li>
-                <li>• Use proper risk management and position sizing</li>
-                <li>• Comply with all applicable laws and regulations</li>
-              </ul>
+              <Badge variant="outline" className="text-accent font-semibold">
+                {strategy.riskReward}
+              </Badge>
             </div>
-          </div>
-        </Card>
+            
+            <CardDescription className="text-base mb-4">
+              {strategy.description}
+            </CardDescription>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Indicators</h4>
+                <div className="flex flex-wrap gap-1">
+                  {strategy.indicators.map((indicator, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {indicator}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Timeframes</h4>
+                <div className="flex flex-wrap gap-1">
+                  {strategy.timeframes.map((tf, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tf}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Entry and Exit Rules */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg text-bullish">Entry Rules</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <p className="text-muted-foreground">{strategy.entry}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg text-bearish">Exit Rules</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <p className="text-muted-foreground">{strategy.exit}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Code Preview & Generation - Main Section */}
+          <Card className="p-6">
+            <CardHeader className="p-0 mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <Code className="h-6 w-6 text-primary" />
+                <CardTitle className="text-2xl">Code Preview & Generation</CardTitle>
+              </div>
+              <CardDescription className="text-lg">
+                Generate and preview trading code for your preferred platform
+              </CardDescription>
+            </CardHeader>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Platform:</label>
+                  <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                        <SelectItem key={platform} value={platform}>
+                          {platform}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Timeframe:</label>
+                  <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEFRAMES.map(tf => (
+                        <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button onClick={handleGenerateCode} className="w-full md:w-auto">
+                <Code className="h-4 w-4 mr-2" />
+                Generate Code Preview
+              </Button>
+
+              {generatedCode && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Generated Code:</h4>
+                    <div className="flex gap-2">
+                       <Button onClick={handleCopyCode} variant="outline" size="sm">
+                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                         {copied ? "Copied!" : "Copy"}
+                       </Button>
+                        <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Available Platforms</div>
+                            {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                              <SelectItem key={platform} value={platform}>
+                                {platform}
+                              </SelectItem>
+                            ))}
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Coming Soon</div>
+                            {COMING_SOON_PLATFORMS.map(platform => (
+                              <SelectItem key={platform} value={platform} disabled>
+                                {platform} (Coming Soon)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button onClick={handleExportCodeFile} variant="outline" size="sm" className="relative">
+                              <Download className="h-4 w-4 mr-2" />
+                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                              Export File
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Downloads the generated code as a file for the selected platform. Perfect for importing directly into your trading platform.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button onClick={() => handleDownloadPineScript("indicator")} variant="outline" size="sm" className="relative">
+                              <Download className="h-4 w-4 mr-2" />
+                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                              Indicator Version
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Downloads Pine Script indicator version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button onClick={() => handleDownloadPineScript("strategy")} variant="outline" size="sm" className="relative">
+                              <Download className="h-4 w-4 mr-2" />
+                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                              Strategy Version
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Downloads complete Pine Script strategy with backtesting framework, automatic position management, and performance analytics.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                    </div>
+                  </div>
+                  <Textarea
+                    value={generatedCode}
+                    readOnly
+                    className="min-h-[400px] font-mono text-sm"
+                    placeholder="Generated code will appear here..."
+                  />
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Global Disclaimer */}
+          <Card className="p-6 border-2 border-yellow-500/20">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-yellow-500 mb-2">Important Disclaimer</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  All scripts are provided for educational purposes only and follow uniform Pine Script v6 standards. 
+                  Each download includes detailed documentation and disclaimers.
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• Educational use only - not financial advice</li>
+                  <li>• Always test strategies thoroughly before live trading</li>
+                  <li>• Past performance does not guarantee future results</li>
+                  <li>• Use proper risk management and position sizing</li>
+                  <li>• Comply with all applicable laws and regulations</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
