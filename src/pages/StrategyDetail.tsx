@@ -12,6 +12,7 @@ import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTe
 import { PineScriptEngine } from "@/components/PineScriptEngine";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+import { supabase } from "@/integrations/supabase/client";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
@@ -22,7 +23,11 @@ const EXPORT_PLATFORMS = {
     strategyName: "Strategy",
     supportsExport: true,
     supportsIndicator: true,
-    supportsStrategy: true
+    supportsStrategy: true,
+    folderStructure: {
+      indicator: "", // No folder needed for Pine scripts
+      strategy: ""
+    }
   },
   "MetaTrader 4 - MQL4": { 
     extension: "mq4", 
@@ -30,7 +35,11 @@ const EXPORT_PLATFORMS = {
     strategyName: "Expert Advisor",
     supportsExport: true,
     supportsIndicator: true,
-    supportsStrategy: true
+    supportsStrategy: true,
+    folderStructure: {
+      indicator: "MQL4/Indicators/",
+      strategy: "MQL4/Experts/"
+    }
   },
   "MetaTrader 5 - MQL5": { 
     extension: "mq5", 
@@ -38,7 +47,11 @@ const EXPORT_PLATFORMS = {
     strategyName: "Expert Advisor",
     supportsExport: true,
     supportsIndicator: true,
-    supportsStrategy: true
+    supportsStrategy: true,
+    folderStructure: {
+      indicator: "MQL5/Indicators/",
+      strategy: "MQL5/Experts/"
+    }
   },
   "cTrader - C#": { 
     extension: "cs", 
@@ -46,7 +59,11 @@ const EXPORT_PLATFORMS = {
     strategyName: "Robot (cBot)",
     supportsExport: true,
     supportsIndicator: true,
-    supportsStrategy: true
+    supportsStrategy: true,
+    folderStructure: {
+      indicator: "Indicators/",
+      strategy: "Robots/"
+    }
   },
   "NinjaTrader 8 - C#": { 
     extension: "cs", 
@@ -54,7 +71,11 @@ const EXPORT_PLATFORMS = {
     strategyName: "Strategy",
     supportsExport: true,
     supportsIndicator: true,
-    supportsStrategy: true
+    supportsStrategy: true,
+    folderStructure: {
+      indicator: "Custom/Indicators/",
+      strategy: "Custom/Strategies/"
+    }
   }
 };
 
@@ -108,6 +129,96 @@ export const StrategyDetail = () => {
   };
 
   const isMultiTimeframe = strategy.name.includes("Triple Screen") || strategy.name.includes("Multi-Timeframe");
+
+  const generateInstallationInstructions = (platform: string, filename: string, extension: string, variant?: string) => {
+    const instructions = {
+      "TradingView - Pine Script v6": `
+TRADINGVIEW PINE SCRIPT INSTALLATION
+
+1. Open TradingView.com
+2. Go to Pine Editor (Alt+E or click Pine Editor tab)
+3. Copy and paste the code from ${filename}.${extension}
+4. Click "Save" and give it a name
+5. Click "Add to Chart" to apply to your chart
+
+Note: ${variant === "indicator" ? "This is an indicator version" : "This is a strategy version"}
+`,
+      "MetaTrader 4 - MQL4": `
+METATRADER 4 INSTALLATION
+
+1. Close MetaTrader 4 completely
+2. Extract the ZIP file to your MetaTrader 4 installation folder
+   - The ${filename}.${extension} file should go to: MQL4/${variant === "indicator" ? "Indicators" : "Experts"}/
+3. Open MetaTrader 4
+4. In Navigator window, ${variant === "indicator" ? "right-click on 'Indicators' → Refresh" : "right-click on 'Expert Advisors' → Refresh"}
+5. ${variant === "indicator" ? "Drag the indicator to your chart" : "Drag the EA to your chart and enable AutoTrading"}
+
+Alternative Method:
+1. Open MetaEditor (F4 in MT4)
+2. File → Open → Browse to the extracted ${filename}.${extension}
+3. Press F7 to compile
+4. File should appear in Navigator window
+`,
+      "MetaTrader 5 - MQL5": `
+METATRADER 5 INSTALLATION
+
+1. Close MetaTrader 5 completely  
+2. Extract the ZIP file to your MetaTrader 5 installation folder
+   - The ${filename}.${extension} file should go to: MQL5/${variant === "indicator" ? "Indicators" : "Experts"}/
+3. Open MetaTrader 5
+4. In Navigator window, ${variant === "indicator" ? "right-click on 'Indicators' → Refresh" : "right-click on 'Expert Advisors' → Refresh"}
+5. ${variant === "indicator" ? "Drag the indicator to your chart" : "Drag the EA to your chart and enable Algo Trading"}
+
+Alternative Method:
+1. Open MetaEditor (F4 in MT5)
+2. File → Open → Browse to the extracted ${filename}.${extension}
+3. Press F7 to compile
+4. File should appear in Navigator window
+`,
+      "cTrader - C#": `
+CTRADER INSTALLATION
+
+1. Open cTrader
+2. Click on "Automate" tab
+3. ${variant === "indicator" ? "Click 'Indicators' folder" : "Click 'cBots' folder"}
+4. Click "+" button to add new ${variant === "indicator" ? "indicator" : "cBot"}
+5. Replace the default code with code from ${filename}.${extension}
+6. Click "Build" (Ctrl+B)
+7. If build succeeds, ${variant === "indicator" ? "drag indicator to chart" : "click 'Start Instance' for the cBot"}
+
+Manual File Method:
+1. Extract ZIP to cTrader folder: %USERPROFILE%/Documents/cTrader/Sources/
+2. Restart cTrader and compile as above
+`,
+      "NinjaTrader 8 - C#": `
+NINJATRADER 8 INSTALLATION
+
+1. Close NinjaTrader 8 completely
+2. Extract ZIP file to: %USERPROFILE%/Documents/NinjaTrader 8/bin/Custom/
+   - ${variant === "indicator" ? "Indicators" : "Strategies"} folder
+3. Open NinjaTrader 8  
+4. Go to Tools → Edit NinjaScript → ${variant === "indicator" ? "Indicators" : "Strategies"}
+5. Find ${filename} in the list and open it
+6. Press F5 to compile
+7. ${variant === "indicator" ? "Apply indicator from Indicators menu" : "Create strategy from Strategies → New Strategy Instance"}
+
+Note: You may need to add necessary using statements and references.
+`
+    };
+    
+    return instructions[platform as keyof typeof instructions] || `
+INSTALLATION INSTRUCTIONS
+
+1. Extract the ZIP file
+2. Follow your platform's standard installation procedure
+3. Refer to platform documentation for specific setup steps
+4. Test on demo account before live trading
+
+File: ${filename}.${extension}
+Platform: ${platform}
+Type: ${variant || "strategy"}
+`;
+  };
 
   const downloadFile = async (content: string, filename: string): Promise<boolean> => {
     try {
@@ -172,6 +283,37 @@ export const StrategyDetail = () => {
     }
   };
 
+  // Enhanced download with Supabase Storage option for production
+  const downloadViaSupabase = async (zipBlob: Blob, filename: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('strategy-downloads')
+        .upload(`temp/${filename}`, zipBlob, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // Get signed URL for download
+      const { data: signedUrlData } = await supabase.storage
+        .from('strategy-downloads')
+        .createSignedUrl(`temp/${filename}`, 3600);
+
+      if (signedUrlData?.signedUrl) {
+        // Direct download via signed URL
+        const a = document.createElement('a');
+        a.href = signedUrlData.signedUrl;
+        a.download = filename;
+        a.click();
+        return true;
+      }
+    } catch (error) {
+      console.warn('Supabase download failed, using fallback:', error);
+    }
+    return false;
+  };
+
   const handleExport = async () => {
     if (!selectedPlatform) return;
 
@@ -202,40 +344,56 @@ export const StrategyDetail = () => {
       const readme = template.generateReadme(strategy);
       const disclaimer = DISCLAIMER_TEXT;
 
-      // Build ZIP bundle (single download to avoid browser blocking)
+      // Build ZIP bundle with proper platform folder structure
       const zip = new JSZip();
-      zip.file(`${cleanName}.${platform.extension}`, code);
+      const folder = platform.folderStructure?.strategy || "";
+      
+      // Add main code file in correct folder
+      zip.file(`${folder}${cleanName}.${platform.extension}`, code);
+      
+      // Add documentation files at root level
       zip.file(`${cleanName}_README.txt`, readme);
       zip.file(`${cleanName}_DISCLAIMER.txt`, disclaimer);
+      
+      // Add installation instructions specific to platform
+      const installInstructions = generateInstallationInstructions(selectedPlatform, cleanName, platform.extension);
+      zip.file(`${cleanName}_INSTALLATION_GUIDE.txt`, installInstructions);
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const zipName = `${cleanName}_${selectedPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
-      const anyWin = window as any;
-      let saved = false;
-      if (typeof anyWin.showSaveFilePicker === 'function') {
-        try {
-          const handle = await anyWin.showSaveFilePicker({
-            suggestedName: zipName,
-            types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }],
-          });
-          const writable = await handle.createWritable();
-          await writable.write(zipBlob);
-          await writable.close();
-          saved = true;
-        } catch (pickerErr) {
-          console.warn('showSaveFilePicker failed, falling back to anchor:', pickerErr);
+      
+      // Try Supabase Storage first for most reliable downloads
+      const supabaseSuccess = await downloadViaSupabase(zipBlob, zipName);
+      
+      if (!supabaseSuccess) {
+        // Fallback to client-side download
+        const anyWin = window as any;
+        let saved = false;
+        if (typeof anyWin.showSaveFilePicker === 'function') {
+          try {
+            const handle = await anyWin.showSaveFilePicker({
+              suggestedName: zipName,
+              types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(zipBlob);
+            await writable.close();
+            saved = true;
+          } catch (pickerErr) {
+            console.warn('showSaveFilePicker failed, falling back to anchor:', pickerErr);
+          }
         }
-      }
-      if (!saved) {
-        const url = URL.createObjectURL(zipBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = zipName;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        if (document.body.contains(a)) document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        if (!saved) {
+          const url = URL.createObjectURL(zipBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = zipName;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          if (document.body.contains(a)) document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
       }
 
       toast({
@@ -476,17 +634,32 @@ export const StrategyDetail = () => {
         }
       };
       
-      // Package files into a single ZIP to ensure browser allows download
+      // Package files into a single ZIP with proper folder structure
       const zip = new JSZip();
-      zip.file(`${prefix}.${platformInfo.extension}`, code);
+      const folder = platformInfo.folderStructure?.[variant] || "";
+      
+      // Add main code file in correct platform folder
+      zip.file(`${folder}${prefix}.${platformInfo.extension}`, code);
+      
+      // Add documentation at root level  
       zip.file(`${prefix}_README.txt`, readme);
       zip.file(`${prefix}_DISCLAIMER.txt`, disclaimer);
+      
+      // Add platform-specific installation guide
+      const installGuide = generateInstallationInstructions(platform, prefix, platformInfo.extension, variant);
+      zip.file(`${prefix}_INSTALLATION_GUIDE.txt`, installGuide);
 
-      zip.generateAsync({ type: "blob" }).then((zipBlob) => {
+      zip.generateAsync({ type: "blob" }).then(async (zipBlob) => {
         const zipName = `${prefix}.zip`;
-        const anyWin = window as any;
-        if (typeof anyWin.showSaveFilePicker === 'function') {
-          (async () => {
+        const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+        
+        // Try Supabase Storage first for reliable downloads
+        const supabaseSuccess = await downloadViaSupabase(zipBlob, zipName);
+        
+        if (!supabaseSuccess) {
+          // Fallback to client-side methods
+          const anyWin = window as any;
+          if (typeof anyWin.showSaveFilePicker === 'function') {
             try {
               const handle = await anyWin.showSaveFilePicker({
                 suggestedName: zipName,
@@ -495,7 +668,6 @@ export const StrategyDetail = () => {
               const writable = await handle.createWritable();
               await writable.write(zipBlob);
               await writable.close();
-              const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
               toast({
                 title: "Download Ready",
                 description: `${strategy.name} ${variantDescription} ZIP saved`,
@@ -513,29 +685,32 @@ export const StrategyDetail = () => {
                 document.body.removeChild(link);
               }
               setTimeout(() => URL.revokeObjectURL(url), 1000);
-              const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
               toast({
-                title: "Download Ready",
+                title: "Download Ready",  
                 description: `${strategy.name} ${variantDescription} ZIP downloaded`,
               });
             }
-          })();
-        } else {
-          const url = URL.createObjectURL(zipBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = zipName;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          if (document.body.contains(link)) {
-            document.body.removeChild(link);
+          } else {
+            const url = URL.createObjectURL(zipBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = zipName;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast({
+              title: "Download Ready",
+              description: `${strategy.name} ${variantDescription} ZIP downloaded`,
+            });
           }
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-          const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+        } else {
           toast({
             title: "Download Ready",
-            description: `${strategy.name} ${variantDescription} ZIP downloaded`,
+            description: `${strategy.name} ${variantDescription} ZIP downloaded via secure link`,
           });
         }
       }).catch((zipErr) => {
