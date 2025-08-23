@@ -162,16 +162,25 @@ const Pricing = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="text-4xl font-bold text-foreground">
-                      ${displayPrice}
-                      {isAnnual && plan.annualPrice ? (
-                        <div className="text-base text-muted-foreground font-normal">
-                          {billingText}
+                    {isAnnual && plan.annualPrice ? (
+                      <div>
+                        <div className="text-4xl font-bold text-foreground">
+                          ${Math.round(plan.annualPrice / 12)}
+                          <span className="text-lg text-muted-foreground">/month</span>
                         </div>
-                      ) : (
-                        <span className="text-lg text-muted-foreground">{billingText}</span>
-                      )}
-                    </div>
+                        <div className="text-sm text-muted-foreground">
+                          billed annually (${plan.annualPrice})
+                        </div>
+                        <div className="text-sm text-muted-foreground line-through">
+                          ${plan.price}/month monthly
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-4xl font-bold text-foreground">
+                        ${plan.price}
+                        <span className="text-lg text-muted-foreground">/month</span>
+                      </div>
+                    )}
                     
                     {isAnnual && savings && (
                       <div className="text-sm text-accent font-semibold">
