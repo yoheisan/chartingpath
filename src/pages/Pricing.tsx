@@ -67,21 +67,21 @@ const Pricing = () => {
     {
       name: "Elite",
       price: 199,
-      description: "Ultimate access with lifetime benefits",
+      annualPrice: 2148,
+      description: "Ultimate access for professional traders",
       features: [
         "Everything in Pro", 
         "Chart Pattern Email Alerts (Unlimited alerts)",
-        "Lifetime access option ($999 one-time)",
         "Premium Discord role & exclusive channels",
         "Early access to strategy packs",
         "Reserved access to Automated Script Generator",
         "1-on-1 strategy consultation (monthly)",
-        "Custom script requests (2 per month)"
+        "Custom script requests (2 per month)",
+        "Priority feature requests"
       ],
       buttonText: "Join Elite",
       popular: false,
-      icon: Crown,
-      lifetime: true
+      icon: Crown
     }
   ];
 
@@ -188,11 +188,6 @@ const Pricing = () => {
                       </div>
                     )}
                     
-                    {plan.lifetime && (
-                      <div className="text-sm text-accent font-semibold">
-                        or $999 lifetime
-                      </div>
-                    )}
                   </div>
                   
                   <CardDescription className="text-base">
