@@ -109,7 +109,7 @@ export const StrategyDetail = () => {
 
   const isMultiTimeframe = strategy.name.includes("Triple Screen") || strategy.name.includes("Multi-Timeframe");
 
-  const downloadFile = (content: string, filename: string): boolean => {
+  const downloadFile = async (content: string, filename: string): Promise<boolean> => {
     try {
       if (!content || content.trim().length === 0) {
         console.error(`downloadFile: empty content for ${filename}`);
@@ -123,6 +123,24 @@ export const StrategyDetail = () => {
       if (blob.size === 0) {
         console.error(`downloadFile: zero-size blob for ${filename}`);
         return false;
+      }
+
+      const anyWin = window as any;
+      if (typeof anyWin.showSaveFilePicker === 'function') {
+        try {
+          const handle = await anyWin.showSaveFilePicker({
+            suggestedName: filename,
+            types: [
+              { description: 'File', accept: { [mime.split(';')[0]]: [`.${ext || 'txt'}`] } }
+            ],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return true;
+        } catch (pickerErr) {
+          console.warn('showSaveFilePicker failed, falling back to anchor:', pickerErr);
+        }
       }
 
       const url = URL.createObjectURL(blob);
@@ -191,16 +209,34 @@ export const StrategyDetail = () => {
       zip.file(`${cleanName}_DISCLAIMER.txt`, disclaimer);
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${cleanName}_${selectedPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
-      a.rel = 'noopener';
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      const zipName = `${cleanName}_${selectedPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
+      const anyWin = window as any;
+      let saved = false;
+      if (typeof anyWin.showSaveFilePicker === 'function') {
+        try {
+          const handle = await anyWin.showSaveFilePicker({
+            suggestedName: zipName,
+            types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(zipBlob);
+          await writable.close();
+          saved = true;
+        } catch (pickerErr) {
+          console.warn('showSaveFilePicker failed, falling back to anchor:', pickerErr);
+        }
+      }
+      if (!saved) {
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = zipName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        if (document.body.contains(a)) document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
 
       toast({
         title: "Export Complete",
@@ -279,19 +315,19 @@ export const StrategyDetail = () => {
     }
   };
 
-  const handleExportCodeFile = () => {
+  const handleExportCodeFile = async () => {
     if (!generatedCode) return;
 
     const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
     const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
     
-    const ok = downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
+    const ok = await downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
 
     toast({
       title: ok ? "File Exported" : "Download Blocked",
       description: ok
         ? `${strategy.name}.${platform.extension} downloaded`
-        : `Your browser blocked the download. Please allow downloads/pop-ups and try again.`,
+        : `Your browser may be blocking downloads. If prompted, use the Save dialog.`,
       variant: ok ? "default" : "destructive",
     });
   };
@@ -448,23 +484,60 @@ export const StrategyDetail = () => {
 
       zip.generateAsync({ type: "blob" }).then((zipBlob) => {
         const zipName = `${prefix}.zip`;
-        const url = URL.createObjectURL(zipBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = zipName;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        if (document.body.contains(link)) {
-          document.body.removeChild(link);
+        const anyWin = window as any;
+        if (typeof anyWin.showSaveFilePicker === 'function') {
+          (async () => {
+            try {
+              const handle = await anyWin.showSaveFilePicker({
+                suggestedName: zipName,
+                types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }],
+              });
+              const writable = await handle.createWritable();
+              await writable.write(zipBlob);
+              await writable.close();
+              const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+              toast({
+                title: "Download Ready",
+                description: `${strategy.name} ${variantDescription} ZIP saved`,
+              });
+            } catch (pickerErr) {
+              console.warn('showSaveFilePicker failed, falling back to anchor:', pickerErr);
+              const url = URL.createObjectURL(zipBlob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = zipName;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              if (document.body.contains(link)) {
+                document.body.removeChild(link);
+              }
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+              const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+              toast({
+                title: "Download Ready",
+                description: `${strategy.name} ${variantDescription} ZIP downloaded`,
+              });
+            }
+          })();
+        } else {
+          const url = URL.createObjectURL(zipBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = zipName;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+          toast({
+            title: "Download Ready",
+            description: `${strategy.name} ${variantDescription} ZIP downloaded`,
+          });
         }
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
-        toast({
-          title: "Download Ready",
-          description: `${strategy.name} ${variantDescription} ZIP downloaded`,
-        });
       }).catch((zipErr) => {
         console.error('ZIP generation failed:', zipErr);
         toast({
