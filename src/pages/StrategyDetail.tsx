@@ -355,11 +355,9 @@ export const StrategyDetail = () => {
           // Add to DOM, trigger download, then cleanup
           document.body.appendChild(link);
           
-          // Force download with multiple attempts
-          setTimeout(() => {
-            link.click();
-            console.log(`Successfully triggered download for ${filename}`);
-          }, 100);
+          // Trigger download immediately within user gesture
+          link.click();
+          console.log(`Successfully triggered download for ${filename}`);
           
           // Cleanup after download
           setTimeout(() => {
@@ -367,7 +365,7 @@ export const StrategyDetail = () => {
               document.body.removeChild(link);
             }
             URL.revokeObjectURL(url);
-          }, 3000);
+          }, 1000);
           
           return true;
         } catch (downloadError) {
@@ -409,34 +407,40 @@ export const StrategyDetail = () => {
         }
       };
       
-      // Download all files with integrity validation
-      const downloads = [
-        { content: code, filename: `${prefix}.${platformInfo.extension}` },
-        { content: readme, filename: `${prefix}_README.txt` },
-        { content: disclaimer, filename: `${prefix}_DISCLAIMER.txt` }
-      ];
-      
-      let successCount = 0;
-      
-      // Stagger downloads to prevent browser blocking
-      downloads.forEach((download, index) => {
-        setTimeout(() => {
-          if (downloadWithFallback(download.content, download.filename)) {
-            successCount++;
-            
-            // Show final success message after all downloads complete
-            if (index === downloads.length - 1) {
-              setTimeout(() => {
-                const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
-                toast({
-                  title: successCount === downloads.length ? "Downloads Complete" : "Partial Download",
-                  description: `${successCount}/${downloads.length} ${strategy.name} ${variantDescription} files downloaded`,
-                  variant: successCount === downloads.length ? "default" : "destructive",
-                });
-              }, 500);
-            }
-          }
-        }, index * 300); // 300ms delay between downloads
+      // Package files into a single ZIP to ensure browser allows download
+      const zip = new JSZip();
+      zip.file(`${prefix}.${platformInfo.extension}`, code);
+      zip.file(`${prefix}_README.txt`, readme);
+      zip.file(`${prefix}_DISCLAIMER.txt`, disclaimer);
+
+      zip.generateAsync({ type: "blob" }).then((zipBlob) => {
+        const zipName = `${prefix}.zip`;
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = zipName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+        toast({
+          title: "Download Ready",
+          description: `${strategy.name} ${variantDescription} ZIP downloaded`,
+        });
+      }).catch((zipErr) => {
+        console.error('ZIP generation failed:', zipErr);
+        toast({
+          title: "Export Error",
+          description: "Failed to create ZIP file for download",
+          variant: "destructive",
+        });
+        // Fallback to single primary file download to salvage action
+        downloadWithFallback(code, `${prefix}.${platformInfo.extension}`);
       });
       
     } catch (error) {
