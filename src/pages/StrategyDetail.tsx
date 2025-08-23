@@ -235,43 +235,83 @@ export const StrategyDetail = () => {
         ? PineScriptEngine.generateIndicatorVersion(strategy)
         : PineScriptEngine.generateStrategyVersion(strategy);
       
-      console.log('Generated Pine Script code:', pineCode?.length > 0 ? 'SUCCESS' : 'FAILED');
+      console.log('Generated Pine Script code length:', pineCode?.length || 0);
+      console.log('Pine Script preview:', pineCode?.substring(0, 100) + '...');
+      
+      if (!pineCode || pineCode.trim().length === 0) {
+        console.error('Pine Script generation failed - empty content');
+        toast({
+          title: "Generation Failed",
+          description: "Pine Script code generation returned empty content",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Generate README
       const readme = PineScriptEngine.generateReadme(strategy, variant);
+      console.log('Generated README length:', readme?.length || 0);
       
       // Generate disclaimer
       const disclaimer = PineScriptEngine.generateDisclaimer();
+      console.log('Generated disclaimer length:', disclaimer?.length || 0);
       
-      // Create bundle with sequential downloads to avoid browser blocking
+      // Force download with user interaction
       const timestamp = new Date().toISOString().slice(0, 10);
       const prefix = `${cleanName}_${variant}_${timestamp}`;
       
-      // Download files with small delays to prevent browser blocking
-      console.log('Starting file downloads...');
+      console.log('Attempting to download files...');
       
-      // Download Pine Script immediately
-      downloadFile(pineCode, `${prefix}.pine`);
+      // Try direct download with user gesture
+      const downloadWithFallback = (content: string, filename: string) => {
+        console.log(`Downloading ${filename}, content length: ${content.length}`);
+        
+        try {
+          // Method 1: Direct blob download
+          const blob = new Blob([content], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          
+          // Create and click download link
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.style.display = 'none';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up after delay
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          
+          console.log(`Successfully triggered download for ${filename}`);
+        } catch (downloadError) {
+          console.error(`Failed to download ${filename}:`, downloadError);
+          
+          // Fallback: Show content in new window
+          const newWindow = window.open('', '_blank');
+          if (newWindow) {
+            newWindow.document.write(`<pre>${content}</pre>`);
+            newWindow.document.title = filename;
+          }
+        }
+      };
       
-      // Download README after short delay
-      setTimeout(() => {
-        downloadFile(readme, `${prefix}_README.txt`);
-      }, 100);
-      
-      // Download disclaimer after longer delay
-      setTimeout(() => {
-        downloadFile(disclaimer, `${prefix}_DISCLAIMER.txt`);
-      }, 200);
+      // Download all files
+      downloadWithFallback(pineCode, `${prefix}.pine`);
+      downloadWithFallback(readme, `${prefix}_README.txt`);
+      downloadWithFallback(disclaimer, `${prefix}_DISCLAIMER.txt`);
       
       toast({
-        title: "Pine Script Downloaded",
-        description: `${strategy.name} ${variant} version exported with documentation (3 files)`,
+        title: "Download Triggered",
+        description: `${strategy.name} ${variant} files prepared for download`,
       });
+      
     } catch (error) {
       console.error('Pine Script export error:', error);
       toast({
         title: "Export Error",
-        description: "An error occurred during Pine Script export. Please try again.",
+        description: `Error: ${error.message}`,
         variant: "destructive",
       });
     }
