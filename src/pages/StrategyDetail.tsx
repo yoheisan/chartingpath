@@ -482,10 +482,6 @@ export const StrategyDetail = () => {
                        <Download className="h-4 w-4 mr-2" />
                        Export File
                      </Button>
-                     <Button onClick={handleExport} size="sm">
-                       <Download className="h-4 w-4 mr-2" />
-                       Multi-Platform Bundle
-                     </Button>
                   </div>
                 </div>
                 <Textarea
