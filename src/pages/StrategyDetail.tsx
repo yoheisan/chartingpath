@@ -212,6 +212,7 @@ export const StrategyDetail = () => {
 
   const handleDownloadPineScript = (variant: "indicator" | "strategy") => {
     try {
+      console.log('Starting Pine Script download for variant:', variant);
       const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
       
       // Generate Pine Script code
@@ -219,28 +220,37 @@ export const StrategyDetail = () => {
         ? PineScriptEngine.generateIndicatorVersion(strategy)
         : PineScriptEngine.generateStrategyVersion(strategy);
       
+      console.log('Generated Pine Script code:', pineCode?.length > 0 ? 'SUCCESS' : 'FAILED');
+      
       // Generate README
       const readme = PineScriptEngine.generateReadme(strategy, variant);
       
       // Generate disclaimer
       const disclaimer = PineScriptEngine.generateDisclaimer();
       
-      // Create ZIP-like bundle by downloading multiple files
+      // Create bundle with sequential downloads to avoid browser blocking
       const timestamp = new Date().toISOString().slice(0, 10);
       const prefix = `${cleanName}_${variant}_${timestamp}`;
       
-      // Download Pine Script
+      // Download files with small delays to prevent browser blocking
+      console.log('Starting file downloads...');
+      
+      // Download Pine Script immediately
       downloadFile(pineCode, `${prefix}.pine`);
       
-      // Download README
-      downloadFile(readme, `${prefix}_README.txt`);
+      // Download README after short delay
+      setTimeout(() => {
+        downloadFile(readme, `${prefix}_README.txt`);
+      }, 100);
       
-      // Download disclaimer
-      downloadFile(disclaimer, `${prefix}_DISCLAIMER.txt`);
+      // Download disclaimer after longer delay
+      setTimeout(() => {
+        downloadFile(disclaimer, `${prefix}_DISCLAIMER.txt`);
+      }, 200);
       
       toast({
         title: "Pine Script Downloaded",
-        description: `${strategy.name} ${variant} version exported with documentation`,
+        description: `${strategy.name} ${variant} version exported with documentation (3 files)`,
       });
     } catch (error) {
       console.error('Pine Script export error:', error);
