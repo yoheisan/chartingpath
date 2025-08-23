@@ -459,10 +459,33 @@ export const StrategyDetail = () => {
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       {copied ? "Copied!" : "Copy"}
                     </Button>
-                    <Button onClick={handleExportCodeFile} variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export File
-                    </Button>
+                     <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
+                       <SelectTrigger className="w-40">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Available Platforms</div>
+                         {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                           <SelectItem key={platform} value={platform}>
+                             {platform}
+                           </SelectItem>
+                         ))}
+                         <div className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Coming Soon</div>
+                         {COMING_SOON_PLATFORMS.map(platform => (
+                           <SelectItem key={platform} value={platform} disabled>
+                             {platform} (Coming Soon)
+                           </SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                     <Button onClick={handleExportCodeFile} variant="outline" size="sm">
+                       <Download className="h-4 w-4 mr-2" />
+                       Export File
+                     </Button>
+                     <Button onClick={handleExport} size="sm">
+                       <Download className="h-4 w-4 mr-2" />
+                       Multi-Platform Bundle
+                     </Button>
                   </div>
                 </div>
                 <Textarea
@@ -497,7 +520,7 @@ export const StrategyDetail = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Indicator Version */}
               <Card className="p-4 border-2 border-primary/30 bg-primary/5">
                 <div className="space-y-4">
@@ -570,55 +593,6 @@ export const StrategyDetail = () => {
                   </div>
                 </div>
               </Card>
-
-              {/* Multi-Platform Export */}
-              <Card className="p-4 border-2 border-secondary/30 bg-secondary/5">
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <Code className="h-8 w-8 text-foreground mx-auto mb-2" />
-                    <h4 className="text-lg font-semibold">Multi-Platform Export</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      <strong>Cross-platform bundle</strong> - Multiple formats in one package
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="font-medium">What you get:</div>
-                    <ul className="text-muted-foreground space-y-1">
-                      <li>• MetaTrader 4/5 (MQL)</li>
-                      <li>• cTrader (C#)</li>
-                      <li>• NinjaTrader 8 (C#)</li>
-                      <li>• TradingView (Pine Script)</li>
-                      <li>• Complete documentation bundle</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Timeframe:</label>
-                      <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TIMEFRAMES.map(tf => (
-                            <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Button onClick={handleExport} className="w-full">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Multi-Platform Bundle
-                    </Button>
-                    
-                    <div className="text-xs text-muted-foreground text-center">
-                      Downloads: ZIP with all platform files
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
 
             {/* Features Information */}
@@ -648,118 +622,6 @@ export const StrategyDetail = () => {
           </div>
         </Card>
 
-        {/* Coming Soon Platforms */}
-        <Card className="p-6">
-          <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-xl">Multi-Platform Export</CardTitle>
-            <CardDescription>
-              Generate code for other trading platforms (MetaTrader, cTrader, etc.)
-            </CardDescription>
-          </CardHeader>
-          
-          {/* Timeframe Selection */}
-          <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  {isMultiTimeframe ? "Signal Timeframe" : "Trading Timeframe"}
-                </label>
-                <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select timeframe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEFRAMES.map(tf => (
-                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {isMultiTimeframe && (
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Confirmation Timeframe
-                  </label>
-                  <Select value={confirmTimeframe} onValueChange={setConfirmTimeframe}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select confirmation timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIMEFRAMES.map(tf => (
-                        <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Platform Selection */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Export Platform
-              </label>
-              <Select value={selectedExportPlatform} onValueChange={setSelectedExportPlatform}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose platform..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Wave 1 - Available Now</div>
-                  {Object.keys(EXPORT_PLATFORMS).map(platform => (
-                    <SelectItem key={platform} value={platform}>
-                      {platform}
-                    </SelectItem>
-                  ))}
-                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Wave 2 & 3 - Coming Soon</div>
-                  {COMING_SOON_PLATFORMS.map(platform => (
-                    <SelectItem key={platform} value={platform} disabled>
-                      {platform} (Coming Soon)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleGenerateCode}
-                disabled={!selectedExportPlatform || COMING_SOON_PLATFORMS.includes(selectedExportPlatform)}
-                className="flex-1"
-              >
-                <Code className="h-4 w-4 mr-2" />
-                Generate Code
-              </Button>
-              
-              <Button 
-                onClick={handleExport}
-                disabled={!selectedExportPlatform || COMING_SOON_PLATFORMS.includes(selectedExportPlatform)}
-                variant="outline"
-                className="flex-1"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Bundle
-              </Button>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-yellow-500 mb-1">Educational Use Only</p>
-                <p className="text-muted-foreground">
-                  This code is for educational purposes only and does not constitute financial advice. 
-                  Trading involves risk. Past performance does not guarantee future results. 
-                  Always test thoroughly and use proper risk management.
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
 
         {/* Global Disclaimer */}
         <Card className="p-6 border-2 border-yellow-500/20">
