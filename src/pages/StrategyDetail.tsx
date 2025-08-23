@@ -316,6 +316,10 @@ Type: ${variant || "strategy"}
       }
 
       if (finalUrl) {
+        // Try window.open first (works better in iframes)
+        window.open(finalUrl, '_blank');
+        
+        // Also try traditional download as backup
         const a = document.createElement('a');
         a.href = finalUrl;
         a.download = filename;
@@ -324,6 +328,24 @@ Type: ${variant || "strategy"}
         document.body.appendChild(a);
         a.click();
         if (document.body.contains(a)) document.body.removeChild(a);
+        
+        // Show success message with direct link
+        toast({
+          title: "Download started!",
+          description: (
+            <div>
+              <p>If it didn't work:</p>
+              <a 
+                href={finalUrl} 
+                target="_blank" 
+                rel="noopener" 
+                className="text-primary underline hover:no-underline"
+              >
+                Click here to download directly
+              </a>
+            </div>
+          ),
+        });
         return true;
       }
     } catch (error) {
