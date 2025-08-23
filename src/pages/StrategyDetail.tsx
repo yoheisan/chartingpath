@@ -16,11 +16,11 @@ import JSZip from "jszip";
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
 const EXPORT_PLATFORMS = {
-  "TradingView - Pine Script v6": { extension: "pine" },
-  "MetaTrader 4 - MQL4": { extension: "mq4" },
-  "MetaTrader 5 - MQL5": { extension: "mq5" },
-  "cTrader - C#": { extension: "cs" },
-  "NinjaTrader 8 - C#": { extension: "cs" }
+  "TradingView - Pine Script v6": { extension: "pine", indicatorName: "Indicator", strategyName: "Strategy" },
+  "MetaTrader 4 - MQL4": { extension: "mq4", indicatorName: "Indicator", strategyName: "Expert Advisor" },
+  "MetaTrader 5 - MQL5": { extension: "mq5", indicatorName: "Indicator", strategyName: "Expert Advisor" },
+  "cTrader - C#": { extension: "cs", indicatorName: "Indicator", strategyName: "Robot (cBot)" },
+  "NinjaTrader 8 - C#": { extension: "cs", indicatorName: "Indicator", strategyName: "Strategy" }
 };
 
 const COMING_SOON_PLATFORMS = [
@@ -38,6 +38,8 @@ export const StrategyDetail = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
   const [selectedExportPlatform, setSelectedExportPlatform] = useState<string>("TradingView - Pine Script v6");
+  const [selectedIndicatorPlatform, setSelectedIndicatorPlatform] = useState<string>("TradingView - Pine Script v6");
+  const [selectedStrategyPlatform, setSelectedStrategyPlatform] = useState<string>("TradingView - Pine Script v6");
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
@@ -226,40 +228,60 @@ export const StrategyDetail = () => {
     });
   };
 
-  const handleDownloadPineScript = (variant: "indicator" | "strategy") => {
+  const handleDownloadVersioned = (variant: "indicator" | "strategy", platform: string) => {
     try {
-      console.log('Starting Pine Script download for variant:', variant);
+      console.log(`Starting ${variant} download for platform:`, platform);
       const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const platformInfo = EXPORT_PLATFORMS[platform as keyof typeof EXPORT_PLATFORMS];
       
-      // Generate Pine Script code
-      const pineCode = variant === "indicator" 
-        ? PineScriptEngine.generateIndicatorVersion(strategy)
-        : PineScriptEngine.generateStrategyVersion(strategy);
+      let code: string;
+      let readme: string;
+      let disclaimer: string;
       
-      console.log('Generated Pine Script code length:', pineCode?.length || 0);
-      console.log('Pine Script preview:', pineCode?.substring(0, 100) + '...');
+      if (platform === "TradingView - Pine Script v6") {
+        // Use existing Pine Script engine
+        code = variant === "indicator" 
+          ? PineScriptEngine.generateIndicatorVersion(strategy)
+          : PineScriptEngine.generateStrategyVersion(strategy);
+        readme = PineScriptEngine.generateReadme(strategy, variant);
+        disclaimer = PineScriptEngine.generateDisclaimer();
+      } else {
+        // Use export templates for other platforms
+        const template = EXPORT_TEMPLATES[platform as keyof typeof EXPORT_TEMPLATES];
+        if (!template) {
+          toast({
+            title: "Template Not Found",
+            description: `The ${platform} template is not available`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        code = template.generateCode(strategy, selectedTimeframe);
+        readme = template.generateReadme(strategy);
+        disclaimer = DISCLAIMER_TEXT;
+        
+        // Modify code generation for indicator vs strategy variants
+        if (variant === "indicator") {
+          // Customize for indicator-only functionality
+          code = code.replace(/strategy\(/g, 'indicator(').replace(/strategy\./g, '');
+        }
+      }
       
-      if (!pineCode || pineCode.trim().length === 0) {
-        console.error('Pine Script generation failed - empty content');
+      if (!code || code.trim().length === 0) {
+        console.error('Code generation failed - empty content');
         toast({
           title: "Generation Failed",
-          description: "Pine Script code generation returned empty content",
+          description: `${platformInfo.indicatorName} code generation returned empty content`,
           variant: "destructive",
         });
         return;
       }
       
-      // Generate README
-      const readme = PineScriptEngine.generateReadme(strategy, variant);
-      console.log('Generated README length:', readme?.length || 0);
-      
-      // Generate disclaimer
-      const disclaimer = PineScriptEngine.generateDisclaimer();
-      console.log('Generated disclaimer length:', disclaimer?.length || 0);
-      
       // Force download with user interaction
       const timestamp = new Date().toISOString().slice(0, 10);
-      const prefix = `${cleanName}_${variant}_${timestamp}`;
+      const variantName = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+      const prefix = `${cleanName}_${variantName.replace(/\s+/g, '_')}_${timestamp}`;
       
       console.log('Attempting to download files...');
       
@@ -268,11 +290,9 @@ export const StrategyDetail = () => {
         console.log(`Downloading ${filename}, content length: ${content.length}`);
         
         try {
-          // Method 1: Direct blob download
           const blob = new Blob([content], { type: 'application/octet-stream' });
           const url = URL.createObjectURL(blob);
           
-          // Create and click download link
           const link = document.createElement('a');
           link.href = url;
           link.download = filename;
@@ -282,14 +302,12 @@ export const StrategyDetail = () => {
           link.click();
           document.body.removeChild(link);
           
-          // Clean up after delay
           setTimeout(() => URL.revokeObjectURL(url), 2000);
           
           console.log(`Successfully triggered download for ${filename}`);
         } catch (downloadError) {
           console.error(`Failed to download ${filename}:`, downloadError);
           
-          // Fallback: Show content in new window
           const newWindow = window.open('', '_blank');
           if (newWindow) {
             newWindow.document.write(`<pre>${content}</pre>`);
@@ -299,17 +317,18 @@ export const StrategyDetail = () => {
       };
       
       // Download all files
-      downloadWithFallback(pineCode, `${prefix}.pine`);
+      downloadWithFallback(code, `${prefix}.${platformInfo.extension}`);
       downloadWithFallback(readme, `${prefix}_README.txt`);
       downloadWithFallback(disclaimer, `${prefix}_DISCLAIMER.txt`);
       
+      const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
       toast({
         title: "Download Triggered",
-        description: `${strategy.name} ${variant} files prepared for download`,
+        description: `${strategy.name} ${variantDescription} files prepared for download`,
       });
       
     } catch (error) {
-      console.error('Pine Script export error:', error);
+      console.error(`${variant} export error:`, error);
       toast({
         title: "Export Error",
         description: `Error: ${error.message}`,
@@ -492,30 +511,64 @@ export const StrategyDetail = () => {
                             <p className="max-w-xs">Downloads the generated code as a file for the selected platform. Perfect for importing directly into your trading platform.</p>
                           </TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button onClick={() => handleDownloadPineScript("indicator")} variant="outline" size="sm" className="relative">
-                              <Download className="h-4 w-4 mr-2" />
-                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                              Indicator Version
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Downloads Pine Script indicator version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button onClick={() => handleDownloadPineScript("strategy")} variant="outline" size="sm" className="relative">
-                              <Download className="h-4 w-4 mr-2" />
-                              <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                              Strategy Version
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Downloads complete Pine Script strategy with backtesting framework, automatic position management, and performance analytics.</p>
-                          </TooltipContent>
-                        </Tooltip>
+                         <Tooltip>
+                           <TooltipTrigger asChild>
+                             <div className="space-y-2">
+                               <div className="flex items-center gap-2">
+                                 <label className="text-xs font-medium">Indicator Platform:</label>
+                                 <Select value={selectedIndicatorPlatform} onValueChange={setSelectedIndicatorPlatform}>
+                                   <SelectTrigger className="w-32 h-8">
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                                       <SelectItem key={platform} value={platform}>
+                                         {EXPORT_PLATFORMS[platform as keyof typeof EXPORT_PLATFORMS].indicatorName}
+                                       </SelectItem>
+                                     ))}
+                                   </SelectContent>
+                                 </Select>
+                               </div>
+                               <Button onClick={() => handleDownloadVersioned("indicator", selectedIndicatorPlatform)} variant="outline" size="sm" className="relative w-full">
+                                 <Download className="h-4 w-4 mr-2" />
+                                 <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                                 {EXPORT_PLATFORMS[selectedIndicatorPlatform as keyof typeof EXPORT_PLATFORMS].indicatorName} Version
+                               </Button>
+                             </div>
+                           </TooltipTrigger>
+                           <TooltipContent>
+                             <p className="max-w-xs">Downloads {selectedIndicatorPlatform} indicator version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
+                           </TooltipContent>
+                         </Tooltip>
+                         <Tooltip>
+                           <TooltipTrigger asChild>
+                             <div className="space-y-2">
+                               <div className="flex items-center gap-2">
+                                 <label className="text-xs font-medium">Strategy Platform:</label>
+                                 <Select value={selectedStrategyPlatform} onValueChange={setSelectedStrategyPlatform}>
+                                   <SelectTrigger className="w-32 h-8">
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     {Object.keys(EXPORT_PLATFORMS).map(platform => (
+                                       <SelectItem key={platform} value={platform}>
+                                         {EXPORT_PLATFORMS[platform as keyof typeof EXPORT_PLATFORMS].strategyName}
+                                       </SelectItem>
+                                     ))}
+                                   </SelectContent>
+                                 </Select>
+                               </div>
+                               <Button onClick={() => handleDownloadVersioned("strategy", selectedStrategyPlatform)} variant="outline" size="sm" className="relative w-full">
+                                 <Download className="h-4 w-4 mr-2" />
+                                 <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
+                                 {EXPORT_PLATFORMS[selectedStrategyPlatform as keyof typeof EXPORT_PLATFORMS].strategyName} Version
+                               </Button>
+                             </div>
+                           </TooltipTrigger>
+                           <TooltipContent>
+                             <p className="max-w-xs">Downloads complete {selectedStrategyPlatform} strategy with backtesting framework, automatic position management, and performance analytics.</p>
+                           </TooltipContent>
+                         </Tooltip>
                     </div>
                   </div>
                   <Textarea
