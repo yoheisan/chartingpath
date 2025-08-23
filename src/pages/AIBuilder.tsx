@@ -42,7 +42,7 @@ const AIBuilder = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Mock user tier - in real app this would come from auth context
-  const userTier: "Starter" | "Pro" | "Pro+" | "Elite" = "Starter"; // Change to test different tiers
+  const userTier: "Starter" | "Pro" | "Pro+" | "Elite" = "Elite"; // Set to Elite for full access
   const quotaUsed = 5;
   const quotaLimit = getTierLimit(userTier);
 
@@ -77,11 +77,6 @@ const AIBuilder = () => {
   ];
 
   const handleGenerate = async () => {
-    if (userTier === "Starter") {
-      toast.error("AI Strategy Builder is available for Pro+ and above. Please upgrade your plan.");
-      return;
-    }
-
     if (quotaUsed >= quotaLimit) {
       toast.error(`Daily quota exceeded (${quotaLimit} generations). Quota resets at 00:00 JST.`);
       return;
@@ -167,46 +162,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
     toast.success("Strategy saved to your library!");
   };
 
-  if (userTier === "Starter") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <div className="mb-6">
-            <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-          </div>
-
-          <Card className="text-center py-12">
-            <CardHeader>
-              <div className="flex justify-center mb-4">
-                <Lock className="h-16 w-16 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-3xl mb-4">AI Strategy Builder</CardTitle>
-              <CardDescription className="text-lg">
-                Transform your trading ideas into code with AI-powered generation
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                The AI Strategy Builder is available for Pro+ and Elite subscribers. 
-                Upgrade to start generating Pine Script, MQL4, and MQL5 strategies from plain English descriptions.
-              </p>
-              <Link to="/pricing">
-                <Button size="lg">
-                  Upgrade to Pro+ 
-                  <Zap className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
+  // Since Elite has full access, skip the Starter gate check
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -418,7 +374,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     <Label htmlFor="alerts">Alerts on Close</Label>
                   </div>
                   
-                  {(userTier === "Pro+" || userTier === "Elite") && (
+                  {userTier === "Elite" && (
                     <div className="flex items-center space-x-2">
                       <Switch 
                         id="multicondition" 
@@ -485,7 +441,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                         <Download className="h-4 w-4 mr-1" />
                         Download
                       </Button>
-                      {(userTier === "Pro+" || userTier === "Elite") && (
+                      {userTier === "Elite" && (
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -533,7 +489,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                             </CardContent>
                           </Card>
                           
-                          {(userTier === "Pro+" || userTier === "Elite") && (
+                          {userTier === "Elite" && (
                             <Card>
                               <CardHeader className="pb-3">
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -582,8 +538,8 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
           </div>
         </div>
 
-        {/* History Panel (Pro+ & Elite only) */}
-        {(userTier === "Pro+" || userTier === "Elite") && (
+        {/* History Panel (Elite only in this demo) */}
+        {userTier === "Elite" && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
