@@ -10,6 +10,7 @@ import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
 import { PineScriptEngine } from "@/components/PineScriptEngine";
 import { useToast } from "@/hooks/use-toast";
+import JSZip from "jszip";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
@@ -82,7 +83,7 @@ export const StrategyDetail = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!selectedExportPlatform) return;
 
     try {
@@ -98,8 +99,8 @@ export const StrategyDetail = () => {
 
       const platform = EXPORT_PLATFORMS[selectedExportPlatform as keyof typeof EXPORT_PLATFORMS];
       const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
-      
-      // Generate code file
+
+      // Generate content
       const code = template.generateCode(strategy, selectedTimeframe);
       if (!code) {
         toast({
@@ -109,19 +110,28 @@ export const StrategyDetail = () => {
         });
         return;
       }
-      
-      downloadFile(code, `${cleanName}.${platform.extension}`);
-      
-      // Generate README
       const readme = template.generateReadme(strategy);
-      downloadFile(readme, `${cleanName}_README.txt`);
-      
-      // Generate disclaimer
-      downloadFile(DISCLAIMER_TEXT, `${cleanName}_DISCLAIMER.txt`);
+      const disclaimer = DISCLAIMER_TEXT;
+
+      // Build ZIP bundle (single download to avoid browser blocking)
+      const zip = new JSZip();
+      zip.file(`${cleanName}.${platform.extension}`, code);
+      zip.file(`${cleanName}_README.txt`, readme);
+      zip.file(`${cleanName}_DISCLAIMER.txt`, disclaimer);
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cleanName}_${selectedExportPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Export Complete",
-        description: `${strategy.name} exported for ${selectedExportPlatform}`,
+        description: `${strategy.name} bundle downloaded for ${selectedExportPlatform}`,
       });
     } catch (error) {
       console.error('Export error:', error);
