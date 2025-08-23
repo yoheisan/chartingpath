@@ -320,12 +320,31 @@ export const StrategyDetail = () => {
       
       console.log('Attempting to download files...');
       
-      // Try direct download with user gesture
+      // Enhanced download with integrity checks
       const downloadWithFallback = (content: string, filename: string) => {
         console.log(`Downloading ${filename}, content length: ${content.length}`);
         
+        // Validate content integrity
+        if (!content || content.trim().length === 0) {
+          console.error(`Cannot download ${filename}: Empty content`);
+          toast({
+            title: "Download Error",
+            description: `${filename} contains no content`,
+            variant: "destructive",
+          });
+          return false;
+        }
+        
         try {
-          const blob = new Blob([content], { type: 'application/octet-stream' });
+          // Use proper MIME type for different file extensions
+          const mimeType = filename.endsWith('.txt') ? 'text/plain' : 'application/octet-stream';
+          const blob = new Blob([content], { type: mimeType });
+          
+          // Verify blob was created successfully
+          if (blob.size === 0) {
+            throw new Error('Blob creation failed - zero size');
+          }
+          
           const url = URL.createObjectURL(blob);
           
           const link = document.createElement('a');
@@ -333,33 +352,91 @@ export const StrategyDetail = () => {
           link.download = filename;
           link.style.display = 'none';
           
+          // Add to DOM, trigger download, then cleanup
           document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
           
-          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          // Force download with multiple attempts
+          setTimeout(() => {
+            link.click();
+            console.log(`Successfully triggered download for ${filename}`);
+          }, 100);
           
-          console.log(`Successfully triggered download for ${filename}`);
+          // Cleanup after download
+          setTimeout(() => {
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+            URL.revokeObjectURL(url);
+          }, 3000);
+          
+          return true;
         } catch (downloadError) {
           console.error(`Failed to download ${filename}:`, downloadError);
           
-          const newWindow = window.open('', '_blank');
-          if (newWindow) {
-            newWindow.document.write(`<pre>${content}</pre>`);
-            newWindow.document.title = filename;
+          // Enhanced fallback - show content in new window with better formatting
+          try {
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <title>${filename}</title>
+                  <style>
+                    body { font-family: monospace; margin: 20px; background: #1e1e1e; color: #d4d4d4; }
+                    pre { white-space: pre-wrap; word-wrap: break-word; }
+                    .header { background: #2d2d30; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h3>${filename}</h3>
+                    <p>Right-click and "Save As" to download this file.</p>
+                  </div>
+                  <pre>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                </body>
+                </html>
+              `;
+              newWindow.document.write(html);
+              newWindow.document.close();
+              return true;
+            }
+          } catch (fallbackError) {
+            console.error(`Fallback also failed for ${filename}:`, fallbackError);
           }
+          
+          return false;
         }
       };
       
-      // Download all files
-      downloadWithFallback(code, `${prefix}.${platformInfo.extension}`);
-      downloadWithFallback(readme, `${prefix}_README.txt`);
-      downloadWithFallback(disclaimer, `${prefix}_DISCLAIMER.txt`);
+      // Download all files with integrity validation
+      const downloads = [
+        { content: code, filename: `${prefix}.${platformInfo.extension}` },
+        { content: readme, filename: `${prefix}_README.txt` },
+        { content: disclaimer, filename: `${prefix}_DISCLAIMER.txt` }
+      ];
       
-      const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
-      toast({
-        title: "Download Triggered",
-        description: `${strategy.name} ${variantDescription} files prepared for download`,
+      let successCount = 0;
+      
+      // Stagger downloads to prevent browser blocking
+      downloads.forEach((download, index) => {
+        setTimeout(() => {
+          if (downloadWithFallback(download.content, download.filename)) {
+            successCount++;
+            
+            // Show final success message after all downloads complete
+            if (index === downloads.length - 1) {
+              setTimeout(() => {
+                const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
+                toast({
+                  title: successCount === downloads.length ? "Downloads Complete" : "Partial Download",
+                  description: `${successCount}/${downloads.length} ${strategy.name} ${variantDescription} files downloaded`,
+                  variant: successCount === downloads.length ? "default" : "destructive",
+                });
+              }, 500);
+            }
+          }
+        }, index * 300); // 300ms delay between downloads
       });
       
     } catch (error) {
