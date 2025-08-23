@@ -1,3 +1,5 @@
+import { PineScriptEngine } from "./PineScriptEngine";
+
 export interface ExportTemplate {
   generateCode: (strategy: any, timeframe?: string, confirmTimeframe?: string) => string;
   generateReadme: (strategy: any) => string;
@@ -7,12 +9,10 @@ export const EXPORT_TEMPLATES = {
   "TradingView - Pine Script v6": {
     generateCode: (strategy: any, timeframe = "1H") => {
       // Use the new Pine Script engine for Pine Script generation
-      const { PineScriptEngine } = require("@/components/PineScriptEngine");
       return PineScriptEngine.generateStrategyVersion(strategy);
     },
     generateReadme: (strategy: any) => {
       // Use the new Pine Script engine for README generation
-      const { PineScriptEngine } = require("@/components/PineScriptEngine");
       return PineScriptEngine.generateReadme(strategy, "strategy");
     }
   },
