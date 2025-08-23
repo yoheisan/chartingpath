@@ -379,6 +379,27 @@ export const StrategyDetail = () => {
           </div>
         </Card>
 
+        {/* Entry and Exit Rules */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-lg text-bullish">Entry Rules</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <p className="text-muted-foreground">{strategy.entry}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="p-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="text-lg text-bearish">Exit Rules</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <p className="text-muted-foreground">{strategy.exit}</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Code Preview & Generation - Main Section */}
         <Card className="p-6">
           <CardHeader className="p-0 mb-6">
@@ -626,27 +647,6 @@ export const StrategyDetail = () => {
             </div>
           </div>
         </Card>
-
-        {/* Entry and Exit Rules */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <CardHeader className="p-0 mb-4">
-              <CardTitle className="text-lg text-bullish">Entry Rules</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <p className="text-muted-foreground">{strategy.entry}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="p-6">
-            <CardHeader className="p-0 mb-4">
-              <CardTitle className="text-lg text-bearish">Exit Rules</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <p className="text-muted-foreground">{strategy.exit}</p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Coming Soon Platforms */}
         <Card className="p-6">
