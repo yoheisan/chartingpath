@@ -33,13 +33,15 @@ const Pricing = () => {
       name: "Starter",
       price: 29,
       annualPrice: 313,
-      description: "Perfect for beginners getting started with automated trading",
+      description: "For beginners getting started with automated trading",
       features: [
         "Script Library (20+ ready-to-use strategies)",
         "Basic Pip & Risk Calculators", 
         "Monthly tutorials",
         "Email support",
-        "Basic pattern recognition guides"
+        "Basic pattern recognition guides",
+        "1–2 basic chart-pattern alerts (email only)",
+        "Starter Discord access (read-only)"
       ],
       buttonText: "Start with Starter",
       popular: false,
@@ -53,14 +55,32 @@ const Pricing = () => {
       features: [
         "Everything in Starter",
         "Advanced Script Library (50+ strategies)",
-        "Chart Pattern Email Alerts (3 active alerts)",
+        "10 multi-condition chart-pattern alerts (email)",
         "Video Course: Automated Trading from Zero to First Bot",
         "Pro Calculators (save profiles, CSV export)",
-        'Monthly "New Script of the Month"',
+        "Monthly AI-generated \"Script of the Month\"",
         "Members-only Q&A sessions",
-        "Priority support"
+        "Priority support",
+        "Basic Backtesting (equity curve, win-rate, drawdown)"
       ],
       buttonText: "Go Pro",
+      popular: false,
+      icon: Star
+    },
+    {
+      name: "Pro+",
+      price: 119,
+      annualPrice: 1284,
+      description: "AI-powered strategy building for advanced traders",
+      features: [
+        "Everything in Pro",
+        "AI Strategy Builder (plain English → code for Pine v5, MQL4, MQL5)",
+        "25 AI-driven pattern alerts (email + Telegram/Discord)",
+        "Advanced Backtesting (equity stats + risk metrics + CSV export)",
+        "Monthly AI Strategy Packs",
+        "Pro+ Discord role (exclusive channels)"
+      ],
+      buttonText: "Go Pro+",
       popular: true,
       icon: Star
     },
@@ -70,18 +90,18 @@ const Pricing = () => {
       annualPrice: 2148,
       description: "Ultimate access for professional traders",
       features: [
-        "Everything in Pro", 
-        "Chart Pattern Email Alerts (Unlimited alerts)",
-        "Premium Discord role & exclusive channels",
-        "Early access to strategy packs",
-        "Reserved access to Automated Script Generator",
-        "1-on-1 strategy consultation (monthly)",
-        "Custom script requests (2 per month)",
+        "Everything in Pro+", 
+        "AI Script Generator (advanced) — multi-platform + risk baked-in presets",
+        "Unlimited AI-driven pattern alerts (email + Telegram/Discord)",
+        "AI Risk Coach (portfolio-level insights)",
+        "Early access to AI features & strategy packs",
+        "Premium Discord role & private channels",
         "Priority feature requests"
       ],
       buttonText: "Join Elite",
       popular: false,
-      icon: Crown
+      icon: Crown,
+      lifetime: true
     }
   ];
 
@@ -135,7 +155,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-8 md:grid-cols-3 mb-12">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const displayPrice = isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
@@ -188,6 +208,11 @@ const Pricing = () => {
                       </div>
                     )}
                     
+                    {plan.lifetime && (
+                      <div className="text-sm text-accent font-semibold">
+                        or $999 lifetime
+                      </div>
+                    )}
                   </div>
                   
                   <CardDescription className="text-base">
@@ -286,8 +311,15 @@ const Pricing = () => {
           </div>
         </div>
 
+        {/* Pricing Disclaimer */}
+        <div className="mt-8 p-4 bg-muted/50 rounded-lg mb-8">
+          <p className="text-sm text-muted-foreground text-center">
+            <strong>Educational use only.</strong> Monthly plans are non-refundable. Annual plans are refundable for unused full months. Lifetime is refundable within 1 month of purchase. See Terms & Privacy for details.
+          </p>
+        </div>
+
         {/* Disclaimer */}
-        <div className="mt-12 p-4 bg-muted/50 rounded-lg">
+        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
             <strong>Disclaimer:</strong> Educational purposes only. Not financial advice. Past performance does not guarantee future results. 
             Trading involves substantial risk of loss. All scripts and strategies should be thoroughly tested before live trading.

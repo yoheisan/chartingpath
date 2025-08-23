@@ -25,6 +25,7 @@ import TradingStrategiesPage from "./pages/TradingStrategiesPage";
 import PatternQuizPage from "./pages/PatternQuizPage";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import AIBuilder from "./pages/AIBuilder";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
+          <Route path="/ai-builder" element={<AIBuilder />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />

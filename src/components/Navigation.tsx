@@ -80,6 +80,9 @@ const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Link to="/ai-builder" className="text-muted-foreground hover:text-foreground transition-colors">
+              AI Builder
+            </Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
