@@ -23,6 +23,8 @@ import PatternGenerator from "./pages/PatternGenerator";
 import PatternLibraryPage from "./pages/PatternLibraryPage";
 import TradingStrategiesPage from "./pages/TradingStrategiesPage";
 import PatternQuizPage from "./pages/PatternQuizPage";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
