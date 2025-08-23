@@ -4,8 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import { useState } from "react";
 
 const Pricing = () => {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   const handlePlanSelect = (planName: string) => {
     // Analytics event
     if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -16,6 +19,13 @@ const Pricing = () => {
     }
     // In a real implementation, this would redirect to checkout
     console.log(`Selected plan: ${planName}`);
+  };
+
+  const calculateMonthlySavings = (monthlyPrice: number, annualPrice: number) => {
+    const monthlyTotal = monthlyPrice * 12;
+    const savings = monthlyTotal - annualPrice;
+    const percentage = Math.round((savings / monthlyTotal) * 100);
+    return { savings, percentage };
   };
 
   const plans = [
@@ -90,17 +100,48 @@ const Pricing = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
-            Choose Your Plan
+            Plans for every level of ambition
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             Start free with our tools, upgrade when you're ready to go pro.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <span className={`text-sm font-medium ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <button
+              onClick={() => setIsAnnual(!isAnnual)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                isAnnual ? 'bg-primary' : 'bg-muted'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
+                  isAnnual ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className={`text-sm font-medium ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Annually
+            </span>
+          </div>
+          {isAnnual && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent rounded-full text-sm font-medium">
+              💰 Save up to 17%
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards */}
         <div className="grid gap-8 md:grid-cols-3 mb-12">
           {plans.map((plan) => {
             const Icon = plan.icon;
+            const displayPrice = isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
+            const billingText = isAnnual && plan.annualPrice ? 'billed annually' : '/month';
+            const savings = plan.annualPrice ? calculateMonthlySavings(plan.price, plan.annualPrice) : null;
+
             return (
               <Card 
                 key={plan.name} 
@@ -120,16 +161,24 @@ const Pricing = () => {
                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   </div>
                   
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <div className="text-4xl font-bold text-foreground">
-                      ${plan.price}
-                      <span className="text-lg text-muted-foreground">/month</span>
+                      ${displayPrice}
+                      {isAnnual && plan.annualPrice ? (
+                        <div className="text-base text-muted-foreground font-normal">
+                          {billingText}
+                        </div>
+                      ) : (
+                        <span className="text-lg text-muted-foreground">{billingText}</span>
+                      )}
                     </div>
-                    {plan.annualPrice && (
+                    
+                    {isAnnual && savings && (
                       <div className="text-sm text-accent font-semibold">
-                        or ${plan.annualPrice}/year
+                        Save ${savings.savings} a year
                       </div>
                     )}
+                    
                     {plan.lifetime && (
                       <div className="text-sm text-accent font-semibold">
                         or $999 lifetime
