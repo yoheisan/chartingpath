@@ -22,6 +22,7 @@ const Pricing = () => {
     {
       name: "Starter",
       price: 29,
+      annualPrice: 313,
       description: "Perfect for beginners getting started with automated trading",
       features: [
         "Script Library (20+ ready-to-use strategies)",
@@ -37,6 +38,7 @@ const Pricing = () => {
     {
       name: "Pro", 
       price: 79,
+      annualPrice: 852,
       description: "Advanced tools and education for serious traders",
       features: [
         "Everything in Starter",
@@ -118,11 +120,16 @@ const Pricing = () => {
                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   </div>
                   
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <div className="text-4xl font-bold text-foreground">
                       ${plan.price}
                       <span className="text-lg text-muted-foreground">/month</span>
                     </div>
+                    {plan.annualPrice && (
+                      <div className="text-sm text-accent font-semibold">
+                        or ${plan.annualPrice}/year
+                      </div>
+                    )}
                     {plan.lifetime && (
                       <div className="text-sm text-accent font-semibold">
                         or $999 lifetime
