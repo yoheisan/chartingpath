@@ -109,19 +109,49 @@ export const StrategyDetail = () => {
 
   const isMultiTimeframe = strategy.name.includes("Triple Screen") || strategy.name.includes("Multi-Timeframe");
 
-  const downloadFile = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.rel = 'noopener';
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    // Delay revocation to ensure download starts in all browsers/iframes
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  const downloadFile = (content: string, filename: string): boolean => {
+    try {
+      if (!content || content.trim().length === 0) {
+        console.error(`downloadFile: empty content for ${filename}`);
+        return false;
+      }
+      const ext = filename.split('.').pop()?.toLowerCase();
+      const textExts = ['txt','pine','mq4','mq5','cs','el','ts','js','json'];
+      const mime = textExts.includes(ext || '') ? 'text/plain;charset=utf-8' : 'application/octet-stream';
+
+      const blob = new Blob([content], { type: mime });
+      if (blob.size === 0) {
+        console.error(`downloadFile: zero-size blob for ${filename}`);
+        return false;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
+      return true;
+    } catch (e) {
+      console.error('downloadFile error:', e);
+      // Fallback: open in a new window so user can save manually
+      try {
+        const nw = window.open('', '_blank');
+        if (nw) {
+          const safe = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          nw.document.write(`<pre>${safe}</pre>`);
+          nw.document.title = filename;
+          nw.document.close();
+          return true;
+        }
+      } catch {}
+      return false;
+    }
   };
 
   const handleExport = async () => {
@@ -255,11 +285,14 @@ export const StrategyDetail = () => {
     const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
     const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
     
-    downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
+    const ok = downloadFile(generatedCode, `${cleanName}.${platform.extension}`);
 
     toast({
-      title: "File Exported",
-      description: `${strategy.name}.${platform.extension} downloaded`,
+      title: ok ? "File Exported" : "Download Blocked",
+      description: ok
+        ? `${strategy.name}.${platform.extension} downloaded`
+        : `Your browser blocked the download. Please allow downloads/pop-ups and try again.`,
+      variant: ok ? "default" : "destructive",
     });
   };
 
