@@ -72,15 +72,18 @@ export const StrategyDetail = () => {
   const isMultiTimeframe = strategy.name.includes("Triple Screen") || strategy.name.includes("Multi-Timeframe");
 
   const downloadFile = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    a.rel = 'noopener';
+    a.target = '_blank';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Delay revocation to ensure download starts in all browsers/iframes
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const handleExport = async () => {
@@ -124,10 +127,12 @@ export const StrategyDetail = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = `${cleanName}_${selectedExportPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
+      a.rel = 'noopener';
+      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
 
       toast({
         title: "Export Complete",
