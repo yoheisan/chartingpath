@@ -174,6 +174,33 @@ export type Database = {
           },
         ]
       }
+      country_language_mapping: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          id: string
+          primary_language_code: string
+          secondary_language_codes: string[] | null
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          id?: string
+          primary_language_code: string
+          secondary_language_codes?: string[] | null
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          id?: string
+          primary_language_code?: string
+          secondary_language_codes?: string[] | null
+        }
+        Relationships: []
+      }
       plan_pricing: {
         Row: {
           created_at: string
@@ -295,6 +322,105 @@ export type Database = {
         }
         Relationships: []
       }
+      translation_keys: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      translations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          key: string
+          language_code: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          value: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key: string
+          language_code: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          value: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key?: string
+          language_code?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          value?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      user_language_preferences: {
+        Row: {
+          created_at: string
+          detected_country: string | null
+          id: string
+          is_manual_selection: boolean
+          language_code: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_country?: string | null
+          id?: string
+          is_manual_selection?: boolean
+          language_code: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_country?: string | null
+          id?: string
+          is_manual_selection?: boolean
+          language_code?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -333,6 +459,17 @@ export type Database = {
         }
         Returns: number
       }
+      get_translations: {
+        Args: { p_language_code?: string }
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
+      get_user_language: {
+        Args: { p_user_id?: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -343,6 +480,19 @@ export type Database = {
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      make_first_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      set_user_language: {
+        Args: {
+          p_detected_country?: string
+          p_is_manual?: boolean
+          p_language_code: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       update_profile_subscription: {
         Args: {
