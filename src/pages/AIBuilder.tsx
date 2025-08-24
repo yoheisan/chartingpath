@@ -364,7 +364,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
 
                       {/* Base Template */}
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-between mb-2">
                           <Label>Base Template (Optional)</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -700,18 +700,28 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                           </Tooltip>
                         </h4>
                         <div className="space-y-4">
-                          <div>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
                             <Label className="text-sm">Action on Trigger</Label>
-                            <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
-                              <SelectTrigger className="mt-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border z-50">
-                                <SelectItem value="long">Enter Long</SelectItem>
-                                <SelectItem value="short">Enter Short</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Choose whether signals trigger long or short entries. Can be overridden by directional mapping if enabled.</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
+                          <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border z-50">
+                              <SelectItem value="long">Enter Long</SelectItem>
+                              <SelectItem value="short">Enter Short</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                           
                           <div className="flex items-center space-x-2">
                             <Switch 
@@ -778,7 +788,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     {/* Timeframes */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-between mb-2">
                           <Label>Signal Timeframe</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -802,7 +812,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       </div>
                       
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-between mb-2">
                           <Label>Confirm TF</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -850,7 +860,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
 
                     {/* Risk Controls */}
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <Label>Risk Controls</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -876,7 +886,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     {riskType === "atr" && (
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center justify-between mb-1">
                             <Label className="text-xs">ATR Length</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -899,7 +909,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                           </Select>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center justify-between mb-1">
                             <Label className="text-xs">SL Mult</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -922,7 +932,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                           </Select>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center justify-between mb-1">
                             <Label className="text-xs">TP Mult</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -967,7 +977,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       </div>
                       
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center justify-between mb-1">
                           <Label className="text-sm">Trend EMA Length</Label>
                           <Tooltip>
                             <TooltipTrigger asChild>
