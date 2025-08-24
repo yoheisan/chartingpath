@@ -10,15 +10,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useTranslation } from 'react-i18next';
-import { useTranslations } from '@/hooks/useTranslations';
 import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-trading-space.jpg';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const { t: translateStatic } = useTranslation();
-  const { t, loading } = useTranslations();
+  const { t } = useTranslation();
   
   // Detect user language on first visit
   useEffect(() => {
