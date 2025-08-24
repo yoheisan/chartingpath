@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   ArrowLeft, 
   Download, 
@@ -29,7 +30,9 @@ import {
   Clock,
   Star,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Info,
+  HelpCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -287,586 +290,773 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
 
   // Since Elite has full access, skip the Starter gate check
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Link>
-          
-          <Badge variant="outline" className="flex items-center gap-2">
-            <Crown className="h-3 w-3" />
-            {userTier} - {quotaUsed}/{quotaLimit} used today
-          </Badge>
-        </div>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+            
+            <Badge variant="outline" className="flex items-center gap-2">
+              <Crown className="h-3 w-3" />
+              {userTier} - {quotaUsed}/{quotaLimit} used today
+            </Badge>
+          </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
-            AI Strategy Builder
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Transform your trading ideas into professional-grade code. Describe your strategy in plain English 
-            and get Pine Script, MQL4, and MQL5 implementations instantly.
-          </p>
-        </div>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+              AI Strategy Builder
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Transform your trading ideas into professional-grade code. Describe your strategy in plain English 
+              and get Pine Script, MQL4, and MQL5 implementations instantly.
+            </p>
+          </div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          
-          {/* Panel A: Strategy Configuration */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Strategy Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                
-                {/* Mode Selection */}
-                <Tabs value={builderMode} onValueChange={(value: "natural" | "visual") => setBuilderMode(value)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="natural">Natural Language</TabsTrigger>
-                    <TabsTrigger value="visual">Visual Builder</TabsTrigger>
-                  </TabsList>
+          {/* Main Content Grid */}
+          <div className="grid lg:grid-cols-3 gap-8">
+            
+            {/* Panel A: Strategy Configuration */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Strategy Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
                   
-                  {/* Natural Language Tab */}
-                  <TabsContent value="natural" className="space-y-6 mt-6">
-                    {/* Strategy Description */}
-                    <div>
-                      <Label htmlFor="strategy">Describe Your Strategy</Label>
-                      <Textarea
-                        id="strategy"
-                        value={strategy}
-                        onChange={(e) => setStrategy(e.target.value)}
-                        placeholder="Describe your strategy in plain English... e.g., '15m BTC strategy: EMA 50/200 trend filter, MACD cross for entries, RSI > 50, ATR SL 1.5×, TP 3×, alerts on close.'"
-                        className="mt-2 min-h-[100px]"
-                      />
+                  {/* Mode Selection */}
+                  <Tabs value={builderMode} onValueChange={(value: "natural" | "visual") => setBuilderMode(value)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="natural">Natural Language</TabsTrigger>
+                      <TabsTrigger value="visual">Visual Builder</TabsTrigger>
+                    </TabsList>
+                    
+                    {/* Natural Language Tab */}
+                    <TabsContent value="natural" className="space-y-6 mt-6">
+                      {/* Strategy Description */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Label htmlFor="strategy">Describe Your Strategy</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Describe your trading strategy in plain English. Include entry conditions, indicators, timeframes, and risk management. Example: "15m BTC strategy using EMA crossover with RSI confirmation and ATR-based stops."</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Textarea
+                          id="strategy"
+                          value={strategy}
+                          onChange={(e) => setStrategy(e.target.value)}
+                          placeholder="Describe your strategy in plain English... e.g., '15m BTC strategy: EMA 50/200 trend filter, MACD cross for entries, RSI > 50, ATR SL 1.5×, TP 3×, alerts on close.'"
+                          className="mt-2 min-h-[100px]"
+                        />
+                      </div>
+
+                      {/* Base Template */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Label>Base Template (Optional)</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Choose a pre-built template to start with. Templates provide common indicator setups like MACD crossovers, RSI signals, or Bollinger Band strategies as a foundation for your custom strategy.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Select value={baseTemplate} onValueChange={setBaseTemplate}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Choose a template" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            {templates.map(template => (
+                              <SelectItem key={template} value={template.toLowerCase()}>
+                                {template}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TabsContent>
+
+                    {/* Visual Builder Tab */}
+                    <TabsContent value="visual" className="space-y-6 mt-6">
+                      {/* Stars Aligned Mode */}
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4" />
+                          <span className="font-medium">Stars Aligned Mode</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p><strong>Stars Aligned (AND):</strong> ALL conditions must be true for a signal. <strong>OR Mode:</strong> ANY condition can trigger a signal. Use AND for more selective entries, OR for more frequent signals.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Switch 
+                          checked={starsAligned}
+                          onCheckedChange={setStarsAligned}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground -mt-4">
+                        {starsAligned ? "ALL conditions must be true (AND)" : "ANY condition can trigger (OR)"}
+                      </p>
+
+                      {/* Indicator Conditions */}
+                      <Collapsible defaultOpen>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                            <div className="flex items-center gap-2">
+                              <BarChart3 className="h-4 w-4" />
+                              <span>Indicator Conditions</span>
+                              <Badge variant="secondary">{indicatorConditions.length}</Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>Add technical indicator conditions like EMA crossovers, RSI levels, MACD signals, Bollinger Band touches, etc. Each condition can have its own timeframe and parameters.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-3 mt-3">
+                          {indicatorConditions.map((condition) => (
+                            <Card key={condition.id} className="p-3">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Select 
+                                    value={condition.indicator} 
+                                    onValueChange={(value) => updateIndicatorCondition(condition.id, { indicator: value })}
+                                  >
+                                    <SelectTrigger className="w-24">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50">
+                                      {indicators.map(ind => (
+                                        <SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => removeIndicatorCondition(condition.id)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  {condition.indicator === "EMA" && (
+                                    <Input 
+                                      placeholder="Period" 
+                                      value={condition.leftParams.period || ""} 
+                                      onChange={(e) => updateIndicatorCondition(condition.id, { 
+                                        leftParams: { ...condition.leftParams, period: e.target.value }
+                                      })}
+                                    />
+                                  )}
+                                  <Select 
+                                    value={condition.operator} 
+                                    onValueChange={(value) => updateIndicatorCondition(condition.id, { operator: value })}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50">
+                                      {operators.map(op => (
+                                        <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Input 
+                                    placeholder="Value" 
+                                    value={condition.rightValue || ""} 
+                                    onChange={(e) => updateIndicatorCondition(condition.id, { rightValue: e.target.value })}
+                                  />
+                                </div>
+                                
+                                <Select 
+                                  value={condition.timeframe || timeframe} 
+                                  onValueChange={(value) => updateIndicatorCondition(condition.id, { timeframe: value })}
+                                >
+                                  <SelectTrigger className="w-20">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {timeframes.map(tf => (
+                                      <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </Card>
+                          ))}
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={addIndicatorCondition}
+                            className="w-full"
+                          >
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Indicator Condition
+                          </Button>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Price Action Conditions */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                            <div className="flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              <span>Price Action & Candles</span>
+                              <Badge variant="secondary">{priceActionConditions.length}</Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>Add price action conditions like close vs open direction, intraday range moves, candlestick patterns (hammer, doji, engulfing), and support/resistance level touches.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-3 mt-3">
+                          {priceActionConditions.map((condition) => (
+                            <Card key={condition.id} className="p-3">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Select 
+                                    value={condition.type}
+                                    onValueChange={(value: "close_vs_open" | "intraday_range" | "candle_pattern" | "sr_touch") => 
+                                      setPriceActionConditions(priceActionConditions.map(c => 
+                                        c.id === condition.id ? { ...c, type: value } : c
+                                      ))
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50">
+                                      <SelectItem value="close_vs_open">Close vs Open</SelectItem>
+                                      <SelectItem value="intraday_range">Intraday Range</SelectItem>
+                                      <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
+                                      <SelectItem value="sr_touch">S/R Touch</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => removePriceActionCondition(condition.id)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                
+                                {condition.type === "close_vs_open" && (
+                                  <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <Select defaultValue="up">
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-background border z-50">
+                                        <SelectItem value="up">Up</SelectItem>
+                                        <SelectItem value="down">Down</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Input placeholder="1.0" />
+                                    <Select defaultValue="percent">
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-background border z-50">
+                                        <SelectItem value="percent">%</SelectItem>
+                                        <SelectItem value="ticks">Ticks</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          ))}
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={addPriceActionCondition}
+                            className="w-full"
+                          >
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Price Action Condition
+                          </Button>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Time/Session Conditions */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>Time & Session</span>
+                              <Badge variant="secondary">{timeConditions.length}</Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>Add time-based filters like session windows (first 2 hours of London/NY), specific time ranges (09:30-11:30), day filters (weekdays only), or bar close requirements.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-3 mt-3">
+                          {timeConditions.map((condition) => (
+                            <Card key={condition.id} className="p-3">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Select 
+                                    value={condition.type}
+                                    onValueChange={(value: "session_window" | "day_filter" | "bar_close") => 
+                                      setTimeConditions(timeConditions.map(c => 
+                                        c.id === condition.id ? { ...c, type: value } : c
+                                      ))
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50">
+                                      <SelectItem value="session_window">Session Window</SelectItem>
+                                      <SelectItem value="day_filter">Day Filter</SelectItem>
+                                      <SelectItem value="bar_close">Bar Close Only</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => removeTimeCondition(condition.id)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                
+                                {condition.type === "session_window" && (
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <Input placeholder="09:30" />
+                                    <Input placeholder="11:30" />
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          ))}
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={addTimeCondition}
+                            className="w-full"
+                          >
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Time Condition
+                          </Button>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Execution Panel */}
+                      <Card className="p-4 bg-muted/30">
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          Execution & Risk
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Configure how trades are executed when conditions are met. Set direction (long/short), enable directional mapping, add trailing stops, and configure early exit rules.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </h4>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm">Action on Trigger</Label>
+                            <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border z-50">
+                                <SelectItem value="long">Enter Long</SelectItem>
+                                <SelectItem value="short">Enter Short</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Switch 
+                              checked={useDirectionalMapping}
+                              onCheckedChange={setUseDirectionalMapping}
+                            />
+                            <Label className="text-sm">Use Directional Mapping</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Automatically determine trade direction based on signal type (e.g., EMA cross up = Long, RSI below 30 = Short). Overrides the fixed action setting above.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Switch 
+                              checked={trailingStop}
+                              onCheckedChange={setTrailingStop}
+                            />
+                            <Label className="text-sm">Trailing Stop</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Enable trailing stop-loss that moves in your favor as price moves favorably. Specify the trail distance in ATR multiples or percentage.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          
+                          {trailingStop && (
+                            <Input 
+                              placeholder="1.5"
+                              value={trailingStopValue}
+                              onChange={(e) => setTrailingStopValue(e.target.value)}
+                            />
+                          )}
+                          
+                          <div className="flex items-center space-x-2">
+                            <Switch 
+                              checked={earlyExit}
+                              onCheckedChange={setEarlyExit}
+                            />
+                            <Label className="text-sm">Early Exit on Opposite Signal</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Close the current position early if an opposite signal appears, even before hitting stop-loss or take-profit levels.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Common Settings (shown for both modes) */}
+                  <div className="space-y-6 border-t pt-6">
+                    {/* Timeframes */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Label>Signal Timeframe</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>The main timeframe where signals are generated. This is the chart timeframe where your strategy will look for entry conditions.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Select value={timeframe} onValueChange={setTimeframe}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            {timeframes.map(tf => (
+                              <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Label>Confirm TF</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Optional higher timeframe for trend confirmation. Signals from the main timeframe will only trigger if the trend on this timeframe aligns.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Select 
+                          value={confirmTimeframe} 
+                          onValueChange={setConfirmTimeframe}
+                          disabled={!mtfEnabled}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            {timeframes.map(tf => (
+                              <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    {/* Base Template */}
+                    {/* MTF Toggle */}
+                    <div className="flex items-center space-x-2">
+                      <Switch 
+                        id="mtf" 
+                        checked={mtfEnabled}
+                        onCheckedChange={setMtfEnabled}
+                      />
+                      <Label htmlFor="mtf">Multi-Timeframe Confirmation</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Enable higher timeframe trend confirmation to improve signal quality. Only take signals when the higher timeframe trend aligns with your entry direction.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+
+                    {/* Risk Controls */}
                     <div>
-                      <Label>Base Template (Optional)</Label>
-                      <Select value={baseTemplate} onValueChange={setBaseTemplate}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label>Risk Controls</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p><strong>ATR-based:</strong> Uses Average True Range for dynamic stops based on market volatility. <strong>Percentage-based:</strong> Uses fixed percentage stops from entry price.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Select value={riskType} onValueChange={setRiskType}>
                         <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Choose a template" />
+                          <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          {templates.map(template => (
-                            <SelectItem key={template} value={template.toLowerCase()}>
-                              {template}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="bg-background border z-50">
+                          <SelectItem value="atr">ATR-based</SelectItem>
+                          <SelectItem value="percentage">Percentage-based</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </TabsContent>
 
-                  {/* Visual Builder Tab */}
-                  <TabsContent value="visual" className="space-y-6 mt-6">
-                    {/* Stars Aligned Mode */}
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        <span className="font-medium">Stars Aligned Mode</span>
-                      </div>
-                      <Switch 
-                        checked={starsAligned}
-                        onCheckedChange={setStarsAligned}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground -mt-4">
-                      {starsAligned ? "ALL conditions must be true (AND)" : "ANY condition can trigger (OR)"}
-                    </p>
-
-                    {/* Indicator Conditions */}
-                    <Collapsible defaultOpen>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                          <div className="flex items-center gap-2">
-                            <BarChart3 className="h-4 w-4" />
-                            <span>Indicator Conditions</span>
-                            <Badge variant="secondary">{indicatorConditions.length}</Badge>
-                          </div>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-3 mt-3">
-                        {indicatorConditions.map((condition) => (
-                          <Card key={condition.id} className="p-3">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Select 
-                                  value={condition.indicator} 
-                                  onValueChange={(value) => updateIndicatorCondition(condition.id, { indicator: value })}
-                                >
-                                  <SelectTrigger className="w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {indicators.map(ind => (
-                                      <SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => removeIndicatorCondition(condition.id)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              
-                              <div className="grid grid-cols-3 gap-2 text-xs">
-                                {condition.indicator === "EMA" && (
-                                  <Input 
-                                    placeholder="Period" 
-                                    value={condition.leftParams.period || ""} 
-                                    onChange={(e) => updateIndicatorCondition(condition.id, { 
-                                      leftParams: { ...condition.leftParams, period: e.target.value }
-                                    })}
-                                  />
-                                )}
-                                <Select 
-                                  value={condition.operator} 
-                                  onValueChange={(value) => updateIndicatorCondition(condition.id, { operator: value })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {operators.map(op => (
-                                      <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Input 
-                                  placeholder="Value" 
-                                  value={condition.rightValue || ""} 
-                                  onChange={(e) => updateIndicatorCondition(condition.id, { rightValue: e.target.value })}
-                                />
-                              </div>
-                              
-                              <Select 
-                                value={condition.timeframe || timeframe} 
-                                onValueChange={(value) => updateIndicatorCondition(condition.id, { timeframe: value })}
-                              >
-                                <SelectTrigger className="w-20">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {timeframes.map(tf => (
-                                    <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </Card>
-                        ))}
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={addIndicatorCondition}
-                          className="w-full"
-                        >
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Indicator Condition
-                        </Button>
-                      </CollapsibleContent>
-                    </Collapsible>
-
-                    {/* Price Action Conditions */}
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                          <div className="flex items-center gap-2">
-                            <Target className="h-4 w-4" />
-                            <span>Price Action & Candles</span>
-                            <Badge variant="secondary">{priceActionConditions.length}</Badge>
-                          </div>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-3 mt-3">
-                        {priceActionConditions.map((condition) => (
-                          <Card key={condition.id} className="p-3">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Select 
-                                  value={condition.type}
-                                  onValueChange={(value: "close_vs_open" | "intraday_range" | "candle_pattern" | "sr_touch") => 
-                                    setPriceActionConditions(priceActionConditions.map(c => 
-                                      c.id === condition.id ? { ...c, type: value } : c
-                                    ))
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="close_vs_open">Close vs Open</SelectItem>
-                                    <SelectItem value="intraday_range">Intraday Range</SelectItem>
-                                    <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
-                                    <SelectItem value="sr_touch">S/R Touch</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => removePriceActionCondition(condition.id)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              
-                              {condition.type === "close_vs_open" && (
-                                <div className="grid grid-cols-3 gap-2 text-xs">
-                                  <Select defaultValue="up">
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="up">Up</SelectItem>
-                                      <SelectItem value="down">Down</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <Input placeholder="1.0" />
-                                  <Select defaultValue="percent">
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="percent">%</SelectItem>
-                                      <SelectItem value="ticks">Ticks</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={addPriceActionCondition}
-                          className="w-full"
-                        >
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Price Action Condition
-                        </Button>
-                      </CollapsibleContent>
-                    </Collapsible>
-
-                    {/* Time/Session Conditions */}
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span>Time & Session</span>
-                            <Badge variant="secondary">{timeConditions.length}</Badge>
-                          </div>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-3 mt-3">
-                        {timeConditions.map((condition) => (
-                          <Card key={condition.id} className="p-3">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Select 
-                                  value={condition.type}
-                                  onValueChange={(value: "session_window" | "day_filter" | "bar_close") => 
-                                    setTimeConditions(timeConditions.map(c => 
-                                      c.id === condition.id ? { ...c, type: value } : c
-                                    ))
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="session_window">Session Window</SelectItem>
-                                    <SelectItem value="day_filter">Day Filter</SelectItem>
-                                    <SelectItem value="bar_close">Bar Close Only</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => removeTimeCondition(condition.id)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              
-                              {condition.type === "session_window" && (
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                  <Input placeholder="09:30" />
-                                  <Input placeholder="11:30" />
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={addTimeCondition}
-                          className="w-full"
-                        >
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Time Condition
-                        </Button>
-                      </CollapsibleContent>
-                    </Collapsible>
-
-                    {/* Execution Panel */}
-                    <Card className="p-4 bg-muted/30">
-                      <h4 className="font-medium mb-3 flex items-center gap-2">
-                        <Target className="h-4 w-4" />
-                        Execution & Risk
-                      </h4>
-                      <div className="space-y-4">
+                    {/* ATR Settings */}
+                    {riskType === "atr" && (
+                      <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <Label className="text-sm">Action on Trigger</Label>
-                          <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Label className="text-xs">ATR Length</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Number of bars to calculate Average True Range. Higher values = smoother, less reactive. Lower values = more responsive to recent volatility changes.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Select value={atrLength} onValueChange={setAtrLength}>
                             <SelectTrigger className="mt-1">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="long">Enter Long</SelectItem>
-                              <SelectItem value="short">Enter Short</SelectItem>
+                            <SelectContent className="bg-background border z-50">
+                              <SelectItem value="10">10</SelectItem>
+                              <SelectItem value="14">14</SelectItem>
+                              <SelectItem value="20">20</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={useDirectionalMapping}
-                            onCheckedChange={setUseDirectionalMapping}
-                          />
-                          <Label className="text-sm">Use Directional Mapping</Label>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Label className="text-xs">SL Mult</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Stop-loss multiplier. Stop = Entry ± (ATR × Multiplier). Higher values = wider stops, lower risk of being stopped out but larger losses when wrong.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Select value={atrSL} onValueChange={setAtrSL}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border z-50">
+                              <SelectItem value="1.0">1.0×</SelectItem>
+                              <SelectItem value="1.5">1.5×</SelectItem>
+                              <SelectItem value="2.0">2.0×</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={trailingStop}
-                            onCheckedChange={setTrailingStop}
-                          />
-                          <Label className="text-sm">Trailing Stop</Label>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Label className="text-xs">TP Mult</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Take-profit multiplier. Target = Entry ± (ATR × Multiplier). Higher values = larger profit targets but lower hit rate. Aim for TP/SL ratio ≥ 2:1.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Select value={atrTP} onValueChange={setAtrTP}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border z-50">
+                              <SelectItem value="2.0">2.0×</SelectItem>
+                              <SelectItem value="3.0">3.0×</SelectItem>
+                              <SelectItem value="4.0">4.0×</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        
-                        {trailingStop && (
-                          <Input 
-                            placeholder="1.5"
-                            value={trailingStopValue}
-                            onChange={(e) => setTrailingStopValue(e.target.value)}
-                          />
-                        )}
-                        
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={earlyExit}
-                            onCheckedChange={setEarlyExit}
-                          />
-                          <Label className="text-sm">Early Exit on Opposite Signal</Label>
-                        </div>
                       </div>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
+                    )}
 
-                {/* Common Settings (shown for both modes) */}
-                <div className="space-y-6 border-t pt-6">
-                  {/* Timeframes */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Signal Timeframe</Label>
-                      <Select value={timeframe} onValueChange={setTimeframe}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeframes.map(tf => (
-                            <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label>Confirm TF</Label>
-                      <Select 
-                        value={confirmTimeframe} 
-                        onValueChange={setConfirmTimeframe}
-                        disabled={!mtfEnabled}
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeframes.map(tf => (
-                            <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* MTF Toggle */}
-                  <div className="flex items-center space-x-2">
-                    <Switch 
-                      id="mtf" 
-                      checked={mtfEnabled}
-                      onCheckedChange={setMtfEnabled}
-                    />
-                    <Label htmlFor="mtf">Multi-Timeframe Confirmation</Label>
-                  </div>
-
-                  {/* Risk Controls */}
-                  <div>
-                    <Label>Risk Controls</Label>
-                    <Select value={riskType} onValueChange={setRiskType}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="atr">ATR-based</SelectItem>
-                        <SelectItem value="percentage">Percentage-based</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* ATR Settings */}
-                  {riskType === "atr" && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <Label className="text-xs">ATR Length</Label>
-                        <Select value={atrLength} onValueChange={setAtrLength}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="14">14</SelectItem>
-                            <SelectItem value="20">20</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">SL Mult</Label>
-                        <Select value={atrSL} onValueChange={setAtrSL}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1.0">1.0×</SelectItem>
-                            <SelectItem value="1.5">1.5×</SelectItem>
-                            <SelectItem value="2.0">2.0×</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">TP Mult</Label>
-                        <Select value={atrTP} onValueChange={setAtrTP}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="2.0">2.0×</SelectItem>
-                            <SelectItem value="3.0">3.0×</SelectItem>
-                            <SelectItem value="4.0">4.0×</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Filters */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Switch 
-                        id="volume" 
-                        checked={volumeFilter}
-                        onCheckedChange={setVolumeFilter}
-                      />
-                      <Label htmlFor="volume">Volume Filter</Label>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-sm">Trend EMA Length</Label>
-                      <Select value={trendEmaLength} onValueChange={setTrendEmaLength}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="200">200</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Alerts */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Switch 
-                        id="alerts" 
-                        checked={alertsOnClose}
-                        onCheckedChange={setAlertsOnClose}
-                      />
-                      <Label htmlFor="alerts">Alerts on Close</Label>
-                    </div>
-                    
-                    {userTier === "Elite" && (
+                    {/* Filters */}
+                    <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Switch 
-                          id="multicondition" 
-                          checked={multiCondition}
-                          onCheckedChange={setMultiCondition}
+                          id="volume" 
+                          checked={volumeFilter}
+                          onCheckedChange={setVolumeFilter}
                         />
-                        <Label htmlFor="multicondition">Multi-condition Alerts</Label>
+                        <Label htmlFor="volume">Volume Filter</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Only take signals when current volume is above the 20-period moving average. Helps filter out low-conviction moves in thin volume.</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
+                      
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Label className="text-sm">Trend EMA Length</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>EMA period for trend filter. Only take long signals when price is above this EMA, short signals when below. Common values: 20 (short-term), 50 (medium), 200 (long-term).</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Select value={trendEmaLength} onValueChange={setTrendEmaLength}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="200">200</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="alerts" 
+                          checked={alertsOnClose}
+                          onCheckedChange={setAlertsOnClose}
+                        />
+                        <Label htmlFor="alerts">Alerts on Close</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Generate alerts only when the bar closes with signal conditions met. Reduces false signals from intra-bar noise but may delay notifications.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      
+                      {userTier === "Elite" && (
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="multicondition" 
+                            checked={multiCondition}
+                            onCheckedChange={setMultiCondition}
+                          />
+                          <Label htmlFor="multicondition">Multi-condition Alerts</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Elite feature: Create complex alert conditions that include multiple indicators, price action, and time filters. Supports email, Telegram, and Discord notifications.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Generate Button */}
+                    <Button 
+                      onClick={handleGenerate} 
+                      disabled={isGenerating || quotaUsed >= quotaLimit || (builderMode === "natural" && !strategy.trim()) || (builderMode === "visual" && indicatorConditions.length === 0 && priceActionConditions.length === 0)}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {isGenerating ? (
+                        "Generating..."
+                      ) : (
+                        <>
+                          Generate Strategy
+                          <Code2 className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                    
+                    {quotaUsed >= quotaLimit && (
+                      <p className="text-sm text-destructive text-center">
+                        Daily quota exceeded. Resets at 00:00 JST.
+                      </p>
                     )}
                   </div>
 
-                  {/* Generate Button */}
-                  <Button 
-                    onClick={handleGenerate} 
-                    disabled={isGenerating || quotaUsed >= quotaLimit || (builderMode === "natural" && !strategy.trim()) || (builderMode === "visual" && indicatorConditions.length === 0 && priceActionConditions.length === 0)}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isGenerating ? (
-                      "Generating..."
-                    ) : (
-                      <>
-                        Generate Strategy
-                        <Code2 className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                  
-                  {quotaUsed >= quotaLimit && (
-                    <p className="text-sm text-destructive text-center">
-                      Daily quota exceeded. Resets at 00:00 JST.
-                    </p>
-                  )}
-                </div>
-
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
 
           {/* Panel B: Code Output */}
           <div className="lg:col-span-2">
@@ -1022,6 +1212,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
