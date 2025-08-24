@@ -11,6 +11,7 @@ export const useTranslations = (namespace = 'translation') => {
   const loadTranslations = async (language: string) => {
     try {
       setLoading(true);
+      console.log('Loading translations for language:', language);
       const { data, error } = await supabase.functions.invoke('manage-translations', {
         body: {
           action: 'get_translations',
@@ -21,6 +22,7 @@ export const useTranslations = (namespace = 'translation') => {
 
       if (error) throw error;
       
+      console.log('Loaded translations:', data);
       setTranslations(data || {});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load translations');
@@ -64,7 +66,9 @@ export const useTranslations = (namespace = 'translation') => {
   }, [namespace]);
 
   const t = (key: string, fallback?: string) => {
-    return translations[key] || fallback || key;
+    const result = translations[key] || fallback || key;
+    console.log(`Translation for "${key}":`, result, 'Available translations:', Object.keys(translations));
+    return result;
   };
 
   return { t, loading, error, translations };

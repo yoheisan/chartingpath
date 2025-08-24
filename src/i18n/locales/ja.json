@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "最高の取引には調査、そして決意が必要です。",
+    "cta": "無料で始める",
+    "free_text": "$0 永続無料、クレジットカード不要"
+  },
+  "features": {
+    "no_coding": "プログラミング不要",
+    "plug_play": "プラグ&プレイスクリプト",
+    "risk_management": "リスク管理機能内蔵"
+  },
   "navigation": {
     "home": "ホーム",
     "pricing": "料金",

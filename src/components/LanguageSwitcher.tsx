@@ -21,19 +21,22 @@ export const LanguageSwitcher = () => {
     setIsLoading(true);
     
     try {
+      console.log('Changing language to:', languageCode);
       // Change the language in i18n
       await i18n.changeLanguage(languageCode);
+      console.log('Language changed successfully to:', i18n.language);
       
       // Save user preference to backend
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.functions.invoke('set-user-language', {
+        const result = await supabase.functions.invoke('set-user-language', {
           body: {
             userId: user.id,
             languageCode,
             isManual: true
           }
         });
+        console.log('User language preference saved:', result);
       }
     } catch (error) {
       console.error('Failed to change language:', error);
