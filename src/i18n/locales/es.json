@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "Las mejores operaciones requieren investigación, luego compromiso.",
+    "cta": "Comenzar gratis",
+    "free_text": "$0 para siempre, no se necesita tarjeta de crédito"
+  },
+  "features": {
+    "no_coding": "No se requiere programación",
+    "plug_play": "Scripts plug & play",
+    "risk_management": "Gestión de riesgos integrada"
+  },
   "navigation": {
     "home": "Inicio",
     "pricing": "Precios",

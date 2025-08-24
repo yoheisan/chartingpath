@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,10 +90,12 @@ const Navigation = () => {
             <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
               Community
             </Link>
+            <LanguageSwitcher />
             <AuthButton />
           </nav>
 
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageSwitcher />
             <AuthButton />
           </div>
         </div>

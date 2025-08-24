@@ -5,14 +5,36 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator } from "lucide-react";
-import { useState } from "react";
+import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import { useTranslation } from 'react-i18next';
+import { useTranslations } from '@/hooks/useTranslations';
+import { supabase } from '@/integrations/supabase/client';
+import heroImage from '@/assets/hero-trading-space.jpg';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const { t: translateStatic } = useTranslation();
+  const { t, loading } = useTranslations();
+  
+  // Detect user language on first visit
+  useEffect(() => {
+    const detectAndSetLanguage = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('detect-user-language');
+        if (data && data.language) {
+          console.log('Detected language:', data.language);
+        }
+      } catch (error) {
+        console.error('Language detection error:', error);
+      }
+    };
+    
+    detectAndSetLanguage();
+  }, []);
 
   const handleEmailOptIn = () => {
     setShowEmailModal(true);
@@ -30,8 +52,22 @@ const Index = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto max-w-6xl text-center">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ 
+            backgroundImage: `url(${heroImage})`,
+            filter: 'brightness(0.4)'
+          }}
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80" />
+        
+        {/* Content */}
+        <div className="relative z-10 container mx-auto max-w-5xl text-center px-6">
+          {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
             <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
               <img 
@@ -40,42 +76,57 @@ const Index = () => {
                 className="h-8 w-8 object-contain brightness-0 invert"
               />
             </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-white">
               ChartingPath
             </h1>
           </div>
           
-          <h2 className="text-6xl font-bold mb-6 leading-tight">
-            Turn Charts Into Trading Scripts — 
-            <span className="text-primary">Without the Guesswork</span>
-          </h2>
+          {/* Main Headline */}
+          <div className="mb-8">
+            <h2 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight">
+              Look first<span className="text-primary">/</span><br />
+              Then trade<span className="text-primary">.</span>
+            </h2>
+            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              {t('hero.subtitle', 'The best trades require research, then commitment.')}
+            </p>
+          </div>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-            Learn candlestick chart reading, access ready-to-use automated trading scripts, and master risk management — all in one platform.
-          </p>
-          
-          <div className="flex items-center justify-center gap-6 mb-12">
-            <Button size="lg" onClick={handleEmailOptIn} className="px-8 py-4 text-lg">
-              Get Free Starter Scripts
+          {/* CTA Button */}
+          <div className="mb-12">
+            <Button 
+              size="lg" 
+              onClick={handleEmailOptIn} 
+              className="px-12 py-6 text-lg font-semibold bg-white text-background hover:bg-white/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+            >
+              {t('hero.cta', 'Get started for free')}
             </Button>
-            <Button variant="outline" size="lg" asChild className="px-8 py-4 text-lg">
-              <Link to="/tools/pip-calculator">Try the Pip Calculator</Link>
-            </Button>
+            <p className="text-white/70 text-sm mt-4">
+              {t('hero.free_text', '$0 forever, no credit card needed')}
+            </p>
           </div>
 
-          <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
+          {/* Features */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 text-sm text-white/80">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>No coding required</span>
+              <span>{t('features.no_coding', 'No coding required')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Plug & play scripts</span>
+              <span>{t('features.plug_play', 'Plug & play scripts')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Risk management built-in</span>
+              <span>{t('features.risk_management', 'Risk management built-in')}</span>
             </div>
+          </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/60 rounded-full mt-2"></div>
           </div>
         </div>
       </section>

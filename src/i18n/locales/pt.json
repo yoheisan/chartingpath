@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "As melhores negociações exigem pesquisa e depois compromisso.",
+    "cta": "Começar gratuitamente",
+    "free_text": "$0 para sempre, sem necessidade de cartão de crédito"
+  },
+  "features": {
+    "no_coding": "Não é necessário programar",
+    "plug_play": "Scripts plug & play",
+    "risk_management": "Gerenciamento de risco integrado"
+  },
   "navigation": {
     "home": "Início",
     "pricing": "Preços",
