@@ -1,0 +1,25 @@
+{
+  "navigation": {
+    "home": "Tuis",
+    "pricing": "Pryse",
+    "aiBuilder": "KI Bouer",
+    "login": "Teken In",
+    "logout": "Teken Uit"
+  },
+  "pricing": {
+    "title": "Kies Jou Plan",
+    "subtitle": "Begin met ons gratis gereedskap en gradeer op wanneer jy gereed is vir gevorderde kenmerke",
+    "monthly": "Maandeliks",
+    "annual": "Jaarliks"
+  },
+  "aiBuilder": {
+    "title": "KI Strategie Bouer",
+    "subtitle": "Verander jou handelsidees in professionele kode.",
+    "backToHome": "Terug na Tuis"
+  },
+  "common": {
+    "loading": "Laai...",
+    "error": "Fout",
+    "success": "Sukses"
+  }
+}

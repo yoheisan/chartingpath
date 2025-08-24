@@ -1,0 +1,25 @@
+{
+  "navigation": {
+    "home": "홈",
+    "pricing": "가격",
+    "aiBuilder": "AI 전략 빌더",
+    "login": "로그인",
+    "logout": "로그아웃"
+  },
+  "pricing": {
+    "title": "플랜 선택",
+    "subtitle": "무료 도구로 시작하고 고급 기능이 준비되면 업그레이드하세요",
+    "monthly": "월간",
+    "annual": "연간"
+  },
+  "aiBuilder": {
+    "title": "AI 전략 빌더",
+    "subtitle": "트레이딩 아이디어를 전문가 수준의 코드로 변환하세요.",
+    "backToHome": "홈으로"
+  },
+  "common": {
+    "loading": "로딩중...",
+    "error": "오류",
+    "success": "성공"
+  }
+}

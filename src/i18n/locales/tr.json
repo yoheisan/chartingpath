@@ -1,0 +1,25 @@
+{
+  "navigation": {
+    "home": "Ana Sayfa",
+    "pricing": "Fiyatlar",
+    "aiBuilder": "AI Yapıcı",
+    "login": "Giriş",
+    "logout": "Çıkış"
+  },
+  "pricing": {
+    "title": "Planınızı Seçin",
+    "subtitle": "Ücretsiz araçlarımızla başlayın ve gelişmiş özellikler için hazır olduğunuzda yükseltin",
+    "monthly": "Aylık",
+    "annual": "Yıllık"
+  },
+  "aiBuilder": {
+    "title": "AI Strateji Yapıcısı",
+    "subtitle": "Ticaret fikirlerinizi profesyonel koda dönüştürün.",
+    "backToHome": "Ana Sayfaya Dön"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarı"
+  }
+}

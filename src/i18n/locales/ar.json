@@ -1,0 +1,42 @@
+{
+  "navigation": {
+    "home": "الرئيسية",
+    "pricing": "التسعير",
+    "aiBuilder": "منشئ الذكي الاصطناعي",
+    "patternGenerator": "مولد الأنماط",
+    "patternLibrary": "مكتبة الأنماط",
+    "patternQuiz": "اختبار الأنماط",
+    "tradingStrategies": "استراتيجيات التداول",
+    "scriptGenerator": "مولد السكريبت",
+    "pipCalculator": "حاسبة النقاط",
+    "riskCalculator": "حاسبة المخاطر",
+    "memberArea": "منطقة الأعضاء",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج"
+  },
+  "pricing": {
+    "title": "اختر خطتك",
+    "subtitle": "ابدأ بأدواتنا المجانية وقم بالترقية عندما تكون مستعداً للميزات المتقدمة",
+    "monthly": "شهرياً",
+    "annual": "سنوياً",
+    "save": "وفر",
+    "mostPopular": "الأكثر شعبية",
+    "getStarted": "ابدأ",
+    "upgradeNow": "ترقية الآن",
+    "currentPlan": "الخطة الحالية",
+    "features": "المميزات"
+  },
+  "aiBuilder": {
+    "title": "منشئ الاستراتيجية بالذكاء الاصطناعي",
+    "subtitle": "حول أفكار التداول إلى كود احترافي. اوصف استراتيجيتك بالعربية البسيطة واحصل على تطبيقات Pine Script و MQL4 و MQL5 فوراً.",
+    "backToHome": "العودة للرئيسية",
+    "strategyConfiguration": "إعداد الاستراتيجية"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد"
+  }
+}
