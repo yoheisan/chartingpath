@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "最佳交易需要研究，然后是承诺。",
+    "cta": "免费开始",
+    "free_text": "$0 永久免费，无需信用卡"
+  },
+  "features": {
+    "no_coding": "无需编程",
+    "plug_play": "即插即用脚本",
+    "risk_management": "内置风险管理"
+  },
   "navigation": {
     "home": "首页",
     "pricing": "价格",

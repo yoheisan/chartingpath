@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
       <div className="container mx-auto px-6 py-4 max-w-6xl">
@@ -31,32 +33,32 @@ const Navigation = () => {
           <nav className="hidden md:flex items-center gap-6">
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                Chart Patterns
+                {t('navigation.patternLibrary', 'Chart Patterns')}
                 <ChevronDown className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/generator" className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4" />
-                    Pattern Generator
+                    {t('navigation.patternGenerator', 'Pattern Generator')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/library" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    Pattern Library
+                    {t('navigation.patternLibrary', 'Pattern Library')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    Trading Strategies
+                    {t('navigation.tradingStrategies', 'Trading Strategies')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    Pattern Quiz
+                    {t('navigation.patternQuiz', 'Pattern Quiz')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -70,22 +72,22 @@ const Navigation = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/tools/pip-calculator" className="flex items-center gap-2">
                     <Calculator className="h-4 w-4" />
-                    Pip Calculator
+                    {t('navigation.pipCalculator', 'Pip Calculator')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/tools/risk-calculator" className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
-                    Risk Calculator
+                    {t('navigation.riskCalculator', 'Risk Calculator')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Link to="/ai-builder" className="text-muted-foreground hover:text-foreground transition-colors">
-              AI Builder
+              {t('navigation.aiBuilder', 'AI Builder')}
             </Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
+              {t('navigation.pricing', 'Pricing')}
             </Link>
             <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
               Community

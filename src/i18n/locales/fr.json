@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "Les meilleures transactions nécessitent de la recherche, puis de l'engagement.",
+    "cta": "Commencer gratuitement",
+    "free_text": "$0 pour toujours, aucune carte de crédit nécessaire"
+  },
+  "features": {
+    "no_coding": "Aucun codage requis",
+    "plug_play": "Scripts prêts à l'emploi",
+    "risk_management": "Gestion des risques intégrée"
+  },
   "navigation": {
     "home": "Accueil",
     "pricing": "Tarifs",

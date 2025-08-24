@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "Perdagangan terbaik memerlukan riset, lalu komitmen.",
+    "cta": "Mulai gratis",
+    "free_text": "$0 selamanya, tidak perlu kartu kredit"
+  },
+  "features": {
+    "no_coding": "Tidak perlu coding",
+    "plug_play": "Script plug & play",
+    "risk_management": "Manajemen risiko terintegrasi"
+  },
   "navigation": {
     "home": "Beranda",
     "pricing": "Harga",

@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "최고의 거래에는 연구, 그리고 결단력이 필요합니다.",
+    "cta": "무료로 시작하기",
+    "free_text": "$0 영원히 무료, 신용카드 불필요"
+  },
+  "features": {
+    "no_coding": "코딩 불필요",
+    "plug_play": "플러그 앤 플레이 스크립트",
+    "risk_management": "내장된 위험 관리"
+  },
   "navigation": {
     "home": "홈",
     "pricing": "가격",

@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "Die beste transaksies vereis navorsing, dan toewyding.",
+    "cta": "Begin gratis",
+    "free_text": "$0 vir ewig, geen kredietkaart nodig nie"
+  },
+  "features": {
+    "no_coding": "Geen kodering vereis nie",
+    "plug_play": "Prop en speel skrifte",
+    "risk_management": "Ingeboude risikobestuur"
+  },
   "navigation": {
     "home": "Tuis",
     "pricing": "Pryse",

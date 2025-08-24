@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "Die besten Trades erfordern Recherche, dann Engagement.",
+    "cta": "Kostenlos loslegen",
+    "free_text": "$0 für immer, keine Kreditkarte erforderlich"
+  },
+  "features": {
+    "no_coding": "Keine Programmierung erforderlich",
+    "plug_play": "Plug & Play Skripte",
+    "risk_management": "Integriertes Risikomanagement"
+  },
   "navigation": {
     "home": "Startseite",
     "pricing": "Preise",

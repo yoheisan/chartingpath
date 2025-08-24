@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "I migliori trade richiedono ricerca, poi impegno.",
+    "cta": "Inizia gratuitamente",
+    "free_text": "$0 per sempre, nessuna carta di credito necessaria"
+  },
+  "features": {
+    "no_coding": "Nessuna programmazione richiesta",
+    "plug_play": "Script plug & play",
+    "risk_management": "Gestione del rischio integrata"
+  },
   "navigation": {
     "home": "Home",
     "pricing": "Prezzi",

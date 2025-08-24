@@ -1,4 +1,14 @@
 {
+  "hero": {
+    "subtitle": "En iyi işlemler araştırma, sonra kararlılık gerektirir.",
+    "cta": "Ücretsiz başlayın",
+    "free_text": "$0 sonsuza kadar, kredi kartı gerekmez"
+  },
+  "features": {
+    "no_coding": "Kodlama gerektirmez",
+    "plug_play": "Tak ve çalıştır scriptler",
+    "risk_management": "Dahili risk yönetimi"
+  },
   "navigation": {
     "home": "Ana Sayfa",
     "pricing": "Fiyatlar",
