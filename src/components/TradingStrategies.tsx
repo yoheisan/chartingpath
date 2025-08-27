@@ -7,8 +7,7 @@ import { TrendingUp, TrendingDown, Search, Filter, ExternalLink } from "lucide-r
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { tradingStrategies, Strategy, STRATEGY_PACKS } from "@/utils/TradingStrategiesData";
-import { PerformanceSnapshot } from "@/components/PerformanceSnapshot";
-import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
+import { PERFORMANCE_LABELS } from "@/constants/disclaimers";
 
 export const TradingStrategies = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -392,13 +391,10 @@ export const TradingStrategies = () => {
                   </div>
                 </div>
                 
-                {/* Performance Snapshot */}
+                {/* Show backtest context if available */}
                 {strategy.backtestData && (
-                  <div className="mt-3">
-                    <PerformanceSnapshot 
-                      backtestData={strategy.backtestData} 
-                      compact={true}
-                    />
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    <p>({strategy.backtestData.instrument}, {strategy.backtestData.timeframe}, {strategy.backtestData.testPeriod}, {strategy.backtestData.totalTrades} trades)</p>
                   </div>
                 )}
               </div>
