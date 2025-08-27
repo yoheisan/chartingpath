@@ -31,7 +31,7 @@ const AdminLogin = () => {
         // Check if this is an admin user
         supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data: isAdminUser }) => {
           if (isAdminUser) {
-            navigate("/admin/dashboard");
+            navigate("/admin/translation-management");
           }
         });
       }
@@ -52,7 +52,7 @@ const AdminLogin = () => {
           .rpc('is_admin', { _user_id: user.id });
         
         if (adminCheck) {
-          navigate("/admin/dashboard");
+          navigate("/admin/translation-management");
         }
       }
     };
@@ -186,7 +186,7 @@ const AdminLogin = () => {
           description: "Welcome to the admin dashboard",
         });
 
-        navigate("/admin/dashboard");
+        navigate("/admin/translation-management");
       }
     } catch (error: any) {
       toast({
