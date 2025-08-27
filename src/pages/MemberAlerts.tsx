@@ -1,150 +1,17 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { MemberNavigation } from "@/components/MemberNavigation";
-import LearningProgress from "@/components/LearningProgress";
-import EnhancedAlertsLibrary from "@/components/EnhancedAlertsLibrary";
-import { Bell, Plus, Settings, TrendingUp } from "lucide-react";
+import MemberNavigation from "@/components/MemberNavigation";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle } from "lucide-react";
 
-const MemberAlerts = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <MemberNavigation />
-      
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Chart Pattern Alerts</h1>
-            <p className="text-muted-foreground">Monitor markets and track alert performance</p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Alert
-          </Button>
-        </div>
-
-        <Tabs defaultValue="active" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="active">Active Alerts</TabsTrigger>
-            <TabsTrigger value="library">Alerts Library</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active" className="space-y-6">
-            {/* Alert Stats */}
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Bell className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">5</p>
-                      <p className="text-sm text-muted-foreground">Active Alerts</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-green-500/10">
-                      <TrendingUp className="h-6 w-6 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">23</p>
-                      <p className="text-sm text-muted-foreground">Alerts This Month</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-blue-500/10">
-                      <Settings className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">78%</p>
-                      <p className="text-sm text-muted-foreground">Success Rate</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Active Alerts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Alerts</CardTitle>
-                <CardDescription>Your current market pattern alerts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Sample alert items */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold">EUR/USD Head & Shoulders</h3>
-                        <Badge variant="outline">4H</Badge>
-                        <Badge className="bg-green-500">Active</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Monitoring for Head & Shoulders pattern completion
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                      <Button variant="destructive" size="sm">
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold">BTC Double Bottom</h3>
-                        <Badge variant="outline">1D</Badge>
-                        <Badge className="bg-yellow-500">Pending</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Waiting for double bottom confirmation
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                      <Button variant="destructive" size="sm">
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="library">
-            <EnhancedAlertsLibrary />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-};
-
-export default MemberAlerts;
 
 interface UserProfile {
   subscription_plan: 'starter' | 'pro' | 'elite';
@@ -513,7 +380,7 @@ const MemberAlerts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <MemberNavigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back Navigation */}
         <div className="mb-6">

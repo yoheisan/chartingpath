@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { MemberNavigation } from "@/components/MemberNavigation";
+import MemberNavigation from "@/components/MemberNavigation";
 import LearningProgress from "@/components/LearningProgress";
 import { User, CreditCard, Settings, Shield, Mail, Bell, Crown, Star, Zap, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
