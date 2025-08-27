@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw } from 'lucide-react';
+import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan } from 'lucide-react';
 import { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
+import { SiteStringScanner } from '@/components/SiteStringScanner';
 
 interface PendingTranslation {
   id: string;
@@ -68,7 +69,7 @@ export const TranslationManagement = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pending' | 'search' | 'submit'>('search');
+  const [activeTab, setActiveTab] = useState<'pending' | 'search' | 'submit' | 'scanner'>('search');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -368,6 +369,14 @@ export const TranslationManagement = () => {
             Search & Edit Translations
           </Button>
           <Button
+            variant={activeTab === 'scanner' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('scanner')}
+            className="flex items-center gap-2"
+          >
+            <Scan className="h-4 w-4" />
+            Site Scanner
+          </Button>
+          <Button
             variant={activeTab === 'submit' ? 'default' : 'outline'}
             onClick={() => setActiveTab('submit')}
             className="flex items-center gap-2"
@@ -536,6 +545,11 @@ export const TranslationManagement = () => {
               </Card>
             )}
           </div>
+        )}
+
+        {/* Site Scanner Tab */}
+        {activeTab === 'scanner' && (
+          <SiteStringScanner />
         )}
 
         {/* Submit New Translation Tab */}

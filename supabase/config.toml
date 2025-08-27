@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.manage-translations]
 verify_jwt = false
+
+[functions.site-string-extractor]
+verify_jwt = false

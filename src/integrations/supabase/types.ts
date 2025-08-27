@@ -201,6 +201,68 @@ export type Database = {
         }
         Relationships: []
       }
+      extracted_strings: {
+        Row: {
+          context_element: string | null
+          context_path: string | null
+          context_selector: string | null
+          created_at: string
+          extraction_method: string | null
+          id: string
+          is_translatable: boolean | null
+          original_text: string
+          parent_component: string | null
+          review_status: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scan_session_id: string
+          string_hash: string
+          string_key: string
+        }
+        Insert: {
+          context_element?: string | null
+          context_path?: string | null
+          context_selector?: string | null
+          created_at?: string
+          extraction_method?: string | null
+          id?: string
+          is_translatable?: boolean | null
+          original_text: string
+          parent_component?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scan_session_id: string
+          string_hash: string
+          string_key: string
+        }
+        Update: {
+          context_element?: string | null
+          context_path?: string | null
+          context_selector?: string | null
+          created_at?: string
+          extraction_method?: string | null
+          id?: string
+          is_translatable?: boolean | null
+          original_text?: string
+          parent_component?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scan_session_id?: string
+          string_hash?: string
+          string_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extracted_strings_scan_session_id_fkey"
+            columns: ["scan_session_id"]
+            isOneToOne: false
+            referencedRelation: "site_scan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_pricing: {
         Row: {
           created_at: string
@@ -269,6 +331,99 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      site_scan_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          modified_strings_count: number | null
+          new_strings_count: number | null
+          scan_date: string
+          scan_metadata: Json | null
+          scan_status: string
+          total_strings_found: number | null
+          version_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          modified_strings_count?: number | null
+          new_strings_count?: number | null
+          scan_date?: string
+          scan_metadata?: Json | null
+          scan_status?: string
+          total_strings_found?: number | null
+          version_number: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          modified_strings_count?: number | null
+          new_strings_count?: number | null
+          scan_date?: string
+          scan_metadata?: Json | null
+          scan_status?: string
+          total_strings_found?: number | null
+          version_number?: number
+        }
+        Relationships: []
+      }
+      string_change_log: {
+        Row: {
+          change_type: string
+          created_at: string
+          id: string
+          new_hash: string | null
+          new_scan_session_id: string | null
+          new_text: string | null
+          old_hash: string | null
+          old_scan_session_id: string | null
+          old_text: string | null
+          string_key: string
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          id?: string
+          new_hash?: string | null
+          new_scan_session_id?: string | null
+          new_text?: string | null
+          old_hash?: string | null
+          old_scan_session_id?: string | null
+          old_text?: string | null
+          string_key: string
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          id?: string
+          new_hash?: string | null
+          new_scan_session_id?: string | null
+          new_text?: string | null
+          old_hash?: string | null
+          old_scan_session_id?: string | null
+          old_text?: string | null
+          string_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "string_change_log_new_scan_session_id_fkey"
+            columns: ["new_scan_session_id"]
+            isOneToOne: false
+            referencedRelation: "site_scan_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "string_change_log_old_scan_session_id_fkey"
+            columns: ["old_scan_session_id"]
+            isOneToOne: false
+            referencedRelation: "site_scan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
