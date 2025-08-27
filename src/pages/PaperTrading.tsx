@@ -144,6 +144,23 @@ const PaperTrading = () => {
     }
   };
 
+  const fetchStrategies = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_strategies')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setStrategies(data || []);
+    } catch (error) {
+      console.error('Error fetching strategies:', error);
+    }
+  };
+
   const handleTrade = async (tradeData: {
     symbol: string;
     type: 'buy' | 'sell';
@@ -233,23 +250,6 @@ const PaperTrading = () => {
     }
   };
 
-  const fetchStrategies = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_strategies')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setStrategies(data || []);
-    } catch (error) {
-      console.error('Error fetching strategies:', error);
-    }
-  };
-
   const handleStrategyEditComplete = () => {
     setEditingStrategy(null);
     setShowStrategyEditor(false);
@@ -271,7 +271,7 @@ const PaperTrading = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-        <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
         <MemberNavigation />
         
         {/* Header */}
@@ -293,28 +293,6 @@ const PaperTrading = () => {
             </div>
           </div>
         </div>
-
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="trading" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Trading
-            </TabsTrigger>
-            <TabsTrigger value="strategies" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              Strategies
-            </TabsTrigger>
-            <TabsTrigger value="execution" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Algo Execution
-            </TabsTrigger>
-            <TabsTrigger value="performance" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Performance
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
 
         {/* Portfolio Summary */}
         <div className="grid gap-6 md:grid-cols-4 mb-8">
@@ -380,153 +358,175 @@ const PaperTrading = () => {
           </Card>
         </div>
 
-        {/* Tab Content */}
-        <TabsContent value="trading">
-          {/* Main Trading Interface */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left Column - Trading & Chart */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Market Overview */}
-              <MarketOverview />
-              
-              {/* Trading Chart */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Price Chart</CardTitle>
-                    <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MAJOR_PAIRS.map((pair) => (
-                          <SelectItem key={pair} value={pair}>
-                            {pair}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <TradingChart symbol={selectedSymbol} />
-                </CardContent>
-              </Card>
+        {/* Navigation Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="trading" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Trading
+            </TabsTrigger>
+            <TabsTrigger value="strategies" className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Strategies
+            </TabsTrigger>
+            <TabsTrigger value="execution" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Algo Execution
+            </TabsTrigger>
+            <TabsTrigger value="performance" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Performance
+            </TabsTrigger>
+          </TabsList>
 
-              {/* Active Trades */}
-              <ActiveTrades 
-                trades={activeTrades} 
-                onCloseTrade={closeTrade}
-              />
-            </div>
+          {/* Tab Content */}
+          <TabsContent value="trading">
+            {/* Main Trading Interface */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Left Column - Trading & Chart */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Market Overview */}
+                <MarketOverview />
+                
+                {/* Trading Chart */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Price Chart</CardTitle>
+                      <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MAJOR_PAIRS.map((pair) => (
+                            <SelectItem key={pair} value={pair}>
+                              {pair}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <TradingChart symbol={selectedSymbol} />
+                  </CardContent>
+                </Card>
 
-            {/* Right Column - Trade Form & Info */}
-            <div className="space-y-6">
-              {/* Trade Form */}
-              <TradeForm 
-                symbol={selectedSymbol}
-                onTrade={handleTrade}
-                loading={loading}
-                availableBalance={portfolio?.current_balance || 0}
-              />
+                {/* Active Trades */}
+                <ActiveTrades 
+                  trades={activeTrades} 
+                  onCloseTrade={closeTrade}
+                />
+              </div>
 
-              {/* Educational Integration */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    Pattern Alert
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-primary mt-1" />
-                      <div>
-                        <p className="font-semibold text-primary">Double Bottom Detected</p>
-                        <p className="text-sm text-muted-foreground">
-                          EUR/USD is showing a potential double bottom pattern. This could signal a bullish reversal.
-                        </p>
-                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
-                          <a href="/chart-patterns/library">Learn about Double Bottom →</a>
-                        </Button>
+              {/* Right Column - Trade Form & Info */}
+              <div className="space-y-6">
+                {/* Trade Form */}
+                <TradeForm 
+                  symbol={selectedSymbol}
+                  onTrade={handleTrade}
+                  loading={loading}
+                  availableBalance={portfolio?.current_balance || 0}
+                />
+
+                {/* Educational Integration */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5" />
+                      Pattern Alert
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-primary mt-1" />
+                        <div>
+                          <p className="font-semibold text-primary">Double Bottom Detected</p>
+                          <p className="text-sm text-muted-foreground">
+                            EUR/USD is showing a potential double bottom pattern. This could signal a bullish reversal.
+                          </p>
+                          <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                            <a href="/chart-patterns/library">Learn about Double Bottom →</a>
+                          </Button>
+                        </div>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Achievements */}
+                <TradingAchievements />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="strategies">
+            <div className="space-y-6">
+              {/* Strategy Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Trading Strategies</h2>
+                  <p className="text-muted-foreground">Create and manage your algorithmic trading strategies</p>
+                </div>
+                <Button onClick={() => setShowStrategyEditor(true)} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Strategy
+                </Button>
+              </div>
+
+              {/* Strategy Editor */}
+              {showStrategyEditor && (
+                <StrategyEditor
+                  strategy={editingStrategy}
+                  onSave={handleStrategyEditComplete}
+                  onCancel={() => {
+                    setShowStrategyEditor(false);
+                    setEditingStrategy(null);
+                  }}
+                />
+              )}
+
+              {/* Strategy List */}
+              {!showStrategyEditor && (
+                <StrategyList
+                  onEdit={(strategy) => {
+                    setEditingStrategy(strategy);
+                    setShowStrategyEditor(true);
+                  }}
+                  onRefresh={fetchStrategies}
+                />
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="execution">
+            <StrategyExecution 
+              strategies={strategies}
+              onRefresh={fetchStrategies}
+            />
+          </TabsContent>
+
+          <TabsContent value="performance">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Analytics</CardTitle>
+                  <CardDescription>
+                    Detailed performance metrics and analytics coming soon
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-muted-foreground">
+                    <BarChart3 className="h-16 w-16 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Advanced Analytics</h3>
+                    <p>Comprehensive strategy performance analysis, backtesting results, and optimization suggestions will be available here.</p>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Achievements */}
-              <TradingAchievements />
             </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="strategies">
-          <div className="space-y-6">
-            {/* Strategy Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Trading Strategies</h2>
-                <p className="text-muted-foreground">Create and manage your algorithmic trading strategies</p>
-              </div>
-              <Button onClick={() => setShowStrategyEditor(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Strategy
-              </Button>
-            </div>
-
-            {/* Strategy Editor */}
-            {showStrategyEditor && (
-              <StrategyEditor
-                strategy={editingStrategy}
-                onSave={handleStrategyEditComplete}
-                onCancel={() => {
-                  setShowStrategyEditor(false);
-                  setEditingStrategy(null);
-                }}
-              />
-            )}
-
-            {/* Strategy List */}
-            {!showStrategyEditor && (
-              <StrategyList
-                onEdit={(strategy) => {
-                  setEditingStrategy(strategy);
-                  setShowStrategyEditor(true);
-                }}
-                onRefresh={fetchStrategies}
-              />
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="execution">
-          <StrategyExecution 
-            strategies={strategies}
-            onRefresh={fetchStrategies}
-          />
-        </TabsContent>
-
-        <TabsContent value="performance">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Analytics</CardTitle>
-                <CardDescription>
-                  Detailed performance metrics and analytics coming soon
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  <BarChart3 className="h-16 w-16 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Advanced Analytics</h3>
-                  <p>Comprehensive strategy performance analysis, backtesting results, and optimization suggestions will be available here.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
