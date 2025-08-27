@@ -7,7 +7,8 @@ import {
   Users, 
   Bell,
   Home,
-  Settings
+  Settings,
+  TrendingUp
 } from "lucide-react";
 
 const MemberNavigation = () => {
@@ -18,6 +19,12 @@ const MemberNavigation = () => {
       to: "/",
       icon: Home,
       label: "Home",
+    },
+    {
+      to: "/members/trading",
+      icon: TrendingUp,
+      label: "Paper Trading",
+      badge: "New"
     },
     {
       to: "/members/scripts",

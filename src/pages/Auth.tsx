@@ -24,7 +24,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        navigate("/members/alerts");
+        navigate("/members/trading");
       }
     };
     checkUser();
@@ -57,7 +57,7 @@ const Auth = () => {
             }
           }
 
-          navigate("/members/alerts");
+          navigate("/members/trading");
         }
       }
     );
@@ -72,7 +72,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/members/alerts`
+          redirectTo: `${window.location.origin}/members/trading`
         }
       });
 
@@ -135,7 +135,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/members/alerts`
+            emailRedirectTo: `${window.location.origin}/members/trading`
           }
         });
 
@@ -173,7 +173,7 @@ const Auth = () => {
           description: "You have been logged in successfully",
         });
 
-        navigate("/members/alerts");
+        navigate("/members/trading");
       }
     } catch (error: any) {
       toast({

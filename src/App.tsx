@@ -27,6 +27,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import AIBuilder from "./pages/AIBuilder";
 import Forge from "./pages/Forge";
+import PaperTrading from "./pages/PaperTrading";
 import { TranslationManagement } from "./pages/TranslationManagement";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
           <Route path="/ai-builder" element={<AIBuilder />} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/members/trading" element={<PaperTrading />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
