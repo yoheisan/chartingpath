@@ -455,6 +455,96 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_executions: {
+        Row: {
+          created_at: string
+          executed_at: string
+          execution_reason: string | null
+          id: string
+          paper_trade_id: string | null
+          price: number
+          quantity: number
+          signal_type: string
+          strategy_id: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string
+          execution_reason?: string | null
+          id?: string
+          paper_trade_id?: string | null
+          price: number
+          quantity: number
+          signal_type: string
+          strategy_id: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string
+          execution_reason?: string | null
+          id?: string
+          paper_trade_id?: string | null
+          price?: number
+          quantity?: number
+          signal_type?: string
+          strategy_id?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      strategy_performance: {
+        Row: {
+          avg_loss: number
+          avg_win: number
+          created_at: string
+          execution_date: string
+          id: string
+          losing_trades: number
+          max_drawdown: number
+          strategy_id: string
+          total_pnl: number
+          total_trades: number
+          user_id: string
+          win_rate: number
+          winning_trades: number
+        }
+        Insert: {
+          avg_loss?: number
+          avg_win?: number
+          created_at?: string
+          execution_date?: string
+          id?: string
+          losing_trades?: number
+          max_drawdown?: number
+          strategy_id: string
+          total_pnl?: number
+          total_trades?: number
+          user_id: string
+          win_rate?: number
+          winning_trades?: number
+        }
+        Update: {
+          avg_loss?: number
+          avg_win?: number
+          created_at?: string
+          execution_date?: string
+          id?: string
+          losing_trades?: number
+          max_drawdown?: number
+          strategy_id?: string
+          total_pnl?: number
+          total_trades?: number
+          user_id?: string
+          win_rate?: number
+          winning_trades?: number
+        }
+        Relationships: []
+      }
       string_change_log: {
         Row: {
           change_type: string
@@ -739,6 +829,42 @@ export type Database = {
           created_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_strategies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          strategy_code: string
+          strategy_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          strategy_code: string
+          strategy_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          strategy_code?: string
+          strategy_type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
