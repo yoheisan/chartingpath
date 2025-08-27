@@ -3,20 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Mail, Lock, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Shield, Mail, Lock, ArrowLeft, Key } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // Check for reset password parameter
+    const resetParam = searchParams.get('reset');
+    if (resetParam === 'true') {
+      setIsResetPassword(true);
+    }
+
     // Check if user is already logged in as admin
     const checkAdminUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,7 +41,7 @@ const AdminLogin = () => {
       }
     };
     checkAdminUser();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +63,58 @@ const AdminLogin = () => {
     } catch (error: any) {
       toast({
         title: "Reset Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully updated. You can now log in.",
+      });
+
+      // Reset form and redirect to login
+      setIsResetPassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      navigate("/admin/login");
+    } catch (error: any) {
+      toast({
+        title: "Reset Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -138,10 +200,12 @@ const AdminLogin = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isForgotPassword ? "Reset Password" : "Admin Portal"}
+              {isResetPassword ? "Set New Password" : isForgotPassword ? "Reset Password" : "Admin Portal"}
             </CardTitle>
             <CardDescription>
-              {isForgotPassword 
+              {isResetPassword 
+                ? "Enter your new admin password"
+                : isForgotPassword 
                 ? "Enter your admin email to receive password reset instructions"
                 : "Secure access for platform administrators"
               }
@@ -149,7 +213,70 @@ const AdminLogin = () => {
           </CardHeader>
 
           <CardContent>
-            {isForgotPassword ? (
+            {isResetPassword ? (
+              // Reset Password Form
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating Password...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="h-4 w-4 mr-2" />
+                      Update Password
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setIsResetPassword(false);
+                    navigate("/admin/login");
+                  }}
+                >
+                  Back to Admin Login
+                </Button>
+              </form>
+            ) : isForgotPassword ? (
               // Forgot Password Form
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
