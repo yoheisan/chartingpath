@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { AlertTriangle, Bell, Plus, Pause, Play, Trash2, ArrowLeft, Crown, Zap, Star, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -378,6 +379,7 @@ const MemberAlerts = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back Navigation */}
         <div className="mb-6">
