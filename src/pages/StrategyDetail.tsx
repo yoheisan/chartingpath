@@ -11,6 +11,8 @@ import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
 import { PineScriptEngine } from "@/components/PineScriptEngine";
 import { useToast } from "@/hooks/use-toast";
+import { PerformanceSnapshot } from "@/components/PerformanceSnapshot";
+import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
 import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -794,12 +796,15 @@ Type: ${variant || "strategy"}
                   </Badge>
                   <Badge variant="outline">{strategy.category}</Badge>
                   <div className="flex items-center gap-1">
-                    {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
+                    {(strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate).includes("7") || 
+                     (strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate).includes("8") ? (
                       <TrendingUp className="h-4 w-4 text-bullish" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-bearish" />
                     )}
-                    <span className="font-medium">{strategy.successRate}</span>
+                    <span className="font-medium">
+                      {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -857,6 +862,15 @@ Type: ${variant || "strategy"}
               </CardContent>
             </Card>
           </div>
+
+          {/* Performance Snapshot */}
+          {strategy.backtestData && (
+            <PerformanceSnapshot 
+              backtestData={strategy.backtestData} 
+              compact={false} 
+              showFullDisclaimer={true}
+            />
+          )}
 
           {/* Code Preview & Generation - Main Section */}
           <Card className="p-6">
@@ -973,15 +987,20 @@ Type: ${variant || "strategy"}
           </Card>
 
           {/* Global Disclaimer */}
-          <Card className="p-6 border-2 border-yellow-500/20">
+          <Card className="p-6 border-2 border-warning/20">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-6 w-6 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="h-6 w-6 text-warning mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-yellow-500 mb-2">Important Disclaimer</h3>
+                <h3 className="font-semibold text-warning mb-2">Important Disclaimer</h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   All scripts are provided for educational purposes only and follow uniform Pine Script v6 standards. 
                   Each download includes detailed documentation and disclaimers.
                 </p>
+                <div className="bg-warning/5 border border-warning/20 rounded-md p-3 mb-3">
+                  <p className="text-sm text-warning-foreground font-medium">
+                    {DISCLAIMERS.SHORT}
+                  </p>
+                </div>
                 <ul className="text-xs text-muted-foreground space-y-1">
                   <li>• Educational use only - not financial advice</li>
                   <li>• Always test strategies thoroughly before live trading</li>

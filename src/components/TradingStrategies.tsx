@@ -7,6 +7,8 @@ import { TrendingUp, TrendingDown, Search, Filter, ExternalLink } from "lucide-r
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { tradingStrategies, Strategy, STRATEGY_PACKS } from "@/utils/TradingStrategiesData";
+import { PerformanceSnapshot } from "@/components/PerformanceSnapshot";
+import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
 
 export const TradingStrategies = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -329,14 +331,25 @@ export const TradingStrategies = () => {
                 <Badge variant="outline" className="text-xs">
                   {strategy.category}
                 </Badge>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
-                    <TrendingUp className="h-3 w-3 text-bullish" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 text-bearish" />
-                  )}
-                  {strategy.successRate}
-                </div>
+                {strategy.backtestData ? (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {strategy.backtestData.winRate.includes("7") || strategy.backtestData.winRate.includes("8") ? (
+                      <TrendingUp className="h-3 w-3 text-bullish" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-bearish" />
+                    )}
+                    {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.backtestData.winRate}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
+                      <TrendingUp className="h-3 w-3 text-bullish" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-bearish" />
+                    )}
+                    {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.successRate}
+                  </div>
+                )}
               </div>
             </CardHeader>
             
@@ -374,10 +387,20 @@ export const TradingStrategies = () => {
                     <div className="text-accent font-medium">{strategy.riskReward}</div>
                   </div>
                   <div>
-                    <span className="font-medium text-foreground">Success Rate:</span>
+                    <span className="font-medium text-foreground">{PERFORMANCE_LABELS.SUCCESS_RATE}:</span>
                     <div className="text-bullish font-medium">{strategy.successRate}</div>
                   </div>
                 </div>
+                
+                {/* Performance Snapshot */}
+                {strategy.backtestData && (
+                  <div className="mt-3">
+                    <PerformanceSnapshot 
+                      backtestData={strategy.backtestData} 
+                      compact={true}
+                    />
+                  </div>
+                )}
               </div>
               
               <div className="border-t pt-3 space-y-2 text-xs">
