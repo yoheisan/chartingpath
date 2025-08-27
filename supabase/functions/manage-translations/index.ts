@@ -6,12 +6,27 @@ const corsHeaders = {
 }
 
 interface TranslationRequest {
-  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations'
+  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details'
   language?: string
   namespace?: string
-  keys?: Array<{ key: string; description?: string; category?: string }>
-  translation?: { key: string; language_code: string; value: string }
+  keys?: Array<{ key: string; description?: string; category?: string; page_context?: string; element_context?: string }>
+  translation?: { 
+    key: string; 
+    language_code: string; 
+    value: string; 
+    is_manual_override?: boolean;
+    automation_source?: string;
+    original_automated_value?: string;
+    context_page?: string;
+    context_element?: string;
+  }
   translation_id?: string
+  search_query?: string
+  page_filter?: string
+  status_filter?: string
+  language_filter?: string
+  limit?: number
+  offset?: number
 }
 
 Deno.serve(async (req) => {
@@ -26,7 +41,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { action, language, namespace, keys, translation, translation_id }: TranslationRequest = await req.json()
+    const { 
+      action, 
+      language, 
+      namespace, 
+      keys, 
+      translation, 
+      translation_id,
+      search_query,
+      page_filter,
+      status_filter,
+      language_filter,
+      limit = 50,
+      offset = 0
+    }: TranslationRequest = await req.json()
     console.log('Translation management action:', action)
 
     switch (action) {
@@ -51,7 +79,9 @@ Deno.serve(async (req) => {
               .insert({
                 key: keyData.key,
                 description: keyData.description || `Auto-extracted key: ${keyData.key}`,
-                category: keyData.category || 'general'
+                category: keyData.category || 'general',
+                page_context: keyData.page_context,
+                element_context: keyData.element_context
               })
 
             if (keyError) {
@@ -99,7 +129,12 @@ Deno.serve(async (req) => {
             language_code: translation.language_code,
             value: translation.value,
             status: 'pending',
-            created_by: null // Could be set to user ID if authenticated
+            created_by: null, // Could be set to user ID if authenticated
+            is_manual_override: translation.is_manual_override || false,
+            automation_source: translation.automation_source,
+            original_automated_value: translation.original_automated_value,
+            context_page: translation.context_page,
+            context_element: translation.context_element
           })
 
         if (error) throw error
@@ -151,28 +186,169 @@ Deno.serve(async (req) => {
         })
       }
 
+      case 'search_translations': {
+        let query = supabase
+          .from('translations')
+          .select(`
+            id,
+            key,
+            language_code,
+            value,
+            status,
+            version,
+            created_at,
+            updated_at,
+            is_manual_override,
+            automation_source,
+            original_automated_value,
+            context_page,
+            context_element,
+            translation_keys(description, category, page_context, element_context)
+          `)
+          .order('updated_at', { ascending: false })
+
+        // Apply filters
+        if (search_query) {
+          query = query.or(`key.ilike.%${search_query}%,value.ilike.%${search_query}%`)
+        }
+        
+        if (language_filter) {
+          query = query.eq('language_code', language_filter)
+        }
+        
+        if (status_filter) {
+          query = query.eq('status', status_filter)
+        }
+        
+        if (page_filter) {
+          query = query.eq('context_page', page_filter)
+        }
+
+        // Apply pagination
+        query = query.range(offset, offset + limit - 1)
+
+        const { data, error, count } = await query
+
+        if (error) throw error
+
+        // Get total count for pagination
+        const { count: totalCount } = await supabase
+          .from('translations')
+          .select('*', { count: 'exact', head: true })
+
+        return new Response(JSON.stringify({
+          translations: data,
+          total_count: totalCount,
+          has_more: (offset + limit) < (totalCount || 0)
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'get_translation_details': {
+        if (!translation_id) {
+          throw new Error('Translation ID is required')
+        }
+
+        const { data, error } = await supabase
+          .from('translations')
+          .select(`
+            id,
+            key,
+            language_code,
+            value,
+            status,
+            version,
+            created_at,
+            updated_at,
+            reviewed_at,
+            reviewed_by,
+            created_by,
+            is_manual_override,
+            automation_source,
+            original_automated_value,
+            context_page,
+            context_element,
+            translation_keys(description, category, page_context, element_context)
+          `)
+          .eq('id', translation_id)
+          .single()
+
+        if (error) throw error
+
+        return new Response(JSON.stringify(data), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'update_translation': {
+        if (!translation_id || !translation) {
+          throw new Error('Translation ID and translation object are required')
+        }
+
+        // If this is a manual override, preserve the original automated value
+        const updateData: any = {
+          value: translation.value,
+          status: 'approved', // Auto-approve manual overrides
+          updated_at: new Date().toISOString(),
+          reviewed_at: new Date().toISOString(),
+          is_manual_override: translation.is_manual_override || true
+        }
+
+        if (translation.context_page) {
+          updateData.context_page = translation.context_page
+        }
+        
+        if (translation.context_element) {
+          updateData.context_element = translation.context_element
+        }
+
+        // If this is the first manual override, save the original automated value
+        if (translation.original_automated_value) {
+          updateData.original_automated_value = translation.original_automated_value
+          updateData.automation_source = translation.automation_source || 'system'
+        }
+
+        const { error } = await supabase
+          .from('translations')
+          .update(updateData)
+          .eq('id', translation_id)
+
+        if (error) throw error
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       case 'sync_to_production': {
         // Get all approved translations
         const { data: approvedTranslations, error } = await supabase
           .from('translations')
-          .select('key, language_code, value')
+          .select('key, language_code, value, is_manual_override')
           .eq('status', 'approved')
 
         if (error) throw error
 
         // Group by language
         const translationsByLanguage: Record<string, Record<string, string>> = {}
+        const metadataByLanguage: Record<string, Record<string, any>> = {}
         
         approvedTranslations?.forEach((trans) => {
           if (!translationsByLanguage[trans.language_code]) {
             translationsByLanguage[trans.language_code] = {}
+            metadataByLanguage[trans.language_code] = {}
           }
           translationsByLanguage[trans.language_code][trans.key] = trans.value
+          metadataByLanguage[trans.language_code][trans.key] = {
+            is_manual_override: trans.is_manual_override
+          }
         })
 
         return new Response(JSON.stringify({
           success: true,
           translations: translationsByLanguage,
+          metadata: metadataByLanguage,
           message: 'Use these translations to update your locale files'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

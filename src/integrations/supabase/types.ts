@@ -327,35 +327,46 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          element_context: string | null
           id: string
           key: string
+          page_context: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
           created_at?: string
           description?: string | null
+          element_context?: string | null
           id?: string
           key: string
+          page_context?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
           created_at?: string
           description?: string | null
+          element_context?: string | null
           id?: string
           key?: string
+          page_context?: string | null
           updated_at?: string
         }
         Relationships: []
       }
       translations: {
         Row: {
+          automation_source: string | null
+          context_element: string | null
+          context_page: string | null
           created_at: string
           created_by: string | null
           id: string
+          is_manual_override: boolean | null
           key: string
           language_code: string
+          original_automated_value: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
@@ -364,11 +375,16 @@ export type Database = {
           version: number
         }
         Insert: {
+          automation_source?: string | null
+          context_element?: string | null
+          context_page?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          is_manual_override?: boolean | null
           key: string
           language_code: string
+          original_automated_value?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -377,11 +393,16 @@ export type Database = {
           version?: number
         }
         Update: {
+          automation_source?: string | null
+          context_element?: string | null
+          context_page?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          is_manual_override?: boolean | null
           key?: string
           language_code?: string
+          original_automated_value?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -389,7 +410,15 @@ export type Database = {
           value?: string
           version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_translations_key"
+            columns: ["key"]
+            isOneToOne: false
+            referencedRelation: "translation_keys"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       user_language_preferences: {
         Row: {
