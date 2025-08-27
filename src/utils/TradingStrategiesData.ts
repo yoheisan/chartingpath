@@ -1,13 +1,3 @@
-export interface BacktestData {
-  winRate: string;
-  riskReward: string;
-  testPeriod: string;
-  totalTrades: number;
-  maxDrawdown: string;
-  instrument: string;
-  timeframe: string;
-}
-
 export interface Strategy {
   id: number;
   name: string;
@@ -19,8 +9,6 @@ export interface Strategy {
   entry: string;
   exit: string;
   riskReward: string;
-  successRate: string;
-  backtestData?: BacktestData;
   pack: string;
   hidden?: boolean;
   internalJsonSchema?: {
@@ -61,16 +49,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "MACD line crosses above signal line + volume spike",
     exit: "MACD crosses below signal line or 2% stop loss",
     riskReward: "1:2",
-    successRate: "65%",
-    backtestData: {
-      winRate: "65%",
-      riskReward: "1:2",
-      testPeriod: "2019-2023",
-      totalTrades: 127,
-      maxDrawdown: "8.4%",
-      instrument: "EUR/USD",
-      timeframe: "4H"
-    },
     pack: "MACD Strategy Pack",
     internalJsonSchema: {
       name: "MACD Golden Cross Momentum",
@@ -94,16 +72,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Bearish divergence + MACD histogram declining",
     exit: "Target previous support/resistance levels",
     riskReward: "1:3",
-    successRate: "72%",
-    backtestData: {
-      winRate: "72%",
-      riskReward: "1:3",
-      testPeriod: "2018-2023",
-      totalTrades: 89,
-      maxDrawdown: "12.1%",
-      instrument: "GBP/USD",
-      timeframe: "4H"
-    },
     pack: "MACD Strategy Pack"
   },
   {
@@ -117,7 +85,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "MACD touches zero line and bounces + price above EMA 20",
     exit: "MACD histogram peaks or price breaks EMA 20",
     riskReward: "1:2.5",
-    successRate: "68%",
     pack: "MACD Strategy Pack"
   },
   {
@@ -131,7 +98,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Histogram turning positive + volume above average",
     exit: "Histogram peaks or ATR-based stop loss",
     riskReward: "1:2",
-    successRate: "70%",
     pack: "MACD Strategy Pack"
   },
   {
@@ -145,7 +111,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Weekly uptrend + daily MACD buy + hourly pullback",
     exit: "Daily MACD turns negative",
     riskReward: "1:4",
-    successRate: "75%",
     pack: "MACD Strategy Pack"
   },
 
@@ -161,16 +126,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Bands squeeze + volume expansion on breakout",
     exit: "Price reaches opposite band or volume dies",
     riskReward: "1:3",
-    successRate: "73%",
-    backtestData: {
-      winRate: "73%",
-      riskReward: "1:3",
-      testPeriod: "2020-2024",
-      totalTrades: 156,
-      maxDrawdown: "9.7%",
-      instrument: "USD/JPY",
-      timeframe: "1H"
-    },
     pack: "Bollinger Bands Strategy Pack"
   },
   {
@@ -184,7 +139,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price touches lower band + RSI < 30",
     exit: "Price reaches middle band or upper band",
     riskReward: "1:2",
-    successRate: "67%",
     pack: "Bollinger Bands Strategy Pack"
   },
   {
@@ -198,7 +152,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price walks along upper band with volume",
     exit: "Price falls below middle band",
     riskReward: "1:5",
-    successRate: "78%",
     pack: "Bollinger Bands Strategy Pack"
   },
   {
@@ -212,7 +165,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price between outer and inner bands + MACD confirmation",
     exit: "Price reaches target zone or stops triggered",
     riskReward: "1:2.5",
-    successRate: "71%",
     pack: "Bollinger Bands Strategy Pack"
   },
   {
@@ -226,7 +178,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Hammer at lower band or shooting star at upper band",
     exit: "Price reaches middle band or pattern fails",
     riskReward: "1:2.5",
-    successRate: "69%",
     pack: "Bollinger Bands Strategy Pack"
   },
 
@@ -242,7 +193,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Bullish divergence: lower lows in price, higher lows in RSI",
     exit: "RSI reaches overbought or price breaks key resistance",
     riskReward: "1:3",
-    successRate: "74%",
     pack: "RSI Strategy Pack"
   },
   {
@@ -256,7 +206,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "RSI above 50 + price above EMA 21 + pullback",
     exit: "RSI below 50 or EMA 21 break",
     riskReward: "1:2",
-    successRate: "66%",
     pack: "RSI Strategy Pack"
   },
   {
@@ -270,7 +219,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "RSI > 80 or < 20 + stochastic confirmation",
     exit: "RSI returns to 50 line or time-based exit",
     riskReward: "1:1.5",
-    successRate: "63%",
     pack: "RSI Strategy Pack"
   },
   {
@@ -284,7 +232,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "RSI fails to exceed previous high/low at key S/R",
     exit: "Price breaks significant support/resistance",
     riskReward: "1:4",
-    successRate: "76%",
     pack: "RSI Strategy Pack"
   },
   {
@@ -298,7 +245,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Cutler RSI crosses threshold + volume confirmation",
     exit: "RSI momentum weakens or VWAP rejection",
     riskReward: "1:2.5",
-    successRate: "72%",
     pack: "RSI Strategy Pack"
   },
 
@@ -314,7 +260,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "50 EMA crosses above 200 EMA + volume spike",
     exit: "50 EMA crosses below 200 EMA",
     riskReward: "1:5",
-    successRate: "68%",
     pack: "Moving Averages & Trend Pack"
   },
   {
@@ -328,7 +273,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Fast EMA > Medium EMA > Slow EMA alignment",
     exit: "EMA alignment breaks or stop loss hit",
     riskReward: "1:2.5",
-    successRate: "71%",
     pack: "Moving Averages & Trend Pack"
   },
   {
@@ -342,7 +286,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price bounces off VWAP + volume confirmation",
     exit: "Price moves 2x ATR or breaks VWAP decisively",
     riskReward: "1:2",
-    successRate: "69%",
     pack: "Moving Averages & Trend Pack"
   },
   {
@@ -356,7 +299,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Hull MA changes color + RSI confirms trend",
     exit: "Hull MA color changes or RSI divergence",
     riskReward: "1:3",
-    successRate: "73%",
     pack: "Moving Averages & Trend Pack"
   },
   {
@@ -370,7 +312,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "KAMA trend change + volatility expansion",
     exit: "KAMA flattens or volatility contracts",
     riskReward: "1:3.5",
-    successRate: "75%",
     pack: "Moving Averages & Trend Pack"
   },
 
@@ -386,7 +327,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "%K crosses above %D below 20 oversold zone",
     exit: "%K crosses below %D above 80 overbought zone",
     riskReward: "1:2",
-    successRate: "64%",
     pack: "Stochastic & Oscillators Pack"
   },
   {
@@ -400,7 +340,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Bearish divergence in uptrend + stoch turns down",
     exit: "Price breaks trend line or stoch reaches extreme",
     riskReward: "1:3.5",
-    successRate: "77%",
     pack: "Stochastic & Oscillators Pack"
   },
   {
@@ -414,53 +353,8 @@ export const tradingStrategies: Strategy[] = [
     entry: "%R below -80 (oversold) + bullish price action",
     exit: "%R above -20 (overbought) or stop loss",
     riskReward: "1:2",
-    successRate: "65%",
     pack: "Stochastic & Oscillators Pack"
   },
-  {
-    id: 35,
-    name: "CCI Zero Line Cross",
-    category: "CCI",
-    difficulty: "Beginner",
-    indicators: ["CCI", "Volume", "Trend"],
-    timeframes: ["1H", "4H"],
-    description: "Trade CCI crosses above/below zero line",
-    entry: "CCI crosses above 0 + volume confirmation",
-    exit: "CCI crosses below 0 or hits +100 level",
-    riskReward: "1:2",
-    successRate: "66%",
-    pack: "Stochastic & Oscillators Pack"
-  },
-  {
-    id: 26,
-    name: "Rate of Change Momentum (ROC)",
-    category: "Momentum",
-    difficulty: "Intermediate",
-    indicators: ["ROC", "MA", "Volume"],
-    timeframes: ["1H", "4H"],
-    description: "Trade momentum using Rate of Change indicator",
-    entry: "ROC crosses above zero + MA support",
-    exit: "ROC crosses below zero or MA breaks",
-    riskReward: "1:2.5",
-    successRate: "68%",
-    pack: "Stochastic & Oscillators Pack"
-  },
-  {
-    id: 27,
-    name: "Price Momentum Oscillator (PMO)",
-    category: "Momentum",
-    difficulty: "Advanced",
-    indicators: ["PMO", "Signal Line", "Trend"],
-    timeframes: ["4H", "1D"],
-    description: "Use DecisionPoint's PMO for momentum analysis",
-    entry: "PMO crosses above signal line + uptrend",
-    exit: "PMO crosses below signal or trend breaks",
-    riskReward: "1:3",
-    successRate: "72%",
-    pack: "Stochastic & Oscillators Pack"
-  },
-
-  // Volume & Volume-Price Pack (F)
   {
     id: 24,
     name: "On Balance Volume Trend (OBV)",
@@ -472,7 +366,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "OBV breaks resistance + price follows",
     exit: "OBV diverges from price or MA breaks",
     riskReward: "1:2.5",
-    successRate: "69%",
     pack: "Volume & Volume-Price Pack"
   },
   {
@@ -486,8 +379,33 @@ export const tradingStrategies: Strategy[] = [
     entry: "VPT trend line break + price confirmation",
     exit: "VPT momentum fails or reverses",
     riskReward: "1:3.5",
-    successRate: "73%",
     pack: "Volume & Volume-Price Pack"
+  },
+  {
+    id: 26,
+    name: "Rate of Change Momentum (ROC)",
+    category: "Momentum",
+    difficulty: "Intermediate",
+    indicators: ["ROC", "MA", "Volume"],
+    timeframes: ["1H", "4H"],
+    description: "Trade momentum using Rate of Change indicator",
+    entry: "ROC crosses above zero + MA support",
+    exit: "ROC crosses below zero or MA breaks",
+    riskReward: "1:2.5",
+    pack: "Stochastic & Oscillators Pack"
+  },
+  {
+    id: 27,
+    name: "Price Momentum Oscillator (PMO)",
+    category: "Momentum",
+    difficulty: "Advanced",
+    indicators: ["PMO", "Signal Line", "Trend"],
+    timeframes: ["4H", "1D"],
+    description: "Use DecisionPoint's PMO for momentum analysis",
+    entry: "PMO crosses above signal line + uptrend",
+    exit: "PMO crosses below signal or trend breaks",
+    riskReward: "1:3",
+    pack: "Stochastic & Oscillators Pack"
   },
   {
     id: 28,
@@ -500,7 +418,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "ADX > 25 + DI+ > DI- + price above EMA",
     exit: "ADX < 20 or DI crossover reverses",
     riskReward: "1:3",
-    successRate: "72%",
     pack: "Volume & Volume-Price Pack"
   },
   {
@@ -514,11 +431,8 @@ export const tradingStrategies: Strategy[] = [
     entry: "SAR flips below price + EMA alignment",
     exit: "SAR flips above price or volume dies",
     riskReward: "1:3",
-    successRate: "69%",
     pack: "Volume & Volume-Price Pack"
   },
-
-  // Levels & Patterns Pack (G)
   {
     id: 30,
     name: "Fibonacci Retracement Bounce",
@@ -530,7 +444,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price bounces from 61.8% or 50% retracement",
     exit: "Price reaches 100% extension or fails retest",
     riskReward: "1:2.5",
-    successRate: "68%",
     pack: "Levels & Patterns Pack"
   },
   {
@@ -544,7 +457,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price breaks above cloud + Tenkan > Kijun",
     exit: "Price re-enters cloud or Tenkan < Kijun",
     riskReward: "1:3",
-    successRate: "73%",
     pack: "Levels & Patterns Pack"
   },
   {
@@ -558,11 +470,8 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price bounces from pivot level + volume",
     exit: "Price reaches next pivot level or fails",
     riskReward: "1:2",
-    successRate: "64%",
     pack: "Levels & Patterns Pack"
   },
-
-  // Market Structure & Profile Pack (H)
   {
     id: 33,
     name: "Market Profile Value Area",
@@ -574,11 +483,8 @@ export const tradingStrategies: Strategy[] = [
     entry: "Price at value area extreme + volume confirmation",
     exit: "Price reaches POC or breaks value area",
     riskReward: "1:3",
-    successRate: "74%",
     pack: "Market Structure & Profile Pack"
   },
-
-  // Advanced Confirmation Pack (I)
   {
     id: 34,
     name: "Triple Confirmation System",
@@ -590,8 +496,20 @@ export const tradingStrategies: Strategy[] = [
     entry: "MACD bullish + RSI oversold recovery + BB breakout + volume",
     exit: "Any indicator turns bearish or stops hit",
     riskReward: "1:3",
-    successRate: "76%",
     pack: "Advanced Confirmation Pack"
+  },
+  {
+    id: 35,
+    name: "CCI Zero Line Cross",
+    category: "CCI",
+    difficulty: "Beginner",
+    indicators: ["CCI", "Volume", "Trend"],
+    timeframes: ["1H", "4H"],
+    description: "Trade CCI crosses above/below zero line",
+    entry: "CCI crosses above 0 + volume confirmation",
+    exit: "CCI crosses below 0 or hits +100 level",
+    riskReward: "1:2",
+    pack: "Stochastic & Oscillators Pack"
   },
   {
     id: 37,
@@ -604,11 +522,8 @@ export const tradingStrategies: Strategy[] = [
     entry: "Daily uptrend + 4H pullback + 1H reversal signal",
     exit: "4H trend changes or daily EMA breaks",
     riskReward: "1:4",
-    successRate: "78%",
     pack: "Advanced Confirmation Pack"
   },
-
-  // Trading Styles Pack (J)
   {
     id: 38,
     name: "5-Minute Scalping System",
@@ -620,7 +535,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "EMA 5 > EMA 10 + RSI > 50 + volume spike",
     exit: "EMA cross or 10-pip target/5-pip stop",
     riskReward: "1:2",
-    successRate: "68%",
     pack: "Trading Styles Pack"
   },
   {
@@ -634,7 +548,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "Weekly EMA support + daily RSI oversold + S/R level",
     exit: "Weekly trend change or major resistance",
     riskReward: "1:5",
-    successRate: "72%",
     pack: "Trading Styles Pack"
   },
   {
@@ -648,7 +561,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "RSI < 25 + price at BB lower band + support level",
     exit: "RSI > 70 or resistance level reached",
     riskReward: "1:2.5",
-    successRate: "67%",
     pack: "Trading Styles Pack"
   },
 
@@ -664,7 +576,6 @@ export const tradingStrategies: Strategy[] = [
     entry: "BB squeeze + volume expansion on breakout direction",
     exit: "Volatility exhaustion or opposite BB touch",
     riskReward: "1:3.5",
-    successRate: "71%",
     pack: "Bollinger Bands Strategy Pack",
     hidden: true  // Hide this duplicate in favor of "Bollinger Band Squeeze"
   }

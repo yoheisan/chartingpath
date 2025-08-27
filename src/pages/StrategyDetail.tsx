@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, AlertCircle, Code, Copy, Check, Info } from "lucide-react";
+import { ArrowLeft, Download, AlertCircle, Code, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
 import { tradingStrategies, Strategy } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES, DISCLAIMER_TEXT } from "@/components/StrategyExportTemplates";
 import { PineScriptEngine } from "@/components/PineScriptEngine";
 import { useToast } from "@/hooks/use-toast";
-import { PerformanceSnapshot } from "@/components/PerformanceSnapshot";
-import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
+import { DISCLAIMERS } from "@/constants/disclaimers";
 import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -795,17 +794,6 @@ Type: ${variant || "strategy"}
                     {strategy.difficulty}
                   </Badge>
                   <Badge variant="outline">{strategy.category}</Badge>
-                  <div className="flex items-center gap-1">
-                    {(strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate).includes("7") || 
-                     (strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate).includes("8") ? (
-                      <TrendingUp className="h-4 w-4 text-bullish" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-bearish" />
-                    )}
-                    <span className="font-medium">
-                      {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.backtestData ? strategy.backtestData.winRate : strategy.successRate}
-                    </span>
-                  </div>
                 </div>
               </div>
               <Badge variant="outline" className="text-accent font-semibold">
@@ -862,15 +850,6 @@ Type: ${variant || "strategy"}
               </CardContent>
             </Card>
           </div>
-
-          {/* Performance Snapshot */}
-          {strategy.backtestData && (
-            <PerformanceSnapshot 
-              backtestData={strategy.backtestData} 
-              compact={false} 
-              showFullDisclaimer={true}
-            />
-          )}
 
           {/* Code Preview & Generation - Main Section */}
           <Card className="p-6">

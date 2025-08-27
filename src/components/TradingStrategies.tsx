@@ -7,7 +7,6 @@ import { TrendingUp, TrendingDown, Search, Filter, ExternalLink } from "lucide-r
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { tradingStrategies, Strategy, STRATEGY_PACKS } from "@/utils/TradingStrategiesData";
-import { PERFORMANCE_LABELS } from "@/constants/disclaimers";
 
 export const TradingStrategies = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -330,25 +329,6 @@ export const TradingStrategies = () => {
                 <Badge variant="outline" className="text-xs">
                   {strategy.category}
                 </Badge>
-                {strategy.backtestData ? (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    {strategy.backtestData.winRate.includes("7") || strategy.backtestData.winRate.includes("8") ? (
-                      <TrendingUp className="h-3 w-3 text-bullish" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-bearish" />
-                    )}
-                    {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.backtestData.winRate}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    {strategy.successRate.includes("7") || strategy.successRate.includes("8") ? (
-                      <TrendingUp className="h-3 w-3 text-bullish" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-bearish" />
-                    )}
-                    {PERFORMANCE_LABELS.SUCCESS_RATE}: {strategy.successRate}
-                  </div>
-                )}
               </div>
             </CardHeader>
             
@@ -380,23 +360,12 @@ export const TradingStrategies = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 gap-2 text-xs">
                   <div>
                     <span className="font-medium text-foreground">Risk:Reward:</span>
                     <div className="text-accent font-medium">{strategy.riskReward}</div>
                   </div>
-                  <div>
-                    <span className="font-medium text-foreground">{PERFORMANCE_LABELS.SUCCESS_RATE}:</span>
-                    <div className="text-bullish font-medium">{strategy.successRate}</div>
-                  </div>
                 </div>
-                
-                {/* Show backtest context if available */}
-                {strategy.backtestData && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    <p>({strategy.backtestData.instrument}, {strategy.backtestData.timeframe}, {strategy.backtestData.testPeriod}, {strategy.backtestData.totalTrades} trades)</p>
-                  </div>
-                )}
               </div>
               
               <div className="border-t pt-3 space-y-2 text-xs">
