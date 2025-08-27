@@ -44,6 +44,53 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_outcomes: {
+        Row: {
+          alert_log_id: string
+          created_at: string
+          entry_price: number | null
+          exit_price: number | null
+          id: string
+          notes: string | null
+          outcome_type: string
+          pnl_percentage: number | null
+          trade_duration_hours: number | null
+          user_id: string
+        }
+        Insert: {
+          alert_log_id: string
+          created_at?: string
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          outcome_type: string
+          pnl_percentage?: number | null
+          trade_duration_hours?: number | null
+          user_id: string
+        }
+        Update: {
+          alert_log_id?: string
+          created_at?: string
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          outcome_type?: string
+          pnl_percentage?: number | null
+          trade_duration_hours?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_outcomes_alert_log_id_fkey"
+            columns: ["alert_log_id"]
+            isOneToOne: false
+            referencedRelation: "alerts_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           created_at: string | null
@@ -174,6 +221,65 @@ export type Database = {
           },
         ]
       }
+      community_strategies: {
+        Row: {
+          created_at: string
+          description: string
+          downloads_count: number | null
+          id: string
+          is_featured: boolean | null
+          likes_count: number | null
+          original_strategy_id: string | null
+          performance_data: Json | null
+          strategy_code: string
+          strategy_type: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          original_strategy_id?: string | null
+          performance_data?: Json | null
+          strategy_code: string
+          strategy_type?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          original_strategy_id?: string | null
+          performance_data?: Json | null
+          strategy_code?: string
+          strategy_type?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_strategies_original_strategy_id_fkey"
+            columns: ["original_strategy_id"]
+            isOneToOne: false
+            referencedRelation: "user_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       country_language_mapping: {
         Row: {
           country_code: string
@@ -262,6 +368,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      learning_progress: {
+        Row: {
+          accuracy_percentage: number | null
+          correct_answers: number | null
+          created_at: string
+          id: string
+          last_practiced_at: string | null
+          mastery_level: string | null
+          pattern_type: string
+          quiz_attempts: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy_percentage?: number | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          last_practiced_at?: string | null
+          mastery_level?: string | null
+          pattern_type: string
+          quiz_attempts?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy_percentage?: number | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          last_practiced_at?: string | null
+          mastery_level?: string | null
+          pattern_type?: string
+          quiz_attempts?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       paper_portfolios: {
         Row: {
@@ -455,6 +600,35 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_downloads: {
+        Row: {
+          created_at: string
+          id: string
+          strategy_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          strategy_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          strategy_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_downloads_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "community_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strategy_executions: {
         Row: {
           created_at: string
@@ -496,6 +670,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      strategy_likes: {
+        Row: {
+          created_at: string
+          id: string
+          strategy_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          strategy_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          strategy_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_likes_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "community_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       strategy_performance: {
         Row: {
