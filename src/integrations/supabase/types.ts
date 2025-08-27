@@ -263,6 +263,90 @@ export type Database = {
           },
         ]
       }
+      paper_portfolios: {
+        Row: {
+          created_at: string
+          current_balance: number
+          id: string
+          initial_balance: number
+          total_pnl: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          initial_balance?: number
+          total_pnl?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          initial_balance?: number
+          total_pnl?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      paper_trades: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          notes: string | null
+          pnl: number | null
+          portfolio_id: string
+          quantity: number
+          status: string
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          pnl?: number | null
+          portfolio_id: string
+          quantity: number
+          status?: string
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          pnl?: number | null
+          portfolio_id?: string
+          quantity?: number
+          status?: string
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_pricing: {
         Row: {
           created_at: string
@@ -477,6 +561,36 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_achievements: {
+        Row: {
+          achievement_name: string
+          achievement_type: string
+          description: string | null
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          achievement_name: string
+          achievement_type: string
+          description?: string | null
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          achievement_name?: string
+          achievement_type?: string
+          description?: string | null
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       translation_keys: {
         Row: {
           category: string | null
@@ -625,6 +739,27 @@ export type Database = {
           created_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlists: {
+        Row: {
+          added_at: string
+          id: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          symbol?: string
           user_id?: string
         }
         Relationships: []
