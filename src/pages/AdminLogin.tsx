@@ -21,7 +21,23 @@ const AdminLogin = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check for reset password parameter
+    // Set up auth state listener to handle password reset flows
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // User clicked password reset link and is now authenticated
+        setIsResetPassword(true);
+        setIsForgotPassword(false);
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        // Check if this is an admin user
+        supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data: isAdminUser }) => {
+          if (isAdminUser) {
+            navigate("/admin/dashboard");
+          }
+        });
+      }
+    });
+
+    // Check for reset password parameter in URL
     const resetParam = searchParams.get('reset');
     if (resetParam === 'true') {
       setIsResetPassword(true);
@@ -41,6 +57,8 @@ const AdminLogin = () => {
       }
     };
     checkAdminUser();
+
+    return () => subscription.unsubscribe();
   }, [navigate, searchParams]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
