@@ -82,6 +82,14 @@ const AIBuilder = () => {
     rightOperand: string;
     rightValue?: string;
     timeframe?: string;
+    isRelativeCondition?: boolean;
+    point?: {
+      mode: "n_bars_ago" | "session_open" | "specific_time" | "previous_close" | "day_open";
+      n?: number;
+      session?: string;
+      time?: string;
+      tz?: string;
+    };
   }
 
   interface PriceActionCondition {
@@ -265,8 +273,82 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
       operator: "crosses_up",
       rightOperand: "indicator",
       rightValue: "50",
-      timeframe: timeframe
+      timeframe: timeframe,
+      isRelativeCondition: false
     };
+    setIndicatorConditions([...indicatorConditions, newCondition]);
+  };
+
+  const addRelativeCondition = (preset?: string) => {
+    let newCondition: IndicatorCondition;
+    
+    switch (preset) {
+      case "sma_cross_past":
+        newCondition = {
+          id: Date.now().toString(),
+          indicator: "SMA",
+          leftParams: { period: 15, source: "close" },
+          operator: "was_below",
+          rightOperand: "indicator",
+          rightValue: "SMA(200)",
+          timeframe: timeframe,
+          isRelativeCondition: true,
+          point: { mode: "n_bars_ago", n: 5 }
+        };
+        break;
+      case "rsi_session_open":
+        newCondition = {
+          id: Date.now().toString(),
+          indicator: "RSI",
+          leftParams: { period: 14, source: "close" },
+          operator: "was_above",
+          rightOperand: "value",
+          rightValue: "50",
+          timeframe: timeframe,
+          isRelativeCondition: true,
+          point: { mode: "session_open", session: "ny" }
+        };
+        break;
+      case "price_vwap_time":
+        newCondition = {
+          id: Date.now().toString(),
+          indicator: "Price",
+          leftParams: { source: "close" },
+          operator: "was_below",
+          rightOperand: "indicator",
+          rightValue: "VWAP",
+          timeframe: timeframe,
+          isRelativeCondition: true,
+          point: { mode: "specific_time", time: "10:00", tz: "user" }
+        };
+        break;
+      case "ema_previous_close":
+        newCondition = {
+          id: Date.now().toString(),
+          indicator: "EMA",
+          leftParams: { period: 21, source: "close" },
+          operator: "was_below",
+          rightOperand: "indicator",
+          rightValue: "EMA(50)",
+          timeframe: timeframe,
+          isRelativeCondition: true,
+          point: { mode: "previous_close" }
+        };
+        break;
+      default:
+        newCondition = {
+          id: Date.now().toString(),
+          indicator: "SMA",
+          leftParams: { period: 15, source: "close" },
+          operator: "was_below",
+          rightOperand: "indicator",
+          rightValue: "200",
+          timeframe: timeframe,
+          isRelativeCondition: true,
+          point: { mode: "n_bars_ago", n: 1 }
+        };
+    }
+    
     setIndicatorConditions([...indicatorConditions, newCondition]);
   };
 
@@ -330,7 +412,25 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
     { value: "inside_band", label: "Inside Band" },
     { value: "outside_band", label: "Outside Band" },
     { value: "slope_up", label: "Slope Up" },
-    { value: "slope_down", label: "Slope Down" }
+    { value: "slope_down", label: "Slope Down" },
+    { value: "was_above", label: "Was Above" },
+    { value: "was_below", label: "Was Below" },
+    { value: "was_equal", label: "Was Equal" }
+  ];
+
+  const pointModes = [
+    { value: "n_bars_ago", label: "N Bars Ago" },
+    { value: "session_open", label: "At Session Open" },
+    { value: "specific_time", label: "At Specific Time" },
+    { value: "previous_close", label: "At Previous Close" },
+    { value: "day_open", label: "At Day Open" }
+  ];
+
+  const sessions = [
+    { value: "tokyo", label: "Tokyo" },
+    { value: "london", label: "London" },
+    { value: "ny", label: "New York" },
+    { value: "custom", label: "Custom" }
   ];
 
   // Show loading state while fetching user profile
@@ -581,68 +681,203 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                   </Button>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent className="space-y-3">
-                                  {indicatorConditions.map((condition, index) => (
-                                    <Card key={condition.id} className="p-3 bg-muted/30">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
-                                        <Select value={condition.indicator} onValueChange={(value) => updateIndicatorCondition(condition.id, { indicator: value })}>
-                                          <SelectTrigger className="h-8 text-xs flex-1">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent className="bg-background border z-50">
-                                            {indicators.map(ind => (
-                                              <SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          onClick={() => removeIndicatorCondition(condition.id)}
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <Input placeholder="Period (e.g., 14)" />
-                                        <Select value={condition.operator} onValueChange={(value) => updateIndicatorCondition(condition.id, { operator: value })}>
-                                          <SelectTrigger className="h-8">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent className="bg-background border z-50">
-                                            {operators.map(op => (
-                                              <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      
-                                      <div className="flex gap-2 mt-2 text-xs">
-                                        <Input placeholder="Value/Level" className="flex-1" />
-                                        <Select value={condition.timeframe || timeframe}>
-                                          <SelectTrigger className="w-20 h-8">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent className="bg-background border z-50">
-                                            {timeframes.map(tf => (
-                                              <SelectItem key={tf} value={tf}>{tf}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    </Card>
-                                  ))}
-                                  
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={addIndicatorCondition}
-                                    className="w-full"
-                                  >
-                                    <Plus className="h-3 w-3 mr-2" />
-                                    Add Indicator Condition
-                                  </Button>
+                                   {indicatorConditions.map((condition, index) => (
+                                     <Card key={condition.id} className="p-3 bg-muted/30">
+                                       <div className="flex items-center gap-2 mb-2">
+                                         <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
+                                         {condition.isRelativeCondition && (
+                                           <Badge variant="secondary" className="text-xs">Relative @ Point</Badge>
+                                         )}
+                                         <Select value={condition.indicator} onValueChange={(value) => updateIndicatorCondition(condition.id, { indicator: value })}>
+                                           <SelectTrigger className="h-8 text-xs flex-1">
+                                             <SelectValue />
+                                           </SelectTrigger>
+                                           <SelectContent className="bg-background border z-50">
+                                             {indicators.map(ind => (
+                                               <SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>
+                                             ))}
+                                           </SelectContent>
+                                         </Select>
+                                         <Button 
+                                           variant="ghost" 
+                                           size="sm"
+                                           onClick={() => removeIndicatorCondition(condition.id)}
+                                         >
+                                           <X className="h-3 w-3" />
+                                         </Button>
+                                       </div>
+                                       
+                                       <div className="grid grid-cols-2 gap-2 text-xs">
+                                         <Input 
+                                           placeholder="Period (e.g., 14)" 
+                                           value={condition.leftParams?.period || ""}
+                                           onChange={(e) => updateIndicatorCondition(condition.id, { 
+                                             leftParams: { ...condition.leftParams, period: e.target.value } 
+                                           })}
+                                         />
+                                         <Select 
+                                           value={condition.operator} 
+                                           onValueChange={(value) => updateIndicatorCondition(condition.id, { operator: value })}
+                                         >
+                                           <SelectTrigger className="h-8">
+                                             <SelectValue />
+                                           </SelectTrigger>
+                                           <SelectContent className="bg-background border z-50">
+                                             {operators.filter(op => condition.isRelativeCondition ? 
+                                               op.value.startsWith('was_') : !op.value.startsWith('was_')
+                                             ).map(op => (
+                                               <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                                             ))}
+                                           </SelectContent>
+                                         </Select>
+                                       </div>
+                                       
+                                       <div className="flex gap-2 mt-2 text-xs">
+                                         <Input 
+                                           placeholder="Value/Level" 
+                                           value={condition.rightValue || ""}
+                                           onChange={(e) => updateIndicatorCondition(condition.id, { rightValue: e.target.value })}
+                                           className="flex-1" 
+                                         />
+                                         <Select value={condition.timeframe || timeframe}>
+                                           <SelectTrigger className="w-20 h-8">
+                                             <SelectValue />
+                                           </SelectTrigger>
+                                           <SelectContent className="bg-background border z-50">
+                                             {timeframes.map(tf => (
+                                               <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                                             ))}
+                                           </SelectContent>
+                                         </Select>
+                                       </div>
+
+                                       {/* Point Configuration for Relative Conditions */}
+                                       {condition.isRelativeCondition && (
+                                         <div className="mt-3 p-2 bg-background/50 rounded border">
+                                           <Label className="text-xs font-medium mb-2 block">Point Reference</Label>
+                                           <div className="space-y-2">
+                                             <Select 
+                                               value={condition.point?.mode || "n_bars_ago"} 
+                                               onValueChange={(value) => updateIndicatorCondition(condition.id, { 
+                                                 point: { ...condition.point, mode: value as any }
+                                               })}
+                                             >
+                                               <SelectTrigger className="h-8 text-xs">
+                                                 <SelectValue />
+                                               </SelectTrigger>
+                                               <SelectContent className="bg-background border z-50">
+                                                 {pointModes.map(mode => (
+                                                   <SelectItem key={mode.value} value={mode.value}>{mode.label}</SelectItem>
+                                                 ))}
+                                               </SelectContent>
+                                             </Select>
+
+                                             {condition.point?.mode === "n_bars_ago" && (
+                                               <Input
+                                                 type="number"
+                                                 placeholder="N (bars ago)"
+                                                 value={condition.point?.n || ""}
+                                                 onChange={(e) => updateIndicatorCondition(condition.id, {
+                                                   point: { ...condition.point, n: parseInt(e.target.value) || 1 }
+                                                 })}
+                                                 className="h-8 text-xs"
+                                                 min="1"
+                                               />
+                                             )}
+
+                                             {condition.point?.mode === "session_open" && (
+                                               <Select 
+                                                 value={condition.point?.session || "ny"} 
+                                                 onValueChange={(value) => updateIndicatorCondition(condition.id, {
+                                                   point: { ...condition.point, session: value }
+                                                 })}
+                                               >
+                                                 <SelectTrigger className="h-8 text-xs">
+                                                   <SelectValue />
+                                                 </SelectTrigger>
+                                                 <SelectContent className="bg-background border z-50">
+                                                   {sessions.map(session => (
+                                                     <SelectItem key={session.value} value={session.value}>{session.label}</SelectItem>
+                                                   ))}
+                                                 </SelectContent>
+                                               </Select>
+                                             )}
+
+                                             {condition.point?.mode === "specific_time" && (
+                                               <Input
+                                                 type="time"
+                                                 value={condition.point?.time || ""}
+                                                 onChange={(e) => updateIndicatorCondition(condition.id, {
+                                                   point: { ...condition.point, time: e.target.value, tz: "user" }
+                                                 })}
+                                                 className="h-8 text-xs"
+                                               />
+                                             )}
+                                           </div>
+                                         </div>
+                                       )}
+                                     </Card>
+                                   ))}
+
+                                   {/* Quick-add chips */}
+                                   <div className="space-y-2">
+                                     <Label className="text-xs text-muted-foreground">Quick Add Patterns</Label>
+                                     <div className="flex flex-wrap gap-1">
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm" 
+                                         onClick={() => addRelativeCondition("sma_cross_past")}
+                                         className="h-6 text-xs px-2"
+                                       >
+                                         SMA(15) was below SMA(200) N=5
+                                       </Button>
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm" 
+                                         onClick={() => addRelativeCondition("rsi_session_open")}
+                                         className="h-6 text-xs px-2"
+                                       >
+                                         RSI(14) was above 50 at session open
+                                       </Button>
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm" 
+                                         onClick={() => addRelativeCondition("price_vwap_time")}
+                                         className="h-6 text-xs px-2"
+                                       >
+                                         Price was below VWAP at 10:00
+                                       </Button>
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm" 
+                                         onClick={() => addRelativeCondition("ema_previous_close")}
+                                         className="h-6 text-xs px-2"
+                                       >
+                                         EMA(21) was below EMA(50) at previous close
+                                       </Button>
+                                     </div>
+                                   </div>
+                                   
+                                   <div className="flex gap-2">
+                                     <Button 
+                                       variant="outline" 
+                                       size="sm" 
+                                       onClick={addIndicatorCondition}
+                                       className="flex-1"
+                                     >
+                                       <Plus className="h-3 w-3 mr-2" />
+                                       Add Indicator Condition
+                                     </Button>
+                                     <Button 
+                                       variant="outline" 
+                                       size="sm" 
+                                       onClick={() => addRelativeCondition()}
+                                       className="flex-1"
+                                     >
+                                       <History className="h-3 w-3 mr-2" />
+                                       Add Relative @ Point
+                                     </Button>
+                                   </div>
                                 </CollapsibleContent>
                               </Collapsible>
 
@@ -789,29 +1024,36 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                     </TooltipContent>
                                   </Tooltip>
                                 </h4>
-                                <div className="space-y-4">
-                                  <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                      <Label className="text-sm">Action on Trigger</Label>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p>Choose whether conditions trigger long entries, short entries, or use directional mapping where bullish conditions = long, bearish conditions = short.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                    <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="bg-background border z-50">
-                                        <SelectItem value="long">Long Entry</SelectItem>
-                                        <SelectItem value="short">Short Entry</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
+                                 <div className="space-y-4">
+                                   <div>
+                                     <div className="flex items-center justify-between mb-1">
+                                       <Label className="text-sm">Action on Trigger</Label>
+                                       <Tooltip>
+                                         <TooltipTrigger asChild>
+                                           <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                         </TooltipTrigger>
+                                         <TooltipContent className="max-w-xs">
+                                           <p>Choose whether conditions trigger long entries, short entries, or use directional mapping where bullish conditions = long, bearish conditions = short.</p>
+                                         </TooltipContent>
+                                       </Tooltip>
+                                     </div>
+                                     {!useDirectionalMapping && (
+                                       <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
+                                         <SelectTrigger>
+                                           <SelectValue />
+                                         </SelectTrigger>
+                                         <SelectContent className="bg-background border z-50">
+                                           <SelectItem value="long">Enter Long</SelectItem>
+                                           <SelectItem value="short">Enter Short</SelectItem>
+                                         </SelectContent>
+                                       </Select>
+                                     )}
+                                     {useDirectionalMapping && (
+                                       <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                                         Directional mapping enabled: Cross up/Above → Long, Cross down/Below → Short
+                                       </div>
+                                     )}
+                                   </div>
 
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
