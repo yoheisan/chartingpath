@@ -32,11 +32,13 @@ import {
   ChevronDown,
   ChevronRight,
   Info,
-  HelpCircle
+  HelpCircle,
+  LogIn
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const AIBuilder = () => {
   // Financial Instrument Selection State
@@ -94,25 +96,26 @@ const AIBuilder = () => {
     params: Record<string, any>;
   }
   
-  // Mock user tier - in real app this would come from auth context
-  const userTier: "Starter" | "Pro" | "Pro+" | "Elite" = "Elite"; // Set to Elite for full access
-  const quotaUsed = 5;
-  const quotaLimit = getTierLimit(userTier);
+  // Real user authentication and profile data
+  const { 
+    user, 
+    profile, 
+    loading: profileLoading, 
+    getTierDisplayName, 
+    hasFeatureAccess, 
+    getGenerationQuota,
+    isAuthenticated,
+    subscriptionPlan 
+  } = useUserProfile();
+  
+  const quotaUsed = 5; // This would come from actual usage tracking
+  const quotaLimit = getGenerationQuota();
 
-  function getTierLimit(tier: "Starter" | "Pro" | "Pro+" | "Elite"): number {
-    switch (tier) {
-      case "Pro": return 5;
-      case "Pro+": return 20;
-      case "Elite": return 100;
-      default: return 0;
-    }
-  }
-
-  function getTierPlatforms(tier: "Starter" | "Pro" | "Pro+" | "Elite"): string[] {
-    switch (tier) {
-      case "Pro": return ["pine"];
-      case "Pro+": return ["pine", "mql4", "mql5"];
-      case "Elite": return ["pine", "mql4", "mql5", "ctrader", "ninjatrader"];
+  function getTierPlatforms(plan: string): string[] {
+    switch (plan) {
+      case "pro": return ["pine"];
+      case "pro_plus": return ["pine", "mql4", "mql5"];
+      case "elite": return ["pine", "mql4", "mql5", "ctrader", "ninjatrader"];
       default: return [];
     }
   }
@@ -158,6 +161,11 @@ const AIBuilder = () => {
   ];
 
   const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to generate strategies.");
+      return;
+    }
+
     if (quotaUsed >= quotaLimit) {
       toast.error(`Daily quota exceeded (${quotaLimit} generations). Quota resets at 00:00 JST.`);
       return;
@@ -241,7 +249,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
   };
 
   const handleSave = () => {
-    if (!["Pro+", "Elite"].includes(userTier)) {
+    if (!hasFeatureAccess('save_library')) {
       toast.error("Save to Library is available for Pro+ and Elite tiers only.");
       return;
     }
@@ -325,7 +333,42 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
     { value: "slope_down", label: "Slope Down" }
   ];
 
-  // Since Elite has full access, skip the Starter gate check
+  // Show loading state while fetching user profile
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not logged in
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-6 py-8 max-w-4xl">
+          <div className="text-center py-16">
+            <Lock className="h-16 w-16 mx-auto mb-6 text-muted-foreground" />
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-muted-foreground mb-8">
+              Please log in to access the AI Strategy Builder and create professional trading strategies.
+            </p>
+            <Button asChild size="lg">
+              <Link to="/auth">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In to Continue
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
@@ -340,7 +383,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
             
             <Badge variant="outline" className="flex items-center gap-2">
               <Crown className="h-3 w-3" />
-              {userTier} - {quotaUsed}/{quotaLimit} used today
+              {getTierDisplayName} - {quotaUsed}/{quotaLimit} used today
             </Badge>
           </div>
 
@@ -492,7 +535,57 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
 
                         {/* Visual Builder Tab */}
                         <TabsContent value="visual" className="space-y-6 mt-6">
-                          <p className="text-sm text-muted-foreground">Visual builder available for Pro+ and Elite tiers.</p>
+                          {hasFeatureAccess('visual_builder') ? (
+                            <div className="space-y-6">
+                              {/* Stars Aligned Mode */}
+                              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <Star className="h-4 w-4" />
+                                  <span className="font-medium">Stars Aligned Mode</span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p><strong>Stars Aligned (AND):</strong> ALL conditions must be true for a signal. <strong>OR Mode:</strong> ANY condition can trigger a signal. Use AND for more selective entries, OR for more frequent signals.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                                <Switch 
+                                  checked={starsAligned}
+                                  onCheckedChange={setStarsAligned}
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground -mt-4">
+                                {starsAligned ? "ALL conditions must be true (AND)" : "ANY condition can trigger (OR)"}
+                              </p>
+
+                              <div className="text-center py-8 border-2 border-dashed border-primary/30 rounded-lg">
+                                <Crown className="h-12 w-12 mx-auto mb-3 text-primary" />
+                                <p className="text-lg font-medium text-primary">Visual Builder Active!</p>
+                                <p className="text-sm text-muted-foreground">
+                                  You have {getTierDisplayName} access to the Visual Strategy Builder
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 border-2 border-dashed border-muted rounded-lg">
+                              <Lock className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                              <p className="text-lg font-medium">Visual Builder Locked</p>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Visual builder is available for Pro+ and Elite tiers only
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Current plan: {getTierDisplayName}
+                              </p>
+                              <Button asChild variant="outline" size="sm" className="mt-4">
+                                <Link to="/pricing">
+                                  <Crown className="h-4 w-4 mr-2" />
+                                  Upgrade Plan
+                                </Link>
+                              </Button>
+                            </div>
+                          )}
                         </TabsContent>
                       </Tabs>
 
@@ -565,11 +658,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                           variant="outline" 
                           size="sm"
                           onClick={handleSave}
-                          disabled={!["Pro+", "Elite"].includes(userTier)}
+                          disabled={!hasFeatureAccess('save_library')}
                         >
                           <Save className="h-3 w-3 mr-2" />
                           Save to Library
-                          {!["Pro+", "Elite"].includes(userTier) && <Lock className="h-3 w-3 ml-1" />}
+                          {!hasFeatureAccess('save_library') && <Lock className="h-3 w-3 ml-1" />}
                         </Button>
                       </div>
                       
