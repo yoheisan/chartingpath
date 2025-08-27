@@ -35,13 +35,13 @@ import {
   HelpCircle,
   LogIn
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 const AIBuilder = () => {
-  // Financial Instrument Selection State
+  const navigate = useNavigate();
   const [selectedInstrument, setSelectedInstrument] = useState("");
   const [instrumentCategory, setInstrumentCategory] = useState("");
   
@@ -262,6 +262,65 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
       return;
     }
     toast.success("Strategy saved to your library!");
+  };
+
+  const handleOpenInForge = () => {
+    // Build current strategy AST from visual builder state
+    const currentAST = {
+      type: "strategy",
+      name: strategy || `${selectedInstrument} Strategy`,
+      conditions: [
+        ...indicatorConditions.map(cond => ({
+          id: cond.id,
+          type: cond.isRelativeCondition ? "relative" : "indicator",
+          lhs: {
+            ind: cond.indicator,
+            params: cond.leftParams,
+            tf: cond.timeframe
+          },
+          operator: cond.operator,
+          rhs: cond.rightOperand === "indicator" ? {
+            ind: cond.rightValue?.split('(')[0] || "SMA",
+            params: { len: parseInt(cond.rightValue?.match(/\d+/)?.[0] || "50") }
+          } : {
+            threshold: parseFloat(cond.rightValue || "0")
+          },
+          point: cond.point,
+          label: `${cond.indicator} ${cond.operator} ${cond.rightValue}`
+        })),
+        ...priceActionConditions.map(cond => ({
+          id: cond.id,
+          type: "price_action",
+          ...cond
+        })),
+        ...timeConditions.map(cond => ({
+          id: cond.id,
+          type: "time",
+          ...cond
+        }))
+      ],
+      logic: starsAligned ? "and" : "or",
+      execution: {
+        mode: useDirectionalMapping ? "directional_mapping" : executionAction
+      },
+      risk: {
+        type: riskType as "atr" | "percentage",
+        stopLoss: parseFloat(atrSL),
+        takeProfit: parseFloat(atrTP),
+        trailingStop,
+        trailingStopValue: parseFloat(trailingStopValue)
+      },
+      timeframe,
+      confirmTimeframe: mtfEnabled ? confirmTimeframe : undefined,
+      filters: {
+        volume: volumeFilter,
+        trend: !!trendEmaLength,
+        trendEmaLength: parseInt(trendEmaLength)
+      }
+    };
+
+    // Navigate to Forge with strategy AST
+    navigate('/forge', { state: { strategyAST: currentAST } });
   };
 
   // Condition Builder Helper Functions
@@ -1163,6 +1222,17 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                             Generate Strategy
                           </>
                         )}
+                      </Button>
+
+                      {/* Open in Forge Button */}
+                      <Button 
+                        variant="outline"
+                        onClick={handleOpenInForge}
+                        className="w-full"
+                        size="lg"
+                      >
+                        <Code2 className="h-4 w-4 mr-2" />
+                        Open in Forge
                       </Button>
 
                       {quotaUsed >= quotaLimit && (

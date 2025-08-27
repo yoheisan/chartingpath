@@ -92,6 +92,9 @@ const Navigation = () => {
             <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
               Community
             </Link>
+            <Link to="/forge" className="text-muted-foreground hover:text-foreground transition-colors">
+              Forge
+            </Link>
             <LanguageSwitcher />
             <AuthButton />
           </nav>

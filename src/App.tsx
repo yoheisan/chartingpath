@@ -26,6 +26,7 @@ import PatternQuizPage from "./pages/PatternQuizPage";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import AIBuilder from "./pages/AIBuilder";
+import Forge from "./pages/Forge";
 import { TranslationManagement } from "./pages/TranslationManagement";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/ai-builder" element={<AIBuilder />} />
+          <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />
