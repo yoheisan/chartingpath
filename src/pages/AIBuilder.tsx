@@ -1224,7 +1224,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                         )}
                       </Button>
 
-                      {/* Open in Forge Button */}
+                      {/* Open in MultiScript Converter Button */}
                       <Button 
                         variant="outline"
                         onClick={handleOpenInForge}
@@ -1232,7 +1232,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                         size="lg"
                       >
                         <Code2 className="h-4 w-4 mr-2" />
-                        Open in Forge
+                        Open in MultiScript Converter
                       </Button>
 
                       {quotaUsed >= quotaLimit && (

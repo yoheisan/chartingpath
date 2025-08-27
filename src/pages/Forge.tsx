@@ -269,9 +269,9 @@ if shortCondition
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Forge</h1>
+          <h1 className="text-3xl font-bold mb-2">MultiScript Converter</h1>
           <p className="text-lg text-muted-foreground">
-            Advanced code generation, refactoring & testing
+            Convert trading strategies between Pine Script, MQL4/5, C#, and more
           </p>
           <div className="flex items-center gap-4 mt-4">
             <Badge variant="outline">

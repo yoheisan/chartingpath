@@ -93,7 +93,7 @@ const Navigation = () => {
               Community
             </Link>
             <Link to="/forge" className="text-muted-foreground hover:text-foreground transition-colors">
-              Forge
+              MultiScript Converter
             </Link>
             <LanguageSwitcher />
             <AuthButton />
