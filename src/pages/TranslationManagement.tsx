@@ -124,7 +124,7 @@ export const TranslationManagement = () => {
   };
 
   const searchTranslations = async () => {
-    if (!searchQuery && !languageFilter && !statusFilter && !pageFilter) {
+    if (!searchQuery && (!languageFilter || languageFilter === 'all') && (!statusFilter || statusFilter === 'all') && !pageFilter) {
       setAllTranslations([]);
       return;
     }
@@ -135,8 +135,8 @@ export const TranslationManagement = () => {
         body: {
           action: 'search_translations',
           search_query: searchQuery || undefined,
-          language_filter: languageFilter || undefined,
-          status_filter: statusFilter || undefined,
+          language_filter: (languageFilter && languageFilter !== 'all') ? languageFilter : undefined,
+          status_filter: (statusFilter && statusFilter !== 'all') ? statusFilter : undefined,
           page_filter: pageFilter || undefined,
           limit: 100
         }
@@ -413,7 +413,7 @@ export const TranslationManagement = () => {
                         <SelectValue placeholder="All languages" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All languages</SelectItem>
+                        <SelectItem value="all">All languages</SelectItem>
                         {languages.map((lang) => (
                           <SelectItem key={lang.code} value={lang.code}>
                             {lang.flag} {lang.name}
@@ -429,7 +429,7 @@ export const TranslationManagement = () => {
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All statuses</SelectItem>
+                        <SelectItem value="all">All statuses</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="rejected">Rejected</SelectItem>
@@ -458,8 +458,8 @@ export const TranslationManagement = () => {
                     variant="outline"
                     onClick={() => {
                       setSearchQuery('');
-                      setLanguageFilter('');
-                      setStatusFilter('');
+                      setLanguageFilter('all');
+                      setStatusFilter('all');
                       setPageFilter('');
                       setAllTranslations([]);
                     }}
