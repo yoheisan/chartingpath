@@ -191,15 +191,6 @@ const PipCalculator = () => {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-secondary/50 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">Want to automate your trading?</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Get our free starter scripts that include automated pip calculations and risk management.
-                    </p>
-                    <Button variant="outline" className="w-full">
-                      Download Free Starter Script
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
