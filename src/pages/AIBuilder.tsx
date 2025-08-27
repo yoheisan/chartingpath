@@ -560,13 +560,327 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                 {starsAligned ? "ALL conditions must be true (AND)" : "ANY condition can trigger (OR)"}
                               </p>
 
-                              <div className="text-center py-8 border-2 border-dashed border-primary/30 rounded-lg">
-                                <Crown className="h-12 w-12 mx-auto mb-3 text-primary" />
-                                <p className="text-lg font-medium text-primary">Visual Builder Active!</p>
-                                <p className="text-sm text-muted-foreground">
-                                  You have {getTierDisplayName} access to the Visual Strategy Builder
-                                </p>
-                              </div>
+                              {/* Indicator Conditions */}
+                              <Collapsible defaultOpen>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                                    <div className="flex items-center gap-2">
+                                      <BarChart3 className="h-4 w-4" />
+                                      <span>Indicator Conditions</span>
+                                      <Badge variant="secondary">{indicatorConditions.length}</Badge>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Add technical indicator conditions like EMA crossovers, RSI levels, MACD signals, Bollinger Band touches, etc. Each condition can use different timeframes for multi-timeframe analysis.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-3">
+                                  {indicatorConditions.map((condition, index) => (
+                                    <Card key={condition.id} className="p-3 bg-muted/30">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
+                                        <Select value={condition.indicator} onValueChange={(value) => updateIndicatorCondition(condition.id, { indicator: value })}>
+                                          <SelectTrigger className="h-8 text-xs flex-1">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-background border z-50">
+                                            {indicators.map(ind => (
+                                              <SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => removeIndicatorCondition(condition.id)}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-2 gap-2 text-xs">
+                                        <Input placeholder="Period (e.g., 14)" />
+                                        <Select value={condition.operator} onValueChange={(value) => updateIndicatorCondition(condition.id, { operator: value })}>
+                                          <SelectTrigger className="h-8">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-background border z-50">
+                                            {operators.map(op => (
+                                              <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <div className="flex gap-2 mt-2 text-xs">
+                                        <Input placeholder="Value/Level" className="flex-1" />
+                                        <Select value={condition.timeframe || timeframe}>
+                                          <SelectTrigger className="w-20 h-8">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-background border z-50">
+                                            {timeframes.map(tf => (
+                                              <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </Card>
+                                  ))}
+                                  
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={addIndicatorCondition}
+                                    className="w-full"
+                                  >
+                                    <Plus className="h-3 w-3 mr-2" />
+                                    Add Indicator Condition
+                                  </Button>
+                                </CollapsibleContent>
+                              </Collapsible>
+
+                              {/* Price Action Conditions */}
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                                    <div className="flex items-center gap-2">
+                                      <TrendingUp className="h-4 w-4" />
+                                      <span>Price Action</span>
+                                      <Badge variant="secondary">{priceActionConditions.length}</Badge>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Add price action conditions like candle patterns (hammer, doji), support/resistance touches, breakouts, or price vs moving average relationships.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-3">
+                                  {priceActionConditions.map((condition, index) => (
+                                    <Card key={condition.id} className="p-3 bg-muted/30">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
+                                        <Select value={condition.type}>
+                                          <SelectTrigger className="h-8 text-xs flex-1">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-background border z-50">
+                                            <SelectItem value="close_vs_open">Close vs Open</SelectItem>
+                                            <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
+                                            <SelectItem value="sr_touch">S/R Touch</SelectItem>
+                                            <SelectItem value="breakout">Breakout</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => removePriceActionCondition(condition.id)}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-2 gap-2 text-xs">
+                                        <Input placeholder="Direction" />
+                                        <Input placeholder="Threshold %" />
+                                      </div>
+                                    </Card>
+                                  ))}
+                                  
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={addPriceActionCondition}
+                                    className="w-full"
+                                  >
+                                    <Plus className="h-3 w-3 mr-2" />
+                                    Add Price Action
+                                  </Button>
+                                </CollapsibleContent>
+                              </Collapsible>
+
+                              {/* Time & Session Conditions */}
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="h-4 w-4" />
+                                      <span>Time & Session</span>
+                                      <Badge variant="secondary">{timeConditions.length}</Badge>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Add time-based filters like session windows (first 2 hours of London/NY), specific time ranges (09:30-11:30), day filters (weekdays only), or bar close requirements.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-3">
+                                  {timeConditions.map((condition, index) => (
+                                    <Card key={condition.id} className="p-3 bg-muted/30">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
+                                        <Select value={condition.type}>
+                                          <SelectTrigger className="h-8 text-xs flex-1">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-background border z-50">
+                                            <SelectItem value="session_window">Session Window</SelectItem>
+                                            <SelectItem value="day_filter">Day Filter</SelectItem>
+                                            <SelectItem value="bar_close">Bar Close Only</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => removeTimeCondition(condition.id)}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                      
+                                      {condition.type === "session_window" && (
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <Input placeholder="09:30" />
+                                          <Input placeholder="11:30" />
+                                        </div>
+                                      )}
+                                    </Card>
+                                  ))}
+                                  
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={addTimeCondition}
+                                    className="w-full"
+                                  >
+                                    <Plus className="h-3 w-3 mr-2" />
+                                    Add Time Condition
+                                  </Button>
+                                </CollapsibleContent>
+                              </Collapsible>
+
+                              {/* Execution Panel */}
+                              <Card className="p-4 bg-muted/30">
+                                <h4 className="font-medium mb-3 flex items-center gap-2">
+                                  <Target className="h-4 w-4" />
+                                  Execution & Risk
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>Configure how trades are executed when conditions are met. Set direction (long/short), enable directional mapping, add trailing stops, and configure early exit rules.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </h4>
+                                <div className="space-y-4">
+                                  <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <Label className="text-sm">Action on Trigger</Label>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Choose whether conditions trigger long entries, short entries, or use directional mapping where bullish conditions = long, bearish conditions = short.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <Select value={executionAction} onValueChange={(value: "long" | "short") => setExecutionAction(value)}>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-background border z-50">
+                                        <SelectItem value="long">Long Entry</SelectItem>
+                                        <SelectItem value="short">Short Entry</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-sm">Directional Mapping</Label>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>When enabled, bullish indicator signals trigger long entries and bearish signals trigger short entries automatically.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <Switch 
+                                      checked={useDirectionalMapping}
+                                      onCheckedChange={setUseDirectionalMapping}
+                                    />
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-sm">Trailing Stop</Label>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Enable trailing stop-loss that follows price movement to lock in profits while protecting against reversals.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <Switch 
+                                      checked={trailingStop}
+                                      onCheckedChange={setTrailingStop}
+                                    />
+                                  </div>
+
+                                  {trailingStop && (
+                                    <div>
+                                      <Label className="text-sm">Trailing Distance (ATR)</Label>
+                                      <Input 
+                                        type="number" 
+                                        step="0.1"
+                                        value={trailingStopValue}
+                                        onChange={(e) => setTrailingStopValue(e.target.value)}
+                                        className="mt-1"
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-sm">Early Exit Conditions</Label>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p>Add early exit rules based on indicator signals, profit targets, or time-based exits.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                    <Switch 
+                                      checked={earlyExit}
+                                      onCheckedChange={setEarlyExit}
+                                    />
+                                  </div>
+                                </div>
+                              </Card>
                             </div>
                           ) : (
                             <div className="text-center py-8 border-2 border-dashed border-muted rounded-lg">
