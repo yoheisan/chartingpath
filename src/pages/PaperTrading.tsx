@@ -70,7 +70,7 @@ const PaperTrading = () => {
   const [marketData, setMarketData] = useState<{[key: string]: any}>({});
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('trading');
-  const [strategies, setStrategies] = useState<Array<{id: string; name: string; description: string; is_active: boolean}>>([]);
+  const [strategies, setStrategies] = useState<Array<{id: string; name: string; description: string; is_active: boolean; strategy_code?: string}>>([]);
   const [editingStrategy, setEditingStrategy] = useState<any>(null);
   const [showStrategyEditor, setShowStrategyEditor] = useState(false);
 
@@ -503,6 +503,7 @@ const PaperTrading = () => {
           <TabsContent value="execution">
             <StrategyExecution 
               strategies={strategies}
+              portfolioId={portfolio?.id}
               onRefresh={fetchStrategies}
             />
           </TabsContent>
