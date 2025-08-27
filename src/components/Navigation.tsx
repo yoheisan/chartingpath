@@ -33,42 +33,22 @@ const Navigation = () => {
           <nav className="hidden md:flex items-center gap-6">
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                {t('navigation.patternLibrary', 'Chart Patterns')}
+                Tools
                 <ChevronDown className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/generator" className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    {t('navigation.patternGenerator', 'Pattern Generator')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/library" className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    {t('navigation.patternLibrary', 'Pattern Library')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    {t('navigation.tradingStrategies', 'Trading Strategies')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
+                  <Link to="/ai-builder" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    {t('navigation.patternQuiz', 'Pattern Quiz')}
+                    {t('navigation.aiBuilder', 'AI Builder')}
                   </Link>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                Calculators
-                <ChevronDown className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link to="/forge" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    MultiScript Converter
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/tools/pip-calculator" className="flex items-center gap-2">
                     <Calculator className="h-4 w-4" />
@@ -83,17 +63,43 @@ const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/ai-builder" className="text-muted-foreground hover:text-foreground transition-colors">
-              {t('navigation.aiBuilder', 'AI Builder')}
-            </Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-              {t('navigation.pricing', 'Pricing')}
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                Learning
+                <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/generator" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    {t('navigation.patternGenerator', 'Pattern Generator')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/library" className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    {t('navigation.patternLibrary', 'Pattern Library')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    {t('navigation.tradingStrategies', 'Trading Strategies')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    {t('navigation.patternQuiz', 'Pattern Quiz')}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
               Community
             </Link>
-            <Link to="/forge" className="text-muted-foreground hover:text-foreground transition-colors">
-              MultiScript Converter
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t('navigation.pricing', 'Pricing')}
             </Link>
             <LanguageSwitcher />
             <AuthButton />
