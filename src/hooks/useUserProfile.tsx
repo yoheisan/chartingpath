@@ -144,14 +144,20 @@ export const useUserProfile = () => {
 
   // Get generation quota based on plan
   const getGenerationQuota = () => {
-    if (!profile) return 0;
+    if (!profile) return 1; // Allow 1 free test for non-authenticated users
     
     switch (profile.subscription_plan) {
       case 'pro': return 5;
       case 'pro_plus': return 20;
       case 'elite': return 100;
-      default: return 0;
+      default: return 1; // Allow 1 free test for starter plan
     }
+  };
+
+  // Check if user can download (not for free users)
+  const canDownload = () => {
+    if (!profile) return false;
+    return profile.subscription_plan !== 'starter';
   };
 
   return {
@@ -163,6 +169,7 @@ export const useUserProfile = () => {
     getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : 'Starter',
     hasFeatureAccess,
     getGenerationQuota,
+    canDownload,
     isAuthenticated: !!user,
     subscriptionPlan: profile?.subscription_plan || 'starter'
   };

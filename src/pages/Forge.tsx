@@ -17,7 +17,7 @@ import { forgeToSite, siteToForge } from "@/adapters/forge";
 
 const Forge = () => {
   const location = useLocation();
-  const { profile, hasFeatureAccess, getGenerationQuota, isAuthenticated } = useUserProfile();
+  const { profile, hasFeatureAccess, getGenerationQuota, canDownload, isAuthenticated } = useUserProfile();
   const [activeTab, setActiveTab] = useState("generate");
   const [quotaUsed, setQuotaUsed] = useState(0);
   
@@ -76,14 +76,13 @@ const Forge = () => {
   };
 
   const handleGenerate = async () => {
-    if (!isAuthenticated) {
-      toast.error("Please log in to generate code");
-      return;
-    }
-
     const quota = getGenerationQuota();
     if (quotaUsed >= quota) {
-      toast.error(`Daily quota exceeded (${quota}/day). Resets at 00:00 JST.`);
+      if (!profile || profile.subscription_plan === 'starter') {
+        toast.error("You've used your free test generation. Upgrade to continue generating strategies.");
+      } else {
+        toast.error(`Daily quota exceeded (${quota}/day). Resets at 00:00 JST.`);
+      }
       return;
     }
 
@@ -222,6 +221,11 @@ if shortCondition
   };
 
   const handleDownloadZip = () => {
+    if (!canDownload()) {
+      toast.error("Download feature is available for Pro+ subscribers only. You can copy the code to test it.");
+      return;
+    }
+
     const gateInfo = getTierGateInfo(selectedPlatform);
     if (!gateInfo?.hasAccess) {
       toast.error(`${platforms[selectedPlatform as keyof typeof platforms].name} export requires ${gateInfo?.requiredTier.toUpperCase()} plan`);
@@ -409,9 +413,10 @@ if shortCondition
                           <Copy className="h-4 w-4 mr-2" />
                           Copy
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleDownloadZip}>
+                        <Button variant="outline" size="sm" onClick={handleDownloadZip} disabled={!canDownload()}>
                           <Download className="h-4 w-4 mr-2" />
                           Download .zip
+                          {!canDownload() && <Lock className="h-4 w-4 ml-1" />}
                         </Button>
                         <Button variant="outline" size="sm" onClick={handleSaveToLibrary}>
                           <Save className="h-4 w-4 mr-2" />
@@ -582,16 +587,17 @@ if shortCondition
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full"
-                          disabled={!gateInfo?.hasAccess}
-                          onClick={handleDownloadZip}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download {platform.extension}
-                        </Button>
+                         <Button 
+                           variant="outline" 
+                           size="sm" 
+                           className="w-full"
+                           disabled={!canDownload()}
+                           onClick={handleDownloadZip}
+                         >
+                           <Download className="h-4 w-4 mr-2" />
+                           Download {platform.extension}
+                           {!canDownload() && <Lock className="h-4 w-4 ml-1" />}
+                         </Button>
                       </div>
                     </CardContent>
                   </Card>

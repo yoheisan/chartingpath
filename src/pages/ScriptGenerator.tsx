@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Code, Copy, Download, Check } from "lucide-react";
+import { ArrowLeft, Code, Copy, Download, Check, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { tradingStrategies } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES } from "@/components/StrategyExportTemplates";
 import { useToast } from "@/hooks/use-toast";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 
@@ -22,6 +23,7 @@ const EXPORT_PLATFORMS = {
 
 const ScriptGenerator = () => {
   const { toast } = useToast();
+  const { canDownload } = useUserProfile();
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("TradingView - Pine Script v5");
@@ -68,6 +70,15 @@ const ScriptGenerator = () => {
   };
 
   const handleExportFile = () => {
+    if (!canDownload()) {
+      toast({
+        title: "Download Restricted",
+        description: "File download is available for Pro+ subscribers only. You can copy the code to test it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!generatedCode || !selectedStrategy) return;
 
     const strategy = tradingStrategies.find(s => s.id === parseInt(selectedStrategy));
@@ -234,9 +245,11 @@ const ScriptGenerator = () => {
                       onClick={handleExportFile}
                       variant="outline"
                       size="sm"
+                      disabled={!canDownload()}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Export
+                      {!canDownload() && <Lock className="h-4 w-4 ml-1" />}
                     </Button>
                   </div>
                 )}

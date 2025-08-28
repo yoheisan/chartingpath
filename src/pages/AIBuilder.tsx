@@ -112,6 +112,7 @@ const AIBuilder = () => {
     getTierDisplayName, 
     hasFeatureAccess, 
     getGenerationQuota,
+    canDownload,
     isAuthenticated,
     subscriptionPlan 
   } = useUserProfile();
@@ -169,13 +170,12 @@ const AIBuilder = () => {
   ];
 
   const handleGenerate = async () => {
-    if (!isAuthenticated) {
-      toast.error("Please log in to generate strategies.");
-      return;
-    }
-
     if (quotaUsed >= quotaLimit) {
-      toast.error(`Daily quota exceeded (${quotaLimit} generations). Quota resets at 00:00 JST.`);
+      if (!profile || profile.subscription_plan === 'starter') {
+        toast.error("You've used your free test generation. Upgrade to continue generating strategies.");
+      } else {
+        toast.error(`Daily quota exceeded (${quotaLimit} generations). Quota resets at 00:00 JST.`);
+      }
       return;
     }
 
@@ -252,6 +252,10 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
   };
 
   const handleDownload = () => {
+    if (!canDownload()) {
+      toast.error("Download feature is available for Pro+ subscribers only. You can copy the code to test it.");
+      return;
+    }
     // Mock download functionality
     toast.success("Strategy bundle downloaded!");
   };
@@ -1276,9 +1280,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                           variant="outline" 
                           size="sm"
                           onClick={handleDownload}
+                          disabled={!canDownload()}
                         >
                           <Download className="h-3 w-3 mr-2" />
                           Download Bundle
+                          {!canDownload() && <Lock className="h-3 w-3 ml-1" />}
                         </Button>
                         <Button 
                           variant="outline" 
