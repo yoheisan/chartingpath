@@ -19,18 +19,18 @@ export const TradingStrategies = () => {
   const visibleStrategies = tradingStrategies.filter(s => !s.hidden);
   const categories = Array.from(new Set(visibleStrategies.map(s => s.category))).sort();
   const difficulties = ["Beginner", "Intermediate", "Advanced", "Expert"];
-  const timeframes = Array.from(new Set(visibleStrategies.flatMap(s => s.timeframes))).sort();
+  const timeframes = Array.from(new Set(visibleStrategies.flatMap(s => s.timeframes || []))).sort();
   const packs = Object.keys(STRATEGY_PACKS);
 
   // Filter strategies
   const filteredStrategies = visibleStrategies.filter(strategy => {
-    const matchesSearch = strategy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         strategy.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         strategy.indicators.some(ind => ind.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = strategy.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         strategy.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         strategy.indicators?.some(ind => ind?.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = selectedCategory === "all" || strategy.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === "all" || strategy.difficulty === selectedDifficulty;
-    const matchesTimeframe = selectedTimeframe === "all" || strategy.timeframes.includes(selectedTimeframe);
+    const matchesTimeframe = selectedTimeframe === "all" || strategy.timeframes?.includes(selectedTimeframe);
     const matchesPack = selectedPack === "all" || strategy.pack === selectedPack;
 
     return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeframe && matchesPack;
@@ -341,7 +341,7 @@ export const TradingStrategies = () => {
                 <div>
                   <span className="font-medium text-foreground">Indicators:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {strategy.indicators.map((indicator, index) => (
+                    {strategy.indicators?.map((indicator, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {indicator}
                       </Badge>
@@ -352,7 +352,7 @@ export const TradingStrategies = () => {
                 <div>
                   <span className="font-medium text-foreground">Timeframes:</span>
                   <div className="flex gap-1 mt-1">
-                    {strategy.timeframes.map((tf, index) => (
+                    {strategy.timeframes?.map((tf, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {tf}
                       </Badge>
