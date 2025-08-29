@@ -1166,7 +1166,7 @@ export type Database = {
         | "ema_cross_bearish"
         | "rsi_divergence_bullish"
         | "rsi_divergence_bearish"
-      subscription_plan: "starter" | "pro" | "elite" | "free"
+      subscription_plan: "starter" | "pro" | "elite" | "free" | "pro_plus"
       timeframe: "15m" | "1h" | "4h" | "1d"
     }
     CompositeTypes: {
@@ -1310,7 +1310,7 @@ export const Constants = {
         "rsi_divergence_bullish",
         "rsi_divergence_bearish",
       ],
-      subscription_plan: ["starter", "pro", "elite", "free"],
+      subscription_plan: ["starter", "pro", "elite", "free", "pro_plus"],
       timeframe: ["15m", "1h", "4h", "1d"],
     },
   },
