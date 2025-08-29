@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, Search, Filter, ExternalLink } from "lucide-react";
+import { TrendingUp, TrendingDown, Search, Filter, ExternalLink, Grid3X3, List } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { tradingStrategies, Strategy, STRATEGY_PACKS } from "@/utils/TradingStrategiesData";
@@ -14,6 +14,7 @@ export const TradingStrategies = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
   const [selectedPack, setSelectedPack] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
 
   // Filter out hidden strategies and get unique categories, difficulties, and timeframes
   const visibleStrategies = tradingStrategies.filter(s => !s.hidden);
@@ -299,89 +300,159 @@ export const TradingStrategies = () => {
         </div>
       </Card>
 
-      {/* Results Summary */}
+      {/* Results Summary and View Toggle */}
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground">
           Showing {filteredStrategies.length} of {visibleStrategies.length} strategies
         </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === "cards" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("cards")}
+          >
+            <Grid3X3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Strategy Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredStrategies.map((strategy) => (
-          <Card key={strategy.id} className="p-6 hover:shadow-lg transition-all duration-300">
-            <CardHeader className="p-0 mb-4">
-              <div className="flex items-start justify-between mb-2">
-                <CardTitle className="text-lg font-semibold line-clamp-2">
-                  <Link 
-                    to={`/strategy/${strategy.id}`}
-                    className="hover:text-primary transition-colors cursor-pointer flex items-center gap-2"
-                  >
-                    {strategy.name}
-                    <ExternalLink className="h-3 w-3 opacity-60" />
-                  </Link>
-                </CardTitle>
-                <Badge className={getDifficultyColor(strategy.difficulty)}>
-                  {strategy.difficulty}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs">
-                  {strategy.category}
-                </Badge>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="p-0 space-y-4">
-              <CardDescription className="text-sm line-clamp-2">
-                {strategy.description}
-              </CardDescription>
+      {/* Strategy Display */}
+      {viewMode === "cards" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStrategies.map((strategy) => (
+            <Card key={strategy.id} className="p-6 hover:shadow-lg transition-all duration-300">
+              <CardHeader className="p-0 mb-4">
+                <div className="flex items-start justify-between mb-2">
+                  <CardTitle className="text-lg font-semibold line-clamp-2">
+                    <Link 
+                      to={`/strategy/${strategy.id}`}
+                      className="hover:text-primary transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      {strategy.name}
+                      <ExternalLink className="h-3 w-3 opacity-60" />
+                    </Link>
+                  </CardTitle>
+                  <Badge className={getDifficultyColor(strategy.difficulty)}>
+                    {strategy.difficulty}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {strategy.category}
+                  </Badge>
+                </div>
+              </CardHeader>
               
-              <div className="space-y-3 text-xs">
-                <div>
-                  <span className="font-medium text-foreground">Indicators:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {strategy.indicators?.map((indicator, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {indicator}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+              <CardContent className="p-0 space-y-4">
+                <CardDescription className="text-sm line-clamp-2">
+                  {strategy.description}
+                </CardDescription>
                 
-                <div>
-                  <span className="font-medium text-foreground">Timeframes:</span>
-                  <div className="flex gap-1 mt-1">
-                    {strategy.timeframes?.map((tf, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tf}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-2 text-xs">
+                <div className="space-y-3 text-xs">
                   <div>
-                    <span className="font-medium text-foreground">Risk:Reward:</span>
-                    <div className="text-accent font-medium">{strategy.riskReward}</div>
+                    <span className="font-medium text-foreground">Indicators:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {strategy.indicators?.map((indicator, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {indicator}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium text-foreground">Timeframes:</span>
+                    <div className="flex gap-1 mt-1">
+                      {strategy.timeframes?.map((tf, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tf}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    <div>
+                      <span className="font-medium text-foreground">Risk:Reward:</span>
+                      <div className="text-accent font-medium">{strategy.riskReward}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-3 space-y-2 text-xs">
+                  <div>
+                    <span className="font-medium text-bullish">Entry:</span>
+                    <p className="text-muted-foreground line-clamp-2">{strategy.entry}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-bearish">Exit:</span>
+                    <p className="text-muted-foreground line-clamp-2">{strategy.exit}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredStrategies.map((strategy) => (
+            <Card key={strategy.id} className="p-4 hover:shadow-md transition-all duration-300">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Link 
+                      to={`/strategy/${strategy.id}`}
+                      className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      {strategy.name}
+                      <ExternalLink className="h-3 w-3 opacity-60" />
+                    </Link>
+                    <Badge className={getDifficultyColor(strategy.difficulty)}>
+                      {strategy.difficulty}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {strategy.category}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                    {strategy.description}
+                  </p>
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium text-foreground">R:R:</span>
+                      <span className="text-accent font-medium">{strategy.riskReward}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium text-foreground">Timeframes:</span>
+                      <span className="text-muted-foreground">
+                        {strategy.timeframes?.slice(0, 2).join(", ")}
+                        {strategy.timeframes && strategy.timeframes.length > 2 && ` +${strategy.timeframes.length - 2} more`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 text-xs min-w-[200px]">
+                  <div>
+                    <span className="font-medium text-bullish">Entry:</span>
+                    <p className="text-muted-foreground line-clamp-1">{strategy.entry}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-bearish">Exit:</span>
+                    <p className="text-muted-foreground line-clamp-1">{strategy.exit}</p>
                   </div>
                 </div>
               </div>
-              
-              <div className="border-t pt-3 space-y-2 text-xs">
-                <div>
-                  <span className="font-medium text-bullish">Entry:</span>
-                  <p className="text-muted-foreground line-clamp-2">{strategy.entry}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-bearish">Exit:</span>
-                  <p className="text-muted-foreground line-clamp-2">{strategy.exit}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {filteredStrategies.length === 0 && (
         <Card className="p-12 text-center">
