@@ -19,7 +19,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   email: string;
-  subscription_plan: 'starter' | 'pro' | 'elite';
+  subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
   subscription_status: string;
   created_at: string;
   updated_at: string;
@@ -63,7 +63,7 @@ const MemberAccount = () => {
         id: '',
         user_id: userId,
         email: user?.email || '',
-        subscription_plan: 'starter',
+        subscription_plan: 'free',
         subscription_status: 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

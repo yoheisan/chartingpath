@@ -14,7 +14,7 @@ import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash
 
 
 interface UserProfile {
-  subscription_plan: 'starter' | 'pro' | 'elite';
+  subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
   subscription_status: string;
 }
 
@@ -94,7 +94,7 @@ const MemberAlerts = () => {
         return;
       }
 
-      setProfile(data || { subscription_plan: 'starter', subscription_status: 'active' });
+      setProfile(data || { subscription_plan: 'free', subscription_status: 'active' });
     } catch (error) {
       console.error('Profile fetch error:', error);
     }
