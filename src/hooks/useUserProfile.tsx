@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   email: string;
-  subscription_plan: "starter" | "pro" | "pro_plus" | "elite";
+  subscription_plan: "free" | "starter" | "pro" | "pro_plus" | "elite";
   subscription_status: string;
   created_at: string;
   updated_at: string;
@@ -119,21 +119,33 @@ export const useUserProfile = () => {
   // Helper function to get tier display name
   const getTierDisplayName = (plan: string) => {
     switch (plan) {
+      case 'free': return 'Free';
+      case 'starter': return 'Starter';
       case 'pro': return 'Pro';
       case 'pro_plus': return 'Pro+';
       case 'elite': return 'Elite';
-      default: return 'Starter';
+      default: return 'Free';
     }
   };
 
   // Helper function to check feature access
-  const hasFeatureAccess = (feature: 'visual_builder' | 'save_library' | 'unlimited_generations') => {
-    if (!profile) return false;
+  const hasFeatureAccess = (feature: 'visual_builder' | 'save_library' | 'unlimited_generations' | 'chart_patterns' | 'alerts' | 'backtesting' | 'script_export' | 'community_sharing') => {
+    if (!profile) return feature === 'chart_patterns'; // Free users get limited chart patterns
     
     switch (feature) {
-      case 'visual_builder':
-        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'chart_patterns':
+        return profile.subscription_plan !== 'free'; // All paid plans get full chart patterns
+      case 'alerts':
+        return profile.subscription_plan !== 'free'; // Free users get limited alerts
       case 'save_library':
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'backtesting':
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'script_export':
+        return ['pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'community_sharing':
+        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'visual_builder':
         return ['pro_plus', 'elite'].includes(profile.subscription_plan);
       case 'unlimited_generations':
         return profile.subscription_plan === 'elite';
@@ -147,17 +159,19 @@ export const useUserProfile = () => {
     if (!profile) return 1; // Allow 1 free test for non-authenticated users
     
     switch (profile.subscription_plan) {
-      case 'pro': return 5;
-      case 'pro_plus': return 20;
-      case 'elite': return 100;
-      default: return 1; // Allow 1 free test for starter plan
+      case 'free': return 1;
+      case 'starter': return 5; 
+      case 'pro': return 20;
+      case 'pro_plus': return 50;
+      case 'elite': return -1; // Unlimited
+      default: return 1;
     }
   };
 
   // Check if user can download (not for free users)
   const canDownload = () => {
     if (!profile) return false;
-    return profile.subscription_plan !== 'starter';
+    return !['free', 'starter'].includes(profile.subscription_plan);
   };
 
   return {
@@ -166,11 +180,11 @@ export const useUserProfile = () => {
     loading,
     error,
     refreshProfile,
-    getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : 'Starter',
+    getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : 'Free',
     hasFeatureAccess,
     getGenerationQuota,
     canDownload,
     isAuthenticated: !!user,
-    subscriptionPlan: profile?.subscription_plan || 'starter'
+    subscriptionPlan: profile?.subscription_plan || 'free'
   };
 };

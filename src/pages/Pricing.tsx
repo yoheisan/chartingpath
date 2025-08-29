@@ -30,78 +30,94 @@ const Pricing = () => {
 
   const plans = [
     {
-      name: "Starter",
-      price: 29,
-      annualPrice: 313,
-      description: "For beginners getting started with automated trading",
+      name: "Free",
+      price: 0,
+      annualPrice: 0,
+      description: "Perfect funnel to get started with ChartingPath",
       features: [
-        "Script Library (20+ ready-to-use strategies)",
-        "Basic Pip & Risk Calculators", 
-        "Monthly tutorials",
-        "Email support",
-        "Basic pattern recognition guides",
-        "1–2 basic chart-pattern alerts (email only)",
-        "Starter Discord access (read-only)"
+        "Access to 5 chart patterns",
+        "1 active alert",
+        "Demo-only backtesting (prebuilt examples)",
+        "Algo builder sandbox (no export)",
+        "No community sharing",
+        "Basic pattern recognition guides"
       ],
-      buttonText: "Start with Starter",
+      buttonText: "Get Started Free",
+      popular: false,
+      icon: Zap
+    },
+    {
+      name: "Starter",
+      price: 19,
+      annualPrice: 205,
+      description: "For casual traders ready to unlock full features",
+      features: [
+        "Full chart pattern library",
+        "Save up to 5 strategies",
+        "10 active alerts",
+        "Paper trading with 1-year history",
+        "Backtesting limited: 20 runs/month, up to 1 year of data",
+        "Basic risk & pip calculators",
+        "Email support"
+      ],
+      buttonText: "Start Trading",
       popular: false,
       icon: Zap
     },
     {
       name: "Pro", 
-      price: 79,
-      annualPrice: 852,
-      description: "Advanced tools and education for serious traders",
+      price: 39,
+      annualPrice: 421,
+      description: "The sweet spot for serious traders",
       features: [
         "Everything in Starter",
-        "Advanced Script Library (50+ strategies)",
-        "10 multi-condition chart-pattern alerts (email)",
-        "Video Course: Automated Trading from Zero to First Bot",
-        "Pro Calculators (save profiles, CSV export)",
-        "Monthly AI-generated \"Script of the Month\"",
-        "Members-only Q&A sessions",
-        "Priority support",
-        "Basic Backtesting (equity curve, win-rate, drawdown)"
+        "Unlimited strategies",
+        "50 active alerts",
+        "Multi-platform script export (TradingView, MT4/MT5, PineScript)",
+        "Full historical backtesting (unlimited runs)",
+        "Forward testing sandbox with history logs",
+        "Enhanced Alerts Library with outcomes tracking",
+        "Priority support"
       ],
       buttonText: "Go Pro",
-      popular: false,
-      icon: Star
-    },
-    {
-      name: "Pro+",
-      price: 119,
-      annualPrice: 1284,
-      description: "AI-powered strategy building for advanced traders",
-      features: [
-        "Everything in Pro",
-        "AI Strategy Builder (plain English → code for Pine v5, MQL4, MQL5)",
-        "25 AI-driven pattern alerts (email + Telegram/Discord)",
-        "Advanced Backtesting (equity stats + risk metrics + CSV export)",
-        "Monthly AI Strategy Packs",
-        "Pro+ Discord role (exclusive channels)"
-      ],
-      buttonText: "Go Pro+",
       popular: true,
       icon: Star
     },
     {
-      name: "Elite",
-      price: 199,
-      annualPrice: 2148,
-      description: "Ultimate access for professional traders",
+      name: "Pro+",
+      price: 79,
+      annualPrice: 853,
+      description: "Advanced analytics and community features",
       features: [
-        "Everything in Pro+", 
-        "AI Script Generator (advanced) — multi-platform + risk baked-in presets",
-        "Unlimited AI-driven pattern alerts (email + Telegram/Discord)",
-        "AI Risk Coach (portfolio-level insights)",
-        "Early access to AI features & strategy packs",
-        "Premium Discord role & private channels",
-        "Priority feature requests"
+        "Everything in Pro",
+        "Advanced risk dashboards + performance analytics",
+        "Community strategy sharing",
+        "Portfolio forward testing",
+        "Better learning progress tracking with milestones",
+        "Advanced backtesting metrics & CSV exports",
+        "Pro+ Discord role with exclusive channels"
+      ],
+      buttonText: "Go Pro+",
+      popular: false,
+      icon: Star
+    },
+    {
+      name: "Elite",
+      price: 149,
+      annualPrice: 1609,
+      description: "Ultimate power user experience",
+      features: [
+        "Everything in Pro+",
+        "Script conversion across ALL platforms (TradingView, MT4/MT5, NinjaTrader, QuantConnect, ThinkOrSwim)",
+        "Priority backtesting queues (fast compute, tick-level)",
+        "VIP support & onboarding",
+        "Advanced scenario simulations for strategies",
+        "Early access to new features",
+        "Premium Discord role & private channels"
       ],
       buttonText: "Join Elite",
       popular: false,
-      icon: Crown,
-      lifetime: true
+      icon: Crown
     }
   ];
 
@@ -155,7 +171,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-5 mb-12">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const displayPrice = isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
@@ -182,7 +198,12 @@ const Pricing = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    {isAnnual && plan.annualPrice ? (
+                    {plan.price === 0 ? (
+                      <div className="text-4xl font-bold text-foreground">
+                        Free
+                        <span className="text-lg text-muted-foreground"> forever</span>
+                      </div>
+                    ) : isAnnual && plan.annualPrice ? (
                       <div>
                         <div className="text-4xl font-bold text-foreground">
                           ${Math.round(plan.annualPrice / 12)}
@@ -202,15 +223,9 @@ const Pricing = () => {
                       </div>
                     )}
                     
-                    {isAnnual && savings && (
+                    {isAnnual && savings && plan.price > 0 && (
                       <div className="text-sm text-accent font-semibold">
                         Save ${savings.savings} a year
-                      </div>
-                    )}
-                    
-                    {plan.lifetime && (
-                      <div className="text-sm text-accent font-semibold">
-                        or $999 lifetime
                       </div>
                     )}
                   </div>
