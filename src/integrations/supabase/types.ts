@@ -162,6 +162,189 @@ export type Database = {
           },
         ]
       }
+      backtest_presets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          parameters: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          parameters?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          parameters?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      backtest_runs: {
+        Row: {
+          avg_holding_time_hours: number | null
+          avg_loss: number | null
+          avg_rr: number | null
+          avg_win: number | null
+          bars_processed: number | null
+          cagr: number | null
+          commission: number
+          created_at: string
+          data_granularity: string | null
+          drawdown_data: Json | null
+          engine_version: string
+          equity_curve_data: Json | null
+          error_message: string | null
+          expectancy: number | null
+          exposure_percentage: number | null
+          fee_model: string | null
+          from_date: string
+          id: string
+          initial_capital: number
+          instrument: string
+          is_starred: boolean | null
+          max_drawdown: number | null
+          net_pnl: number | null
+          notes: string | null
+          order_type: string
+          parameters: Json
+          position_size: number
+          position_sizing_type: string
+          profit_factor: number | null
+          run_duration_seconds: number | null
+          sharpe_ratio: number | null
+          slippage: number
+          sortino_ratio: number | null
+          status: string
+          stop_loss: number | null
+          strategy_id: string | null
+          strategy_name: string
+          strategy_version: string | null
+          tags: string[] | null
+          take_profit: number | null
+          timeframe: string
+          to_date: string
+          total_trades: number | null
+          trade_log: Json | null
+          updated_at: string
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          avg_holding_time_hours?: number | null
+          avg_loss?: number | null
+          avg_rr?: number | null
+          avg_win?: number | null
+          bars_processed?: number | null
+          cagr?: number | null
+          commission?: number
+          created_at?: string
+          data_granularity?: string | null
+          drawdown_data?: Json | null
+          engine_version?: string
+          equity_curve_data?: Json | null
+          error_message?: string | null
+          expectancy?: number | null
+          exposure_percentage?: number | null
+          fee_model?: string | null
+          from_date: string
+          id?: string
+          initial_capital?: number
+          instrument: string
+          is_starred?: boolean | null
+          max_drawdown?: number | null
+          net_pnl?: number | null
+          notes?: string | null
+          order_type?: string
+          parameters?: Json
+          position_size?: number
+          position_sizing_type?: string
+          profit_factor?: number | null
+          run_duration_seconds?: number | null
+          sharpe_ratio?: number | null
+          slippage?: number
+          sortino_ratio?: number | null
+          status?: string
+          stop_loss?: number | null
+          strategy_id?: string | null
+          strategy_name: string
+          strategy_version?: string | null
+          tags?: string[] | null
+          take_profit?: number | null
+          timeframe: string
+          to_date: string
+          total_trades?: number | null
+          trade_log?: Json | null
+          updated_at?: string
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          avg_holding_time_hours?: number | null
+          avg_loss?: number | null
+          avg_rr?: number | null
+          avg_win?: number | null
+          bars_processed?: number | null
+          cagr?: number | null
+          commission?: number
+          created_at?: string
+          data_granularity?: string | null
+          drawdown_data?: Json | null
+          engine_version?: string
+          equity_curve_data?: Json | null
+          error_message?: string | null
+          expectancy?: number | null
+          exposure_percentage?: number | null
+          fee_model?: string | null
+          from_date?: string
+          id?: string
+          initial_capital?: number
+          instrument?: string
+          is_starred?: boolean | null
+          max_drawdown?: number | null
+          net_pnl?: number | null
+          notes?: string | null
+          order_type?: string
+          parameters?: Json
+          position_size?: number
+          position_sizing_type?: string
+          profit_factor?: number | null
+          run_duration_seconds?: number | null
+          sharpe_ratio?: number | null
+          slippage?: number
+          sortino_ratio?: number | null
+          status?: string
+          stop_loss?: number | null
+          strategy_id?: string | null
+          strategy_name?: string
+          strategy_version?: string | null
+          tags?: string[] | null
+          take_profit?: number | null
+          timeframe?: string
+          to_date?: string
+          total_trades?: number | null
+          trade_log?: Json | null
+          updated_at?: string
+          user_id?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       billing_events: {
         Row: {
           billing_reason: string | null

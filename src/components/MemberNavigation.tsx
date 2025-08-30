@@ -8,7 +8,9 @@ import {
   Bell,
   Home,
   Settings,
-  TrendingUp
+  TrendingUp,
+  BarChart3,
+  Database
 } from "lucide-react";
 
 const MemberNavigation = () => {
@@ -24,7 +26,18 @@ const MemberNavigation = () => {
       to: "/members/trading",
       icon: TrendingUp,
       label: "Paper Trading",
+    },
+    {
+      to: "/backtest",
+      icon: BarChart3,
+      label: "Backtesting",
       badge: "New"
+    },
+    {
+      to: "/vault",
+      icon: Database,
+      label: "Results Vault",
+      badge: "Pro"
     },
     {
       to: "/members/scripts",

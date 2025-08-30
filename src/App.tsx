@@ -28,6 +28,8 @@ import Privacy from "./pages/Privacy";
 import AIBuilder from "./pages/AIBuilder";
 import Forge from "./pages/Forge";
 import PaperTrading from "./pages/PaperTrading";
+import BacktestWorkspace from "./pages/BacktestWorkspace";
+import BacktestVault from "./pages/BacktestVault";
 import { TranslationManagement } from "./pages/TranslationManagement";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/trading" element={<PaperTrading />} />
+          <Route path="/backtest" element={<BacktestWorkspace />} />
+          <Route path="/vault" element={<BacktestVault />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
