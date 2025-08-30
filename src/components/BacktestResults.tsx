@@ -33,6 +33,9 @@ interface BacktestRun {
   avg_loss?: number;
   created_at: string;
   initial_capital?: number;
+  trade_log?: any[];
+  equity_curve_data?: any[];
+  drawdown_data?: any[];
 }
 
 interface BacktestResultsProps {
@@ -275,12 +278,87 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run }) => {
             </Button>
           </div>
           
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4" />
-              <p>Trade history will be displayed here once the backtest completes.</p>
-            </CardContent>
-          </Card>
+          {run.trade_log && run.trade_log.length > 0 ? (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 border-b">
+                      <tr>
+                        <th className="text-left p-3 font-medium">Entry Time</th>
+                        <th className="text-left p-3 font-medium">Exit Time</th>
+                        <th className="text-left p-3 font-medium">Type</th>
+                        <th className="text-right p-3 font-medium">Entry Price</th>
+                        <th className="text-right p-3 font-medium">Exit Price</th>
+                        <th className="text-right p-3 font-medium">Quantity</th>
+                        <th className="text-right p-3 font-medium">P&L</th>
+                        <th className="text-right p-3 font-medium">P&L %</th>
+                        <th className="text-right p-3 font-medium">R-Multiple</th>
+                        <th className="text-left p-3 font-medium">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {run.trade_log.slice(0, 50).map((trade: any, index: number) => (
+                        <tr key={trade.id} className="border-b hover:bg-muted/25">
+                          <td className="p-3 text-muted-foreground">
+                            {new Date(trade.entry_time).toLocaleDateString()}
+                          </td>
+                          <td className="p-3 text-muted-foreground">
+                            {new Date(trade.exit_time).toLocaleDateString()}
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={trade.trade_type === 'BUY' ? 'default' : 'secondary'}>
+                              {trade.trade_type}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-right font-mono">
+                            {trade.entry_price.toFixed(5)}
+                          </td>
+                          <td className="p-3 text-right font-mono">
+                            {trade.exit_price.toFixed(5)}
+                          </td>
+                          <td className="p-3 text-right">
+                            {trade.quantity.toLocaleString()}
+                          </td>
+                          <td className={`p-3 text-right font-medium ${
+                            trade.pnl >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {formatCurrency(trade.pnl)}
+                          </td>
+                          <td className={`p-3 text-right font-medium ${
+                            trade.pnl_percentage >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {trade.pnl_percentage.toFixed(2)}%
+                          </td>
+                          <td className={`p-3 text-right font-medium ${
+                            trade.r_multiple >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {trade.r_multiple.toFixed(2)}R
+                          </td>
+                          <td className="p-3 text-muted-foreground text-xs">
+                            {trade.reason}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {run.trade_log.length > 50 && (
+                  <div className="p-4 text-center text-muted-foreground border-t">
+                    Showing first 50 of {run.trade_log.length} trades. Export CSV to see all trades.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4" />
+                <p>No trade data available. Run a backtest to see trade history.</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="distributions" className="space-y-4">

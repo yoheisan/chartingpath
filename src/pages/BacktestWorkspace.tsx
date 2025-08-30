@@ -44,6 +44,9 @@ interface BacktestRun {
   max_drawdown?: number;
   total_trades?: number;
   created_at: string;
+  trade_log?: any[];
+  equity_curve_data?: any[];
+  drawdown_data?: any[];
 }
 
 const BacktestWorkspace = () => {
@@ -133,17 +136,101 @@ const BacktestWorkspace = () => {
   };
 
   const completeBacktest = async (runId: string) => {
-    // Mock results - in a real implementation, this would come from the backtesting engine
+    // Generate realistic trade data
+    const totalTrades = Math.floor(50 + Math.random() * 100);
+    const trades = [];
+    const equityCurve = [];
+    const drawdownData = [];
+    
+    let currentEquity = backtestParams.initialCapital;
+    let peakEquity = currentEquity;
+    let winningTrades = 0;
+    let totalWinAmount = 0;
+    let totalLossAmount = 0;
+    
+    // Generate individual trades
+    for (let i = 0; i < totalTrades; i++) {
+      const isWin = Math.random() > 0.35; // ~65% win rate
+      const entryTime = new Date(Date.now() - (totalTrades - i) * 24 * 60 * 60 * 1000);
+      const exitTime = new Date(entryTime.getTime() + (1 + Math.random() * 48) * 60 * 60 * 1000);
+      
+      const tradeSize = (backtestParams.positionSizingType === 'percentage' 
+        ? currentEquity * (backtestParams.positionSize / 100)
+        : backtestParams.positionSize);
+      
+      let pnl = 0;
+      if (isWin) {
+        pnl = tradeSize * (0.01 + Math.random() * 0.05); // 1-6% gain
+        winningTrades++;
+        totalWinAmount += pnl;
+      } else {
+        pnl = -tradeSize * (0.01 + Math.random() * 0.03); // 1-4% loss
+        totalLossAmount += Math.abs(pnl);
+      }
+      
+      // Apply commission and slippage
+      const costs = tradeSize * (backtestParams.commission + backtestParams.slippage) / 100;
+      pnl -= costs;
+      
+      currentEquity += pnl;
+      peakEquity = Math.max(peakEquity, currentEquity);
+      
+      const trade = {
+        id: `trade_${i + 1}`,
+        entry_time: entryTime.toISOString(),
+        exit_time: exitTime.toISOString(),
+        entry_price: 1.0500 + Math.random() * 0.1,
+        exit_price: 1.0500 + Math.random() * 0.1,
+        quantity: Math.floor(tradeSize / 100),
+        pnl: pnl,
+        pnl_percentage: (pnl / tradeSize) * 100,
+        trade_type: Math.random() > 0.5 ? 'BUY' : 'SELL',
+        reason: isWin ? 'Take Profit Hit' : (Math.random() > 0.5 ? 'Stop Loss Hit' : 'Strategy Exit'),
+        r_multiple: pnl / (tradeSize * 0.02) // Assuming 2% risk per trade
+      };
+      
+      trades.push(trade);
+      
+      // Add equity curve point
+      equityCurve.push({
+        date: exitTime.toISOString().split('T')[0],
+        equity: currentEquity,
+        trade_number: i + 1
+      });
+      
+      // Calculate drawdown
+      const drawdown = ((peakEquity - currentEquity) / peakEquity) * 100;
+      drawdownData.push({
+        date: exitTime.toISOString().split('T')[0],
+        drawdown: drawdown,
+        equity: currentEquity
+      });
+    }
+    
+    const netPnl = currentEquity - backtestParams.initialCapital;
+    const winRate = (winningTrades / totalTrades) * 100;
+    const avgWin = winningTrades > 0 ? totalWinAmount / winningTrades : 0;
+    const avgLoss = (totalTrades - winningTrades) > 0 ? totalLossAmount / (totalTrades - winningTrades) : 0;
+    const profitFactor = avgLoss > 0 ? (totalWinAmount / totalLossAmount) : 0;
+    const maxDrawdown = Math.max(...drawdownData.map(d => d.drawdown));
+    
     const mockResults = {
-      win_rate: 65 + Math.random() * 20,
-      profit_factor: 1.2 + Math.random() * 0.8,
-      net_pnl: (Math.random() - 0.3) * 5000,
-      max_drawdown: Math.random() * 15,
+      win_rate: winRate,
+      profit_factor: profitFactor,
+      net_pnl: netPnl,
+      max_drawdown: maxDrawdown,
       sharpe_ratio: 0.5 + Math.random() * 1.5,
-      total_trades: Math.floor(50 + Math.random() * 100),
-      avg_win: 50 + Math.random() * 100,
-      avg_loss: -30 - Math.random() * 50,
-      status: 'completed'
+      total_trades: totalTrades,
+      avg_win: avgWin,
+      avg_loss: -avgLoss,
+      status: 'completed',
+      trade_log: trades,
+      equity_curve_data: equityCurve,
+      drawdown_data: drawdownData,
+      bars_processed: Math.floor(totalTrades * 24 * (1 + Math.random())),
+      exposure_percentage: 45 + Math.random() * 30,
+      avg_holding_time_hours: 12 + Math.random() * 36,
+      expectancy: netPnl / totalTrades
     };
 
     try {
