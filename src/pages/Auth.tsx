@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +21,17 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check URL for recovery token
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    const isRecovery = urlParams.get('reset') === 'true' || hashParams.get('type') === 'recovery';
+    
+    if (isRecovery) {
+      setIsResetPassword(true);
+      return;
+    }
+
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -58,6 +70,8 @@ const Auth = () => {
           }
 
           navigate("/members/trading");
+        } else if (event === 'PASSWORD_RECOVERY') {
+          setIsResetPassword(true);
         }
       }
     );
@@ -107,6 +121,47 @@ const Auth = () => {
     } catch (error: any) {
       toast({
         title: "Reset Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (password !== confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully updated",
+      });
+
+      // Clear URL params and redirect
+      window.history.replaceState({}, document.title, '/auth');
+      setIsResetPassword(false);
+      
+    } catch (error: any) {
+      toast({
+        title: "Update Error",
         description: error.message,
         variant: "destructive",
       });
@@ -205,20 +260,68 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Welcome Back"}
+              {isResetPassword ? "Set New Password" : isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Welcome Back"}
             </CardTitle>
             <CardDescription>
-              {isForgotPassword 
-                ? "Enter your email to receive password reset instructions"
-                : isSignUp 
-                  ? "Sign up to access chart pattern alerts and member features"
-                  : "Sign in to your ChartingPath account"
+              {isResetPassword
+                ? "Enter your new password below"
+                : isForgotPassword 
+                  ? "Enter your email to receive password reset instructions"
+                  : isSignUp 
+                    ? "Sign up to access chart pattern alerts and member features"
+                    : "Sign in to your ChartingPath account"
               }
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {isForgotPassword ? (
+            {isResetPassword ? (
+              // Password Reset Form
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="Enter your new password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmNewPassword"
+                      type="password"
+                      placeholder="Confirm your new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating Password...
+                    </>
+                  ) : (
+                    "Update Password"
+                  )}
+                </Button>
+              </form>
+            ) : isForgotPassword ? (
               // Forgot Password Form
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
