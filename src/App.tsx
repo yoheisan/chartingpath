@@ -64,7 +64,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/translations" element={<TranslationManagement />} />
+          <Route path="/admin/translation-management" element={<TranslationManagement />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
