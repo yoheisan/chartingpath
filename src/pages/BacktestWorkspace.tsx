@@ -73,6 +73,88 @@ const BacktestWorkspace = () => {
   const canRunBacktest = hasFeatureAccess('backtesting');
   const canAccessVault = hasFeatureAccess('backtesting');
 
+  const handleSavePreset = async () => {
+    if (!user) {
+      toast.error("Please sign in to save presets");
+      return;
+    }
+
+    if (!selectedStrategy) {
+      toast.error("Please select a strategy first");
+      return;
+    }
+
+    const presetName = prompt("Enter preset name:");
+    if (!presetName) return;
+
+    try {
+      const { error } = await supabase
+        .from('backtest_presets')
+        .insert({
+          user_id: user.id,
+          name: presetName,
+          description: `${selectedStrategy} preset for ${backtestParams.instrument} ${backtestParams.timeframe}`,
+          parameters: {
+            strategy: selectedStrategy,
+            ...backtestParams
+          }
+        });
+
+      if (error) throw error;
+      toast.success("Preset saved successfully!");
+    } catch (error) {
+      console.error('Error saving preset:', error);
+      toast.error("Failed to save preset");
+    }
+  };
+
+  const handleForwardTest = async () => {
+    if (!user || !currentRun) {
+      toast.error("Please run a backtest first");
+      return;
+    }
+
+    if (!currentRun.trade_log || currentRun.trade_log.length === 0) {
+      toast.error("No trade data available for forward testing");
+      return;
+    }
+
+    try {
+      // Create or update paper portfolio
+      const { data: portfolio, error: portfolioError } = await supabase
+        .from('paper_portfolios')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (portfolioError && portfolioError.code !== 'PGRST116') {
+        throw portfolioError;
+      }
+
+      if (!portfolio) {
+        const { error: createError } = await supabase
+          .from('paper_portfolios')
+          .insert({
+            user_id: user.id,
+            initial_balance: backtestParams.initialCapital,
+            current_balance: backtestParams.initialCapital
+          });
+
+        if (createError) throw createError;
+      }
+
+      // Navigate to paper trading with strategy context
+      toast.success("Forward test setup complete! Redirecting to paper trading...");
+      setTimeout(() => {
+        window.location.href = `/members/trading?strategy=${encodeURIComponent(selectedStrategy)}&instrument=${backtestParams.instrument}`;
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error setting up forward test:', error);
+      toast.error("Failed to setup forward test");
+    }
+  };
+
   const handleRunBacktest = async () => {
     if (!user || !canRunBacktest) {
       toast.error("Please upgrade your plan to run backtests");
@@ -323,12 +405,22 @@ const BacktestWorkspace = () => {
                       )}
                     </Button>
                     
-                    <Button variant="outline" size="sm" disabled>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleSavePreset}
+                      disabled={!user || !selectedStrategy}
+                    >
                       <Save className="h-4 w-4 mr-2" />
                       Save Preset
                     </Button>
                     
-                    <Button variant="outline" size="sm" disabled>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleForwardTest}
+                      disabled={!currentRun || !currentRun.trade_log || currentRun.trade_log.length === 0}
+                    >
                       <Send className="h-4 w-4 mr-2" />
                       Forward Test
                     </Button>
