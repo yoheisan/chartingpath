@@ -94,7 +94,7 @@ const AIBuilder = () => {
 
   interface PriceActionCondition {
     id: string;
-    type: "close_vs_open" | "intraday_range" | "candle_pattern" | "sr_touch";
+    type: "close_vs_open" | "intraday_range" | "candle_pattern" | "sr_touch" | "breakout";
     params: Record<string, any>;
   }
 
@@ -965,32 +965,97 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                 <CollapsibleContent className="space-y-3">
                                   {priceActionConditions.map((condition, index) => (
                                     <Card key={condition.id} className="p-3 bg-muted/30">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
-                                        <Select value={condition.type}>
-                                          <SelectTrigger className="h-8 text-xs flex-1">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent className="bg-background border z-50">
-                                            <SelectItem value="close_vs_open">Close vs Open</SelectItem>
-                                            <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
-                                            <SelectItem value="sr_touch">S/R Touch</SelectItem>
-                                            <SelectItem value="breakout">Breakout</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          onClick={() => removePriceActionCondition(condition.id)}
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <Input placeholder="Direction" />
-                                        <Input placeholder="Threshold %" />
-                                      </div>
+                                       <div className="flex items-center gap-2 mb-2">
+                                         <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
+                                         <div className="flex items-center gap-1 flex-1">
+                                           <Select value={condition.type}>
+                                             <SelectTrigger className="h-8 text-xs flex-1">
+                                               <SelectValue />
+                                             </SelectTrigger>
+                                             <SelectContent className="bg-background border z-50">
+                                               <SelectItem value="close_vs_open">Close vs Open</SelectItem>
+                                               <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
+                                               <SelectItem value="sr_touch">S/R Touch</SelectItem>
+                                               <SelectItem value="breakout">Breakout</SelectItem>
+                                             </SelectContent>
+                                           </Select>
+                                           <Tooltip>
+                                             <TooltipTrigger asChild>
+                                               <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help flex-shrink-0" />
+                                             </TooltipTrigger>
+                                             <TooltipContent className="max-w-sm">
+                                               <div className="text-xs space-y-1">
+                                                 {condition.type === "close_vs_open" && (
+                                                   <div>
+                                                     <p className="font-medium">Close vs Open</p>
+                                                     <p>Compare candle close to open price. Use for detecting bullish/bearish candles or specific price movements within a bar.</p>
+                                                     <p className="text-muted-foreground">Example: Close &gt; Open (bullish candle)</p>
+                                                   </div>
+                                                 )}
+                                                 {condition.type === "candle_pattern" && (
+                                                   <div>
+                                                     <p className="font-medium">Candle Pattern</p>
+                                                     <p>Detect specific candlestick patterns like hammer, doji, engulfing, etc. Great for reversal or continuation signals.</p>
+                                                     <p className="text-muted-foreground">Example: Hammer at support level</p>
+                                                   </div>
+                                                 )}
+                                                 {condition.type === "sr_touch" && (
+                                                   <div>
+                                                     <p className="font-medium">Support/Resistance Touch</p>
+                                                     <p>Trigger when price touches key S/R levels. Useful for bounce or breakout strategies.</p>
+                                                     <p className="text-muted-foreground">Example: Price touches 50 EMA support</p>
+                                                   </div>
+                                                 )}
+                                                 {condition.type === "breakout" && (
+                                                   <div>
+                                                     <p className="font-medium">Breakout</p>
+                                                     <p>Detect when price breaks above/below key levels with momentum. Perfect for trend continuation strategies.</p>
+                                                     <p className="text-muted-foreground">Example: Break above daily high</p>
+                                                   </div>
+                                                 )}
+                                               </div>
+                                             </TooltipContent>
+                                           </Tooltip>
+                                         </div>
+                                         <Button 
+                                           variant="ghost" 
+                                           size="sm"
+                                           onClick={() => removePriceActionCondition(condition.id)}
+                                         >
+                                           <X className="h-3 w-3" />
+                                         </Button>
+                                       </div>
+                                       
+                                       <div className="grid grid-cols-2 gap-2 text-xs">
+                                         <div className="relative">
+                                           <Input placeholder="Direction" />
+                                           <Tooltip>
+                                             <TooltipTrigger asChild>
+                                               <HelpCircle className="absolute right-2 top-1.5 h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                             </TooltipTrigger>
+                                             <TooltipContent className="max-w-xs">
+                                               <p className="text-xs">
+                                                 Specify direction: "bullish", "bearish", "up", "down", "above", "below". 
+                                                 Example: "bullish" for upward price action or "above" for breakouts.
+                                               </p>
+                                             </TooltipContent>
+                                           </Tooltip>
+                                         </div>
+                                         <div className="relative">
+                                           <Input placeholder="Threshold %" />
+                                           <Tooltip>
+                                             <TooltipTrigger asChild>
+                                               <HelpCircle className="absolute right-2 top-1.5 h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                             </TooltipTrigger>
+                                             <TooltipContent className="max-w-xs">
+                                               <p className="text-xs">
+                                                 Set minimum percentage move required. Example: "2.5" for 2.5% minimum move, 
+                                                 or "0.1" for 0.1% for sensitive triggers.
+                                               </p>
+                                             </TooltipContent>
+                                           </Tooltip>
+                                         </div>
+                                       </div>
                                     </Card>
                                   ))}
                                   
