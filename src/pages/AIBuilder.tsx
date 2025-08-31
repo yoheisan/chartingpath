@@ -1027,33 +1027,39 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                        </div>
                                        
                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                         <div className="relative">
-                                           <Input placeholder="Direction" />
-                                           <Tooltip>
-                                             <TooltipTrigger asChild>
-                                               <HelpCircle className="absolute right-2 top-1.5 h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
-                                             </TooltipTrigger>
-                                             <TooltipContent className="max-w-xs">
-                                               <p className="text-xs">
-                                                 Specify direction: "bullish", "bearish", "up", "down", "above", "below". 
-                                                 Example: "bullish" for upward price action or "above" for breakouts.
-                                               </p>
-                                             </TooltipContent>
-                                           </Tooltip>
+                                         <div className="space-y-1">
+                                           <div className="flex items-center gap-1">
+                                             <Label className="text-xs text-muted-foreground">Direction</Label>
+                                             <Tooltip>
+                                               <TooltipTrigger asChild>
+                                                 <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                               </TooltipTrigger>
+                                               <TooltipContent side="top" className="max-w-xs z-[100]">
+                                                 <p className="text-xs">
+                                                   Specify direction: "bullish", "bearish", "up", "down", "above", "below". 
+                                                   Example: "bullish" for upward price action or "above" for breakouts.
+                                                 </p>
+                                               </TooltipContent>
+                                             </Tooltip>
+                                           </div>
+                                           <Input placeholder="e.g., bullish, above" className="h-7" />
                                          </div>
-                                         <div className="relative">
-                                           <Input placeholder="Threshold %" />
-                                           <Tooltip>
-                                             <TooltipTrigger asChild>
-                                               <HelpCircle className="absolute right-2 top-1.5 h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
-                                             </TooltipTrigger>
-                                             <TooltipContent className="max-w-xs">
-                                               <p className="text-xs">
-                                                 Set minimum percentage move required. Example: "2.5" for 2.5% minimum move, 
-                                                 or "0.1" for 0.1% for sensitive triggers.
-                                               </p>
-                                             </TooltipContent>
-                                           </Tooltip>
+                                         <div className="space-y-1">
+                                           <div className="flex items-center gap-1">
+                                             <Label className="text-xs text-muted-foreground">Threshold</Label>
+                                             <Tooltip>
+                                               <TooltipTrigger asChild>
+                                                 <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                               </TooltipTrigger>
+                                               <TooltipContent side="top" className="max-w-xs z-[100]">
+                                                 <p className="text-xs">
+                                                   Set minimum percentage move required. Example: "2.5" for 2.5% minimum move, 
+                                                   or "0.1" for 0.1% for sensitive triggers.
+                                                 </p>
+                                               </TooltipContent>
+                                             </Tooltip>
+                                           </div>
+                                           <Input placeholder="e.g., 2.5%" className="h-7" />
                                          </div>
                                        </div>
                                     </Card>
