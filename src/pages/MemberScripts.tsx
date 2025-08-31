@@ -4,15 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Filter, Code, ArrowLeft, Lock } from "lucide-react";
+import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
 import Navigation from "@/components/Navigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const MemberScripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [selectedStrategy, setSelectedStrategy] = useState("all");
+  const { toast } = useToast();
 
   const scripts = [
     {
@@ -69,6 +72,45 @@ const MemberScripts = () => {
     console.log(`Downloading script: ${scriptName}`);
   };
 
+  const upgradeToElite = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to upgrade",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-change-membership', {
+        body: {
+          user_id: user.id,
+          new_plan: 'elite',
+          reason: 'Dev upgrade to elite',
+          is_free_assignment: true
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Upgraded to Elite!",
+        description: "Your account has been upgraded to Elite membership",
+      });
+
+      // Refresh the page to see changes
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upgrade membership",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -76,11 +118,20 @@ const MemberScripts = () => {
         <MemberNavigation />
         
         {/* Back Navigation */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Link>
+          
+          {/* Dev: Quick Elite Upgrade */}
+          <Button 
+            onClick={upgradeToElite}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Upgrade to Elite
+          </Button>
         </div>
 
         {/* Header */}
