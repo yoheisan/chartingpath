@@ -926,25 +926,25 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                      </div>
                                    </div>
                                    
-                                   <div className="flex gap-2">
-                                     <Button 
-                                       variant="outline" 
-                                       size="sm" 
-                                       onClick={addIndicatorCondition}
-                                       className="flex-1"
-                                     >
-                                       <Plus className="h-3 w-3 mr-2" />
-                                       Add Indicator Condition
-                                     </Button>
-                                     <Button 
-                                       variant="outline" 
-                                       size="sm" 
-                                       onClick={() => addRelativeCondition()}
-                                       className="flex-1"
-                                     >
-                                       <History className="h-3 w-3 mr-2" />
-                                       Add Relative @ Point
-                                     </Button>
+                                    <div className="flex gap-2 mt-3 pt-3 border-t border-muted/30">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={addIndicatorCondition}
+                                        className="flex-1 bg-background/50"
+                                      >
+                                        <Plus className="h-3 w-3 mr-2" />
+                                        Add Indicator Condition
+                                      </Button>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => addRelativeCondition()}
+                                        className="flex-1 bg-accent/10 border-accent/20 text-accent-foreground hover:bg-accent/20"
+                                      >
+                                        <History className="h-3 w-3 mr-2" />
+                                        Add Relative @ Point
+                                      </Button>
                                     </div>
                                  </CollapsibleContent>
                                </Collapsible>
