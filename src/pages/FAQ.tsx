@@ -1232,7 +1232,7 @@ const FAQ = () => {
                             <Card className="cursor-pointer hover:shadow-md transition-shadow">
                               <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
-                                  <h3 className="font-semibold text-left">{qa.question}</h3>
+                                  <h3 className="font-semibold text-left text-card-foreground">{qa.question}</h3>
                                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               </CardHeader>
