@@ -345,6 +345,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backtester_v2_usage: {
+        Row: {
+          created_at: string
+          id: string
+          run_date: string
+          runs_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          run_date?: string
+          runs_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          run_date?: string
+          runs_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       billing_events: {
         Row: {
           billing_reason: string | null
@@ -1290,6 +1317,10 @@ export type Database = {
         }
         Returns: number
       }
+      get_backtester_v2_usage: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_translations: {
         Args: { p_language_code?: string }
         Returns: {
@@ -1307,6 +1338,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_backtester_v2_usage: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       is_admin: {
         Args: { _user_id: string }
