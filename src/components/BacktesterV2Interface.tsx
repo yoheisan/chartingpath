@@ -20,10 +20,14 @@ import {
   DollarSign,
   Target,
   AlertTriangle,
-  Info
+  Info,
+  PieChart,
+  Briefcase
 } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { PairTradingConfig } from './PairTradingBuilder';
+import { BasketManager, BasketConfig } from './BasketManager';
+import { PortfolioManager, PortfolioConfig } from './PortfolioManager';
 
 interface V2BacktestParams {
   // Basic Parameters
@@ -39,9 +43,13 @@ interface V2BacktestParams {
   slippageModel: 'fixed' | 'dynamic' | 'market_impact';
   
   // Portfolio Parameters
-  portfolioMode: 'single' | 'pair' | 'basket';
+  portfolioMode: 'single' | 'pair' | 'basket' | 'portfolio';
   rebalanceFrequency: 'trade' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   portfolioWeights: number[];
+  
+  // Basket/Portfolio Configuration
+  selectedBasketId?: string;
+  selectedPortfolioId?: string;
   
   // Risk Management
   portfolioLevelStops: boolean;
@@ -64,7 +72,7 @@ interface V2BacktestParams {
 interface BacktesterV2InterfaceProps {
   onRunBacktest: (params: V2BacktestParams) => void;
   isRunning: boolean;
-  initialMode?: 'single' | 'pair' | 'basket';
+  initialMode?: 'single' | 'pair' | 'basket' | 'portfolio';
   pairTradingConfig?: PairTradingConfig;
 }
 
@@ -75,6 +83,10 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
   pairTradingConfig
 }) => {
   const { hasFeatureAccess } = useUserProfile();
+  
+  // State for basket and portfolio management
+  const [baskets, setBaskets] = useState<BasketConfig[]>([]);
+  const [portfolios, setPortfolios] = useState<PortfolioConfig[]>([]);
   
   const [params, setParams] = useState<V2BacktestParams>({
     strategy: '',
@@ -88,6 +100,8 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
     portfolioMode: initialMode,
     rebalanceFrequency: 'trade',
     portfolioWeights: [100],
+    selectedBasketId: undefined,
+    selectedPortfolioId: undefined,
     portfolioLevelStops: true,
     correlationLimit: 0.8,
     sectorLimit: 30,
@@ -137,10 +151,12 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
       </Card>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Setup</TabsTrigger>
           <TabsTrigger value="execution">Execution</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+          <TabsTrigger value="baskets">Baskets</TabsTrigger>
+          <TabsTrigger value="portfolios">Portfolios</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
 
@@ -417,9 +433,9 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Portfolio Mode</Label>
-                  <Select 
+                    <Select 
                     value={params.portfolioMode} 
-                    onValueChange={(value: 'single' | 'pair' | 'basket') => updateParams({ portfolioMode: value })}
+                    onValueChange={(value: 'single' | 'pair' | 'basket' | 'portfolio') => updateParams({ portfolioMode: value })}
                     disabled={!hasFeatureAccess('pair_trading') && params.portfolioMode !== 'single'}
                   >
                     <SelectTrigger>
@@ -428,7 +444,8 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
                     <SelectContent>
                       <SelectItem value="single">Single Asset</SelectItem>
                       {hasFeatureAccess('pair_trading') && <SelectItem value="pair">Pair Trading</SelectItem>}
-                      {hasFeatureAccess('basket_trading') && <SelectItem value="basket">Multi-Asset Basket</SelectItem>}
+                      {hasFeatureAccess('basket_trading') && <SelectItem value="basket">Single Basket</SelectItem>}
+                      {hasFeatureAccess('basket_trading') && <SelectItem value="portfolio">Multi-Basket Portfolio</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
@@ -509,6 +526,127 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Baskets Management */}
+        <TabsContent value="baskets" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5" />
+                Basket Management
+                {!hasFeatureAccess('basket_trading') && (
+                  <Badge variant="outline" className="text-xs">Pro+ Required</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {hasFeatureAccess('basket_trading') ? (
+                <BasketManager 
+                  baskets={baskets}
+                  onBasketsChange={setBaskets}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <PieChart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Basket management requires Pro+ subscription
+                  </p>
+                  <Button variant="outline">Upgrade to Pro+</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Basket Selection for Backtesting */}
+          {hasFeatureAccess('basket_trading') && baskets.length > 0 && params.portfolioMode === 'basket' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Select Basket for Backtest</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label>Basket</Label>
+                  <Select 
+                    value={params.selectedBasketId || ''} 
+                    onValueChange={(value) => updateParams({ selectedBasketId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a basket" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {baskets.map((basket) => (
+                        <SelectItem key={basket.id} value={basket.id}>
+                          {basket.name} ({basket.assets.length} assets)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Portfolios Management */}
+        <TabsContent value="portfolios" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Portfolio Management
+                {!hasFeatureAccess('basket_trading') && (
+                  <Badge variant="outline" className="text-xs">Pro+ Required</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {hasFeatureAccess('basket_trading') ? (
+                <PortfolioManager 
+                  portfolios={portfolios}
+                  availableBaskets={baskets}
+                  onPortfoliosChange={setPortfolios}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Portfolio management requires Pro+ subscription
+                  </p>
+                  <Button variant="outline">Upgrade to Pro+</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Portfolio Selection for Backtesting */}
+          {hasFeatureAccess('basket_trading') && portfolios.length > 0 && params.portfolioMode === 'portfolio' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Select Portfolio for Backtest</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label>Portfolio</Label>
+                  <Select 
+                    value={params.selectedPortfolioId || ''} 
+                    onValueChange={(value) => updateParams({ selectedPortfolioId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a portfolio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {portfolios.map((portfolio) => (
+                        <SelectItem key={portfolio.id} value={portfolio.id}>
+                          {portfolio.name} ({portfolio.allocations.length} baskets)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Advanced Features */}
