@@ -1,0 +1,23 @@
+{
+  "name": "3-Asset Buy & Hold with Rebalancing",
+  "description": "Equal weight SPY/TLT/GLD with monthly DCA and quarterly rebalancing",
+  "config": {
+    "mode": "basket",
+    "startDate": "2020-01-01",
+    "endDate": "2023-12-31",
+    "initialCapital": 50000,
+    "tradingCost": 0.0005,
+    "slippage": 0.0002,
+    "policy": {
+      "symbols": ["SPY", "TLT", "GLD"],
+      "contributionAmount": 2000,
+      "contributionFrequency": "monthly",
+      "rebalanceFrequency": "quarterly",
+      "driftThreshold": 0.05,
+      "tradingCost": 0.0005
+    }
+  },
+  "expectedResults": {
+    "description": "Equal weight allocation with $2k monthly contributions. Rebalance quarterly if any asset drifts >5% from target 33.33% weight."
+  }
+}

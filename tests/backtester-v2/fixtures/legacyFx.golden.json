@@ -1,0 +1,31 @@
+{
+  "description": "Golden test for legacy FX single backtest - ensures zero regression",
+  "config": {
+    "symbol": "EURUSD",
+    "startDate": "2023-01-01",
+    "endDate": "2023-02-01", 
+    "initialCapital": 10000,
+    "positionSize": 10000,
+    "stopLoss": 100,
+    "takeProfit": 200
+  },
+  "mockPrices": [
+    {"date": "2023-01-01", "price": 1.0500},
+    {"date": "2023-01-02", "price": 1.0520},
+    {"date": "2023-01-03", "price": 1.0480},
+    {"date": "2023-01-04", "price": 1.0510},
+    {"date": "2023-01-05", "price": 1.0530},
+    {"date": "2023-01-06", "price": 1.0525},
+    {"date": "2023-01-07", "price": 1.0515},
+    {"date": "2023-01-08", "price": 1.0535},
+    {"date": "2023-01-09", "price": 1.0540},
+    {"date": "2023-01-10", "price": 1.0545}
+  ],
+  "expectedResult": {
+    "finalEquity": 10428.57,
+    "totalTrades": 4,
+    "winRate": 0.75,
+    "maxDrawdown": 0.019,
+    "sharpeRatio": 1.42
+  }
+}

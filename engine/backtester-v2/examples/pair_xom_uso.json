@@ -1,0 +1,25 @@
+{
+  "name": "XOM vs USO Pair Trading",
+  "description": "Mean reversion pair trading between Exxon Mobil (XOM) and US Oil ETF (USO)",
+  "config": {
+    "mode": "pair",
+    "startDate": "2023-01-01",
+    "endDate": "2023-12-31",
+    "initialCapital": 200000,
+    "tradingCost": 0.001,
+    "slippage": 0.0005,
+    "strategy": {
+      "symbolA": "XOM",
+      "symbolB": "USO",
+      "lookbackPeriod": 60,
+      "zScoreEntry": 2.0,
+      "zScoreExit": 0.5,
+      "betaNeutral": true,
+      "maxLeverage": 2.0,
+      "borrowCost": 0.03
+    }
+  },
+  "expectedResults": {
+    "description": "When XOM becomes expensive relative to USO (z-score > 2), short XOM and long USO. Close when z-score normalizes to < 0.5."
+  }
+}

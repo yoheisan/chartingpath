@@ -1,0 +1,26 @@
+{
+  "name": "EUR/USD Cross-Trigger Strategy",
+  "description": "Trade EUR/USD based on DXY (Dollar Index) signals",
+  "config": {
+    "mode": "single",
+    "startDate": "2023-01-01",
+    "endDate": "2023-12-31",
+    "initialCapital": 100000,
+    "tradingCost": 0.0002,
+    "slippage": 0.0001,
+    "strategy": {
+      "tradableSymbol": "EURUSD",
+      "triggerSymbol": "DXY",
+      "longThreshold": 103.5,
+      "shortThreshold": 105.0,
+      "exitLongThreshold": 104.8,
+      "exitShortThreshold": 103.8,
+      "positionSize": 100000,
+      "stopLoss": 0.02,
+      "takeProfit": 0.04
+    }
+  },
+  "expectedResults": {
+    "description": "When DXY weakens below 103.5, go long EUR/USD. When DXY strengthens above 105.0, go short EUR/USD."
+  }
+}

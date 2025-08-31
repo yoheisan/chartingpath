@@ -1,0 +1,157 @@
+name: Backtester V2 CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        backtester-flag: ['false', 'true']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Run tests with BACKTESTER_V2_ENABLED=${{ matrix.backtester-flag }}
+      env:
+        BACKTESTER_V2_ENABLED: ${{ matrix.backtester-flag }}
+        NODE_ENV: test
+      run: npm run test:ci
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-node${{ matrix.node-version }}-flag${{ matrix.backtester-flag }}
+        path: |
+          coverage/
+          test-results.xml
+        retention-days: 7
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint --if-present
+    
+    - name: Check TypeScript
+      run: npx tsc --noEmit
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run security audit
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+    
+    - name: Check for outdated dependencies
+      run: npm outdated
+      continue-on-error: true
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Run integration tests
+      env:
+        BACKTESTER_V2_ENABLED: true
+        NODE_ENV: test
+      run: |
+        echo "Running integration tests..."
+        # In a real scenario, this would run integration tests
+        # against a test database or external services
+        npm run test -- --testPathPattern=integration
+      continue-on-error: true
+
+  performance:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Run performance benchmarks
+      env:
+        BACKTESTER_V2_ENABLED: true
+        NODE_ENV: test
+      run: |
+        echo "Running performance benchmarks..."
+        # Placeholder for performance tests
+        # In practice, this would run backtests with larger datasets
+        # and measure execution time, memory usage, etc.
+        node -e "
+          console.log('Performance benchmark placeholder');
+          console.log('Memory usage:', process.memoryUsage());
+          console.log('Platform:', process.platform);
+          console.log('Node version:', process.version);
+        "
