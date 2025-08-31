@@ -104,6 +104,9 @@ const Navigation = () => {
             <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
               Community
             </Link>
+            <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+              FAQ
+            </Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('navigation.pricing', 'Pricing')}
             </Link>
