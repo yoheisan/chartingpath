@@ -723,26 +723,33 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                 {starsAligned ? "ALL conditions must be true (AND)" : "ANY condition can trigger (OR)"}
                               </p>
 
-                              {/* Indicator Conditions */}
-                              <Collapsible defaultOpen>
-                                <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                                    <div className="flex items-center gap-2">
-                                      <BarChart3 className="h-4 w-4" />
-                                      <span>Indicator Conditions</span>
-                                      <Badge variant="secondary">{indicatorConditions.length}</Badge>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p>Add technical indicator conditions like EMA crossovers, RSI levels, MACD signals, Bollinger Band touches, etc. Each condition can use different timeframes for multi-timeframe analysis.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                    <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                                </CollapsibleTrigger>
+                               {/* Indicator Conditions */}
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-2">
+                                     <BarChart3 className="h-4 w-4" />
+                                     <span className="font-medium">Indicator Conditions</span>
+                                     <Badge variant="secondary">{indicatorConditions.length}</Badge>
+                                   </div>
+                                   <div className="flex items-center gap-2">
+                                     <Tooltip>
+                                       <TooltipTrigger asChild>
+                                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                           <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                         </Button>
+                                       </TooltipTrigger>
+                                       <TooltipContent side="left" className="max-w-xs z-[100]">
+                                         <p>Add technical indicator conditions like EMA crossovers, RSI levels, MACD signals, Bollinger Band touches, etc. Each condition can use different timeframes for multi-timeframe analysis.</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
+                                 </div>
+                                 <Collapsible defaultOpen>
+                                   <CollapsibleTrigger asChild>
+                                     <Button variant="ghost" className="w-full justify-center p-2 h-auto">
+                                       <ChevronDown className="h-4 w-4" />
+                                     </Button>
+                                   </CollapsibleTrigger>
                                 <CollapsibleContent className="space-y-3">
                                    {indicatorConditions.map((condition, index) => (
                                      <Card key={condition.id} className="p-3 bg-muted/30">
@@ -938,30 +945,38 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                        <History className="h-3 w-3 mr-2" />
                                        Add Relative @ Point
                                      </Button>
-                                   </div>
-                                </CollapsibleContent>
-                              </Collapsible>
-
-                              {/* Price Action Conditions */}
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                                    <div className="flex items-center gap-2">
-                                      <TrendingUp className="h-4 w-4" />
-                                      <span>Price Action</span>
-                                      <Badge variant="secondary">{priceActionConditions.length}</Badge>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p>Add price action conditions like candle patterns (hammer, doji), support/resistance touches, breakouts, or price vs moving average relationships.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
                                     </div>
-                                    <ChevronRight className="h-4 w-4" />
-                                  </Button>
-                                </CollapsibleTrigger>
+                                 </CollapsibleContent>
+                               </Collapsible>
+                               </div>
+
+                               {/* Price Action Conditions */}
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-2">
+                                     <TrendingUp className="h-4 w-4" />
+                                     <span className="font-medium">Price Action</span>
+                                     <Badge variant="secondary">{priceActionConditions.length}</Badge>
+                                   </div>
+                                   <div className="flex items-center gap-2">
+                                     <Tooltip>
+                                       <TooltipTrigger asChild>
+                                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                           <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                         </Button>
+                                       </TooltipTrigger>
+                                       <TooltipContent side="left" className="max-w-xs z-[100]">
+                                         <p>Add price action conditions like candle patterns (hammer, doji), support/resistance touches, breakouts, or price vs moving average relationships.</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
+                                 </div>
+                                 <Collapsible>
+                                   <CollapsibleTrigger asChild>
+                                     <Button variant="ghost" className="w-full justify-center p-2 h-auto">
+                                       <ChevronRight className="h-4 w-4" />
+                                     </Button>
+                                   </CollapsibleTrigger>
                                 <CollapsibleContent className="space-y-3">
                                   {priceActionConditions.map((condition, index) => (
                                     <Card key={condition.id} className="p-3 bg-muted/30">
@@ -1074,29 +1089,37 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                     <Plus className="h-3 w-3 mr-2" />
                                     Add Price Action
                                   </Button>
-                                </CollapsibleContent>
-                              </Collapsible>
+                                 </CollapsibleContent>
+                               </Collapsible>
+                               </div>
 
-                              {/* Time & Session Conditions */}
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
-                                    <div className="flex items-center gap-2">
-                                      <Clock className="h-4 w-4" />
-                                      <span>Time & Session</span>
-                                      <Badge variant="secondary">{timeConditions.length}</Badge>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p>Add time-based filters like session windows (first 2 hours of London/NY), specific time ranges (09:30-11:30), day filters (weekdays only), or bar close requirements.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4" />
-                                  </Button>
-                                </CollapsibleTrigger>
+                               {/* Time & Session Conditions */}
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-2">
+                                     <Clock className="h-4 w-4" />
+                                     <span className="font-medium">Time & Session</span>
+                                     <Badge variant="secondary">{timeConditions.length}</Badge>
+                                   </div>
+                                   <div className="flex items-center gap-2">
+                                     <Tooltip>
+                                       <TooltipTrigger asChild>
+                                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                           <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                         </Button>
+                                       </TooltipTrigger>
+                                       <TooltipContent side="left" className="max-w-xs z-[100]">
+                                         <p>Add time-based filters like session windows (first 2 hours of London/NY), specific time ranges (09:30-11:30), day filters (weekdays only), or bar close requirements.</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
+                                 </div>
+                                 <Collapsible>
+                                   <CollapsibleTrigger asChild>
+                                     <Button variant="ghost" className="w-full justify-center p-2 h-auto">
+                                       <ChevronRight className="h-4 w-4" />
+                                     </Button>
+                                   </CollapsibleTrigger>
                                 <CollapsibleContent className="space-y-3">
                                   {timeConditions.map((condition, index) => (
                                     <Card key={condition.id} className="p-3 bg-muted/30">
@@ -1139,10 +1162,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                     <Plus className="h-3 w-3 mr-2" />
                                     Add Time Condition
                                   </Button>
-                                </CollapsibleContent>
-                              </Collapsible>
+                                 </CollapsibleContent>
+                               </Collapsible>
+                               </div>
 
-                              {/* Execution Panel */}
+                               {/* Execution Panel */}
                               <Card className="p-4 bg-muted/30">
                                 <h4 className="font-medium mb-3 flex items-center gap-2">
                                   <Target className="h-4 w-4" />
