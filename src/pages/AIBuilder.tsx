@@ -1047,42 +1047,90 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                          </Button>
                                        </div>
                                        
-                                       <div className="grid grid-cols-2 gap-2 text-xs">
-                                         <div className="space-y-1">
-                                           <div className="flex items-center gap-1">
-                                             <Label className="text-xs text-muted-foreground">Direction</Label>
-                                             <Tooltip>
-                                               <TooltipTrigger asChild>
-                                                 <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
-                                               </TooltipTrigger>
-                                               <TooltipContent side="top" className="max-w-xs z-[100]">
-                                                 <p className="text-xs">
-                                                   Specify direction: "bullish", "bearish", "up", "down", "above", "below". 
-                                                   Example: "bullish" for upward price action or "above" for breakouts.
-                                                 </p>
-                                               </TooltipContent>
-                                             </Tooltip>
-                                           </div>
-                                           <Input placeholder="e.g., bullish, above" className="h-7" />
-                                         </div>
-                                         <div className="space-y-1">
-                                           <div className="flex items-center gap-1">
-                                             <Label className="text-xs text-muted-foreground">Threshold</Label>
-                                             <Tooltip>
-                                               <TooltipTrigger asChild>
-                                                 <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
-                                               </TooltipTrigger>
-                                               <TooltipContent side="top" className="max-w-xs z-[100]">
-                                                 <p className="text-xs">
-                                                   Set minimum percentage move required. Example: "2.5" for 2.5% minimum move, 
-                                                   or "0.1" for 0.1% for sensitive triggers.
-                                                 </p>
-                                               </TooltipContent>
-                                             </Tooltip>
-                                           </div>
-                                           <Input placeholder="e.g., 2.5%" className="h-7" />
-                                         </div>
-                                       </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-1">
+                                              <Label className="text-xs text-muted-foreground">Direction</Label>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs z-[100]">
+                                                  <p className="text-xs">
+                                                    Choose direction based on condition type: bullish/bearish for candles, up/down for breakouts, above/below for levels.
+                                                  </p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </div>
+                                            <Select 
+                                              value={condition.params?.direction || ""} 
+                                              onValueChange={(value) => updatePriceActionCondition(condition.id, { 
+                                                params: { ...condition.params, direction: value }
+                                              })}
+                                            >
+                                              <SelectTrigger className="h-7">
+                                                <SelectValue placeholder="Select direction" />
+                                              </SelectTrigger>
+                                              <SelectContent className="bg-background border z-50">
+                                                {condition.type === "close_vs_open" && (
+                                                  <>
+                                                    <SelectItem value="bullish">Bullish (Close &gt; Open)</SelectItem>
+                                                    <SelectItem value="bearish">Bearish (Close &lt; Open)</SelectItem>
+                                                    <SelectItem value="doji">Doji (Close = Open)</SelectItem>
+                                                  </>
+                                                )}
+                                                {condition.type === "candle_pattern" && (
+                                                  <>
+                                                    <SelectItem value="bullish">Bullish Pattern</SelectItem>
+                                                    <SelectItem value="bearish">Bearish Pattern</SelectItem>
+                                                    <SelectItem value="reversal">Reversal Pattern</SelectItem>
+                                                    <SelectItem value="continuation">Continuation Pattern</SelectItem>
+                                                  </>
+                                                )}
+                                                {condition.type === "sr_touch" && (
+                                                  <>
+                                                    <SelectItem value="support_touch">Touch Support</SelectItem>
+                                                    <SelectItem value="resistance_touch">Touch Resistance</SelectItem>
+                                                    <SelectItem value="support_bounce">Bounce off Support</SelectItem>
+                                                    <SelectItem value="resistance_reject">Reject at Resistance</SelectItem>
+                                                  </>
+                                                )}
+                                                {condition.type === "breakout" && (
+                                                  <>
+                                                    <SelectItem value="breakout_up">Breakout Above</SelectItem>
+                                                    <SelectItem value="breakout_down">Breakout Below</SelectItem>
+                                                    <SelectItem value="breakdown">Breakdown</SelectItem>
+                                                    <SelectItem value="breakout_retest">Breakout Retest</SelectItem>
+                                                  </>
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-1">
+                                              <Label className="text-xs text-muted-foreground">Threshold</Label>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs z-[100]">
+                                                  <p className="text-xs">
+                                                    Set minimum percentage move required. Example: "2.5" for 2.5% minimum move, 
+                                                    or "0.1" for 0.1% for sensitive triggers.
+                                                  </p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </div>
+                                            <Input 
+                                              placeholder="e.g., 2.5%" 
+                                              className="h-7" 
+                                              value={condition.params?.threshold || ""}
+                                              onChange={(e) => updatePriceActionCondition(condition.id, { 
+                                                params: { ...condition.params, threshold: e.target.value }
+                                              })}
+                                            />
+                                          </div>
+                                        </div>
                                     </Card>
                                   ))}
                                   
