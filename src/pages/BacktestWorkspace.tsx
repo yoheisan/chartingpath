@@ -33,6 +33,7 @@ import { tradingStrategies } from "@/utils/TradingStrategiesData";
 import BacktestResults from "@/components/BacktestResults";
 import BacktestParametersPanel, { BacktestParams } from "@/components/BacktestParametersPanel";
 import BacktesterV2Engine from "@/components/BacktesterV2Engine";
+import BacktesterV2Interface from "@/components/BacktesterV2Interface";
 
 interface BacktestRun {
   id: string;
@@ -583,130 +584,75 @@ const BacktestWorkspace = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Panel - Parameters & V2 Engine */}
-          <div className="lg:col-span-1 space-y-6">
-            <BacktestParametersPanel
-              selectedStrategy={selectedStrategy}
-              onStrategyChange={setSelectedStrategy}
-              params={backtestParams}
-              onParamsChange={setBacktestParams}
-              strategies={tradingStrategies.map(s => ({
-                id: s.id.toString(),
-                name: s.name,
-                category: s.category,
-                description: s.description
-              }))}
-            />
-            
-            {/* Backtester V2 Engine */}
-            <BacktesterV2Engine
-              selectedStrategy={selectedStrategy}
-              params={backtestParams}
-              onRunV2Backtest={handleRunV2Backtest}
+        <Tabs defaultValue="v1" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="v1">V1 Engine (Classic)</TabsTrigger>
+            <TabsTrigger value="v2">V2 Engine (Advanced)</TabsTrigger>
+          </TabsList>
+
+          {/* V1 Engine */}
+          <TabsContent value="v1" className="space-y-6">
+            <div className="lg:col-span-1 space-y-6">
+              <BacktestParametersPanel
+                selectedStrategy={selectedStrategy}
+                onStrategyChange={setSelectedStrategy}
+                params={backtestParams}
+                onParamsChange={setBacktestParams}
+                strategies={tradingStrategies.map(s => ({
+                  id: s.id.toString(),
+                  name: s.name,
+                  category: s.category,
+                  description: s.description
+                }))}
+              />
+              
+              {/* Backtester V2 Engine */}
+              <BacktesterV2Engine
+                selectedStrategy={selectedStrategy}
+                params={backtestParams}
+                onRunV2Backtest={handleRunV2Backtest}
+                isRunning={isRunningV2}
+              />
+            </div>
+          </TabsContent>
+
+          {/* V2 Engine */}
+          <TabsContent value="v2" className="space-y-6">
+            <BacktesterV2Interface
+              onRunBacktest={(v2Params) => {
+                console.log('V2 Params:', v2Params);
+                handleRunV2Backtest();
+              }}
               isRunning={isRunningV2}
             />
-          </div>
+          </TabsContent>
+        </Tabs>
 
-          {/* Main Area - Results */}
-          <div className="lg:col-span-3">
-            {/* Toolbar */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Button 
-                      onClick={handleRunBacktest}
-                      disabled={isRunning || isRunningV2 || !canRunBacktest}
-                      className="flex items-center gap-2"
-                      variant={activeEngine === 'v1' ? 'default' : 'outline'}
-                    >
-                      {isRunning ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent" />
-                          Running V1...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4" />
-                          Run V1 Backtest
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleSavePreset}
-                      disabled={!user || !selectedStrategy}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Preset
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleForwardTest}
-                      disabled={!currentRun || !currentRun.trade_log || currentRun.trade_log.length === 0}
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Forward Test
-                    </Button>
+        <div className="lg:col-span-3">
+          {/* Results Area */}
+          {currentRun ? (
+            <BacktestResults run={currentRun} />
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Ready to Backtest</h3>
+                <p className="text-muted-foreground mb-6">
+                  Configure your strategy parameters and click "Run Backtest" to begin
+                </p>
+                
+                {!canRunBacktest && (
+                  <div className="bg-muted p-6 rounded-lg max-w-md mx-auto">
+                    <h4 className="font-medium mb-2">Demo Mode</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      You can view sample backtest results in demo mode. Upgrade to Pro to run unlimited custom backtests.
+                    </p>
+                    <Button size="sm">View Demo Results</Button>
                   </div>
-
-                  {(isRunning || isRunningV2) && (
-                    <div className="flex items-center gap-4 min-w-48">
-                      <Progress value={progress} className="flex-1" />
-                      <span className="text-sm text-muted-foreground">
-                        {progress}% ({activeEngine === 'v2' ? 'V2 Engine' : 'V1 Engine'})
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 space-y-2">
-                  {!canRunBacktest && (
-                    <div className="p-3 bg-muted rounded-lg flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-warning" />
-                      <span className="text-sm">Upgrade to Starter to run backtests</span>
-                    </div>
-                  )}
-                  
-                  {activeEngine === 'v2' && (
-                    <div className="p-3 bg-primary/10 rounded-lg flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />
-                      <span className="text-sm">Running enhanced V2 engine with advanced analytics</span>
-                    </div>
-                  )}
-                </div>
+                )}
               </CardContent>
             </Card>
-
-            {/* Results Area */}
-            {currentRun ? (
-              <BacktestResults run={currentRun} />
-            ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Ready to Backtest</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Configure your strategy parameters and click "Run Backtest" to begin
-                  </p>
-                  
-                  {!canRunBacktest && (
-                    <div className="bg-muted p-6 rounded-lg max-w-md mx-auto">
-                      <h4 className="font-medium mb-2">Demo Mode</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        You can view sample backtest results in demo mode. Upgrade to Pro to run unlimited custom backtests.
-                      </p>
-                      <Button size="sm">View Demo Results</Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
