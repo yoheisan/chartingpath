@@ -23,6 +23,7 @@ import {
   Info
 } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { PairTradingConfig } from './PairTradingBuilder';
 
 interface V2BacktestParams {
   // Basic Parameters
@@ -63,24 +64,28 @@ interface V2BacktestParams {
 interface BacktesterV2InterfaceProps {
   onRunBacktest: (params: V2BacktestParams) => void;
   isRunning: boolean;
+  initialMode?: 'single' | 'pair' | 'basket';
+  pairTradingConfig?: PairTradingConfig;
 }
 
 const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
   onRunBacktest,
-  isRunning
+  isRunning,
+  initialMode = 'single',
+  pairTradingConfig
 }) => {
   const { hasFeatureAccess } = useUserProfile();
   
   const [params, setParams] = useState<V2BacktestParams>({
     strategy: '',
-    instrument: 'EURUSD',
-    timeframe: '1H',
+    instrument: pairTradingConfig ? `${pairTradingConfig.symbolA}/${pairTradingConfig.symbolB}` : 'EURUSD',
+    timeframe: pairTradingConfig?.timeframe || '1H',
     fromDate: '2024-01-01',
     toDate: '2024-12-31',
     dataGranularity: 'minute',
     executionModel: 'realistic',
     slippageModel: 'dynamic',
-    portfolioMode: 'single',
+    portfolioMode: initialMode,
     rebalanceFrequency: 'trade',
     portfolioWeights: [100],
     portfolioLevelStops: true,
@@ -94,7 +99,7 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
       commission: 0.1,
       spread: 0.05,
       marketImpact: 0.02,
-      borrowCost: 0.5
+      borrowCost: pairTradingConfig?.borrowCost * 100 || 0.5
     }
   });
 
@@ -599,4 +604,4 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
   );
 };
 
-export default BacktesterV2Interface;
+export { BacktesterV2Interface };

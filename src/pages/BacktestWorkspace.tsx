@@ -33,7 +33,9 @@ import { tradingStrategies } from "@/utils/TradingStrategiesData";
 import BacktestResults from "@/components/BacktestResults";
 import BacktestParametersPanel, { BacktestParams } from "@/components/BacktestParametersPanel";
 import BacktesterV2Engine from "@/components/BacktesterV2Engine";
-import BacktesterV2Interface from "@/components/BacktesterV2Interface";
+import { BacktesterV2Interface } from "@/components/BacktesterV2Interface";
+import { PairTradingConfig } from "@/components/PairTradingBuilder";
+import { useLocation } from 'react-router-dom';
 
 interface BacktestRun {
   id: string;
@@ -57,12 +59,18 @@ interface BacktestRun {
 const BacktestWorkspace = () => {
   const { user, profile, hasFeatureAccess } = useUserProfile();
   const { incrementUsage } = useBacktesterV2Usage();
+  const location = useLocation();
+  
+  // Get pair trading config from navigation state if available
+  const pairTradingConfig = location.state?.pairTradingConfig as PairTradingConfig | undefined;
+  const initialMode = location.state?.mode || "single";
+
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
   const [currentRun, setCurrentRun] = useState<BacktestRun | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isRunningV2, setIsRunningV2] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeEngine, setActiveEngine] = useState<'v1' | 'v2'>('v1');
+  const [activeEngine, setActiveEngine] = useState<'v1' | 'v2'>(pairTradingConfig ? 'v2' : 'v1');
   const [backtestParams, setBacktestParams] = useState<BacktestParams>({
     instrument: "EURUSD",
     timeframe: "1H", 
@@ -624,6 +632,8 @@ const BacktestWorkspace = () => {
                 handleRunV2Backtest();
               }}
               isRunning={isRunningV2}
+              initialMode={initialMode}
+              pairTradingConfig={pairTradingConfig}
             />
           </TabsContent>
         </Tabs>

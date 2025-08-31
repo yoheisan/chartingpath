@@ -38,7 +38,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
-import { useUserProfile } from "@/hooks/useUserProfile";
+  import { useUserProfile } from "@/hooks/useUserProfile";
+  import { PairTradingBuilder, PairTradingConfig } from "@/components/PairTradingBuilder";
 
 const AIBuilder = () => {
   const navigate = useNavigate();
@@ -72,6 +73,10 @@ const AIBuilder = () => {
   const [trailingStop, setTrailingStop] = useState(false);
   const [trailingStopValue, setTrailingStopValue] = useState("1.5");
   const [earlyExit, setEarlyExit] = useState(false);
+  
+  // Pair Trading State
+  const [showPairTrading, setShowPairTrading] = useState(false);
+  const [pairTradingConfig, setPairTradingConfig] = useState<PairTradingConfig | null>(null);
 
   // Types for condition builder
   interface IndicatorCondition {
@@ -166,8 +171,19 @@ const AIBuilder = () => {
     "Breakout",
     "Candlestick",
     "VPT",
+    "Pair Trading",
     "Custom"
   ];
+
+  const handlePairTradingBacktest = (config: PairTradingConfig) => {
+    // Navigate to backtest workspace with pair trading config
+    navigate('/backtest-workspace', { 
+      state: { 
+        pairTradingConfig: config,
+        mode: 'pair' 
+      } 
+    });
+  };
 
   const handleGenerate = async () => {
     if (quotaLimit !== -1 && quotaUsed >= quotaLimit) {
@@ -652,54 +668,65 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                         
                         {/* Natural Language Tab */}
                         <TabsContent value="natural" className="space-y-6 mt-6">
-                          {/* Strategy Description */}
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Label htmlFor="strategy">Describe Your Strategy</Label>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>Describe your trading strategy in plain English. Include entry conditions, indicators, timeframes, and risk management. Example: "15m BTC strategy using EMA crossover with RSI confirmation and ATR-based stops."</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                            <Textarea
-                              id="strategy"
-                              value={strategy}
-                              onChange={(e) => setStrategy(e.target.value)}
-                              placeholder={`Describe your ${selectedInstrument} strategy in plain English... e.g., '15m ${selectedInstrument} strategy: EMA 50/200 trend filter, MACD cross for entries, RSI > 50, ATR SL 1.5×, TP 3×, alerts on close.'`}
-                              className="mt-2 min-h-[100px]"
+                          
+                          {/* Check if Pair Trading template is selected */}
+                          {baseTemplate === 'pair trading' ? (
+                            <PairTradingBuilder 
+                              onConfigChange={setPairTradingConfig}
+                              onBacktest={handlePairTradingBacktest}
                             />
-                          </div>
+                          ) : (
+                            <>
+                              {/* Strategy Description */}
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Label htmlFor="strategy">Describe Your Strategy</Label>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>Describe your trading strategy in plain English. Include entry conditions, indicators, timeframes, and risk management. Example: "15m BTC strategy using EMA crossover with RSI confirmation and ATR-based stops."</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                                <Textarea
+                                  id="strategy"
+                                  value={strategy}
+                                  onChange={(e) => setStrategy(e.target.value)}
+                                  placeholder={`Describe your ${selectedInstrument} strategy in plain English... e.g., '15m ${selectedInstrument} strategy: EMA 50/200 trend filter, MACD cross for entries, RSI > 50, ATR SL 1.5×, TP 3×, alerts on close.'`}
+                                  className="mt-2 min-h-[100px]"
+                                />
+                              </div>
 
-                          {/* Base Template */}
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label>Base Template (Optional)</Label>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>Choose a pre-built template to start with. Templates provide common indicator setups like MACD crossovers, RSI signals, or Bollinger Band strategies as a foundation for your custom strategy.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                            <Select value={baseTemplate} onValueChange={setBaseTemplate}>
-                              <SelectTrigger className="mt-2">
-                                <SelectValue placeholder="Choose a template" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border z-50">
-                                {templates.map(template => (
-                                  <SelectItem key={template} value={template.toLowerCase()}>
-                                    {template}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                              {/* Base Template */}
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <Label>Base Template (Optional)</Label>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>Choose a pre-built template to start with. Templates provide common indicator setups like MACD crossovers, RSI signals, or Bollinger Band strategies as a foundation for your custom strategy.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                                <Select value={baseTemplate} onValueChange={setBaseTemplate}>
+                                  <SelectTrigger className="mt-2">
+                                    <SelectValue placeholder="Choose a template" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {templates.map(template => (
+                                      <SelectItem key={template} value={template.toLowerCase()}>
+                                        {template}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
                         </TabsContent>
 
                         {/* Visual Builder Tab */}
