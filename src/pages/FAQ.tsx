@@ -848,10 +848,10 @@ const FAQ = () => {
                 <div className="space-y-4">
                   <div className="grid gap-4">
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 dark:bg-gray-900/50 p-3 border-b">
+                      <div className="bg-primary text-primary-foreground p-3 border-b">
                         <div className="flex items-center gap-2">
-                           <Badge variant="outline">FREE</Badge>
-                          <h4 className="font-semibold text-foreground">Starter Plan</h4>
+                           <Badge variant="outline" className="text-primary-foreground border-primary-foreground/40">FREE</Badge>
+                          <h4 className="font-semibold text-primary-foreground">Starter Plan</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
@@ -865,10 +865,10 @@ const FAQ = () => {
                     </div>
                     
                     <div className="border rounded-lg overflow-hidden border-blue-200 dark:border-blue-800">
-                      <div className="bg-blue-50 dark:bg-blue-900/30 p-3 border-b border-blue-200 dark:border-blue-800">
+                      <div className="bg-primary text-primary-foreground p-3 border-b border-blue-200 dark:border-blue-800">
                         <div className="flex items-center gap-2">
                            <Badge className="bg-blue-600">PRO</Badge>
-                          <h4 className="font-semibold text-foreground">Professional Trader</h4>
+                          <h4 className="font-semibold text-primary-foreground">Professional Trader</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
@@ -883,10 +883,10 @@ const FAQ = () => {
                     </div>
                     
                     <div className="border rounded-lg overflow-hidden border-purple-200 dark:border-purple-800">
-                      <div className="bg-purple-50 dark:bg-purple-900/30 p-3 border-b border-purple-200 dark:border-purple-800">
+                      <div className="bg-primary text-primary-foreground p-3 border-b border-purple-200 dark:border-purple-800">
                         <div className="flex items-center gap-2">
                            <Badge className="bg-purple-600">ELITE</Badge>
-                          <h4 className="font-semibold text-foreground">Professional Developer</h4>
+                          <h4 className="font-semibold text-primary-foreground">Professional Developer</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
