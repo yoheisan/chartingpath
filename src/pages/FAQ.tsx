@@ -85,8 +85,8 @@ const FAQ = () => {
                       <p className="text-xs text-muted-foreground">Gold, Silver, Oil, etc.</p>
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Tip:</strong> Different markets have unique characteristics. Crypto strategies often use shorter timeframes, while stock strategies may focus on earnings patterns.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Tip:</strong> Different markets have unique characteristics. Crypto strategies often use shorter timeframes, while stock strategies may focus on earnings patterns.</p>
                   </div>
                 </div>
               )
@@ -98,7 +98,7 @@ const FAQ = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-bullish rounded-full"></div>
                         <h4 className="font-semibold">Natural Language Mode</h4>
                       </div>
                       <p className="text-sm mb-3">Describe your strategy in plain English and let AI convert it to code.</p>
@@ -115,7 +115,7 @@ const FAQ = () => {
                     </div>
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
                         <h4 className="font-semibold">Visual Builder Mode</h4>
                       </div>
                       <p className="text-sm mb-3">Build strategies using visual condition blocks with precise control.</p>
@@ -131,8 +131,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Pro Tip:</strong> Start with Natural Language to get the basic structure, then switch to Visual Builder for fine-tuning.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> Start with Natural Language to get the basic structure, then switch to Visual Builder for fine-tuning.</p>
                   </div>
                 </div>
               )
@@ -150,8 +150,8 @@ const FAQ = () => {
                   <div className="grid md:grid-cols-2 gap-4 my-4">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                         <div className="w-8 h-8 bg-bullish/20 border border-bullish/30 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="h-4 w-4 text-bullish" />
                         </div>
                         <h4 className="font-semibold">Stars Aligned (AND)</h4>
                       </div>
@@ -163,8 +163,8 @@ const FAQ = () => {
                     </div>
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                          <Zap className="h-4 w-4 text-blue-600" />
+                         <div className="w-8 h-8 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center">
+                          <Zap className="h-4 w-4 text-primary" />
                         </div>
                         <h4 className="font-semibold">OR Mode</h4>
                       </div>
@@ -216,8 +216,8 @@ const FAQ = () => {
                       <p className="text-xs text-muted-foreground mt-2">This creates a trend-following strategy with momentum confirmation.</p>
                     </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Multi-timeframe Support:</strong> Each condition can use different timeframes (1m, 5m, 15m, 1h, 4h, 1D) for sophisticated analysis.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Multi-timeframe Support:</strong> Each condition can use different timeframes (1m, 5m, 15m, 1h, 4h, 1D) for sophisticated analysis.</p>
                   </div>
                 </div>
               )
@@ -269,8 +269,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Example Strategy:</strong> "Enter long on bullish engulfing pattern at EMA support with 2% minimum candle body size"</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Example Strategy:</strong> "Enter long on bullish engulfing pattern at EMA support with 2% minimum candle body size"</p>
                   </div>
                 </div>
               )
@@ -328,8 +328,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Pro Tip:</strong> Combine session filters with indicator conditions. Example: "EMA crossover during London session first 2 hours only."</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> Combine session filters with indicator conditions. Example: "EMA crossover during London session first 2 hours only."</p>
                   </div>
                 </div>
               )
@@ -440,8 +440,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Best Practice:</strong> Combine trailing stops with early exit rules. Example: "Trail by 2x ATR, but exit if RSI becomes overbought (&gt;70) for longs."</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Best Practice:</strong> Combine trailing stops with early exit rules. Example: "Trail by 2x ATR, but exit if RSI becomes overbought (&gt;70) for longs."</p>
                   </div>
                 </div>
               )
@@ -542,18 +542,21 @@ const FAQ = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg">
+                    <div className="bg-muted/50 border border-border p-4 rounded-lg">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <HelpCircle className="h-4 w-4 text-blue-600" />
+                        <div className="w-8 h-8 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Code2 className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-2">Quota Management Tips:</h4>
-                          <div className="text-sm space-y-1">
-                            <div>• Quotas reset daily at 00:00 JST</div>
-                            <div>• Use Visual Builder to refine before generating</div>
-                            <div>• Save strategies to your library to avoid regeneration</div>
-                            <div>• Test with free generation first, then upgrade for more</div>
+                          <h4 className="font-semibold text-foreground mb-2">Generated Pine Script Output</h4>
+                          <div className="bg-card border border-border rounded p-3 font-mono text-xs text-muted-foreground">
+                            //@version=5<br/>
+                            strategy("AI Generated Strategy", overlay=true)<br/>
+                            // Entry conditions generated from your setup<br/>
+                            longCondition = ta.crossover(ta.ema(close, 21), ta.ema(close, 50))<br/>
+                            // Risk management with ATR-based stops<br/>
+                            if (longCondition)<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;strategy.entry("Long", strategy.long)
                           </div>
                         </div>
                       </div>
@@ -658,8 +661,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Pro Feature:</strong> Available for Pro+ and Elite subscribers. Maintains complex logic, custom functions, and optimization parameters.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Feature:</strong> Available for Pro+ and Elite subscribers. Maintains complex logic, custom functions, and optimization parameters.</p>
                   </div>
                 </div>
               )
@@ -693,8 +696,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Integration:</strong> Seamlessly import strategies from AI Builder and test across 10+ years of historical data.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Integration:</strong> Seamlessly import strategies from AI Builder and test across 10+ years of historical data.</p>
                   </div>
                 </div>
               )
@@ -740,8 +743,8 @@ const FAQ = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                      <p className="text-sm"><strong>Learning Method:</strong> Generate patterns, study the formation rules, then test your recognition skills with the Pattern Quiz.</p>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Learning Method:</strong> Generate patterns, study the formation rules, then test your recognition skills with the Pattern Quiz.</p>
                     </div>
                   </div>
                 </div>
@@ -821,8 +824,8 @@ const FAQ = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                    <p className="text-sm"><strong>Mastery Path:</strong> Start with basic patterns, advance through intermediate, and master complex multi-pattern formations.</p>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Mastery Path:</strong> Start with basic patterns, advance through intermediate, and master complex multi-pattern formations.</p>
                   </div>
                 </div>
               )
@@ -915,8 +918,8 @@ const FAQ = () => {
                         <div>4. Features activate immediately</div>
                       </div>
                     </div>
-                    <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                      <p className="text-sm"><strong>Pro-rated Billing:</strong> When upgrading mid-cycle, you only pay the difference. Downgrades take effect at the next billing cycle.</p>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro-rated Billing:</strong> When upgrading mid-cycle, you only pay the difference. Downgrades take effect at the next billing cycle.</p>
                     </div>
                   </div>
                 </div>
@@ -971,8 +974,8 @@ const FAQ = () => {
                         <div>• Platform installation guides</div>
                       </div>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                      <p className="text-sm"><strong>Quality Assurance:</strong> All scripts are tested and documented with performance metrics and usage instructions.</p>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Quality Assurance:</strong> All scripts are tested and documented with performance metrics and usage instructions.</p>
                     </div>
                   </div>
                 </div>
