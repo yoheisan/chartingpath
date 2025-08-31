@@ -39,7 +39,7 @@ interface V2BacktestParams {
   
   // Portfolio Parameters
   portfolioMode: 'single' | 'pair' | 'basket';
-  rebalanceFrequency: 'trade' | 'daily' | 'weekly' | 'monthly';
+  rebalanceFrequency: 'trade' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   portfolioWeights: number[];
   
   // Risk Management
@@ -432,7 +432,7 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
                   <Label>Rebalance Frequency</Label>
                   <Select 
                     value={params.rebalanceFrequency} 
-                    onValueChange={(value: 'trade' | 'daily' | 'weekly' | 'monthly') => updateParams({ rebalanceFrequency: value })}
+                    onValueChange={(value: 'trade' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => updateParams({ rebalanceFrequency: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -442,6 +442,8 @@ const BacktesterV2Interface: React.FC<BacktesterV2InterfaceProps> = ({
                       <SelectItem value="daily">Daily</SelectItem>
                       <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
