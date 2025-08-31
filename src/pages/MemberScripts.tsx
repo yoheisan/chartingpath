@@ -118,20 +118,11 @@ const MemberScripts = () => {
         <MemberNavigation />
         
         {/* Back Navigation */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Link>
-          
-          {/* Dev: Quick Elite Upgrade */}
-          <Button 
-            onClick={upgradeToElite}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            Upgrade to Elite
-          </Button>
         </div>
 
         {/* Header */}
