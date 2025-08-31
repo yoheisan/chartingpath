@@ -129,7 +129,7 @@ export const useUserProfile = () => {
   };
 
   // Helper function to check feature access
-  const hasFeatureAccess = (feature: 'visual_builder' | 'save_library' | 'unlimited_generations' | 'chart_patterns' | 'alerts' | 'backtesting' | 'script_export' | 'community_sharing') => {
+  const hasFeatureAccess = (feature: 'visual_builder' | 'save_library' | 'unlimited_generations' | 'chart_patterns' | 'alerts' | 'backtesting' | 'script_export' | 'community_sharing' | 'backtester_v2' | 'pair_trading' | 'basket_trading' | 'tick_data') => {
     if (!profile) return feature === 'chart_patterns'; // Free users get limited chart patterns
     
     switch (feature) {
@@ -141,6 +141,14 @@ export const useUserProfile = () => {
         return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
       case 'backtesting':
         return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'backtester_v2':
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'pair_trading':
+        return ['pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'basket_trading':
+        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+      case 'tick_data':
+        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
       case 'script_export':
         return ['pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
       case 'community_sharing':
@@ -168,6 +176,20 @@ export const useUserProfile = () => {
     }
   };
 
+  // Get Backtester V2 quota based on plan
+  const getBacktesterV2Quota = () => {
+    if (!profile) return 0;
+    
+    switch (profile.subscription_plan) {
+      case 'free': return 0;
+      case 'starter': return 5;
+      case 'pro': return 50;
+      case 'pro_plus': return -1; // Unlimited
+      case 'elite': return -1; // Unlimited
+      default: return 0;
+    }
+  };
+
   // Check if user can download (not for free users)
   const canDownload = () => {
     if (!profile) return false;
@@ -183,6 +205,7 @@ export const useUserProfile = () => {
     getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : 'Free',
     hasFeatureAccess,
     getGenerationQuota,
+    getBacktesterV2Quota,
     canDownload,
     isAuthenticated: !!user,
     subscriptionPlan: profile?.subscription_plan || 'free'

@@ -56,7 +56,8 @@ const Pricing = () => {
         "Save up to 5 strategies",
         "10 active alerts",
         "Paper trading with 1-year history",
-        "Backtesting limited: 20 runs/month, up to 1 year of data",
+        "Basic backtesting: 20 runs/month, up to 1 year of data",
+        "Backtester V2: 5 runs/month (single asset strategies only)",
         "Basic risk & pip calculators",
         "Email support"
       ],
@@ -75,6 +76,8 @@ const Pricing = () => {
         "50 active alerts",
         "Multi-platform script export (TradingView, MT4/MT5, PineScript)",
         "Full historical backtesting (unlimited runs)",
+        "Backtester V2: 50 runs/month (single + pair trading strategies)",
+        "Advanced metrics & trade analytics",
         "Forward testing sandbox with history logs",
         "Enhanced Alerts Library with outcomes tracking",
         "Priority support"
@@ -93,6 +96,9 @@ const Pricing = () => {
         "Advanced risk dashboards + performance analytics",
         "Community strategy sharing",
         "Portfolio forward testing",
+        "Backtester V2: Unlimited runs (all strategy types: single, pair, basket)",
+        "High-frequency data access (tick-level backtesting)",
+        "Advanced portfolio optimization tools",
         "Better learning progress tracking with milestones",
         "Advanced backtesting metrics & CSV exports",
         "Pro+ Discord role with exclusive channels"
@@ -109,10 +115,12 @@ const Pricing = () => {
       features: [
         "Everything in Pro+",
         "Script conversion across ALL platforms (TradingView, MT4/MT5, NinjaTrader, QuantConnect, ThinkOrSwim)",
-        "Priority backtesting queues (fast compute, tick-level)",
+        "Priority backtesting queues (institutional-grade compute)",
+        "Backtester V2: Custom strategy development & deployment",
+        "Real-time strategy monitoring & alerts",
         "VIP support & onboarding",
         "Advanced scenario simulations for strategies",
-        "Early access to new features",
+        "Early access to new features & alpha testing",
         "Premium Discord role & private channels"
       ],
       buttonText: "Join Elite",
