@@ -785,13 +785,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                            <SelectTrigger className="h-8">
                                              <SelectValue />
                                            </SelectTrigger>
-                                           <SelectContent className="bg-background border z-50">
-                                             {operators.filter(op => condition.isRelativeCondition ? 
-                                               op.value.startsWith('was_') : !op.value.startsWith('was_')
-                                             ).map(op => (
-                                               <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                                             ))}
-                                           </SelectContent>
+                                            <SelectContent className="bg-background border z-50">
+                                              {operators.map(op => (
+                                                <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
                                          </Select>
                                        </div>
                                        
