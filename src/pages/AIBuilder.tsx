@@ -170,7 +170,7 @@ const AIBuilder = () => {
   ];
 
   const handleGenerate = async () => {
-    if (quotaUsed >= quotaLimit) {
+    if (quotaLimit !== -1 && quotaUsed >= quotaLimit) {
       if (!profile || profile.subscription_plan === 'starter') {
         toast.error("You've used your free test generation. Upgrade to continue generating strategies.");
       } else {
@@ -1358,7 +1358,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       {/* Generate Button */}
                       <Button 
                         onClick={handleGenerate}
-                        disabled={isGenerating || quotaUsed >= quotaLimit}
+                        disabled={isGenerating || (quotaLimit !== -1 && quotaUsed >= quotaLimit)}
                         className="w-full"
                         size="lg"
                       >
@@ -1386,7 +1386,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                         Open in MultiScript Converter
                       </Button>
 
-                      {quotaUsed >= quotaLimit && (
+                      {quotaLimit !== -1 && quotaUsed >= quotaLimit && (
                         <p className="text-sm text-destructive text-center">
                           Daily quota exceeded. Resets at 00:00 JST.
                         </p>
