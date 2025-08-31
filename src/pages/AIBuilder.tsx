@@ -441,6 +441,12 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
     setPriceActionConditions(priceActionConditions.filter(c => c.id !== id));
   };
 
+  const updatePriceActionCondition = (id: string, updates: Partial<PriceActionCondition>) => {
+    setPriceActionConditions(priceActionConditions.map(c => 
+      c.id === id ? { ...c, ...updates } : c
+    ));
+  };
+
   const removeTimeCondition = (id: string) => {
     setTimeConditions(timeConditions.filter(c => c.id !== id));
   };
@@ -983,17 +989,17 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                        <div className="flex items-center gap-2 mb-2">
                                          <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
                                          <div className="flex items-center gap-1 flex-1">
-                                           <Select value={condition.type}>
-                                             <SelectTrigger className="h-8 text-xs flex-1">
-                                               <SelectValue />
-                                             </SelectTrigger>
-                                             <SelectContent className="bg-background border z-50">
-                                               <SelectItem value="close_vs_open">Close vs Open</SelectItem>
-                                               <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
-                                               <SelectItem value="sr_touch">S/R Touch</SelectItem>
-                                               <SelectItem value="breakout">Breakout</SelectItem>
-                                             </SelectContent>
-                                           </Select>
+                                            <Select value={condition.type} onValueChange={(value) => updatePriceActionCondition(condition.id, { type: value as any })}>
+                                              <SelectTrigger className="h-8 text-xs flex-1">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent className="bg-background border z-50">
+                                                <SelectItem value="close_vs_open">Close vs Open</SelectItem>
+                                                <SelectItem value="candle_pattern">Candle Pattern</SelectItem>
+                                                <SelectItem value="sr_touch">S/R Touch</SelectItem>
+                                                <SelectItem value="breakout">Breakout</SelectItem>
+                                              </SelectContent>
+                                            </Select>
                                            <Tooltip>
                                              <TooltipTrigger asChild>
                                                <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help flex-shrink-0" />
