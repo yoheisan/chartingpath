@@ -44,6 +44,12 @@ const Navigation = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/backtest" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Backtesting
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/forge" className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4" />
                     MultiScript Converter
@@ -59,12 +65,6 @@ const Navigation = () => {
                   <Link to="/tools/risk-calculator" className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     {t('navigation.riskCalculator', 'Risk Calculator')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/backtest" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Backtesting
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
