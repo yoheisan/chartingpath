@@ -8,12 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Trash2, Plus, TrendingUp, Calendar, Percent } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Trash2, Plus, TrendingUp, Calendar as CalendarIcon, Percent } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export interface BasketAsset {
   symbol: string;
   targetWeight: number;
   side: 'long' | 'short';
+  purchaseDate: Date;
 }
 
 export interface BasketConfig {
@@ -53,7 +58,7 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
   const createNewBasket = (): BasketConfig => ({
     id: `basket_${Date.now()}`,
     name: '',
-    assets: [{ symbol: 'SPY', targetWeight: 50, side: 'long' }],
+    assets: [{ symbol: 'SPY', targetWeight: 50, side: 'long', purchaseDate: new Date() }],
     dcaConfig: {
       enabled: false,
       contributionAmount: 1000,
@@ -104,7 +109,7 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
       ...editingBasket,
       assets: [
         ...editingBasket.assets,
-        { symbol: 'SPY', targetWeight: 10, side: 'long' }
+        { symbol: 'SPY', targetWeight: 10, side: 'long', purchaseDate: new Date() }
       ]
     });
   };
@@ -151,12 +156,12 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
                     <Badge variant="outline">
                       {basket.assets.length} assets
                     </Badge>
-                    {basket.dcaConfig.enabled && (
-                      <Badge variant="secondary">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        DCA {basket.dcaConfig.frequency}
-                      </Badge>
-                    )}
+                     {basket.dcaConfig.enabled && (
+                       <Badge variant="secondary">
+                         <CalendarIcon className="h-3 w-3 mr-1" />
+                         DCA {basket.dcaConfig.frequency}
+                       </Badge>
+                     )}
                     {basket.rebalancingConfig.enabled && (
                       <Badge variant="secondary">
                         <TrendingUp className="h-3 w-3 mr-1" />
@@ -237,8 +242,9 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
               </div>
 
               {editingBasket.assets.map((asset, index) => (
-                <div key={index} className="grid grid-cols-12 gap-3 items-center p-3 border rounded">
-                  <div className="col-span-4">
+                <div key={index} className="grid grid-cols-12 gap-3 items-start p-3 border rounded">
+                  <div className="col-span-3">
+                    <Label className="text-sm">Symbol</Label>
                     <Select
                       value={asset.symbol}
                       onValueChange={(value) => updateAsset(index, { symbol: value })}
@@ -256,7 +262,8 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
                     </Select>
                   </div>
 
-                  <div className="col-span-3">
+                  <div className="col-span-2">
+                    <Label className="text-sm">Side</Label>
                     <Select
                       value={asset.side}
                       onValueChange={(value: 'long' | 'short') => updateAsset(index, { side: value })}
@@ -271,7 +278,35 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
                     </Select>
                   </div>
 
-                  <div className="col-span-4 space-y-2">
+                  <div className="col-span-3">
+                    <Label className="text-sm">Purchase Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !asset.purchaseDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {asset.purchaseDate ? format(asset.purchaseDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={asset.purchaseDate}
+                          onSelect={(date) => date && updateAsset(index, { purchaseDate: date })}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="col-span-3 space-y-2">
+                    <Label className="text-sm">Weight (%)</Label>
                     <div className="flex items-center gap-2">
                       <Percent className="h-3 w-3" />
                       <span className="text-sm font-medium">
@@ -288,7 +323,7 @@ export const BasketManager: React.FC<BasketManagerProps> = ({
                     />
                   </div>
 
-                  <div className="col-span-1">
+                  <div className="col-span-1 flex items-end">
                     <Button
                       onClick={() => removeAssetFromBasket(index)}
                       size="sm"
