@@ -83,11 +83,11 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     // Simulate backtest - replace with actual backtest logic
     setTimeout(() => {
       const mockResults: BacktestData = {
-        winRate: Math.max(45, Math.min(75, answers.reward?.winRate + (Math.random() - 0.5) * 20)),
-        riskReward: Math.max(1.2, Math.min(3.5, answers.reward?.riskRewardRatio + (Math.random() - 0.5) * 0.8)),
+        winRate: Math.max(45, Math.min(75, answers.reward?.winRate + (Math.random() - 0.5) * 20)).toFixed(1),
+        riskReward: Math.max(1.2, Math.min(3.5, answers.reward?.riskRewardRatio + (Math.random() - 0.5) * 0.8)).toFixed(1),
         testPeriod: subscriptionPlan?.toLowerCase() === 'starter' ? '1Y' : '3Y',
         totalTrades: Math.floor(150 + Math.random() * 300),
-        maxDrawdown: Math.max(5, Math.min(25, answers.riskTolerance?.maxDrawdown + (Math.random() - 0.5) * 8)),
+        maxDrawdown: Math.max(5, Math.min(25, answers.riskTolerance?.maxDrawdown + (Math.random() - 0.5) * 8)).toFixed(1),
         instrument: answers.market?.instruments?.[0] || 'Multi-Asset',
         timeframe: answers.market?.timeframes?.[0] || '1h'
       };

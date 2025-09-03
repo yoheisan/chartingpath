@@ -64,7 +64,7 @@ const AIBuilder = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Visual Condition Builder State
-  const [builderMode, setBuilderMode] = useState<"natural" | "visual">("natural");
+  const [builderMode, setBuilderMode] = useState<"natural" | "visual" | "guided">("natural");
   const [starsAligned, setStarsAligned] = useState(true); // AND mode by default
   const [indicatorConditions, setIndicatorConditions] = useState<IndicatorCondition[]>([]);
   const [priceActionConditions, setPriceActionConditions] = useState<PriceActionCondition[]>([]);
