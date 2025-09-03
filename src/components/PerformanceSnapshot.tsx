@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Info, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
 
-interface BacktestData {
+export interface BacktestData {
   winRate: string;
   riskReward: string;
   testPeriod: string;

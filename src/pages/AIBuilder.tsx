@@ -38,8 +38,9 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
-  import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserProfile } from "@/hooks/useUserProfile";
   import { PairTradingBuilder, PairTradingConfig } from "@/components/PairTradingBuilder";
+  import { GuidedStrategyBuilder } from "@/components/GuidedStrategyBuilder";
 
 const AIBuilder = () => {
   const navigate = useNavigate();
@@ -660,13 +661,18 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                   {selectedInstrument && (
                     <>
                       {/* Mode Selection */}
-                      <Tabs value={builderMode} onValueChange={(value: "natural" | "visual") => setBuilderMode(value)} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                      <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
                           <TabsTrigger value="natural">Natural Language</TabsTrigger>
+                          <TabsTrigger value="guided">Guided Builder</TabsTrigger>
                           <TabsTrigger value="visual">Visual Builder</TabsTrigger>
                         </TabsList>
                         
                         {/* Natural Language Tab */}
+                        <TabsContent value="guided" className="space-y-6 mt-6">
+                          <GuidedStrategyBuilder />
+                        </TabsContent>
+                        
                         <TabsContent value="natural" className="space-y-6 mt-6">
                           
                           {/* Check if Pair Trading template is selected */}
