@@ -431,6 +431,127 @@ export type Database = {
           },
         ]
       }
+      community_analytics: {
+        Row: {
+          ai_responses: number
+          avg_response_time_minutes: number | null
+          created_at: string
+          date: string
+          id: string
+          sentiment_score: number | null
+          top_categories: Json | null
+          total_messages: number
+          total_questions: number
+          user_responses: number
+        }
+        Insert: {
+          ai_responses?: number
+          avg_response_time_minutes?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          sentiment_score?: number | null
+          top_categories?: Json | null
+          total_messages?: number
+          total_questions?: number
+          user_responses?: number
+        }
+        Update: {
+          ai_responses?: number
+          avg_response_time_minutes?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          sentiment_score?: number | null
+          top_categories?: Json | null
+          total_messages?: number
+          total_questions?: number
+          user_responses?: number
+        }
+        Relationships: []
+      }
+      community_message_likes: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_message_likes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_messages: {
+        Row: {
+          ai_confidence_score: number | null
+          content: string
+          created_at: string
+          id: string
+          is_ai_response: boolean
+          likes_count: number
+          message_type: string
+          parent_id: string | null
+          replies_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          is_ai_response?: boolean
+          likes_count?: number
+          message_type?: string
+          parent_id?: string | null
+          replies_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_ai_response?: boolean
+          likes_count?: number
+          message_type?: string
+          parent_id?: string | null
+          replies_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_strategies: {
         Row: {
           created_at: string
@@ -613,6 +734,51 @@ export type Database = {
           mastery_level?: string | null
           pattern_type?: string
           quiz_attempts?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      moderator_reports: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
           updated_at?: string
           user_id?: string
         }
