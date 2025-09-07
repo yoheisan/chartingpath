@@ -807,7 +807,7 @@ const FAQ = () => {
                       <div>
                         <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Important Disclaimer</h4>
                         <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
-                          The success rates displayed in our pattern library are based on historical statistical analysis from Thomas Bulkowski's extensive research in his "Encyclopedia of Chart Patterns." These percentages represent the historical likelihood of a pattern achieving its measured move target when correctly identified and traded.
+                          The "success rate" in the pattern library is based on historical statistical analysis and backtesting data from Thomas Bulkowski's Encyclopedia of Chart Patterns. These percentages represent the historical likelihood of a pattern achieving its measured move target when correctly identified and traded.
                         </p>
                       </div>
                     </div>
