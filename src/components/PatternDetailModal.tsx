@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Brain, AlertTriangle, Lightbulb } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Brain, AlertTriangle, Lightbulb, Info } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
 
 interface PatternDetailModalProps {
@@ -78,7 +79,17 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-3 border rounded-lg">
-                <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-sm">Based on historical analysis. Not a guarantee of future results. Always do your own research.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <div className="text-sm text-muted-foreground">Success Rate</div>
               </div>
               <div className="text-center p-3 border rounded-lg">
