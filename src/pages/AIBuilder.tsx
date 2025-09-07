@@ -123,7 +123,7 @@ const AIBuilder = () => {
     subscriptionPlan 
   } = useUserProfile();
   
-  const quotaUsed = 5; // This would come from actual usage tracking
+  const [quotaUsed, setQuotaUsed] = useState(0); // Placeholder until real usage tracking is wired
   const quotaLimit = getGenerationQuota();
 
   function getTierPlatforms(plan: string): string[] {
