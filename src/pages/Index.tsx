@@ -129,6 +129,58 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Educational Content Tabs */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Learn & Practice</h2>
+            <p className="text-xl text-muted-foreground">Master chart patterns with our interactive tools</p>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex justify-center mb-8">
+            <Card className="p-2 inline-flex">
+              <Button
+                variant={activeTab === "generator" ? "default" : "ghost"}
+                onClick={() => setActiveTab("generator")}
+                className="px-6"
+              >
+                Pattern Generator
+              </Button>
+              <Button
+                variant={activeTab === "library" ? "default" : "ghost"}
+                onClick={() => setActiveTab("library")}
+                className="px-6"
+              >
+                Pattern Library
+              </Button>
+              <Button
+                variant={activeTab === "strategies" ? "default" : "ghost"}
+                onClick={() => setActiveTab("strategies")}
+                className="px-6"
+              >
+                Trading Strategies
+              </Button>
+              <Button
+                variant={activeTab === "quiz" ? "default" : "ghost"}
+                onClick={() => setActiveTab("quiz")}
+                className="px-6"
+              >
+                Pattern Quiz
+              </Button>
+            </Card>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-8">
+            {activeTab === "generator" && <ChartPatternGenerator />}
+            {activeTab === "library" && <PatternLibrary />}
+            {activeTab === "strategies" && <TradingStrategies />}
+            {activeTab === "quiz" && <PatternQuiz />}
+          </div>
+        </div>
+      </section>
+
       {/* Value Proposition */}
       <section className="py-20 px-6 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
@@ -229,57 +281,6 @@ const Index = () => {
       </section>
 
 
-      {/* Educational Content Tabs */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Learn & Practice</h2>
-            <p className="text-xl text-muted-foreground">Master chart patterns with our interactive tools</p>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex justify-center mb-8">
-            <Card className="p-2 inline-flex">
-              <Button
-                variant={activeTab === "generator" ? "default" : "ghost"}
-                onClick={() => setActiveTab("generator")}
-                className="px-6"
-              >
-                Pattern Generator
-              </Button>
-              <Button
-                variant={activeTab === "library" ? "default" : "ghost"}
-                onClick={() => setActiveTab("library")}
-                className="px-6"
-              >
-                Pattern Library
-              </Button>
-              <Button
-                variant={activeTab === "strategies" ? "default" : "ghost"}
-                onClick={() => setActiveTab("strategies")}
-                className="px-6"
-              >
-                Trading Strategies
-              </Button>
-              <Button
-                variant={activeTab === "quiz" ? "default" : "ghost"}
-                onClick={() => setActiveTab("quiz")}
-                className="px-6"
-              >
-                Pattern Quiz
-              </Button>
-            </Card>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-8">
-            {activeTab === "generator" && <ChartPatternGenerator />}
-            {activeTab === "library" && <PatternLibrary />}
-            {activeTab === "strategies" && <TradingStrategies />}
-            {activeTab === "quiz" && <PatternQuiz />}
-          </div>
-        </div>
-      </section>
 
       {/* Footer CTA */}
       <section className="py-20 px-6 bg-primary text-primary-foreground">
