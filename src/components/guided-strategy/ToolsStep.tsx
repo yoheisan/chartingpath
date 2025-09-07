@@ -166,7 +166,7 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
                     </p>
                     <ul className="list-disc pl-4 text-sm space-y-1">
                       <li><strong>Volatility Filter:</strong> Avoid extremes; trade only when volatility sits within a normal band.</li>
-                      <li><strong>Trend Filter:</strong> Align with trend (e.g., allow longs only when price is above a chosen MA/EMA).</li>
+                      <li><strong>Trend Filter:</strong> Block counter-trend trades (e.g., no longs in downtrend below MA, no shorts in uptrend above MA).</li>
                       <li><strong>Volume Filter:</strong> Skip low-liquidity periods; require minimum volume to enter.</li>
                       <li><strong>Correlation Filter:</strong> Block new entries highly correlated with existing positions.</li>
                       <li><strong>Time/Day/Session:</strong> Trade only inside selected windows; block outside.</li>
