@@ -725,6 +725,22 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                          
                          <TabsContent value="natural" className="space-y-6 mt-6">
                           
+                          {/* Selected Instrument Display */}
+                          <div className="p-4 border-2 border-green-500/20 rounded-lg bg-green-50/50 dark:bg-green-900/10">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="h-5 w-5 text-green-600" />
+                              <Label className="text-base font-semibold text-green-700 dark:text-green-400">Selected Financial Instrument</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                {selectedInstrument}
+                              </Badge>
+                              <span className="text-sm text-green-600 dark:text-green-400">
+                                Your strategy will be specifically designed for {selectedInstrument}
+                              </span>
+                            </div>
+                          </div>
+                          
                           {/* Check if Pair Trading template is selected */}
                           {baseTemplate === 'pair trading' ? (
                             <PairTradingBuilder 
@@ -736,13 +752,13 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                               {/* Strategy Description */}
                               <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Label htmlFor="strategy">Describe Your Strategy</Label>
+                                  <Label htmlFor="strategy">Describe Your {selectedInstrument} Strategy</Label>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs">
-                                      <p>Describe your trading strategy in plain English. Include entry conditions, indicators, timeframes, and risk management. Example: "15m BTC strategy using EMA crossover with RSI confirmation and ATR-based stops."</p>
+                                      <p>Describe your {selectedInstrument} trading strategy in plain English. Include entry conditions, indicators, timeframes, and risk management specific to {selectedInstrument} market characteristics.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </div>
@@ -750,8 +766,18 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                   id="strategy"
                                   value={strategy}
                                   onChange={(e) => setStrategy(e.target.value)}
-                                  placeholder={`Describe your ${selectedInstrument} strategy in plain English... e.g., '15m ${selectedInstrument} strategy: EMA 50/200 trend filter, MACD cross for entries, RSI > 50, ATR SL 1.5×, TP 3×, alerts on close.'`}
-                                  className="mt-2 min-h-[100px]"
+                                  placeholder={`Describe your ${selectedInstrument} strategy in plain English...
+
+Example for ${selectedInstrument}:
+"15-minute ${selectedInstrument} strategy using EMA 50/200 crossover for trend direction, RSI confirmation above 50 for longs, MACD histogram for entry timing, ATR-based stop loss at 1.5x, take profit at 3x ATR, with alerts on candle close."
+
+Be specific about:
+• Timeframe for ${selectedInstrument}
+• Technical indicators 
+• Entry/exit conditions
+• Risk management rules
+• Alert preferences`}
+                                  className="mt-2 min-h-[120px]"
                                 />
                               </div>
 
