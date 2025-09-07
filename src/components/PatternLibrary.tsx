@@ -308,18 +308,16 @@ export const PatternLibrary = () => {
                   
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <Badge className={`text-xs ${getDifficultyColor(pattern.difficulty)}`}>
-                          {pattern.difficulty}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium text-foreground">
-                          {pattern.successRate}%
+                      <Badge className={`text-xs ${getDifficultyColor(pattern.difficulty)}`}>
+                        {pattern.difficulty}
+                      </Badge>
+                      <div className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded-md">
+                        <span className="text-sm font-semibold text-success">
+                          {pattern.successRate}% Success Rate
                         </span>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-success cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p className="text-xs">
