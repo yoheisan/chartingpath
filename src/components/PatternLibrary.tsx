@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, RotateCcw, Info } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
 
 interface Pattern {
@@ -227,20 +228,15 @@ export const PatternLibrary = () => {
         </p>
       </div>
 
-      {/* Disclaimer */}
-      <div className="bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-blue-500 p-4 rounded-lg max-w-4xl mx-auto">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Important Disclaimer</h3>
-            <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
-              The success rates shown are based on historical statistical analysis from Thomas Bulkowski's research. 
-              These are <strong>not absolute guarantees</strong> and actual results may vary significantly based on market conditions, 
-              timing, risk management, and individual trading execution. Always conduct your own research and consider 
-              consulting with financial professionals before making trading decisions.
-            </p>
-          </div>
-        </div>
+      {/* Success Rate Disclaimer Link */}
+      <div className="flex justify-center">
+        <Link 
+          to="/faq" 
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4"
+        >
+          <Info className="h-4 w-4" />
+          Questions about pattern success rates? See our FAQ
+        </Link>
       </div>
 
       {Object.entries(groupedPatterns).map(([type, patterns]) => (

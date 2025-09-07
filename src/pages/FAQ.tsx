@@ -798,6 +798,49 @@ const FAQ = () => {
               )
             },
             {
+              question: "How reliable are the pattern success rates shown?",
+              answer: (
+                <div className="space-y-4">
+                  <div className="bg-amber-50/50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Important Disclaimer</h4>
+                        <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
+                          The success rates displayed in our pattern library are based on historical statistical analysis from Thomas Bulkowski's extensive research in his "Encyclopedia of Chart Patterns." These percentages represent the historical likelihood of a pattern achieving its measured move target when correctly identified and traded.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">What the Success Rates Mean:</h4>
+                      <div className="space-y-2 text-sm">
+                        <div>• <strong>Historical Performance:</strong> Based on thousands of real market examples analyzed over decades</div>
+                        <div>• <strong>Pattern Completion:</strong> Percentage showing how often the pattern achieved its theoretical target</div>
+                        <div>• <strong>Market-Tested:</strong> Data collected from various market conditions and timeframes</div>
+                        <div>• <strong>Statistical Average:</strong> Represents typical performance, not guaranteed outcomes</div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Important Limitations:</h4>
+                      <div className="space-y-2 text-sm">
+                        <div>• <strong>Not Guarantees:</strong> Past performance does not guarantee future results</div>
+                        <div>• <strong>Market Dependent:</strong> Success rates vary significantly based on market conditions, volatility, and economic environment</div>
+                        <div>• <strong>Execution Matters:</strong> Individual results depend on entry/exit timing, risk management, and trade execution</div>
+                        <div>• <strong>Context Critical:</strong> Pattern effectiveness varies by timeframe, asset class, and overall market trend</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Recommendation:</strong> Use success rates as general guidance for pattern reliability, but always combine with your own analysis, risk management, and paper trading before implementing any strategy with real money.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
               question: "How does the Pattern Quiz help me learn?",
               answer: (
                 <div className="space-y-4">
