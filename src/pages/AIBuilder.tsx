@@ -608,7 +608,26 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                 </CardHeader>
                 <CardContent className="space-y-6">
                    
-                  {/* Financial Instrument Selection - Required First */}
+                  {/* Building Method Selection - Now First */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Label className="text-lg font-medium">Choose Your Building Method</Label>
+                       <Tooltip>
+                         <TooltipTrigger>
+                           <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                         </TooltipTrigger>
+                         <TooltipContent>
+                           <p className="max-w-xs">
+                             <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation (easiest).<br/>
+                             <strong>Visual Builder:</strong> Drag-and-drop interface with indicator conditions (intermediate).<br/>
+                             <strong>Natural Language:</strong> Describe your strategy in plain English (advanced).
+                           </p>
+                         </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+
+                  {/* Financial Instrument Selection */}
                   <div className="space-y-4 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
                     <div className="flex items-center gap-2">
                       <Target className="h-5 w-5 text-primary" />
@@ -620,7 +639,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                          </TooltipTrigger>
                          <TooltipContent>
                           <p className="max-w-xs">
-                            Choose the financial instrument you want to trade. This is required first because your strategy 
+                            Choose the financial instrument you want to trade. Your strategy 
                             will be optimized for the specific characteristics and behavior patterns of your selected market.
                           </p>
                         </TooltipContent>
@@ -697,21 +716,6 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     <>
                       {/* Mode Selection */}
                       <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Label className="text-lg font-medium">Choose Your Building Method</Label>
-                           <Tooltip>
-                             <TooltipTrigger>
-                               <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
-                             </TooltipTrigger>
-                             <TooltipContent>
-                               <p className="max-w-xs">
-                                 <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation (easiest).<br/>
-                                 <strong>Visual Builder:</strong> Drag-and-drop interface with indicator conditions (intermediate).<br/>
-                                 <strong>Natural Language:</strong> Describe your strategy in plain English (advanced).
-                               </p>
-                             </TooltipContent>
-                          </Tooltip>
-                        </div>
                          <TabsList className="grid w-full grid-cols-3">
                            <TabsTrigger value="guided">Guided Builder</TabsTrigger>
                            <TabsTrigger value="visual">Visual Builder</TabsTrigger>
