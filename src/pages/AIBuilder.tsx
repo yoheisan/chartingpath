@@ -609,7 +609,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                 <CardContent className="space-y-6">
                    
                   {/* Building Method Selection - Now First */}
-                  <div className="space-y-4">
+                  <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
                     <div className="flex items-center gap-2 mb-4">
                       <Label className="text-lg font-medium">Choose Your Building Method</Label>
                        <Tooltip>
@@ -625,10 +625,14 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                          </TooltipContent>
                       </Tooltip>
                     </div>
-                  </div>
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="guided">Guided Builder</TabsTrigger>
+                      <TabsTrigger value="visual">Visual Builder</TabsTrigger>
+                      <TabsTrigger value="natural">Natural Language</TabsTrigger>
+                    </TabsList>
 
                   {/* Financial Instrument Selection */}
-                  <div className="space-y-4 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+                  <div className="space-y-4 p-4 border-2 border-primary/20 rounded-lg bg-primary/5 mt-6">
                     <div className="flex items-center gap-2">
                       <Target className="h-5 w-5 text-primary" />
                       <Label className="text-base font-semibold">Select Financial Instrument</Label>
@@ -711,23 +715,15 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     </div>
                   )}
 
-                  {/* Strategy Configuration - Only show when instrument is selected */}
+                  {/* Strategy Configuration Content - Only show when instrument is selected */}
                   {selectedInstrument && (
                     <>
-                      {/* Mode Selection */}
-                      <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
-                         <TabsList className="grid w-full grid-cols-3">
-                           <TabsTrigger value="guided">Guided Builder</TabsTrigger>
-                           <TabsTrigger value="visual">Visual Builder</TabsTrigger>
-                           <TabsTrigger value="natural">Natural Language</TabsTrigger>
-                         </TabsList>
-                        
-                        {/* Natural Language Tab */}
-                        <TabsContent value="guided" className="space-y-6 mt-6">
-                          <GuidedStrategyBuilder />
-                        </TabsContent>
-                        
-                        <TabsContent value="natural" className="space-y-6 mt-6">
+                         {/* Guided Builder Tab */}
+                         <TabsContent value="guided" className="space-y-6 mt-6">
+                           <GuidedStrategyBuilder />
+                         </TabsContent>
+                         
+                         <TabsContent value="natural" className="space-y-6 mt-6">
                           
                           {/* Check if Pair Trading template is selected */}
                           {baseTemplate === 'pair trading' ? (
@@ -1439,8 +1435,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                               </Button>
                             </div>
                           )}
-                        </TabsContent>
-                      </Tabs>
+                         </TabsContent>
 
                       {/* Generate Button */}
                       <Button 
@@ -1480,6 +1475,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       )}
                     </>
                   )}
+                  </Tabs>
                 </CardContent>
               </Card>
             </div>
