@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { Info, TrendingUp, TrendingDown, AlertTriangle, HelpCircle } from "lucide-react";
 import { DISCLAIMERS, PERFORMANCE_LABELS } from "@/constants/disclaimers";
 
 export interface BacktestData {
@@ -50,7 +50,7 @@ export const PerformanceSnapshot = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
+                <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-sm">
                 <p className="font-medium mb-2">Backtest Context:</p>
@@ -86,7 +86,7 @@ export const PerformanceSnapshot = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-lg">
                 <div className="space-y-2">

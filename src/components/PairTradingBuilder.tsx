@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, Info, HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
@@ -389,7 +389,7 @@ export const PairTradingBuilder: React.FC<PairTradingBuilderProps> = ({
                     <Label>Maximum Leverage</Label>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="h-3 w-3 text-muted-foreground" />
+                        <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Total position value as multiple of account equity</p>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BarChart3, TrendingUp, Activity, Filter, Eye, Info } from 'lucide-react';
+import { BarChart3, TrendingUp, Activity, Filter, Eye, Info, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ToolsStepProps {
@@ -157,7 +157,7 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
               <h3 className="font-medium text-lg">Market Filters</h3>
               <Tooltip>
                 <TooltipTrigger>
-                  <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs">

@@ -595,7 +595,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     Strategy Configuration
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                        <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs">
@@ -614,11 +614,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       <Target className="h-5 w-5 text-primary" />
                       <Label className="text-base font-semibold">Select Financial Instrument</Label>
                       <Badge variant="secondary">Required</Badge>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                        </TooltipTrigger>
-                        <TooltipContent>
+                       <Tooltip>
+                         <TooltipTrigger>
+                           <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                         </TooltipTrigger>
+                         <TooltipContent>
                           <p className="max-w-xs">
                             Choose the financial instrument you want to trade. This is required first because your strategy 
                             will be optimized for the specific characteristics and behavior patterns of your selected market.
@@ -631,11 +631,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <Label className="text-sm font-medium">Market Category</Label>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                          </TooltipTrigger>
-                          <TooltipContent>
+                         <Tooltip>
+                           <TooltipTrigger>
+                             <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent>
                             <p className="max-w-xs">
                               Different market categories have unique characteristics: Forex (24/5 trading), Stocks (company shares), 
                               Crypto (digital assets), Commodities (gold, oil), and Indices (market baskets like S&P 500).
@@ -699,11 +699,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
                         <div className="flex items-center gap-2 mb-4">
                           <Label className="text-lg font-medium">Choose Your Building Method</Label>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                            </TooltipTrigger>
-                            <TooltipContent>
+                           <Tooltip>
+                             <TooltipTrigger>
+                               <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                             </TooltipTrigger>
+                             <TooltipContent>
                               <p className="max-w-xs">
                                 <strong>Natural Language:</strong> Describe your strategy in plain English.<br/>
                                 <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation.<br/>
