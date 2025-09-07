@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { BarChart3, TrendingUp, Activity, Filter, Eye } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BarChart3, TrendingUp, Activity, Filter, Eye, Info } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ToolsStepProps {
@@ -77,7 +78,8 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
   const isComplete = getTotalSelected() > 0;
 
   return (
-    <div className="space-y-6">
+    <TooltipProvider>
+      <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -153,6 +155,17 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4" />
               <h3 className="font-medium text-lg">Market Filters</h3>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Market filters help refine when your strategy executes trades by filtering out unfavorable market conditions. 
+                    Examples include avoiding low volatility periods, trading only during specific market sessions, or filtering based on economic events.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
               <Badge variant="outline" className="text-xs">
                 {currentAnswers.filters?.length || 0} selected
               </Badge>
@@ -219,7 +232,8 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
             </p>
           </CardContent>
         </Card>
-      )}
-    </div>
+       )}
+      </div>
+    </TooltipProvider>
   );
 };
