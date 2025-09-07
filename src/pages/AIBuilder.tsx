@@ -704,19 +704,19 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                              </TooltipTrigger>
                              <TooltipContent>
-                              <p className="max-w-xs">
-                                <strong>Natural Language:</strong> Describe your strategy in plain English.<br/>
-                                <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation.<br/>
-                                <strong>Visual Builder:</strong> Drag-and-drop interface with indicator conditions.
-                              </p>
-                            </TooltipContent>
+                               <p className="max-w-xs">
+                                 <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation (easiest).<br/>
+                                 <strong>Visual Builder:</strong> Drag-and-drop interface with indicator conditions (intermediate).<br/>
+                                 <strong>Natural Language:</strong> Describe your strategy in plain English (advanced).
+                               </p>
+                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="natural">Natural Language</TabsTrigger>
-                          <TabsTrigger value="guided">Guided Builder</TabsTrigger>
-                          <TabsTrigger value="visual">Visual Builder</TabsTrigger>
-                        </TabsList>
+                         <TabsList className="grid w-full grid-cols-3">
+                           <TabsTrigger value="guided">Guided Builder</TabsTrigger>
+                           <TabsTrigger value="visual">Visual Builder</TabsTrigger>
+                           <TabsTrigger value="natural">Natural Language</TabsTrigger>
+                         </TabsList>
                         
                         {/* Natural Language Tab */}
                         <TabsContent value="guided" className="space-y-6 mt-6">
