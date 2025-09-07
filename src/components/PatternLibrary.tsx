@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge"; 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrendingUp, TrendingDown, RotateCcw, Info } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -11,6 +12,7 @@ interface Pattern {
   type: "reversal" | "continuation" | "candlestick";
   description: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
+  successRate: number;
 }
 
 const PATTERN_LIBRARY: Pattern[] = [
@@ -19,49 +21,57 @@ const PATTERN_LIBRARY: Pattern[] = [
     name: "Head and Shoulders",
     type: "reversal",
     description: "Most reliable bearish reversal pattern with three peaks",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 89
   },
   {
     name: "Inverted Head and Shoulders",
     type: "reversal",
     description: "Bullish reversal pattern with three troughs - mirror of Head and Shoulders",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 85
   },
   {
     name: "Double Top",
     type: "reversal", 
     description: "Bearish reversal with two peaks at same level",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 78
   },
   {
     name: "Double Bottom",
     type: "reversal",
     description: "Bullish reversal with two troughs at same level", 
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 79
   },
   {
     name: "Triple Top",
     type: "reversal",
     description: "Strong bearish reversal with three equal peaks",
-    difficulty: "Advanced"
+    difficulty: "Advanced",
+    successRate: 83
   },
   {
     name: "Triple Bottom", 
     type: "reversal",
     description: "Strong bullish reversal with three equal troughs",
-    difficulty: "Advanced"
+    difficulty: "Advanced",
+    successRate: 81
   },
   {
     name: "Bump-and-Run Reversal",
     type: "reversal",
     description: "Three-phase reversal pattern with trend acceleration",
-    difficulty: "Advanced"
+    difficulty: "Advanced",
+    successRate: 64
   },
   {
     name: "Island Reversal",
     type: "reversal",
     description: "Gap-based reversal pattern isolated from main trend",
-    difficulty: "Advanced"
+    difficulty: "Advanced",
+    successRate: 59
   },
   
   // Continuation Patterns
@@ -69,61 +79,71 @@ const PATTERN_LIBRARY: Pattern[] = [
     name: "Ascending Triangle",
     type: "continuation",
     description: "Bullish continuation with horizontal resistance",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 73
   },
   {
     name: "Descending Triangle", 
     type: "continuation",
     description: "Bearish continuation with horizontal support",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 64
   },
   {
     name: "Symmetrical Triangle",
     type: "continuation", 
     description: "Neutral triangle with converging trend lines",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 75
   },
   {
     name: "Bull Flag",
     type: "continuation",
     description: "Brief consolidation in strong uptrend",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 86
   },
   {
     name: "Bear Flag",
     type: "continuation",
     description: "Brief consolidation in strong downtrend", 
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 82
   },
   {
     name: "Pennant",
     type: "continuation",
     description: "Small symmetrical triangle after strong move",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 76
   },
   {
     name: "Cup with Handle",
     type: "continuation",
     description: "Bullish continuation resembling a cup",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 65
   },
   {
     name: "Rectangle",
     type: "continuation",
     description: "Consolidation between horizontal support and resistance",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 67
   },
   {
     name: "Rising Wedge",
     type: "reversal",
     description: "Bearish reversal with converging upward sloping trendlines",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 68
   },
   {
     name: "Falling Wedge",
     type: "reversal", 
     description: "Bullish reversal with converging downward sloping trendlines",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 72
   },
 
   // Candlestick Patterns
@@ -131,55 +151,64 @@ const PATTERN_LIBRARY: Pattern[] = [
     name: "Hammer",
     type: "candlestick",
     description: "Bullish reversal with long lower shadow",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 60
   },
   {
     name: "Hanging Man",
     type: "candlestick", 
     description: "Bearish reversal with long lower shadow",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 59
   },
   {
     name: "Shooting Star",
     type: "candlestick",
     description: "Bearish reversal with long upper shadow",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 62
   },
   {
     name: "Doji",
     type: "candlestick",
     description: "Indecision candle with equal open/close",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 52
   },
   {
     name: "Bullish Harami",
     type: "candlestick",
     description: "Small candle inside previous large bearish candle",
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 63
   },
   {
     name: "Bearish Harami",
     type: "candlestick",
     description: "Small candle inside previous large bullish candle", 
-    difficulty: "Intermediate"
+    difficulty: "Intermediate",
+    successRate: 61
   },
   {
     name: "Bullish Engulfing",
     type: "candlestick",
     description: "Large bullish candle engulfing previous bearish candle",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 63
   },
   {
     name: "Bearish Engulfing", 
     type: "candlestick",
     description: "Large bearish candle engulfing previous bullish candle",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 79
   },
   {
     name: "Spinning Top",
     type: "candlestick",
     description: "Small body with long shadows indicating indecision",
-    difficulty: "Beginner"
+    difficulty: "Beginner",
+    successRate: 45
   }
 ];
 
@@ -219,25 +248,26 @@ export const PatternLibrary = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-foreground mb-4">Pattern Library</h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Comprehensive collection of chart patterns based on Thomas Bulkowski's Encyclopedia of Chart Patterns.
-          Each pattern includes detailed descriptions and difficulty ratings.
-        </p>
-      </div>
+    <TooltipProvider>
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-foreground mb-4">Pattern Library</h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Comprehensive collection of chart patterns based on Thomas Bulkowski's Encyclopedia of Chart Patterns.
+            Each pattern includes detailed descriptions and difficulty ratings.
+          </p>
+        </div>
 
-      {/* Success Rate Disclaimer Link */}
-      <div className="flex justify-center">
-        <Link 
-          to="/faq" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4"
-        >
-          <Info className="h-4 w-4" />
-          Questions about pattern success rates? See our FAQ
-        </Link>
-      </div>
+        {/* Success Rate Disclaimer Link */}
+        <div className="flex justify-center">
+          <Link 
+            to="/faq" 
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4"
+          >
+            <Info className="h-4 w-4" />
+            Questions about pattern success rates? See our FAQ
+          </Link>
+        </div>
 
       {Object.entries(groupedPatterns).map(([type, patterns]) => (
         <div key={type} className="space-y-4">
@@ -283,6 +313,21 @@ export const PatternLibrary = () => {
                           {pattern.difficulty}
                         </Badge>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium text-foreground">
+                          {pattern.successRate}%
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-xs">
+                              The "success rate" in the pattern library is based on historical statistical analysis and backtesting data from Thomas Bulkowski's Encyclopedia of Chart Patterns. These percentages represent the historical likelihood of a pattern achieving its measured move target when correctly identified and traded.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     
                     <Button 
@@ -308,7 +353,8 @@ export const PatternLibrary = () => {
           patternKey={selectedPatternForDetails}
         />
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 
   // Helper function to convert pattern name to key
