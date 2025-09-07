@@ -593,6 +593,17 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="h-5 w-5" />
                     Strategy Configuration
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          Configure your trading strategy step-by-step. Start by selecting your target instrument, 
+                          then choose your preferred building method and define your trading logic.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -603,11 +614,35 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                       <Target className="h-5 w-5 text-primary" />
                       <Label className="text-base font-semibold">Select Financial Instrument</Label>
                       <Badge variant="secondary">Required</Badge>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Choose the financial instrument you want to trade. This is required first because your strategy 
+                            will be optimized for the specific characteristics and behavior patterns of your selected market.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                      
                     {/* Instrument Category Selection */}
                     <div>
-                      <Label className="text-sm font-medium">Market Category</Label>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label className="text-sm font-medium">Market Category</Label>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Different market categories have unique characteristics: Forex (24/5 trading), Stocks (company shares), 
+                              Crypto (digital assets), Commodities (gold, oil), and Indices (market baskets like S&P 500).
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Select value={instrumentCategory} onValueChange={setInstrumentCategory}>
                         <SelectTrigger className="mt-2">
                           <SelectValue placeholder="Choose market category" />
@@ -662,6 +697,21 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                     <>
                       {/* Mode Selection */}
                       <Tabs value={builderMode} onValueChange={(value: "natural" | "visual" | "guided") => setBuilderMode(value)} className="w-full">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Label className="text-lg font-medium">Choose Your Building Method</Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">
+                                <strong>Natural Language:</strong> Describe your strategy in plain English.<br/>
+                                <strong>Guided Builder:</strong> Step-by-step questionnaire for strategy creation.<br/>
+                                <strong>Visual Builder:</strong> Drag-and-drop interface with indicator conditions.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <TabsList className="grid w-full grid-cols-3">
                           <TabsTrigger value="natural">Natural Language</TabsTrigger>
                           <TabsTrigger value="guided">Guided Builder</TabsTrigger>
