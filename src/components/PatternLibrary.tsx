@@ -250,12 +250,6 @@ export const PatternLibrary = () => {
   return (
     <TooltipProvider>
       <div className="space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Pattern Library</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Comprehensive collection of chart patterns with detailed analysis and success rates.
-          </p>
-        </div>
 
         {/* Success Rate Disclaimer Link */}
         <div className="flex justify-center">
