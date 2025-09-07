@@ -583,11 +583,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
             </p>
           </div>
 
-          {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content - Single Column Centered Layout */}
+          <div className="max-w-4xl mx-auto space-y-8">
             
-            {/* Panel A: Strategy Configuration */}
-            <div className="lg:col-span-1">
+            {/* Strategy Configuration */}
+            <div>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1430,8 +1430,8 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
               </Card>
             </div>
 
-            {/* Panel B: Generated Code */}
-            <div className="lg:col-span-2">
+            {/* Generated Code Section - Placed below Strategy Configuration */}
+            <div>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
