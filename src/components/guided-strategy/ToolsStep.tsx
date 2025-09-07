@@ -159,11 +159,20 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
                 <TooltipTrigger>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    Market filters help refine when your strategy executes trades by filtering out unfavorable market conditions. 
-                    Examples include avoiding low volatility periods, trading only during specific market sessions, or filtering based on economic events.
-                  </p>
+                <TooltipContent className="max-w-sm">
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      Filters act as exclusions: when selected, entries are blocked while the condition is unfavorable.
+                    </p>
+                    <ul className="list-disc pl-4 text-sm space-y-1">
+                      <li><strong>Volatility Filter:</strong> Avoid extremes; trade only when volatility sits within a normal band.</li>
+                      <li><strong>Trend Filter:</strong> Align with trend (e.g., allow longs only when price is above a chosen MA/EMA).</li>
+                      <li><strong>Volume Filter:</strong> Skip low-liquidity periods; require minimum volume to enter.</li>
+                      <li><strong>Correlation Filter:</strong> Block new entries highly correlated with existing positions.</li>
+                      <li><strong>Time/Day/Session:</strong> Trade only inside selected windows; block outside.</li>
+                      <li><strong>Economic News:</strong> Pause entries around high-impact releases (buffer window).</li>
+                    </ul>
+                  </div>
                 </TooltipContent>
               </Tooltip>
               <Badge variant="outline" className="text-xs">
