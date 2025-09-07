@@ -2,7 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, AlertTriangle, Lightbulb, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, AlertTriangle, Lightbulb, ExternalLink, Info } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { useState } from "react";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
@@ -59,7 +60,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
   };
 
   return (
-    <>
+    <TooltipProvider>
       <Card className="p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -90,6 +91,16 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Success Rate</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-sm">
+                      Success rate represents the historical percentage of times this pattern correctly predicted price movement based on Thomas Bulkowski's extensive market research. This is educational data and does not guarantee future performance.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
             </div>
@@ -252,6 +263,6 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
         onClose={() => setShowDetailModal(false)}
         patternKey={patternKey}
       />
-    </>
+    </TooltipProvider>
   );
 };
