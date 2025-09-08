@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import MemberNavigation from '@/components/MemberNavigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Heart, Download, Share, Search, Users, Code, Star } from "lucide-react";
-import MemberNavigation from "@/components/MemberNavigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Heart, Download, Share2, Eye, TrendingUp, Users, MessageSquare, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import CommunityChatInterface from '@/components/CommunityChatInterface';
+import ModeratorContactModal from '@/components/ModeratorContactModal';
 
 interface CommunityStrategy {
   id: string;
@@ -35,12 +38,14 @@ interface UserStrategy {
 }
 
 const MemberCommunity = () => {
-  const [strategies, setStrategies] = useState<CommunityStrategy[]>([]);
+  const [communityStrategies, setCommunityStrategies] = useState<CommunityStrategy[]>([]);
   const [myStrategies, setMyStrategies] = useState<UserStrategy[]>([]);
+  const [mySharedStrategies, setMySharedStrategies] = useState<CommunityStrategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState("all");
-  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isModeratorContactOpen, setIsModeratorContactOpen] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<UserStrategy | null>(null);
   const [shareForm, setShareForm] = useState({
     title: "",
@@ -63,7 +68,7 @@ const MemberCommunity = () => {
         .order('likes_count', { ascending: false });
 
       if (error) throw error;
-      setStrategies(data || []);
+      setCommunityStrategies(data || []);
     } catch (error) {
       console.error('Error fetching community strategies:', error);
       toast({
@@ -79,14 +84,25 @@ const MemberCommunity = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Fetch personal strategies
+      const { data: strategies, error: strategiesError } = await supabase
         .from('user_strategies')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setMyStrategies(data || []);
+      if (strategiesError) throw strategiesError;
+      setMyStrategies(strategies || []);
+
+      // Fetch shared strategies
+      const { data: sharedStrategies, error: sharedError } = await supabase
+        .from('community_strategies')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (sharedError) throw sharedError;
+      setMySharedStrategies(sharedStrategies || []);
     } catch (error) {
       console.error('Error fetching user strategies:', error);
     } finally {
@@ -177,10 +193,11 @@ const MemberCommunity = () => {
         description: "Strategy shared with the community!"
       });
 
-      setShowShareDialog(false);
+      setIsShareDialogOpen(false);
       setSelectedStrategy(null);
       setShareForm({ title: "", description: "", tags: "", performance_data: "" });
       fetchCommunityStrategies();
+      fetchMyStrategies();
     } catch (error) {
       console.error('Error sharing strategy:', error);
       toast({
@@ -191,7 +208,7 @@ const MemberCommunity = () => {
     }
   };
 
-  const filteredStrategies = strategies.filter(strategy => {
+  const filteredStrategies = communityStrategies.filter(strategy => {
     const matchesSearch = strategy.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          strategy.description.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -208,21 +225,37 @@ const MemberCommunity = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Community Hub</h1>
-            <p className="text-muted-foreground">Share strategies and learn from the community</p>
+            <p className="text-muted-foreground">Chat, share strategies, and connect with fellow traders</p>
           </div>
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              {strategies.length} Shared Strategies
+              {communityStrategies.length} Shared Strategies
             </Badge>
           </div>
         </div>
 
-        <Tabs defaultValue="discover" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="discover">Discover Strategies</TabsTrigger>
-            <TabsTrigger value="my-shared">My Shared Strategies</TabsTrigger>
+        <Tabs defaultValue="chat" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Community Chat
+            </TabsTrigger>
+            <TabsTrigger value="discover" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Discover Strategies
+            </TabsTrigger>
+            <TabsTrigger value="shared" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              My Shared Strategies
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="chat">
+            <CommunityChatInterface 
+              onOpenModeratorContact={() => setIsModeratorContactOpen(true)}
+            />
+          </TabsContent>
 
           <TabsContent value="discover" className="space-y-6">
             {/* Search and Filters */}
@@ -236,15 +269,16 @@ const MemberCommunity = () => {
                   className="pl-10"
                 />
               </div>
-              <select 
-                value={filterBy} 
-                onChange={(e) => setFilterBy(e.target.value)}
-                className="px-4 py-2 border rounded-md bg-background"
-              >
-                <option value="all">All Strategies</option>
-                <option value="featured">Featured</option>
-                <option value="popular">Popular</option>
-              </select>
+              <Select value={filterBy} onValueChange={setFilterBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Strategies</SelectItem>
+                  <SelectItem value="featured">Featured</SelectItem>
+                  <SelectItem value="popular">Popular</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Strategy Grid */}
@@ -261,14 +295,14 @@ const MemberCommunity = () => {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">{strategy.title}</CardTitle>
-                        <CardDescription className="mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {strategy.description}
-                        </CardDescription>
+                        </p>
                       </div>
                     </div>
                     
                     <div className="flex flex-wrap gap-1 mt-3">
-                      {strategy.tags.map((tag) => (
+                      {strategy.tags?.map((tag) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
@@ -319,119 +353,128 @@ const MemberCommunity = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="my-shared" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">My Strategies</h2>
-              <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Share className="h-4 w-4 mr-2" />
-                    Share Strategy
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Share Strategy with Community</DialogTitle>
-                    <DialogDescription>
-                      Select a strategy to share and add community-friendly details
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Select Strategy</label>
-                      <select 
-                        className="w-full mt-1 px-3 py-2 border rounded-md"
-                        onChange={(e) => {
-                          const strategy = myStrategies.find(s => s.id === e.target.value);
+          <TabsContent value="shared">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">My Shared Strategies</h3>
+                <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share Strategy
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>Share Strategy with Community</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Select Strategy</label>
+                        <Select onValueChange={(value) => {
+                          const strategy = myStrategies.find(s => s.id === value);
                           setSelectedStrategy(strategy || null);
-                        }}
-                      >
-                        <option value="">Choose a strategy...</option>
-                        {myStrategies.map((strategy) => (
-                          <option key={strategy.id} value={strategy.id}>
-                            {strategy.name}
-                          </option>
-                        ))}
-                      </select>
+                        }}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Choose a strategy..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {myStrategies.map((strategy) => (
+                              <SelectItem key={strategy.id} value={strategy.id}>
+                                {strategy.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {selectedStrategy && (
+                        <>
+                          <div>
+                            <label className="text-sm font-medium">Public Title</label>
+                            <Input
+                              placeholder={selectedStrategy.name}
+                              value={shareForm.title}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, title: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea
+                              placeholder={selectedStrategy.description}
+                              value={shareForm.description}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, description: e.target.value }))}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-medium">Tags (comma-separated)</label>
+                            <Input
+                              placeholder="scalping, trend-following, breakout"
+                              value={shareForm.tags}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, tags: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div className="flex gap-2 pt-4">
+                            <Button onClick={handleShareStrategy} className="flex-1">
+                              Share Strategy
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setIsShareDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-                    {selectedStrategy && (
-                      <>
-                        <div>
-                          <label className="text-sm font-medium">Public Title</label>
-                          <Input
-                            placeholder={selectedStrategy.name}
-                            value={shareForm.title}
-                            onChange={(e) => setShareForm(prev => ({ ...prev, title: e.target.value }))}
-                          />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {mySharedStrategies.map((strategy) => (
+                  <Card key={strategy.id}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{strategy.title}</CardTitle>
+                      <p className="text-sm text-muted-foreground">{strategy.description}</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge variant="outline">{strategy.strategy_type}</Badge>
+                        {strategy.is_featured && <Badge>Featured</Badge>}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Heart className="h-4 w-4" />
+                          {strategy.likes_count} likes
                         </div>
-
-                        <div>
-                          <label className="text-sm font-medium">Description</label>
-                          <Textarea
-                            placeholder={selectedStrategy.description}
-                            value={shareForm.description}
-                            onChange={(e) => setShareForm(prev => ({ ...prev, description: e.target.value }))}
-                            rows={3}
-                          />
+                        <div className="flex items-center gap-1">
+                          <Download className="h-4 w-4" />
+                          {strategy.downloads_count} downloads
                         </div>
-
-                        <div>
-                          <label className="text-sm font-medium">Tags (comma-separated)</label>
-                          <Input
-                            placeholder="scalping, trend-following, breakout"
-                            value={shareForm.tags}
-                            onChange={(e) => setShareForm(prev => ({ ...prev, tags: e.target.value }))}
-                          />
-                        </div>
-
-                        <div className="flex gap-2 pt-4">
-                          <Button onClick={handleShareStrategy} className="flex-1">
-                            Share Strategy
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setShowShareDialog(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {myStrategies.map((strategy) => (
-                <Card key={strategy.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{strategy.name}</CardTitle>
-                    <CardDescription>{strategy.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline">{strategy.strategy_type}</Badge>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedStrategy(strategy);
-                          setShowShareDialog(true);
-                        }}
-                      >
-                        <Share className="h-4 w-4 mr-2" />
-                        Share
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      <ModeratorContactModal 
+        open={isModeratorContactOpen}
+        onClose={() => setIsModeratorContactOpen(false)}
+      />
     </div>
   );
 };
