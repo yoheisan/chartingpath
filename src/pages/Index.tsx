@@ -82,8 +82,7 @@ const Index = () => {
           {/* Main Headline */}
           <div className="mb-8">
             <h2 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight">
-              Research first<span className="text-primary">/</span><br />
-              Then execute<span className="text-primary">.</span>
+              Plan <span className="text-primary">→</span> Execute<span className="text-primary">.</span>
             </h2>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
               {t('hero.subtitle', 'The best trades require research, then commitment.')}
