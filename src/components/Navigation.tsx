@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
@@ -110,12 +109,10 @@ const Navigation = () => {
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('navigation.pricing', 'Pricing')}
             </Link>
-            <LanguageSwitcher />
             <AuthButton />
           </nav>
 
           <div className="md:hidden flex items-center gap-2">
-            <LanguageSwitcher />
             <AuthButton />
           </div>
         </div>
