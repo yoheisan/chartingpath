@@ -16,7 +16,6 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 export interface GuidedStrategyAnswers {
   objectives: {
     primaryGoal: string;
-    tradingExperience: string;
     timeCommitment: string;
   };
   market: {

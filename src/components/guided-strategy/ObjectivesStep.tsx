@@ -39,7 +39,6 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
 }) => {
   const currentAnswers = answers.objectives || {
     primaryGoal: '',
-    tradingExperience: '',
     timeCommitment: ''
   };
 
@@ -51,7 +50,7 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
     onAnswersChange('objectives', newAnswers);
   };
 
-  const isComplete = currentAnswers.primaryGoal && currentAnswers.tradingExperience && currentAnswers.timeCommitment;
+  const isComplete = currentAnswers.primaryGoal && currentAnswers.timeCommitment;
 
   return (
     <div className="space-y-6">
@@ -85,29 +84,6 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            What's Your Trading Experience?
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {experienceLevels.map((level) => (
-              <Button
-                key={level.id}
-                variant={currentAnswers.tradingExperience === level.id ? "default" : "outline"}
-                className="h-auto p-4 flex flex-col items-center text-center"
-                onClick={() => handleAnswerChange('tradingExperience', level.id)}
-              >
-                <span className="font-medium mb-1">{level.label}</span>
-                <span className="text-xs text-muted-foreground">{level.desc}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

@@ -54,7 +54,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     
     return `A ${style?.approach?.replace('-', ' ')} strategy targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
     Trades ${market?.assetClass} markets with ${riskTolerance?.maxDrawdown}% max drawdown tolerance. 
-    Designed for ${objectives?.tradingExperience} traders seeking ${objectives?.primaryGoal?.replace('_', ' ')}.`;
+    Designed for traders seeking ${objectives?.primaryGoal?.replace('_', ' ')}.`;
   };
 
   const canBacktest = () => {
@@ -171,7 +171,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li>• Goal: {answers.objectives?.primaryGoal?.replace('_', ' ')}</li>
-                <li>• Experience: {answers.objectives?.tradingExperience}</li>
                 <li>• Time: {answers.objectives?.timeCommitment}</li>
               </ul>
             </div>
