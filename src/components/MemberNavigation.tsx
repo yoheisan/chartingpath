@@ -6,7 +6,6 @@ import {
   Download, 
   Bell,
   Home,
-  Settings,
   TrendingUp,
   Database
 } from "lucide-react";
@@ -52,11 +51,6 @@ const MemberNavigation = () => {
       icon: Bell,
       label: "Alerts",
       badge: "Pro"
-    },
-    {
-      to: "/members/account",
-      icon: Settings,
-      label: "Account",
     },
   ];
 
