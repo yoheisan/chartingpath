@@ -41,10 +41,10 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
 
   const generateStrategyName = () => {
     const approach = answers.style?.approach?.replace('-', ' ') || 'Custom';
-    const market = answers.market?.assetClass || 'Multi-Asset';
+    const instrument = answers.market?.instruments?.[0] || 'Multi-Asset';
     const timeframe = answers.market?.timeframes?.[0] || '1h';
     
-    return `${approach} ${market} ${timeframe}`.split(' ').map(word => 
+    return `${approach} ${instrument} ${timeframe}`.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -53,7 +53,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     const { objectives, market, style, riskTolerance, reward } = answers;
     
     return `A ${style?.approach?.replace('-', ' ')} strategy targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
-    Trades ${market?.assetClass} markets with ${riskTolerance?.maxDrawdown}% max drawdown tolerance. 
+    Trades selected instruments with ${riskTolerance?.maxDrawdown}% max drawdown tolerance. 
     Designed for traders seeking ${objectives?.primaryGoal?.replace('_', ' ')}.`;
   };
 
@@ -181,7 +181,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 Markets
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Asset: {answers.market?.assetClass}</li>
                 <li>• Instruments: {answers.market?.instruments?.slice(0, 3).join(', ')}{answers.market?.instruments?.length > 3 ? '...' : ''}</li>
                 <li>• Timeframes: {answers.market?.timeframes?.join(', ')}</li>
               </ul>

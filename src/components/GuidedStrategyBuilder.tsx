@@ -19,7 +19,6 @@ export interface GuidedStrategyAnswers {
     timeCommitment: string;
   };
   market: {
-    assetClass: string;
     instruments: string[];
     timeframes: string[];
   };

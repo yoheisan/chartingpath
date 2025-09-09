@@ -11,25 +11,18 @@ interface MarketStepProps {
   subscriptionPlan: string;
 }
 
-const assetClasses = [
-  { id: 'forex', label: 'Forex', desc: 'Currency pairs', icon: Globe },
-  { id: 'stocks', label: 'Stocks', desc: 'Equity markets', icon: TrendingUp },
-  { id: 'crypto', label: 'Crypto', desc: 'Digital assets', icon: Zap },
-  { id: 'commodities', label: 'Commodities', desc: 'Raw materials', icon: TrendingUp },
-  { id: 'indices', label: 'Indices', desc: 'Market indices', icon: TrendingUp },
-];
-
-const forexPairs = [
+const allInstruments = [
+  // Forex
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD',
-  'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'XAU/USD', 'XAG/USD'
-];
-
-const stocks = [
-  'SPY', 'QQQ', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX'
-];
-
-const cryptos = [
-  'BTC/USD', 'ETH/USD', 'ADA/USD', 'DOT/USD', 'LINK/USD', 'UNI/USD', 'SOL/USD'
+  'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'XAU/USD', 'XAG/USD',
+  // Stocks  
+  'SPY', 'QQQ', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX',
+  // Crypto
+  'BTC/USD', 'ETH/USD', 'ADA/USD', 'DOT/USD', 'LINK/USD', 'UNI/USD', 'SOL/USD',
+  // Commodities
+  'Gold', 'Silver', 'Oil', 'Natural Gas',
+  // Indices
+  'S&P 500', 'NASDAQ', 'DAX', 'FTSE'
 ];
 
 const timeframes = [
@@ -48,18 +41,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.market || {
-    assetClass: '',
     instruments: [],
     timeframes: []
-  };
-
-  const handleAssetClassChange = (assetClass: string) => {
-    const newAnswers = {
-      ...currentAnswers,
-      assetClass,
-      instruments: [] // Reset instruments when changing asset class
-    };
-    onAnswersChange('market', newAnswers);
   };
 
   const handleInstrumentToggle = (instrument: string) => {
@@ -86,19 +69,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     });
   };
 
-  const getInstrumentOptions = () => {
-    switch (currentAnswers.assetClass) {
-      case 'forex': return forexPairs;
-      case 'stocks': return stocks;
-      case 'crypto': return cryptos;
-      case 'commodities': return ['Gold', 'Silver', 'Oil', 'Natural Gas'];
-      case 'indices': return ['S&P 500', 'NASDAQ', 'DAX', 'FTSE'];
-      default: return [];
-    }
-  };
-
-  const isComplete = currentAnswers.assetClass && 
-                   currentAnswers.instruments?.length > 0 && 
+  const isComplete = currentAnswers.instruments?.length > 0 && 
                    currentAnswers.timeframes?.length > 0;
 
   return (
@@ -106,57 +77,28 @@ export const MarketStep: React.FC<MarketStepProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            Which Asset Class Interests You?
+            <TrendingUp className="w-5 h-5" />
+            Select Your Preferred Instruments
+            <Badge variant="secondary" className="ml-2">
+              {currentAnswers.instruments?.length || 0} selected
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {assetClasses.map((asset) => {
-              const Icon = asset.icon;
-              return (
-                <Button
-                  key={asset.id}
-                  variant={currentAnswers.assetClass === asset.id ? "default" : "outline"}
-                  className="h-auto p-4 flex flex-col items-center text-center"
-                  onClick={() => handleAssetClassChange(asset.id)}
-                >
-                  <Icon className="w-6 h-6 mb-2" />
-                  <span className="font-medium">{asset.label}</span>
-                  <span className="text-xs text-muted-foreground">{asset.desc}</span>
-                </Button>
-              );
-            })}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {allInstruments.map((instrument) => (
+              <Button
+                key={instrument}
+                variant={currentAnswers.instruments?.includes(instrument) ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleInstrumentToggle(instrument)}
+              >
+                {instrument}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
-
-      {currentAnswers.assetClass && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Select Your Preferred Instruments
-              <Badge variant="secondary" className="ml-2">
-                {currentAnswers.instruments?.length || 0} selected
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {getInstrumentOptions().map((instrument) => (
-                <Button
-                  key={instrument}
-                  variant={currentAnswers.instruments?.includes(instrument) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleInstrumentToggle(instrument)}
-                >
-                  {instrument}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
@@ -201,7 +143,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               <span className="font-medium">Market Selection Complete!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              You've selected {currentAnswers.assetClass} with {currentAnswers.instruments?.length} instruments 
+              You've selected {currentAnswers.instruments?.length} instruments 
               across {currentAnswers.timeframes?.length} timeframes.
             </p>
           </CardContent>
