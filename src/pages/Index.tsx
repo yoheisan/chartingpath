@@ -94,10 +94,10 @@ const Index = () => {
           <div className="mb-12">
             <Button 
               size="lg" 
-              onClick={handleEmailOptIn} 
+              asChild
               className="px-12 py-6 text-lg font-semibold bg-white text-background hover:bg-white/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
-              {t('hero.cta', 'Get started for free')}
+              <Link to="/pricing">{t('hero.cta', 'Get started for free')}</Link>
             </Button>
             <p className="text-white/70 text-sm mt-4">
               {t('hero.free_text', '$0 forever, no credit card needed')}
