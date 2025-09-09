@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Target, Clock, TrendingUp, User } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Target, Clock, TrendingUp, User, Info } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ObjectivesStepProps {
@@ -53,14 +54,29 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
   const isComplete = currentAnswers.primaryGoal && currentAnswers.timeCommitment;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            What's Your Primary Trading Goal?
-          </CardTitle>
-        </CardHeader>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" />
+              What's Your Primary Trading Goal?
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Your trading goal determines the strategy's focus and risk profile. 
+                    <strong> Income</strong> strategies prioritize consistent smaller gains, 
+                    <strong> Growth</strong> targets larger capital appreciation, 
+                    <strong> Learning</strong> emphasizes educational value with simpler approaches, and 
+                    <strong> Diversification</strong> spreads risk across multiple positions.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {primaryGoals.map((goal) => {
@@ -123,5 +139,6 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };
