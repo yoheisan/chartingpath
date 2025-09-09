@@ -286,16 +286,23 @@ const Pricing = () => {
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">What's included in the Script Library?</CardTitle>
+                <CardTitle className="text-lg">How does upgrading without payment work?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Ready-to-use trading scripts for Pine Script (TradingView), Python (MT4/MT5), and MQL5. 
-                  Each script includes setup instructions, backtesting results, and customization guides.
-                </p>
+                <div className="text-muted-foreground space-y-3">
+                  <p>
+                    You can upgrade your annual subscription at any time with no extra transactions needed. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier. You don't lose anything, just use the remaining amount to switch to a better version.
+                  </p>
+                  <p>
+                    Thus, the remaining period of your subscription will be reduced and your next payment date will be switched. You can upgrade your annual non-professional or professional subscription at any time with no extra money payments. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    Remember, it's not a free trial. Once upgraded, there will be no option to revert this action. However, you'll be able to set a downgraded plan for the next billing period.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
@@ -304,8 +311,25 @@ const Pricing = () => {
                 <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="text-muted-foreground space-y-2">
+                  <p>
+                    You can cancel your subscription anytime and it will not auto-renew after the current paid term. Paid service will remain active for the duration of the paid term.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    A canceled trial will stop immediately after cancellation.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">What's included in the Script Library?</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <p className="text-muted-foreground">
-                  Yes! All plans are month-to-month with no long-term commitment. Cancel anytime from your account settings.
+                  Ready-to-use trading scripts for Pine Script (TradingView), Python (MT4/MT5), and MQL5. 
+                  Each script includes setup instructions, backtesting results, and customization guides.
                 </p>
               </CardContent>
             </Card>
@@ -328,6 +352,17 @@ const Pricing = () => {
               <CardContent>
                 <p className="text-muted-foreground">
                   Our scripts are compatible with TradingView (Pine Script), MetaTrader 4/5 (Python & MQL), and most major trading platforms.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">How do plan upgrades affect billing?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  When you upgrade to a higher tier, we automatically calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly, and you'll see the updated next payment date in your account.
                 </p>
               </CardContent>
             </Card>
