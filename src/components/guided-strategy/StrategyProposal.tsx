@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   FileText, 
   Play, 
@@ -38,6 +41,8 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
 }) => {
   const [backtestResults, setBacktestResults] = useState<BacktestData | null>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [strategyName, setStrategyName] = useState('');
 
   const generateStrategyName = () => {
     const approach = answers.style?.approach?.replace('-', ' ') || 'Custom';
@@ -103,8 +108,19 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
       return;
     }
 
+    // Show dialog to get strategy name
+    setStrategyName(generateStrategyName());
+    setShowNameDialog(true);
+  };
+
+  const confirmSaveStrategy = () => {
+    if (!strategyName.trim()) {
+      toast.error('Please enter a strategy name');
+      return;
+    }
+
     const strategy = {
-      name: generateStrategyName(),
+      name: strategyName.trim(),
       description: generateStrategyDescription(),
       answers,
       backtestResults,
@@ -113,6 +129,8 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     };
 
     onSaveStrategy?.(strategy);
+    setShowNameDialog(false);
+    setStrategyName('');
     toast.success('Strategy saved to vault');
   };
 
@@ -298,6 +316,39 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Strategy Name Dialog */}
+      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Strategy to Vault</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="strategy-name">Strategy Name</Label>
+              <Input
+                id="strategy-name"
+                value={strategyName}
+                onChange={(e) => setStrategyName(e.target.value)}
+                placeholder="Enter a name for your strategy"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmSaveStrategy();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNameDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmSaveStrategy}>
+              Save Strategy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
