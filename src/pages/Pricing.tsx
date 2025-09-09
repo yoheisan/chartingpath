@@ -294,10 +294,10 @@ const Pricing = () => {
               <CardContent>
                 <div className="text-muted-foreground space-y-3">
                   <p>
-                    You can upgrade your annual subscription at any time with no extra transactions needed. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier. You don't lose anything, just use the remaining amount to switch to a better version.
+                    <strong>Upgrading:</strong> You can upgrade your annual subscription at any time with no extra transactions needed. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier. You don't lose anything, just use the remaining amount to switch to a better version. Thus, the remaining period of your subscription will be reduced and your next payment date will be switched.
                   </p>
                   <p>
-                    Thus, the remaining period of your subscription will be reduced and your next payment date will be switched. You can upgrade your annual non-professional or professional subscription at any time with no extra money payments. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier.
+                    <strong>Downgrading:</strong> If you downgrade, your current plan will stay exactly as it is until its subscription date. Then, once it expires, your new downgraded plan will go live at the selected rate.
                   </p>
                   <p className="font-medium text-foreground">
                     Remember, it's not a free trial. Once upgraded, there will be no option to revert this action. However, you'll be able to set a downgraded plan for the next billing period.
