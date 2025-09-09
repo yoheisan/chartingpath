@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Shield, DollarSign } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlertTriangle, Shield, DollarSign, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface RiskToleranceStepProps {
@@ -50,14 +51,27 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
   const isComplete = true; // All have default values
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            Risk Tolerance Settings
-          </CardTitle>
-        </CardHeader>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Risk Tolerance Settings
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Risk settings control position sizing and loss limits. <strong>Max Drawdown</strong> sets portfolio stop-loss, 
+                    <strong>Position Size</strong> determines capital per trade, <strong>Risk Per Trade</strong> limits single trade exposure. 
+                    Conservative settings prioritize capital preservation, aggressive settings target higher returns with more risk.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
         <CardContent className="space-y-8">
           {/* Max Drawdown */}
           <div className="space-y-4">
@@ -163,5 +177,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };

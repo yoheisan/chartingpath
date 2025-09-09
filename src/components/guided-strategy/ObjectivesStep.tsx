@@ -101,13 +101,27 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
       </Card>
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            How Much Time Can You Dedicate?
-          </CardTitle>
-        </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              How Much Time Can You Dedicate?
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Your time commitment determines strategy frequency and complexity. 
+                    <strong> Minimal</strong> time suits position trading with weekly checks, 
+                    <strong> Moderate</strong> allows swing trading with daily monitoring, 
+                    <strong> Substantial</strong> enables intraday strategies, and 
+                    <strong> Full-time</strong> supports high-frequency scalping approaches.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {timeCommitments.map((time) => (

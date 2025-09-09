@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Globe, Clock, Zap } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TrendingUp, Globe, Clock, Zap, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface MarketStepProps {
@@ -59,17 +60,30 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   const isComplete = currentAnswers.timeframes?.length > 0;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            What Timeframes Do You Prefer?
-            <Badge variant="secondary" className="ml-2">
-              {currentAnswers.timeframes?.length || 0} selected
-            </Badge>
-          </CardTitle>
-        </CardHeader>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              What Timeframes Do You Prefer?
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Timeframes determine trade duration and monitoring frequency. <strong>Scalping</strong> (1-15min) requires constant attention for quick profits, 
+                    <strong>Intraday</strong> (15min-4h) holds positions within the day, <strong>Swing</strong> (4h-1d) captures multi-day trends, 
+                    <strong>Position</strong> (1w+) targets long-term moves with minimal monitoring.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <Badge variant="secondary" className="ml-2">
+                {currentAnswers.timeframes?.length || 0} selected
+              </Badge>
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {['scalping', 'intraday', 'swing', 'position'].map((category) => (
@@ -109,5 +123,6 @@ export const MarketStep: React.FC<MarketStepProps> = ({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };

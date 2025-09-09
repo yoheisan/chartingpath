@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Calendar, AlertTriangle, Shield } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Clock, Calendar, AlertTriangle, Shield, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ConstraintsStepProps {
@@ -69,17 +70,30 @@ export const ConstraintsStep: React.FC<ConstraintsStepProps> = ({
   const isComplete = getTotalSelected() > 0;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Trading Constraints & Rules
-            <Badge variant="secondary" className="ml-2">
-              {getTotalSelected()} constraints
-            </Badge>
-          </CardTitle>
-        </CardHeader>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Trading Constraints & Rules
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Constraints define when your strategy should <strong>NOT</strong> trade to avoid unfavorable conditions. 
+                    <strong>Trading Hours</strong> limit active periods, <strong>Market Conditions</strong> specify favorable environments, 
+                    <strong>Excluded Periods</strong> avoid high-risk times like news events or low liquidity periods.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <Badge variant="secondary" className="ml-2">
+                {getTotalSelected()} constraints
+              </Badge>
+            </CardTitle>
+          </CardHeader>
         <CardContent className="space-y-6">
           
           {/* Trading Hours */}
@@ -235,5 +249,6 @@ export const ConstraintsStep: React.FC<ConstraintsStepProps> = ({
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 };

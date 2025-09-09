@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { TrendingUp, Target, Award } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TrendingUp, Target, Award, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface RewardStepProps {
@@ -58,14 +59,26 @@ export const RewardStep: React.FC<RewardStepProps> = ({
   const isComplete = true; // All have default values
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Reward Expectations
-          </CardTitle>
-        </CardHeader>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Reward Expectations
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Reward targets shape your strategy's aggressiveness and position sizing. <strong>Higher returns</strong> require larger risks and more volatile approaches. 
+                    <strong>Win rate</strong> and <strong>risk-reward ratio</strong> must balance: high win rates typically mean smaller average profits per trade.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
         <CardContent className="space-y-8">
           {/* Target Return */}
           <div className="space-y-4">
@@ -183,5 +196,6 @@ export const RewardStep: React.FC<RewardStepProps> = ({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };

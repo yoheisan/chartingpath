@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, BarChart3, Brain, Clock, Layers, TrendingUp } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Zap, BarChart3, Brain, Clock, Layers, TrendingUp, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface StyleStepProps {
@@ -86,12 +87,25 @@ export const StyleStep: React.FC<StyleStepProps> = ({
   const isComplete = currentAnswers.approach && currentAnswers.frequency && currentAnswers.complexity;
 
   return (
-    <div className="space-y-6">
+    <TooltipProvider>
+      <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
             What's Your Trading Approach?
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  Your approach defines core entry/exit logic. <strong>Trend Following</strong> rides momentum with moving averages, 
+                  <strong>Mean Reversion</strong> buys oversold/sells overbought conditions, <strong>Breakout</strong> trades volatility expansions, 
+                  <strong>Scalping</strong> captures small frequent moves, <strong>Multi-Strategy</strong> combines multiple approaches for diversification.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -139,6 +153,18 @@ export const StyleStep: React.FC<StyleStepProps> = ({
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Trading Frequency
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  Frequency determines timeframes and monitoring requirements. <strong>High Frequency</strong> uses 1-15min charts with constant monitoring, 
+                  <strong>Medium</strong> uses 1-4h charts with periodic checks, <strong>Low</strong> uses daily charts, 
+                  <strong>Position Trading</strong> uses weekly/monthly charts for long-term holds.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -167,6 +193,18 @@ export const StyleStep: React.FC<StyleStepProps> = ({
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5" />
             Strategy Complexity
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  Complexity affects number of conditions and decision logic. <strong>Simple</strong> uses 1-3 basic indicators for clear signals, 
+                  <strong>Moderate</strong> combines 4-6 indicators with basic filters, <strong>Complex</strong> uses 7+ indicators with advanced logic, 
+                  <strong>Adaptive</strong> employs AI-driven dynamic parameter adjustment.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -217,5 +255,6 @@ export const StyleStep: React.FC<StyleStepProps> = ({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };

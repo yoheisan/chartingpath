@@ -102,6 +102,19 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
                   <div className="flex items-center gap-2">
                     <Icon className="w-4 h-4" />
                     <h4 className="font-medium">{category.label}</h4>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p className="text-sm">
+                          {key === 'trend' && "Trend indicators identify market direction. Moving averages smooth price data, MACD shows momentum changes, ADX measures trend strength."}
+                          {key === 'momentum' && "Momentum oscillators detect overbought/oversold conditions. RSI shows price momentum, Stochastic compares closing prices to ranges."}
+                          {key === 'volume' && "Volume indicators confirm price movements. Volume MA shows average trading activity, OBV tracks volume flow, VWAP shows average price weighted by volume."}
+                          {key === 'volatility' && "Volatility indicators measure market uncertainty. Bollinger Bands show price ranges, ATR measures average price movement, VIX shows market fear."}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                     <Badge variant="outline" className="text-xs">
                       {currentAnswers.indicators?.filter(ind => category.items.includes(ind)).length || 0} selected
                     </Badge>
@@ -130,6 +143,19 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
             <div className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
               <h3 className="font-medium text-lg">Chart Patterns</h3>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Chart patterns predict price movements based on historical formations. 
+                    <strong>Reversal patterns</strong> (Double Top, Head & Shoulders) signal trend changes, 
+                    <strong>Continuation patterns</strong> (Flags, Triangles) suggest trend persistence, 
+                    <strong>Candlestick patterns</strong> (Doji, Hammer) provide short-term signals.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
               <Badge variant="outline" className="text-xs">
                 {currentAnswers.patterns?.length || 0} selected
               </Badge>
