@@ -4,12 +4,10 @@ import {
   Code, 
   BookOpen, 
   Download, 
-  Users, 
   Bell,
   Home,
   Settings,
   TrendingUp,
-  BarChart3,
   Database
 } from "lucide-react";
 
@@ -20,18 +18,13 @@ const MemberNavigation = () => {
     {
       to: "/",
       icon: Home,
-      label: "Home",
+      label: "Member Dashboard",
+      primary: true
     },
     {
       to: "/members/trading",
       icon: TrendingUp,
       label: "Paper Trading",
-    },
-    {
-      to: "/backtest",
-      icon: BarChart3,
-      label: "Backtesting",
-      badge: "New"
     },
     {
       to: "/vault",
@@ -61,11 +54,6 @@ const MemberNavigation = () => {
       badge: "Pro"
     },
     {
-      to: "/members/community",
-      icon: Users,
-      label: "Community",
-    },
-    {
       to: "/members/account",
       icon: Settings,
       label: "Account",
@@ -78,14 +66,15 @@ const MemberNavigation = () => {
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.to;
+          const isPrimary = item.primary;
           
           return (
             <Button
               key={item.to}
-              variant={isActive ? "default" : "outline"}
-              size="sm"
+              variant={isActive ? "default" : isPrimary ? "secondary" : "outline"}
+              size={isPrimary ? "default" : "sm"}
               asChild
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 ${isPrimary ? "font-semibold shadow-md" : ""}`}
             >
               <Link to={item.to}>
                 <Icon className="h-4 w-4" />
