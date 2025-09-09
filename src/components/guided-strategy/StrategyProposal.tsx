@@ -189,10 +189,9 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 <TrendingUp className="w-4 h-4" />
                 Style
               </h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Approach: {answers.style?.approach?.replace('-', ' ')}</li>
-                <li>• Complexity: {answers.style?.complexity}</li>
-              </ul>
+               <ul className="space-y-1 text-sm text-muted-foreground">
+                 <li>• Approach: {answers.style?.approach?.replace('-', ' ')}</li>
+               </ul>
             </div>
             
             <div>

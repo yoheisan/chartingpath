@@ -33,7 +33,6 @@ export interface GuidedStrategyAnswers {
   };
   style: {
     approach: string;
-    complexity: string;
   };
   tools: {
     indicators: string[];

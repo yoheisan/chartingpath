@@ -55,12 +55,6 @@ const approaches = [
   }
 ];
 
-const complexities = [
-  { id: 'simple', label: 'Simple', desc: '1-3 conditions', level: 'Beginner-friendly' },
-  { id: 'moderate', label: 'Moderate', desc: '4-6 conditions', level: 'Some experience needed' },
-  { id: 'complex', label: 'Complex', desc: '7+ conditions', level: 'Advanced traders' },
-  { id: 'adaptive', label: 'Adaptive', desc: 'AI-driven', level: 'Pro/Elite only' },
-];
 
 export const StyleStep: React.FC<StyleStepProps> = ({
   answers,
@@ -68,8 +62,7 @@ export const StyleStep: React.FC<StyleStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.style || {
-    approach: '',
-    complexity: ''
+    approach: ''
   };
 
   const handleAnswerChange = (field: string, value: string) => {
@@ -80,8 +73,7 @@ export const StyleStep: React.FC<StyleStepProps> = ({
     onAnswersChange('style', newAnswers);
   };
 
-  const isAdaptiveAvailable = ['pro', 'pro_plus', 'elite'].includes(subscriptionPlan?.toLowerCase() || '');
-  const isComplete = currentAnswers.approach && currentAnswers.complexity;
+  const isComplete = currentAnswers.approach;
 
   return (
     <TooltipProvider>
@@ -145,58 +137,6 @@ export const StyleStep: React.FC<StyleStepProps> = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Layers className="w-5 h-5" />
-            Strategy Complexity
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">
-                  Complexity affects number of conditions and decision logic. <strong>Simple</strong> uses 1-3 basic indicators for clear signals, 
-                  <strong>Moderate</strong> combines 4-6 indicators with basic filters, <strong>Complex</strong> uses 7+ indicators with advanced logic, 
-                  <strong>Adaptive</strong> employs AI-driven dynamic parameter adjustment.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {complexities.map((complexity) => {
-              const isDisabled = complexity.id === 'adaptive' && !isAdaptiveAvailable;
-              
-              return (
-                <Button
-                  key={complexity.id}
-                  variant={currentAnswers.complexity === complexity.id ? "default" : "outline"}
-                  className="h-auto p-4 flex flex-col items-center text-center"
-                  onClick={() => !isDisabled && handleAnswerChange('complexity', complexity.id)}
-                  disabled={isDisabled}
-                >
-                  <span className="font-medium">{complexity.label}</span>
-                  <span className="text-xs text-muted-foreground mb-1">{complexity.desc}</span>
-                  <Badge 
-                    variant={isDisabled ? "secondary" : "outline"} 
-                    className="text-xs"
-                  >
-                    {complexity.level}
-                  </Badge>
-                  {isDisabled && (
-                    <Badge variant="secondary" className="text-xs mt-1">
-                      Upgrade Required
-                    </Badge>
-                  )}
-                </Button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
       {isComplete && (
         <Card className="border-primary bg-primary/5">
           <CardContent className="pt-4">
@@ -205,8 +145,7 @@ export const StyleStep: React.FC<StyleStepProps> = ({
               <span className="font-medium">Trading Style Defined!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {approaches.find(a => a.id === currentAnswers.approach)?.label} strategy with{' '}
-              {complexities.find(c => c.id === currentAnswers.complexity)?.label.toLowerCase()} complexity.
+              {approaches.find(a => a.id === currentAnswers.approach)?.label} strategy selected.
             </p>
           </CardContent>
         </Card>
