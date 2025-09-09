@@ -962,9 +962,116 @@ const FAQ = () => {
                       </div>
                     </div>
                     <div className="bg-muted/50 border border-border p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro-rated Billing:</strong> When upgrading mid-cycle, you only pay the difference. Downgrades take effect at the next billing cycle.</p>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">For detailed billing policies:</strong> See our comprehensive billing and payment policies in the "Billing & Payments" section below, including upgrade prorating, refund policies, and cancellation terms.
+                      </p>
                     </div>
                   </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: "Billing & Payments",
+          questions: [
+            {
+              question: "How does upgrading without payment work?",
+              answer: (
+                <div className="text-muted-foreground space-y-3">
+                  <p>
+                    <strong className="text-foreground">Upgrading:</strong> You can upgrade your annual subscription at any time with no extra transactions needed. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier. You don't lose anything, just use the remaining amount to switch to a better version. Thus, the remaining period of your subscription will be reduced and your next payment date will be switched.
+                  </p>
+                  <p>
+                    <strong className="text-foreground">Downgrading:</strong> If you downgrade, your current plan will stay exactly as it is until its subscription date. Then, once it expires, your new downgraded plan will go live at the selected rate.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    Remember, it's not a free trial. Once upgraded, there will be no option to revert this action. However, you'll be able to set a downgraded plan for the next billing period.
+                  </p>
+                </div>
+              )
+            },
+            {
+              question: "Can I cancel anytime?",
+              answer: (
+                <div className="text-muted-foreground space-y-2">
+                  <p>
+                    You can cancel your subscription anytime and it will not auto-renew after the current paid term. Paid service will remain active for the duration of the paid term.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    A canceled trial will stop immediately after cancellation.
+                  </p>
+                </div>
+              )
+            },
+            {
+              question: "What is your Refund Policy?",
+              answer: (
+                <div className="text-muted-foreground space-y-2">
+                  <p>
+                    Refunds are available for annual plans only and must be requested within 14 calendar days of payment. To request a refund, contact our support team.
+                  </p>
+                  <p>
+                    There are no refunds for upgrades to a more expensive plan, monthly plans or market data, even if the subscription is cancelled on the same day as the payment has gone through.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    Please note that users who filed a chargeback/dispute request or a claim are not eligible for a refund.
+                  </p>
+                </div>
+              )
+            },
+            {
+              question: "How do plan upgrades affect billing?",
+              answer: (
+                <div className="text-muted-foreground">
+                  <p>
+                    When you upgrade to a higher tier, we automatically calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly, and you'll see the updated next payment date in your account.
+                  </p>
+                </div>
+              )
+            },
+            {
+              question: "What payment methods do you accept?",
+              answer: (
+                <div className="text-muted-foreground space-y-2">
+                  <p>
+                    We accept all major payment methods through our secure Stripe integration:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Credit cards (Visa, MasterCard, American Express)</li>
+                    <li>Debit cards</li>
+                    <li>PayPal</li>
+                    <li>Apple Pay and Google Pay</li>
+                    <li>Bank transfers (for annual subscriptions)</li>
+                  </ul>
+                  <p className="text-sm">
+                    All payments are processed securely with industry-standard encryption.
+                  </p>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: "Script Library & Platform Support",
+          questions: [
+            {
+              question: "What's included in the Script Library?",
+              answer: (
+                <div className="text-muted-foreground">
+                  <p>
+                    Ready-to-use trading scripts for Pine Script (TradingView), Python (MT4/MT5), and MQL5. Each script includes setup instructions, backtesting results, and customization guides.
+                  </p>
+                </div>
+              )
+            },
+            {
+              question: "What platforms do your scripts work with?",
+              answer: (
+                <div className="text-muted-foreground">
+                  <p>
+                    Our scripts are compatible with TradingView (Pine Script), MetaTrader 4/5 (Python & MQL), and most major trading platforms.
+                  </p>
                 </div>
               )
             }
