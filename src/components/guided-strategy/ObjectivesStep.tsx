@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Target, Clock, TrendingUp, User, Info } from 'lucide-react';
+import { Target, Clock, TrendingUp, User, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ObjectivesStepProps {
@@ -63,7 +63,7 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
               What's Your Primary Trading Goal?
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
