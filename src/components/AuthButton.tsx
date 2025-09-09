@@ -7,10 +7,11 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, LogIn, Globe } from "lucide-react";
+import { User, Settings, LogOut, LogIn, Globe, Palette } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const AuthButton = () => {
   const [user, setUser] = useState<any>(null);
@@ -98,10 +99,15 @@ const AuthButton = () => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <div className="px-2 py-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Language:</span>
             <LanguageSwitcher />
+          </div>
+          <div className="flex items-center gap-2">
+            <Palette className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Theme:</span>
+            <ThemeSwitcher />
           </div>
         </div>
         <DropdownMenuSeparator />
