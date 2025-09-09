@@ -16,6 +16,7 @@ import MemberDownloads from "./pages/MemberDownloads";
 import MemberCommunity from "./pages/MemberCommunity";
 import MemberAlerts from "./pages/MemberAlerts";
 import MemberAccount from "./pages/MemberAccount";
+import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/ai-builder" element={<AIBuilder />} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/members/dashboard" element={<MemberDashboard />} />
           <Route path="/members/trading" element={<PaperTrading />} />
           <Route path="/backtest" element={<BacktestWorkspace />} />
           <Route path="/vault" element={<BacktestVault />} />

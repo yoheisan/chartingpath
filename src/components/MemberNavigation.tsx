@@ -15,7 +15,7 @@ const MemberNavigation = () => {
   
   const navigationItems = [
     {
-      to: "/members/trading",
+      to: "/members/dashboard",
       icon: Home,
       label: "Member Dashboard",
       primary: true

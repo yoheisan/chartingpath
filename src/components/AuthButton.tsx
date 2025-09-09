@@ -91,7 +91,7 @@ const AuthButton = () => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/members/scripts" className="flex items-center">
+          <Link to="/members/dashboard" className="flex items-center">
             <User className="h-4 w-4 mr-2" />
             Member Dashboard
           </Link>
