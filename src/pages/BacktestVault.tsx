@@ -111,11 +111,11 @@ const BacktestVault = () => {
       );
     }
 
-    if (filterInstrument) {
+    if (filterInstrument && filterInstrument !== "all") {
       filtered = filtered.filter(run => run.instrument === filterInstrument);
     }
 
-    if (filterTimeframe) {
+    if (filterTimeframe && filterTimeframe !== "all") {
       filtered = filtered.filter(run => run.timeframe === filterTimeframe);
     }
 
@@ -263,7 +263,7 @@ const BacktestVault = () => {
                   <SelectValue placeholder="All Instruments" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Instruments</SelectItem>
+                  <SelectItem value="all">All Instruments</SelectItem>
                   {getUniqueInstruments().map(instrument => (
                     <SelectItem key={instrument} value={instrument}>
                       {instrument}
@@ -277,7 +277,7 @@ const BacktestVault = () => {
                   <SelectValue placeholder="All Timeframes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Timeframes</SelectItem>
+                  <SelectItem value="all">All Timeframes</SelectItem>
                   {getUniqueTimeframes().map(timeframe => (
                     <SelectItem key={timeframe} value={timeframe}>
                       {timeframe}
