@@ -41,20 +41,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.market || {
-    instruments: [],
     timeframes: []
-  };
-
-  const handleInstrumentToggle = (instrument: string) => {
-    const instruments = currentAnswers.instruments || [];
-    const newInstruments = instruments.includes(instrument)
-      ? instruments.filter(i => i !== instrument)
-      : [...instruments, instrument];
-    
-    onAnswersChange('market', {
-      ...currentAnswers,
-      instruments: newInstruments
-    });
   };
 
   const handleTimeframeToggle = (timeframe: string) => {
@@ -69,37 +56,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     });
   };
 
-  const isComplete = currentAnswers.instruments?.length > 0 && 
-                   currentAnswers.timeframes?.length > 0;
+  const isComplete = currentAnswers.timeframes?.length > 0;
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Select Your Preferred Instruments
-            <Badge variant="secondary" className="ml-2">
-              {currentAnswers.instruments?.length || 0} selected
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            {allInstruments.map((instrument) => (
-              <Button
-                key={instrument}
-                variant={currentAnswers.instruments?.includes(instrument) ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleInstrumentToggle(instrument)}
-              >
-                {instrument}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -143,8 +103,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               <span className="font-medium">Market Selection Complete!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              You've selected {currentAnswers.instruments?.length} instruments 
-              across {currentAnswers.timeframes?.length} timeframes.
+              You've selected {currentAnswers.timeframes?.length} timeframes for your strategy.
             </p>
           </CardContent>
         </Card>

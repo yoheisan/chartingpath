@@ -41,10 +41,9 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
 
   const generateStrategyName = () => {
     const approach = answers.style?.approach?.replace('-', ' ') || 'Custom';
-    const instrument = answers.market?.instruments?.[0] || 'Multi-Asset';
     const timeframe = answers.market?.timeframes?.[0] || '1h';
     
-    return `${approach} ${instrument} ${timeframe}`.split(' ').map(word => 
+    return `${approach} ${timeframe} Strategy`.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -88,7 +87,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
         testPeriod: subscriptionPlan?.toLowerCase() === 'starter' ? '1Y' : '3Y',
         totalTrades: Math.floor(150 + Math.random() * 300),
         maxDrawdown: Math.max(5, Math.min(25, answers.riskTolerance?.maxDrawdown + (Math.random() - 0.5) * 8)).toFixed(1),
-        instrument: answers.market?.instruments?.[0] || 'Multi-Asset',
+        instrument: 'Selected Instrument',
         timeframe: answers.market?.timeframes?.[0] || '1h'
       };
       
@@ -181,7 +180,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 Markets
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Instruments: {answers.market?.instruments?.slice(0, 3).join(', ')}{answers.market?.instruments?.length > 3 ? '...' : ''}</li>
                 <li>• Timeframes: {answers.market?.timeframes?.join(', ')}</li>
               </ul>
             </div>

@@ -19,7 +19,6 @@ export interface GuidedStrategyAnswers {
     timeCommitment: string;
   };
   market: {
-    instruments: string[];
     timeframes: string[];
   };
   riskTolerance: {
