@@ -15,15 +15,10 @@ const MemberNavigation = () => {
   
   const navigationItems = [
     {
-      to: "/",
+      to: "/members/trading",
       icon: Home,
       label: "Member Dashboard",
       primary: true
-    },
-    {
-      to: "/members/trading",
-      icon: TrendingUp,
-      label: "Paper Trading",
     },
     {
       to: "/vault",
