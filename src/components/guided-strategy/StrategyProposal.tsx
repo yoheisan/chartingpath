@@ -191,7 +191,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li>• Approach: {answers.style?.approach?.replace('-', ' ')}</li>
-                <li>• Frequency: {answers.style?.frequency}</li>
                 <li>• Complexity: {answers.style?.complexity}</li>
               </ul>
             </div>

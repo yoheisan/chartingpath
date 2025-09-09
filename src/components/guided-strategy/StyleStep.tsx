@@ -13,48 +13,46 @@ interface StyleStepProps {
 }
 
 const approaches = [
-  { 
-    id: 'trend-following', 
-    label: 'Trend Following', 
-    desc: 'Follow market momentum', 
+  {
+    id: 'trend-following',
+    label: 'Trend Following',
+    desc: 'Follow market momentum and direction',
     icon: TrendingUp,
-    characteristics: ['Momentum-based', 'Medium frequency', 'Good for trending markets']
+    characteristics: ['Momentum-based', 'Directional bias', 'Good for trending markets'],
+    explanation: 'Identifies and follows the prevailing market direction, entering positions that align with the trend. Works best in strong directional markets and typically uses moving averages, trend lines, or momentum indicators.'
   },
-  { 
-    id: 'mean-reversion', 
+  {
+    id: 'mean-reversion',
     label: 'Mean Reversion', 
-    desc: 'Buy low, sell high', 
+    desc: 'Buy low, sell high when prices deviate',
     icon: BarChart3,
-    characteristics: ['Counter-trend', 'Higher frequency', 'Good for ranging markets']
+    characteristics: ['Counter-trend', 'Statistical edge', 'Good for ranging markets'],
+    explanation: 'Assumes prices will return to their average over time. Buys when prices are oversold and sells when overbought. Most effective in sideways or ranging markets with clear support/resistance levels.'
   },
-  { 
-    id: 'breakout', 
-    label: 'Breakout Trading', 
-    desc: 'Trade significant moves', 
+  {
+    id: 'breakout',
+    label: 'Breakout Trading',
+    desc: 'Trade significant price movements',
     icon: Zap,
-    characteristics: ['Volatility-based', 'Medium frequency', 'Good for news events']
+    characteristics: ['Volatility-based', 'Event-driven', 'Captures large moves'],
+    explanation: 'Enters positions when price breaks through key levels like support/resistance. Aims to capture the initial momentum of a new trend or significant price movement, often triggered by news or technical levels.'
   },
-  { 
-    id: 'scalping', 
-    label: 'Scalping', 
-    desc: 'Quick small profits', 
-    icon: Clock,
-    characteristics: ['High frequency', 'Small targets', 'Requires focus']
+  {
+    id: 'arbitrage',
+    label: 'Arbitrage/Pairs',
+    desc: 'Exploit price differences', 
+    icon: BarChart3,
+    characteristics: ['Market-neutral', 'Low-risk', 'Statistical edge'],
+    explanation: 'Takes advantage of price differences between related instruments or markets. Includes pairs trading, statistical arbitrage, and correlation strategies. Typically market-neutral with lower risk but requires sophisticated analysis.'
   },
-  { 
-    id: 'multi-strategy', 
-    label: 'Multi-Strategy', 
-    desc: 'Combine approaches', 
+  {
+    id: 'multi-strategy',
+    label: 'Multi-Strategy',
+    desc: 'Combine multiple approaches',
     icon: Layers,
-    characteristics: ['Diversified', 'Adaptive', 'Complex management']
-  },
-];
-
-const frequencies = [
-  { id: 'high', label: 'High Frequency', desc: '10+ trades/day', icon: Zap },
-  { id: 'medium', label: 'Medium Frequency', desc: '2-10 trades/day', icon: BarChart3 },
-  { id: 'low', label: 'Low Frequency', desc: '1-5 trades/week', icon: Clock },
-  { id: 'position', label: 'Position Trading', desc: 'Long-term holds', icon: TrendingUp },
+    characteristics: ['Diversified', 'Adaptive', 'Complex management'],
+    explanation: 'Uses multiple trading approaches simultaneously to diversify risk and capture different market opportunities. Requires advanced portfolio management and the ability to adapt strategies based on market conditions.'
+  }
 ];
 
 const complexities = [
@@ -71,7 +69,6 @@ export const StyleStep: React.FC<StyleStepProps> = ({
 }) => {
   const currentAnswers = answers.style || {
     approach: '',
-    frequency: '',
     complexity: ''
   };
 
@@ -84,7 +81,7 @@ export const StyleStep: React.FC<StyleStepProps> = ({
   };
 
   const isAdaptiveAvailable = ['pro', 'pro_plus', 'elite'].includes(subscriptionPlan?.toLowerCase() || '');
-  const isComplete = currentAnswers.approach && currentAnswers.frequency && currentAnswers.complexity;
+  const isComplete = currentAnswers.approach && currentAnswers.complexity;
 
   return (
     <TooltipProvider>
@@ -102,7 +99,7 @@ export const StyleStep: React.FC<StyleStepProps> = ({
                 <p className="text-sm">
                   Your approach defines core entry/exit logic. <strong>Trend Following</strong> rides momentum with moving averages, 
                   <strong>Mean Reversion</strong> buys oversold/sells overbought conditions, <strong>Breakout</strong> trades volatility expansions, 
-                  <strong>Scalping</strong> captures small frequent moves, <strong>Multi-Strategy</strong> combines multiple approaches for diversification.
+                  <strong>Arbitrage/Pairs</strong> exploits price differences between related assets, <strong>Multi-Strategy</strong> combines multiple approaches for diversification.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -142,46 +139,6 @@ export const StyleStep: React.FC<StyleStepProps> = ({
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Trading Frequency
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">
-                  Frequency determines timeframes and monitoring requirements. <strong>High Frequency</strong> uses 1-15min charts with constant monitoring, 
-                  <strong>Medium</strong> uses 1-4h charts with periodic checks, <strong>Low</strong> uses daily charts, 
-                  <strong>Position Trading</strong> uses weekly/monthly charts for long-term holds.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {frequencies.map((freq) => {
-              const Icon = freq.icon;
-              return (
-                <Button
-                  key={freq.id}
-                  variant={currentAnswers.frequency === freq.id ? "default" : "outline"}
-                  className="h-auto p-4 flex flex-col items-center text-center"
-                  onClick={() => handleAnswerChange('frequency', freq.id)}
-                >
-                  <Icon className="w-5 h-5 mb-2" />
-                  <span className="font-medium">{freq.label}</span>
-                  <span className="text-xs text-muted-foreground">{freq.desc}</span>
-                </Button>
               );
             })}
           </div>
@@ -248,8 +205,8 @@ export const StyleStep: React.FC<StyleStepProps> = ({
               <span className="font-medium">Trading Style Defined!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {approaches.find(a => a.id === currentAnswers.approach)?.label} approach with{' '}
-              {frequencies.find(f => f.id === currentAnswers.frequency)?.label.toLowerCase()} trading.
+              {approaches.find(a => a.id === currentAnswers.approach)?.label} strategy with{' '}
+              {complexities.find(c => c.id === currentAnswers.complexity)?.label.toLowerCase()} complexity.
             </p>
           </CardContent>
         </Card>
