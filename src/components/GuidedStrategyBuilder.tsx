@@ -71,10 +71,15 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
 
   const updateAnswers = (stepKey: keyof GuidedStrategyAnswers, stepAnswers: any) => {
-    setAnswers(prev => ({
-      ...prev,
-      [stepKey]: stepAnswers
-    }));
+    setAnswers(prev => {
+      const next = {
+        ...prev,
+        [stepKey]: stepAnswers
+      };
+      // Bubble up partial answers so the parent (AIBuilder) knows guided mode is in use
+      onSaveStrategy?.(next);
+      return next;
+    });
     
     // Mark step as completed
     setCompletedSteps(prev => new Set([...prev, currentStep]));
