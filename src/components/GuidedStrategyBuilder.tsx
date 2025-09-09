@@ -84,11 +84,43 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   };
 
   const canProceed = () => {
+    // Risk Tolerance step always allows proceeding (has default values)
+    if (currentStep === 2) return true;
+    // Reward step always allows proceeding (has default values) 
+    if (currentStep === 3) return true;
+    // Constraints step allows proceeding (optional constraints)
+    if (currentStep === 6) return true;
+    // Tools step allows proceeding (optional tools)
+    if (currentStep === 5) return true;
+    
     return completedSteps.has(currentStep);
   };
 
   const handleNext = () => {
     if (currentStep < steps.length - 1 && canProceed()) {
+      // Ensure default values are set for steps that allow proceeding with defaults
+      if (currentStep === 2 && !answers.riskTolerance) {
+        setAnswers(prev => ({
+          ...prev,
+          riskTolerance: {
+            maxDrawdown: 10,
+            positionSize: 2,
+            riskPerTrade: 1
+          }
+        }));
+      }
+      
+      if (currentStep === 3 && !answers.reward) {
+        setAnswers(prev => ({
+          ...prev,
+          reward: {
+            targetReturn: 20,
+            winRate: 60,
+            riskRewardRatio: 2
+          }
+        }));
+      }
+      
       setCurrentStep(currentStep + 1);
     }
   };
