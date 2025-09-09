@@ -6,6 +6,8 @@ import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -18,8 +20,31 @@ const Pricing = () => {
         event_label: planName
       });
     }
-    // In a real implementation, this would redirect to checkout
-    console.log(`Selected plan: ${planName}`);
+    
+    // Create subscription via Supabase function
+    createSubscription(planName);
+  };
+
+  const createSubscription = async (plan: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-subscription', {
+        body: {
+          plan: plan.toLowerCase(),
+          billing_cycle: isAnnual ? 'annual' : 'monthly'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.url) {
+        // Open Stripe checkout in new tab
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      // Show error message
+      toast.error('Failed to start checkout. Please try again or contact support.');
+    }
   };
 
   const calculateMonthlySavings = (monthlyPrice: number, annualPrice: number) => {

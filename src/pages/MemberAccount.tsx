@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import MemberNavigation from "@/components/MemberNavigation";
 import LearningProgress from "@/components/LearningProgress";
+import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { User, CreditCard, Settings, Shield, Mail, Bell, Crown, Star, Zap, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,23 +128,7 @@ const MemberAccount = () => {
           </TabsContent>
 
           <TabsContent value="subscription">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Subscription Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-4 border rounded-lg mb-4">
-                  <h4 className="font-semibold capitalize">{profile?.subscription_plan || 'starter'} Plan</h4>
-                  <Badge className="mt-2">Active</Badge>
-                </div>
-                <Button asChild>
-                  <Link to="/pricing">Manage Subscription</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <SubscriptionManager />
           </TabsContent>
 
           <TabsContent value="learning">

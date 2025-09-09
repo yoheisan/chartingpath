@@ -937,6 +937,78 @@ export type Database = {
         }
         Relationships: []
       }
+      refunds: {
+        Row: {
+          admin_notes: string | null
+          amount_cents: number
+          billing_event_id: string | null
+          created_at: string
+          eligibility_reason: string | null
+          id: string
+          is_eligible: boolean
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          requested_at: string
+          status: string
+          stripe_refund_id: string | null
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_cents: number
+          billing_event_id?: string | null
+          created_at?: string
+          eligibility_reason?: string | null
+          id?: string
+          is_eligible?: boolean
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          stripe_refund_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_cents?: number
+          billing_event_id?: string | null
+          created_at?: string
+          eligibility_reason?: string | null
+          id?: string
+          is_eligible?: boolean
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          stripe_refund_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_billing_event_id_fkey"
+            columns: ["billing_event_id"]
+            isOneToOne: false
+            referencedRelation: "billing_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_scan_sessions: {
         Row: {
           completed_at: string | null
@@ -1483,6 +1555,10 @@ export type Database = {
         }
         Returns: number
       }
+      check_refund_eligibility: {
+        Args: { p_subscription_id: string; p_user_id: string }
+        Returns: Json
+      }
       get_backtester_v2_usage: {
         Args: { p_user_id: string }
         Returns: number
@@ -1516,6 +1592,14 @@ export type Database = {
       make_first_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      process_plan_change: {
+        Args: {
+          p_billing_cycle?: string
+          p_new_plan: Database["public"]["Enums"]["subscription_plan"]
+          p_user_id: string
+        }
+        Returns: Json
       }
       set_user_language: {
         Args: {
