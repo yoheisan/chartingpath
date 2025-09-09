@@ -79,6 +79,9 @@ const AIBuilder = () => {
   const [showPairTrading, setShowPairTrading] = useState(false);
   const [pairTradingConfig, setPairTradingConfig] = useState<PairTradingConfig | null>(null);
 
+  // Guided Strategy State
+  const [guidedAnswers, setGuidedAnswers] = useState<any>(null);
+
   // Types for condition builder
   interface IndicatorCondition {
     id: string;
@@ -201,8 +204,12 @@ const AIBuilder = () => {
       return;
     }
 
-    if (!strategy.trim()) {
-      toast.error("Please describe your strategy first.");
+    // Check if we have guided strategy answers or natural language description
+    const hasGuidedAnswers = guidedAnswers && 
+      (guidedAnswers.objectives?.primaryGoal || guidedAnswers.style?.approach);
+    
+    if (!hasGuidedAnswers && !strategy.trim()) {
+      toast.error("Please complete the guided strategy builder or describe your strategy first.");
       return;
     }
 
@@ -719,9 +726,11 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                   {selectedInstrument && (
                     <>
                          {/* Guided Builder Tab */}
-                         <TabsContent value="guided" className="space-y-6 mt-6">
-                           <GuidedStrategyBuilder />
-                         </TabsContent>
+                          <TabsContent value="guided" className="space-y-6 mt-6">
+                            <GuidedStrategyBuilder 
+                              onSaveStrategy={setGuidedAnswers}
+                            />
+                          </TabsContent>
                          
                          <TabsContent value="natural" className="space-y-6 mt-6">
                           
