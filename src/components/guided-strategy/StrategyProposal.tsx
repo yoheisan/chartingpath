@@ -199,11 +199,11 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 <Clock className="w-4 h-4" />
                 Tools & Constraints
               </h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Indicators: {answers.tools?.indicators?.length || 0} selected</li>
-                <li>• Patterns: {answers.tools?.patterns?.length || 0} selected</li>
-                <li>• Constraints: {(answers.constraints?.tradingHours?.length || 0) + (answers.constraints?.excludedPeriods?.length || 0)} rules</li>
-              </ul>
+               <ul className="space-y-1 text-sm text-muted-foreground">
+                 <li>• Patterns: {answers.tools?.patterns?.length || 0} selected</li>
+                 <li>• Filters: {answers.tools?.filters?.length || 0} selected</li>
+                 <li>• Constraints: {(answers.constraints?.tradingHours?.length || 0) + (answers.constraints?.excludedPeriods?.length || 0)} rules</li>
+               </ul>
             </div>
           </div>
         </CardContent>

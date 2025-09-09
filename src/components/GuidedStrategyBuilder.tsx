@@ -35,7 +35,6 @@ export interface GuidedStrategyAnswers {
     approach: string;
   };
   tools: {
-    indicators: string[];
     patterns: string[];
     filters: string[];
   };

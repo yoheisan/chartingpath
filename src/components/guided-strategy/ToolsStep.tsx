@@ -13,28 +13,6 @@ interface ToolsStepProps {
   subscriptionPlan: string;
 }
 
-const indicatorCategories = {
-  trend: {
-    label: 'Trend Indicators',
-    icon: TrendingUp,
-    items: ['Moving Average', 'EMA', 'MACD', 'ADX', 'Parabolic SAR', 'Supertrend']
-  },
-  momentum: {
-    label: 'Momentum Oscillators', 
-    icon: Activity,
-    items: ['RSI', 'Stochastic', 'CCI', 'Williams %R', 'Ultimate Oscillator', 'ROC']
-  },
-  volume: {
-    label: 'Volume Indicators',
-    icon: BarChart3,
-    items: ['Volume MA', 'OBV', 'Chaikin MF', 'Volume Profile', 'VWAP', 'A/D Line']
-  },
-  volatility: {
-    label: 'Volatility Indicators',
-    icon: Eye,
-    items: ['Bollinger Bands', 'ATR', 'Keltner Channels', 'Donchian Channels', 'VIX']
-  }
-};
 
 const patterns = [
   'Double Top/Bottom', 'Head & Shoulders', 'Triangle', 'Flag/Pennant', 
@@ -52,12 +30,11 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.tools || {
-    indicators: [],
     patterns: [],
     filters: []
   };
 
-  const handleToggleItem = (category: keyof typeof currentAnswers, item: string) => {
+  const handleToggleItem = (category: 'patterns' | 'filters', item: string) => {
     const currentItems = currentAnswers[category] || [];
     const newItems = currentItems.includes(item)
       ? currentItems.filter(i => i !== item)
@@ -70,8 +47,7 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
   };
 
   const getTotalSelected = () => {
-    return (currentAnswers.indicators?.length || 0) + 
-           (currentAnswers.patterns?.length || 0) + 
+    return (currentAnswers.patterns?.length || 0) + 
            (currentAnswers.filters?.length || 0);
   };
 
@@ -83,8 +59,8 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Technical Analysis Tools
+            <Eye className="w-5 h-5" />
+            Analysis Tools
             <Badge variant="secondary" className="ml-2">
               {getTotalSelected()} selected
             </Badge>
@@ -92,52 +68,6 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
         </CardHeader>
         <CardContent className="space-y-6">
           
-          {/* Technical Indicators */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">Technical Indicators</h3>
-            {Object.entries(indicatorCategories).map(([key, category]) => {
-              const Icon = category.icon;
-              return (
-                <div key={key} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    <h4 className="font-medium">{category.label}</h4>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <p className="text-sm">
-                          {key === 'trend' && "Trend indicators identify market direction. Moving averages smooth price data, MACD shows momentum changes, ADX measures trend strength."}
-                          {key === 'momentum' && "Momentum oscillators detect overbought/oversold conditions. RSI shows price momentum, Stochastic compares closing prices to ranges."}
-                          {key === 'volume' && "Volume indicators confirm price movements. Volume MA shows average trading activity, OBV tracks volume flow, VWAP shows average price weighted by volume."}
-                          {key === 'volatility' && "Volatility indicators measure market uncertainty. Bollinger Bands show price ranges, ATR measures average price movement, VIX shows market fear."}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Badge variant="outline" className="text-xs">
-                      {currentAnswers.indicators?.filter(ind => category.items.includes(ind)).length || 0} selected
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                    {category.items.map((indicator) => (
-                      <Button
-                        key={indicator}
-                        variant={currentAnswers.indicators?.includes(indicator) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleItem('indicators', indicator)}
-                      >
-                        {indicator}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <Separator />
-
           {/* Chart Patterns */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -233,11 +163,6 @@ export const ToolsStep: React.FC<ToolsStepProps> = ({
                   Selected Analysis Tools
                 </h4>
                 <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-                  {currentAnswers.indicators && currentAnswers.indicators.length > 0 && (
-                    <div>
-                      <span className="font-medium">Indicators:</span> {currentAnswers.indicators.join(', ')}
-                    </div>
-                  )}
                   {currentAnswers.patterns && currentAnswers.patterns.length > 0 && (
                     <div>
                       <span className="font-medium">Patterns:</span> {currentAnswers.patterns.join(', ')}
