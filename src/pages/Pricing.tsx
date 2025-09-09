@@ -336,12 +336,20 @@ const Pricing = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Do you offer refunds?</CardTitle>
+                <CardTitle className="text-lg">What is your Refund Policy?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  We offer a 30-day money-back guarantee. If you're not satisfied, contact support for a full refund.
-                </p>
+                <div className="text-muted-foreground space-y-2">
+                  <p>
+                    Refunds are available for annual plans only and must be requested within 14 calendar days of payment. To request a refund, contact our support team.
+                  </p>
+                  <p>
+                    There are no refunds for upgrades to a more expensive plan, monthly plans or market data, even if the subscription is cancelled on the same day as the payment has gone through.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    Please note that users who filed a chargeback/dispute request or a claim are not eligible for a refund.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
