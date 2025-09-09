@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -286,12 +287,12 @@ const Pricing = () => {
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">How does upgrading without payment work?</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+            <AccordionItem value="upgrade-payment">
+              <AccordionTrigger className="text-left">
+                How does upgrading without payment work?
+              </AccordionTrigger>
+              <AccordionContent>
                 <div className="text-muted-foreground space-y-3">
                   <p>
                     <strong>Upgrading:</strong> You can upgrade your annual subscription at any time with no extra transactions needed. All remaining days of your current plan will be automatically converted into equivalent value days on the new tier. You don't lose anything, just use the remaining amount to switch to a better version. Thus, the remaining period of your subscription will be reduced and your next payment date will be switched.
@@ -303,14 +304,14 @@ const Pricing = () => {
                     Remember, it's not a free trial. Once upgraded, there will be no option to revert this action. However, you'll be able to set a downgraded plan for the next billing period.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AccordionItem value="cancel-anytime">
+              <AccordionTrigger className="text-left">
+                Can I cancel anytime?
+              </AccordionTrigger>
+              <AccordionContent>
                 <div className="text-muted-foreground space-y-2">
                   <p>
                     You can cancel your subscription anytime and it will not auto-renew after the current paid term. Paid service will remain active for the duration of the paid term.
@@ -319,26 +320,26 @@ const Pricing = () => {
                     A canceled trial will stop immediately after cancellation.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What's included in the Script Library?</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AccordionItem value="script-library">
+              <AccordionTrigger className="text-left">
+                What's included in the Script Library?
+              </AccordionTrigger>
+              <AccordionContent>
                 <p className="text-muted-foreground">
                   Ready-to-use trading scripts for Pine Script (TradingView), Python (MT4/MT5), and MQL5. 
                   Each script includes setup instructions, backtesting results, and customization guides.
                 </p>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What is your Refund Policy?</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AccordionItem value="refund-policy">
+              <AccordionTrigger className="text-left">
+                What is your Refund Policy?
+              </AccordionTrigger>
+              <AccordionContent>
                 <div className="text-muted-foreground space-y-2">
                   <p>
                     Refunds are available for annual plans only and must be requested within 14 calendar days of payment. To request a refund, contact our support team.
@@ -350,31 +351,31 @@ const Pricing = () => {
                     Please note that users who filed a chargeback/dispute request or a claim are not eligible for a refund.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What platforms do your scripts work with?</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AccordionItem value="platform-compatibility">
+              <AccordionTrigger className="text-left">
+                What platforms do your scripts work with?
+              </AccordionTrigger>
+              <AccordionContent>
                 <p className="text-muted-foreground">
                   Our scripts are compatible with TradingView (Pine Script), MetaTrader 4/5 (Python & MQL), and most major trading platforms.
                 </p>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">How do plan upgrades affect billing?</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AccordionItem value="billing-upgrades">
+              <AccordionTrigger className="text-left">
+                How do plan upgrades affect billing?
+              </AccordionTrigger>
+              <AccordionContent>
                 <p className="text-muted-foreground">
                   When you upgrade to a higher tier, we automatically calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly, and you'll see the updated next payment date in your account.
                 </p>
-              </CardContent>
-            </Card>
-          </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
         {/* Pricing Disclaimer */}
