@@ -25,6 +25,7 @@ import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 import { PerformanceSnapshot } from '../PerformanceSnapshot';
 import { BacktestData } from '../PerformanceSnapshot';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StrategyProposalProps {
   answers: GuidedStrategyAnswers;
@@ -76,7 +77,34 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     return plan !== 'free';
   };
 
+  const validateStrategy = () => {
+    const requiredSteps = ['objectives', 'market', 'style'];
+    const missingSteps = [];
+
+    if (!answers.objectives?.primaryGoal || !answers.objectives?.timeCommitment) {
+      missingSteps.push('Objectives');
+    }
+    if (!answers.market?.timeframes || answers.market.timeframes.length === 0) {
+      missingSteps.push('Market');
+    }
+    if (!answers.style?.approach) {
+      missingSteps.push('Style');
+    }
+
+    return {
+      isValid: missingSteps.length === 0,
+      missingSteps
+    };
+  };
+
   const handleBacktest = async () => {
+    const validation = validateStrategy();
+    
+    if (!validation.isValid) {
+      toast.error(`Please complete the following steps: ${validation.missingSteps.join(', ')}`);
+      return;
+    }
+
     if (!canBacktest()) {
       toast.error('Backtesting requires Starter plan or higher');
       return;
@@ -103,6 +131,12 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   };
 
   const handleSaveStrategy = () => {
+    const validation = validateStrategy();
+    if (!validation.isValid) {
+      toast.error(`Please complete the following steps before saving: ${validation.missingSteps.join(', ')}`);
+      return;
+    }
+
     if (!canSave()) {
       toast.error('Saving strategies requires paid plan');
       return;
@@ -113,25 +147,38 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     setShowNameDialog(true);
   };
 
-  const confirmSaveStrategy = () => {
+  const confirmSaveStrategy = async () => {
     if (!strategyName.trim()) {
       toast.error('Please enter a strategy name');
       return;
     }
 
-    const strategy = {
-      name: strategyName.trim(),
-      description: generateStrategyDescription(),
-      answers,
-      backtestResults,
-      createdAt: new Date().toISOString(),
-      type: 'guided-strategy'
-    };
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast.error('Please log in to save strategies');
+        return;
+      }
 
-    onSaveStrategy?.(strategy);
-    setShowNameDialog(false);
-    setStrategyName('');
-    toast.success('Strategy saved to vault');
+      const { error } = await supabase
+        .from('guided_strategies')
+        .insert([{
+          name: strategyName.trim(),
+          description: generateStrategyDescription(),
+          answers: answers as any,
+          backtest_results: backtestResults as any,
+          user_id: user.user.id
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Strategy saved successfully to vault!');
+      setShowNameDialog(false);
+      setStrategyName('');
+    } catch (error) {
+      console.error('Error saving strategy:', error);
+      toast.error('Failed to save strategy');
+    }
   };
 
   return (

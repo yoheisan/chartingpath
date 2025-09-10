@@ -56,19 +56,41 @@ const steps = [
   { id: 'proposal', title: 'Proposal', description: 'Strategy summary' },
 ];
 
-interface GuidedStrategyBuilderProps {
+export interface GuidedStrategyBuilderProps {
   onSaveStrategy?: (strategy: any) => void;
   onBacktest?: (strategy: any) => void;
+  initialStrategy?: any;
+  onStrategyLoad?: () => void;
 }
 
 export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   onSaveStrategy,
-  onBacktest
+  onBacktest,
+  initialStrategy,
+  onStrategyLoad
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>({});
+  const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {});
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
+
+  // Load initial strategy if provided
+  React.useEffect(() => {
+    if (initialStrategy) {
+      setAnswers(initialStrategy.answers || {});
+      // Mark steps as completed based on loaded answers
+      const completed = new Set<number>();
+      if (initialStrategy.answers?.objectives) completed.add(0);
+      if (initialStrategy.answers?.market) completed.add(1);
+      if (initialStrategy.answers?.riskTolerance) completed.add(2);
+      if (initialStrategy.answers?.reward) completed.add(3);
+      if (initialStrategy.answers?.style) completed.add(4);
+      if (initialStrategy.answers?.tools) completed.add(5);
+      if (initialStrategy.answers?.constraints) completed.add(6);
+      setCompletedSteps(completed);
+      onStrategyLoad?.();
+    }
+  }, [initialStrategy, onStrategyLoad]);
 
   const updateAnswers = (stepKey: keyof GuidedStrategyAnswers, stepAnswers: any) => {
     setAnswers(prev => {

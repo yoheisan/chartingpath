@@ -700,6 +700,42 @@ export type Database = {
           },
         ]
       }
+      guided_strategies: {
+        Row: {
+          answers: Json
+          backtest_results: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          backtest_results?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          backtest_results?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           accuracy_percentage: number | null

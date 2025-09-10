@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { useUserProfile } from "@/hooks/useUserProfile";
   import { PairTradingBuilder, PairTradingConfig } from "@/components/PairTradingBuilder";
   import { GuidedStrategyBuilder } from "@/components/GuidedStrategyBuilder";
+  import { GuidedStrategyManager } from "@/components/GuidedStrategyManager";
 
 const AIBuilder = () => {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ const AIBuilder = () => {
 
   // Guided Strategy State
   const [guidedAnswers, setGuidedAnswers] = useState<any>(null);
+  const [currentStrategy, setCurrentStrategy] = useState<any>(null);
+  const [showStrategyManager, setShowStrategyManager] = useState(false);
 
   // Types for condition builder
   interface IndicatorCondition {
@@ -290,6 +293,23 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
       return;
     }
     toast.success("Strategy saved to your library!");
+  };
+
+  const handleLoadStrategy = (strategy: any) => {
+    setCurrentStrategy(strategy);
+    setShowStrategyManager(false);
+    toast.success(`Loaded strategy: ${strategy.name}`);
+  };
+
+  const handleEditStrategy = (strategy: any) => {
+    setCurrentStrategy(strategy);
+    setShowStrategyManager(false);
+    toast.success(`Editing strategy: ${strategy.name}`);
+  };
+
+  const handleStrategyLoad = () => {
+    // Called when a strategy is loaded in the guided builder
+    toast.success('Strategy loaded successfully');
   };
 
   const handleOpenInForge = () => {
@@ -725,11 +745,38 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                   {/* Strategy Configuration Content - Only show when instrument is selected */}
                   {selectedInstrument && (
                     <>
-                         {/* Guided Builder Tab */}
+                          {/* Guided Builder Tab */}
                           <TabsContent value="guided" className="space-y-6 mt-6">
-                            <GuidedStrategyBuilder 
-                              onSaveStrategy={setGuidedAnswers}
-                            />
+                            {showStrategyManager ? (
+                              <div className="space-y-4">
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => setShowStrategyManager(false)}
+                                  className="mb-4"
+                                >
+                                  ← Back to Builder
+                                </Button>
+                                <GuidedStrategyManager
+                                  onLoadStrategy={handleLoadStrategy}
+                                  onEditStrategy={handleEditStrategy}
+                                />
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => setShowStrategyManager(true)}
+                                  className="mb-4"
+                                >
+                                  📚 My Strategies
+                                </Button>
+                                <GuidedStrategyBuilder 
+                                  onSaveStrategy={setGuidedAnswers}
+                                  initialStrategy={currentStrategy}
+                                  onStrategyLoad={handleStrategyLoad}
+                                />
+                              </div>
+                            )}
                           </TabsContent>
                          
                          <TabsContent value="natural" className="space-y-6 mt-6">
