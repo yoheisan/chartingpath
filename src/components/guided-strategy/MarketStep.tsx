@@ -46,14 +46,9 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   };
 
   const handleTimeframeToggle = (timeframe: string) => {
-    const timeframes = currentAnswers.timeframes || [];
-    const newTimeframes = timeframes.includes(timeframe)
-      ? timeframes.filter(t => t !== timeframe)
-      : [...timeframes, timeframe];
-    
     onAnswersChange('market', {
       ...currentAnswers,
-      timeframes: newTimeframes
+      timeframes: [timeframe] // Only allow single selection
     });
   };
 
@@ -66,7 +61,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              What Timeframes Do You Prefer?
+              What Timeframe Do You Prefer?
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
@@ -79,9 +74,6 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                   </p>
                 </TooltipContent>
               </Tooltip>
-              <Badge variant="secondary" className="ml-2">
-                {currentAnswers.timeframes?.length || 0} selected
-              </Badge>
             </CardTitle>
           </CardHeader>
         <CardContent>
@@ -117,7 +109,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               <span className="font-medium">Market Selection Complete!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              You've selected {currentAnswers.timeframes?.length} timeframes for your strategy.
+              You've selected a {currentAnswers.timeframes?.[0] || 'timeframe'} for your strategy.
             </p>
           </CardContent>
         </Card>
