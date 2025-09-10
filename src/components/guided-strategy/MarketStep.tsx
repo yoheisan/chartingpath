@@ -68,7 +68,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
-                    Timeframes determine trade duration and monitoring frequency. <strong>Scalping</strong> (1-15min) requires constant attention for quick profits, 
+                    <strong>Select one timeframe</strong> that determines your trade duration and monitoring frequency. <strong>Scalping</strong> (1-15min) requires constant attention for quick profits, 
                     <strong>Intraday</strong> (15min-4h) holds positions within the day, <strong>Swing</strong> (4h-1d) captures multi-day trends, 
                     <strong>Position</strong> (1w+) targets long-term moves with minimal monitoring.
                   </p>
