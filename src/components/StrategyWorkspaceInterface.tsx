@@ -67,13 +67,14 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     toast.success('Strategy saved successfully!');
   };
 
-  // Navigate to backtest tab when strategy is ready
+  // Navigate to backtest section when strategy is ready
   const handleMoveToBacktest = () => {
     if (!strategyAnswers.market?.instrument || !strategyAnswers.market?.timeframes || strategyAnswers.market.timeframes.length === 0 || !strategyAnswers.style?.approach) {
       toast.error('Please complete the strategy building process first (instrument, timeframe, and approach required)');
       return;
     }
-    setActiveTab('backtest');
+    // Strategy is complete, backtest engine will show automatically in builder tab
+    toast.success('Strategy is ready for backtesting! Scroll down to see the Backtest Engine.');
   };
 
   // Handle backtest completion
@@ -205,7 +206,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
       {/* Main Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Strategy Builder
@@ -213,14 +214,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             My Strategies
-          </TabsTrigger>
-          <TabsTrigger 
-            value="backtest" 
-            className="flex items-center gap-2"
-            disabled={!isStrategyComplete()}
-          >
-            <Zap className="w-4 h-4" />
-            Backtest Engine
           </TabsTrigger>
           <TabsTrigger 
             value="results" 
@@ -240,6 +233,29 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             onSaveStrategy={handleStrategySaved}
             onBacktest={() => handleMoveToBacktest()}
           />
+          
+          {/* Backtest Engine Section */}
+          {isStrategyComplete() && (
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary" />
+                  Backtest Engine
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Test your strategy with historical data using our V2 backtesting engine
+                </p>
+              </CardHeader>
+              <CardContent>
+                <BacktesterV2Engine
+                  selectedStrategy={generateStrategyName()}
+                  params={convertToBacktestParams()}
+                  onRunV2Backtest={handleRunV2Backtest}
+                  isRunning={isBacktesting}
+                />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Strategy Library Tab */}
@@ -248,32 +264,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             onLoadStrategy={handleLoadStrategy}
             onEditStrategy={handleLoadStrategy}
           />
-        </TabsContent>
-
-        {/* Backtest Engine Tab - Now using V2 Engine */}
-        <TabsContent value="backtest" className="space-y-6">
-          {isStrategyComplete() ? (
-            <BacktesterV2Engine
-              selectedStrategy={generateStrategyName()}
-              params={convertToBacktestParams()}
-              onRunV2Backtest={handleRunV2Backtest}
-              isRunning={isBacktesting}
-            />
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Settings className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">Strategy Required</h3>
-                <p className="text-muted-foreground mb-4">
-                  Complete building your strategy first, then return here to run V2 backtests.
-                </p>
-                <Button onClick={() => setActiveTab('builder')}>
-                  <Bot className="w-4 h-4 mr-2" />
-                  Build Strategy
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         {/* Results Tab */}
