@@ -13,7 +13,7 @@ import {
   Download,
   AlertCircle
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 
 interface BacktestRun {
   id: string;
@@ -279,78 +279,179 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run }) => {
           </div>
           
           {run.trade_log && run.trade_log.length > 0 ? (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/50 border-b">
-                      <tr>
-                        <th className="text-left p-3 font-medium">Entry Time</th>
-                        <th className="text-left p-3 font-medium">Exit Time</th>
-                        <th className="text-left p-3 font-medium">Type</th>
-                        <th className="text-right p-3 font-medium">Entry Price</th>
-                        <th className="text-right p-3 font-medium">Exit Price</th>
-                        <th className="text-right p-3 font-medium">Quantity</th>
-                        <th className="text-right p-3 font-medium">P&L</th>
-                        <th className="text-right p-3 font-medium">P&L %</th>
-                        <th className="text-right p-3 font-medium">R-Multiple</th>
-                        <th className="text-left p-3 font-medium">Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {run.trade_log.slice(0, 50).map((trade: any, index: number) => (
-                        <tr key={trade.id} className="border-b hover:bg-muted/25">
-                          <td className="p-3 text-muted-foreground">
-                            {new Date(trade.entry_time).toLocaleDateString()}
-                          </td>
-                          <td className="p-3 text-muted-foreground">
-                            {new Date(trade.exit_time).toLocaleDateString()}
-                          </td>
-                          <td className="p-3">
-                            <Badge variant={trade.trade_type === 'BUY' ? 'default' : 'secondary'}>
-                              {trade.trade_type}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-right font-mono">
-                            {trade.entry_price.toFixed(5)}
-                          </td>
-                          <td className="p-3 text-right font-mono">
-                            {trade.exit_price.toFixed(5)}
-                          </td>
-                          <td className="p-3 text-right">
-                            {trade.quantity.toLocaleString()}
-                          </td>
-                          <td className={`p-3 text-right font-medium ${
-                            trade.pnl >= 0 ? 'text-success' : 'text-destructive'
-                          }`}>
-                            {formatCurrency(trade.pnl)}
-                          </td>
-                          <td className={`p-3 text-right font-medium ${
-                            trade.pnl_percentage >= 0 ? 'text-success' : 'text-destructive'
-                          }`}>
-                            {trade.pnl_percentage.toFixed(2)}%
-                          </td>
-                          <td className={`p-3 text-right font-medium ${
-                            trade.r_multiple >= 0 ? 'text-success' : 'text-destructive'
-                          }`}>
-                            {trade.r_multiple.toFixed(2)}R
-                          </td>
-                          <td className="p-3 text-muted-foreground text-xs">
-                            {trade.reason}
-                          </td>
+            <>
+              {/* Trade P&L Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trade Profit & Loss Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={run.trade_log.slice(0, 50).map((trade: any, index: number) => ({
+                      trade: `T${index + 1}`,
+                      pnl: trade.pnl,
+                      isWin: trade.pnl >= 0
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="trade" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value) => [formatCurrency(value as number), 'P&L']}
+                        labelFormatter={(label) => `Trade ${label}`}
+                      />
+                      <Bar dataKey="pnl">
+                        {run.trade_log.slice(0, 50).map((trade: any, index: number) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={trade.pnl >= 0 ? "hsl(var(--success))" : "hsl(var(--destructive))"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Trade Table */}
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50 border-b">
+                        <tr>
+                          <th className="text-left p-3 font-medium">Trade #</th>
+                          <th className="text-left p-3 font-medium">Entry Time</th>
+                          <th className="text-left p-3 font-medium">Exit Time</th>
+                          <th className="text-left p-3 font-medium">Type</th>
+                          <th className="text-right p-3 font-medium">Entry Price</th>
+                          <th className="text-right p-3 font-medium">Exit Price</th>
+                          <th className="text-right p-3 font-medium">Quantity</th>
+                          <th className="text-right p-3 font-medium">Principal</th>
+                          <th className="text-right p-3 font-medium">P&L</th>
+                          <th className="text-right p-3 font-medium">Win Amount</th>
+                          <th className="text-right p-3 font-medium">Running Equity</th>
+                          <th className="text-right p-3 font-medium">Drawdown</th>
+                          <th className="text-left p-3 font-medium">Reason</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {run.trade_log.length > 50 && (
-                  <div className="p-4 text-center text-muted-foreground border-t">
-                    Showing first 50 of {run.trade_log.length} trades. Export CSV to see all trades.
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          let runningEquity = run.initial_capital || 10000;
+                          let peakEquity = runningEquity;
+                          
+                          return run.trade_log.slice(0, 50).map((trade: any, index: number) => {
+                            const principal = Math.abs(trade.quantity * trade.entry_price);
+                            const winAmount = trade.pnl > 0 ? trade.pnl : 0;
+                            runningEquity += trade.pnl;
+                            peakEquity = Math.max(peakEquity, runningEquity);
+                            const drawdown = ((peakEquity - runningEquity) / peakEquity) * 100;
+                            
+                            return (
+                              <tr key={trade.id || index} className="border-b hover:bg-muted/25">
+                                <td className="p-3 font-medium">#{index + 1}</td>
+                                <td className="p-3 text-muted-foreground">
+                                  {new Date(trade.entry_time).toLocaleDateString()}
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {new Date(trade.exit_time).toLocaleDateString()}
+                                </td>
+                                <td className="p-3">
+                                  <Badge variant={trade.trade_type === 'BUY' ? 'default' : 'secondary'}>
+                                    {trade.trade_type}
+                                  </Badge>
+                                </td>
+                                <td className="p-3 text-right font-mono">
+                                  {trade.entry_price.toFixed(5)}
+                                </td>
+                                <td className="p-3 text-right font-mono">
+                                  {trade.exit_price.toFixed(5)}
+                                </td>
+                                <td className="p-3 text-right">
+                                  {trade.quantity.toLocaleString()}
+                                </td>
+                                <td className="p-3 text-right font-medium">
+                                  {formatCurrency(principal)}
+                                </td>
+                                <td className={`p-3 text-right font-medium ${
+                                  trade.pnl >= 0 ? 'text-success' : 'text-destructive'
+                                }`}>
+                                  {formatCurrency(trade.pnl)}
+                                </td>
+                                <td className="p-3 text-right font-medium text-success">
+                                  {winAmount > 0 ? formatCurrency(winAmount) : '-'}
+                                </td>
+                                <td className="p-3 text-right font-medium">
+                                  {formatCurrency(runningEquity)}
+                                </td>
+                                <td className={`p-3 text-right font-medium ${
+                                  drawdown > 5 ? 'text-destructive' : drawdown > 2 ? 'text-warning' : 'text-muted-foreground'
+                                }`}>
+                                  -{drawdown.toFixed(2)}%
+                                </td>
+                                <td className="p-3 text-muted-foreground text-xs">
+                                  {trade.reason || 'Strategy signal'}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  
+                  {run.trade_log.length > 50 && (
+                    <div className="p-4 text-center text-muted-foreground border-t">
+                      Showing first 50 of {run.trade_log.length} trades. Export CSV to see all trades.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Trade Summary Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Winning Trades</p>
+                      <p className="text-2xl font-bold text-success">
+                        {run.trade_log.filter((t: any) => t.pnl > 0).length}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {((run.trade_log.filter((t: any) => t.pnl > 0).length / run.trade_log.length) * 100).toFixed(1)}% of total
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Losing Trades</p>
+                      <p className="text-2xl font-bold text-destructive">
+                        {run.trade_log.filter((t: any) => t.pnl < 0).length}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {((run.trade_log.filter((t: any) => t.pnl < 0).length / run.trade_log.length) * 100).toFixed(1)}% of total
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Largest Win</p>
+                      <p className="text-2xl font-bold text-success">
+                        {formatCurrency(Math.max(...run.trade_log.map((t: any) => t.pnl)))}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Best single trade
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
