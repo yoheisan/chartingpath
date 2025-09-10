@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Target, Clock, TrendingUp, User, HelpCircle } from 'lucide-react';
+import { Target, Clock, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface ObjectivesStepProps {
@@ -12,19 +12,7 @@ interface ObjectivesStepProps {
   subscriptionPlan: string;
 }
 
-const primaryGoals = [
-  { id: 'income', label: 'Generate Income', desc: 'Consistent regular profits', icon: TrendingUp },
-  { id: 'growth', label: 'Capital Growth', desc: 'Long-term wealth building', icon: Target },
-  { id: 'learning', label: 'Learn & Practice', desc: 'Educational focus', icon: User },
-  { id: 'diversification', label: 'Portfolio Diversification', desc: 'Risk spreading', icon: Target },
-];
 
-const experienceLevels = [
-  { id: 'beginner', label: 'Beginner', desc: 'New to trading' },
-  { id: 'intermediate', label: 'Intermediate', desc: '1-3 years experience' },
-  { id: 'advanced', label: 'Advanced', desc: '3+ years experience' },
-  { id: 'expert', label: 'Expert', desc: 'Professional level' },
-];
 
 const timeCommitments = [
   { id: 'minimal', label: 'Minimal', desc: '< 1 hour/day' },
@@ -39,7 +27,6 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.objectives || {
-    primaryGoal: '',
     timeCommitment: ''
   };
 
@@ -51,61 +38,18 @@ export const ObjectivesStep: React.FC<ObjectivesStepProps> = ({
     onAnswersChange('objectives', newAnswers);
   };
 
-  const isComplete = currentAnswers.primaryGoal && currentAnswers.timeCommitment;
+  const isComplete = currentAnswers.timeCommitment;
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              What's Your Primary Trading Goal?
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    Your trading goal determines the strategy's focus and risk profile. 
-                    <strong> Income</strong> strategies prioritize consistent smaller gains, 
-                    <strong> Growth</strong> targets larger capital appreciation, 
-                    <strong> Learning</strong> emphasizes educational value with simpler approaches, and 
-                    <strong> Diversification</strong> spreads risk across multiple positions.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </CardTitle>
-          </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {primaryGoals.map((goal) => {
-              const Icon = goal.icon;
-              return (
-                <Button
-                  key={goal.id}
-                  variant={currentAnswers.primaryGoal === goal.id ? "default" : "outline"}
-                  className="h-auto p-4 flex flex-col items-start text-left"
-                  onClick={() => handleAnswerChange('primaryGoal', goal.id)}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{goal.label}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">{goal.desc}</span>
-                </Button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              How Much Time Can You Dedicate?
+              Trading Time Commitment
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />

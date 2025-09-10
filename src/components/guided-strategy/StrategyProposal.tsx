@@ -59,11 +59,10 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   };
 
   const generateStrategyDescription = () => {
-    const { objectives, market, style, riskTolerance, reward } = answers;
+    const { market, style, riskTolerance, reward } = answers;
     
     return `A ${style?.approach?.replace('-', ' ')} strategy targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
-    Trades selected instruments with ${riskTolerance?.maxDrawdown}% max drawdown tolerance. 
-    Designed for traders seeking ${objectives?.primaryGoal?.replace('_', ' ')}.`;
+    Trades selected instruments with ${riskTolerance?.maxDrawdown}% max drawdown tolerance.`;
   };
 
   const canBacktest = () => {
@@ -85,7 +84,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     const requiredSteps = ['objectives', 'market', 'style'];
     const missingSteps = [];
 
-    if (!answers.objectives?.primaryGoal || !answers.objectives?.timeCommitment) {
+    if (!answers.objectives?.timeCommitment) {
       missingSteps.push('Objectives');
     }
     if (!answers.market?.timeframes || answers.market.timeframes.length === 0) {
@@ -238,7 +237,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 Objectives
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Goal: {answers.objectives?.primaryGoal?.replace('_', ' ')}</li>
                 <li>• Time: {answers.objectives?.timeCommitment}</li>
               </ul>
             </div>

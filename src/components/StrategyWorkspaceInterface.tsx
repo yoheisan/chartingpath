@@ -31,7 +31,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [activeTab, setActiveTab] = useState('builder');
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
-    objectives: { primaryGoal: '', timeCommitment: '' },
+    objectives: { timeCommitment: '' },
     market: { timeframes: [] },
     riskTolerance: { maxDrawdown: 10, positionSize: 2, riskPerTrade: 2 },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
