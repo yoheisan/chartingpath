@@ -51,9 +51,10 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
 
   const generateStrategyName = () => {
     const approach = answers.style?.approach?.replace('-', ' ') || 'Custom';
+    const instrument = answers.market?.instrument || 'Strategy';
     const timeframe = answers.market?.timeframes?.[0] || '1h';
     
-    return `${approach} ${timeframe} Strategy`.split(' ').map(word => 
+    return `${instrument} ${approach} ${timeframe}`.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -61,7 +62,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   const generateStrategyDescription = () => {
     const { market, style, riskTolerance, reward } = answers;
     
-    return `A ${style?.approach?.replace('-', ' ')} strategy targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
+    return `A ${style?.approach?.replace('-', ' ')} strategy for ${market?.instrument || 'selected instrument'} targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
     Trades ${market?.timeframes?.join(', ')} timeframes with ${riskTolerance?.maxDrawdown}% max drawdown tolerance.`;
   };
 
@@ -233,9 +234,10 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 <BarChart3 className="w-4 h-4" />
                 Markets
               </h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Timeframes: {answers.market?.timeframes?.join(', ')}</li>
-              </ul>
+               <ul className="space-y-1 text-sm text-muted-foreground">
+                 <li>• Instrument: {answers.market?.instrument || 'Not selected'}</li>
+                 <li>• Timeframes: {answers.market?.timeframes?.join(', ')}</li>
+               </ul>
             </div>
             
             <div>
