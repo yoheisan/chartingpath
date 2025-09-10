@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TrendingUp, Globe, Clock, Zap, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
@@ -45,10 +45,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     timeframes: []
   };
 
-  const handleTimeframeToggle = (timeframe: string) => {
+  const handleTimeframeChange = (value: string) => {
     onAnswersChange('market', {
       ...currentAnswers,
-      timeframes: [timeframe] // Only allow single selection
+      timeframes: [value]
     });
   };
 
@@ -76,27 +76,48 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               </Tooltip>
             </CardTitle>
           </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {['scalping', 'intraday', 'swing', 'position'].map((category) => (
-              <div key={category}>
-                <h4 className="font-medium capitalize mb-2">{category} Trading</h4>
-                <div className="flex flex-wrap gap-2">
-                  {timeframes
-                    .filter(tf => tf.category === category)
-                    .map((timeframe) => (
-                      <Button
-                        key={timeframe.id}
-                        variant={currentAnswers.timeframes?.includes(timeframe.id) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTimeframeToggle(timeframe.id)}
-                      >
-                        {timeframe.label}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            ))}
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="timeframe-select" className="text-base font-medium">
+              Select Your Trading Timeframe
+            </Label>
+            <Select 
+              value={currentAnswers.timeframes?.[0] || ""} 
+              onValueChange={handleTimeframeChange}
+            >
+              <SelectTrigger 
+                id="timeframe-select" 
+                className="w-full bg-background border-input hover:bg-accent/50 focus:ring-2 focus:ring-ring focus:border-ring"
+              >
+                <SelectValue placeholder="Choose a timeframe for your strategy" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-popover border-border shadow-lg">
+                {['scalping', 'intraday', 'swing', 'position'].map((category) => (
+                  <div key={category}>
+                    <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {category} Trading
+                    </div>
+                    {timeframes
+                      .filter(tf => tf.category === category)
+                      .map((timeframe) => (
+                        <SelectItem 
+                          key={timeframe.id} 
+                          value={timeframe.id}
+                          className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {timeframe.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Choose the time interval that matches your trading style and availability.
+            </p>
           </div>
         </CardContent>
       </Card>
