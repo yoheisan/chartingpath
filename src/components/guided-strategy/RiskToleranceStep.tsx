@@ -13,6 +13,19 @@ interface RiskToleranceStepProps {
   subscriptionPlan: string;
 }
 
+const majorCurrencies = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'SEK', symbol: 'kr', name: 'Swedish Krona' },
+  { code: 'NOK', symbol: 'kr', name: 'Norwegian Krone' },
+];
+
 export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
   answers,
   onAnswersChange,
@@ -20,6 +33,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
 }) => {
   const currentAnswers = answers.riskTolerance || {
     accountPrinciple: 10000,
+    currency: 'USD',
     leverage: 1,
     maxDrawdown: 10,
     riskPerTrade: 2
@@ -31,6 +45,12 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
       [field]: value[0]
     };
     onAnswersChange('riskTolerance', newAnswers);
+  };
+
+  const selectedCurrency = majorCurrencies.find(c => c.code === (currentAnswers.currency || 'USD')) || majorCurrencies[0];
+  
+  const formatAmount = (amount: number) => {
+    return `${selectedCurrency.symbol}${amount.toLocaleString()}`;
   };
 
   const getRiskLevel = (drawdown: number) => {
@@ -150,7 +170,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               <div className="flex items-center gap-2">
                 <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
                 <span className={`font-medium ${riskLevel.color}`}>
-                  {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()})
+                 {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))})
                 </span>
               </div>
             </div>
@@ -200,9 +220,9 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 Risk Profile Summary
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                 <p>• Account Principle: ${(currentAnswers.accountPrinciple || 0).toLocaleString()}</p>
-                 <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
-                 <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()}) ({riskLevel.level})</p>
+                <p>• Account Principle: {formatAmount(currentAnswers.accountPrinciple || 0)} ({currentAnswers.currency || 'USD'})</p>
+                <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
+                <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))} - {riskLevel.level})</p>
                 <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account principle</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">

@@ -18,6 +18,7 @@ export interface GuidedStrategyAnswers {
   };
   riskTolerance: {
     accountPrinciple: number;
+    currency?: string;
     leverage: number;
     maxDrawdown: number;
     riskPerTrade: number;
@@ -58,7 +59,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
     market: { instrumentCategory: '', instrument: '', timeframes: [] },
-    riskTolerance: { accountPrinciple: 10000, leverage: 1, maxDrawdown: 10, riskPerTrade: 2 },
+    riskTolerance: { accountPrinciple: 10000, currency: 'USD', leverage: 1, maxDrawdown: 10, riskPerTrade: 2 },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
     style: { approach: '' }
   });
