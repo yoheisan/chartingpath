@@ -32,13 +32,17 @@ interface StrategyProposalProps {
   onSaveStrategy?: (strategy: any) => void;
   onBacktest?: (strategy: any) => void;
   subscriptionPlan: string;
+  showMoveToBacktest?: boolean;
+  onMoveToBacktest?: () => void;
 }
 
 export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   answers,
   onSaveStrategy,
   onBacktest,
-  subscriptionPlan
+  subscriptionPlan,
+  showMoveToBacktest = false,
+  onMoveToBacktest
 }) => {
   const [backtestResults, setBacktestResults] = useState<BacktestData | null>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
@@ -278,25 +282,36 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
-            <Button
-              onClick={handleBacktest}
-              disabled={!canBacktest() || isBacktesting}
-              className="flex-1 min-w-[200px]"
-              size="lg"
-            >
-              {isBacktesting ? (
-                <>
-                  <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Running Backtest...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Run Backtest
-                  {!canBacktest() && <Lock className="w-3 w-3 ml-1" />}
-                </>
-              )}
-            </Button>
+            {showMoveToBacktest && onMoveToBacktest ? (
+              <Button
+                onClick={onMoveToBacktest}
+                className="flex-1 min-w-[200px]"
+                size="lg"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Test Strategy
+              </Button>
+            ) : (
+              <Button
+                onClick={handleBacktest}
+                disabled={!canBacktest() || isBacktesting}
+                className="flex-1 min-w-[200px]"
+                size="lg"
+              >
+                {isBacktesting ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Running Backtest...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Run Backtest
+                    {!canBacktest() && <Lock className="w-3 w-3 ml-1" />}
+                  </>
+                )}
+              </Button>
+            )}
             
             <Button
               variant="outline"

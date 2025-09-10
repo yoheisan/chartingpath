@@ -37,15 +37,10 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link to="/ai-builder" className="flex items-center gap-2">
+                  <Link to="/strategy-workspace" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    {t('navigation.aiBuilder', 'AI Builder')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/backtest" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Backtesting
+                    <TrendingUp className="h-4 w-4 ml-1" />
+                    Strategy Workspace
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

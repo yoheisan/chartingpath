@@ -32,6 +32,7 @@ import Forge from "./pages/Forge";
 import PaperTrading from "./pages/PaperTrading";
 import BacktestWorkspace from "./pages/BacktestWorkspace";
 import BacktestVault from "./pages/BacktestVault";
+import StrategyWorkspace from "./pages/StrategyWorkspace";
 import EliteDashboard from "./pages/EliteDashboard";
 import { TranslationManagement } from "./pages/TranslationManagement";
 
@@ -51,12 +52,13 @@ const App = () => (
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
-          <Route path="/ai-builder" element={<AIBuilder />} />
+          <Route path="/strategy-workspace" element={<StrategyWorkspace />} />
+          <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
+          <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/dashboard" element={<MemberDashboard />} />
           <Route path="/members/trading" element={<PaperTrading />} />
-          <Route path="/backtest" element={<BacktestWorkspace />} />
           <Route path="/vault" element={<BacktestVault />} />
           <Route path="/elite" element={<EliteDashboard />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
