@@ -88,19 +88,21 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
             </div>
             <Input
               type="number"
-              value={currentAnswers.accountPrinciple || 10000}
-              onChange={(e) => 
+              value={currentAnswers.accountPrinciple ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
                 onAnswersChange('riskTolerance', {
                   ...currentAnswers,
-                  accountPrinciple: parseFloat(e.target.value) || 10000
-                })
-              }
-              min={1000}
+                  accountPrinciple: value === '' ? '' : parseFloat(value)
+                });
+              }}
+              min={0}
               step={1000}
               className="text-lg font-medium"
+              placeholder="Enter starting capital (e.g., 10000)"
             />
             <p className="text-sm text-muted-foreground">
-              Enter your total trading capital (minimum $1,000)
+              Enter your total trading capital (can be zero for paper trading)
             </p>
           </div>
 
@@ -148,7 +150,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               <div className="flex items-center gap-2">
                 <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
                 <span className={`font-medium ${riskLevel.color}`}>
-                  {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 10000) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()})
+                  {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()})
                 </span>
               </div>
             </div>
@@ -198,9 +200,9 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 Risk Profile Summary
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>• Account Principle: ${(currentAnswers.accountPrinciple || 10000).toLocaleString()}</p>
-                <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
-                <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 10000) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()}) ({riskLevel.level})</p>
+                 <p>• Account Principle: ${(currentAnswers.accountPrinciple || 0).toLocaleString()}</p>
+                 <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
+                 <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()}) ({riskLevel.level})</p>
                 <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account principle</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
