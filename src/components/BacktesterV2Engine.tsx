@@ -21,11 +21,13 @@ import {
   Activity,
   DollarSign,
   Target,
-  Timer
+  Timer,
+  Brain
 } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBacktesterV2Usage } from '@/hooks/useBacktesterV2Usage';
 import BacktestParametersPanel, { BacktestParams } from './BacktestParametersPanel';
+import { getStrategyTemplate, getStrategyDescription, getStrategyRiskProfile } from '@/utils/StrategyTemplates';
 
 interface BacktesterV2EngineProps {
   selectedStrategy: string;
@@ -83,6 +85,12 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
     setBacktestParams(newParams);
   };
 
+  // Get strategy template based on approach
+  const getApproachTemplate = () => {
+    if (!strategyAnswers?.style?.approach) return null;
+    return getStrategyTemplate(strategyAnswers.style.approach, strategyAnswers);
+  };
+
   // Check if all required parameters are filled
   const areParametersComplete = () => {
     return !!(
@@ -92,7 +100,8 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
       backtestParams.positionSize > 0 &&
       backtestParams.fromDate &&
       backtestParams.toDate &&
-      isStrategyComplete
+      isStrategyComplete &&
+      strategyAnswers?.style?.approach
     );
   };
 
@@ -367,6 +376,51 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
           {/* Engine Features Tab */}
           <TabsContent value="engine" className="mt-6">
             <div className="space-y-4">
+              {/* Strategy Information */}
+              {strategyAnswers?.style?.approach && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5" />
+                      Selected Strategy: {getApproachTemplate()?.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      {getStrategyDescription(strategyAnswers.style.approach)}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 p-3 bg-background/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Risk Level</div>
+                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).risk}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Time Horizon</div>
+                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).timeHorizon}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Best Market</div>
+                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).marketCondition}</div>
+                      </div>
+                    </div>
+
+                    {/* Strategy Parameters Preview */}
+                    <div>
+                      <h4 className="font-medium mb-2">Strategy Parameters</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {Object.entries(getApproachTemplate()?.parameters || {}).map(([key, value]) => (
+                          <div key={key} className="flex justify-between p-2 bg-background/30 rounded">
+                            <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                            <span className="font-medium">{String(value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">V2 Engine Capabilities</CardTitle>

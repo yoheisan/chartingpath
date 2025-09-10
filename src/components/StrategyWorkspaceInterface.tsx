@@ -18,6 +18,7 @@ import BacktesterV2Engine from './BacktesterV2Engine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { mapAnswersToBacktestParams } from '@/utils/StrategyTemplates';
 
 interface SavedStrategy {
   id: string;
@@ -94,22 +95,24 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     ).join(' ');
   };
 
-  // Convert strategy answers to backtest params for V2 engine
+  // Convert strategy answers to backtest params for V2 engine using templates
   const convertToBacktestParams = () => {
+    const templateParams = mapAnswersToBacktestParams(strategyAnswers);
+    
     return {
-      instrument: strategyAnswers.market?.instrument || 'EURUSD',
-      timeframe: strategyAnswers.market?.timeframes?.[0] || '1H',
-      period: '1Y',
-      fromDate: '2024-01-01',
-      toDate: '2024-12-31',
-      initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || 10000,
+      instrument: templateParams.instrument || 'EURUSD',
+      timeframe: templateParams.timeframe || '1H',
+      period: 'custom',
+      fromDate: templateParams.fromDate || '2024-01-01',
+      toDate: templateParams.toDate || '2024-12-31',
+      initialCapital: templateParams.initialCapital || 10000,
       positionSizingType: 'percentage',
-      positionSize: strategyAnswers.riskTolerance?.riskPerTrade || 2,
+      positionSize: templateParams.positionSize || 2,
       orderType: 'market',
-      commission: 0.1,
-      slippage: 0.05,
-      stopLoss: strategyAnswers.riskTolerance?.maxDrawdown ? strategyAnswers.riskTolerance.maxDrawdown / 2 : undefined,
-      takeProfit: strategyAnswers.reward?.targetReturn ? strategyAnswers.reward.targetReturn / 5 : undefined
+      commission: templateParams.commission || 0.1,
+      slippage: templateParams.slippage || 0.05,
+      stopLoss: templateParams.stopLoss,
+      takeProfit: templateParams.takeProfit
     };
   };
 
