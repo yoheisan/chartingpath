@@ -109,7 +109,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               <Label className="text-base font-medium">
-                Leverage: 1:{currentAnswers.leverage || 1}
+                Leverage (1:{currentAnswers.leverage || 1})
               </Label>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -122,18 +122,23 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 </TooltipContent>
               </Tooltip>
             </div>
-            <Slider
-              value={[currentAnswers.leverage || 1]}
-              onValueChange={(value) => handleAnswerChange('leverage', value)}
-              max={3000}
+            <Input
+              type="number"
+              value={currentAnswers.leverage || 1}
+              onChange={(e) => 
+                onAnswersChange('riskTolerance', {
+                  ...currentAnswers,
+                  leverage: parseFloat(e.target.value) || 1
+                })
+              }
               min={1}
+              max={3000}
               step={1}
-              className="py-4"
+              className="text-lg font-medium"
             />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>No Leverage (1:1)</span>
-              <span>Maximum (1:3000)</span>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter leverage ratio (1 = no leverage, up to 3000 for maximum leverage)
+            </p>
           </div>
 
           {/* Max Drawdown */}
