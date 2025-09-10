@@ -304,7 +304,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               ) : (
                 <>
                   <Play className="w-4 h-4 mr-2" />
-                  Run Backtest
+                  Run Backtest (30 Days)
                   {!canBacktest() && <Lock className="w-3 w-3 ml-1" />}
                 </>
               )}
@@ -332,6 +332,19 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               Export Strategy
               {!canExport() && <Lock className="w-3 w-3 ml-1" />}
             </Button>
+          </div>
+          {/* Period Limitation Info */}
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="font-medium mb-1">Guided Builder: Past 30 Days Backtesting</p>
+                <p>
+                  For custom date ranges and unlimited historical data, use the Advanced Backtest Engine below 
+                  (available with Pro+ plan or higher).
+                </p>
+              </div>
+            </div>
           </div>
           
           {/* Tier Limitations */}

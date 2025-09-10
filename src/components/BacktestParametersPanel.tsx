@@ -28,6 +28,7 @@ interface BacktestParametersPanelProps {
   params: BacktestParams;
   onParamsChange: (params: BacktestParams) => void;
   strategies: Strategy[];
+  isGuidedBuilder?: boolean; // true = guided builder (30 days limit), false = advanced engine (custom periods)
 }
 
 export interface BacktestParams {

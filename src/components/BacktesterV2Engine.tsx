@@ -37,6 +37,7 @@ interface BacktesterV2EngineProps {
   strategyAnswers?: any;
   isStrategyComplete?: boolean;
   onBacktestComplete?: () => void;
+  isGuidedBuilder?: boolean; // true = guided builder (30 days limit), false = advanced engine (custom periods)
 }
 
 const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
@@ -46,7 +47,8 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   isRunning,
   strategyAnswers,
   isStrategyComplete = false,
-  onBacktestComplete
+  onBacktestComplete,
+  isGuidedBuilder = false
 }) => {
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
   const { 
@@ -306,12 +308,28 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
                 </CardContent>
               </Card>
 
+              {/* Period Restriction Info for Guided Builder */}
+              {isGuidedBuilder && (
+                <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 mb-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                      <Timer className="w-4 h-4" />
+                      <span className="font-medium">Guided Builder: Past 30 Days Only</span>
+                    </div>
+                    <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                      Upgrade to Pro+ for custom date ranges and unlimited historical data access in the Advanced Engine below.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               <BacktestParametersPanel
                 selectedStrategy={selectedStrategy}
                 onStrategyChange={() => {}} // Strategy is pre-selected from builder
                 params={backtestParams}
                 onParamsChange={handleParamsChange}
                 strategies={mockStrategies}
+                isGuidedBuilder={isGuidedBuilder}
               />
 
               {/* Run Backtest Button */}

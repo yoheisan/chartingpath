@@ -96,15 +96,21 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   };
 
   // Convert strategy answers to backtest params for V2 engine using templates
+  // GUIDED BUILDER: Limited to past 30 days only (service differentiator)
   const convertToBacktestParams = () => {
     const templateParams = mapAnswersToBacktestParams(strategyAnswers);
+    
+    // Calculate past 30 days from current date for guided builder
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
     
     return {
       instrument: templateParams.instrument || 'EURUSD',
       timeframe: templateParams.timeframe || '1H',
-      period: 'custom',
-      fromDate: templateParams.fromDate || '2024-01-01',
-      toDate: templateParams.toDate || '2024-12-31',
+      period: 'past_30_days', // Fixed period for guided builder
+      fromDate: thirtyDaysAgo.toISOString().split('T')[0],
+      toDate: today.toISOString().split('T')[0],
       initialCapital: templateParams.initialCapital || 10000,
       positionSizingType: 'percentage',
       positionSize: templateParams.positionSize || 2,
@@ -231,16 +237,17 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             isBacktesting={isBacktesting}
           />
           
-          {/* Backtest Engine Section */}
+          {/* Advanced Backtest Engine Section - Premium Feature */}
           {isStrategyComplete() && (
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
-                  Backtest Engine
+                  Advanced Backtest Engine
+                  <Badge variant="outline" className="ml-2">Pro+ Feature</Badge>
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  Test your strategy with historical data using our V2 backtesting engine
+                  Custom date ranges, advanced parameters, and unlimited historical data access
                 </p>
               </CardHeader>
               <CardContent>
@@ -252,6 +259,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
               strategyAnswers={strategyAnswers}
               isStrategyComplete={isStrategyComplete()}
               onBacktestComplete={() => setActiveTab('results')}
+              isGuidedBuilder={false}
             />
               </CardContent>
             </Card>
