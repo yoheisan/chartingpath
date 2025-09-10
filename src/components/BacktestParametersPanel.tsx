@@ -33,6 +33,7 @@ interface BacktestParametersPanelProps {
 export interface BacktestParams {
   instrument: string;
   timeframe: string;
+  period: string;
   fromDate: string;
   toDate: string;
   initialCapital: number;
@@ -61,6 +62,17 @@ const TIMEFRAMES = [
   { value: '1W', label: '1 Week' }
 ];
 
+const BACKTEST_PERIODS = [
+  { value: 'custom', label: 'Custom Range' },
+  { value: '1M', label: 'Last 1 Month' },
+  { value: '3M', label: 'Last 3 Months' },
+  { value: '6M', label: 'Last 6 Months' },
+  { value: '1Y', label: 'Last 1 Year' },
+  { value: '2Y', label: 'Last 2 Years' },
+  { value: '3Y', label: 'Last 3 Years' },
+  { value: '5Y', label: 'Last 5 Years' }
+];
+
 const PRESET_TEMPLATES = [
   { name: 'Swing 4H', description: '4H swing trading setup' },
   { name: 'Daily Trend', description: 'Daily trend following' },
@@ -77,6 +89,46 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
 }) => {
   const updateParam = (key: keyof BacktestParams, value: any) => {
     onParamsChange({ ...params, [key]: value });
+  };
+
+  const calculateDateRange = (period: string) => {
+    const today = new Date();
+    const toDate = today.toISOString().split('T')[0];
+    let fromDate: string;
+
+    switch (period) {
+      case '1M':
+        fromDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()).toISOString().split('T')[0];
+        break;
+      case '3M':
+        fromDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()).toISOString().split('T')[0];
+        break;
+      case '6M':
+        fromDate = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate()).toISOString().split('T')[0];
+        break;
+      case '1Y':
+        fromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        break;
+      case '2Y':
+        fromDate = new Date(today.getFullYear() - 2, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        break;
+      case '3Y':
+        fromDate = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        break;
+      case '5Y':
+        fromDate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        break;
+      default:
+        return; // Custom range - don't update dates
+    }
+
+    updateParam('fromDate', fromDate);
+    updateParam('toDate', toDate);
+  };
+
+  const handlePeriodChange = (value: string) => {
+    updateParam('period', value);
+    calculateDateRange(value);
   };
 
   const validateSettings = () => {
@@ -154,6 +206,22 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="period">Backtest Period</Label>
+            <Select value={params.period} onValueChange={handlePeriodChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BACKTEST_PERIODS.map((period) => (
+                  <SelectItem key={period.value} value={period.value}>
+                    {period.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="fromDate">From Date</Label>
@@ -161,6 +229,7 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 type="date"
                 value={params.fromDate}
                 onChange={(e) => updateParam('fromDate', e.target.value)}
+                disabled={params.period !== 'custom'}
               />
             </div>
 
@@ -170,6 +239,7 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 type="date"
                 value={params.toDate}
                 onChange={(e) => updateParam('toDate', e.target.value)}
+                disabled={params.period !== 'custom'}
               />
             </div>
           </div>

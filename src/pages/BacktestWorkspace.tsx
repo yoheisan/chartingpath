@@ -73,7 +73,8 @@ const BacktestWorkspace = () => {
   const [activeEngine, setActiveEngine] = useState<'v1' | 'v2'>(pairTradingConfig ? 'v2' : 'v1');
   const [backtestParams, setBacktestParams] = useState<BacktestParams>({
     instrument: "EURUSD",
-    timeframe: "1H", 
+    timeframe: "1H",
+    period: "1Y",
     fromDate: "2024-01-01",
     toDate: "2024-12-31",
     initialCapital: 10000,
