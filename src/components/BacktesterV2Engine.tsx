@@ -32,13 +32,17 @@ interface BacktesterV2EngineProps {
   params: BacktestParams;
   onRunV2Backtest: () => void;
   isRunning: boolean;
+  strategyAnswers?: any;
+  isStrategyComplete?: boolean;
 }
 
 const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   selectedStrategy,
   params,
   onRunV2Backtest,
-  isRunning
+  isRunning,
+  strategyAnswers,
+  isStrategyComplete = false
 }) => {
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
   const { 
@@ -53,6 +57,11 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
   const [backtestParams, setBacktestParams] = useState<BacktestParams>(params);
+
+  // Update params when strategy answers change
+  React.useEffect(() => {
+    setBacktestParams(params);
+  }, [params]);
 
   const hasV2Access = hasFeatureAccess('backtester_v2');
   const hasPairTrading = hasFeatureAccess('pair_trading');
@@ -74,7 +83,25 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
     setBacktestParams(newParams);
   };
 
+  // Check if all required parameters are filled
+  const areParametersComplete = () => {
+    return !!(
+      backtestParams.instrument &&
+      backtestParams.timeframe &&
+      backtestParams.initialCapital > 0 &&
+      backtestParams.positionSize > 0 &&
+      backtestParams.fromDate &&
+      backtestParams.toDate &&
+      isStrategyComplete
+    );
+  };
+
   const handleRunBacktest = async () => {
+    if (!areParametersComplete()) {
+      toast.error('Please complete all required parameters first');
+      return;
+    }
+    
     setActiveTab('progress');
     
     // Simulate backtest phases
@@ -213,6 +240,54 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
           {/* Parameters Tab */}
           <TabsContent value="parameters" className="mt-6">
             <div className="space-y-4">
+              {/* Strategy Connection Status */}
+              <Card className={`border ${isStrategyComplete ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
+                    <div>
+                      <div className="font-medium">
+                        {isStrategyComplete ? 'Strategy Connected' : 'Strategy Incomplete'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {isStrategyComplete 
+                          ? 'Parameters automatically synced from Strategy Builder'
+                          : 'Complete strategy building to auto-populate parameters'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  {strategyAnswers && (
+                    <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Market:</span>
+                        <span className="ml-2 font-medium">
+                          {strategyAnswers.market?.instrument || 'Not selected'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Timeframe:</span>
+                        <span className="ml-2 font-medium">
+                          {strategyAnswers.market?.timeframes?.[0] || 'Not selected'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Capital:</span>
+                        <span className="ml-2 font-medium">
+                          ${strategyAnswers.riskTolerance?.accountPrinciple?.toLocaleString() || 'Not set'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Risk/Trade:</span>
+                        <span className="ml-2 font-medium">
+                          {strategyAnswers.riskTolerance?.riskPerTrade || 'Not set'}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <BacktestParametersPanel
                 selectedStrategy={selectedStrategy}
                 onStrategyChange={() => {}} // Strategy is pre-selected from builder
@@ -220,6 +295,72 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
                 onParamsChange={handleParamsChange}
                 strategies={mockStrategies}
               />
+
+              {/* Run Backtest Button */}
+              <Card className="border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">Ready to Execute</div>
+                      <div className="text-sm text-muted-foreground">
+                        {areParametersComplete() 
+                          ? 'All parameters configured. Ready to run backtest.'
+                          : 'Complete all parameters to enable backtesting.'
+                        }
+                      </div>
+                    </div>
+                    {canExecute ? (
+                      <Button 
+                        onClick={handleRunBacktest}
+                        disabled={isRunning || !areParametersComplete()}
+                        size="lg"
+                        className="min-w-[140px]"
+                      >
+                        {isRunning ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
+                            Running...
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle className="h-4 w-4 mr-2" />
+                            Run Backtest
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleUpgrade}
+                        variant="outline"
+                        size="lg"
+                      >
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgrade
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Parameter Completion Status */}
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div className={`flex items-center gap-1 ${backtestParams.instrument ? 'text-green-600' : 'text-orange-600'}`}>
+                      <div className={`w-2 h-2 rounded-full ${backtestParams.instrument ? 'bg-green-500' : 'bg-orange-500'}`} />
+                      Instrument: {backtestParams.instrument ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center gap-1 ${backtestParams.timeframe ? 'text-green-600' : 'text-orange-600'}`}>
+                      <div className={`w-2 h-2 rounded-full ${backtestParams.timeframe ? 'bg-green-500' : 'bg-orange-500'}`} />
+                      Timeframe: {backtestParams.timeframe ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center gap-1 ${backtestParams.initialCapital > 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                      <div className={`w-2 h-2 rounded-full ${backtestParams.initialCapital > 0 ? 'bg-green-500' : 'bg-orange-500'}`} />
+                      Capital: {backtestParams.initialCapital > 0 ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center gap-1 ${isStrategyComplete ? 'text-green-600' : 'text-orange-600'}`}>
+                      <div className={`w-2 h-2 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
+                      Strategy: {isStrategyComplete ? '✓' : 'Complete in Builder'}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 

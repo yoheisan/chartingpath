@@ -107,7 +107,9 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       positionSize: strategyAnswers.riskTolerance?.riskPerTrade || 2,
       orderType: 'market',
       commission: 0.1,
-      slippage: 0.05
+      slippage: 0.05,
+      stopLoss: strategyAnswers.riskTolerance?.maxDrawdown ? strategyAnswers.riskTolerance.maxDrawdown / 2 : undefined,
+      takeProfit: strategyAnswers.reward?.targetReturn ? strategyAnswers.reward.targetReturn / 5 : undefined
     };
   };
 
@@ -247,12 +249,14 @@ export const StrategyWorkspaceInterface: React.FC = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                <BacktesterV2Engine
-                  selectedStrategy={generateStrategyName()}
-                  params={convertToBacktestParams()}
-                  onRunV2Backtest={handleRunV2Backtest}
-                  isRunning={isBacktesting}
-                />
+            <BacktesterV2Engine
+              selectedStrategy={generateStrategyName()}
+              params={convertToBacktestParams()}
+              onRunV2Backtest={handleRunV2Backtest}
+              isRunning={isBacktesting}
+              strategyAnswers={strategyAnswers}
+              isStrategyComplete={isStrategyComplete()}
+            />
               </CardContent>
             </Card>
           )}
