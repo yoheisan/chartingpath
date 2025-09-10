@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TrendingUp, Globe, Clock, Zap, HelpCircle } from 'lucide-react';
+import { TrendingUp, Globe, Clock, Zap, HelpCircle, Check, ChevronsUpDown, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface MarketStepProps {
@@ -74,6 +78,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   onAnswersChange,
   subscriptionPlan
 }) => {
+  const [instrumentSearchOpen, setInstrumentSearchOpen] = useState(false);
+  
   const currentAnswers = answers.market || {
     instrumentCategory: '',
     instrument: '',
@@ -104,6 +110,14 @@ export const MarketStep: React.FC<MarketStepProps> = ({
 
   const selectedCategory = currentAnswers.instrumentCategory;
   const availableInstruments = selectedCategory ? instrumentCategories[selectedCategory as keyof typeof instrumentCategories]?.instruments || [] : [];
+  
+  // Create a comprehensive list of all instruments for global search
+  const allInstruments = Object.values(instrumentCategories).flatMap(category => 
+    category.instruments.map(instrument => ({
+      ...instrument,
+      category: category.label
+    }))
+  );
   
   const isComplete = currentAnswers.instrumentCategory && currentAnswers.instrument && currentAnswers.timeframes?.length > 0;
 
@@ -165,42 +179,112 @@ export const MarketStep: React.FC<MarketStepProps> = ({
             </p>
           </div>
 
-          {/* Specific Instrument Selection */}
-          {selectedCategory && (
-            <div className="space-y-3">
-              <Label htmlFor="instrument-select" className="text-base font-medium">
-                Select Specific Instrument
-              </Label>
-              <Select 
-                value={currentAnswers.instrument || ""} 
-                onValueChange={handleInstrumentChange}
-              >
-                <SelectTrigger 
-                  id="instrument-select" 
-                  className="w-full bg-background border-input hover:bg-accent/50 focus:ring-2 focus:ring-ring focus:border-ring"
+          {/* Specific Instrument Selection - Now available without category selection */}
+          <div className="space-y-3">
+            <Label htmlFor="instrument-select" className="text-base font-medium flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Search & Select Instrument
+            </Label>
+            <Popover open={instrumentSearchOpen} onOpenChange={setInstrumentSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={instrumentSearchOpen}
+                  className="w-full justify-between bg-background hover:bg-accent/50"
                 >
-                  <SelectValue placeholder={`Choose a ${instrumentCategories[selectedCategory as keyof typeof instrumentCategories]?.label.toLowerCase()} instrument`} />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-popover border-border shadow-lg max-h-60 overflow-y-auto">
-                  {availableInstruments.map((instrument) => (
-                    <SelectItem 
-                      key={instrument.symbol} 
-                      value={instrument.symbol}
-                      className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium">{instrument.symbol}</span>
-                        <span className="text-xs text-muted-foreground">{instrument.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Select the specific trading pair or instrument for your strategy.
-              </p>
-            </div>
-          )}
+                  {currentAnswers.instrument ? (
+                    <>
+                      <span className="font-medium">{currentAnswers.instrument}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {allInstruments.find(
+                          (instrument) => instrument.symbol === currentAnswers.instrument
+                        )?.name}
+                      </span>
+                    </>
+                  ) : (
+                    "Search instruments by ticker (e.g., EURUSD, BTC, SPY)..."
+                  )}
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Type ticker symbol or instrument name..." 
+                    className="h-9" 
+                  />
+                  <CommandList>
+                    <CommandEmpty>No instruments found. Try searching by ticker symbol.</CommandEmpty>
+                    {selectedCategory ? (
+                      <CommandGroup heading={instrumentCategories[selectedCategory as keyof typeof instrumentCategories]?.label}>
+                        {availableInstruments.map((instrument) => (
+                          <CommandItem
+                            key={instrument.symbol}
+                            value={`${instrument.symbol} ${instrument.name}`}
+                            onSelect={() => {
+                              handleInstrumentChange(instrument.symbol);
+                              setInstrumentSearchOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-medium">{instrument.symbol}</span>
+                                <span className="text-xs text-muted-foreground">{instrument.name}</span>
+                              </div>
+                              <Check
+                                className={cn(
+                                  "h-4 w-4",
+                                  currentAnswers.instrument === instrument.symbol
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : (
+                      Object.entries(instrumentCategories).map(([categoryKey, category]) => (
+                        <CommandGroup key={categoryKey} heading={category.label}>
+                          {category.instruments.map((instrument) => (
+                            <CommandItem
+                              key={instrument.symbol}
+                              value={`${instrument.symbol} ${instrument.name}`}
+                              onSelect={() => {
+                                // Auto-set category when instrument is selected
+                                handleInstrumentCategoryChange(categoryKey);
+                                handleInstrumentChange(instrument.symbol);
+                                setInstrumentSearchOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-medium">{instrument.symbol}</span>
+                                  <span className="text-xs text-muted-foreground">{instrument.name}</span>
+                                </div>
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    currentAnswers.instrument === instrument.symbol
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ))
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <p className="text-sm text-muted-foreground">
+              Search and select by typing the ticker symbol (e.g., EURUSD, BTC/USD, SPY). Category will be auto-selected.
+            </p>
+          </div>
 
           {/* Timeframe Selection */}
           <div className="space-y-3">
