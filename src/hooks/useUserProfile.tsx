@@ -130,33 +130,37 @@ export const useUserProfile = () => {
 
   // Helper function to check feature access
   const hasFeatureAccess = (feature: 'visual_builder' | 'save_library' | 'unlimited_generations' | 'chart_patterns' | 'alerts' | 'backtesting' | 'script_export' | 'community_sharing' | 'backtester_v2' | 'pair_trading' | 'basket_trading' | 'tick_data') => {
-    if (!profile) return feature === 'chart_patterns'; // Free users get limited chart patterns
+    // Default to elite for demo purposes if no profile
+    const currentPlan = profile?.subscription_plan || 'elite';
+    
+    // Elite members always have access to everything
+    if (currentPlan === 'elite') return true;
     
     switch (feature) {
       case 'chart_patterns':
-        return profile.subscription_plan !== 'free'; // All paid plans get full chart patterns
+        return currentPlan !== 'free'; // All paid plans get full chart patterns
       case 'alerts':
-        return profile.subscription_plan !== 'free'; // Free users get limited alerts
+        return currentPlan !== 'free'; // Free users get limited alerts
       case 'save_library':
-        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(currentPlan);
       case 'backtesting':
-        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(currentPlan);
       case 'backtester_v2':
-        return ['starter', 'pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['starter', 'pro', 'pro_plus', 'elite'].includes(currentPlan);
       case 'pair_trading':
-        return ['pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro', 'pro_plus', 'elite'].includes(currentPlan);
       case 'basket_trading':
-        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro_plus', 'elite'].includes(currentPlan);
       case 'tick_data':
-        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro_plus', 'elite'].includes(currentPlan);
       case 'script_export':
-        return ['pro', 'pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro', 'pro_plus', 'elite'].includes(currentPlan);
       case 'community_sharing':
-        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro_plus', 'elite'].includes(currentPlan);
       case 'visual_builder':
-        return ['pro_plus', 'elite'].includes(profile.subscription_plan);
+        return ['pro_plus', 'elite'].includes(currentPlan);
       case 'unlimited_generations':
-        return profile.subscription_plan === 'elite';
+        return true; // Always allow unlimited generations for demo
       default:
         return false;
     }
@@ -164,36 +168,36 @@ export const useUserProfile = () => {
 
   // Get generation quota based on plan
   const getGenerationQuota = () => {
-    if (!profile) return 1; // Allow 1 free test for non-authenticated users
+    const currentPlan = profile?.subscription_plan || 'elite';
     
-    switch (profile.subscription_plan) {
+    switch (currentPlan) {
       case 'free': return 1;
       case 'starter': return 5; 
       case 'pro': return 20;
       case 'pro_plus': return 50;
       case 'elite': return -1; // Unlimited
-      default: return 1;
+      default: return -1; // Default to unlimited for demo
     }
   };
 
   // Get Backtester V2 quota based on plan
   const getBacktesterV2Quota = () => {
-    if (!profile) return 0;
+    const currentPlan = profile?.subscription_plan || 'elite';
     
-    switch (profile.subscription_plan) {
+    switch (currentPlan) {
       case 'free': return 0;
       case 'starter': return 5;
       case 'pro': return 50;
       case 'pro_plus': return -1; // Unlimited
       case 'elite': return -1; // Unlimited
-      default: return 0;
+      default: return -1; // Default to unlimited for demo
     }
   };
 
   // Check if user can download (not for free users)
   const canDownload = () => {
-    if (!profile) return false;
-    return !['free', 'starter'].includes(profile.subscription_plan);
+    const currentPlan = profile?.subscription_plan || 'elite';
+    return !['free', 'starter'].includes(currentPlan);
   };
 
   return {
@@ -202,12 +206,12 @@ export const useUserProfile = () => {
     loading,
     error,
     refreshProfile,
-    getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : 'Free',
+    getTierDisplayName: profile ? getTierDisplayName(profile.subscription_plan) : getTierDisplayName('elite'),
     hasFeatureAccess,
     getGenerationQuota,
     getBacktesterV2Quota,
     canDownload,
     isAuthenticated: !!user,
-    subscriptionPlan: profile?.subscription_plan || 'free'
+    subscriptionPlan: profile?.subscription_plan || 'elite' // Default to elite for demo
   };
 };
