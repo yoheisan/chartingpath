@@ -30,10 +30,9 @@ import { supabase } from '@/integrations/supabase/client';
 interface StrategyProposalProps {
   answers: GuidedStrategyAnswers;
   onSaveStrategy?: (strategy: any) => void;
-  onBacktest?: (strategy: any) => void;
+  onBacktest?: () => void;
   subscriptionPlan: string;
-  showMoveToBacktest?: boolean;
-  onMoveToBacktest?: () => void;
+  isBacktesting?: boolean;
 }
 
 export const StrategyProposal: React.FC<StrategyProposalProps> = ({
@@ -41,13 +40,15 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   onSaveStrategy,
   onBacktest,
   subscriptionPlan,
-  showMoveToBacktest = false,
-  onMoveToBacktest
+  isBacktesting: externalIsBacktesting = false
 }) => {
   const [backtestResults, setBacktestResults] = useState<BacktestData | null>(null);
-  const [isBacktesting, setIsBacktesting] = useState(false);
+  const [isLocalBacktesting, setIsLocalBacktesting] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [strategyName, setStrategyName] = useState('');
+
+  // Use external backtest state when provided (unified V2), otherwise use local state
+  const isBacktesting = externalIsBacktesting || isLocalBacktesting;
 
   const generateStrategyName = () => {
     const approach = answers.style?.approach?.replace('-', ' ') || 'Custom';
@@ -98,7 +99,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     };
   };
 
-  const handleBacktest = async () => {
+  const handleBacktestClick = () => {
     const validation = validateStrategy();
     
     if (!validation.isValid) {
@@ -111,7 +112,16 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
       return;
     }
 
-    setIsBacktesting(true);
+    // Use unified V2 backtest if available, otherwise fall back to local simulation
+    if (onBacktest) {
+      onBacktest();
+    } else {
+      handleBacktest();
+    }
+  };
+
+  const handleBacktest = async () => {
+    setIsLocalBacktesting(true);
     
     // Simulate backtest - replace with actual backtest logic
     setTimeout(() => {
@@ -126,7 +136,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
       };
       
       setBacktestResults(mockResults);
-      setIsBacktesting(false);
+      setIsLocalBacktesting(false);
       toast.success('Backtest completed successfully');
     }, 3000);
   };
@@ -280,36 +290,25 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
-            {showMoveToBacktest && onMoveToBacktest ? (
-              <Button
-                onClick={onMoveToBacktest}
-                className="flex-1 min-w-[200px]"
-                size="lg"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Test Strategy
-              </Button>
-            ) : (
-              <Button
-                onClick={handleBacktest}
-                disabled={!canBacktest() || isBacktesting}
-                className="flex-1 min-w-[200px]"
-                size="lg"
-              >
-                {isBacktesting ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Running Backtest...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Backtest
-                    {!canBacktest() && <Lock className="w-3 w-3 ml-1" />}
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={handleBacktestClick}
+              disabled={!canBacktest() || isBacktesting}
+              className="flex-1 min-w-[200px]"
+              size="lg"
+            >
+              {isBacktesting ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Running Backtest...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2" />
+                  Run Backtest
+                  {!canBacktest() && <Lock className="w-3 w-3 ml-1" />}
+                </>
+              )}
+            </Button>
             
             <Button
               variant="outline"

@@ -44,9 +44,10 @@ const steps = [
 export interface GuidedStrategyBuilderProps {
   onSaveStrategy?: (strategy: any) => void;
   onAnswersChange?: (answers: GuidedStrategyAnswers) => void;
-  onBacktest?: (strategy: any) => void;
+  onBacktest?: () => void;
   initialStrategy?: any;
   onStrategyLoad?: () => void;
+  isBacktesting?: boolean;
 }
 
 export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
@@ -54,7 +55,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   onAnswersChange,
   onBacktest,
   initialStrategy,
-  onStrategyLoad
+  onStrategyLoad,
+  isBacktesting = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
@@ -151,6 +153,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
             onSaveStrategy={onSaveStrategy}
             onBacktest={onBacktest}
             subscriptionPlan={subscriptionPlan}
+            isBacktesting={isBacktesting}
           />
         );
       default:

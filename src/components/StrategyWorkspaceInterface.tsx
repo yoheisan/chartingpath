@@ -236,7 +236,8 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             initialStrategy={{ answers: strategyAnswers }}
             onAnswersChange={handleAnswersChange}
             onSaveStrategy={handleStrategySaved}
-            onBacktest={() => handleMoveToBacktest()}
+            onBacktest={handleRunV2Backtest}
+            isBacktesting={isBacktesting}
           />
           
           {/* Backtest Engine Section */}
