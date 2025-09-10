@@ -2,8 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertTriangle, Shield, DollarSign, HelpCircle } from 'lucide-react';
+import { AlertTriangle, Shield, DollarSign, HelpCircle, Banknote, TrendingUp } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 
 interface RiskToleranceStepProps {
@@ -18,6 +19,8 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.riskTolerance || {
+    accountPrinciple: 10000,
+    leverage: 1,
     maxDrawdown: 10,
     riskPerTrade: 2
   };
@@ -65,6 +68,74 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
             </CardTitle>
           </CardHeader>
         <CardContent className="space-y-8">
+          {/* Account Principle */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Banknote className="w-5 h-5 text-primary" />
+              <Label className="text-base font-medium">
+                Account Principle (Starting Capital)
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-sm">
+                    Your total trading capital. Drawdown percentages will be calculated against this amount.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Input
+              type="number"
+              value={currentAnswers.accountPrinciple || 10000}
+              onChange={(e) => 
+                onAnswersChange('riskTolerance', {
+                  ...currentAnswers,
+                  accountPrinciple: parseFloat(e.target.value) || 10000
+                })
+              }
+              min={1000}
+              step={1000}
+              className="text-lg font-medium"
+            />
+            <p className="text-sm text-muted-foreground">
+              Enter your total trading capital (minimum $1,000)
+            </p>
+          </div>
+
+          {/* Leverage */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <Label className="text-base font-medium">
+                Leverage: 1:{currentAnswers.leverage || 1}
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-sm">
+                    The amount of leverage you want to use. Higher leverage increases both potential profits and losses.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Slider
+              value={[currentAnswers.leverage || 1]}
+              onValueChange={(value) => handleAnswerChange('leverage', value)}
+              max={3000}
+              min={1}
+              step={1}
+              className="py-4"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>No Leverage (1:1)</span>
+              <span>Maximum (1:3000)</span>
+            </div>
+          </div>
+
           {/* Max Drawdown */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -72,7 +143,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               <div className="flex items-center gap-2">
                 <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
                 <span className={`font-medium ${riskLevel.color}`}>
-                  {currentAnswers.maxDrawdown}% - {riskLevel.level}
+                  {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 10000) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()})
                 </span>
               </div>
             </div>
@@ -85,7 +156,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               className="w-full"
             />
             <p className="text-sm text-muted-foreground">
-              The maximum portfolio loss you're comfortable with before stopping trading.
+              The maximum portfolio loss from your account principle you're comfortable with before stopping trading.
             </p>
           </div>
 
@@ -122,8 +193,10 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 Risk Profile Summary
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% ({riskLevel.level})</p>
-                <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account</p>
+                <p>• Account Principle: ${(currentAnswers.accountPrinciple || 10000).toLocaleString()}</p>
+                <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
+                <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% (${((currentAnswers.accountPrinciple || 10000) * (currentAnswers.maxDrawdown || 10) / 100).toLocaleString()}) ({riskLevel.level})</p>
+                <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account principle</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
                 These settings will be used to calculate position sizes and stop losses in your strategy.
