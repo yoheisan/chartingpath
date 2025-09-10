@@ -125,33 +125,24 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
     setIsBacktesting(true);
     
-    // Simulate V2 backtest process
     try {
-      // Here you would integrate with the actual V2 backtesting engine
-      // For now, simulate the process
-      setTimeout(() => {
-        const mockResults = {
-          id: 'v2-' + Date.now(),
-          strategy_name: generateStrategyName(),
-          win_rate: 68.5,
-          profit_factor: 2.1,
-          net_pnl: 15.2,
-          max_drawdown: strategyAnswers.riskTolerance?.maxDrawdown || 10,
-          sharpe_ratio: 1.8,
-          total_trades: 142,
-          engine_version: '2.0',
-          status: 'completed',
-          created_at: new Date().toISOString()
-        };
-        
-        setBacktestResults(mockResults);
-        setIsBacktesting(false);
-        setActiveTab('results');
-        toast.success('V2 Backtest completed successfully!');
-      }, 3000);
+      // Import the BacktesterV2Adapter dynamically
+      const { BacktesterV2Adapter } = await import('@/adapters/backtesterV2');
+      const adapter = new BacktesterV2Adapter();
+      
+      // Convert strategy answers to backtest parameters
+      const backtestParams = convertToBacktestParams();
+      
+      // Run real backtest
+      const results = await adapter.runBacktest(backtestParams, strategyAnswers);
+      
+      setBacktestResults(results);
+      setIsBacktesting(false);
+      setActiveTab('results');
+      toast.success('V2 Backtest completed successfully!');
     } catch (error) {
       console.error('V2 Backtest error:', error);
-      toast.error('V2 Backtest failed');
+      toast.error('V2 Backtest failed: ' + (error as Error).message);
       setIsBacktesting(false);
     }
   };
@@ -260,6 +251,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
               isRunning={isBacktesting}
               strategyAnswers={strategyAnswers}
               isStrategyComplete={isStrategyComplete()}
+              onBacktestComplete={() => setActiveTab('results')}
             />
               </CardContent>
             </Card>
@@ -279,6 +271,11 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           {backtestResults ? (
             <BacktestResults 
               run={backtestResults}
+              strategyAnswers={strategyAnswers}
+              onStrategySaved={() => {
+                // Optionally redirect to My Strategies or show success message
+                toast.success('Strategy saved! You can find it in My Strategies tab.');
+              }}
             />
           ) : (
             <Card>

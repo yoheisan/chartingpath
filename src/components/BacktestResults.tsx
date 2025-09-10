@@ -3,6 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,9 +15,14 @@ import {
   Target, 
   BarChart3,
   Download,
-  AlertCircle
+  AlertCircle,
+  Save,
+  Heart
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { GuidedStrategyAnswers } from "./GuidedStrategyBuilder";
 
 interface BacktestRun {
   id: string;
@@ -36,13 +45,20 @@ interface BacktestRun {
   trade_log?: any[];
   equity_curve_data?: any[];
   drawdown_data?: any[];
+  engine_version?: string;
 }
 
 interface BacktestResultsProps {
   run: BacktestRun;
+  strategyAnswers?: GuidedStrategyAnswers;
+  onStrategySaved?: () => void;
 }
 
-const BacktestResults: React.FC<BacktestResultsProps> = ({ run }) => {
+const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers, onStrategySaved }) => {
+  const [showSaveDialog, setShowSaveDialog] = React.useState(false);
+  const [strategyName, setStrategyName] = React.useState('');
+  const [strategyDescription, setStrategyDescription] = React.useState('');
+  const [isSaving, setIsSaving] = React.useState(false);
   // Mock equity curve data
   const equityCurveData = React.useMemo(() => {
     const data = [];
@@ -72,6 +88,68 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run }) => {
     return `${value.toFixed(2)}%`;
   };
 
+  // Generate default strategy name
+  const generateDefaultStrategyName = () => {
+    return `${run.strategy_name} - ${new Date().toLocaleDateString()}`;
+  };
+
+  // Generate default description
+  const generateDefaultDescription = () => {
+    const winRateText = run.win_rate ? `${run.win_rate}% win rate` : 'Unknown win rate';
+    const pnlText = run.net_pnl ? `${run.net_pnl > 0 ? '+' : ''}${run.net_pnl.toFixed(2)}% return` : 'Unknown return';
+    return `Backtested strategy on ${run.instrument} (${run.timeframe}) with ${winRateText} and ${pnlText}. Tested from ${run.from_date} to ${run.to_date}.`;
+  };
+
+  // Initialize dialog with defaults
+  React.useEffect(() => {
+    if (showSaveDialog) {
+      setStrategyName(generateDefaultStrategyName());
+      setStrategyDescription(generateDefaultDescription());
+    }
+  }, [showSaveDialog, run]);
+
+  // Handle save strategy
+  const handleSaveStrategy = async () => {
+    if (!strategyName.trim()) {
+      toast.error('Please enter a strategy name');
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast.error('Please log in to save strategies');
+        setIsSaving(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('guided_strategies')
+        .insert({
+          name: strategyName.trim(),
+          description: strategyDescription.trim() || generateDefaultDescription(),
+          answers: strategyAnswers || {},
+          backtest_results: run as any,
+          user_id: user.user.id
+        });
+
+      if (error) throw error;
+
+      toast.success('Strategy saved successfully to My Strategies!');
+      setShowSaveDialog(false);
+      setStrategyName('');
+      setStrategyDescription('');
+      onStrategySaved?.();
+    } catch (error) {
+      console.error('Error saving strategy:', error);
+      toast.error('Failed to save strategy');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Context Banner */}
@@ -82,11 +160,77 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run }) => {
               <span><strong>Instrument:</strong> {run.instrument}</span>
               <span><strong>Timeframe:</strong> {run.timeframe}</span>
               <span><strong>Period:</strong> {run.from_date} to {run.to_date}</span>
-              <span><strong>Engine:</strong> v1.0</span>
+              <span><strong>Engine:</strong> {run.engine_version || 'v1.0'}</span>
             </div>
-            <Badge variant="secondary">
-              {run.status === 'completed' ? 'Completed' : 'Processing'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {run.status === 'completed' ? 'Completed' : 'Processing'}
+              </Badge>
+              {/* Save Strategy Button - only show if strategy answers exist */}
+              {strategyAnswers && (
+                <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Heart className="h-3 w-3 mr-1" />
+                      Save Strategy
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Save Strategy to My Strategies</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="strategy-name">Strategy Name</Label>
+                        <Input
+                          id="strategy-name"
+                          value={strategyName}
+                          onChange={(e) => setStrategyName(e.target.value)}
+                          placeholder="Enter a name for your strategy"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="strategy-description">Description (Optional)</Label>
+                        <Textarea
+                          id="strategy-description"
+                          value={strategyDescription}
+                          onChange={(e) => setStrategyDescription(e.target.value)}
+                          placeholder="Describe your strategy and results..."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg text-sm">
+                        <h4 className="font-medium mb-2">Strategy Performance</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>Win Rate: <span className="font-medium">{run.win_rate ? `${run.win_rate}%` : 'N/A'}</span></div>
+                          <div>Net Return: <span className="font-medium">{run.net_pnl ? `${run.net_pnl.toFixed(2)}%` : 'N/A'}</span></div>
+                          <div>Max Drawdown: <span className="font-medium">{run.max_drawdown ? `${run.max_drawdown}%` : 'N/A'}</span></div>
+                          <div>Total Trades: <span className="font-medium">{run.total_trades || 0}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSaveStrategy} disabled={isSaving}>
+                        {isSaving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-background border-t-transparent mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-3 w-3 mr-2" />
+                            Save Strategy
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -38,6 +38,6 @@ export interface BacktestResult {
     side: "OPEN" | "CLOSE"; 
     tag?: string;
   }>;
-  exposures?: Array<{date: string; [symbol: string]: number}>;
-  weights?: Array<{date: string; [symbol: string]: number}>;
+  exposures?: Array<{date: string} & Record<string, number>>;
+  weights?: Array<{date: string} & Record<string, number>>;
 }

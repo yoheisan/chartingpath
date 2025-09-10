@@ -36,6 +36,7 @@ interface BacktesterV2EngineProps {
   isRunning: boolean;
   strategyAnswers?: any;
   isStrategyComplete?: boolean;
+  onBacktestComplete?: () => void;
 }
 
 const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
@@ -44,7 +45,8 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   onRunV2Backtest,
   isRunning,
   strategyAnswers,
-  isStrategyComplete = false
+  isStrategyComplete = false,
+  onBacktestComplete
 }) => {
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
   const { 
@@ -60,10 +62,14 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   const [currentPhase, setCurrentPhase] = useState('');
   const [backtestParams, setBacktestParams] = useState<BacktestParams>(params);
 
-  // Update params when strategy answers change
+  // Update progress when backtesting completes
   React.useEffect(() => {
-    setBacktestParams(params);
-  }, [params]);
+    if (!isRunning && progress > 0 && progress < 100) {
+      setProgress(100);
+      setCurrentPhase('Completed');
+      onBacktestComplete?.();
+    }
+  }, [isRunning, progress, onBacktestComplete]);
 
   const hasV2Access = hasFeatureAccess('backtester_v2');
   const hasPairTrading = hasFeatureAccess('pair_trading');
@@ -113,27 +119,30 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
     
     setActiveTab('progress');
     
-    // Simulate backtest phases
+    // Simulate backtest phases for UI feedback
     const phases = [
-      { name: 'Initializing V2 Engine', duration: 1000 },
-      { name: 'Loading Historical Data', duration: 2000 },
-      { name: 'Validating Strategy Logic', duration: 1500 },
-      { name: 'Running Simulation', duration: 3000 },
-      { name: 'Calculating Metrics', duration: 1000 },
-      { name: 'Generating Report', duration: 1500 }
+      { name: 'Initializing V2 Engine', duration: 500 },
+      { name: 'Loading Historical Data', duration: 1000 },
+      { name: 'Validating Strategy Logic', duration: 500 },
+      { name: 'Running Simulation', duration: 2000 },
+      { name: 'Calculating Metrics', duration: 500 },
+      { name: 'Generating Report', duration: 500 }
     ];
 
     let currentProgress = 0;
     const progressStep = 100 / phases.length;
 
+    // Run phases with progress updates
     for (const phase of phases) {
       setCurrentPhase(phase.name);
       await new Promise(resolve => setTimeout(resolve, phase.duration));
       currentProgress += progressStep;
-      setProgress(Math.min(currentProgress, 100));
+      setProgress(Math.min(currentProgress, 95)); // Stop at 95% until real backtest completes
     }
 
-    setCurrentPhase('Completed');
+    setCurrentPhase('Running V2 Backtest...');
+    
+    // Now trigger the actual V2 backtest
     onRunV2Backtest();
   };
 

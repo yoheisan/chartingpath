@@ -87,8 +87,8 @@ export class BacktesterV2 {
     const strategy = new PairZScoreStrategy(config.strategy);
 
     const equity: Array<{date: string, value: number}> = [];
-    const exposures: Array<{date: string, [symbol: string]: number}> = [];
-    const weights: Array<{date: string, [symbol: string]: number}> = [];
+    const exposures: Array<{date: string} & Record<string, number>> = [];
+    const weights: Array<{date: string} & Record<string, number>> = [];
     const dates = Object.keys(filledData).sort();
 
     for (const date of dates) {
@@ -106,10 +106,10 @@ export class BacktesterV2 {
       equity.push({ date, value: totalValue });
       
       const currentExposures = portfolio.getExposures();
-      exposures.push({ date, ...currentExposures });
+      exposures.push({ date, ...currentExposures } as {date: string} & Record<string, number>);
       
       const currentWeights = portfolio.getWeights(totalValue);
-      weights.push({ date, ...currentWeights });
+      weights.push({ date, ...currentWeights } as {date: string} & Record<string, number>);
     }
 
     const stats = calculateMetrics(equity, portfolio.trades, config.initialCapital);
@@ -136,8 +136,8 @@ export class BacktesterV2 {
     const policy = new EqualWeightDCAPolicy(config.policy);
 
     const equity: Array<{date: string, value: number}> = [];
-    const exposures: Array<{date: string, [symbol: string]: number}> = [];
-    const weights: Array<{date: string, [symbol: string]: number}> = [];
+    const exposures: Array<{date: string} & Record<string, number>> = [];
+    const weights: Array<{date: string} & Record<string, number>> = [];
     const dates = Object.keys(filledData).sort();
 
     for (const date of dates) {
@@ -156,10 +156,10 @@ export class BacktesterV2 {
       equity.push({ date, value: totalValue });
       
       const currentExposures = portfolio.getExposures();
-      exposures.push({ date, ...currentExposures });
+      exposures.push({ date, ...currentExposures } as {date: string} & Record<string, number>);
       
       const updatedWeights = portfolio.getWeights(totalValue);
-      weights.push({ date, ...updatedWeights });
+      weights.push({ date, ...updatedWeights } as {date: string} & Record<string, number>);
     }
 
     const stats = calculateMetrics(equity, portfolio.trades, config.initialCapital);
