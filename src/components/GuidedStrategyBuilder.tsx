@@ -38,6 +38,7 @@ const steps = [
 
 export interface GuidedStrategyBuilderProps {
   onSaveStrategy?: (strategy: any) => void;
+  onAnswersChange?: (answers: GuidedStrategyAnswers) => void;
   onBacktest?: (strategy: any) => void;
   initialStrategy?: any;
   onStrategyLoad?: () => void;
@@ -45,6 +46,7 @@ export interface GuidedStrategyBuilderProps {
 
 export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   onSaveStrategy,
+  onAnswersChange,
   onBacktest,
   initialStrategy,
   onStrategyLoad
@@ -80,8 +82,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
         ...prev,
         [stepKey]: stepAnswers
       };
-      // Bubble up partial answers so the parent (AIBuilder) knows guided mode is in use
-      onSaveStrategy?.(next);
+      // Call onAnswersChange for live updates to parent state
+      onAnswersChange?.(next as GuidedStrategyAnswers);
       return next;
     });
     

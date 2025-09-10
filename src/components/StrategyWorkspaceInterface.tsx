@@ -168,6 +168,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         <TabsContent value="builder" className="space-y-6">
           <GuidedStrategyBuilder
             initialStrategy={{ answers: strategyAnswers }}
+            onAnswersChange={handleAnswersChange}
             onSaveStrategy={handleStrategySaved}
             onBacktest={() => handleMoveToBacktest()}
           />
