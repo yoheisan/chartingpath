@@ -44,11 +44,14 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   const hasBasketTrading = hasFeatureAccess('basket_trading');
   const hasTickData = hasFeatureAccess('tick_data');
 
+  const isElite = subscriptionPlan?.toLowerCase() === 'elite';
+
   const handleUpgrade = () => {
     window.open('/pricing', '_blank');
   };
 
   const getUpgradeMessage = () => {
+    if (isElite) return null; // Elite always allowed
     if (!hasV2Access) {
       return "Upgrade to Starter to access Backtester V2";
     }
@@ -79,7 +82,7 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
   const strategyRestriction = getStrategyTypeRestriction();
   const upgradeMessage = getUpgradeMessage();
-  const canExecute = hasV2Access && canRunBacktest && !strategyRestriction;
+  const canExecute = ((isElite || (hasV2Access && canRunBacktest)) && !strategyRestriction);
 
   return (
     <Card className="border-primary/20">

@@ -88,13 +88,20 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
       return;
     }
 
-    if (!canRunBacktest && !hasUnlimited) {
+    const isElite = subscriptionPlan?.toLowerCase() === 'elite';
+
+    if (!isElite && !canRunBacktest && !hasUnlimited) {
       toast.error('Daily backtest limit reached. Upgrade for unlimited runs.');
       return;
     }
 
     try {
-      await incrementUsage();
+      // Elite can proceed even if usage RPC fails
+      try {
+        await incrementUsage();
+      } catch (e) {
+        if (!isElite) throw e;
+      }
       
       setIsBacktesting(true);
       setProgress(0);
