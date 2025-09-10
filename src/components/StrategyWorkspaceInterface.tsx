@@ -31,13 +31,10 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [activeTab, setActiveTab] = useState('builder');
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
-    objectives: { timeCommitment: '' },
     market: { timeframes: [] },
-    riskTolerance: { maxDrawdown: 10, positionSize: 2, riskPerTrade: 2 },
+    riskTolerance: { maxDrawdown: 10, riskPerTrade: 2 },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
-    style: { approach: '' },
-    tools: { patterns: [], filters: [] },
-    constraints: { tradingHours: [], marketConditions: [], excludedPeriods: [] }
+    style: { approach: '' }
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
@@ -72,7 +69,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
   // Navigate to backtest tab when strategy is ready
   const handleMoveToBacktest = () => {
-    if (!strategyAnswers.objectives || !strategyAnswers.market || !strategyAnswers.style) {
+    if (!strategyAnswers.market?.timeframes || strategyAnswers.market.timeframes.length === 0 || !strategyAnswers.style?.approach) {
       toast.error('Please complete the strategy building process first');
       return;
     }
@@ -86,7 +83,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   };
 
   const isStrategyComplete = () => {
-    return !!(strategyAnswers.objectives && strategyAnswers.market && strategyAnswers.style);
+    return !!(strategyAnswers.market?.timeframes && strategyAnswers.market.timeframes.length > 0 && strategyAnswers.style?.approach);
   };
 
   return (

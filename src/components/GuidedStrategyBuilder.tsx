@@ -3,26 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import { ObjectivesStep } from './guided-strategy/ObjectivesStep';
 import { MarketStep } from './guided-strategy/MarketStep';
-import { RiskToleranceStep } from './guided-strategy/RiskToleranceStep';
+import { RiskToleranceStep } from './guided-strategy/RiskToleranceStep';  
 import { RewardStep } from './guided-strategy/RewardStep';
 import { StyleStep } from './guided-strategy/StyleStep';
-import { ToolsStep } from './guided-strategy/ToolsStep';
-import { ConstraintsStep } from './guided-strategy/ConstraintsStep';
 import { StrategyProposal } from './guided-strategy/StrategyProposal';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface GuidedStrategyAnswers {
-  objectives: {
-    timeCommitment: string;
-  };
   market: {
     timeframes: string[];
   };
   riskTolerance: {
     maxDrawdown: number;
-    positionSize: number;
     riskPerTrade: number;
   };
   reward: {
@@ -33,26 +26,14 @@ export interface GuidedStrategyAnswers {
   style: {
     approach: string;
   };
-  tools: {
-    patterns: string[];
-    filters: string[];
-  };
-  constraints: {
-    tradingHours: string[];
-    marketConditions: string[];
-    excludedPeriods: string[];
-  };
 }
 
 const steps = [
-  { id: 'objectives', title: 'Objectives', description: 'Define your trading goals' },
   { id: 'market', title: 'Market', description: 'Choose your markets' },
   { id: 'risk-tolerance', title: 'Risk Tolerance', description: 'Set risk parameters' },
-  { id: 'reward', title: 'Reward', description: 'Define profit targets' },
-  { id: 'style', title: 'Style', description: 'Trading approach' },
-  { id: 'tools', title: 'Tools', description: 'Technical analysis' },
-  { id: 'constraints', title: 'Constraints', description: 'Trading rules' },
-  { id: 'proposal', title: 'Proposal', description: 'Strategy summary' },
+  { id: 'reward', title: 'Reward Profile', description: 'Define targets' },
+  { id: 'style', title: 'Trading Style', description: 'Pick approach' },
+  { id: 'proposal', title: 'Strategy Proposal', description: 'Review & save' }
 ];
 
 export interface GuidedStrategyBuilderProps {
@@ -69,7 +50,12 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   onStrategyLoad
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {});
+  const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
+    market: { timeframes: [] },
+    riskTolerance: { maxDrawdown: 10, riskPerTrade: 2 },
+    reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
+    style: { approach: '' }
+  });
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
 
@@ -79,13 +65,10 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       setAnswers(initialStrategy.answers || {});
       // Mark steps as completed based on loaded answers
       const completed = new Set<number>();
-      if (initialStrategy.answers?.objectives) completed.add(0);
-      if (initialStrategy.answers?.market) completed.add(1);
-      if (initialStrategy.answers?.riskTolerance) completed.add(2);
-      if (initialStrategy.answers?.reward) completed.add(3);
-      if (initialStrategy.answers?.style) completed.add(4);
-      if (initialStrategy.answers?.tools) completed.add(5);
-      if (initialStrategy.answers?.constraints) completed.add(6);
+      if (initialStrategy.answers?.market) completed.add(0);
+      if (initialStrategy.answers?.riskTolerance) completed.add(1);
+      if (initialStrategy.answers?.reward) completed.add(2);
+      if (initialStrategy.answers?.style) completed.add(3);
       setCompletedSteps(completed);
       onStrategyLoad?.();
     }
@@ -106,44 +89,26 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
     setCompletedSteps(prev => new Set([...prev, currentStep]));
   };
 
-  const canProceed = () => {
-    // Risk Tolerance step always allows proceeding (has default values)
-    if (currentStep === 2) return true;
-    // Reward step always allows proceeding (has default values) 
-    if (currentStep === 3) return true;
-    // Constraints step allows proceeding (optional constraints)
-    if (currentStep === 6) return true;
-    // Tools step allows proceeding (optional tools)
-    if (currentStep === 5) return true;
+  const isCurrentStepComplete = () => {
+    const step = steps[currentStep];
+    if (!step) return false;
     
-    return completedSteps.has(currentStep);
+    switch (step.id) {
+      case 'market':
+        return answers.market?.timeframes && answers.market.timeframes.length > 0;
+      case 'risk-tolerance':
+        return answers.riskTolerance?.maxDrawdown && answers.riskTolerance?.riskPerTrade;
+      case 'reward':
+        return answers.reward?.targetReturn && answers.reward?.winRate && answers.reward?.riskRewardRatio;
+      case 'style':
+        return !!answers.style?.approach;
+      default:
+        return false;
+    }
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1 && canProceed()) {
-      // Ensure default values are set for steps that allow proceeding with defaults
-      if (currentStep === 2 && !answers.riskTolerance) {
-        setAnswers(prev => ({
-          ...prev,
-          riskTolerance: {
-            maxDrawdown: 10,
-            positionSize: 2,
-            riskPerTrade: 1
-          }
-        }));
-      }
-      
-      if (currentStep === 3 && !answers.reward) {
-        setAnswers(prev => ({
-          ...prev,
-          reward: {
-            targetReturn: 20,
-            winRate: 60,
-            riskRewardRatio: 2
-          }
-        }));
-      }
-      
+    if (currentStep < steps.length - 1 && isCurrentStepComplete()) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -161,22 +126,16 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       subscriptionPlan
     };
 
-    switch (currentStep) {
-      case 0:
-        return <ObjectivesStep {...stepProps} />;
-      case 1:
+    switch (steps[currentStep]?.id) {
+      case 'market':
         return <MarketStep {...stepProps} />;
-      case 2:
+      case 'risk-tolerance':
         return <RiskToleranceStep {...stepProps} />;
-      case 3:
+      case 'reward':
         return <RewardStep {...stepProps} />;
-      case 4:
+      case 'style':
         return <StyleStep {...stepProps} />;
-      case 5:
-        return <ToolsStep {...stepProps} />;
-      case 6:
-        return <ConstraintsStep {...stepProps} />;
-      case 7:
+      case 'proposal':
         return (
           <StrategyProposal 
             answers={answers as GuidedStrategyAnswers}
@@ -186,7 +145,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
           />
         );
       default:
-        return null;
+        return <div>Step not found</div>;
     }
   };
 
@@ -198,7 +157,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between mb-4">
-            <CardTitle className="text-lg">Guided Strategy Builder</CardTitle>
+            <CardTitle className="text-lg">AI Strategy Builder</CardTitle>
             <div className="text-sm text-muted-foreground">
               Step {currentStep + 1} of {steps.length}
             </div>
@@ -247,7 +206,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
               
               <Button
                 onClick={handleNext}
-                disabled={!canProceed()}
+                disabled={!isCurrentStepComplete()}
               >
                 Next
                 <ArrowRight className="w-4 h-4 ml-2" />

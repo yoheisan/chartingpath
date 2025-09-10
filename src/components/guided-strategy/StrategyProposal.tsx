@@ -62,7 +62,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     const { market, style, riskTolerance, reward } = answers;
     
     return `A ${style?.approach?.replace('-', ' ')} strategy targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
-    Trades selected instruments with ${riskTolerance?.maxDrawdown}% max drawdown tolerance.`;
+    Trades ${market?.timeframes?.join(', ')} timeframes with ${riskTolerance?.maxDrawdown}% max drawdown tolerance.`;
   };
 
   const canBacktest = () => {
@@ -81,12 +81,9 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   };
 
   const validateStrategy = () => {
-    const requiredSteps = ['objectives', 'market', 'style'];
+    const requiredSteps = ['market', 'style'];
     const missingSteps = [];
 
-    if (!answers.objectives?.timeCommitment) {
-      missingSteps.push('Objectives');
-    }
     if (!answers.market?.timeframes || answers.market.timeframes.length === 0) {
       missingSteps.push('Market');
     }
@@ -233,16 +230,6 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-medium mb-2 flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Objectives
-              </h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Time: {answers.objectives?.timeCommitment}</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-2 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Markets
               </h4>
@@ -263,13 +250,24 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
             
             <div>
               <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                Risk Parameters
+              </h4>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>• Max Drawdown: {answers.riskTolerance?.maxDrawdown}%</li>
+                <li>• Risk Per Trade: {answers.riskTolerance?.riskPerTrade}%</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Tools & Constraints
+                Targets
               </h4>
                <ul className="space-y-1 text-sm text-muted-foreground">
-                 <li>• Patterns: {answers.tools?.patterns?.length || 0} selected</li>
-                 <li>• Filters: {answers.tools?.filters?.length || 0} selected</li>
-                 <li>• Constraints: {(answers.constraints?.tradingHours?.length || 0) + (answers.constraints?.excludedPeriods?.length || 0)} rules</li>
+                 <li>• Target Return: {answers.reward?.targetReturn}%</li>
+                 <li>• Win Rate: {answers.reward?.winRate}%</li>
+                 <li>• Risk:Reward: {answers.reward?.riskRewardRatio}:1</li>
                </ul>
             </div>
           </div>

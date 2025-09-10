@@ -209,7 +209,7 @@ const AIBuilder = () => {
 
     // Check if we have guided strategy answers or natural language description
     const hasGuidedAnswers = guidedAnswers && 
-      (guidedAnswers.objectives?.timeCommitment || guidedAnswers.style?.approach);
+      (guidedAnswers.style?.approach);
     
     if (!hasGuidedAnswers && !strategy.trim()) {
       toast.error("Please complete the guided strategy builder or describe your strategy first.");

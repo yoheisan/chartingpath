@@ -19,8 +19,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
 }) => {
   const currentAnswers = answers.riskTolerance || {
     maxDrawdown: 10,
-    positionSize: 2,
-    riskPerTrade: 1
+    riskPerTrade: 2
   };
 
   const handleAnswerChange = (field: string, value: number[]) => {
@@ -37,13 +36,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
     return { level: 'Aggressive', color: 'text-red-600', icon: AlertTriangle };
   };
 
-  const getPositionSizeDescription = (size: number) => {
-    if (size <= 1) return 'Very Conservative';
-    if (size <= 3) return 'Conservative';
-    if (size <= 5) return 'Moderate';
-    if (size <= 8) return 'Aggressive';
-    return 'Very Aggressive';
-  };
 
   const riskLevel = getRiskLevel(currentAnswers.maxDrawdown);
   const RiskIcon = riskLevel.icon;
@@ -97,27 +89,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
             </p>
           </div>
 
-          {/* Position Size */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-medium">Position Size</Label>
-              <span className="font-medium">
-                {currentAnswers.positionSize}% - {getPositionSizeDescription(currentAnswers.positionSize)}
-              </span>
-            </div>
-            <Slider
-              value={[currentAnswers.positionSize]}
-              onValueChange={(value) => handleAnswerChange('positionSize', value)}
-              max={10}
-              min={0.5}
-              step={0.5}
-              className="w-full"
-            />
-            <p className="text-sm text-muted-foreground">
-              Percentage of your account to risk per position.
-            </p>
-          </div>
-
           {/* Risk Per Trade */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -152,7 +123,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
                 <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% ({riskLevel.level})</p>
-                <p>• Position Size: {currentAnswers.positionSize}% per position</p>
                 <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
