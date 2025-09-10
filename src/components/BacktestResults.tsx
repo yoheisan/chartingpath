@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -144,7 +144,8 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers,
       onStrategySaved?.();
     } catch (error) {
       console.error('Error saving strategy:', error);
-      toast.error('Failed to save strategy');
+      const msg = (error as any)?.message || 'Failed to save strategy';
+      toast.error(`Failed to save strategy: ${msg}`);
     } finally {
       setIsSaving(false);
     }
@@ -166,70 +167,71 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers,
               <Badge variant="secondary">
                 {run.status === 'completed' ? 'Completed' : 'Processing'}
               </Badge>
-              {/* Save Strategy Button - only show if strategy answers exist */}
-              {strategyAnswers && (
-                <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Heart className="h-3 w-3 mr-1" />
-                      Save Strategy
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Save Strategy to My Strategies</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="strategy-name">Strategy Name</Label>
-                        <Input
-                          id="strategy-name"
-                          value={strategyName}
-                          onChange={(e) => setStrategyName(e.target.value)}
-                          placeholder="Enter a name for your strategy"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="strategy-description">Description (Optional)</Label>
-                        <Textarea
-                          id="strategy-description"
-                          value={strategyDescription}
-                          onChange={(e) => setStrategyDescription(e.target.value)}
-                          placeholder="Describe your strategy and results..."
-                          rows={3}
-                        />
-                      </div>
-                      <div className="p-3 bg-muted rounded-lg text-sm">
-                        <h4 className="font-medium mb-2">Strategy Performance</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>Win Rate: <span className="font-medium">{run.win_rate ? `${run.win_rate}%` : 'N/A'}</span></div>
-                          <div>Net Return: <span className="font-medium">{run.net_pnl ? `${run.net_pnl.toFixed(2)}%` : 'N/A'}</span></div>
-                          <div>Max Drawdown: <span className="font-medium">{run.max_drawdown ? `${run.max_drawdown}%` : 'N/A'}</span></div>
-                          <div>Total Trades: <span className="font-medium">{run.total_trades || 0}</span></div>
-                        </div>
+              {/* Save Strategy Button - always available for logged-in users */}
+              <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Heart className="h-3 w-3 mr-1" />
+                    Save Strategy
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Save Strategy to My Strategies</DialogTitle>
+                    <DialogDescription>
+                      Name and describe this strategy to save it in your personal vault. You can edit details later.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="strategy-name">Strategy Name</Label>
+                      <Input
+                        id="strategy-name"
+                        value={strategyName}
+                        onChange={(e) => setStrategyName(e.target.value)}
+                        placeholder="Enter a name for your strategy"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="strategy-description">Description (Optional)</Label>
+                      <Textarea
+                        id="strategy-description"
+                        value={strategyDescription}
+                        onChange={(e) => setStrategyDescription(e.target.value)}
+                        placeholder="Describe your strategy and results..."
+                        rows={3}
+                      />
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg text-sm">
+                      <h4 className="font-medium mb-2">Strategy Performance</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>Win Rate: <span className="font-medium">{run.win_rate ? `${run.win_rate}%` : 'N/A'}</span></div>
+                        <div>Net Return: <span className="font-medium">{run.net_pnl ? `${run.net_pnl.toFixed(2)}%` : 'N/A'}</span></div>
+                        <div>Max Drawdown: <span className="font-medium">{run.max_drawdown ? `${run.max_drawdown}%` : 'N/A'}</span></div>
+                        <div>Total Trades: <span className="font-medium">{run.total_trades || 0}</span></div>
                       </div>
                     </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSaveStrategy} disabled={isSaving}>
-                        {isSaving ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-background border-t-transparent mr-2" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-3 w-3 mr-2" />
-                            Save Strategy
-                          </>
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveStrategy} disabled={isSaving}>
+                      {isSaving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-background border-t-transparent mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-3 w-3 mr-2" />
+                          Save Strategy
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardContent>
