@@ -12,6 +12,8 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface GuidedStrategyAnswers {
   market: {
+    instrumentCategory?: string;
+    instrument?: string;
     timeframes: string[];
   };
   riskTolerance: {
@@ -55,7 +57,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
-    market: { timeframes: [] },
+    market: { instrumentCategory: '', instrument: '', timeframes: [] },
     riskTolerance: { accountPrinciple: 10000, leverage: 1, maxDrawdown: 10, riskPerTrade: 2 },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
     style: { approach: '' }
@@ -99,7 +101,10 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
     
     switch (step.id) {
       case 'market':
-        return answers.market?.timeframes && answers.market.timeframes.length > 0;
+        return answers.market?.instrumentCategory && 
+               answers.market?.instrument && 
+               answers.market?.timeframes && 
+               answers.market.timeframes.length > 0;
       case 'risk-tolerance':
         return answers.riskTolerance?.accountPrinciple && answers.riskTolerance?.leverage && answers.riskTolerance?.maxDrawdown && answers.riskTolerance?.riskPerTrade;
       case 'reward':
