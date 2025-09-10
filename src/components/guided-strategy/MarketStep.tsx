@@ -119,7 +119,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     }))
   );
   
-  const isComplete = currentAnswers.instrumentCategory && currentAnswers.instrument && currentAnswers.timeframes?.length > 0;
+  const isComplete = currentAnswers.instrument && currentAnswers.timeframes?.length > 0;
 
   return (
     <TooltipProvider>
@@ -127,63 +127,27 @@ export const MarketStep: React.FC<MarketStepProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              What Timeframe Do You Prefer?
+              <Search className="w-5 h-5" />
+              Select Your Financial Instrument & Timeframe
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
-                    <strong>Select one timeframe</strong> that determines your trade duration and monitoring frequency. <strong>Scalping</strong> (1-15min) requires constant attention for quick profits, 
-                    <strong>Intraday</strong> (15min-4h) holds positions within the day, <strong>Swing</strong> (4h-1d) captures multi-day trends, 
-                    <strong>Position</strong> (1w+) targets long-term moves with minimal monitoring.
+                    <strong>Search any financial instrument</strong> by typing the ticker symbol (e.g., EURUSD, BTC/USD, SPY). 
+                    Then <strong>select your timeframe</strong> which determines your trade duration and monitoring frequency.
                   </p>
                 </TooltipContent>
               </Tooltip>
             </CardTitle>
           </CardHeader>
         <CardContent className="space-y-6">
-          {/* Financial Instrument Category Selection */}
-          <div className="space-y-3">
-            <Label htmlFor="category-select" className="text-base font-medium">
-              Select Financial Instrument Category
-            </Label>
-            <Select 
-              value={currentAnswers.instrumentCategory || ""} 
-              onValueChange={handleInstrumentCategoryChange}
-            >
-              <SelectTrigger 
-                id="category-select" 
-                className="w-full bg-background border-input hover:bg-accent/50 focus:ring-2 focus:ring-ring focus:border-ring"
-              >
-                <SelectValue placeholder="Choose an asset class to trade" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover border-border shadow-lg">
-                {Object.entries(instrumentCategories).map(([key, category]) => (
-                  <SelectItem 
-                    key={key} 
-                    value={key}
-                    className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="flex items-center gap-2">
-                      <category.icon className="w-4 h-4" />
-                      {category.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Choose the asset class that matches your trading interests and market knowledge.
-            </p>
-          </div>
-
-          {/* Specific Instrument Selection - Now available without category selection */}
+          {/* Unified Instrument Search - Primary Interface */}
           <div className="space-y-3">
             <Label htmlFor="instrument-select" className="text-base font-medium flex items-center gap-2">
               <Search className="w-4 h-4" />
-              Search & Select Instrument
+              Search & Select Financial Instrument
             </Label>
             <Popover open={instrumentSearchOpen} onOpenChange={setInstrumentSearchOpen}>
               <PopoverTrigger asChild>
@@ -194,16 +158,21 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                   className="w-full justify-between bg-background hover:bg-accent/50"
                 >
                   {currentAnswers.instrument ? (
-                    <>
+                    <div className="flex items-center gap-2 flex-1 text-left">
                       <span className="font-medium">{currentAnswers.instrument}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {allInstruments.find(
                           (instrument) => instrument.symbol === currentAnswers.instrument
                         )?.name}
                       </span>
-                    </>
+                      <span className="ml-auto text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                        {allInstruments.find(
+                          (instrument) => instrument.symbol === currentAnswers.instrument
+                        )?.category}
+                      </span>
+                    </div>
                   ) : (
-                    "Search instruments by ticker (e.g., EURUSD, BTC, SPY)..."
+                    "Search any instrument by ticker (e.g., EURUSD, BTC/USD, SPY)..."
                   )}
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -216,13 +185,15 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                   />
                   <CommandList>
                     <CommandEmpty>No instruments found. Try searching by ticker symbol.</CommandEmpty>
-                    {selectedCategory ? (
-                      <CommandGroup heading={instrumentCategories[selectedCategory as keyof typeof instrumentCategories]?.label}>
-                        {availableInstruments.map((instrument) => (
+                    {Object.entries(instrumentCategories).map(([categoryKey, category]) => (
+                      <CommandGroup key={categoryKey} heading={category.label}>
+                        {category.instruments.map((instrument) => (
                           <CommandItem
                             key={instrument.symbol}
                             value={`${instrument.symbol} ${instrument.name}`}
                             onSelect={() => {
+                              // Auto-set category when instrument is selected
+                              handleInstrumentCategoryChange(categoryKey);
                               handleInstrumentChange(instrument.symbol);
                               setInstrumentSearchOpen(false);
                             }}
@@ -232,37 +203,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                                 <span className="font-medium">{instrument.symbol}</span>
                                 <span className="text-xs text-muted-foreground">{instrument.name}</span>
                               </div>
-                              <Check
-                                className={cn(
-                                  "h-4 w-4",
-                                  currentAnswers.instrument === instrument.symbol
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    ) : (
-                      Object.entries(instrumentCategories).map(([categoryKey, category]) => (
-                        <CommandGroup key={categoryKey} heading={category.label}>
-                          {category.instruments.map((instrument) => (
-                            <CommandItem
-                              key={instrument.symbol}
-                              value={`${instrument.symbol} ${instrument.name}`}
-                              onSelect={() => {
-                                // Auto-set category when instrument is selected
-                                handleInstrumentCategoryChange(categoryKey);
-                                handleInstrumentChange(instrument.symbol);
-                                setInstrumentSearchOpen(false);
-                              }}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="font-medium">{instrument.symbol}</span>
-                                  <span className="text-xs text-muted-foreground">{instrument.name}</span>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
+                                  {category.label}
+                                </span>
                                 <Check
                                   className={cn(
                                     "h-4 w-4",
@@ -272,17 +216,17 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                                   )}
                                 />
                               </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      ))
-                    )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ))}
                   </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>
             <p className="text-sm text-muted-foreground">
-              Search and select by typing the ticker symbol (e.g., EURUSD, BTC/USD, SPY). Category will be auto-selected.
+              Search across all markets: Foreign Exchange, Cryptocurrencies, and Major Indices. Just start typing the ticker symbol.
             </p>
           </div>
 

@@ -101,8 +101,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
     
     switch (step.id) {
       case 'market':
-        return answers.market?.instrumentCategory && 
-               answers.market?.instrument && 
+        return answers.market?.instrument && 
                answers.market?.timeframes && 
                answers.market.timeframes.length > 0;
       case 'risk-tolerance':
