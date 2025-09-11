@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import { 
   Zap, 
@@ -259,284 +260,343 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
           {/* Parameters Tab */}
           <TabsContent value="parameters" className="mt-6">
-            <div className="space-y-4">
+            <Accordion type="multiple" defaultValue={["strategy-status", "backtest-params", "execution"]} className="space-y-4">
+              
               {/* Strategy Connection Status */}
-              <Card className={`border ${isStrategyComplete ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
+              <AccordionItem value="strategy-status" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
-                    <div>
-                      <div className="font-medium">
-                        {isStrategyComplete ? 'Strategy Connected' : 'Strategy Incomplete'}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {isStrategyComplete 
-                          ? 'Parameters automatically synced from Strategy Builder'
-                          : 'Complete strategy building to auto-populate parameters'
-                        }
-                      </div>
-                    </div>
+                    <span className="font-medium">
+                      {isStrategyComplete ? 'Strategy Connected' : 'Strategy Setup'}
+                    </span>
                   </div>
-                  {strategyAnswers && (
-                    <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Market:</span>
-                        <span className="ml-2 font-medium">
-                          {strategyAnswers.market?.instrument || 'Not selected'}
-                        </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <Card className={`border ${isStrategyComplete ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
+                        <div>
+                          <div className="font-medium">
+                            {isStrategyComplete ? 'Strategy Connected' : 'Strategy Incomplete'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {isStrategyComplete 
+                              ? 'Parameters automatically synced from Strategy Builder'
+                              : 'Complete strategy building to auto-populate parameters'
+                            }
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Timeframe:</span>
-                        <span className="ml-2 font-medium">
-                          {strategyAnswers.market?.timeframes?.[0] || 'Not selected'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Capital:</span>
-                        <span className="ml-2 font-medium">
-                          ${strategyAnswers.riskTolerance?.accountPrinciple?.toLocaleString() || 'Not set'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Risk/Trade:</span>
-                        <span className="ml-2 font-medium">
-                          {strategyAnswers.riskTolerance?.riskPerTrade || 'Not set'}%
-                        </span>
-                      </div>
-                    </div>
+                      {strategyAnswers && (
+                        <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Market:</span>
+                            <span className="ml-2 font-medium">
+                              {strategyAnswers.market?.instrument || 'Not selected'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Timeframe:</span>
+                            <span className="ml-2 font-medium">
+                              {strategyAnswers.market?.timeframes?.[0] || 'Not selected'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Capital:</span>
+                            <span className="ml-2 font-medium">
+                              ${strategyAnswers.riskTolerance?.accountPrinciple?.toLocaleString() || 'Not set'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Risk/Trade:</span>
+                            <span className="ml-2 font-medium">
+                              {strategyAnswers.riskTolerance?.riskPerTrade || 'Not set'}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Period Restriction Info for Guided Builder */}
+                  {isGuidedBuilder && (
+                    <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 mt-4">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                          <Timer className="w-4 h-4" />
+                          <span className="font-medium">Guided Builder: Past 30 Days Only</span>
+                        </div>
+                        <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                          Upgrade to Pro+ for custom date ranges and unlimited historical data access in the Advanced Engine below.
+                        </p>
+                      </CardContent>
+                    </Card>
                   )}
-                </CardContent>
-              </Card>
+                </AccordionContent>
+              </AccordionItem>
 
-              {/* Period Restriction Info for Guided Builder */}
-              {isGuidedBuilder && (
-                <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 mb-4">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                      <Timer className="w-4 h-4" />
-                      <span className="font-medium">Guided Builder: Past 30 Days Only</span>
-                    </div>
-                    <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                      Upgrade to Pro+ for custom date ranges and unlimited historical data access in the Advanced Engine below.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Backtest Parameters */}
+              <AccordionItem value="backtest-params" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    <span className="font-medium">Backtest Parameters</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <BacktestParametersPanel
+                    selectedStrategy={selectedStrategy}
+                    onStrategyChange={() => {}} // Strategy is pre-selected from builder
+                    params={backtestParams}
+                    onParamsChange={handleParamsChange}
+                    strategies={mockStrategies}
+                    isGuidedBuilder={isGuidedBuilder}
+                  />
+                </AccordionContent>
+              </AccordionItem>
 
-              <BacktestParametersPanel
-                selectedStrategy={selectedStrategy}
-                onStrategyChange={() => {}} // Strategy is pre-selected from builder
-                params={backtestParams}
-                onParamsChange={handleParamsChange}
-                strategies={mockStrategies}
-                isGuidedBuilder={isGuidedBuilder}
-              />
-
-              {/* Run Backtest Button */}
-              <Card className="border-primary/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Ready to Execute</div>
-                      <div className="text-sm text-muted-foreground">
-                        {areParametersComplete() 
-                          ? 'All parameters configured. Ready to run backtest.'
-                          : 'Complete all parameters to enable backtesting.'
-                        }
-                      </div>
-                    </div>
-                    {canExecute ? (
-                      <Button 
-                        onClick={handleRunBacktest}
-                        disabled={isRunning || !areParametersComplete()}
-                        size="lg"
-                        className="min-w-[140px]"
-                      >
-                        {isRunning ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
-                            Running...
-                          </>
+              {/* Execution Section */}
+              <AccordionItem value="execution" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle className="w-4 h-4" />
+                    <span className="font-medium">Ready to Execute</span>
+                    <Badge variant={areParametersComplete() ? "default" : "secondary"} className="ml-2">
+                      {areParametersComplete() ? "Ready" : "Setup Required"}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <Card className="border-primary/20">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">Ready to Execute</div>
+                          <div className="text-sm text-muted-foreground">
+                            {areParametersComplete() 
+                              ? 'All parameters configured. Ready to run backtest.'
+                              : 'Complete all parameters to enable backtesting.'
+                            }
+                          </div>
+                        </div>
+                        {canExecute ? (
+                          <Button 
+                            onClick={handleRunBacktest}
+                            disabled={isRunning || !areParametersComplete()}
+                            size="lg"
+                            className="min-w-[140px]"
+                          >
+                            {isRunning ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
+                                Running...
+                              </>
+                            ) : (
+                              <>
+                                <PlayCircle className="h-4 w-4 mr-2" />
+                                Run Backtest
+                              </>
+                            )}
+                          </Button>
                         ) : (
-                          <>
-                            <PlayCircle className="h-4 w-4 mr-2" />
-                            Run Backtest
-                          </>
+                          <Button 
+                            onClick={handleUpgrade}
+                            variant="outline"
+                            size="lg"
+                          >
+                            <Crown className="h-4 w-4 mr-2" />
+                            Upgrade
+                          </Button>
                         )}
-                      </Button>
-                    ) : (
-                      <Button 
-                        onClick={handleUpgrade}
-                        variant="outline"
-                        size="lg"
-                      >
-                        <Crown className="h-4 w-4 mr-2" />
-                        Upgrade
-                      </Button>
-                    )}
-                  </div>
+                      </div>
 
-                  {/* Parameter Completion Status */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                    <div className={`flex items-center gap-1 ${backtestParams.instrument ? 'text-green-600' : 'text-orange-600'}`}>
-                      <div className={`w-2 h-2 rounded-full ${backtestParams.instrument ? 'bg-green-500' : 'bg-orange-500'}`} />
-                      Instrument: {backtestParams.instrument ? '✓' : 'Required'}
-                    </div>
-                    <div className={`flex items-center gap-1 ${backtestParams.timeframe ? 'text-green-600' : 'text-orange-600'}`}>
-                      <div className={`w-2 h-2 rounded-full ${backtestParams.timeframe ? 'bg-green-500' : 'bg-orange-500'}`} />
-                      Timeframe: {backtestParams.timeframe ? '✓' : 'Required'}
-                    </div>
-                    <div className={`flex items-center gap-1 ${backtestParams.initialCapital > 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                      <div className={`w-2 h-2 rounded-full ${backtestParams.initialCapital > 0 ? 'bg-green-500' : 'bg-orange-500'}`} />
-                      Capital: {backtestParams.initialCapital > 0 ? '✓' : 'Required'}
-                    </div>
-                    <div className={`flex items-center gap-1 ${isStrategyComplete ? 'text-green-600' : 'text-orange-600'}`}>
-                      <div className={`w-2 h-2 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
-                      Strategy: {isStrategyComplete ? '✓' : 'Complete in Builder'}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                      {/* Parameter Completion Status */}
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        <div className={`flex items-center gap-1 ${backtestParams.instrument ? 'text-green-600' : 'text-orange-600'}`}>
+                          <div className={`w-2 h-2 rounded-full ${backtestParams.instrument ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          Instrument: {backtestParams.instrument ? '✓' : 'Required'}
+                        </div>
+                        <div className={`flex items-center gap-1 ${backtestParams.timeframe ? 'text-green-600' : 'text-orange-600'}`}>
+                          <div className={`w-2 h-2 rounded-full ${backtestParams.timeframe ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          Timeframe: {backtestParams.timeframe ? '✓' : 'Required'}
+                        </div>
+                        <div className={`flex items-center gap-1 ${backtestParams.initialCapital > 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                          <div className={`w-2 h-2 rounded-full ${backtestParams.initialCapital > 0 ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          Capital: {backtestParams.initialCapital > 0 ? '✓' : 'Required'}
+                        </div>
+                        <div className={`flex items-center gap-1 ${isStrategyComplete ? 'text-green-600' : 'text-orange-600'}`}>
+                          <div className={`w-2 h-2 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
+                          Strategy: {isStrategyComplete ? '✓' : 'Complete in Builder'}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
 
           {/* Engine Features Tab */}
           <TabsContent value="engine" className="mt-6">
-            <div className="space-y-4">
+            <Accordion type="multiple" defaultValue={["strategy-info", "engine-capabilities"]} className="space-y-4">
+              
               {/* Strategy Information */}
               {strategyAnswers?.style?.approach && (
-                <Card className="border-primary/20 bg-primary/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Brain className="w-5 h-5" />
-                      Selected Strategy: {getApproachTemplate()?.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      {getStrategyDescription(strategyAnswers.style.approach)}
+                <AccordionItem value="strategy-info" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      <span className="font-medium">Strategy Information: {getApproachTemplate()?.name}</span>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 p-3 bg-background/50 rounded-lg">
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground">Risk Level</div>
-                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).risk}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground">Time Horizon</div>
-                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).timeHorizon}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-muted-foreground">Best Market</div>
-                        <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).marketCondition}</div>
-                      </div>
-                    </div>
-
-                    {/* Strategy Parameters Preview */}
-                    <div>
-                      <h4 className="font-medium mb-2">Strategy Parameters</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        {Object.entries(getApproachTemplate()?.parameters || {}).map(([key, value]) => (
-                          <div key={key} className="flex justify-between p-2 bg-background/30 rounded">
-                            <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                            <span className="font-medium">{String(value)}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <Card className="border-primary/20 bg-primary/5">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Brain className="w-5 h-5" />
+                          Selected Strategy: {getApproachTemplate()?.name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="text-sm text-muted-foreground">
+                          {getStrategyDescription(strategyAnswers.style.approach)}
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 p-3 bg-background/50 rounded-lg">
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground">Risk Level</div>
+                            <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).risk}</div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground">Time Horizon</div>
+                            <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).timeHorizon}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground">Best Market</div>
+                            <div className="font-medium">{getStrategyRiskProfile(strategyAnswers.style.approach).marketCondition}</div>
+                          </div>
+                        </div>
+
+                        {/* Strategy Parameters Preview */}
+                        <div>
+                          <h4 className="font-medium mb-2">Strategy Parameters</h4>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {Object.entries(getApproachTemplate()?.parameters || {}).map(([key, value]) => (
+                              <div key={key} className="flex justify-between p-2 bg-background/30 rounded">
+                                <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                <span className="font-medium">{String(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">V2 Engine Capabilities</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Feature Matrix */}
-                  <div className="grid grid-cols-1 gap-3 text-sm">
-                    <div className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <span>Single Asset Strategies</span>
-                      </div>
-                      {hasV2Access ? (
-                        <Badge variant="secondary" className="text-xs">✓ Available</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">Starter+</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-blue-500" />
-                        <span>Pair Trading Strategies</span>
-                      </div>
-                      {hasPairTrading ? (
-                        <Badge variant="secondary" className="text-xs">✓ Available</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">Pro+</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-purple-500" />
-                        <span>Portfolio/Basket Strategies</span>
-                      </div>
-                      {hasBasketTrading ? (
-                        <Badge variant="secondary" className="text-xs">✓ Available</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">Pro++</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-orange-500" />
-                        <span>Tick-level Data & Analysis</span>
-                      </div>
-                      {hasTickData ? (
-                        <Badge variant="secondary" className="text-xs">✓ Available</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">Pro++</Badge>
-                      )}
-                    </div>
+              {/* V2 Engine Capabilities */}
+              <AccordionItem value="engine-capabilities" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    <span className="font-medium">V2 Engine Capabilities</span>
                   </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">V2 Engine Capabilities</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Feature Matrix */}
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                            <span>Single Asset Strategies</span>
+                          </div>
+                          {hasV2Access ? (
+                            <Badge variant="secondary" className="text-xs">✓ Available</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Starter+</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-blue-500" />
+                            <span>Pair Trading Strategies</span>
+                          </div>
+                          {hasPairTrading ? (
+                            <Badge variant="secondary" className="text-xs">✓ Available</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Pro+</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            <Layers className="h-4 w-4 text-purple-500" />
+                            <span>Portfolio/Basket Strategies</span>
+                          </div>
+                          {hasBasketTrading ? (
+                            <Badge variant="secondary" className="text-xs">✓ Available</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Pro++</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-orange-500" />
+                            <span>Tick-level Data & Analysis</span>
+                          </div>
+                          {hasTickData ? (
+                            <Badge variant="secondary" className="text-xs">✓ Available</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Pro++</Badge>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Technical Specifications */}
-                  <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-                    <h4 className="font-medium text-primary mb-3">V2 Engine Specifications</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">• Execution Model:</span>
-                        <span className="ml-2">Realistic slippage & commission</span>
+                      {/* Technical Specifications */}
+                      <div className="mt-6 p-4 bg-primary/5 rounded-lg">
+                        <h4 className="font-medium text-primary mb-3">V2 Engine Specifications</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">• Execution Model:</span>
+                            <span className="ml-2">Realistic slippage & commission</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">• Data Quality:</span>
+                            <span className="ml-2">Institutional-grade feeds</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">• Risk Metrics:</span>
+                            <span className="ml-2">Advanced portfolio analytics</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">• Performance:</span>
+                            <span className="ml-2">Sub-second execution</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">• Market Impact:</span>
+                            <span className="ml-2">Dynamic spread modeling</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">• Optimization:</span>
+                            <span className="ml-2">Multi-objective algorithms</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">• Data Quality:</span>
-                        <span className="ml-2">Institutional-grade feeds</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">• Risk Metrics:</span>
-                        <span className="ml-2">Advanced portfolio analytics</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">• Performance:</span>
-                        <span className="ml-2">Sub-second execution</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">• Market Impact:</span>
-                        <span className="ml-2">Dynamic spread modeling</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">• Optimization:</span>
-                        <span className="ml-2">Multi-objective algorithms</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    </CardContent>
+                  </Card>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
 
           {/* Progress Tab */}
