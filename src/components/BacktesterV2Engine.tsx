@@ -65,6 +65,11 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   const [currentPhase, setCurrentPhase] = useState('');
   const [backtestParams, setBacktestParams] = useState<BacktestParams>(params);
 
+  // Keep internal params in sync with incoming props (e.g., after loading a strategy)
+  React.useEffect(() => {
+    setBacktestParams(params);
+  }, [params]);
+
   // Update progress when backtesting completes
   React.useEffect(() => {
     if (!isRunning && progress > 0 && progress < 100) {
