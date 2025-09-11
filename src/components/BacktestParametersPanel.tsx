@@ -75,10 +75,62 @@ const BACKTEST_PERIODS = [
 ];
 
 const PRESET_TEMPLATES = [
-  { name: 'Swing 4H', description: '4H swing trading setup' },
-  { name: 'Daily Trend', description: 'Daily trend following' },
-  { name: 'Scalp 5M', description: '5-minute scalping setup' },
-  { name: 'Conservative', description: 'Low risk conservative approach' }
+  { 
+    name: 'Swing 4H', 
+    description: '4H swing trading setup',
+    params: {
+      timeframe: '4H',
+      positionSizingType: 'percentage',
+      positionSize: 2,
+      stopLoss: 2,
+      takeProfit: 4,
+      commission: 0.1,
+      slippage: 0.05,
+      orderType: 'market'
+    }
+  },
+  { 
+    name: 'Daily Trend', 
+    description: 'Daily trend following',
+    params: {
+      timeframe: '1D',
+      positionSizingType: 'percentage',
+      positionSize: 1.5,
+      stopLoss: 1.5,
+      takeProfit: 3,
+      commission: 0.08,
+      slippage: 0.03,
+      orderType: 'market'
+    }
+  },
+  { 
+    name: 'Scalp 5M', 
+    description: '5-minute scalping setup',
+    params: {
+      timeframe: '5m',
+      positionSizingType: 'percentage',
+      positionSize: 0.5,
+      stopLoss: 0.5,
+      takeProfit: 1,
+      commission: 0.15,
+      slippage: 0.08,
+      orderType: 'limit'
+    }
+  },
+  { 
+    name: 'Conservative', 
+    description: 'Low risk conservative approach',
+    params: {
+      timeframe: '1H',
+      positionSizingType: 'percentage',
+      positionSize: 1,
+      stopLoss: 1,
+      takeProfit: 2,
+      commission: 0.05,
+      slippage: 0.02,
+      orderType: 'market'
+    }
+  }
 ];
 
 const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
@@ -130,6 +182,16 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   const handlePeriodChange = (value: string) => {
     updateParam('period', value);
     calculateDateRange(value);
+  };
+
+  const applyPreset = (preset: typeof PRESET_TEMPLATES[0]) => {
+    // Apply preset parameters
+    Object.entries(preset.params).forEach(([key, value]) => {
+      updateParam(key as keyof BacktestParams, value);
+    });
+    
+    // Show success message
+    console.log(`Applied ${preset.name} preset successfully`);
   };
 
   const validateSettings = () => {
@@ -380,8 +442,8 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 key={preset.name}
                 variant="outline"
                 size="sm"
-                className="justify-start h-auto p-3"
-                disabled
+                className="justify-start h-auto p-3 hover:bg-muted"
+                onClick={() => applyPreset(preset)}
               >
                 <div className="text-left">
                   <div className="font-medium">{preset.name}</div>
