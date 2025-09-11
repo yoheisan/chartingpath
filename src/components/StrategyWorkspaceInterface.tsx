@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
+  const backtestSectionRef = useRef<HTMLDivElement>(null);
 
   // Load strategy when selected from manager
   const handleLoadStrategy = (strategy: SavedStrategy) => {
@@ -74,8 +75,9 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       toast.error('Please complete the strategy building process first (instrument, timeframe, and approach required)');
       return;
     }
-    // Strategy is complete, backtest engine will show automatically in builder tab
-    toast.success('Strategy is ready for backtesting! Scroll down to see the Backtest Engine.');
+    // Scroll to the backtesting section
+    backtestSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast.success('Scrolled to Backtest Engine');
   };
 
   // Handle backtest completion
@@ -239,7 +241,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           
           {/* Advanced Backtest Engine Section - Premium Feature */}
           {isStrategyComplete() && (
-            <Card className="border-primary/20">
+            <Card className="border-primary/20" ref={backtestSectionRef}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
