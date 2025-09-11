@@ -260,16 +260,21 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
           {/* Parameters Tab */}
           <TabsContent value="parameters" className="mt-6">
-            <Accordion type="multiple" defaultValue={["strategy-status", "backtest-params", "execution"]} className="space-y-4">
+            <Accordion type="multiple" defaultValue={["execution"]} className="space-y-4">
               
               {/* Strategy Connection Status */}
               <AccordionItem value="strategy-status" className="border rounded-lg">
                 <AccordionTrigger className="px-4 py-3 hover:no-underline">
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${isStrategyComplete ? 'bg-green-500' : 'bg-orange-500'}`} />
-                    <span className="font-medium">
-                      {isStrategyComplete ? 'Strategy Connected' : 'Strategy Setup'}
-                    </span>
+                    <div>
+                      <span className="font-medium">
+                        {isStrategyComplete ? 'Strategy Connected' : 'Strategy Setup'}
+                      </span>
+                      {isStrategyComplete && selectedStrategy && (
+                        <span className="text-sm text-muted-foreground ml-2">- {selectedStrategy}</span>
+                      )}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
@@ -440,7 +445,7 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
           {/* Engine Features Tab */}
           <TabsContent value="engine" className="mt-6">
-            <Accordion type="multiple" defaultValue={["strategy-info", "engine-capabilities"]} className="space-y-4">
+            <Accordion type="multiple" defaultValue={[]} className="space-y-4">
               
               {/* Strategy Information */}
               {strategyAnswers?.style?.approach && (
