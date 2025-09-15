@@ -1,5 +1,5 @@
 import { BacktesterV2, SingleBacktestConfig } from '../../engine/backtester-v2/backtest';
-import { MockProvider } from '../../engine/backtester-v2/data/providers/MockProvider';
+import { marketDataProvider } from './marketDataProvider';
 import { BacktestParams } from '@/components/BacktestParametersPanel';
 import { GuidedStrategyAnswers } from '@/components/GuidedStrategyBuilder';
 
@@ -30,26 +30,8 @@ export class BacktesterV2Adapter {
   private backtester: BacktesterV2;
 
   constructor() {
-    // Initialize with mock provider with sample data
-    const mockData = {
-      'EURUSD': {
-        index: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
-        columns: ['EURUSD'],
-        data: [[1.1000], [1.1020], [1.0980], [1.1050], [1.1030]]
-      },
-      'GBPUSD': {
-        index: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
-        columns: ['GBPUSD'],
-        data: [[1.2700], [1.2720], [1.2680], [1.2750], [1.2730]]
-      },
-      'USDJPY': {
-        index: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
-        columns: ['USDJPY'],
-        data: [[145.50], [145.80], [145.20], [146.10], [145.90]]
-      }
-    };
-    
-    this.backtester = new BacktesterV2(new MockProvider(mockData));
+    // Initialize with real market data provider
+    this.backtester = new BacktesterV2(marketDataProvider);
   }
 
   async runBacktest(
