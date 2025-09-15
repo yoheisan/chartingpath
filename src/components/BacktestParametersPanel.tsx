@@ -122,7 +122,9 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
 
   const handlePeriodChange = (value: string) => {
     updateParam('period', value);
-    calculateDateRange(value);
+    if (value !== 'custom') {
+      calculateDateRange(value);
+    }
   };
 
   const validateSettings = () => {
@@ -216,11 +218,14 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
             </Select>
           </div>
 
-          {params.period !== 'custom' && params.fromDate && params.toDate && (
+          {params.period !== 'custom' && (
             <div className="p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>Period: {params.fromDate} to {params.toDate}</span>
+                <span>
+                  Period: {params.fromDate || 'Calculating...'} to {params.toDate || 'Calculating...'}
+                  {params.period && ` (${BACKTEST_PERIODS.find(p => p.value === params.period)?.label})`}
+                </span>
               </div>
             </div>
           )}
