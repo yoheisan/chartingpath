@@ -216,6 +216,15 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
             </Select>
           </div>
 
+          {params.period !== 'custom' && params.fromDate && params.toDate && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>Period: {params.fromDate} to {params.toDate}</span>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="fromDate">From Date</Label>
