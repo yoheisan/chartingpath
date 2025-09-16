@@ -42,12 +42,12 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestParams, setBacktestParams] = useState<BacktestParams | null>(null);
   const backtestSectionRef = useRef<HTMLDivElement>(null);
-  // Initialize backtest params once when strategy answers change
+  // Initialize backtest params once when strategy answers change, but only if not already set
   useEffect(() => {
-    if (strategyAnswers && Object.keys(strategyAnswers).length > 0) {
+    if (strategyAnswers && Object.keys(strategyAnswers).length > 0 && !backtestParams) {
       setBacktestParams(convertToBacktestParams());
     }
-  }, [strategyAnswers]);
+  }, [strategyAnswers, backtestParams]);
 
   // Handle backtest parameter changes from BacktesterV2Engine
   const handleBacktestParamsChange = (newParams: BacktestParams) => {
