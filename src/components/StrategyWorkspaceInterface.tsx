@@ -123,7 +123,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     return {
       instrument: templateParams.instrument || 'EURUSD',
       timeframe: templateParams.timeframe || '1H',
-      period: 'past_30_days', // Fixed period for guided builder
+      period: '1M', // Last 1 Month for guided builder
       fromDate: thirtyDaysAgo.toISOString().split('T')[0],
       toDate: today.toISOString().split('T')[0],
       initialCapital: templateParams.initialCapital || 10000,
