@@ -121,15 +121,11 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   };
 
   const handlePeriodChange = (value: string) => {
-    console.log('Period changed to:', value); // Debug log
     updateParam('period', value);
     if (value !== 'custom') {
-      console.log('Calculating date range for:', value); // Debug log
       calculateDateRange(value);
     }
   };
-
-  console.log('Current params:', params); // Debug log
 
   const validateSettings = () => {
     const warnings = [];
@@ -220,11 +216,6 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Debug info */}
-          <div className="text-xs text-muted-foreground p-2 bg-yellow-50 rounded">
-            Debug: period="{params.period}", fromDate="{params.fromDate}", toDate="{params.toDate}"
           </div>
 
           {params.period && params.period !== 'custom' && (

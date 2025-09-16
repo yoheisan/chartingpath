@@ -39,6 +39,7 @@ interface BacktesterV2EngineProps {
   isStrategyComplete?: boolean;
   onBacktestComplete?: () => void;
   isGuidedBuilder?: boolean; // true = guided builder (30 days limit), false = advanced engine (custom periods)
+  onParamsChange?: (params: BacktestParams) => void;
 }
 
 const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
@@ -49,7 +50,8 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
   strategyAnswers,
   isStrategyComplete = false,
   onBacktestComplete,
-  isGuidedBuilder = false
+  isGuidedBuilder = false,
+  onParamsChange
 }) => {
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
   const { 
@@ -97,6 +99,10 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
   const handleParamsChange = (newParams: BacktestParams) => {
     setBacktestParams(newParams);
+    // Notify parent component about parameter changes
+    if (onParamsChange) {
+      onParamsChange(newParams);
+    }
   };
 
   // Get strategy template based on approach

@@ -265,6 +265,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
               isStrategyComplete={isStrategyComplete()}
               onBacktestComplete={() => setActiveTab('results')}
               isGuidedBuilder={false}
+              onParamsChange={() => {}} // Parameters are managed by parent in this context
             />
               </CardContent>
             </Card>
