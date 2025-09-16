@@ -225,7 +225,10 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       )}
 
       {/* Main Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        console.log('Tab changed to:', value);
+        setActiveTab(value);
+      }} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -287,6 +290,9 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
         {/* Strategy Library Tab */}
         <TabsContent value="library" className="space-y-6">
+          <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-md">
+            <p className="text-yellow-800">Debug: My Strategies tab is loading...</p>
+          </div>
           <GuidedStrategyManager
             onLoadStrategy={handleLoadStrategy}
             onEditStrategy={handleLoadStrategy}

@@ -39,6 +39,8 @@ export const GuidedStrategyManager: React.FC<GuidedStrategyManagerProps> = ({
   onLoadStrategy,
   onEditStrategy
 }) => {
+  console.log('GuidedStrategyManager component mounted');
+  
   const [strategies, setStrategies] = useState<GuidedStrategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,11 +55,21 @@ export const GuidedStrategyManager: React.FC<GuidedStrategyManagerProps> = ({
 
   const fetchStrategies = async () => {
     try {
+      console.log('=== FETCHING STRATEGIES START ===');
       setLoading(true);
+      
+      // Check if user is authenticated
+      const { data: user, error: userError } = await supabase.auth.getUser();
+      console.log('User data:', user);
+      console.log('User error:', userError);
+      
       const { data, error } = await supabase
         .from('guided_strategies')
         .select('*')
         .order(sortBy, { ascending: false });
+
+      console.log('Database query result:', { data, error });
+      console.log('Number of strategies found:', data?.length || 0);
 
       if (error) throw error;
       setStrategies((data || []).map(item => ({
@@ -65,6 +77,7 @@ export const GuidedStrategyManager: React.FC<GuidedStrategyManagerProps> = ({
         answers: item.answers as unknown as GuidedStrategyAnswers,
         backtest_results: item.backtest_results
       })));
+      console.log('=== FETCHING STRATEGIES END ===');
     } catch (error) {
       console.error('Error fetching strategies:', error);
       toast.error('Failed to load strategies');
