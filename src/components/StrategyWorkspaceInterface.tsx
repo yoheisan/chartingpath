@@ -180,8 +180,8 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         </CardHeader>
       </Card>
 
-      {/* Current Strategy Status */}
-      {currentStrategy && (
+      {/* Strategy Connected Status - Only show when strategy is actually loaded */}
+      {currentStrategy && currentStrategy.id && (
         <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
