@@ -19,6 +19,7 @@ import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { mapAnswersToBacktestParams } from '@/utils/StrategyTemplates';
+import { BacktestParams } from '@/components/BacktestParametersPanel';
 
 interface SavedStrategy {
   id: string;
@@ -39,7 +40,19 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
+  const [backtestParams, setBacktestParams] = useState<BacktestParams | null>(null);
   const backtestSectionRef = useRef<HTMLDivElement>(null);
+  // Initialize backtest params once when strategy answers change
+  useEffect(() => {
+    if (strategyAnswers && Object.keys(strategyAnswers).length > 0) {
+      setBacktestParams(convertToBacktestParams());
+    }
+  }, [strategyAnswers]);
+
+  // Handle backtest parameter changes from BacktesterV2Engine
+  const handleBacktestParamsChange = (newParams: BacktestParams) => {
+    setBacktestParams(newParams);
+  };
 
   // Load strategy when selected from manager
   const handleLoadStrategy = (strategy: SavedStrategy) => {
@@ -258,14 +271,14 @@ export const StrategyWorkspaceInterface: React.FC = () => {
               <CardContent>
             <BacktesterV2Engine
               selectedStrategy={generateStrategyName()}
-              params={convertToBacktestParams()}
+              params={backtestParams || convertToBacktestParams()}
               onRunV2Backtest={handleRunV2Backtest}
               isRunning={isBacktesting}
               strategyAnswers={strategyAnswers}
               isStrategyComplete={isStrategyComplete()}
               onBacktestComplete={() => setActiveTab('results')}
               isGuidedBuilder={false}
-              onParamsChange={() => {}} // Parameters are managed by parent in this context
+              onParamsChange={handleBacktestParamsChange}
             />
               </CardContent>
             </Card>
