@@ -79,8 +79,14 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   onStrategyChange,
   params,
   onParamsChange,
-  strategies
+  strategies,
+  isGuidedBuilder = false
 }) => {
+  // Filter periods based on guided builder mode
+  const availablePeriods = isGuidedBuilder 
+    ? BACKTEST_PERIODS.filter(period => period.value === 'custom' || period.value === '1M')
+    : BACKTEST_PERIODS;
+
   const updateParam = (key: keyof BacktestParams, value: any) => {
     onParamsChange({ ...params, [key]: value });
   };
@@ -209,7 +215,7 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                {BACKTEST_PERIODS.map((period) => (
+                {availablePeriods.map((period) => (
                   <SelectItem key={period.value} value={period.value}>
                     {period.label}
                   </SelectItem>
