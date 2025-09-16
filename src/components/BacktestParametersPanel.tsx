@@ -122,10 +122,18 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   };
 
   const handlePeriodChange = (value: string) => {
+    console.log('=== PERIOD CHANGE START ===');
+    console.log('New value:', value);
+    console.log('Current params before update:', JSON.stringify(params, null, 2));
+    
     updateParam('period', value);
+    
     if (value !== 'custom') {
+      console.log('Calculating date range for:', value);
       calculateDateRange(value);
     }
+    
+    console.log('=== PERIOD CHANGE END ===');
   };
 
   const validateSettings = () => {
@@ -205,12 +213,22 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
 
           <div>
             <Label htmlFor="period">Backtest Period</Label>
-            <div className="text-xs text-muted-foreground mb-1">Current: {params.period || 'undefined'}</div>
-            <Select value={params.period || ''} onValueChange={handlePeriodChange}>
+            <div className="text-xs text-muted-foreground mb-1">
+              Current: {params.period || 'undefined'} | 
+              Type: {typeof params.period} | 
+              All keys: {Object.keys(params).join(', ')}
+            </div>
+            <Select 
+              value={params.period || ''} 
+              onValueChange={(value) => {
+                console.log('Select onValueChange called with:', value);
+                handlePeriodChange(value);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[9999] bg-background">
                 {BACKTEST_PERIODS.map((period) => (
                   <SelectItem key={period.value} value={period.value}>
                     {period.label}
@@ -218,6 +236,9 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                 ))}
               </SelectContent>
             </Select>
+            <div className="text-xs text-green-600 mt-1">
+              Available periods: {BACKTEST_PERIODS.map(p => p.value).join(', ')}
+            </div>
           </div>
 
           {params.period && params.period !== 'custom' && (
