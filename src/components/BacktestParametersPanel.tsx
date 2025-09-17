@@ -263,7 +263,10 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                   type="button"
                   variant="outline"
                   className="w-full justify-between h-10 px-3"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                   onClick={() => {
+                     console.log('Dropdown button clicked, current state:', dropdownOpen);
+                     setDropdownOpen(!dropdownOpen);
+                   }}
                 >
                   <span className="flex items-center gap-2">
                     {params.instrument ? (
@@ -282,44 +285,55 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
                   </div>
                 </Button>
 
-                {/* Custom Dropdown Content */}
-                {dropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-[9999] max-h-96 overflow-hidden">
-                    {/* Search Input */}
-                    <div className="p-3 border-b border-border">
-                      <Input
-                        placeholder="Search instruments..."
-                        value={instrumentSearch}
-                        onChange={(e) => setInstrumentSearch(e.target.value)}
-                        className="h-9"
-                        autoFocus
-                      />
-                    </div>
+                 {/* Custom Dropdown Content */}
+                 {dropdownOpen && (
+                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-xl z-[9999] max-h-96 overflow-hidden">
+                     {/* Debug indicator */}
+                     <div className="p-1 bg-green-100 dark:bg-green-900 text-xs text-green-800 dark:text-green-200">
+                       Dropdown Open - Categories Available
+                     </div>
+                     
+                     {/* Search Input */}
+                     <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                       <Input
+                         placeholder="Search instruments..."
+                         value={instrumentSearch}
+                         onChange={(e) => setInstrumentSearch(e.target.value)}
+                         className="h-9"
+                         autoFocus
+                       />
+                     </div>
 
-                    {/* Category Tabs */}
-                    <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30">
-                      <Button
-                        type="button"
-                        variant={selectedCategory === 'ALL' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setSelectedCategory('ALL')}
-                        className="h-7 px-3 text-xs"
-                      >
-                        All
-                      </Button>
-                      {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
-                        <Button
-                          key={key}
-                          type="button"
-                          variant={selectedCategory === key ? 'default' : 'ghost'}
-                          size="sm"
-                          onClick={() => setSelectedCategory(key as keyof typeof INSTRUMENT_CATEGORIES)}
-                          className="h-7 px-3 text-xs"
-                        >
-                          {category.label.replace(' Exchange', '').replace('Stock ', '')}
-                        </Button>
-                      ))}
-                    </div>
+                     {/* Category Tabs */}
+                     <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                       <Button
+                         type="button"
+                         variant={selectedCategory === 'ALL' ? 'default' : 'ghost'}
+                         size="sm"
+                         onClick={() => {
+                           console.log('Selected ALL category');
+                           setSelectedCategory('ALL');
+                         }}
+                         className="h-7 px-3 text-xs"
+                       >
+                         All
+                       </Button>
+                       {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
+                         <Button
+                           key={key}
+                           type="button"
+                           variant={selectedCategory === key ? 'default' : 'ghost'}
+                           size="sm"
+                           onClick={() => {
+                             console.log('Selected category:', key);
+                             setSelectedCategory(key as keyof typeof INSTRUMENT_CATEGORIES);
+                           }}
+                           className="h-7 px-3 text-xs"
+                         >
+                           {category.label.replace(' Exchange', '').replace('Stock ', '')}
+                         </Button>
+                       ))}
+                     </div>
 
                     {/* Instruments List */}
                     <div className="max-h-60 overflow-y-auto">
