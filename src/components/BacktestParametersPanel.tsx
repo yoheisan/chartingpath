@@ -47,10 +47,36 @@ export interface BacktestParams {
   slippage: number;
 }
 
-const POPULAR_INSTRUMENTS = [
-  'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
-  'XAUUSD', 'XAGUSD', 'SPX500', 'NAS100', 'US30', 'GER30', 'UK100'
-];
+const INSTRUMENT_CATEGORIES = {
+  FX: {
+    label: 'Foreign Exchange',
+    instruments: [
+      'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
+      'EURGBP', 'EURJPY', 'GBPJPY', 'AUDNZD', 'EURAUD', 'GBPAUD', 'CHFJPY'
+    ]
+  },
+  Crypto: {
+    label: 'Cryptocurrency',
+    instruments: [
+      'BTCUSD', 'ETHUSD', 'ADAUSD', 'XRPUSD', 'SOLUSD', 'DOTUSD', 'MATICUSD',
+      'LINKUSD', 'LTCUSD', 'BCHUSD', 'XMRUSD', 'ETCUSD', 'EOSUSD', 'TRXUSD'
+    ]
+  },
+  Indices: {
+    label: 'Stock Indices',
+    instruments: [
+      'SPX500', 'NAS100', 'US30', 'GER30', 'UK100', 'FRA40', 'AUS200',
+      'JPN225', 'HK50', 'EUSTX50', 'SPAIN35', 'NETH25', 'SWI20', 'ITA40'
+    ]
+  },
+  Commodities: {
+    label: 'Commodities',
+    instruments: [
+      'XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD', 'USOIL', 'UKOIL', 'NGAS',
+      'WHEAT', 'CORN', 'SOYBEAN', 'COFFEE', 'SUGAR', 'COCOA', 'COTTON'
+    ]
+  }
+};
 
 const TIMEFRAMES = [
   { value: '1m', label: '1 Minute' },
@@ -82,6 +108,8 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   strategies,
   isGuidedBuilder = false
 }) => {
+  const [selectedCategory, setSelectedCategory] = React.useState<keyof typeof INSTRUMENT_CATEGORIES>('FX');
+  const [instrumentSearch, setInstrumentSearch] = React.useState('');
   const updateParam = (key: keyof BacktestParams, value: any) => {
     onParamsChange({ ...params, [key]: value });
   };
@@ -180,18 +208,47 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="instrument">Instrument</Label>
-              <Select value={params.instrument} onValueChange={(value) => updateParam('instrument', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POPULAR_INSTRUMENTS.map((instrument) => (
-                    <SelectItem key={instrument} value={instrument}>
-                      {instrument}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                {/* Category Selection */}
+                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as keyof typeof INSTRUMENT_CATEGORIES)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999] bg-background border shadow-lg">
+                    {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
+                      <SelectItem key={key} value={key}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Instrument Search */}
+                <Input
+                  placeholder={`Search ${INSTRUMENT_CATEGORIES[selectedCategory].label}...`}
+                  value={instrumentSearch}
+                  onChange={(e) => setInstrumentSearch(e.target.value)}
+                  className="h-9"
+                />
+                
+                {/* Instrument Selection */}
+                <Select value={params.instrument} onValueChange={(value) => updateParam('instrument', value)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select instrument" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999] bg-background border shadow-lg max-h-60 overflow-y-auto">
+                    {INSTRUMENT_CATEGORIES[selectedCategory].instruments
+                      .filter(instrument => 
+                        instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+                      )
+                      .map((instrument) => (
+                        <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent">
+                          {instrument}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
