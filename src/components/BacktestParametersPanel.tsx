@@ -110,6 +110,55 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = React.useState<keyof typeof INSTRUMENT_CATEGORIES | 'ALL'>('ALL');
   const [instrumentSearch, setInstrumentSearch] = React.useState('');
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  // Helper function to get filtered instruments based on category and search
+  const getFilteredInstruments = () => {
+    const allInstruments: Array<{instrument: string, category: string}> = [];
+    
+    if (selectedCategory === 'ALL') {
+      Object.entries(INSTRUMENT_CATEGORIES).forEach(([categoryKey, category]) => {
+        category.instruments.forEach(instrument => {
+          allInstruments.push({
+            instrument,
+            category: category.label
+          });
+        });
+      });
+    } else {
+      INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].instruments.forEach(instrument => {
+        allInstruments.push({
+          instrument,
+          category: INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].label
+        });
+      });
+    }
+
+    return allInstruments.filter(item =>
+      item.instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+    );
+  };
+
+  // Helper function to get instrument description
+  const getInstrumentDescription = (instrument: string) => {
+    const descriptions: Record<string, string> = {
+      'EURUSD': 'Euro / US Dollar',
+      'GBPUSD': 'British Pound / US Dollar',
+      'USDJPY': 'US Dollar / Japanese Yen',
+      'USDCHF': 'US Dollar / Swiss Franc',
+      'AUDUSD': 'Australian Dollar / US Dollar',
+      'USDCAD': 'US Dollar / Canadian Dollar',
+      'NZDUSD': 'New Zealand Dollar / US Dollar',
+      'BTCUSD': 'Bitcoin / US Dollar',
+      'ETHUSD': 'Ethereum / US Dollar',
+      'SPX500': 'S&P 500 Index',
+      'NAS100': 'NASDAQ 100 Index',
+      'US30': 'Dow Jones Industrial Average',
+      'XAUUSD': 'Gold / US Dollar',
+      'XAGUSD': 'Silver / US Dollar',
+    };
+    return descriptions[instrument] || instrument;
+  };
   const updateParam = (key: keyof BacktestParams, value: any) => {
     onParamsChange({ ...params, [key]: value });
   };
@@ -208,87 +257,118 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="instrument">Instrument</Label>
-              <div className="space-y-2">
-                {/* Search Input */}
-                <div className="relative">
-                  <Input
-                    placeholder="Type ticker symbol or instrument name..."
-                    value={instrumentSearch}
-                    onChange={(e) => setInstrumentSearch(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-                
-                {/* Instrument Selection with Categories */}
-                <Select value={params.instrument} onValueChange={(value) => updateParam('instrument', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select instrument" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[9999] bg-background border shadow-lg max-h-80 overflow-y-auto">
-                    {selectedCategory === 'ALL' ? 
-                      // Show all categories when no filter is selected
-                      Object.entries(INSTRUMENT_CATEGORIES).map(([categoryKey, category]) => (
-                        <React.Fragment key={categoryKey}>
-                          {category.instruments
-                            .filter(instrument => 
-                              instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-                            )
-                            .map((instrument) => (
-                              <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent flex justify-between">
-                                <div className="flex justify-between items-center w-full">
-                                  <span className="font-medium">{instrument}</span>
-                                  <Badge variant="secondary" className="ml-2 text-xs">
-                                    {category.label}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
-                        </React.Fragment>
-                      ))
-                      :
-                      // Show filtered category
-                      INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].instruments
-                        .filter(instrument => 
-                          instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-                        )
-                        .map((instrument) => (
-                          <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent">
-                            <div className="flex justify-between items-center w-full">
-                              <span className="font-medium">{instrument}</span>
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  {INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].label}
-                                </Badge>
+              <div className="relative">
+                {/* Custom Dropdown Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-between h-10 px-3"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
+                  <span className="flex items-center gap-2">
+                    {params.instrument ? (
+                      <>
+                        <span className="w-5 h-5 bg-primary/10 rounded-sm flex items-center justify-center text-xs font-bold">
+                          {params.instrument.substring(0, 2)}
+                        </span>
+                        {params.instrument}
+                      </>
+                    ) : (
+                      'Select instrument'
+                    )}
+                  </span>
+                  <div className={`transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                  </div>
+                </Button>
+
+                {/* Custom Dropdown Content */}
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-[9999] max-h-96 overflow-hidden">
+                    {/* Search Input */}
+                    <div className="p-3 border-b border-border">
+                      <Input
+                        placeholder="Search instruments..."
+                        value={instrumentSearch}
+                        onChange={(e) => setInstrumentSearch(e.target.value)}
+                        className="h-9"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Category Tabs */}
+                    <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30">
+                      <Button
+                        type="button"
+                        variant={selectedCategory === 'ALL' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setSelectedCategory('ALL')}
+                        className="h-7 px-3 text-xs"
+                      >
+                        All
+                      </Button>
+                      {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
+                        <Button
+                          key={key}
+                          type="button"
+                          variant={selectedCategory === key ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setSelectedCategory(key as keyof typeof INSTRUMENT_CATEGORIES)}
+                          className="h-7 px-3 text-xs"
+                        >
+                          {category.label.replace(' Exchange', '').replace('Stock ', '')}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* Instruments List */}
+                    <div className="max-h-60 overflow-y-auto">
+                      {getFilteredInstruments().map((item) => (
+                        <div
+                          key={item.instrument}
+                          className="flex items-center justify-between p-3 hover:bg-accent cursor-pointer border-b border-border/50 last:border-b-0"
+                          onClick={() => {
+                            updateParam('instrument', item.instrument);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Icon */}
+                            <div className="w-6 h-6 bg-primary/20 rounded-sm flex items-center justify-center text-xs font-bold text-primary">
+                              {item.instrument.substring(0, 2)}
                             </div>
-                          </SelectItem>
-                        ))
-                    }
-                  </SelectContent>
-                </Select>
-                
-                {/* Category Filter Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant={selectedCategory === 'ALL' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory('ALL')}
-                    className="text-xs"
-                  >
-                    All
-                  </Button>
-                  {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
-                    <Button
-                      key={key}
-                      type="button"
-                      variant={selectedCategory === key ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(key as keyof typeof INSTRUMENT_CATEGORIES)}
-                      className="text-xs"
-                    >
-                      {category.label}
-                    </Button>
-                  ))}
-                </div>
+                            {/* Symbol and Name */}
+                            <div>
+                              <div className="font-medium text-sm">{item.instrument}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {getInstrumentDescription(item.instrument)}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Category Badge */}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {item.category.toLowerCase()}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                      {getFilteredInstruments().length === 0 && (
+                        <div className="p-6 text-center text-muted-foreground">
+                          No instruments found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Overlay to close dropdown */}
+                {dropdownOpen && (
+                  <div 
+                    className="fixed inset-0 z-[9998]" 
+                    onClick={() => setDropdownOpen(false)} 
+                  />
+                )}
               </div>
             </div>
 
