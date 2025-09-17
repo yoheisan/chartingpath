@@ -108,7 +108,7 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
   strategies,
   isGuidedBuilder = false
 }) => {
-  const [selectedCategory, setSelectedCategory] = React.useState<keyof typeof INSTRUMENT_CATEGORIES>('FX');
+  const [selectedCategory, setSelectedCategory] = React.useState<keyof typeof INSTRUMENT_CATEGORIES | 'ALL'>('ALL');
   const [instrumentSearch, setInstrumentSearch] = React.useState('');
   const updateParam = (key: keyof BacktestParams, value: any) => {
     onParamsChange({ ...params, [key]: value });
@@ -209,45 +209,86 @@ const BacktestParametersPanel: React.FC<BacktestParametersPanelProps> = ({
             <div>
               <Label htmlFor="instrument">Instrument</Label>
               <div className="space-y-2">
-                {/* Category Selection */}
-                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as keyof typeof INSTRUMENT_CATEGORIES)}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-[9999] bg-background border shadow-lg">
-                    {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
-                      <SelectItem key={key} value={key}>
-                        {category.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Search Input */}
+                <div className="relative">
+                  <Input
+                    placeholder="Type ticker symbol or instrument name..."
+                    value={instrumentSearch}
+                    onChange={(e) => setInstrumentSearch(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
                 
-                {/* Instrument Search */}
-                <Input
-                  placeholder={`Search ${INSTRUMENT_CATEGORIES[selectedCategory].label}...`}
-                  value={instrumentSearch}
-                  onChange={(e) => setInstrumentSearch(e.target.value)}
-                  className="h-9"
-                />
-                
-                {/* Instrument Selection */}
+                {/* Instrument Selection with Categories */}
                 <Select value={params.instrument} onValueChange={(value) => updateParam('instrument', value)}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select instrument" />
                   </SelectTrigger>
-                  <SelectContent className="z-[9999] bg-background border shadow-lg max-h-60 overflow-y-auto">
-                    {INSTRUMENT_CATEGORIES[selectedCategory].instruments
-                      .filter(instrument => 
-                        instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-                      )
-                      .map((instrument) => (
-                        <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent">
-                          {instrument}
-                        </SelectItem>
-                      ))}
+                  <SelectContent className="z-[9999] bg-background border shadow-lg max-h-80 overflow-y-auto">
+                    {selectedCategory === 'ALL' ? 
+                      // Show all categories when no filter is selected
+                      Object.entries(INSTRUMENT_CATEGORIES).map(([categoryKey, category]) => (
+                        <React.Fragment key={categoryKey}>
+                          {category.instruments
+                            .filter(instrument => 
+                              instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+                            )
+                            .map((instrument) => (
+                              <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent flex justify-between">
+                                <div className="flex justify-between items-center w-full">
+                                  <span className="font-medium">{instrument}</span>
+                                  <Badge variant="secondary" className="ml-2 text-xs">
+                                    {category.label}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </React.Fragment>
+                      ))
+                      :
+                      // Show filtered category
+                      INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].instruments
+                        .filter(instrument => 
+                          instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+                        )
+                        .map((instrument) => (
+                          <SelectItem key={instrument} value={instrument} className="cursor-pointer hover:bg-accent">
+                            <div className="flex justify-between items-center w-full">
+                              <span className="font-medium">{instrument}</span>
+                                <Badge variant="secondary" className="ml-2 text-xs">
+                                  {INSTRUMENT_CATEGORIES[selectedCategory as keyof typeof INSTRUMENT_CATEGORIES].label}
+                                </Badge>
+                            </div>
+                          </SelectItem>
+                        ))
+                    }
                   </SelectContent>
                 </Select>
+                
+                {/* Category Filter Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={selectedCategory === 'ALL' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory('ALL')}
+                    className="text-xs"
+                  >
+                    All
+                  </Button>
+                  {Object.entries(INSTRUMENT_CATEGORIES).map(([key, category]) => (
+                    <Button
+                      key={key}
+                      type="button"
+                      variant={selectedCategory === key ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(key as keyof typeof INSTRUMENT_CATEGORIES)}
+                      className="text-xs"
+                    >
+                      {category.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
