@@ -271,7 +271,7 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
 
           {/* Parameters Tab */}
           <TabsContent value="parameters" className="mt-6">
-            <Accordion type="multiple" defaultValue={["execution"]} className="space-y-4">
+            <Accordion type="multiple" defaultValue={["execution", "backtest-params"]} className="space-y-4">
               
               {/* Strategy Connection Status */}
               <AccordionItem value="strategy-status" className="border rounded-lg">
