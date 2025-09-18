@@ -10,7 +10,14 @@ import {
   Zap, 
   ArrowRight,
   BookOpen,
-  Play
+  Play,
+  Crown,
+  Users,
+  Building,
+  Activity,
+  BarChart3,
+  Shield,
+  Target
 } from 'lucide-react';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
@@ -229,10 +236,14 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Strategy Builder
+          </TabsTrigger>
+          <TabsTrigger value="professional" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Professional
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -247,6 +258,117 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             Results
           </TabsTrigger>
         </TabsList>
+
+        {/* Professional Strategy Wizard Tab */}
+        <TabsContent value="professional" className="space-y-6">
+          <div className="text-center space-y-4 py-8">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <Zap className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Professional Strategy Development</h3>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Institutional-grade workflow that mirrors how professional fund managers and quants 
+                approach strategy development. Includes market regime analysis, risk budgeting, 
+                and data-driven target setting.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8">
+              <Card className="text-left">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart3 className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-sm">Market Regime Analysis</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Identify current market conditions and adjust strategy parameters accordingly
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-left">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-sm">Risk Budgeting</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Portfolio-level risk allocation using institutional methods
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-left">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-sm">Performance Targets</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Data-driven targets based on historical performance metrics
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+              <Button 
+                size="lg"
+                onClick={() => {
+                  // This would navigate to the professional wizard
+                  toast.success('Professional Strategy Wizard will open in a new tab');
+                }}
+                className="flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Launch Professional Wizard
+              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Crown className="w-4 h-4" />
+                <span>Available on Pro+ plans</span>
+              </div>
+            </div>
+
+            {/* Comparison */}
+            <Card className="mt-8 text-left">
+              <CardHeader>
+                <CardTitle className="text-base">When to Use Each Approach</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-blue-600" />
+                      Guided Builder (Current)
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Simple step-by-step process</li>
+                      <li>• Pre-defined strategy templates</li>
+                      <li>• Basic risk/reward inputs</li>
+                      <li>• Good for beginners</li>
+                      <li>• 30-day backtesting</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-purple-600" />
+                      Professional Wizard
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Market regime-based approach</li>
+                      <li>• Portfolio risk budgeting</li>
+                      <li>• Statistical performance metrics</li>
+                      <li>• Kelly criterion position sizing</li>
+                      <li>• Multi-year walk-forward testing</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
