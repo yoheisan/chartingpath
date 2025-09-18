@@ -61,9 +61,6 @@ export const RewardStep: React.FC<RewardStepProps> = ({
     // Assuming Avg Loss = 1, Avg Win = Risk-Reward Ratio
     return (winRate * riskReward) / ((1 - winRate) * 1);
   };
-    if (rr >= 1.5) return { category: 'Fair', color: 'text-yellow-600' };
-    return { category: 'Poor', color: 'text-red-600' };
-  };
 
   const returnCategory = getReturnCategory(currentAnswers.targetReturn);
   const winRateCategory = getWinRateCategory(currentAnswers.winRate);

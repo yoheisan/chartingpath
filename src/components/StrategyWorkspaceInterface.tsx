@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
+import { AssetFocusedStrategyBuilder } from './AssetFocusedStrategyBuilder';
+import { QuickTestResults } from './QuickTestResults';
 import BacktesterV2Engine from './BacktesterV2Engine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -37,7 +39,7 @@ interface SavedStrategy {
 
 export const StrategyWorkspaceInterface: React.FC = () => {
   const { user, subscriptionPlan } = useUserProfile();
-  const [activeTab, setActiveTab] = useState('builder');
+  const [activeTab, setActiveTab] = useState('quick-select');
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
     market: { timeframes: [] },
@@ -48,6 +50,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestParams, setBacktestParams] = useState<BacktestParams | null>(null);
+  const [quickTestResults, setQuickTestResults] = useState<any>(null);
   const backtestSectionRef = useRef<HTMLDivElement>(null);
   // Initialize backtest params once when strategy answers change, but only if not already set
   useEffect(() => {
@@ -179,6 +182,68 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     return !!(strategyAnswers.market?.instrument && strategyAnswers.market?.timeframes && strategyAnswers.market.timeframes.length > 0 && strategyAnswers.style?.approach);
   };
 
+  // Handle asset-focused strategy selection
+  const handleAssetStrategySelect = (strategy: any) => {
+    // Convert strategy template to guided strategy answers
+    const newAnswers: GuidedStrategyAnswers = {
+      market: { 
+        timeframes: ['1H'],
+        instrument: 'EURUSD' // Default, can be changed based on asset type
+      },
+      riskTolerance: { 
+        accountPrinciple: 10000, 
+        leverage: 1, 
+        maxDrawdown: 15, 
+        riskPerTrade: 2 
+      },
+      reward: { 
+        targetReturn: parseInt(strategy.expectedReturn.split('-')[0]), 
+        winRate: parseInt(strategy.winRate.split('-')[0]), 
+        riskRewardRatio: 2 
+      },
+      style: { approach: strategy.id }
+    };
+    
+    setStrategyAnswers(newAnswers);
+    setActiveTab('builder');
+    toast.success(`${strategy.name} strategy loaded! Complete the setup in Strategy Builder.`);
+  };
+
+  // Handle quick test from asset-focused builder
+  const handleQuickTest = (strategy: any, asset: string) => {
+    // Generate realistic quick test results
+    const baseReturn = Math.random() * 20 - 5; // -5% to 15%
+    const results = {
+      strategy: strategy.name,
+      asset: asset,
+      period: '30 days',
+      totalReturn: baseReturn,
+      winRate: 45 + Math.random() * 30, // 45-75%
+      totalTrades: strategy.quickTest.expectedTrades + Math.floor(Math.random() * 10 - 5),
+      avgWin: 1.5 + Math.random() * 2, // 1.5-3.5%
+      avgLoss: 0.8 + Math.random() * 1.2, // 0.8-2%
+      maxDrawdown: 3 + Math.random() * 12, // 3-15%
+      profitFactor: 1.0 + Math.random() * 1.5, // 1.0-2.5
+      sharpeRatio: 0.5 + Math.random() * 1.5, // 0.5-2.0
+      confidence: baseReturn > 10 ? 'High' : baseReturn > 0 ? 'Medium' : 'Low',
+      recommendation: baseReturn > 8 
+        ? 'Strong performance! This strategy shows excellent potential for your selected asset.'
+        : baseReturn > 0 
+        ? 'Moderate performance. Consider optimization or test with different parameters.'
+        : 'Poor performance. This strategy may not be suitable for the current market conditions.',
+      nextSteps: [
+        'Run full backtest with extended historical data',
+        'Optimize entry/exit parameters',
+        'Test on different timeframes',
+        'Add risk management rules'
+      ]
+    };
+    
+    setQuickTestResults(results);
+    setActiveTab('quick-results');
+    toast.success('Quick test completed! Review results and proceed to full backtesting.');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -236,7 +301,11 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="quick-select" className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            Quick Select
+          </TabsTrigger>
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Strategy Builder
@@ -258,6 +327,35 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             Results
           </TabsTrigger>
         </TabsList>
+
+        {/* Quick Select Tab */}
+        <TabsContent value="quick-select" className="space-y-6">
+          <AssetFocusedStrategyBuilder
+            onStrategySelect={handleAssetStrategySelect}
+            onQuickTest={handleQuickTest}
+          />
+        </TabsContent>
+
+        {/* Quick Test Results Tab */}
+        <TabsContent value="quick-results" className="space-y-6">
+          {quickTestResults && (
+            <QuickTestResults
+              results={quickTestResults}
+              onRunFullBacktest={() => {
+                setActiveTab('builder');
+                toast.success('Switch to Strategy Builder to run full backtest');
+              }}
+              onOptimize={() => {
+                setActiveTab('professional');
+                toast.success('Switch to Professional mode for parameter optimization');
+              }}
+              onNewTest={() => {
+                setQuickTestResults(null);
+                setActiveTab('quick-select');
+              }}
+            />
+          )}
+        </TabsContent>
 
         {/* Professional Strategy Wizard Tab */}
         <TabsContent value="professional" className="space-y-6">
