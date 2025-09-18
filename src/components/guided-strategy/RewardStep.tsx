@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TrendingUp, Target, Award, HelpCircle } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
+import { RewardAnalysisValidator } from '../RewardAnalysisValidator';
 
 interface RewardStepProps {
   answers: Partial<GuidedStrategyAnswers>;
@@ -48,6 +49,18 @@ export const RewardStep: React.FC<RewardStepProps> = ({
   const getRRCategory = (rr: number) => {
     if (rr >= 3) return { category: 'Excellent', color: 'text-green-600' };
     if (rr >= 2) return { category: 'Good', color: 'text-blue-600' };
+    if (rr >= 1.5) return { category: 'Fair', color: 'text-yellow-600' };
+    return { category: 'Poor', color: 'text-red-600' };
+  };
+
+  const calculateProfitFactor = () => {
+    const winRate = currentAnswers.winRate / 100;
+    const riskReward = currentAnswers.riskRewardRatio;
+    
+    // Profit Factor = (Win Rate × Avg Win) / (Loss Rate × Avg Loss)
+    // Assuming Avg Loss = 1, Avg Win = Risk-Reward Ratio
+    return (winRate * riskReward) / ((1 - winRate) * 1);
+  };
     if (rr >= 1.5) return { category: 'Fair', color: 'text-yellow-600' };
     return { category: 'Poor', color: 'text-red-600' };
   };
@@ -195,7 +208,19 @@ export const RewardStep: React.FC<RewardStepProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Reward Analysis Validator */}
+      {isComplete && (
+        <RewardAnalysisValidator 
+          targets={{
+            expectedReturn: currentAnswers.targetReturn,
+            winRate: currentAnswers.winRate,
+            riskReward: currentAnswers.riskRewardRatio,
+            profitFactor: calculateProfitFactor()
+          }}
+        />
+      )}
     </div>
-    </TooltipProvider>
-  );
+  </TooltipProvider>
+);
 };
