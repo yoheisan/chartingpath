@@ -79,6 +79,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   subscriptionPlan
 }) => {
   const [instrumentSearchOpen, setInstrumentSearchOpen] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
   
   const currentAnswers = answers.market || {
     instrumentCategory: '',
@@ -183,44 +184,108 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                     placeholder="Type ticker symbol or instrument name..." 
                     className="h-9" 
                   />
+                  
+                  {/* Category Filter Tabs */}
+                  <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30">
+                    <Button
+                      type="button"
+                      variant={selectedCategoryFilter === 'ALL' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedCategoryFilter('ALL')}
+                      className="h-7 px-3 text-xs"
+                    >
+                      All
+                    </Button>
+                    {Object.entries(instrumentCategories).map(([key, category]) => (
+                      <Button
+                        key={key}
+                        type="button"
+                        variant={selectedCategoryFilter === key ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setSelectedCategoryFilter(key)}
+                        className="h-7 px-3 text-xs"
+                      >
+                        {category.label.replace('Foreign Exchange', 'Forex')}
+                      </Button>
+                    ))}
+                  </div>
+                  
                   <CommandList>
                     <CommandEmpty>No instruments found. Try searching by ticker symbol.</CommandEmpty>
-                    {Object.entries(instrumentCategories).map(([categoryKey, category]) => (
-                      <CommandGroup key={categoryKey} heading={category.label}>
-                        {category.instruments.map((instrument) => (
-                          <CommandItem
-                            key={instrument.symbol}
-                            value={`${instrument.symbol} ${instrument.name}`}
-                            onSelect={() => {
-                              // Auto-set category when instrument is selected
-                              handleInstrumentCategoryChange(categoryKey);
-                              handleInstrumentChange(instrument.symbol);
-                              setInstrumentSearchOpen(false);
-                            }}
-                          >
-                            <div className="flex items-center justify-between w-full">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="font-medium">{instrument.symbol}</span>
-                                <span className="text-xs text-muted-foreground">{instrument.name}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
-                                  {category.label}
-                                </span>
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    currentAnswers.instrument === instrument.symbol
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    ))}
+                    {selectedCategoryFilter === 'ALL' 
+                      ? Object.entries(instrumentCategories).map(([categoryKey, category]) => (
+                          <CommandGroup key={categoryKey} heading={category.label}>
+                            {category.instruments.map((instrument) => (
+                              <CommandItem
+                                key={instrument.symbol}
+                                value={`${instrument.symbol} ${instrument.name}`}
+                                onSelect={() => {
+                                  // Auto-set category when instrument is selected
+                                  handleInstrumentCategoryChange(categoryKey);
+                                  handleInstrumentChange(instrument.symbol);
+                                  setInstrumentSearchOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="font-medium">{instrument.symbol}</span>
+                                    <span className="text-xs text-muted-foreground">{instrument.name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
+                                      {category.label}
+                                    </span>
+                                    <Check
+                                      className={cn(
+                                        "h-4 w-4",
+                                        currentAnswers.instrument === instrument.symbol
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        ))
+                      : instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories] && (
+                          <CommandGroup heading={instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].label}>
+                            {instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].instruments.map((instrument) => (
+                              <CommandItem
+                                key={instrument.symbol}
+                                value={`${instrument.symbol} ${instrument.name}`}
+                                onSelect={() => {
+                                  // Auto-set category when instrument is selected
+                                  handleInstrumentCategoryChange(selectedCategoryFilter);
+                                  handleInstrumentChange(instrument.symbol);
+                                  setInstrumentSearchOpen(false);
+                                }}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="font-medium">{instrument.symbol}</span>
+                                    <span className="text-xs text-muted-foreground">{instrument.name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
+                                      {instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].label}
+                                    </span>
+                                    <Check
+                                      className={cn(
+                                        "h-4 w-4",
+                                        currentAnswers.instrument === instrument.symbol
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )
+                    }
                   </CommandList>
                 </Command>
               </PopoverContent>
