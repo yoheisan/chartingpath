@@ -198,34 +198,41 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       </Card>
 
       {/* Step Content */}
-      <div className="min-h-[400px]">
+      <div className="min-h-[400px] pb-20">
         {renderStep()}
       </div>
 
-      {/* Navigation */}
+      {/* Sticky Navigation at Bottom */}
       {currentStep < steps.length - 1 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-between">
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-50">
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex justify-between items-center">
               <Button
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={currentStep === 0}
+                className="flex items-center gap-2"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4" />
                 Previous
               </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                Step {currentStep + 1} of {steps.length}
+              </div>
               
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepComplete()}
+                className="flex items-center gap-2"
+                size="default"
               >
                 Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
