@@ -7,6 +7,8 @@ import { MarketStep } from './guided-strategy/MarketStep';
 import { RiskToleranceStep } from './guided-strategy/RiskToleranceStep';  
 import { StyleStep } from './guided-strategy/StyleStep';
 import { StrategyProposal } from './guided-strategy/StrategyProposal';
+import { AdvancedParametersStep } from './AdvancedParametersStep';
+import { BacktestSection } from './BacktestSection';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface GuidedStrategyAnswers {
@@ -20,11 +22,15 @@ export interface GuidedStrategyAnswers {
     maxDrawdown: number;
     riskPerTrade: number;
     leverage: number;
+    accountPrinciple?: number;
   };
   style?: {
     approach: string;
     timeHorizon: string;
     complexity: string;
+  };
+  parameters?: {
+    [key: string]: any;
   };
 }
 
@@ -32,6 +38,8 @@ const steps = [
   { id: 'market', title: 'Market Selection', description: 'Choose your trading market' },
   { id: 'risk', title: 'Risk Management', description: 'Set risk parameters' },
   { id: 'style', title: 'Trading Style', description: 'Define your approach' },
+  { id: 'parameters', title: 'Advanced Parameters', description: 'Fine-tune technical indicators' },
+  { id: 'backtest', title: 'Backtest & Results', description: 'Test your strategy' },
 ];
 
 export interface GuidedStrategyBuilderProps {
@@ -41,6 +49,7 @@ export interface GuidedStrategyBuilderProps {
   initialStrategy?: any;
   onStrategyLoad?: () => void;
   isBacktesting?: boolean;
+  onBacktestComplete?: (results: any) => void;
 }
 
 export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
@@ -49,7 +58,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   onBacktest,
   initialStrategy,
   onStrategyLoad,
-  isBacktesting = false
+  isBacktesting = false,
+  onBacktestComplete
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<GuidedStrategyAnswers>({
@@ -102,6 +112,10 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
         return !!answers.risk?.maxDrawdown !== undefined && !!answers.risk?.riskPerTrade !== undefined && !!answers.risk?.leverage;
       case 2: // style
         return !!answers.style?.approach && !!answers.style?.timeHorizon && !!answers.style?.complexity;
+      case 3: // parameters (optional step)
+        return true; // Parameters step is always complete as it has defaults
+      case 4: // backtest
+        return true; // Backtest step is informational
       default:
         return false;
     }
@@ -134,6 +148,19 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       case 2:
         return <StyleStep {...stepProps} />;
       case 3:
+        return <AdvancedParametersStep {...stepProps} />;
+      case 4:
+        return (
+          <BacktestSection 
+            answers={answers} 
+            onBacktestComplete={onBacktestComplete}
+            onAnswersChange={(newAnswers) => {
+              setAnswers(newAnswers);
+              onAnswersChange?.(newAnswers);
+            }}
+          />
+        );
+      case 5:
         return <StrategyProposal {...stepProps} onSaveStrategy={onSaveStrategy} onBacktest={onBacktest} />;
       default:
         return null;
@@ -199,55 +226,40 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
         <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-50">
           <div className="container mx-auto max-w-4xl">
             <div className="flex justify-between items-center">
-              {currentStep < steps.length ? (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handlePrevious}
-                    disabled={currentStep === 0}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Previous
-                  </Button>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    Step {currentStep + 1} of {steps.length}
-                  </div>
-                  
-                  {currentStep < steps.length - 1 ? (
-                    <Button
-                      onClick={handleNext}
-                      disabled={!isCurrentStepComplete()}
-                      className="flex items-center gap-2"
-                      size="default"
-                    >
-                      Next
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => setCurrentStep(3)}
-                      disabled={!isCurrentStepComplete()}
-                      className="flex items-center gap-2"
-                      size="default"
-                    >
-                      Generate Strategy
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  )}
-                </>
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                Step {currentStep + 1} of {steps.length}
+              </div>
+              
+              {currentStep < steps.length - 1 ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isCurrentStepComplete()}
+                  className="flex items-center gap-2"
+                  size="default"
+                >
+                  {currentStep === 2 ? 'Advanced Setup' : 
+                   currentStep === 3 ? 'Test Strategy' : 'Next'}
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               ) : (
-                <div className="w-full text-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentStep(2)}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Settings
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setCurrentStep(5)}
+                  className="flex items-center gap-2"
+                  size="default"
+                >
+                  Generate Strategy
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>

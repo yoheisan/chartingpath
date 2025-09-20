@@ -192,7 +192,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="quick-select" className="flex items-center gap-2">
             <Target className="w-4 h-4" />
             Professional Library
@@ -201,21 +201,9 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             <Bot className="w-4 h-4" />
             Strategy Builder
           </TabsTrigger>
-          <TabsTrigger value="backtest" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            Backtest Engine
-          </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             My Strategies
-          </TabsTrigger>
-          <TabsTrigger 
-            value="results" 
-            className="flex items-center gap-2"
-            disabled={!backtestResults}
-          >
-            <TrendingUp className="w-4 h-4" />
-            Results
           </TabsTrigger>
         </TabsList>
 
@@ -232,18 +220,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             initialStrategy={{ answers: strategyAnswers }}
             onAnswersChange={handleAnswersChange}
             onSaveStrategy={handleStrategySaved}
-          />
-        </TabsContent>
-
-        {/* Unified Backtest Engine Tab */}
-        <TabsContent value="backtest" className="space-y-6">
-          <ConsolidatedBacktestEngine
-            strategyAnswers={strategyAnswers}
-            currentStrategy={currentStrategy}
             onBacktestComplete={handleBacktestComplete}
-            isBacktesting={isBacktesting}
-            setIsBacktesting={setIsBacktesting}
-            onStrategyUpdate={handleAnswersChange}
           />
         </TabsContent>
 
@@ -255,36 +232,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           />
         </TabsContent>
 
-        {/* Results Tab */}
-        <TabsContent value="results" className="space-y-6">
-          {backtestResults ? (
-            <BacktestResults 
-              run={backtestResults}
-              strategyAnswers={strategyAnswers}
-              onStrategySaved={() => {
-                // Optionally redirect to My Strategies or show success message
-                toast.success('Strategy saved! You can find it in My Strategies tab.');
-              }}
-            />
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No Results Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Run a backtest to see detailed performance results and analytics.
-                </p>
-                   <Button 
-                    onClick={() => setActiveTab('backtest')}
-                    disabled={!isStrategyComplete()}
-                  >
-                    <Zap className="w-4 h-4 mr-2" />
-                    Go to Backtest Engine
-                  </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
       </Tabs>
 
       {/* Workflow Guide */}
@@ -292,23 +239,18 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         <CardContent className="pt-4">
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Bot className="w-4 h-4" />
-              <span>1. Build</span>
+              <Target className="w-4 h-4" />
+              <span>1. Select or Build</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-blue-500" />
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Settings className="w-4 h-4" />
+              <span>2. Configure & Test</span>
             </div>
             <ArrowRight className="w-4 h-4 text-blue-500" />
             <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <BookOpen className="w-4 h-4" />
-              <span>2. Save</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-blue-500" />
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Zap className="w-4 h-4" />
-              <span>3. Backtest</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-blue-500" />
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <TrendingUp className="w-4 h-4" />
-              <span>4. Analyze</span>
+              <span>3. Save & Export</span>
             </div>
           </div>
         </CardContent>

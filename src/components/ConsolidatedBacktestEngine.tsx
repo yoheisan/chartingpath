@@ -48,15 +48,17 @@ interface ConsolidatedBacktestEngineProps {
   isBacktesting: boolean;
   setIsBacktesting: (running: boolean) => void;
   onStrategyUpdate?: (answers: GuidedStrategyAnswers) => void;
+  embedded?: boolean;
 }
 
-export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProps> = ({
-  strategyAnswers,
-  currentStrategy,
-  onBacktestComplete,
-  isBacktesting,
+export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProps> = ({ 
+  strategyAnswers, 
+  currentStrategy, 
+  onBacktestComplete, 
+  isBacktesting, 
   setIsBacktesting,
-  onStrategyUpdate
+  onStrategyUpdate,
+  embedded = false
 }) => {
   const { user, hasFeatureAccess, subscriptionPlan } = useUserProfile();
   const { 
@@ -487,15 +489,38 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
   const restriction = getDateRangeRestriction();
 
   return (
-    <Card className="border-primary/20">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle>Unified Backtest Engine</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Complete strategy testing with {hasV2Access ? 'advanced' : 'standard'} execution modeling
+    <div className={embedded ? "space-y-4" : ""}>
+      {!embedded && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                Unified Backtest Engine
+                <Badge variant="secondary">V2 Enhanced</Badge>
+              </CardTitle>
+              {strategyAnswers.market?.instrument && strategyAnswers.market?.timeframes?.length && strategyAnswers.style?.approach && (
+                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  Strategy Ready
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Professional backtesting with real market data, comprehensive analytics, and risk management
+            </p>
+          </CardHeader>
+        </Card>
+      )}
+      
+      <Card className="border-primary/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle>{embedded ? "Backtest Configuration" : "Unified Backtest Engine"}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Complete strategy testing with {hasV2Access ? 'advanced' : 'standard'} execution modeling
               </p>
             </div>
           </div>
@@ -927,5 +952,6 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
         </Tabs>
       </CardContent>
     </Card>
+    </div>
   );
 };
