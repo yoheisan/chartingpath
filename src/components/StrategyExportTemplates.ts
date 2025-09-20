@@ -97,6 +97,70 @@ export const EXPORT_TEMPLATES = {
       
       const logic = getIndicatorLogic(strategy.indicators || []);
       
+      // Extract risk management settings from strategy answers
+      const riskSettings = strategy.answers?.riskTolerance || {};
+      const accountSize = riskSettings.accountPrinciple || 10000;
+      const riskPerTrade = riskSettings.riskPerTrade || null;
+      const maxDrawdown = riskSettings.maxDrawdown || null;
+      
+      // Generate dynamic risk management code
+      const riskManagementCode = `
+// Risk Management Settings from Strategy Builder
+extern double AccountSize = ${accountSize};        // Account size from strategy
+extern bool UseRiskPerTrade = ${riskPerTrade ? 'true' : 'false'};    // Enable/disable risk per trade
+extern double RiskPerTradePercent = ${riskPerTrade || 2.0};          // Risk per trade percentage
+extern bool UseMaxDrawdown = ${maxDrawdown ? 'true' : 'false'};      // Enable/disable max drawdown protection
+extern double MaxDrawdownPercent = ${maxDrawdown || 10.0};           // Maximum drawdown percentage
+
+// Global variables for risk management
+double accountPeak = AccountSize;
+double currentDrawdown = 0.0;
+bool drawdownLimitReached = false;
+
+//+------------------------------------------------------------------+
+//| Calculate dynamic lot size based on risk settings               |
+//+------------------------------------------------------------------+
+double CalculateLotSize()
+{
+   if(!UseRiskPerTrade)
+   {
+      // Use substantial portion of available capital (80% of account)
+      double availableMargin = AccountFreeMargin() * 0.8;
+      double lotSize = availableMargin / (MarketInfo(Symbol(), MODE_MARGINREQUIRED) * 100);
+      return NormalizeDouble(MathMax(lotSize, 0.01), 2);
+   }
+   
+   // Calculate lot size based on risk per trade
+   double riskAmount = AccountSize * (RiskPerTradePercent / 100.0);
+   double stopLossPoints = StopLoss > 0 ? StopLoss : 50; // Default to 50 points if no SL
+   double lotSize = riskAmount / (stopLossPoints * MarketInfo(Symbol(), MODE_TICKVALUE));
+   return NormalizeDouble(MathMax(lotSize, 0.01), 2);
+}
+
+//+------------------------------------------------------------------+
+//| Check drawdown limit                                             |
+//+------------------------------------------------------------------+
+bool CheckDrawdownLimit()
+{
+   if(!UseMaxDrawdown) return true; // No limit set
+   
+   double currentEquity = AccountEquity();
+   accountPeak = MathMax(accountPeak, currentEquity);
+   currentDrawdown = ((accountPeak - currentEquity) / accountPeak) * 100.0;
+   
+   if(currentDrawdown >= MaxDrawdownPercent)
+   {
+      if(!drawdownLimitReached)
+      {
+         Print("DRAWDOWN LIMIT REACHED: ", currentDrawdown, "% - Stopping all trading");
+         drawdownLimitReached = true;
+      }
+      return false;
+   }
+   
+   return true;
+}`;
+      
       return `
 //+------------------------------------------------------------------+
 //|                            ${strategy.name.replace(/[^a-zA-Z0-9]/g, '_')}.mq4 |
@@ -113,12 +177,13 @@ export const EXPORT_TEMPLATES = {
 // Success Rate: ${strategy.successRate}
 
 // External parameters
-extern double LotSize = 0.1;       // Lot size
 extern double StopLoss = 50;       // Stop loss in points
 extern double TakeProfit = 150;    // Take profit in points
 extern bool EnableLongs = true;    // Enable long positions
 extern bool EnableShorts = true;   // Enable short positions
 extern int MagicNumber = 12345;    // Magic number
+
+${riskManagementCode}
 
 ${strategy.internalJsonSchema?.inputs ? Object.entries(strategy.internalJsonSchema.inputs).map(([key, value]) => 
   `extern double ${key} = ${value}; // ${key}`
@@ -165,6 +230,22 @@ void OnTick()
 {
    if(!IsNewBar()) return; // Only trade on new bar
    
+   // Check drawdown limit first
+   if(!CheckDrawdownLimit()) 
+   {
+      // Close all positions if drawdown limit is reached
+      for(int i = OrdersTotal() - 1; i >= 0; i--)
+      {
+         if(OrderSelect(i, SELECT_BY_POS) && OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber)
+         {
+            bool result = OrderClose(OrderTicket(), OrderLots(), 
+                                   OrderType() == OP_BUY ? Bid : Ask, 3, clrRed);
+            if(result) Print("Position closed due to drawdown limit");
+         }
+      }
+      return; // Stop all trading
+   }
+   
    // Calculate indicators
 ${logic.calculations}
    
@@ -180,16 +261,24 @@ ${logic.calculations}
          totalOrders++;
    }
    
+   // Calculate dynamic lot size
+   double lotSize = CalculateLotSize();
+   
    // Entry logic
    if(longCondition && totalOrders == 0)
    {
       double sl = StopLoss > 0 ? Ask - StopLoss * Point : 0;
       double tp = TakeProfit > 0 ? Ask + TakeProfit * Point : 0;
       
-      int ticket = OrderSend(Symbol(), OP_BUY, LotSize, Ask, 3, sl, tp, 
+      int ticket = OrderSend(Symbol(), OP_BUY, lotSize, Ask, 3, sl, tp, 
                             "${strategy.name} Long", MagicNumber, 0, clrGreen);
       if(ticket > 0)
-         Print("Long position opened at ", Ask);
+      {
+         string riskInfo = UseRiskPerTrade ? 
+            StringConcatenate("Risk: ", RiskPerTradePercent, "% | Lot: ", lotSize) :
+            StringConcatenate("Full Capital Mode | Lot: ", lotSize);
+         Print("Long position opened at ", Ask, " | ", riskInfo);
+      }
    }
    
    if(shortCondition && totalOrders == 0)
@@ -197,10 +286,15 @@ ${logic.calculations}
       double sl = StopLoss > 0 ? Bid + StopLoss * Point : 0;
       double tp = TakeProfit > 0 ? Bid - TakeProfit * Point : 0;
       
-      int ticket = OrderSend(Symbol(), OP_SELL, LotSize, Bid, 3, sl, tp,
+      int ticket = OrderSend(Symbol(), OP_SELL, lotSize, Bid, 3, sl, tp,
                             "${strategy.name} Short", MagicNumber, 0, clrRed);
       if(ticket > 0)
-         Print("Short position opened at ", Bid);
+      {
+         string riskInfo = UseRiskPerTrade ? 
+            StringConcatenate("Risk: ", RiskPerTradePercent, "% | Lot: ", lotSize) :
+            StringConcatenate("Full Capital Mode | Lot: ", lotSize);
+         Print("Short position opened at ", Bid, " | ", riskInfo);
+      }
    }
    
    // Exit logic based on: ${strategy.exit}

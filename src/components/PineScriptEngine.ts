@@ -423,11 +423,17 @@ if barstate.islast
     const indicators = this.generateIndicatorCalculations(config);
     const { longCond, shortCond } = this.generateSignalLogic(config);
 
+    // Extract risk management settings from strategy answers
+    const riskSettings = strategy.answers?.riskTolerance || {};
+    const accountSize = riskSettings.accountPrinciple || 100000;
+    const riskPerTrade = riskSettings.riskPerTrade || null;
+    const maxDrawdown = riskSettings.maxDrawdown || null;
+
     return `
 //@version=6
 strategy("${config.name} — Strategy Version",
      overlay=true,
-     initial_capital=100000,
+     initial_capital=${accountSize},
      default_qty_type=strategy.percent_of_equity,
      default_qty_value=1,
      commission_type=strategy.commission.percent,
@@ -442,7 +448,17 @@ strategy("${config.name} — Strategy Version",
 // Trading involves risk. Past performance does not guarantee future results.
 // ------------------------------------------------------------
 
-//=== Inputs ===
+//=== Strategy Builder Risk Management ===
+useRiskPerTrade = input.bool(${riskPerTrade !== null}, "Use Risk Per Trade Control", 
+    tooltip="From Strategy Builder: Controls position sizing based on risk percentage")
+riskPerTradePercent = input.float(${riskPerTrade || 2.0}, "Risk Per Trade %", minval=0.1, maxval=10.0, step=0.1,
+    tooltip="Percentage of account to risk per trade")
+useMaxDrawdown = input.bool(${maxDrawdown !== null}, "Use Max Drawdown Protection", 
+    tooltip="From Strategy Builder: Halt strategy when drawdown limit is reached")
+maxDrawdownPercent = input.float(${maxDrawdown || 10.0}, "Max Drawdown %", minval=1.0, maxval=50.0, step=0.1,
+    tooltip="Maximum drawdown percentage before halting strategy")
+
+//=== Traditional Risk Management ===
 // Risk management
 useATR      = input.bool(true, "Use ATR stops/targets?")
 atrLen      = input.int(14,   "ATR Length",       minval=1)
@@ -465,6 +481,34 @@ endDate     = input.time(timestamp("2025-12-31 23:59"), "End Date")
 // Date filter
 dateFilter = (not useStartDate or time >= startDate) and (not useEndDate or time <= endDate)
 
+//=== Strategy Builder Risk Control ===
+var float accountPeak = ${accountSize}
+var bool drawdownLimitReached = false
+
+// Check drawdown limit
+checkDrawdownLimit() =>
+    if not useMaxDrawdown
+        true
+    else
+        currentEquity = strategy.equity
+        accountPeak := math.max(accountPeak, currentEquity)
+        currentDrawdown = ((accountPeak - currentEquity) / accountPeak) * 100
+        
+        if currentDrawdown >= maxDrawdownPercent and not drawdownLimitReached
+            drawdownLimitReached := true
+            strategy.close_all(comment="Max Drawdown Reached")
+            
+        not drawdownLimitReached
+
+// Position sizing based on risk management settings
+calcPositionSize() =>
+    if not useRiskPerTrade
+        // Full capital mode (default Pine Script behavior)
+        100  // 100% of equity
+    else
+        // Risk percentage mode - calculate position size to risk only specified percentage
+        accountSize * (riskPerTradePercent / 100)
+
 //=== Helper: ATR ===
 atr = ta.atr(atrLen)
 
@@ -472,8 +516,8 @@ ${indicators}
 
 //=== Entry Logic (strategy-specific + uniform filters) ===
 // Based on: ${strategy.entry}
-longCond  = enableLongs and dateFilter and (${longCond})
-shortCond = enableShorts and dateFilter and (${shortCond})
+longCond  = enableLongs and dateFilter and checkDrawdownLimit() and (${longCond})
+shortCond = enableShorts and dateFilter and checkDrawdownLimit() and (${shortCond})
 
 //=== Order sizing and exits ===
 longSL  = useATR ? close - atrSLmult * atr : close * (1 - slPct/100.0)
@@ -481,17 +525,20 @@ longTP  = useATR ? close + atrTPmult * atr : close * (1 + tpPct/100.0)
 shortSL = useATR ? close + atrSLmult * atr : close * (1 + slPct/100.0)
 shortTP = useATR ? close - atrTPmult * atr : close * (1 - tpPct/100.0)
 
+// Dynamic position size
+positionSize = calcPositionSize()
+
 //=== Entries & Exits (paired + opposite close) ===
 if longCond
     if strategy.position_size < 0
         strategy.close("Short")
-    strategy.entry("Long", strategy.long)
+    strategy.entry("Long", strategy.long, qty=positionSize)
     strategy.exit("Exit Long", "Long", stop=longSL, limit=longTP)
 
 if shortCond
     if strategy.position_size > 0
         strategy.close("Long")
-    strategy.entry("Short", strategy.short)
+    strategy.entry("Short", strategy.short, qty=positionSize)
     strategy.exit("Exit Short", "Short", stop=shortSL, limit=shortTP)
 
 //=== Plots ===
