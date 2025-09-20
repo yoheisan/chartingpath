@@ -35,7 +35,7 @@ interface BacktestParams {
   fromDate: string;
   toDate: string;
   initialCapital: number;
-  riskPerTrade: number;
+  riskPerTrade: number | null; // Now optional
   commission: number;
   slippage: number;
 }
@@ -78,7 +78,7 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     fromDate: getDefaultFromDate(),
     toDate: getDefaultToDate(),
     initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || 10000,
-    riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || 2,
+    riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || null, // Now optional
     commission: 0.1,
     slippage: 0.05
   });
@@ -118,7 +118,7 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       instrument: strategyAnswers.market?.instrument || prev.instrument,
       timeframe: strategyAnswers.market?.timeframes?.[0] || prev.timeframe,
       initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || prev.initialCapital,
-      riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || prev.riskPerTrade,
+      riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || null, // Keep optional
     }));
   }, [strategyAnswers]);
 
@@ -165,7 +165,6 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       params.instrument &&
       params.timeframe &&
       params.initialCapital > 0 &&
-      params.riskPerTrade > 0 &&
       params.fromDate &&
       params.toDate &&
       strategyAnswers?.style?.approach &&
@@ -304,8 +303,9 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     // Generate results based on strategy parameters and subscription level
     const targetReturn = strategyAnswers.reward?.targetReturn || 15;
     const winRate = strategyAnswers.reward?.winRate || 65;
-    const maxDrawdownLimit = strategyAnswers.riskTolerance?.maxDrawdown || 10;
+    const maxDrawdownLimit = strategyAnswers.riskTolerance?.maxDrawdown || null; // Now optional
     const riskRewardRatio = strategyAnswers.reward?.riskRewardRatio || 2;
+    const useRiskPerTrade = params.riskPerTrade !== null && params.riskPerTrade > 0;
 
     // More sophisticated results for higher tiers
     const baseTrades = hasV2Access ? 150 : hasBasicBacktest ? 80 : 40;
@@ -323,23 +323,36 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     let strategyHalted = false;
     let haltReason = '';
     
-    // Generate realistic trade sequence with actual drawdown control
+    // Generate realistic trade sequence with optional risk controls
     for (let i = 0; i < maxPossibleTrades; i++) {
       const currentDrawdown = ((peakEquity - currentEquity) / peakEquity) * 100;
       
-      // CRITICAL: Check if max drawdown limit is reached
-      if (currentDrawdown >= maxDrawdownLimit) {
+      // OPTIONAL: Check if max drawdown limit is reached (only if set)
+      if (maxDrawdownLimit && currentDrawdown >= maxDrawdownLimit) {
         strategyHalted = true;
         haltReason = `Maximum drawdown limit of ${maxDrawdownLimit}% reached`;
         break;
       }
       
-      // Reduce position size as we approach max drawdown (risk management)
-      const drawdownFactor = Math.max(0.3, 1 - (currentDrawdown / maxDrawdownLimit) * 0.7);
-      const adjustedRiskPerTrade = params.riskPerTrade * drawdownFactor;
+      // Position sizing logic
+      let tradeSize;
+      let adjustedRiskPerTrade = useRiskPerTrade ? params.riskPerTrade : null;
+      
+      if (useRiskPerTrade) {
+        // Risk per trade is set - use percentage of current equity
+        if (maxDrawdownLimit) {
+          // Reduce position size as we approach max drawdown (risk management)
+          const drawdownFactor = Math.max(0.3, 1 - (currentDrawdown / maxDrawdownLimit) * 0.7);
+          adjustedRiskPerTrade = params.riskPerTrade! * drawdownFactor;
+        }
+        tradeSize = currentEquity * (adjustedRiskPerTrade! / 100);
+      } else {
+        // No risk per trade limit - use substantial portion of available capital
+        tradeSize = currentEquity * 0.8; // Use 80% of available capital
+        adjustedRiskPerTrade = 80; // For logging purposes
+      }
       
       const isWin = Math.random() < (winRate / 100);
-      const tradeSize = currentEquity * (adjustedRiskPerTrade / 100);
       
       let pnl = 0;
       if (isWin) {
@@ -372,7 +385,8 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
         pnl_percentage: (pnl / tradeSize) * 100,
         trade_type: Math.random() > 0.5 ? 'BUY' : 'SELL',
         reason: isWin ? 'Take Profit Hit' : 'Stop Loss Hit',
-        adjusted_risk: adjustedRiskPerTrade.toFixed(2) + '%',
+        position_sizing: useRiskPerTrade ? `${adjustedRiskPerTrade!.toFixed(2)}% of equity` : 'Full capital (80%)',
+        trade_size: tradeSize,
         drawdown_at_entry: currentDrawdown.toFixed(2) + '%'
       });
       
@@ -397,20 +411,32 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount) : 0;
     const actualMaxDrawdown = Math.max(...drawdownData.map(d => d.drawdown), 0);
     
-    // Add warning if strategy was halted
+    // Generate warnings and status information
     const warnings = [];
+    let status = 'completed';
+    
     if (strategyHalted) {
+      status = 'halted';
       warnings.push({
         type: 'STRATEGY_HALTED',
         message: haltReason,
         impact: 'Strategy stopped trading to prevent exceeding risk tolerance'
       });
     }
-    if (actualMaxDrawdown > maxDrawdownLimit * 0.8) {
+    
+    if (maxDrawdownLimit && actualMaxDrawdown > maxDrawdownLimit * 0.8) {
       warnings.push({
         type: 'HIGH_DRAWDOWN_WARNING',
         message: `Drawdown reached ${actualMaxDrawdown.toFixed(1)}% (close to ${maxDrawdownLimit}% limit)`,
         impact: 'Consider adjusting risk parameters or strategy approach'
+      });
+    }
+    
+    if (!useRiskPerTrade) {
+      warnings.push({
+        type: 'FULL_CAPITAL_MODE',
+        message: 'Strategy used full available capital for each trade',
+        impact: 'Higher risk/reward potential but increased volatility'
       });
     }
     
@@ -421,12 +447,14 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       timeframe: params.timeframe,
       from_date: params.fromDate,
       to_date: params.toDate,
-      status: strategyHalted ? 'halted' : 'completed',
+      status: status,
       win_rate: actualWinRate,
       profit_factor: profitFactor,
       net_pnl: netPnl,
       max_drawdown: actualMaxDrawdown,
       max_drawdown_limit: maxDrawdownLimit,
+      risk_per_trade_used: useRiskPerTrade ? params.riskPerTrade : null,
+      position_sizing_mode: useRiskPerTrade ? 'Risk Percentage' : 'Full Capital',
       total_trades: actualTrades,
       potential_trades: maxPossibleTrades,
       avg_win: winningTrades > 0 ? totalWinAmount / winningTrades : 0,
@@ -440,6 +468,11 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       strategy_halted: strategyHalted,
       halt_reason: haltReason,
       warnings: warnings,
+      risk_management_applied: {
+        drawdown_limit: maxDrawdownLimit,
+        risk_per_trade: useRiskPerTrade ? params.riskPerTrade : null,
+        position_sizing: useRiskPerTrade ? 'Percentage-based' : 'Full capital'
+      },
       created_at: new Date().toISOString()
     };
   };
@@ -542,11 +575,15 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                   </div>
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Max Drawdown</div>
-                    <div className="font-bold text-orange-600">{strategyAnswers.riskTolerance?.maxDrawdown || 10}%</div>
+                    <div className="font-bold text-orange-600">
+                      {strategyAnswers.riskTolerance?.maxDrawdown ? `${strategyAnswers.riskTolerance.maxDrawdown}%` : 'No Limit'}
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm text-muted-foreground">Risk/Reward</div>
-                    <div className="font-bold text-purple-600">1:{strategyAnswers.reward?.riskRewardRatio || 2}</div>
+                    <div className="text-sm text-muted-foreground">Position Sizing</div>
+                    <div className="font-bold text-purple-600">
+                      {params.riskPerTrade ? `${params.riskPerTrade}% per trade` : 'Full Capital'}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -634,15 +671,19 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Risk Per Trade (%) *</Label>
+                    <Label>Risk Per Trade (%) - Optional</Label>
                     <Input
                       type="number"
-                      min="0.1"
+                      min="0"
                       max="10"
                       step="0.1"
-                      value={params.riskPerTrade}
-                      onChange={(e) => handleParamChange('riskPerTrade', Number(e.target.value))}
+                      value={params.riskPerTrade || ''}
+                      placeholder="Leave empty for full position"
+                      onChange={(e) => handleParamChange('riskPerTrade', e.target.value ? Number(e.target.value) : null)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      If not set, strategy will use full available capital for each trade
+                    </p>
                   </div>
 
                   {hasV2Access && (
@@ -670,6 +711,32 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                           onChange={(e) => handleParamChange('slippage', Number(e.target.value))}
                         />
                       </div>
+
+                      <div className="space-y-2">
+                        <Label>Max Drawdown Limit (%) - Optional</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="50"
+                          step="0.1"
+                          value={strategyAnswers.riskTolerance?.maxDrawdown || ''}
+                          placeholder="Leave empty for no limit"
+                          onChange={(e) => {
+                            const value = e.target.value ? Number(e.target.value) : null;
+                            const updatedAnswers = {
+                              ...strategyAnswers,
+                              riskTolerance: {
+                                ...strategyAnswers.riskTolerance,
+                                maxDrawdown: value
+                              }
+                            };
+                            onStrategyUpdate?.(updatedAnswers);
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          If set, strategy will halt when this drawdown level is reached
+                        </p>
+                      </div>
                     </>
                   )}
                 </div>
@@ -686,6 +753,21 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                           : `Your ${subscriptionPlan} plan allows backtesting up to ${restriction.months} months of historical data`
                         }
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Risk Management Info */}
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5" />
+                    <div className="text-sm text-amber-700 dark:text-amber-300">
+                      <p className="font-medium mb-1">Risk Management Options</p>
+                      <ul className="space-y-1 text-xs">
+                        <li>• <strong>Risk Per Trade:</strong> Optional position sizing control</li>
+                        <li>• <strong>Max Drawdown:</strong> Optional strategy halt protection</li>
+                        <li>• Leave empty to let strategy run with full available capital</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
