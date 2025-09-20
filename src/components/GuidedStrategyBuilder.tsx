@@ -20,8 +20,8 @@ export interface GuidedStrategyAnswers {
     accountPrinciple: number;
     currency?: string;
     leverage: number;
-    maxDrawdown: number;
-    riskPerTrade: number;
+    maxDrawdown: number | null; // Now optional
+    riskPerTrade: number | null; // Now optional
   };
   reward: {
     targetReturn: number;
@@ -61,7 +61,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
     market: { instrumentCategory: '', instrument: '', timeframes: [] },
-    riskTolerance: { accountPrinciple: 10000, currency: 'USD', leverage: 1, maxDrawdown: 10, riskPerTrade: 2 },
+    riskTolerance: { accountPrinciple: 10000, currency: 'USD', leverage: 1, maxDrawdown: null, riskPerTrade: null },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
     style: { approach: '' }
   });
@@ -108,7 +108,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
                answers.market?.timeframes && 
                answers.market.timeframes.length > 0;
       case 'risk-tolerance':
-        return answers.riskTolerance?.accountPrinciple && answers.riskTolerance?.leverage && answers.riskTolerance?.maxDrawdown && answers.riskTolerance?.riskPerTrade;
+        return answers.riskTolerance?.accountPrinciple && answers.riskTolerance?.leverage;
       case 'reward':
         return answers.reward?.targetReturn && answers.reward?.winRate && answers.reward?.riskRewardRatio;
       case 'style':

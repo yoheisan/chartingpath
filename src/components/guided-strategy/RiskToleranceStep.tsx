@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertTriangle, Shield, DollarSign, HelpCircle, Banknote, TrendingUp } from 'lucide-react';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
@@ -35,9 +36,13 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
     accountPrinciple: 10000,
     currency: 'USD',
     leverage: 1,
-    maxDrawdown: 10,
-    riskPerTrade: 2
+    maxDrawdown: null, // Start as disabled
+    riskPerTrade: null // Start as disabled
   };
+
+  // Track toggle states
+  const [useMaxDrawdown, setUseMaxDrawdown] = useState(!!(currentAnswers.maxDrawdown));
+  const [useRiskPerTrade, setUseRiskPerTrade] = useState(!!(currentAnswers.riskPerTrade));
 
   const handleAnswerChange = (field: string, value: number[]) => {
     const newAnswers = {
@@ -53,7 +58,8 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
     return `${selectedCurrency.symbol}${amount.toLocaleString()}`;
   };
 
-  const getRiskLevel = (drawdown: number) => {
+  const getRiskLevel = (drawdown: number | null) => {
+    if (!drawdown) return { level: 'No Limit', color: 'text-red-600', icon: AlertTriangle };
     if (drawdown <= 5) return { level: 'Conservative', color: 'text-green-600', icon: Shield };
     if (drawdown <= 15) return { level: 'Moderate', color: 'text-yellow-600', icon: AlertTriangle };
     return { level: 'Aggressive', color: 'text-red-600', icon: AlertTriangle };
@@ -166,45 +172,125 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
           {/* Max Drawdown */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-base font-medium">Maximum Drawdown</Label>
               <div className="flex items-center gap-2">
-                <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
-                <span className={`font-medium ${riskLevel.color}`}>
-                 {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))})
+                <Label className="text-base font-medium">Maximum Drawdown Protection</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">
+                      When enabled, strategy will halt trading if this loss level is reached to protect your capital.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={useMaxDrawdown}
+                  onCheckedChange={(checked) => {
+                    setUseMaxDrawdown(checked);
+                    const newAnswers = {
+                      ...currentAnswers,
+                      maxDrawdown: checked ? 10 : null
+                    };
+                    onAnswersChange('riskTolerance', newAnswers);
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {useMaxDrawdown ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
             </div>
-            <Slider
-              value={[currentAnswers.maxDrawdown]}
-              onValueChange={(value) => handleAnswerChange('maxDrawdown', value)}
-              max={30}
-              min={2}
-              step={1}
-              className="w-full"
-            />
+            
+            {useMaxDrawdown && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Drawdown Limit</span>
+                  <div className="flex items-center gap-2">
+                    <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
+                    <span className={`font-medium ${riskLevel.color}`}>
+                      {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))})
+                    </span>
+                  </div>
+                </div>
+                <Slider
+                  value={[currentAnswers.maxDrawdown || 10]}
+                  onValueChange={(value) => handleAnswerChange('maxDrawdown', value)}
+                  max={30}
+                  min={2}
+                  step={1}
+                  className="w-full"
+                />
+              </>
+            )}
+            
             <p className="text-sm text-muted-foreground">
-              The maximum portfolio loss from your account principle you're comfortable with before stopping trading.
+              {useMaxDrawdown 
+                ? 'Strategy will halt when this loss level is reached'
+                : 'Strategy will run to completion regardless of losses'
+              }
             </p>
           </div>
 
           {/* Risk Per Trade */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-base font-medium">Risk Per Trade</Label>
-              <span className="font-medium">
-                {currentAnswers.riskPerTrade}% of account
-              </span>
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-medium">Risk Per Trade Control</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">
+                      When enabled, limits each trade to a percentage of your account. When disabled, uses full available capital.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={useRiskPerTrade}
+                  onCheckedChange={(checked) => {
+                    setUseRiskPerTrade(checked);
+                    const newAnswers = {
+                      ...currentAnswers,
+                      riskPerTrade: checked ? 2 : null
+                    };
+                    onAnswersChange('riskTolerance', newAnswers);
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {useRiskPerTrade ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
             </div>
-            <Slider
-              value={[currentAnswers.riskPerTrade]}
-              onValueChange={(value) => handleAnswerChange('riskPerTrade', value)}
-              max={5}
-              min={0.25}
-              step={0.25}
-              className="w-full"
-            />
+            
+            {useRiskPerTrade && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Risk Percentage</span>
+                  <span className="font-medium">
+                    {currentAnswers.riskPerTrade}% of account
+                  </span>
+                </div>
+                <Slider
+                  value={[currentAnswers.riskPerTrade || 2]}
+                  onValueChange={(value) => handleAnswerChange('riskPerTrade', value)}
+                  max={5}
+                  min={0.25}
+                  step={0.25}
+                  className="w-full"
+                />
+              </>
+            )}
+            
             <p className="text-sm text-muted-foreground">
-              Maximum percentage of your account to risk on a single trade.
+              {useRiskPerTrade 
+                ? 'Limits each trade to specified percentage of account'
+                : 'Will use full available capital for each trade'
+              }
             </p>
           </div>
         </CardContent>
@@ -222,8 +308,8 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
                 <p>• Account Principle: {formatAmount(currentAnswers.accountPrinciple || 0)} ({currentAnswers.currency || 'USD'})</p>
                 <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
-                <p>• Max Portfolio Loss: {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))} - {riskLevel.level})</p>
-                <p>• Risk Per Trade: {currentAnswers.riskPerTrade}% of account principle</p>
+                <p>• Max Drawdown: {useMaxDrawdown ? `${currentAnswers.maxDrawdown}% (${formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))}) - ${riskLevel.level}` : 'No Limit - Strategy runs to completion'}</p>
+                <p>• Risk Per Trade: {useRiskPerTrade ? `${currentAnswers.riskPerTrade}% of account` : 'Full Capital Mode'}</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
                 These settings will be used to calculate position sizes and stop losses in your strategy.

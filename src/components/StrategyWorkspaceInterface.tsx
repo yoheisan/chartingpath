@@ -34,7 +34,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
     market: { timeframes: [] },
-    riskTolerance: { accountPrinciple: 10000, leverage: 1, maxDrawdown: 10, riskPerTrade: 2 },
+    riskTolerance: { accountPrinciple: 10000, leverage: 1, maxDrawdown: null, riskPerTrade: null },
     reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
     style: { approach: '' }
   });
