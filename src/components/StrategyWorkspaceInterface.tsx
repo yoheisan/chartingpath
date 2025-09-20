@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { AssetFocusedStrategyBuilder } from './AssetFocusedStrategyBuilder';
+import { ProfessionalStrategyLibrary } from './ProfessionalStrategyLibrary';
 import BacktesterV2Engine from './BacktesterV2Engine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -284,7 +284,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
         {/* Quick Select Tab */}
         <TabsContent value="quick-select" className="space-y-6">
-          <AssetFocusedStrategyBuilder
+          <ProfessionalStrategyLibrary
             onStrategySelect={handleAssetStrategySelect}
           />
         </TabsContent>
