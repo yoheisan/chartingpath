@@ -38,13 +38,13 @@ export const EXPORT_TEMPLATES = {
 
   "MetaTrader 4 - MQL4": {
     generateCode: (strategy: any, timeframe = "PERIOD_H1") => {
-      // Extract settings from strategy answers
+      // Extract settings from strategy answers  
       const riskSettings = strategy.answers?.risk || {};
       const marketSettings = strategy.answers?.market || {};
-      const accountSize = riskSettings.accountPrinciple || 10000;
-      const riskPerTrade = riskSettings.riskPerTrade || null;
-      const maxDrawdown = riskSettings.maxDrawdown || null;
-      const leverage = riskSettings.leverage || 1;
+      const approach = strategy.answers?.style?.approach || 'trend-following';
+      const accountSize = riskSettings.accountPrinciple || 100000;
+      const riskPerTrade = riskSettings.riskPerTrade || 2.0;
+      const maxDrawdown = riskSettings.maxDrawdown || 10.0;
       const selectedTimeframe = marketSettings.timeframes?.[0] || '1H';
       
       // Map timeframe to MetaTrader format
@@ -64,57 +64,62 @@ export const EXPORT_TEMPLATES = {
         
         switch (approach) {
           case 'trend-following':
-            calculations = `   double macd = iMACD(Symbol(), 0, 12, 26, 9, PRICE_CLOSE, MODE_MAIN, 0);
-   double macdSignal = iMACD(Symbol(), 0, 12, 26, 9, PRICE_CLOSE, MODE_SIGNAL, 0);
-   double ema50 = iMA(Symbol(), 0, 50, 0, MODE_EMA, PRICE_CLOSE, 0);
-   double ema200 = iMA(Symbol(), 0, 200, 0, MODE_EMA, PRICE_CLOSE, 0);`;
-            entryLogic = `macd > macdSignal && ema50 > ema200 && Close[0] > ema50`;
-            exitLogic = `macd < macdSignal || Close[0] < ema50`;
+            calculations = `   double fast_ema = iMA(Symbol(), 0, ${params.fast_len?.default || 12}, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double slow_ema = iMA(Symbol(), 0, ${params.slow_len?.default || 26}, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double rsi = iRSI(Symbol(), 0, ${params.rsi_len?.default || 14}, PRICE_CLOSE, 0);
+   double atr = iATR(Symbol(), 0, ${params.atr_len?.default || 14}, 0);`;
+            entryLogic = `fast_ema > slow_ema && rsi > ${params.rsi_buy?.default || 60}`;
+            exitLogic = `fast_ema < slow_ema || rsi < ${params.rsi_sell?.default || 40}`;
             break;
 
           case 'mean-reversion':
-            calculations = `   double rsi = iRSI(Symbol(), 0, 14, PRICE_CLOSE, 0);
-   double bbUpper = iBands(Symbol(), 0, 20, 2, 0, PRICE_CLOSE, MODE_UPPER, 0);
-   double bbLower = iBands(Symbol(), 0, 20, 2, 0, PRICE_CLOSE, MODE_LOWER, 0);
-   double bbMiddle = iBands(Symbol(), 0, 20, 2, 0, PRICE_CLOSE, MODE_MAIN, 0);`;
-            entryLogic = `(Close[0] <= bbLower && rsi <= 30) || (Close[0] >= bbUpper && rsi >= 70)`;
-            exitLogic = `Close[0] > bbMiddle && rsi > 40 && rsi < 60`;
+            calculations = `   double bb_upper = iBands(Symbol(), 0, ${params.bb_len?.default || 20}, ${params.bb_dev?.default || 2}, 0, PRICE_CLOSE, MODE_UPPER, 0);
+   double bb_lower = iBands(Symbol(), 0, ${params.bb_len?.default || 20}, ${params.bb_dev?.default || 2}, 0, PRICE_CLOSE, MODE_LOWER, 0);
+   double bb_middle = iBands(Symbol(), 0, ${params.bb_len?.default || 20}, ${params.bb_dev?.default || 2}, 0, PRICE_CLOSE, MODE_MAIN, 0);
+   double rsi = iRSI(Symbol(), 0, ${params.rsi_len?.default || 14}, PRICE_CLOSE, 0);
+   double atr = iATR(Symbol(), 0, ${params.atr_len?.default || 14}, 0);`;
+            entryLogic = `(Close[0] <= bb_lower && rsi <= ${params.rsi_buy?.default || 30}) || (Close[0] >= bb_upper && rsi >= ${params.rsi_sell?.default || 70})`;
+            exitLogic = `Close[0] > bb_middle && rsi > 40 && rsi < 60`;
             break;
 
           case 'breakout':
-            calculations = `   double atr = iATR(Symbol(), 0, 14, 0);
-   double ema20 = iMA(Symbol(), 0, 20, 0, MODE_EMA, PRICE_CLOSE, 0);
-   double highestHigh = iHigh(Symbol(), 0, iHighest(Symbol(), 0, MODE_HIGH, 20, 1));
-   double lowestLow = iLow(Symbol(), 0, iLowest(Symbol(), 0, MODE_LOW, 20, 1));
+            calculations = `   double atr = iATR(Symbol(), 0, ${params.atr_len?.default || 14}, 0);
+   double highest_high = iHigh(Symbol(), 0, iHighest(Symbol(), 0, MODE_HIGH, ${params.lookback?.default || 20}, 1));
+   double lowest_low = iLow(Symbol(), 0, iLowest(Symbol(), 0, MODE_LOW, ${params.lookback?.default || 20}, 1));
    double volume = iVolume(Symbol(), 0, 0);
    double avgVolume = 0;
-   for(int i = 1; i <= 20; i++) avgVolume += iVolume(Symbol(), 0, i);
-   avgVolume = avgVolume / 20;`;
-            entryLogic = `((Close[0] > highestHigh + atr * 0.5) || (Close[0] < lowestLow - atr * 0.5)) && volume > avgVolume * 1.5`;
-            exitLogic = `Close[0] <= ema20 && volume < avgVolume`;
+   for(int i = 1; i <= ${params.lookback?.default || 20}; i++) avgVolume += iVolume(Symbol(), 0, i);
+   avgVolume = avgVolume / ${params.lookback?.default || 20};`;
+            entryLogic = `((Close[0] > highest_high) || (Close[0] < lowest_low)) && volume > avgVolume * ${params.vol_mult?.default || 1.5}`;
+            exitLogic = `volume < avgVolume`;
             break;
 
           case 'arbitrage':
-            calculations = `   double correlation = 0.95; // Static for demo - implement correlation calculation
-   double zscore = 2.5; // Static for demo - implement z-score calculation
-   double ema20 = iMA(Symbol(), 0, 20, 0, MODE_EMA, PRICE_CLOSE, 0);`;
-            entryLogic = `MathAbs(zscore) > 2.0 && correlation > 0.8`;
-            exitLogic = `MathAbs(zscore) < 0.5 || correlation < 0.6`;
+            calculations = `   double ma_long = iMA(Symbol(), 0, ${params.corr_len?.default || 50}, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double price_deviation = (Close[0] - ma_long) / ma_long * 100;
+   double atr = iATR(Symbol(), 0, ${params.atr_len?.default || 14}, 0);
+   // Simplified z-score calculation
+   double zscore_threshold = ${params.zscore_entry?.default || 2.0};`;
+            entryLogic = `MathAbs(price_deviation) > zscore_threshold`;
+            exitLogic = `MathAbs(price_deviation) < ${params.zscore_exit?.default || 0.5}`;
             break;
 
           default:
-            calculations = `   double ema20 = iMA(Symbol(), 0, 20, 0, MODE_EMA, PRICE_CLOSE, 0);
-   double rsi = iRSI(Symbol(), 0, 14, PRICE_CLOSE, 0);`;
-            entryLogic = `Close[0] > ema20 && rsi > 30 && rsi < 70`;
-            exitLogic = `Close[0] < ema20 || rsi > 80 || rsi < 20`;
+            calculations = `   double fast_ema = iMA(Symbol(), 0, 12, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double slow_ema = iMA(Symbol(), 0, 26, 0, MODE_EMA, PRICE_CLOSE, 0);
+   double rsi = iRSI(Symbol(), 0, 14, PRICE_CLOSE, 0);
+   double atr = iATR(Symbol(), 0, 14, 0);`;
+            entryLogic = `fast_ema > slow_ema && rsi > 30 && rsi < 70`;
+            exitLogic = `fast_ema < slow_ema || rsi > 80 || rsi < 20`;
             break;
         }
         
         return { calculations, entryLogic, exitLogic };
       };
       
-      const approach = strategy.answers?.style?.approach || 'trend-following';
+      const params = PineScriptEngine.getStrategyParameters(strategy);
       const logic = getIndicatorLogic(approach);
+      const leverage = riskSettings.leverage || 1;
 
       return `//+------------------------------------------------------------------+
 //|                            ${(strategy.name || 'Strategy').replace(/[^a-zA-Z0-9]/g, '_')}.mq4 |
