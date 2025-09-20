@@ -30,6 +30,7 @@ interface QuickTestResult {
   confidence: 'High' | 'Medium' | 'Low';
   recommendation: string;
   nextSteps: string[];
+  disclaimer?: string;
 }
 
 interface QuickTestResultsProps {
@@ -211,6 +212,16 @@ export const QuickTestResults: React.FC<QuickTestResultsProps> = ({
           </CardHeader>
           <CardContent>
             <p className="text-sm mb-3">{results.recommendation}</p>
+            {results.disclaimer && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
+                <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium">
+                  Important Disclaimer:
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                  {results.disclaimer}
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <p className="text-sm font-medium">Next Steps:</p>
               <ul className="text-sm space-y-1">

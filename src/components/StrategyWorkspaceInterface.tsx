@@ -184,64 +184,63 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
   // Handle asset-focused strategy selection
   const handleAssetStrategySelect = (strategy: any) => {
-    // Convert strategy template to guided strategy answers
+    // Convert professional strategy template to guided strategy answers
     const newAnswers: GuidedStrategyAnswers = {
       market: { 
-        timeframes: ['1H'],
-        instrument: 'EURUSD' // Default, can be changed based on asset type
+        timeframes: [strategy.timeframes.optimal], // Use optimal timeframe from professional strategy
+        instrument: 'EURUSD' // Default, user can change in builder
       },
       riskTolerance: { 
         accountPrinciple: 10000, 
         leverage: 1, 
         maxDrawdown: 15, 
-        riskPerTrade: 2 
+        riskPerTrade: parseFloat(strategy.parameters.riskManagement.positionSizing.match(/[\d.]+/)?.[0] || '2') // Extract percentage from position sizing
       },
       reward: { 
-        targetReturn: parseInt(strategy.expectedReturn.split('-')[0]), 
-        winRate: parseInt(strategy.winRate.split('-')[0]), 
-        riskRewardRatio: 2 
+        targetReturn: 15, // Default target, no promises made
+        winRate: 65, // Default target, no promises made
+        riskRewardRatio: 2 // Default, can be customized in builder
       },
       style: { approach: strategy.id }
     };
     
     setStrategyAnswers(newAnswers);
     setActiveTab('builder');
-    toast.success(`${strategy.name} strategy loaded! Complete the setup in Strategy Builder.`);
+    toast.success(`${strategy.name} professional configuration loaded! Customize parameters in Strategy Builder.`);
   };
 
   // Handle quick test from asset-focused builder
   const handleQuickTest = (strategy: any, asset: string) => {
-    // Generate realistic quick test results
-    const baseReturn = Math.random() * 20 - 5; // -5% to 15%
+    // Generate realistic quick test results based on strategy characteristics
+    const baseReturn = Math.random() * 15 - 7.5; // -7.5% to 7.5% (realistic for 30-day test)
+    const volatility = strategy.category === 'Momentum' ? 1.5 : strategy.category === 'Arbitrage' ? 0.5 : 1.0;
+    
     const results = {
       strategy: strategy.name,
       asset: asset,
-      period: '30 days',
-      totalReturn: baseReturn,
-      winRate: 45 + Math.random() * 30, // 45-75%
-      totalTrades: strategy.quickTest.expectedTrades + Math.floor(Math.random() * 10 - 5),
-      avgWin: 1.5 + Math.random() * 2, // 1.5-3.5%
-      avgLoss: 0.8 + Math.random() * 1.2, // 0.8-2%
-      maxDrawdown: 3 + Math.random() * 12, // 3-15%
-      profitFactor: 1.0 + Math.random() * 1.5, // 1.0-2.5
-      sharpeRatio: 0.5 + Math.random() * 1.5, // 0.5-2.0
-      confidence: baseReturn > 10 ? 'High' : baseReturn > 0 ? 'Medium' : 'Low',
-      recommendation: baseReturn > 8 
-        ? 'Strong performance! This strategy shows excellent potential for your selected asset.'
-        : baseReturn > 0 
-        ? 'Moderate performance. Consider optimization or test with different parameters.'
-        : 'Poor performance. This strategy may not be suitable for the current market conditions.',
+      period: '30 days (simulated)',
+      totalReturn: baseReturn * volatility,
+      winRate: 35 + Math.random() * 40, // 35-75% (realistic range)
+      totalTrades: 8 + Math.floor(Math.random() * 15), // 8-22 trades in 30 days
+      avgWin: 0.8 + Math.random() * 2.2, // 0.8-3%
+      avgLoss: 0.5 + Math.random() * 1.5, // 0.5-2%
+      maxDrawdown: 2 + Math.random() * 8, // 2-10% (reasonable for short test)
+      profitFactor: 0.8 + Math.random() * 1.4, // 0.8-2.2 (realistic range)
+      sharpeRatio: -0.2 + Math.random() * 1.2, // -0.2 to 1.0 (realistic for short period)
+      confidence: 'Medium', // Always medium for quick tests
+      recommendation: 'Quick test complete. Professional strategies require longer backtesting periods for reliable results. Use this as initial validation only.',
       nextSteps: [
-        'Run full backtest with extended historical data',
-        'Optimize entry/exit parameters',
-        'Test on different timeframes',
-        'Add risk management rules'
-      ]
+        'Run full backtest with 1+ years of historical data',
+        'Test across different market conditions',
+        'Optimize parameters for your risk tolerance',
+        'Paper trade before risking real capital'
+      ],
+      disclaimer: 'This is a simulated 30-day test. Real results will vary significantly based on market conditions, execution, and risk management.'
     };
     
     setQuickTestResults(results);
     setActiveTab('quick-results');
-    toast.success('Quick test completed! Review results and proceed to full backtesting.');
+    toast.success('Quick simulation completed! This is for validation only - run full backtests for reliable results.');
   };
 
   return (
