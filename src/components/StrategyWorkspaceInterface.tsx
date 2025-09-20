@@ -16,6 +16,7 @@ import {
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
 import { ProfessionalStrategyLibrary } from './ProfessionalStrategyLibrary';
+import { ChartingPathStrategyBuilder, ChartingPathStrategy } from './ChartingPathStrategyBuilder';
 import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -28,10 +29,18 @@ interface SavedStrategy {
   backtest_results?: any;
 }
 
+interface SavedChartingPathStrategy {
+  id: string;
+  name: string;
+  strategy: ChartingPathStrategy;
+  backtest_results?: any;
+}
+
 export const StrategyWorkspaceInterface: React.FC = () => {
   const { user, subscriptionPlan } = useUserProfile();
   const [activeTab, setActiveTab] = useState('quick-select');
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
+  const [currentChartingPathStrategy, setCurrentChartingPathStrategy] = useState<ChartingPathStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
     market: { 
       instrumentCategory: 'forex',
@@ -85,6 +94,38 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const handleStrategySaved = (strategy: SavedStrategy) => {
     setCurrentStrategy(strategy);
     toast.success('Strategy saved successfully!');
+  };
+
+  // Handle ChartingPath strategy save
+  const handleChartingPathStrategySave = (strategy: ChartingPathStrategy) => {
+    setCurrentChartingPathStrategy(strategy);
+    toast.success('ChartingPath strategy saved successfully!');
+  };
+
+  // Handle ChartingPath strategy backtest
+  const handleChartingPathBacktest = async (strategy: ChartingPathStrategy): Promise<any> => {
+    setIsBacktesting(true);
+    try {
+      // Mock backtest results for now
+      const mockResults = {
+        totalReturn: 15.4,
+        maxDrawdown: -5.2,
+        winRate: 68.5,
+        profitFactor: 2.1,
+        trades: 145,
+        equityCurve: []
+      };
+      
+      setTimeout(() => {
+        setBacktestResults(mockResults);
+        setIsBacktesting(false);
+      }, 2000);
+      
+      return mockResults;
+    } catch (error) {
+      setIsBacktesting(false);
+      throw error;
+    }
   };
 
   // Navigate to backtest section when strategy is ready (now integrated in builder)
@@ -215,11 +256,10 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
-          <GuidedStrategyBuilder
-            initialStrategy={{ answers: strategyAnswers }}
-            onAnswersChange={handleAnswersChange}
-            onSaveStrategy={handleStrategySaved}
-            onBacktestComplete={handleBacktestComplete}
+          <ChartingPathStrategyBuilder
+            initialStrategy={currentChartingPathStrategy}
+            onSave={handleChartingPathStrategySave}
+            onBacktest={handleChartingPathBacktest}
           />
         </TabsContent>
 
