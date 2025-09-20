@@ -21,14 +21,11 @@ import { professionalStrategies, ProfessionalStrategy } from '@/utils/Profession
 
 interface AssetFocusedStrategyBuilderProps {
   onStrategySelect: (strategy: any) => void;
-  onQuickTest: (strategy: any) => void;
 }
 
 export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderProps> = ({
-  onStrategySelect,
-  onQuickTest
+  onStrategySelect
 }) => {
-  const [testingStrategy, setTestingStrategy] = useState<string>('');
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -51,15 +48,6 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
     }
   };
 
-  const handleQuickTest = async (strategy: ProfessionalStrategy) => {
-    setTestingStrategy(strategy.id);
-    
-    // Simulate quick test
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    onQuickTest(strategy);
-    setTestingStrategy('');
-  };
 
   return (
     <div className="space-y-6">
@@ -81,7 +69,6 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         {professionalStrategies.map(strategy => {
           const IconComponent = strategy.icon;
-          const isCurrentlyTesting = testingStrategy === strategy.id;
           
           return (
             <Card key={strategy.id} className="relative overflow-hidden">
@@ -228,35 +215,15 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-2">
+                {/* Action Button */}
+                <div className="pt-2">
                   <Button 
-                    variant="outline" 
                     size="sm" 
                     onClick={() => onStrategySelect(strategy)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
                     Select Strategy
-                  </Button>
-                  
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleQuickTest(strategy)}
-                    disabled={isCurrentlyTesting}
-                    className="flex-1"
-                  >
-                    {isCurrentlyTesting ? (
-                      <>
-                        <div className="w-4 h-4 mr-1 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                        Testing...
-                      </>
-                    ) : (
-                      <>
-                        <PlayCircle className="w-4 h-4 mr-1" />
-                        Quick Test
-                      </>
-                    )}
                   </Button>
                 </div>
               </CardContent>

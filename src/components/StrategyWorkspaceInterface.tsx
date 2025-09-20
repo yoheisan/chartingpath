@@ -11,18 +11,11 @@ import {
   ArrowRight,
   BookOpen,
   Play,
-  Crown,
-  Users,
-  Building,
-  Activity,
-  BarChart3,
-  Shield,
   Target
 } from 'lucide-react';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
 import { AssetFocusedStrategyBuilder } from './AssetFocusedStrategyBuilder';
-import { QuickTestResults } from './QuickTestResults';
 import BacktesterV2Engine from './BacktesterV2Engine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -50,8 +43,8 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestParams, setBacktestParams] = useState<BacktestParams | null>(null);
-  const [quickTestResults, setQuickTestResults] = useState<any>(null);
   const backtestSectionRef = useRef<HTMLDivElement>(null);
+
   // Initialize backtest params once when strategy answers change, but only if not already set
   useEffect(() => {
     if (strategyAnswers && Object.keys(strategyAnswers).length > 0 && !backtestParams) {
@@ -209,40 +202,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     toast.success(`${strategy.name} professional configuration loaded! Customize parameters in Strategy Builder.`);
   };
 
-  // Handle quick test from strategy builder
-  const handleQuickTest = (strategy: any) => {
-    // Generate realistic quick test results based on strategy characteristics
-    const baseReturn = Math.random() * 15 - 7.5; // -7.5% to 7.5% (realistic for 30-day test)
-    const volatility = strategy.category === 'Momentum' ? 1.5 : strategy.category === 'Arbitrage' ? 0.5 : 1.0;
-    
-    const results = {
-      strategy: strategy.name,
-      asset: 'Mixed Assets', // No specific asset selected yet
-      period: '30 days (simulated)',
-      totalReturn: baseReturn * volatility,
-      winRate: 35 + Math.random() * 40, // 35-75% (realistic range)
-      totalTrades: 8 + Math.floor(Math.random() * 15), // 8-22 trades in 30 days
-      avgWin: 0.8 + Math.random() * 2.2, // 0.8-3%
-      avgLoss: 0.5 + Math.random() * 1.5, // 0.5-2%
-      maxDrawdown: 2 + Math.random() * 8, // 2-10% (reasonable for short test)
-      profitFactor: 0.8 + Math.random() * 1.4, // 0.8-2.2 (realistic range)
-      sharpeRatio: -0.2 + Math.random() * 1.2, // -0.2 to 1.0 (realistic for short period)
-      confidence: 'Medium', // Always medium for quick tests
-      recommendation: 'Quick test complete. Professional strategies require longer backtesting periods with specific assets for reliable results. Use this as initial validation only.',
-      nextSteps: [
-        'Select specific asset in Strategy Builder',
-        'Run full backtest with 1+ years of historical data',
-        'Test across different market conditions',
-        'Optimize parameters for your risk tolerance'
-      ],
-      disclaimer: 'This is a simulated test without specific asset data. Real results will vary significantly based on chosen asset, market conditions, execution, and risk management.'
-    };
-    
-    setQuickTestResults(results);
-    setActiveTab('quick-results');
-    toast.success('Quick simulation completed! Select your asset and run full backtests for reliable results.');
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -300,7 +259,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="quick-select" className="flex items-center gap-2">
             <Target className="w-4 h-4" />
             Quick Select
@@ -308,10 +267,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Strategy Builder
-          </TabsTrigger>
-          <TabsTrigger value="professional" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            Professional
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -331,140 +286,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         <TabsContent value="quick-select" className="space-y-6">
           <AssetFocusedStrategyBuilder
             onStrategySelect={handleAssetStrategySelect}
-            onQuickTest={handleQuickTest}
           />
-        </TabsContent>
-
-        {/* Quick Test Results Tab */}
-        <TabsContent value="quick-results" className="space-y-6">
-          {quickTestResults && (
-            <QuickTestResults
-              results={quickTestResults}
-              onRunFullBacktest={() => {
-                setActiveTab('builder');
-                toast.success('Switch to Strategy Builder to run full backtest');
-              }}
-              onOptimize={() => {
-                setActiveTab('professional');
-                toast.success('Switch to Professional mode for parameter optimization');
-              }}
-              onNewTest={() => {
-                setQuickTestResults(null);
-                setActiveTab('quick-select');
-              }}
-            />
-          )}
-        </TabsContent>
-
-        {/* Professional Strategy Wizard Tab */}
-        <TabsContent value="professional" className="space-y-6">
-          <div className="text-center space-y-4 py-8">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <Zap className="w-8 h-8 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold">Professional Strategy Development</h3>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Institutional-grade workflow that mirrors how professional fund managers and quants 
-                approach strategy development. Includes market regime analysis, risk budgeting, 
-                and data-driven target setting.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8">
-              <Card className="text-left">
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-sm">Market Regime Analysis</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Identify current market conditions and adjust strategy parameters accordingly
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="text-left">
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-sm">Risk Budgeting</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Portfolio-level risk allocation using institutional methods
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="text-left">
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-purple-600" />
-                    <span className="font-medium text-sm">Performance Targets</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Data-driven targets based on historical performance metrics
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-              <Button 
-                size="lg"
-                onClick={() => {
-                  // This would navigate to the professional wizard
-                  toast.success('Professional Strategy Wizard will open in a new tab');
-                }}
-                className="flex items-center gap-2"
-              >
-                <Zap className="w-4 h-4" />
-                Launch Professional Wizard
-              </Button>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Crown className="w-4 h-4" />
-                <span>Available on Pro+ plans</span>
-              </div>
-            </div>
-
-            {/* Comparison */}
-            <Card className="mt-8 text-left">
-              <CardHeader>
-                <CardTitle className="text-base">When to Use Each Approach</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-blue-600" />
-                      Guided Builder (Current)
-                    </h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Simple step-by-step process</li>
-                      <li>• Pre-defined strategy templates</li>
-                      <li>• Basic risk/reward inputs</li>
-                      <li>• Good for beginners</li>
-                      <li>• 30-day backtesting</li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-purple-600" />
-                      Professional Wizard
-                    </h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Market regime-based approach</li>
-                      <li>• Portfolio risk budgeting</li>
-                      <li>• Statistical performance metrics</li>
-                      <li>• Kelly criterion position sizing</li>
-                      <li>• Multi-year walk-forward testing</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
         {/* Strategy Builder Tab */}
@@ -473,8 +295,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             initialStrategy={{ answers: strategyAnswers }}
             onAnswersChange={handleAnswersChange}
             onSaveStrategy={handleStrategySaved}
-            onBacktest={handleRunV2Backtest}
-            isBacktesting={isBacktesting}
           />
           
           {/* Advanced Backtest Engine Section - Premium Feature */}
@@ -491,29 +311,26 @@ export const StrategyWorkspaceInterface: React.FC = () => {
                 </p>
               </CardHeader>
               <CardContent>
-            <BacktesterV2Engine
-              selectedStrategy={generateStrategyName()}
-              params={backtestParams || convertToBacktestParams()}
-              onRunV2Backtest={handleRunV2Backtest}
-              isRunning={isBacktesting}
-              strategyAnswers={strategyAnswers}
-              isStrategyComplete={isStrategyComplete()}
-              onBacktestComplete={() => setActiveTab('results')}
-              isGuidedBuilder={false}
-              onParamsChange={handleBacktestParamsChange}
-            />
+                <BacktesterV2Engine
+                  selectedStrategy={generateStrategyName()}
+                  params={backtestParams || convertToBacktestParams()}
+                  onRunV2Backtest={handleRunV2Backtest}
+                  isRunning={isBacktesting}
+                  strategyAnswers={strategyAnswers}
+                  isStrategyComplete={isStrategyComplete()}
+                  onBacktestComplete={() => setActiveTab('results')}
+                  isGuidedBuilder={false}
+                  onParamsChange={handleBacktestParamsChange}
+                />
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        {/* Strategy Library Tab */}
+        {/* My Strategies Tab */}
         <TabsContent value="library" className="space-y-6">
-          <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-md">
-            <p className="text-yellow-800">Debug: My Strategies tab is loading...</p>
-          </div>
-          <GuidedStrategyManager
-            onLoadStrategy={handleLoadStrategy}
+          <GuidedStrategyManager 
+            onLoadStrategy={handleLoadStrategy} 
             onEditStrategy={handleLoadStrategy}
           />
         </TabsContent>
@@ -579,3 +396,5 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     </div>
   );
 };
+
+export default StrategyWorkspaceInterface;
