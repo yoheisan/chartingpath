@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { 
   Clock,
@@ -15,27 +14,21 @@ import {
   TrendingUp,
   Activity,
   Info,
-  Target
+  Target,
+  Zap
 } from 'lucide-react';
-import { professionalStrategies, getStrategiesByAsset, ProfessionalStrategy } from '@/utils/ProfessionalStrategyTemplates';
+import { professionalStrategies, ProfessionalStrategy } from '@/utils/ProfessionalStrategyTemplates';
 
 interface AssetFocusedStrategyBuilderProps {
   onStrategySelect: (strategy: any) => void;
-  onQuickTest: (strategy: any, asset: string) => void;
+  onQuickTest: (strategy: any) => void;
 }
 
 export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderProps> = ({
   onStrategySelect,
   onQuickTest
 }) => {
-  const [selectedAsset, setSelectedAsset] = useState<string>('');
   const [testingStrategy, setTestingStrategy] = useState<string>('');
-
-  const assetTypes = ['Stocks', 'Forex', 'Crypto', 'ETFs', 'Commodities'];
-  
-  const filteredStrategies = selectedAsset 
-    ? getStrategiesByAsset(selectedAsset)
-    : professionalStrategies;
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -59,14 +52,12 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
   };
 
   const handleQuickTest = async (strategy: ProfessionalStrategy) => {
-    if (!selectedAsset) return;
-    
     setTestingStrategy(strategy.id);
     
     // Simulate quick test
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    onQuickTest(strategy, selectedAsset);
+    onQuickTest(strategy);
     setTestingStrategy('');
   };
 
@@ -76,48 +67,19 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
+            <Zap className="w-5 h-5" />
             Professional Strategy Library
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Industry-standard trading strategies used by professional traders worldwide. 
-            These are proven configurations - results depend on market conditions and execution.
+            Select a strategy to customize and backtest with your preferred assets.
           </p>
         </CardHeader>
       </Card>
 
-      {/* Asset Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingUp className="w-5 h-5" />
-            Select Your Trading Asset
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose the type of asset you want to trade" />
-            </SelectTrigger>
-            <SelectContent>
-              {assetTypes.map(asset => (
-                <SelectItem key={asset} value={asset}>
-                  {asset}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedAsset && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Showing {filteredStrategies.length} professional strategies optimized for {selectedAsset.toLowerCase()} trading
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Strategy Templates */}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        {filteredStrategies.map(strategy => {
+        {professionalStrategies.map(strategy => {
           const IconComponent = strategy.icon;
           const isCurrentlyTesting = testingStrategy === strategy.id;
           
@@ -149,6 +111,13 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
                   <Badge className={getComplexityColor(strategy.complexity)}>
                     {strategy.complexity}
                   </Badge>
+                </div>
+
+                {/* Supported Assets */}
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">Supported Assets:</span> {strategy.assetTypes.join(', ')}
+                  </p>
                 </div>
               </CardHeader>
 
@@ -254,8 +223,7 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
                     <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                     <p className="text-muted-foreground">
                       <span className="font-medium">Professional Configuration:</span> These parameters represent 
-                      industry-standard settings. Actual performance depends on market conditions, execution, 
-                      and individual risk management.
+                      industry-standard settings. Choose your specific asset and customize parameters in the Strategy Builder.
                     </p>
                   </div>
                 </div>
@@ -269,48 +237,33 @@ export const AssetFocusedStrategyBuilder: React.FC<AssetFocusedStrategyBuilderPr
                     className="flex-1"
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
-                    Customize Strategy
+                    Select Strategy
                   </Button>
                   
-                  {selectedAsset && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleQuickTest(strategy)}
-                      disabled={isCurrentlyTesting || !selectedAsset}
-                      className="flex-1"
-                    >
-                      {isCurrentlyTesting ? (
-                        <>
-                          <div className="w-4 h-4 mr-1 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                          Testing...
-                        </>
-                      ) : (
-                        <>
-                          <PlayCircle className="w-4 h-4 mr-1" />
-                          Quick Test
-                        </>
-                      )}
-                    </Button>
-                  )}
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleQuickTest(strategy)}
+                    disabled={isCurrentlyTesting}
+                    className="flex-1"
+                  >
+                    {isCurrentlyTesting ? (
+                      <>
+                        <div className="w-4 h-4 mr-1 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                        Testing...
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="w-4 h-4 mr-1" />
+                        Quick Test
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
-
-      {filteredStrategies.length === 0 && selectedAsset && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-medium mb-2">No Strategies Available</h3>
-            <p className="text-sm text-muted-foreground">
-              We don't currently have professional strategies optimized for {selectedAsset.toLowerCase()}. 
-              Try selecting a different asset type.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

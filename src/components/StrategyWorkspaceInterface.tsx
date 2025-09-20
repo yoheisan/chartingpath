@@ -209,15 +209,15 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     toast.success(`${strategy.name} professional configuration loaded! Customize parameters in Strategy Builder.`);
   };
 
-  // Handle quick test from asset-focused builder
-  const handleQuickTest = (strategy: any, asset: string) => {
+  // Handle quick test from strategy builder
+  const handleQuickTest = (strategy: any) => {
     // Generate realistic quick test results based on strategy characteristics
     const baseReturn = Math.random() * 15 - 7.5; // -7.5% to 7.5% (realistic for 30-day test)
     const volatility = strategy.category === 'Momentum' ? 1.5 : strategy.category === 'Arbitrage' ? 0.5 : 1.0;
     
     const results = {
       strategy: strategy.name,
-      asset: asset,
+      asset: 'Mixed Assets', // No specific asset selected yet
       period: '30 days (simulated)',
       totalReturn: baseReturn * volatility,
       winRate: 35 + Math.random() * 40, // 35-75% (realistic range)
@@ -228,19 +228,19 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       profitFactor: 0.8 + Math.random() * 1.4, // 0.8-2.2 (realistic range)
       sharpeRatio: -0.2 + Math.random() * 1.2, // -0.2 to 1.0 (realistic for short period)
       confidence: 'Medium', // Always medium for quick tests
-      recommendation: 'Quick test complete. Professional strategies require longer backtesting periods for reliable results. Use this as initial validation only.',
+      recommendation: 'Quick test complete. Professional strategies require longer backtesting periods with specific assets for reliable results. Use this as initial validation only.',
       nextSteps: [
+        'Select specific asset in Strategy Builder',
         'Run full backtest with 1+ years of historical data',
         'Test across different market conditions',
-        'Optimize parameters for your risk tolerance',
-        'Paper trade before risking real capital'
+        'Optimize parameters for your risk tolerance'
       ],
-      disclaimer: 'This is a simulated 30-day test. Real results will vary significantly based on market conditions, execution, and risk management.'
+      disclaimer: 'This is a simulated test without specific asset data. Real results will vary significantly based on chosen asset, market conditions, execution, and risk management.'
     };
     
     setQuickTestResults(results);
     setActiveTab('quick-results');
-    toast.success('Quick simulation completed! This is for validation only - run full backtests for reliable results.');
+    toast.success('Quick simulation completed! Select your asset and run full backtests for reliable results.');
   };
 
   return (
