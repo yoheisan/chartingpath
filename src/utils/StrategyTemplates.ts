@@ -9,9 +9,9 @@ export interface StrategyTemplate {
 
 export const getStrategyTemplate = (approach: string, answers: any): StrategyTemplate => {
   const baseParams = {
-    positionSize: answers.riskTolerance?.riskPerTrade || 2,
-    stopLoss: Math.min(answers.riskTolerance?.maxDrawdown || 10, 5), // Conservative SL
-    takeProfit: (answers.reward?.riskRewardRatio || 2) * (Math.min(answers.riskTolerance?.maxDrawdown || 10, 5))
+    positionSize: answers.risk?.riskPerTrade || 2,
+    stopLoss: Math.min(answers.risk?.maxDrawdown || 10, 5), // Conservative SL
+    takeProfit: 2 * (Math.min(answers.risk?.maxDrawdown || 10, 5))
   };
 
   switch (approach) {
@@ -75,7 +75,7 @@ export const getStrategyTemplate = (approach: string, answers: any): StrategyTem
           lookback: 60,
           entryZScore: 2.0,
           exitZScore: 0.5,
-          leverage: answers.riskTolerance?.leverage || 1,
+          leverage: answers.risk?.leverage || 1,
           positionSize: baseParams.positionSize
         }
       };
@@ -117,7 +117,7 @@ export const mapAnswersToBacktestParams = (answers: any): Partial<BacktestParams
   return {
     instrument: answers.market?.instrument || '',
     timeframe: answers.market?.timeframes?.[0] || '1h',
-    initialCapital: answers.riskTolerance?.accountPrinciple || 10000,
+    initialCapital: 10000,
     positionSize: template.parameters.positionSize || 2,
     stopLoss: template.parameters.stopLoss,
     takeProfit: template.parameters.takeProfit,

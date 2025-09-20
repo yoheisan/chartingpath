@@ -17,7 +17,6 @@ export interface GuidedStrategyAnswers {
     tradingHours: string;
   };
   risk?: {
-    tolerance: string;
     maxDrawdown: number;
     riskPerTrade: number;
     leverage: number;
@@ -60,7 +59,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       timeframes: ['1h'], 
       tradingHours: 'london-ny' 
     },
-    risk: { tolerance: 'moderate', maxDrawdown: 10, riskPerTrade: 2, leverage: 10 },
+    risk: { maxDrawdown: 10, riskPerTrade: 2, leverage: 10 },
     style: { approach: 'trend-following', timeHorizon: 'intraday', complexity: 'intermediate' },
   });
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -100,7 +99,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       case 0: // market
         return !!answers.market?.instrument && !!answers.market?.timeframes?.length && !!answers.market?.tradingHours;
       case 1: // risk
-        return !!answers.risk?.tolerance && !!answers.risk?.maxDrawdown !== undefined && !!answers.risk?.riskPerTrade !== undefined && !!answers.risk?.leverage;
+        return !!answers.risk?.maxDrawdown !== undefined && !!answers.risk?.riskPerTrade !== undefined && !!answers.risk?.leverage;
       case 2: // style
         return !!answers.style?.approach && !!answers.style?.timeHorizon && !!answers.style?.complexity;
       default:

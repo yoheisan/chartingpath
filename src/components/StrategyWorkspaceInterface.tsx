@@ -40,7 +40,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       tradingHours: 'london-ny'
     },
     risk: { 
-      tolerance: 'moderate',
       maxDrawdown: 10,
       riskPerTrade: 2,
       leverage: 10
@@ -114,7 +113,6 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         tradingHours: 'london-ny'
       },
       risk: { 
-        tolerance: 'moderate',
         maxDrawdown: 15, 
         riskPerTrade: parseFloat(strategy.parameters.riskManagement.positionSizing.match(/[\d.]+/)?.[0] || '2'),
         leverage: 10

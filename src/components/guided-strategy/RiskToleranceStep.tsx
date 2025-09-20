@@ -33,7 +33,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
   subscriptionPlan
 }) => {
   const currentAnswers = answers.risk || {
-    tolerance: 'moderate',
     maxDrawdown: null, // Start as disabled
     riskPerTrade: null, // Start as disabled
     leverage: 10
@@ -64,7 +63,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
     return { level: 'Aggressive', color: 'text-red-600', icon: AlertTriangle };
   };
 
-
   const riskLevel = getRiskLevel(currentAnswers.maxDrawdown);
   const RiskIcon = riskLevel.icon;
 
@@ -77,7 +75,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Risk Tolerance Settings
+              Risk Management Settings
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
@@ -93,43 +91,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
             </CardTitle>
           </CardHeader>
         <CardContent className="space-y-8">
-          {/* Account Principle */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Banknote className="w-5 h-5 text-primary" />
-            <Label className="text-base font-medium">
-              Risk Tolerance Level
-            </Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">
-                    Your total trading capital. Drawdown percentages will be calculated against this amount.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <select
-              value={currentAnswers.tolerance || 'moderate'}
-              onChange={(e) => {
-                onAnswersChange('risk', {
-                  ...currentAnswers,
-                  tolerance: e.target.value
-                });
-              }}
-              className="w-full p-2 border border-input bg-background rounded-md"
-            >
-              <option value="conservative">Conservative</option>
-              <option value="moderate">Moderate</option>
-              <option value="aggressive">Aggressive</option>
-            </select>
-            <p className="text-sm text-muted-foreground">
-              Select your overall risk comfort level
-            </p>
-          </div>
-
           {/* Leverage */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -304,7 +265,6 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 Risk Profile Summary
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>• Risk Tolerance: {currentAnswers.tolerance || 'Moderate'}</p>
                 <p>• Leverage: 1:{currentAnswers.leverage || 10}</p>
                 <p>• Max Drawdown: {useMaxDrawdown ? `${currentAnswers.maxDrawdown}% - ${riskLevel.level}` : 'No Limit - Strategy runs to completion'}</p>
                 <p>• Risk Per Trade: {useRiskPerTrade ? `${currentAnswers.riskPerTrade}% of account` : 'Full Capital Mode'}</p>
@@ -325,7 +285,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               <span className="font-medium">Risk Settings Configured!</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Your risk tolerance has been set to {riskLevel.level.toLowerCase()} level.
+              Your risk tolerance has been set.
             </p>
           </CardContent>
         </Card>

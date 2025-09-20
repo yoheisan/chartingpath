@@ -322,13 +322,13 @@ const BacktesterV2Engine: React.FC<BacktesterV2EngineProps> = ({
                           <div>
                             <span className="text-muted-foreground">Capital:</span>
                             <span className="ml-2 font-medium">
-                              ${strategyAnswers.riskTolerance?.accountPrinciple?.toLocaleString() || 'Not set'}
+                              $10,000
                             </span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Risk/Trade:</span>
                             <span className="ml-2 font-medium">
-                              {strategyAnswers.riskTolerance?.riskPerTrade || 'Not set'}%
+                              {strategyAnswers.risk?.riskPerTrade || 'Not set'}%
                             </span>
                           </div>
                         </div>

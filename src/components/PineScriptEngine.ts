@@ -424,8 +424,8 @@ if barstate.islast
     const { longCond, shortCond } = this.generateSignalLogic(config);
 
     // Extract risk management settings from strategy answers
-    const riskSettings = strategy.answers?.riskTolerance || {};
-    const accountSize = riskSettings.accountPrinciple || 100000;
+    const riskSettings = strategy.answers?.risk || {};
+    const accountSize = riskSettings.leverage || 10;
     const riskPerTrade = riskSettings.riskPerTrade || null;
     const maxDrawdown = riskSettings.maxDrawdown || null;
 

@@ -39,7 +39,7 @@ export const EXPORT_TEMPLATES = {
   "MetaTrader 4 - MQL4": {
     generateCode: (strategy: any, timeframe = "PERIOD_H1") => {
       // Extract settings from strategy answers
-      const riskSettings = strategy.answers?.riskTolerance || {};
+      const riskSettings = strategy.answers?.risk || {};
       const marketSettings = strategy.answers?.market || {};
       const accountSize = riskSettings.accountPrinciple || 10000;
       const riskPerTrade = riskSettings.riskPerTrade || null;
@@ -323,7 +323,7 @@ ${logic.calculations}
 `;
     },
     generateReadme: (strategy: any) => {
-      const riskSettings = strategy.answers?.riskTolerance || {};
+      const riskSettings = strategy.answers?.risk || {};
       const marketSettings = strategy.answers?.market || {};
       const selectedTimeframe = marketSettings.timeframes?.[0] || '1H';
       const leverage = riskSettings.leverage || 1;

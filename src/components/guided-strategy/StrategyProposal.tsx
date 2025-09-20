@@ -65,7 +65,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   const generateStrategyDescription = () => {
     const { market, style, risk } = answers;
     
-    return `A ${style?.approach?.replace('-', ' ')} strategy for ${market?.instrument || 'selected instrument'} with ${risk?.tolerance || 'moderate'} risk tolerance. 
+    return `A ${style?.approach?.replace('-', ' ')} strategy for ${market?.instrument || 'selected instrument'} with risk management controls. 
     Trades ${market?.timeframes?.join(', ')} timeframes with ${risk?.maxDrawdown || 'no'} drawdown limit.`;
   };
 
@@ -212,13 +212,13 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center p-3 border rounded-lg">
               <Shield className="w-5 h-5 mx-auto mb-1 text-orange-600" />
-              <div className="text-sm font-medium">Risk Level</div>
-              <div className="text-lg font-bold text-orange-600">{answers.risk?.tolerance || 'Moderate'}</div>
+              <div className="text-sm font-medium">Max Drawdown</div>
+              <div className="text-lg font-bold text-orange-600">{answers.risk?.maxDrawdown || 'No Limit'}</div>
             </div>
             <div className="text-center p-3 border rounded-lg">
               <TrendingUp className="w-5 h-5 mx-auto mb-1 text-green-600" />
-              <div className="text-sm font-medium">Max Drawdown</div>
-              <div className="text-lg font-bold text-green-600">{answers.risk?.maxDrawdown || 'No Limit'}</div>
+              <div className="text-sm font-medium">Risk Per Trade</div>
+              <div className="text-lg font-bold text-green-600">{answers.risk?.riskPerTrade || 'Full Capital'}%</div>
             </div>
             <div className="text-center p-3 border rounded-lg">
               <BarChart3 className="w-5 h-5 mx-auto mb-1 text-purple-600" />
@@ -264,9 +264,9 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
                 Risk Management
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Tolerance: {answers.risk?.tolerance}</li>
                 <li>• Max Drawdown: {answers.risk?.maxDrawdown ? `${answers.risk.maxDrawdown}%` : 'No Limit'}</li>
                 <li>• Risk Per Trade: {answers.risk?.riskPerTrade ? `${answers.risk.riskPerTrade}%` : 'Full Capital'}</li>
+                <li>• Leverage: 1:{answers.risk?.leverage || 10}</li>
               </ul>
             </div>
             
