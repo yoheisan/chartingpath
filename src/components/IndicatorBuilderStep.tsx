@@ -122,6 +122,7 @@ export const IndicatorBuilderStep: React.FC<IndicatorBuilderStepProps> = ({
 
   const [indicators, setIndicators] = useState<IndicatorConfig[]>(currentAnswers.indicators || []);
   const [conditions, setConditions] = useState<TradingCondition[]>(currentAnswers.conditions || []);
+  const [selectedIndicatorType, setSelectedIndicatorType] = useState<string>("");
 
   const updateAnswers = () => {
     const newAnswers = {
@@ -151,6 +152,7 @@ export const IndicatorBuilderStep: React.FC<IndicatorBuilderStepProps> = ({
     };
 
     setIndicators([...indicators, newIndicator]);
+    setSelectedIndicatorType(""); // Reset the dropdown
   };
 
   const removeIndicator = (indicatorId: string) => {
@@ -224,7 +226,7 @@ export const IndicatorBuilderStep: React.FC<IndicatorBuilderStepProps> = ({
           <div className="space-y-4">
             {/* Add Indicator Dropdown */}
             <div className="flex gap-2">
-              <Select onValueChange={addIndicator}>
+              <Select value={selectedIndicatorType} onValueChange={addIndicator}>
                 <SelectTrigger className="flex-1">
                   <SelectValue placeholder="Select indicator to add..." />
                 </SelectTrigger>
@@ -242,6 +244,14 @@ export const IndicatorBuilderStep: React.FC<IndicatorBuilderStepProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedIndicatorType("")}
+                disabled={!selectedIndicatorType}
+              >
+                Clear
+              </Button>
             </div>
 
             {/* Selected Indicators */}
