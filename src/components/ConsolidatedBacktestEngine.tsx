@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { 
   Zap, 
@@ -70,6 +71,8 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
   const [activeTab, setActiveTab] = useState('setup');
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('');
+  const [useRiskPerTrade, setUseRiskPerTrade] = useState(false);
+  const [useMaxDrawdown, setUseMaxDrawdown] = useState(false);
   
   // Initialize params from strategy answers
   const [params, setParams] = useState<BacktestParams>({
@@ -120,6 +123,10 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || prev.initialCapital,
       riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || null, // Keep optional
     }));
+    
+    // Set toggles based on strategy answers
+    setUseRiskPerTrade(!!(strategyAnswers.riskTolerance?.riskPerTrade));
+    setUseMaxDrawdown(!!(strategyAnswers.riskTolerance?.maxDrawdown));
   }, [strategyAnswers]);
 
   const generateStrategyName = () => {
@@ -671,18 +678,40 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Risk Per Trade (%) - Optional</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={params.riskPerTrade || ''}
-                      placeholder="Leave empty for full position"
-                      onChange={(e) => handleParamChange('riskPerTrade', e.target.value ? Number(e.target.value) : null)}
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label>Risk Per Trade Control</Label>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={useRiskPerTrade}
+                          onCheckedChange={(checked) => {
+                            setUseRiskPerTrade(checked);
+                            if (!checked) {
+                              handleParamChange('riskPerTrade', null);
+                            } else {
+                              handleParamChange('riskPerTrade', 2);
+                            }
+                          }}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {useRiskPerTrade ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                    {useRiskPerTrade && (
+                      <Input
+                        type="number"
+                        min="0.1"
+                        max="10"
+                        step="0.1"
+                        value={params.riskPerTrade || 2}
+                        onChange={(e) => handleParamChange('riskPerTrade', Number(e.target.value))}
+                      />
+                    )}
                     <p className="text-xs text-muted-foreground">
-                      If not set, strategy will use full available capital for each trade
+                      {useRiskPerTrade 
+                        ? 'Uses specified percentage of equity per trade'
+                        : 'Will use full available capital (80%) for each trade'
+                      }
                     </p>
                   </div>
 
@@ -713,28 +742,54 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Max Drawdown Limit (%) - Optional</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="50"
-                          step="0.1"
-                          value={strategyAnswers.riskTolerance?.maxDrawdown || ''}
-                          placeholder="Leave empty for no limit"
-                          onChange={(e) => {
-                            const value = e.target.value ? Number(e.target.value) : null;
-                            const updatedAnswers = {
-                              ...strategyAnswers,
-                              riskTolerance: {
-                                ...strategyAnswers.riskTolerance,
-                                maxDrawdown: value
-                              }
-                            };
-                            onStrategyUpdate?.(updatedAnswers);
-                          }}
-                        />
+                        <div className="flex items-center justify-between">
+                          <Label>Maximum Drawdown Protection</Label>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={useMaxDrawdown}
+                              onCheckedChange={(checked) => {
+                                setUseMaxDrawdown(checked);
+                                const value = checked ? 10 : null;
+                                const updatedAnswers = {
+                                  ...strategyAnswers,
+                                  riskTolerance: {
+                                    ...strategyAnswers.riskTolerance,
+                                    maxDrawdown: value
+                                  }
+                                };
+                                onStrategyUpdate?.(updatedAnswers);
+                              }}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {useMaxDrawdown ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                        </div>
+                        {useMaxDrawdown && (
+                          <Input
+                            type="number"
+                            min="1"
+                            max="50"
+                            step="0.1"
+                            value={strategyAnswers.riskTolerance?.maxDrawdown || 10}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              const updatedAnswers = {
+                                ...strategyAnswers,
+                                riskTolerance: {
+                                  ...strategyAnswers.riskTolerance,
+                                  maxDrawdown: value
+                                }
+                              };
+                              onStrategyUpdate?.(updatedAnswers);
+                            }}
+                          />
+                        )}
                         <p className="text-xs text-muted-foreground">
-                          If set, strategy will halt when this drawdown level is reached
+                          {useMaxDrawdown 
+                            ? 'Strategy will halt when this drawdown level is reached'
+                            : 'Strategy will run to completion regardless of losses'
+                          }
                         </p>
                       </div>
                     </>
