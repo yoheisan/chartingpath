@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { RiskToleranceStep } from './guided-strategy/RiskToleranceStep';  
-import { StyleStep } from './guided-strategy/StyleStep';
+import { IndicatorBuilderStep } from './IndicatorBuilderStep';
 import { StrategyProposal } from './guided-strategy/StrategyProposal';
 import { AdvancedParametersStep } from './AdvancedParametersStep';
 import { BacktestSection } from './BacktestSection';
@@ -26,8 +26,10 @@ export interface GuidedStrategyAnswers {
   };
   style?: {
     approach: string;
-    timeHorizon: string;
-    complexity: string;
+    indicators?: any[];
+    conditions?: any[];
+    timeHorizon?: string;
+    complexity?: string;
   };
   parameters?: {
     [key: string]: any;
@@ -37,8 +39,8 @@ export interface GuidedStrategyAnswers {
 const steps = [
   { id: 'market', title: 'Market Selection', description: 'Choose your trading market' },
   { id: 'risk', title: 'Risk Management', description: 'Set risk parameters' },
-  { id: 'style', title: 'Trading Style', description: 'Define your approach' },
-  { id: 'parameters', title: 'Advanced Parameters', description: 'Fine-tune technical indicators' },
+  { id: 'indicators', title: 'Indicator Builder', description: 'Configure indicators and conditions' },
+  { id: 'parameters', title: 'Advanced Parameters', description: 'Fine-tune technical parameters' },
   { id: 'backtest', title: 'Backtest & Results', description: 'Test your strategy' },
 ];
 
@@ -70,7 +72,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       tradingHours: 'london-ny' 
     },
     risk: { maxDrawdown: 10, riskPerTrade: 2, leverage: 10 },
-    style: { approach: 'trend-following', timeHorizon: 'intraday', complexity: 'intermediate' },
+    style: { approach: 'custom', indicators: [], conditions: [] },
   });
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
@@ -110,8 +112,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
         return !!answers.market?.instrument && !!answers.market?.timeframes?.length && !!answers.market?.tradingHours;
       case 1: // risk
         return !!answers.risk?.maxDrawdown !== undefined && !!answers.risk?.riskPerTrade !== undefined && !!answers.risk?.leverage;
-      case 2: // style
-        return !!answers.style?.approach && !!answers.style?.timeHorizon && !!answers.style?.complexity;
+      case 2: // indicators
+        return !!answers.style?.approach && (answers.style?.indicators?.length || 0) > 0 && (answers.style?.conditions?.length || 0) > 0;
       case 3: // parameters (optional step)
         return true; // Parameters step is always complete as it has defaults
       case 4: // backtest
@@ -146,7 +148,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       case 1:
         return <RiskToleranceStep {...stepProps} />;
       case 2:
-        return <StyleStep {...stepProps} />;
+        return <IndicatorBuilderStep {...stepProps} />;
       case 3:
         return <AdvancedParametersStep {...stepProps} />;
       case 4:
@@ -175,7 +177,7 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between mb-4">
-            <CardTitle className="text-lg">AI Strategy Builder</CardTitle>
+            <CardTitle className="text-lg">Professional EA/Pine Script Builder</CardTitle>
             <div className="text-sm text-muted-foreground">
               Step {currentStep + 1} of {steps.length}
             </div>

@@ -1,3 +1,4 @@
+import { ProfessionalPineScriptEngine } from './ProfessionalPineScriptEngine';
 import { PineScriptEngine } from "./PineScriptEngine";
 
 export interface ExportTemplate {
@@ -27,11 +28,19 @@ Always implement proper risk management including position sizing, stop losses, 
 export const EXPORT_TEMPLATES = {
   "TradingView - Pine Script v6": {
     generateCode: (strategy: any, timeframe = "1H") => {
-      // Use the new Pine Script engine for Pine Script generation
+      // Use the professional Pine Script engine for custom strategies
+      if (strategy.answers?.style?.approach === 'custom') {
+        return ProfessionalPineScriptEngine.generateStrategyFromIndicators(strategy);
+      }
+      // Use the original Pine Script engine for traditional approaches
       return PineScriptEngine.generateStrategyVersion(strategy);
     },
     generateReadme: (strategy: any) => {
-      // Use the new Pine Script engine for README generation
+      // Use the professional Pine Script engine for custom strategies
+      if (strategy.answers?.style?.approach === 'custom') {
+        return ProfessionalPineScriptEngine.generateReadme(strategy);
+      }
+      // Use the original Pine Script engine for traditional approaches
       return PineScriptEngine.generateReadme(strategy, "strategy");
     }
   },

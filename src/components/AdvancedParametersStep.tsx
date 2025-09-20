@@ -5,7 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { PineScriptEngine } from './PineScriptEngine';
+import { ProfessionalPineScriptEngine } from './ProfessionalPineScriptEngine';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { Settings, TrendingUp, Activity, Target } from 'lucide-react';
 
@@ -18,8 +18,30 @@ export const AdvancedParametersStep: React.FC<AdvancedParametersStepProps> = ({
   answers,
   onAnswersChange,
 }) => {
-  const approach = answers.style?.approach || 'trend-following';
-  const strategyParams = PineScriptEngine.getStrategyParameters({ answers });
+  const approach = answers.style?.approach || 'custom';
+  const indicators = answers.style?.indicators || [];
+  
+  // Generate parameters based on selected indicators
+  const getParametersFromIndicators = () => {
+    const baseParams = {
+      risk_r: { default: 2.0, min: 0.1, max: 10.0, step: 0.1 },
+      tp_rr: { default: 2.0, min: 0.5, max: 10.0, step: 0.1 },
+      max_trades_day: { default: 5, min: 0, max: 100, step: 1 },
+      trade_start: { default: 0, min: 0, max: 2359, step: 1 },
+      trade_end: { default: 2359, min: 0, max: 2359, step: 1 },
+      use_long: { default: true },
+      use_short: { default: true }
+    };
+    
+    // Add ATR for stop losses
+    const atrParams = {
+      atr_mult: { default: 2.0, min: 0.5, max: 5.0, step: 0.1 }
+    };
+    
+    return { ...baseParams, ...atrParams };
+  };
+  
+  const strategyParams = getParametersFromIndicators();
   
   const currentParams = answers.parameters || {};
 
@@ -78,24 +100,8 @@ export const AdvancedParametersStep: React.FC<AdvancedParametersStepProps> = ({
     const categories = {
       'Risk Management': ['risk_r', 'tp_rr', 'max_trades_day'],
       'Session Settings': ['trade_start', 'trade_end', 'use_long', 'use_short'],
-      'Technical Indicators': []
+      'Technical Indicators': ['atr_mult']
     };
-
-    // Add approach-specific parameters
-    switch (approach) {
-      case 'trend-following':
-        categories['Technical Indicators'] = ['fast_len', 'slow_len', 'rsi_len', 'rsi_buy', 'rsi_sell', 'atr_len', 'atr_mult'];
-        break;
-      case 'mean-reversion':
-        categories['Technical Indicators'] = ['bb_len', 'bb_dev', 'rsi_len', 'rsi_buy', 'rsi_sell', 'atr_len', 'atr_mult'];
-        break;
-      case 'breakout':
-        categories['Technical Indicators'] = ['bb_len', 'bb_dev', 'vol_mult', 'atr_len', 'atr_mult', 'lookback'];
-        break;
-      case 'arbitrage':
-        categories['Technical Indicators'] = ['corr_len', 'zscore_len', 'zscore_entry', 'zscore_exit', 'atr_len', 'atr_mult'];
-        break;
-    }
 
     return categories;
   };
@@ -119,7 +125,7 @@ export const AdvancedParametersStep: React.FC<AdvancedParametersStepProps> = ({
             <Settings className="w-5 h-5" />
             Advanced Parameters
             <Badge variant="secondary" className="ml-2">
-              {approach.replace('-', ' ').toUpperCase()}
+              Professional Builder
             </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
