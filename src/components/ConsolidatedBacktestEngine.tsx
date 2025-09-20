@@ -304,25 +304,42 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     // Generate results based on strategy parameters and subscription level
     const targetReturn = strategyAnswers.reward?.targetReturn || 15;
     const winRate = strategyAnswers.reward?.winRate || 65;
-    const maxDrawdown = strategyAnswers.riskTolerance?.maxDrawdown || 10;
+    const maxDrawdownLimit = strategyAnswers.riskTolerance?.maxDrawdown || 10;
     const riskRewardRatio = strategyAnswers.reward?.riskRewardRatio || 2;
 
     // More sophisticated results for higher tiers
     const baseTrades = hasV2Access ? 150 : hasBasicBacktest ? 80 : 40;
-    const totalTrades = Math.floor(baseTrades + Math.random() * (hasV2Access ? 200 : 60));
+    const maxPossibleTrades = Math.floor(baseTrades + Math.random() * (hasV2Access ? 200 : 60));
     
     const trades = [];
     const equityCurve = [];
+    const drawdownData = [];
     let currentEquity = params.initialCapital;
     let peakEquity = currentEquity;
     let winningTrades = 0;
     let totalWinAmount = 0;
     let totalLossAmount = 0;
+    let actualTrades = 0;
+    let strategyHalted = false;
+    let haltReason = '';
     
-    // Generate more realistic trade sequence
-    for (let i = 0; i < totalTrades; i++) {
+    // Generate realistic trade sequence with actual drawdown control
+    for (let i = 0; i < maxPossibleTrades; i++) {
+      const currentDrawdown = ((peakEquity - currentEquity) / peakEquity) * 100;
+      
+      // CRITICAL: Check if max drawdown limit is reached
+      if (currentDrawdown >= maxDrawdownLimit) {
+        strategyHalted = true;
+        haltReason = `Maximum drawdown limit of ${maxDrawdownLimit}% reached`;
+        break;
+      }
+      
+      // Reduce position size as we approach max drawdown (risk management)
+      const drawdownFactor = Math.max(0.3, 1 - (currentDrawdown / maxDrawdownLimit) * 0.7);
+      const adjustedRiskPerTrade = params.riskPerTrade * drawdownFactor;
+      
       const isWin = Math.random() < (winRate / 100);
-      const tradeSize = currentEquity * (params.riskPerTrade / 100);
+      const tradeSize = currentEquity * (adjustedRiskPerTrade / 100);
       
       let pnl = 0;
       if (isWin) {
@@ -340,31 +357,62 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       
       currentEquity += pnl;
       peakEquity = Math.max(peakEquity, currentEquity);
+      actualTrades++;
+      
+      const tradeDate = new Date(Date.now() - (maxPossibleTrades - i) * 12 * 60 * 60 * 1000);
       
       trades.push({
         id: `trade_${i + 1}`,
-        entry_time: new Date(Date.now() - (totalTrades - i) * 12 * 60 * 60 * 1000).toISOString(),
-        exit_time: new Date(Date.now() - (totalTrades - i - 1) * 12 * 60 * 60 * 1000).toISOString(),
+        entry_time: tradeDate.toISOString(),
+        exit_time: new Date(tradeDate.getTime() + 4 * 60 * 60 * 1000).toISOString(),
         entry_price: 1.0500 + Math.random() * 0.1,
         exit_price: 1.0500 + Math.random() * 0.1,
         quantity: Math.floor(tradeSize / 100),
         pnl: pnl,
         pnl_percentage: (pnl / tradeSize) * 100,
         trade_type: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        reason: isWin ? 'Take Profit Hit' : 'Stop Loss Hit'
+        reason: isWin ? 'Take Profit Hit' : 'Stop Loss Hit',
+        adjusted_risk: adjustedRiskPerTrade.toFixed(2) + '%',
+        drawdown_at_entry: currentDrawdown.toFixed(2) + '%'
       });
       
+      const finalDrawdown = ((peakEquity - currentEquity) / peakEquity) * 100;
+      
       equityCurve.push({
-        date: new Date(Date.now() - (totalTrades - i) * 12 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: tradeDate.toISOString().split('T')[0],
         equity: currentEquity,
-        trade_number: i + 1
+        trade_number: actualTrades,
+        drawdown: finalDrawdown
+      });
+
+      drawdownData.push({
+        date: tradeDate.toISOString().split('T')[0],
+        drawdown: finalDrawdown,
+        equity: currentEquity
       });
     }
     
     const netPnl = currentEquity - params.initialCapital;
-    const actualWinRate = (winningTrades / totalTrades) * 100;
+    const actualWinRate = actualTrades > 0 ? (winningTrades / actualTrades) * 100 : 0;
     const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount) : 0;
-    const actualMaxDrawdown = Math.min(maxDrawdown + Math.random() * 5, 25);
+    const actualMaxDrawdown = Math.max(...drawdownData.map(d => d.drawdown), 0);
+    
+    // Add warning if strategy was halted
+    const warnings = [];
+    if (strategyHalted) {
+      warnings.push({
+        type: 'STRATEGY_HALTED',
+        message: haltReason,
+        impact: 'Strategy stopped trading to prevent exceeding risk tolerance'
+      });
+    }
+    if (actualMaxDrawdown > maxDrawdownLimit * 0.8) {
+      warnings.push({
+        type: 'HIGH_DRAWDOWN_WARNING',
+        message: `Drawdown reached ${actualMaxDrawdown.toFixed(1)}% (close to ${maxDrawdownLimit}% limit)`,
+        impact: 'Consider adjusting risk parameters or strategy approach'
+      });
+    }
     
     return {
       id: runId,
@@ -373,19 +421,25 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       timeframe: params.timeframe,
       from_date: params.fromDate,
       to_date: params.toDate,
-      status: 'completed',
+      status: strategyHalted ? 'halted' : 'completed',
       win_rate: actualWinRate,
       profit_factor: profitFactor,
       net_pnl: netPnl,
       max_drawdown: actualMaxDrawdown,
-      total_trades: totalTrades,
+      max_drawdown_limit: maxDrawdownLimit,
+      total_trades: actualTrades,
+      potential_trades: maxPossibleTrades,
       avg_win: winningTrades > 0 ? totalWinAmount / winningTrades : 0,
-      avg_loss: (totalTrades - winningTrades) > 0 ? -(totalLossAmount / (totalTrades - winningTrades)) : 0,
+      avg_loss: (actualTrades - winningTrades) > 0 ? -(totalLossAmount / (actualTrades - winningTrades)) : 0,
       trade_log: trades,
       equity_curve_data: equityCurve,
+      drawdown_data: drawdownData,
       sharpe_ratio: hasV2Access ? 1.2 + Math.random() * 0.8 : 0.8 + Math.random() * 0.6,
-      expectancy: netPnl / totalTrades,
+      expectancy: actualTrades > 0 ? netPnl / actualTrades : 0,
       cagr: ((currentEquity / params.initialCapital) ** (365 / 365) - 1) * 100,
+      strategy_halted: strategyHalted,
+      halt_reason: haltReason,
+      warnings: warnings,
       created_at: new Date().toISOString()
     };
   };
