@@ -16,12 +16,10 @@ import {
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
 import { ProfessionalStrategyLibrary } from './ProfessionalStrategyLibrary';
-import BacktesterV2Engine from './BacktesterV2Engine';
+import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
-import { mapAnswersToBacktestParams } from '@/utils/StrategyTemplates';
-import { BacktestParams } from '@/components/BacktestParametersPanel';
 
 interface SavedStrategy {
   id: string;
@@ -42,19 +40,11 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
-  const [backtestParams, setBacktestParams] = useState<BacktestParams | null>(null);
-  const backtestSectionRef = useRef<HTMLDivElement>(null);
 
-  // Initialize backtest params once when strategy answers change, but only if not already set
-  useEffect(() => {
-    if (strategyAnswers && Object.keys(strategyAnswers).length > 0 && !backtestParams) {
-      setBacktestParams(convertToBacktestParams());
-    }
-  }, [strategyAnswers, backtestParams]);
-
-  // Handle backtest parameter changes from BacktesterV2Engine
-  const handleBacktestParamsChange = (newParams: BacktestParams) => {
-    setBacktestParams(newParams);
+  // Handle backtest completion
+  const handleBacktestComplete = (results: any) => {
+    setBacktestResults(results);
+    setActiveTab('results');
   };
 
   // Load strategy when selected from manager
@@ -91,84 +81,9 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       toast.error('Please complete the strategy building process first (instrument, timeframe, and approach required)');
       return;
     }
-    // Scroll to the backtesting section
-    backtestSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    toast.success('Scrolled to Backtest Engine');
-  };
-
-  // Handle backtest completion
-  const handleBacktestComplete = (results: any) => {
-    setBacktestResults(results);
-    setActiveTab('results');
-  };
-
-  // Generate strategy name from answers for V2 engine
-  const generateStrategyName = () => {
-    const approach = strategyAnswers.style?.approach?.replace('-', ' ') || 'Custom';
-    const instrument = strategyAnswers.market?.instrument || 'Strategy';
-    const timeframe = strategyAnswers.market?.timeframes?.[0] || '1h';
-    
-    return `${instrument} ${approach} ${timeframe}`.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  // Convert strategy answers to backtest params for V2 engine using templates
-  // GUIDED BUILDER: Limited to past 30 days only (service differentiator)
-  const convertToBacktestParams = () => {
-    const templateParams = mapAnswersToBacktestParams(strategyAnswers);
-    
-    // Calculate past 30 days from current date for guided builder
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    return {
-      instrument: templateParams.instrument || 'EURUSD',
-      timeframe: templateParams.timeframe || '1H',
-      period: '1M', // Last 1 Month for guided builder
-      fromDate: thirtyDaysAgo.toISOString().split('T')[0],
-      toDate: today.toISOString().split('T')[0],
-      initialCapital: templateParams.initialCapital || 10000,
-      positionSizingType: 'percentage',
-      positionSize: templateParams.positionSize || 2,
-      orderType: 'market',
-      commission: templateParams.commission || 0.1,
-      slippage: templateParams.slippage || 0.05,
-      stopLoss: templateParams.stopLoss,
-      takeProfit: templateParams.takeProfit
-    };
-  };
-
-  // Handle V2 backtest execution
-  const handleRunV2Backtest = async () => {
-    if (!isStrategyComplete()) {
-      toast.error('Please complete the strategy building process first');
-      return;
-    }
-
-    setIsBacktesting(true);
-    
-    try {
-      // Import the BacktesterV2Adapter dynamically
-      const { BacktesterV2Adapter } = await import('@/adapters/backtesterV2');
-      const adapter = new BacktesterV2Adapter();
-      
-      // Convert strategy answers to backtest parameters
-      const backtestParams = convertToBacktestParams();
-      
-      // Run real backtest
-      const results = await adapter.runBacktest(backtestParams, strategyAnswers);
-      
-      setBacktestResults(results);
-      setIsBacktesting(false);
-      setActiveTab('results');
-      toast.success('V2 Backtest completed successfully!');
-    } catch (error) {
-      console.error('V2 Backtest error:', error);
-      toast.error('V2 Backtest failed: ' + (error as Error).message);
-      setIsBacktesting(false);
-    }
+    // Switch to the backtest tab
+    setActiveTab('backtest');
+    toast.success('Switched to Backtest Engine');
   };
 
   const isStrategyComplete = () => {
@@ -265,14 +180,18 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="quick-select" className="flex items-center gap-2">
             <Target className="w-4 h-4" />
-            Quick Select
+            Professional Library
           </TabsTrigger>
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Strategy Builder
+          </TabsTrigger>
+          <TabsTrigger value="backtest" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Backtest Engine
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -302,35 +221,18 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             onAnswersChange={handleAnswersChange}
             onSaveStrategy={handleStrategySaved}
           />
-          
-          {/* Advanced Backtest Engine Section - Premium Feature */}
-          {isStrategyComplete() && (
-            <Card className="border-primary/20" ref={backtestSectionRef}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  Advanced Backtest Engine
-                  <Badge variant="outline" className="ml-2">Pro+ Feature</Badge>
-                </CardTitle>
-                <p className="text-muted-foreground">
-                  Custom date ranges, advanced parameters, and unlimited historical data access
-                </p>
-              </CardHeader>
-              <CardContent>
-                <BacktesterV2Engine
-                  selectedStrategy={generateStrategyName()}
-                  params={backtestParams || convertToBacktestParams()}
-                  onRunV2Backtest={handleRunV2Backtest}
-                  isRunning={isBacktesting}
-                  strategyAnswers={strategyAnswers}
-                  isStrategyComplete={isStrategyComplete()}
-                  onBacktestComplete={() => setActiveTab('results')}
-                  isGuidedBuilder={false}
-                  onParamsChange={handleBacktestParamsChange}
-                />
-              </CardContent>
-            </Card>
-          )}
+        </TabsContent>
+
+        {/* Unified Backtest Engine Tab */}
+        <TabsContent value="backtest" className="space-y-6">
+          <ConsolidatedBacktestEngine
+            strategyAnswers={strategyAnswers}
+            currentStrategy={currentStrategy}
+            onBacktestComplete={handleBacktestComplete}
+            isBacktesting={isBacktesting}
+            setIsBacktesting={setIsBacktesting}
+            onStrategyUpdate={handleAnswersChange}
+          />
         </TabsContent>
 
         {/* My Strategies Tab */}
@@ -360,13 +262,13 @@ export const StrategyWorkspaceInterface: React.FC = () => {
                 <p className="text-muted-foreground mb-4">
                   Run a backtest to see detailed performance results and analytics.
                 </p>
-                 <Button 
-                   onClick={handleRunV2Backtest}
-                   disabled={!isStrategyComplete()}
-                 >
-                   <Zap className="w-4 h-4 mr-2" />
-                   Run V2 Backtest
-                 </Button>
+                   <Button 
+                    onClick={() => setActiveTab('backtest')}
+                    disabled={!isStrategyComplete()}
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Go to Backtest Engine
+                  </Button>
               </CardContent>
             </Card>
           )}
@@ -389,7 +291,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             <ArrowRight className="w-4 h-4 text-blue-500" />
             <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <Zap className="w-4 h-4" />
-              <span>3. Test</span>
+              <span>3. Backtest</span>
             </div>
             <ArrowRight className="w-4 h-4 text-blue-500" />
             <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
