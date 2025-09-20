@@ -181,7 +181,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     const newAnswers: GuidedStrategyAnswers = {
       market: { 
         timeframes: [strategy.timeframes.optimal], // Use optimal timeframe from professional strategy
-        instrument: 'EURUSD' // Default, user can change in builder
+        instrument: '' // Clear instrument so user must select it first
       },
       riskTolerance: { 
         accountPrinciple: 10000, 
@@ -199,7 +199,13 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     
     setStrategyAnswers(newAnswers);
     setActiveTab('builder');
-    toast.success(`${strategy.name} professional configuration loaded! Customize parameters in Strategy Builder.`);
+    
+    // Scroll to top of Strategy Builder after a brief delay to ensure tab change completes
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+    
+    toast.success(`${strategy.name} selected! Please choose your financial instrument and timeframe in Strategy Builder.`);
   };
 
   return (
