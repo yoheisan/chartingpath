@@ -33,10 +33,23 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   const [activeTab, setActiveTab] = useState('quick-select');
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
-    market: { timeframes: [] },
-    riskTolerance: { accountPrinciple: 10000, leverage: 1, maxDrawdown: null, riskPerTrade: null },
-    reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
-    style: { approach: '' }
+    market: { 
+      instrumentCategory: 'forex',
+      instrument: 'EUR/USD',
+      timeframes: ['1h'],
+      tradingHours: 'london-ny'
+    },
+    risk: { 
+      tolerance: 'moderate',
+      maxDrawdown: 10,
+      riskPerTrade: 2,
+      leverage: 10
+    },
+    style: { 
+      approach: 'trend-following',
+      timeHorizon: 'intraday',
+      complexity: 'intermediate'
+    }
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
@@ -95,21 +108,22 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     // Convert professional strategy template to guided strategy answers
     const newAnswers: GuidedStrategyAnswers = {
       market: { 
-        timeframes: [strategy.timeframes.optimal], // Use optimal timeframe from professional strategy
-        instrument: '' // Clear instrument so user must select it first
+        instrumentCategory: 'forex',
+        timeframes: [strategy.timeframes.optimal],
+        instrument: '',
+        tradingHours: 'london-ny'
       },
-      riskTolerance: { 
-        accountPrinciple: 10000, 
-        leverage: 1, 
+      risk: { 
+        tolerance: 'moderate',
         maxDrawdown: 15, 
-        riskPerTrade: parseFloat(strategy.parameters.riskManagement.positionSizing.match(/[\d.]+/)?.[0] || '2') // Extract percentage from position sizing
+        riskPerTrade: parseFloat(strategy.parameters.riskManagement.positionSizing.match(/[\d.]+/)?.[0] || '2'),
+        leverage: 10
       },
-      reward: { 
-        targetReturn: 15, // Default target, no promises made
-        winRate: 65, // Default target, no promises made
-        riskRewardRatio: 2 // Default, can be customized in builder
-      },
-      style: { approach: strategy.id }
+      style: { 
+        approach: strategy.id,
+        timeHorizon: 'intraday',
+        complexity: 'intermediate'
+      }
     };
     
     setStrategyAnswers(newAnswers);

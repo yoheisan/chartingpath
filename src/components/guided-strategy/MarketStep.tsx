@@ -82,9 +82,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
   
   const currentAnswers = answers.market || {
-    instrumentCategory: '',
-    instrument: '',
-    timeframes: []
+    instrumentCategory: 'forex',
+    instrument: 'EUR/USD',
+    timeframes: ['1h'],
+    tradingHours: 'london-ny'
   };
 
   const handleInstrumentCategoryChange = (category: string) => {

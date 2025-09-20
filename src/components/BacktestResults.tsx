@@ -130,7 +130,7 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers,
         .insert({
           name: strategyName.trim(),
           description: strategyDescription.trim() || generateDefaultDescription(),
-          answers: strategyAnswers || {},
+          answers: JSON.stringify(strategyAnswers) as any,
           backtest_results: run as any,
           user_id: user.user.id
         });

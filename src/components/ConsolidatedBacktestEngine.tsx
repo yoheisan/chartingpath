@@ -80,8 +80,8 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     timeframe: strategyAnswers.market?.timeframes?.[0] || '',
     fromDate: getDefaultFromDate(),
     toDate: getDefaultToDate(),
-    initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || 10000,
-    riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || null, // Now optional
+    initialCapital: 10000,
+    riskPerTrade: strategyAnswers.risk?.riskPerTrade || null, // Now optional
     commission: 0.1,
     slippage: 0.05
   });
@@ -120,13 +120,13 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
       ...prev,
       instrument: strategyAnswers.market?.instrument || prev.instrument,
       timeframe: strategyAnswers.market?.timeframes?.[0] || prev.timeframe,
-      initialCapital: strategyAnswers.riskTolerance?.accountPrinciple || prev.initialCapital,
-      riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || null, // Keep optional
+      initialCapital: 10000,
+      riskPerTrade: strategyAnswers.risk?.riskPerTrade || null, // Keep optional
     }));
     
     // Set toggles based on strategy answers
-    setUseRiskPerTrade(!!(strategyAnswers.riskTolerance?.riskPerTrade));
-    setUseMaxDrawdown(!!(strategyAnswers.riskTolerance?.maxDrawdown));
+    setUseRiskPerTrade(!!(strategyAnswers.risk?.riskPerTrade));
+    setUseMaxDrawdown(!!(strategyAnswers.risk?.maxDrawdown));
   }, [strategyAnswers]);
 
   const generateStrategyName = () => {
@@ -264,8 +264,8 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
         initial_capital: params.initialCapital,
         position_sizing_type: 'percentage',
         position_size: params.riskPerTrade,
-        stop_loss: strategyAnswers.riskTolerance?.maxDrawdown || 5,
-        take_profit: strategyAnswers.reward?.targetReturn || 10,
+        stop_loss: strategyAnswers.risk?.maxDrawdown || 5,
+        take_profit: 10,
         order_type: 'market',
         commission: params.commission,
         slippage: params.slippage,
@@ -308,10 +308,10 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
 
   const generateBacktestResults = async (runId: string) => {
     // Generate results based on strategy parameters and subscription level
-    const targetReturn = strategyAnswers.reward?.targetReturn || 15;
-    const winRate = strategyAnswers.reward?.winRate || 65;
-    const maxDrawdownLimit = strategyAnswers.riskTolerance?.maxDrawdown || null; // Now optional
-    const riskRewardRatio = strategyAnswers.reward?.riskRewardRatio || 2;
+    const targetReturn = 15;
+    const winRate = 65;
+    const maxDrawdownLimit = strategyAnswers.risk?.maxDrawdown || null; // Now optional
+    const riskRewardRatio = 2;
     const useRiskPerTrade = params.riskPerTrade !== null && params.riskPerTrade > 0;
 
     // More sophisticated results for higher tiers
@@ -574,16 +574,16 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Target Return</div>
-                    <div className="font-bold text-green-600">{strategyAnswers.reward?.targetReturn || 15}%</div>
+                    <div className="font-bold text-green-600">15%</div>
                   </div>
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Win Rate</div>
-                    <div className="font-bold text-blue-600">{strategyAnswers.reward?.winRate || 65}%</div>
+                    <div className="font-bold text-blue-600">65%</div>
                   </div>
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Max Drawdown</div>
                     <div className="font-bold text-orange-600">
-                      {strategyAnswers.riskTolerance?.maxDrawdown ? `${strategyAnswers.riskTolerance.maxDrawdown}%` : 'No Limit'}
+                      {strategyAnswers.risk?.maxDrawdown ? `${strategyAnswers.risk.maxDrawdown}%` : 'No Limit'}
                     </div>
                   </div>
                   <div className="text-center">
@@ -752,8 +752,8 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                                 const value = checked ? 10 : null;
                                 const updatedAnswers = {
                                   ...strategyAnswers,
-                                  riskTolerance: {
-                                    ...strategyAnswers.riskTolerance,
+                                  risk: {
+                                    ...strategyAnswers.risk,
                                     maxDrawdown: value
                                   }
                                 };
@@ -771,13 +771,13 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
                             min="1"
                             max="50"
                             step="0.1"
-                            value={strategyAnswers.riskTolerance?.maxDrawdown || 10}
+                            value={strategyAnswers.risk?.maxDrawdown || 10}
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               const updatedAnswers = {
                                 ...strategyAnswers,
-                                riskTolerance: {
-                                  ...strategyAnswers.riskTolerance,
+                                risk: {
+                                  ...strategyAnswers.risk,
                                   maxDrawdown: value
                                 }
                               };

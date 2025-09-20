@@ -11,6 +11,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface GuidedStrategyAnswers {
   market?: {
+    instrumentCategory?: string;
     instrument: string;
     timeframes: string[];
     tradingHours: string;
@@ -53,7 +54,12 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<GuidedStrategyAnswers>({
-    market: { instrument: 'EUR/USD', timeframes: ['1h'], tradingHours: 'london-ny' },
+    market: { 
+      instrumentCategory: 'forex',
+      instrument: 'EUR/USD', 
+      timeframes: ['1h'], 
+      tradingHours: 'london-ny' 
+    },
     risk: { tolerance: 'moderate', maxDrawdown: 10, riskPerTrade: 2, leverage: 10 },
     style: { approach: 'trend-following', timeHorizon: 'intraday', complexity: 'intermediate' },
   });

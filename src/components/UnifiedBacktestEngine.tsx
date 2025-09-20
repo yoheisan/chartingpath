@@ -66,7 +66,7 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
     fromDate: '2024-01-01',
     toDate: '2024-12-31',
     initialCapital: 10000,
-    riskPerTrade: strategyAnswers.riskTolerance?.riskPerTrade || 2,
+    riskPerTrade: strategyAnswers.risk?.riskPerTrade || 2,
     commission: 0.1,
     slippage: 0.05
   });
@@ -119,8 +119,8 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
           initial_capital: params.initialCapital,
           position_sizing_type: 'percentage',
           position_size: params.riskPerTrade,
-          stop_loss: strategyAnswers.riskTolerance?.maxDrawdown || 5,
-          take_profit: strategyAnswers.reward?.targetReturn || 10,
+          stop_loss: strategyAnswers.risk?.maxDrawdown || 5,
+          take_profit: 10,
           order_type: 'market',
           commission: params.commission,
           slippage: params.slippage,
@@ -160,10 +160,10 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
 
   const completeBacktest = async (runId: string) => {
     // Generate results based on strategy parameters
-    const targetReturn = strategyAnswers.reward?.targetReturn || 15;
-    const winRate = strategyAnswers.reward?.winRate || 65;
-    const maxDrawdown = strategyAnswers.riskTolerance?.maxDrawdown || 10;
-    const riskRewardRatio = strategyAnswers.reward?.riskRewardRatio || 2;
+    const targetReturn = 15;
+    const winRate = 65;
+    const maxDrawdown = strategyAnswers.risk?.maxDrawdown || 10;
+    const riskRewardRatio = 2;
 
     const totalTrades = Math.floor(hasV2Access ? 120 + Math.random() * 200 : 60 + Math.random() * 100);
     const trades = [];
@@ -316,19 +316,19 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Target Return</div>
-              <div className="font-bold text-green-600">{strategyAnswers.reward?.targetReturn || 15}%</div>
+              <div className="font-bold text-green-600">15%</div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Win Rate</div>
-              <div className="font-bold text-blue-600">{strategyAnswers.reward?.winRate || 65}%</div>
+              <div className="font-bold text-blue-600">65%</div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Max Drawdown</div>
-              <div className="font-bold text-orange-600">{strategyAnswers.riskTolerance?.maxDrawdown || 10}%</div>
+              <div className="font-bold text-orange-600">{strategyAnswers.risk?.maxDrawdown || 10}%</div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Risk/Reward</div>
-              <div className="font-bold text-purple-600">1:{strategyAnswers.reward?.riskRewardRatio || 2}</div>
+              <div className="font-bold text-purple-600">1:2</div>
             </div>
           </div>
         </CardContent>
