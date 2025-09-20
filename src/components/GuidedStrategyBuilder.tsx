@@ -5,40 +5,33 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { RiskToleranceStep } from './guided-strategy/RiskToleranceStep';  
-import { RewardStep } from './guided-strategy/RewardStep';
 import { StyleStep } from './guided-strategy/StyleStep';
 import { StrategyProposal } from './guided-strategy/StrategyProposal';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface GuidedStrategyAnswers {
-  market: {
-    instrumentCategory?: string;
-    instrument?: string;
+  market?: {
+    instrument: string;
     timeframes: string[];
+    tradingHours: string;
   };
-  riskTolerance: {
-    accountPrinciple: number;
-    currency?: string;
+  risk?: {
+    tolerance: string;
+    maxDrawdown: number;
+    riskPerTrade: number;
     leverage: number;
-    maxDrawdown: number | null; // Now optional
-    riskPerTrade: number | null; // Now optional
   };
-  reward: {
-    targetReturn: number;
-    winRate: number;
-    riskRewardRatio: number;
-  };
-  style: {
+  style?: {
     approach: string;
+    timeHorizon: string;
+    complexity: string;
   };
 }
 
 const steps = [
-  { id: 'market', title: 'Market', description: 'Choose your markets' },
-  { id: 'risk-tolerance', title: 'Risk Tolerance', description: 'Set risk parameters' },
-  { id: 'reward', title: 'Reward Profile', description: 'Define targets' },
-  { id: 'style', title: 'Trading Style', description: 'Pick approach' },
-  { id: 'proposal', title: 'Strategy Proposal', description: 'Review & save' }
+  { id: 'market', title: 'Market Selection', description: 'Choose your trading market' },
+  { id: 'risk', title: 'Risk Management', description: 'Set risk parameters' },
+  { id: 'style', title: 'Trading Style', description: 'Define your approach' },
 ];
 
 export interface GuidedStrategyBuilderProps {
@@ -59,11 +52,10 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   isBacktesting = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Partial<GuidedStrategyAnswers>>(initialStrategy?.answers || {
-    market: { instrumentCategory: '', instrument: '', timeframes: [] },
-    riskTolerance: { accountPrinciple: 10000, currency: 'USD', leverage: 1, maxDrawdown: null, riskPerTrade: null },
-    reward: { targetReturn: 15, winRate: 65, riskRewardRatio: 2 },
-    style: { approach: '' }
+  const [answers, setAnswers] = useState<GuidedStrategyAnswers>({
+    market: { instrument: 'EUR/USD', timeframes: ['1h'], tradingHours: 'london-ny' },
+    risk: { tolerance: 'moderate', maxDrawdown: 10, riskPerTrade: 2, leverage: 10 },
+    style: { approach: 'trend-following', timeHorizon: 'intraday', complexity: 'intermediate' },
   });
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const { hasFeatureAccess, subscriptionPlan } = useUserProfile();
@@ -75,9 +67,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       // Mark steps as completed based on loaded answers
       const completed = new Set<number>();
       if (initialStrategy.answers?.market) completed.add(0);
-      if (initialStrategy.answers?.riskTolerance) completed.add(1);
-      if (initialStrategy.answers?.reward) completed.add(2);
-      if (initialStrategy.answers?.style) completed.add(3);
+      if (initialStrategy.answers?.risk) completed.add(1);
+      if (initialStrategy.answers?.style) completed.add(2);
       setCompletedSteps(completed);
       onStrategyLoad?.();
     }
@@ -98,21 +89,14 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
     setCompletedSteps(prev => new Set([...prev, currentStep]));
   };
 
-  const isCurrentStepComplete = () => {
-    const step = steps[currentStep];
-    if (!step) return false;
-    
-    switch (step.id) {
-      case 'market':
-        return answers.market?.instrument && 
-               answers.market?.timeframes && 
-               answers.market.timeframes.length > 0;
-      case 'risk-tolerance':
-        return answers.riskTolerance?.accountPrinciple && answers.riskTolerance?.leverage;
-      case 'reward':
-        return answers.reward?.targetReturn && answers.reward?.winRate && answers.reward?.riskRewardRatio;
-      case 'style':
-        return !!answers.style?.approach;
+  const isCurrentStepComplete = (): boolean => {
+    switch (currentStep) {
+      case 0: // market
+        return !!answers.market?.instrument && !!answers.market?.timeframes?.length && !!answers.market?.tradingHours;
+      case 1: // risk
+        return !!answers.risk?.tolerance && !!answers.risk?.maxDrawdown !== undefined && !!answers.risk?.riskPerTrade !== undefined && !!answers.risk?.leverage;
+      case 2: // style
+        return !!answers.style?.approach && !!answers.style?.timeHorizon && !!answers.style?.complexity;
       default:
         return false;
     }
@@ -132,32 +116,22 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
 
   const renderStep = () => {
     const stepProps = {
-      answers: answers,
+      answers,
       onAnswersChange: updateAnswers,
-      subscriptionPlan
+      subscriptionPlan: 'premium'
     };
 
-    switch (steps[currentStep]?.id) {
-      case 'market':
+    switch (currentStep) {
+      case 0:
         return <MarketStep {...stepProps} />;
-      case 'risk-tolerance':
+      case 1:
         return <RiskToleranceStep {...stepProps} />;
-      case 'reward':
-        return <RewardStep {...stepProps} />;
-      case 'style':
+      case 2:
         return <StyleStep {...stepProps} />;
-      case 'proposal':
-        return (
-          <StrategyProposal 
-            answers={answers as GuidedStrategyAnswers}
-            onSaveStrategy={onSaveStrategy}
-            onBacktest={onBacktest}
-            subscriptionPlan={subscriptionPlan}
-            isBacktesting={isBacktesting}
-          />
-        );
+      case 3:
+        return <StrategyProposal {...stepProps} onSaveStrategy={onSaveStrategy} onBacktest={onBacktest} />;
       default:
-        return <div>Step not found</div>;
+        return null;
     }
   };
 
@@ -177,23 +151,36 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
           
           <Progress value={progressPercentage} className="mb-4" />
           
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                completedSteps.has(currentStep) 
-                  ? 'bg-primary' 
-                  : 'bg-muted border-2 border-primary'
+        <div className="flex items-center justify-center space-x-2">
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                index <= currentStep 
+                  ? 'bg-primary text-white' 
+                  : 'bg-muted text-muted-foreground'
               }`}>
-                {completedSteps.has(currentStep) && (
-                  <Check className="w-2 h-2 text-primary-foreground m-0.5" />
-                )}
+                {index + 1}
               </div>
-              <span className="font-medium">{steps[currentStep].title}</span>
+              {index < steps.length - 1 && (
+                <div className={`w-12 h-0.5 mx-2 ${
+                  index < currentStep ? 'bg-primary' : 'bg-muted'
+                }`} />
+              )}
             </div>
-            <span className="text-muted-foreground">
-              {steps[currentStep].description}
-            </span>
+          ))}
+        </div>
+
+        {currentStep < steps.length ? (
+          <div className="text-center mt-4">
+            <h2 className="text-xl font-semibold">{steps[currentStep].title}</h2>
+            <p className="text-muted-foreground">{steps[currentStep].description}</p>
           </div>
+        ) : (
+          <div className="text-center mt-4">
+            <h2 className="text-xl font-semibold">Strategy Configuration</h2>
+            <p className="text-muted-foreground">Review and generate your strategy</p>
+          </div>
+        )}
         </CardHeader>
       </Card>
 
@@ -203,33 +190,60 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
       </div>
 
       {/* Sticky Navigation at Bottom */}
-      {currentStep < steps.length - 1 && (
+      {currentStep < steps.length && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-50">
           <div className="container mx-auto max-w-4xl">
             <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 0}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Previous
-              </Button>
-              
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                Step {currentStep + 1} of {steps.length}
-              </div>
-              
-              <Button
-                onClick={handleNext}
-                disabled={!isCurrentStepComplete()}
-                className="flex items-center gap-2"
-                size="default"
-              >
-                Next
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              {currentStep < steps.length ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    disabled={currentStep === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    Step {currentStep + 1} of {steps.length}
+                  </div>
+                  
+                  {currentStep < steps.length - 1 ? (
+                    <Button
+                      onClick={handleNext}
+                      disabled={!isCurrentStepComplete()}
+                      className="flex items-center gap-2"
+                      size="default"
+                    >
+                      Next
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setCurrentStep(3)}
+                      disabled={!isCurrentStepComplete()}
+                      className="flex items-center gap-2"
+                      size="default"
+                    >
+                      Generate Strategy
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <div className="w-full text-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(2)}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Settings
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

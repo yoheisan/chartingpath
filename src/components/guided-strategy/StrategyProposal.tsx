@@ -29,17 +29,19 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface StrategyProposalProps {
   answers: GuidedStrategyAnswers;
+  onAnswersChange: (stepKey: keyof GuidedStrategyAnswers, stepAnswers: any) => void;
+  subscriptionPlan: string;
   onSaveStrategy?: (strategy: any) => void;
   onBacktest?: () => void;
-  subscriptionPlan: string;
   isBacktesting?: boolean;
 }
 
 export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   answers,
+  onAnswersChange,
+  subscriptionPlan,
   onSaveStrategy,
   onBacktest,
-  subscriptionPlan,
   isBacktesting: externalIsBacktesting = false
 }) => {
   const [backtestResults, setBacktestResults] = useState<BacktestData | null>(null);
@@ -61,10 +63,10 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
   };
 
   const generateStrategyDescription = () => {
-    const { market, style, riskTolerance, reward } = answers;
+    const { market, style, risk } = answers;
     
-    return `A ${style?.approach?.replace('-', ' ')} strategy for ${market?.instrument || 'selected instrument'} targeting ${reward?.targetReturn}% annual returns with ${reward?.winRate}% win rate. 
-    Trades ${market?.timeframes?.join(', ')} timeframes with ${riskTolerance?.maxDrawdown}% max drawdown tolerance.`;
+    return `A ${style?.approach?.replace('-', ' ')} strategy for ${market?.instrument || 'selected instrument'} with ${risk?.tolerance || 'moderate'} risk tolerance. 
+    Trades ${market?.timeframes?.join(', ')} timeframes with ${risk?.maxDrawdown || 'no'} drawdown limit.`;
   };
 
   const canBacktest = () => {
@@ -126,11 +128,11 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
     // Simulate backtest - replace with actual backtest logic
     setTimeout(() => {
       const mockResults: BacktestData = {
-        winRate: Math.max(45, Math.min(75, answers.reward?.winRate + (Math.random() - 0.5) * 20)).toFixed(1),
-        riskReward: Math.max(1.2, Math.min(3.5, answers.reward?.riskRewardRatio + (Math.random() - 0.5) * 0.8)).toFixed(1),
+        winRate: Math.max(45, Math.min(75, 60 + (Math.random() - 0.5) * 20)).toFixed(1),
+        riskReward: Math.max(1.2, Math.min(3.5, 2 + (Math.random() - 0.5) * 0.8)).toFixed(1),
         testPeriod: subscriptionPlan?.toLowerCase() === 'starter' ? '1Y' : '3Y',
         totalTrades: Math.floor(150 + Math.random() * 300),
-        maxDrawdown: Math.max(5, Math.min(25, answers.riskTolerance?.maxDrawdown + (Math.random() - 0.5) * 8)).toFixed(1),
+        maxDrawdown: Math.max(5, Math.min(25, (answers.risk?.maxDrawdown || 10) + (Math.random() - 0.5) * 8)).toFixed(1),
         instrument: 'Selected Instrument',
         timeframe: answers.market?.timeframes?.[0] || '1h'
       };
@@ -207,26 +209,21 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
             {generateStrategyDescription()}
           </p>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center p-3 border rounded-lg">
-              <Target className="w-5 h-5 mx-auto mb-1 text-blue-600" />
-              <div className="text-sm font-medium">Target Return</div>
-              <div className="text-lg font-bold text-blue-600">{answers.reward?.targetReturn}%</div>
+              <Shield className="w-5 h-5 mx-auto mb-1 text-orange-600" />
+              <div className="text-sm font-medium">Risk Level</div>
+              <div className="text-lg font-bold text-orange-600">{answers.risk?.tolerance || 'Moderate'}</div>
             </div>
             <div className="text-center p-3 border rounded-lg">
               <TrendingUp className="w-5 h-5 mx-auto mb-1 text-green-600" />
-              <div className="text-sm font-medium">Win Rate</div>
-              <div className="text-lg font-bold text-green-600">{answers.reward?.winRate}%</div>
-            </div>
-            <div className="text-center p-3 border rounded-lg">
-              <Shield className="w-5 h-5 mx-auto mb-1 text-orange-600" />
               <div className="text-sm font-medium">Max Drawdown</div>
-              <div className="text-lg font-bold text-orange-600">{answers.riskTolerance?.maxDrawdown}%</div>
+              <div className="text-lg font-bold text-green-600">{answers.risk?.maxDrawdown || 'No Limit'}</div>
             </div>
             <div className="text-center p-3 border rounded-lg">
               <BarChart3 className="w-5 h-5 mx-auto mb-1 text-purple-600" />
-              <div className="text-sm font-medium">Risk/Reward</div>
-              <div className="text-lg font-bold text-purple-600">1:{answers.reward?.riskRewardRatio}</div>
+              <div className="text-sm font-medium">Leverage</div>
+              <div className="text-lg font-bold text-purple-600">1:{answers.risk?.leverage || 10}</div>
             </div>
           </div>
         </CardContent>
@@ -257,29 +254,30 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               </h4>
                <ul className="space-y-1 text-sm text-muted-foreground">
                  <li>• Approach: {answers.style?.approach?.replace('-', ' ')}</li>
+                 <li>• Time Horizon: {answers.style?.timeHorizon}</li>
                </ul>
             </div>
             
             <div>
               <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Target className="w-4 h-4" />
-                Risk Parameters
+                Risk Management
               </h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Max Drawdown: {answers.riskTolerance?.maxDrawdown}%</li>
-                <li>• Risk Per Trade: {answers.riskTolerance?.riskPerTrade}%</li>
+                <li>• Tolerance: {answers.risk?.tolerance}</li>
+                <li>• Max Drawdown: {answers.risk?.maxDrawdown ? `${answers.risk.maxDrawdown}%` : 'No Limit'}</li>
+                <li>• Risk Per Trade: {answers.risk?.riskPerTrade ? `${answers.risk.riskPerTrade}%` : 'Full Capital'}</li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Targets
+                Parameters
               </h4>
                <ul className="space-y-1 text-sm text-muted-foreground">
-                 <li>• Target Return: {answers.reward?.targetReturn}%</li>
-                 <li>• Win Rate: {answers.reward?.winRate}%</li>
-                 <li>• Risk:Reward: {answers.reward?.riskRewardRatio}:1</li>
+                 <li>• Leverage: 1:{answers.risk?.leverage || 10}</li>
+                 <li>• Complexity: {answers.style?.complexity}</li>
                </ul>
             </div>
           </div>

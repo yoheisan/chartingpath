@@ -171,7 +171,7 @@ export const GuidedStrategyManager: React.FC<GuidedStrategyManagerProps> = ({
     return {
       timeframe: answers.market?.timeframes?.[0] || 'N/A',
       approach: answers.style?.approach?.replace('-', ' ') || 'N/A',
-      targetReturn: answers.reward?.targetReturn ? `${answers.reward.targetReturn}%` : 'N/A'
+      targetReturn: 'N/A'
     };
   };
 

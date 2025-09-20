@@ -32,12 +32,11 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
   onAnswersChange,
   subscriptionPlan
 }) => {
-  const currentAnswers = answers.riskTolerance || {
-    accountPrinciple: 10000,
-    currency: 'USD',
-    leverage: 1,
+  const currentAnswers = answers.risk || {
+    tolerance: 'moderate',
     maxDrawdown: null, // Start as disabled
-    riskPerTrade: null // Start as disabled
+    riskPerTrade: null, // Start as disabled
+    leverage: 10
   };
 
   // Track toggle states
@@ -49,10 +48,10 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
       ...currentAnswers,
       [field]: value[0]
     };
-    onAnswersChange('riskTolerance', newAnswers);
+    onAnswersChange('risk', newAnswers);
   };
 
-  const selectedCurrency = majorCurrencies.find(c => c.code === (currentAnswers.currency || 'USD')) || majorCurrencies[0];
+  const selectedCurrency = { symbol: '$' };
   
   const formatAmount = (amount: number) => {
     return `${selectedCurrency.symbol}${amount.toLocaleString()}`;
@@ -98,9 +97,9 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Banknote className="w-5 h-5 text-primary" />
-              <Label className="text-base font-medium">
-                Account Principle (Starting Capital)
-              </Label>
+            <Label className="text-base font-medium">
+              Risk Tolerance Level
+            </Label>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
@@ -112,23 +111,22 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 </TooltipContent>
               </Tooltip>
             </div>
-            <Input
-              type="number"
-              value={currentAnswers.accountPrinciple ?? ''}
+            <select
+              value={currentAnswers.tolerance || 'moderate'}
               onChange={(e) => {
-                const value = e.target.value;
-                onAnswersChange('riskTolerance', {
+                onAnswersChange('risk', {
                   ...currentAnswers,
-                  accountPrinciple: value === '' ? '' : parseFloat(value)
+                  tolerance: e.target.value
                 });
               }}
-              min={0}
-              step={1000}
-              className="text-lg font-medium"
-              placeholder="Enter starting capital (e.g., 10000)"
-            />
+              className="w-full p-2 border border-input bg-background rounded-md"
+            >
+              <option value="conservative">Conservative</option>
+              <option value="moderate">Moderate</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
             <p className="text-sm text-muted-foreground">
-              Enter your total trading capital (can be zero for paper trading)
+              Select your overall risk comfort level
             </p>
           </div>
 
@@ -154,7 +152,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
               type="number"
               value={currentAnswers.leverage || 1}
               onChange={(e) => 
-                onAnswersChange('riskTolerance', {
+                onAnswersChange('risk', {
                   ...currentAnswers,
                   leverage: parseFloat(e.target.value) || 1
                 })
@@ -194,7 +192,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                       ...currentAnswers,
                       maxDrawdown: checked ? 10 : null
                     };
-                    onAnswersChange('riskTolerance', newAnswers);
+                    onAnswersChange('risk', newAnswers);
                   }}
                 />
                 <span className="text-sm text-muted-foreground">
@@ -210,7 +208,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                   <div className="flex items-center gap-2">
                     <RiskIcon className={`w-4 h-4 ${riskLevel.color}`} />
                     <span className={`font-medium ${riskLevel.color}`}>
-                      {currentAnswers.maxDrawdown}% ({formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))})
+                      {currentAnswers.maxDrawdown}%
                     </span>
                   </div>
                 </div>
@@ -258,7 +256,7 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                       ...currentAnswers,
                       riskPerTrade: checked ? 2 : null
                     };
-                    onAnswersChange('riskTolerance', newAnswers);
+                    onAnswersChange('risk', newAnswers);
                   }}
                 />
                 <span className="text-sm text-muted-foreground">
@@ -306,9 +304,9 @@ export const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({
                 Risk Profile Summary
               </h4>
               <div className="space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>• Account Principle: {formatAmount(currentAnswers.accountPrinciple || 0)} ({currentAnswers.currency || 'USD'})</p>
-                <p>• Leverage: 1:{currentAnswers.leverage || 1}</p>
-                <p>• Max Drawdown: {useMaxDrawdown ? `${currentAnswers.maxDrawdown}% (${formatAmount(((currentAnswers.accountPrinciple || 0) * (currentAnswers.maxDrawdown || 10) / 100))}) - ${riskLevel.level}` : 'No Limit - Strategy runs to completion'}</p>
+                <p>• Risk Tolerance: {currentAnswers.tolerance || 'Moderate'}</p>
+                <p>• Leverage: 1:{currentAnswers.leverage || 10}</p>
+                <p>• Max Drawdown: {useMaxDrawdown ? `${currentAnswers.maxDrawdown}% - ${riskLevel.level}` : 'No Limit - Strategy runs to completion'}</p>
                 <p>• Risk Per Trade: {useRiskPerTrade ? `${currentAnswers.riskPerTrade}% of account` : 'Full Capital Mode'}</p>
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
