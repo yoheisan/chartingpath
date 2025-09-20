@@ -9,163 +9,92 @@ export interface StrategyConfig {
 
 export class PineScriptEngine {
   private static getStrategyConfig(strategy: any): StrategyConfig {
-    const { name, category, indicators } = strategy;
+    const { name, answers } = strategy;
+    const approach = answers?.style?.approach || 'trend-following';
     
-    // Map each strategy to its specific signals and filters
-    switch (category) {
-      case "MACD":
+    // Map trading approach to specific indicators and signals
+    switch (approach) {
+      case "trend-following":
         return {
-          name,
+          name: name || "Trend Following Strategy",
           indicators: ["MACD", "EMA", "Volume"],
-          primarySignals: [
-            name.includes("Golden Cross") ? "macdCrossUp" : 
-            name.includes("Divergence") ? "macdDivergence" :
-            name.includes("Zero Line") ? "macdZeroBounce" :
-            name.includes("Histogram") ? "macdHistogram" :
-            name.includes("Triple Screen") ? "macdTripleScreen" : "macdCrossUp"
-          ],
+          primarySignals: ["macdCrossUp", "emaTrendConfirm"],
           entryFilters: ["trendFilter", "volumeFilter"],
           exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
         };
 
-      case "RSI":
+      case "mean-reversion":
         return {
-          name,
-          indicators: ["RSI", "EMA", "Volume"],
-          primarySignals: [
-            name.includes("Divergence") ? "rsiDivergence" :
-            name.includes("50 Line") ? "rsi50Line" :
-            name.includes("Overbought") ? "rsiOverboughtOversold" :
-            name.includes("Failure") ? "rsiFailureSwing" :
-            name.includes("Cutler") ? "rsiCutler" : "rsi50Line"
-          ],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
-        };
-
-      case "Bollinger Bands":
-        return {
-          name,
-          indicators: ["BollingerBands", "Volume", "ATR"],
-          primarySignals: [
-            name.includes("Squeeze") ? "bbSqueeze" :
-            name.includes("Mean Reversion") ? "bbMeanReversion" :
-            name.includes("Walk") ? "bbWalk" :
-            name.includes("Double") ? "bbDouble" :
-            name.includes("Reversal") ? "bbReversal" : "bbSqueeze"
-          ],
+          name: name || "Mean Reversion Strategy", 
+          indicators: ["RSI", "BollingerBands", "Volume"],
+          primarySignals: ["rsiOverboughtOversold", "bbMeanReversion"],
           entryFilters: ["volumeFilter"],
           exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
         };
 
-      case "Moving Averages":
+      case "breakout":
         return {
-          name,
-          indicators: ["EMA", "Volume"],
-          primarySignals: [
-            name.includes("Golden Cross") ? "maGoldenCross" :
-            name.includes("Triple") ? "maTripleCross" :
-            name.includes("VWAP") ? "vwapBounce" :
-            name.includes("Hull") ? "hullMA" :
-            name.includes("Adaptive") ? "adaptiveMA" : "maGoldenCross"
-          ],
-          entryFilters: ["volumeFilter"],
+          name: name || "Breakout Strategy",
+          indicators: ["ATR", "EMA", "Volume"],
+          primarySignals: ["volumeBreakout", "atrBreakout"],
+          entryFilters: ["volumeFilter", "atrFilter"],
           exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
         };
 
-      case "Stochastic":
-      case "Williams %R":
-      case "CCI": 
-      case "Momentum":
+      case "arbitrage":
         return {
-          name,
-          indicators: ["Stochastic", "EMA", "Volume"],
-          primarySignals: [
-            name.includes("Stochastic") ? "stochCross" :
-            name.includes("Williams") ? "williamsR" :
-            name.includes("CCI") ? "cciZeroCross" :
-            name.includes("ROC") ? "rocMomentum" :
-            name.includes("PMO") ? "pmoSignal" : "stochCross"
-          ],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
-        };
-
-      case "Volume":
-        if (name.includes("VPT") || name.includes("Volume Price Trend")) {
-          return {
-            name,
-            indicators: ["VPT", "EMA", "Volume"],
-            primarySignals: ["vptCrossover"],
-            entryFilters: ["trendFilter", "volumeFilter", "vptMomentum"],
-            exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"],
-            specialParams: { smoothVPT: 0, vptSigLen: 20, slopeLookback: 5 }
-          };
-        }
-        return {
-          name,
-          indicators: ["OBV", "ADX", "ParabolicSAR", "EMA", "Volume"],
-          primarySignals: [
-            name.includes("OBV") ? "obvTrend" :
-            name.includes("ADX") ? "adxFilter" :
-            name.includes("Parabolic") ? "sarTrend" : "obvTrend"
-          ],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
-        };
-
-      case "Fibonacci":
-      case "Ichimoku":
-      case "Pivot Points":
-        return {
-          name,
-          indicators: ["SupportResistance", "EMA", "Volume"],
-          primarySignals: [
-            name.includes("Fibonacci") ? "fiboBounce" :
-            name.includes("Ichimoku") ? "ichimokuBreakout" :
-            name.includes("Pivot") ? "pivotBounce" : "fiboBounce"
-          ],
-          entryFilters: ["volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
-        };
-
-      case "Advanced":
-      case "Multi-Indicator":
-      case "Trend Following":
-        return {
-          name,
-          indicators: ["MACD", "RSI", "BollingerBands", "EMA", "Volume"],
-          primarySignals: ["tripleConfirmation", "mtfAlignment"],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"],
-          specialParams: { confirmTimeframe: "4h" }
-        };
-
-      case "Scalping":
-      case "Swing Trading":
-      case "Mean Reversion":
-      case "Breakout":
-        return {
-          name,
-          indicators: ["EMA", "RSI", "Volume"],
-          primarySignals: [
-            name.includes("Scalping") ? "fastEMAScalp" :
-            name.includes("Swing") ? "weeklySwing" :
-            name.includes("Mean Reversion") ? "oversoldBounce" :
-            name.includes("Breakout") ? "volumeBreakout" : "fastEMAScalp"
-          ],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
+          name: name || "Arbitrage Strategy",
+          indicators: ["Correlation", "ZScore", "Volume"],
+          primarySignals: ["zscoreEntry", "correlationDivergence"],
+          entryFilters: ["correlationFilter"],
+          exitConditions: ["zscoreExit", "stopLoss", "takeProfit"],
+          specialParams: { lookback: 252, entryThreshold: 2.0, exitThreshold: 0.5 }
         };
 
       default:
-        return {
-          name,
-          indicators: ["EMA", "RSI", "Volume"],
-          primarySignals: ["basicTrend"],
-          entryFilters: ["trendFilter", "volumeFilter"],
-          exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
-        };
+        // Fallback to original category-based logic for backward compatibility
+        const { category } = strategy;
+        switch (category) {
+          case "MACD":
+            return {
+              name,
+              indicators: ["MACD", "EMA", "Volume"],
+              primarySignals: [
+                name?.includes("Golden Cross") ? "macdCrossUp" : 
+                name?.includes("Divergence") ? "macdDivergence" :
+                name?.includes("Zero Line") ? "macdZeroBounce" :
+                name?.includes("Histogram") ? "macdHistogram" :
+                name?.includes("Triple Screen") ? "macdTripleScreen" : "macdCrossUp"
+              ],
+              entryFilters: ["trendFilter", "volumeFilter"],
+              exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
+            };
+
+          case "RSI":
+            return {
+              name,
+              indicators: ["RSI", "EMA", "Volume"],
+              primarySignals: [
+                name?.includes("Divergence") ? "rsiDivergence" :
+                name?.includes("50 Line") ? "rsi50Line" :
+                name?.includes("Overbought") ? "rsiOverboughtOversold" :
+                name?.includes("Failure") ? "rsiFailureSwing" :
+                name?.includes("Cutler") ? "rsiCutler" : "rsi50Line"
+              ],
+              entryFilters: ["trendFilter", "volumeFilter"],
+              exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
+            };
+
+          // Keep other category cases for backward compatibility...
+          default:
+            return {
+              name: name || "Custom Strategy",
+              indicators: ["EMA", "RSI", "Volume"],
+              primarySignals: ["basicTrend"],
+              entryFilters: ["trendFilter", "volumeFilter"],
+              exitConditions: ["oppositeSignal", "stopLoss", "takeProfit"]
+            };
+        }
     }
   }
 

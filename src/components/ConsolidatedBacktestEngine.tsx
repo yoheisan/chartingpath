@@ -74,18 +74,6 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
   const [useRiskPerTrade, setUseRiskPerTrade] = useState(false);
   const [useMaxDrawdown, setUseMaxDrawdown] = useState(false);
   
-  // Initialize params from strategy answers
-  const [params, setParams] = useState<BacktestParams>({
-    instrument: strategyAnswers.market?.instrument || '',
-    timeframe: strategyAnswers.market?.timeframes?.[0] || '',
-    fromDate: getDefaultFromDate(),
-    toDate: getDefaultToDate(),
-    initialCapital: 10000,
-    riskPerTrade: strategyAnswers.risk?.riskPerTrade || null, // Now optional
-    commission: 0.1,
-    slippage: 0.05
-  });
-
   // Get subscription-based capabilities
   const isElite = subscriptionPlan?.toLowerCase() === 'elite';
   const hasV2Access = hasFeatureAccess('backtester_v2');
@@ -113,6 +101,18 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
   function getDefaultToDate(): string {
     return new Date().toISOString().split('T')[0];
   }
+
+  // Initialize params from strategy answers
+  const [params, setParams] = useState<BacktestParams>({
+    instrument: strategyAnswers.market?.instrument || '',
+    timeframe: strategyAnswers.market?.timeframes?.[0] || '',
+    fromDate: getDefaultFromDate(),
+    toDate: getDefaultToDate(),
+    initialCapital: 10000,
+    riskPerTrade: strategyAnswers.risk?.riskPerTrade || null, // Now optional
+    commission: 0.1,
+    slippage: 0.05
+  });
 
   // Update params when strategy answers change
   useEffect(() => {
