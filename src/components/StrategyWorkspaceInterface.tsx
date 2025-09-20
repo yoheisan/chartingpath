@@ -87,15 +87,14 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     toast.success('Strategy saved successfully!');
   };
 
-  // Navigate to backtest section when strategy is ready
+  // Navigate to backtest section when strategy is ready (now integrated in builder)
   const handleMoveToBacktest = () => {
     if (!strategyAnswers.market?.instrument || !strategyAnswers.market?.timeframes || strategyAnswers.market.timeframes.length === 0 || !strategyAnswers.style?.approach) {
       toast.error('Please complete the strategy building process first (instrument, timeframe, and approach required)');
       return;
     }
-    // Switch to the backtest tab
-    setActiveTab('backtest');
-    toast.success('Switched to Backtest Engine');
+    // Stay in builder tab since backtest is now integrated
+    toast.success('Continue to the Backtest step within Strategy Builder');
   };
 
   const isStrategyComplete = () => {
@@ -147,11 +146,11 @@ export const StrategyWorkspaceInterface: React.FC = () => {
             </div>
             Strategy Workspace
             <Badge className="bg-gradient-to-r from-primary to-accent text-white">
-              Unified Platform
+              Unified Builder & Tester
             </Badge>
           </CardTitle>
           <p className="text-muted-foreground">
-            Build, save, and backtest your trading strategies in one seamless workflow
+            Build, configure, test, and save your trading strategies in one seamless workflow
           </p>
         </CardHeader>
       </Card>
@@ -166,7 +165,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
                   Strategy Connected
                 </p>
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  Parameters automatically synced from Strategy Builder
+                  Ready for advanced configuration and backtesting
                 </p>
                 <p className="text-xs text-green-500 dark:text-green-300 mt-1">
                   "{currentStrategy.name}" has been loaded successfully from My Strategies
@@ -174,12 +173,12 @@ export const StrategyWorkspaceInterface: React.FC = () => {
               </div>
               {isStrategyComplete() && (
                 <Button 
-                  onClick={handleMoveToBacktest} 
+                  onClick={() => setActiveTab('builder')} 
                   size="sm"
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Test Strategy
+                  Continue Building
                 </Button>
               )}
             </div>
@@ -199,7 +198,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
-            Strategy Builder
+            Strategy Builder & Tester
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
