@@ -19,11 +19,11 @@ import {
   BarChart3,
   AlertTriangle
 } from 'lucide-react';
-import { IndicatorLibrary } from './chartingpath/IndicatorLibrary';
+import { PatternLibrary } from './chartingpath/PatternLibrary';
 import { SignalBuilder } from './chartingpath/SignalBuilder';
 import { StrategyModules } from './chartingpath/StrategyModules';
 import { MoneyManagement } from './chartingpath/MoneyManagement';
-import { BacktestEngine } from './chartingpath/BacktestEngine';
+import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
 import { PresetManager } from './chartingpath/PresetManager';
 
@@ -31,6 +31,7 @@ export interface ChartingPathStrategy {
   id?: string;
   name: string;
   description?: string;
+  patterns: any[];
   indicators: any[];
   signals: any[];
   riskManagement: any;
@@ -40,6 +41,12 @@ export interface ChartingPathStrategy {
   takeProfit: any;
   advancedControls: any;
   sessionFilters: any;
+  multiPatternSettings: {
+    maxConcurrentPatterns: number;
+    patternPriority: 'first' | 'highest_probability' | 'risk_reward';
+    deduplication: boolean;
+    portfolioRiskCap: number;
+  };
   backtestResults?: any;
   created_at?: Date;
   updated_at?: Date;
@@ -58,8 +65,9 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 }) => {
   const [strategy, setStrategy] = useState<ChartingPathStrategy>(
     initialStrategy || {
-      name: 'New Professional Strategy',
-      description: 'Custom strategy built with ChartingPath Builder',
+      name: 'New Professional Pattern Strategy',
+      description: 'Multi-pattern strategy built with ChartingPath Builder',
+      patterns: [],
       indicators: [],
       signals: [],
       riskManagement: {
@@ -81,12 +89,12 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         pending: false
       },
       stopLoss: {
-        type: 'atr',
+        type: 'pattern',
         value: 2.0,
         trailing: false
       },
       takeProfit: {
-        type: 'ratio',
+        type: 'pattern',
         value: 2.0,
         trailing: false
       },
@@ -100,6 +108,12 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         enabled: false,
         sessions: [],
         excludeNews: false
+      },
+      multiPatternSettings: {
+        maxConcurrentPatterns: 3,
+        patternPriority: 'highest_probability',
+        deduplication: true,
+        portfolioRiskCap: 6.0
       }
     }
   );
@@ -137,8 +151,8 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     let completed = 0;
     let total = 6;
 
-    if (strategy.indicators.length > 0) completed++;
-    if (strategy.signals.length > 0) completed++;
+    if (strategy.patterns.length > 0) completed++;
+    if (strategy.patterns.length > 0 && strategy.multiPatternSettings) completed++;
     if (strategy.riskManagement) completed++;
     if (strategy.moneyManagement) completed++;
     if (strategy.stopLoss && strategy.takeProfit) completed++;
@@ -148,7 +162,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   };
 
   const canBacktest = () => {
-    return strategy.indicators.length > 0 && strategy.signals.length > 0;
+    return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
   };
 
   return (
@@ -165,7 +179,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                 ChartingPath Strategy Builder
               </CardTitle>
               <p className="text-muted-foreground mt-2">
-                Design, test, and deploy professional trading strategies with visual clarity and smart defaults
+                Build multi-pattern trading strategies using professional chart patterns with the Detect → Confirm → Enter → Manage → Invalidate framework
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -235,9 +249,9 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-7 mb-6">
-              <TabsTrigger value="indicators" className="flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                <span className="hidden sm:inline">Indicators</span>
+              <TabsTrigger value="patterns" className="flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">Patterns</span>
               </TabsTrigger>
               <TabsTrigger value="signals" className="flex items-center gap-2">
                 <Zap className="w-4 h-4" />
@@ -265,15 +279,16 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="indicators" className="mt-6">
-              <IndicatorLibrary
-                indicators={strategy.indicators}
-                onChange={(indicators) => updateStrategy('indicators', indicators)}
+            <TabsContent value="patterns" className="mt-6">
+              <PatternLibrary
+                patterns={strategy.patterns}
+                onChange={(patterns) => updateStrategy('patterns', patterns)}
               />
             </TabsContent>
 
             <TabsContent value="signals" className="mt-6">
               <SignalBuilder
+                patterns={strategy.patterns}
                 indicators={strategy.indicators}
                 signals={strategy.signals}
                 onChange={(signals) => updateStrategy('signals', signals)}
@@ -299,7 +314,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             </TabsContent>
 
             <TabsContent value="backtest" className="mt-6">
-              <BacktestEngine
+              <EnhancedBacktestEngine
                 strategy={strategy}
                 results={backtestResults}
                 isRunning={isBacktesting}
@@ -329,12 +344,16 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                <span>{strategy.indicators.length} Indicators</span>
+                <Target className="w-4 h-4 text-primary" />
+                <span>{strategy.patterns.length} Patterns</span>
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-accent" />
                 <span>{strategy.signals.length} Signals</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                <span>Max {strategy.multiPatternSettings?.maxConcurrentPatterns || 3} Concurrent</span>
               </div>
               {backtestResults && (
                 <div className="flex items-center gap-2">

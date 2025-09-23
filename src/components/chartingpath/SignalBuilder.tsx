@@ -84,12 +84,14 @@ interface SignalCondition {
 }
 
 interface SignalBuilderProps {
+  patterns?: any[];
   indicators: any[];
   signals: Signal[];
   onChange: (signals: Signal[]) => void;
 }
 
 export const SignalBuilder: React.FC<SignalBuilderProps> = ({ 
+  patterns = [],
   indicators, 
   signals, 
   onChange 
