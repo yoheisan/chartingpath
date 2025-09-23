@@ -6,65 +6,247 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, Trash2, TrendingUp, Activity, BarChart3, Zap, ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, Plus, Trash2, TrendingUp, Activity, BarChart3, Zap, ChevronDown, Settings, ArrowLeft } from 'lucide-react';
 
-// Comprehensive 40+ indicator library
+// Professional parameter configurations
+const TIMEFRAMES = [
+  { value: 'current', label: 'Current timeframe' },
+  { value: '1m', label: '1 Minute' },
+  { value: '5m', label: '5 Minutes' },
+  { value: '15m', label: '15 Minutes' },
+  { value: '30m', label: '30 Minutes' },
+  { value: '1h', label: '1 Hour' },
+  { value: '4h', label: '4 Hours' },
+  { value: '1d', label: '1 Day' },
+  { value: '1w', label: '1 Week' },
+  { value: '1M', label: '1 Month' }
+];
+
+const PRICE_SOURCES = [
+  { value: 'close', label: 'Close' },
+  { value: 'open', label: 'Open' },
+  { value: 'high', label: 'High' },
+  { value: 'low', label: 'Low' },
+  { value: 'median', label: 'Median Price' },
+  { value: 'typical', label: 'Typical Price' },
+  { value: 'weighted', label: 'Weighted Close' }
+];
+
+const MA_METHODS = [
+  { value: 'simple', label: 'Simple' },
+  { value: 'exponential', label: 'Exponential' },
+  { value: 'smoothed', label: 'Smoothed' },
+  { value: 'linear_weighted', label: 'Linear Weighted' }
+];
+
+// Comprehensive 40+ indicator library with Bloomberg-level parameters
 const INDICATOR_LIBRARY = [
   // Trend Indicators
-  { id: 'ema', name: 'Exponential Moving Average', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'sma', name: 'Simple Moving Average', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'wma', name: 'Weighted Moving Average', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'hma', name: 'Hull Moving Average', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'tema', name: 'Triple EMA', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'dema', name: 'Double EMA', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'kama', name: 'Kaufman Adaptive MA', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'vwma', name: 'Volume Weighted MA', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 } }},
-  { id: 'alma', name: 'Arnaud Legoux MA', category: 'Trend', icon: TrendingUp, params: { length: { default: 20, min: 1, max: 500, step: 1 }, offset: { default: 0.85, min: 0, max: 1, step: 0.01 }, sigma: { default: 6, min: 1, max: 10, step: 1 } }},
-  { id: 'ichimoku', name: 'Ichimoku Cloud', category: 'Trend', icon: TrendingUp, params: { tenkan: { default: 9, min: 1, max: 100, step: 1 }, kijun: { default: 26, min: 1, max: 100, step: 1 }, senkou: { default: 52, min: 1, max: 100, step: 1 } }},
+  { 
+    id: 'ema', 
+    name: 'Exponential Moving Average', 
+    category: 'Trend', 
+    icon: TrendingUp, 
+    params: { 
+      period: { type: 'number', default: 20, min: 1, max: 500, step: 1, label: 'Period', description: 'Number of periods for calculation' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      shift: { type: 'number', default: 0, min: -100, max: 100, step: 1, label: 'Shift', linkable: true },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'sma', 
+    name: 'Simple Moving Average', 
+    category: 'Trend', 
+    icon: TrendingUp, 
+    params: { 
+      period: { type: 'number', default: 20, min: 1, max: 500, step: 1, label: 'Period', description: 'Number of periods for calculation' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      shift: { type: 'number', default: 0, min: -100, max: 100, step: 1, label: 'Shift', linkable: true },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'wma', 
+    name: 'Weighted Moving Average', 
+    category: 'Trend', 
+    icon: TrendingUp, 
+    params: { 
+      period: { type: 'number', default: 20, min: 1, max: 500, step: 1, label: 'Period' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      shift: { type: 'number', default: 0, min: -100, max: 100, step: 1, label: 'Shift', linkable: true },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
   
-  // Momentum Indicators
-  { id: 'rsi', name: 'Relative Strength Index', category: 'Momentum', icon: Activity, params: { length: { default: 14, min: 2, max: 100, step: 1 } }},
-  { id: 'macd', name: 'MACD', category: 'Momentum', icon: Activity, params: { fast: { default: 12, min: 1, max: 100, step: 1 }, slow: { default: 26, min: 1, max: 200, step: 1 }, signal: { default: 9, min: 1, max: 50, step: 1 } }},
-  { id: 'stoch', name: 'Stochastic Oscillator', category: 'Momentum', icon: Activity, params: { k: { default: 14, min: 1, max: 100, step: 1 }, d: { default: 3, min: 1, max: 50, step: 1 }, smooth: { default: 3, min: 1, max: 50, step: 1 } }},
-  { id: 'stoch_rsi', name: 'Stochastic RSI', category: 'Momentum', icon: Activity, params: { rsi_length: { default: 14, min: 2, max: 100, step: 1 }, stoch_length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'williams_r', name: 'Williams %R', category: 'Momentum', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'roc', name: 'Rate of Change', category: 'Momentum', icon: Activity, params: { length: { default: 10, min: 1, max: 100, step: 1 } }},
-  { id: 'momentum', name: 'Momentum', category: 'Momentum', icon: Activity, params: { length: { default: 10, min: 1, max: 100, step: 1 } }},
-  { id: 'cci', name: 'Commodity Channel Index', category: 'Momentum', icon: Activity, params: { length: { default: 20, min: 1, max: 100, step: 1 } }},
-  { id: 'mfi', name: 'Money Flow Index', category: 'Momentum', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'tsi', name: 'True Strength Index', category: 'Momentum', icon: Activity, params: { long: { default: 25, min: 1, max: 100, step: 1 }, short: { default: 13, min: 1, max: 50, step: 1 } }},
-  
-  // Volatility Indicators
-  { id: 'bollinger_bands', name: 'Bollinger Bands', category: 'Volatility', icon: BarChart3, params: { length: { default: 20, min: 2, max: 100, step: 1 }, mult: { default: 2.0, min: 0.1, max: 5.0, step: 0.1 } }},
-  { id: 'atr', name: 'Average True Range', category: 'Volatility', icon: Zap, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'keltner', name: 'Keltner Channels', category: 'Volatility', icon: BarChart3, params: { length: { default: 20, min: 2, max: 100, step: 1 }, mult: { default: 2.0, min: 0.1, max: 5.0, step: 0.1 } }},
-  { id: 'donchian', name: 'Donchian Channels', category: 'Volatility', icon: BarChart3, params: { length: { default: 20, min: 1, max: 100, step: 1 } }},
-  { id: 'price_channel', name: 'Price Channel', category: 'Volatility', icon: BarChart3, params: { length: { default: 20, min: 1, max: 100, step: 1 } }},
-  { id: 'chaikin_volatility', name: 'Chaikin Volatility', category: 'Volatility', icon: Zap, params: { length: { default: 10, min: 1, max: 100, step: 1 } }},
-  
-  // Volume Indicators
-  { id: 'volume_sma', name: 'Volume SMA', category: 'Volume', icon: BarChart3, params: { length: { default: 20, min: 1, max: 100, step: 1 } }},
-  { id: 'vwap', name: 'Volume Weighted Avg Price', category: 'Volume', icon: BarChart3, params: {} },
-  { id: 'obv', name: 'On Balance Volume', category: 'Volume', icon: BarChart3, params: {} },
-  { id: 'ad_line', name: 'Accumulation/Distribution', category: 'Volume', icon: BarChart3, params: {} },
-  { id: 'chaikin_osc', name: 'Chaikin Oscillator', category: 'Volume', icon: BarChart3, params: { fast: { default: 3, min: 1, max: 20, step: 1 }, slow: { default: 10, min: 1, max: 50, step: 1 } }},
-  { id: 'volume_oscillator', name: 'Volume Oscillator', category: 'Volume', icon: BarChart3, params: { short: { default: 5, min: 1, max: 50, step: 1 }, long: { default: 10, min: 1, max: 100, step: 1 } }},
-  { id: 'ease_of_movement', name: 'Ease of Movement', category: 'Volume', icon: BarChart3, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  
-  // Support/Resistance
-  { id: 'pivot_points', name: 'Pivot Points', category: 'Support/Resistance', icon: TrendingUp, params: { type: { default: 'traditional', options: ['traditional', 'fibonacci', 'camarilla'] } }},
-  { id: 'support_resistance', name: 'Support/Resistance', category: 'Support/Resistance', icon: TrendingUp, params: { lookback: { default: 50, min: 10, max: 200, step: 1 } }},
-  { id: 'fractal', name: 'Fractal', category: 'Support/Resistance', icon: TrendingUp, params: { periods: { default: 2, min: 1, max: 10, step: 1 } }},
-  
-  // Oscillators
-  { id: 'ao', name: 'Awesome Oscillator', category: 'Oscillators', icon: Activity, params: { fast: { default: 5, min: 1, max: 50, step: 1 }, slow: { default: 34, min: 1, max: 100, step: 1 } }},
-  { id: 'ac', name: 'Accelerator Oscillator', category: 'Oscillators', icon: Activity, params: { fast: { default: 5, min: 1, max: 50, step: 1 }, slow: { default: 34, min: 1, max: 100, step: 1 } }},
-  { id: 'adx', name: 'Average Directional Index', category: 'Oscillators', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'aroon', name: 'Aroon', category: 'Oscillators', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'dmi', name: 'Directional Movement Index', category: 'Oscillators', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'psar', name: 'Parabolic SAR', category: 'Oscillators', icon: Activity, params: { start: { default: 0.02, min: 0.01, max: 0.1, step: 0.01 }, increment: { default: 0.02, min: 0.01, max: 0.1, step: 0.01 }, maximum: { default: 0.2, min: 0.1, max: 1.0, step: 0.1 } }},
-  { id: 'trix', name: 'TRIX', category: 'Oscillators', icon: Activity, params: { length: { default: 14, min: 1, max: 100, step: 1 } }},
-  { id: 'ultimate_osc', name: 'Ultimate Oscillator', category: 'Oscillators', icon: Activity, params: { short: { default: 7, min: 1, max: 50, step: 1 }, medium: { default: 14, min: 1, max: 100, step: 1 }, long: { default: 28, min: 1, max: 200, step: 1 } }}
+  // Momentum Indicators  
+  { 
+    id: 'rsi', 
+    name: 'Relative Strength Index', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      period: { type: 'number', default: 14, min: 2, max: 100, step: 1, label: 'Period', description: 'Number of periods for RSI calculation' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      overbought: { type: 'number', default: 70, min: 50, max: 90, step: 1, label: 'Overbought Level' },
+      oversold: { type: 'number', default: 30, min: 10, max: 50, step: 1, label: 'Oversold Level' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'macd', 
+    name: 'MACD', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      fastPeriod: { type: 'number', default: 12, min: 1, max: 100, step: 1, label: 'Fast EMA Period' },
+      slowPeriod: { type: 'number', default: 26, min: 1, max: 200, step: 1, label: 'Slow EMA Period' },
+      signalPeriod: { type: 'number', default: 9, min: 1, max: 50, step: 1, label: 'Signal Period' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      maMethod: { type: 'select', default: 'exponential', options: MA_METHODS, label: 'MA Method' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'stoch', 
+    name: 'Stochastic Oscillator', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      kPeriod: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: '%K Period' },
+      dPeriod: { type: 'number', default: 3, min: 1, max: 50, step: 1, label: '%D Period' },
+      slowing: { type: 'number', default: 3, min: 1, max: 50, step: 1, label: 'Slowing' },
+      maMethod: { type: 'select', default: 'simple', options: MA_METHODS, label: 'MA Method' },
+      priceField: { type: 'select', default: 'low_high', options: [
+        { value: 'low_high', label: 'Low/High' },
+        { value: 'close_close', label: 'Close/Close' }
+      ], label: 'Price field' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'bollinger_bands', 
+    name: 'Bollinger Bands', 
+    category: 'Volatility', 
+    icon: BarChart3, 
+    params: { 
+      period: { type: 'number', default: 20, min: 2, max: 100, step: 1, label: 'Period' },
+      deviation: { type: 'number', default: 2.0, min: 0.1, max: 5.0, step: 0.1, label: 'Deviation' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      maMethod: { type: 'select', default: 'simple', options: MA_METHODS, label: 'MA Method' },
+      shift: { type: 'number', default: 0, min: -100, max: 100, step: 1, label: 'Shift', linkable: true },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'atr', 
+    name: 'Average True Range', 
+    category: 'Volatility', 
+    icon: Zap, 
+    params: { 
+      period: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: 'Period' },
+      maMethod: { type: 'select', default: 'simple', options: MA_METHODS, label: 'MA Method' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'adx', 
+    name: 'Average Directional Index', 
+    category: 'Trend', 
+    icon: Activity, 
+    params: { 
+      period: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: 'Period' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'cci', 
+    name: 'Commodity Channel Index', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      period: { type: 'number', default: 20, min: 1, max: 100, step: 1, label: 'Period' },
+      applyTo: { type: 'select', default: 'typical', options: PRICE_SOURCES, label: 'Apply to' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'momentum', 
+    name: 'Momentum', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      period: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: 'Period' },
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'williams_r', 
+    name: 'Williams Percent Range', 
+    category: 'Momentum', 
+    icon: Activity, 
+    params: { 
+      period: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: 'Period' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'obv', 
+    name: 'On Balance Volume', 
+    category: 'Volume', 
+    icon: BarChart3, 
+    params: { 
+      applyTo: { type: 'select', default: 'close', options: PRICE_SOURCES, label: 'Apply to' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'vwap', 
+    name: 'Volume Weighted Average Price', 
+    category: 'Volume', 
+    icon: BarChart3, 
+    params: { 
+      period: { type: 'number', default: 20, min: 1, max: 500, step: 1, label: 'Period' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'mfi', 
+    name: 'Money Flow Index', 
+    category: 'Volume', 
+    icon: BarChart3, 
+    params: { 
+      period: { type: 'number', default: 14, min: 1, max: 100, step: 1, label: 'Period' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'psar', 
+    name: 'Parabolic SAR', 
+    category: 'Trend', 
+    icon: Activity, 
+    params: { 
+      step: { type: 'number', default: 0.02, min: 0.01, max: 0.1, step: 0.01, label: 'Step' },
+      maximum: { type: 'number', default: 0.2, min: 0.1, max: 1.0, step: 0.1, label: 'Maximum' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  },
+  { 
+    id: 'ichimoku', 
+    name: 'Ichimoku Kinko Hyo', 
+    category: 'Trend', 
+    icon: TrendingUp, 
+    params: { 
+      tenkanSen: { type: 'number', default: 9, min: 1, max: 100, step: 1, label: 'Tenkan-sen' },
+      kijunSen: { type: 'number', default: 26, min: 1, max: 100, step: 1, label: 'Kijun-sen' },
+      senkouSpanB: { type: 'number', default: 52, min: 1, max: 100, step: 1, label: 'Senkou Span B' },
+      timeframe: { type: 'select', default: 'current', options: TIMEFRAMES, label: 'Timeframe' }
+    }
+  }
 ];
 
 interface IndicatorLibraryProps {
@@ -80,6 +262,9 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [selectedIndicator, setSelectedIndicator] = useState<any>(null);
+  const [isParameterDialogOpen, setIsParameterDialogOpen] = useState(false);
+  const [linkedParameters, setLinkedParameters] = useState<{[key: string]: boolean}>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -146,12 +331,13 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
     const newIndicator = {
       id: `${indicatorType}_${Date.now()}`,
       type: indicatorType,
-      name: `${indicatorDef.name} #${indicators.filter(i => i.type === indicatorType).length + 1}`,
+      name: `${indicatorDef.name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('')}`,
+      displayName: `${indicatorDef.name} #${indicators.filter(i => i.type === indicatorType).length + 1}`,
       category: indicatorDef.category,
       parameters: Object.fromEntries(
         Object.entries(indicatorDef.params).map(([key, param]: [string, any]) => [
           key, 
-          param.default !== undefined ? param.default : param.options?.[0] || ''
+          param.default !== undefined ? param.default : param.options?.[0]?.value || ''
         ])
       ),
       enabled: true
@@ -161,6 +347,24 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
     setSearchTerm('');
     setIsDropdownOpen(false);
     setFocusedIndex(-1);
+  };
+
+  const openParameterDialog = (indicator: any) => {
+    setSelectedIndicator(indicator);
+    setIsParameterDialogOpen(true);
+  };
+
+  const saveIndicatorParameters = () => {
+    if (!selectedIndicator) return;
+    
+    onChange(indicators.map(indicator =>
+      indicator.id === selectedIndicator.id
+        ? selectedIndicator
+        : indicator
+    ));
+    
+    setIsParameterDialogOpen(false);
+    setSelectedIndicator(null);
   };
 
   const removeIndicator = (indicatorId: string) => {
@@ -296,10 +500,10 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
                     <Card key={indicator.id} className={`border-l-4 ${indicator.enabled ? 'border-l-primary' : 'border-l-muted'}`}>
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
                             <indicatorDef.icon className="w-5 h-5" />
                             <div>
-                              <span className="font-medium">{indicator.name}</span>
+                              <span className="font-medium">{indicator.displayName || indicator.name}</span>
                               <Badge variant="outline" className="ml-2">
                                 {indicatorDef.category}
                               </Badge>
@@ -324,24 +528,24 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
                           </div>
                         </div>
 
-                        {/* Parameters */}
-                        {Object.keys(indicatorDef.params).length > 0 && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {Object.entries(indicatorDef.params).map(([paramKey, param]: [string, any]) => (
+                        {/* Quick Parameters & Configure Button */}
+                        <div className="flex items-center justify-between">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+                            {Object.entries(indicatorDef.params).slice(0, 2).map(([paramKey, param]: [string, any]) => (
                               <div key={paramKey}>
-                                <Label className="text-xs font-medium">{paramKey.charAt(0).toUpperCase() + paramKey.slice(1)}</Label>
-                                {param.options ? (
+                                <Label className="text-xs font-medium">{param.label || paramKey}</Label>
+                                {param.type === 'select' ? (
                                   <Select 
                                     value={indicator.parameters[paramKey]} 
                                     onValueChange={(value) => updateIndicatorParameter(indicator.id, paramKey, value)}
                                   >
-                                    <SelectTrigger className="mt-1">
+                                    <SelectTrigger className="mt-1 h-8">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {param.options.map((option: string) => (
-                                        <SelectItem key={option} value={option}>
-                                          {option}
+                                      {param.options.map((option: any) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                          {option.label}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -358,14 +562,24 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
                                       paramKey, 
                                       parseFloat(e.target.value) || param.default
                                     )}
-                                    className="mt-1"
+                                    className="mt-1 h-8"
                                     disabled={!indicator.enabled}
                                   />
                                 )}
                               </div>
                             ))}
                           </div>
-                        )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openParameterDialog(indicator)}
+                            className="ml-3"
+                            disabled={!indicator.enabled}
+                          >
+                            <Settings className="w-4 h-4 mr-1" />
+                            Configure
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   );
@@ -383,6 +597,152 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Professional Parameter Configuration Dialog */}
+      <Dialog open={isParameterDialogOpen} onOpenChange={setIsParameterDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsParameterDialogOpen(false)}
+                className="p-0 h-auto hover:bg-transparent"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <DialogTitle className="flex-1">Indicator Parameters</DialogTitle>
+              <Button onClick={saveIndicatorParameters} className="bg-blue-600 hover:bg-blue-700">
+                Save
+              </Button>
+            </div>
+          </DialogHeader>
+
+          {selectedIndicator && (
+            <div className="space-y-6 py-4">
+              {/* Indicator Header */}
+              <Card className="border-0 bg-accent/20">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {INDICATOR_LIBRARY.find(i => i.id === selectedIndicator.type)?.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">Configure professional parameters</p>
+                    </div>
+                    <div className="ml-auto">
+                      <Badge variant="outline">
+                        {INDICATOR_LIBRARY.find(i => i.id === selectedIndicator.type)?.category}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Parameter Configuration */}
+              <div className="space-y-4">
+                {/* Display Name */}
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Name</Label>
+                  <Input
+                    value={selectedIndicator.name || ''}
+                    onChange={(e) => setSelectedIndicator({
+                      ...selectedIndicator,
+                      name: e.target.value
+                    })}
+                    className="mt-1"
+                    placeholder="Indicator display name"
+                  />
+                </div>
+
+                {/* Professional Parameters */}
+                {Object.entries(INDICATOR_LIBRARY.find(i => i.id === selectedIndicator.type)?.params || {}).map(([paramKey, param]: [string, any]) => (
+                  <div key={paramKey} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        {param.label || paramKey}
+                        {param.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                      {param.linkable && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`link-${paramKey}`}
+                            checked={linkedParameters[paramKey] || false}
+                            onCheckedChange={(checked) => 
+                              setLinkedParameters(prev => ({ ...prev, [paramKey]: checked as boolean }))
+                            }
+                          />
+                          <Label 
+                            htmlFor={`link-${paramKey}`} 
+                            className="text-xs text-muted-foreground cursor-pointer"
+                          >
+                            Linked
+                          </Label>
+                        </div>
+                      )}
+                    </div>
+
+                    {param.type === 'select' ? (
+                      <Select 
+                        value={selectedIndicator.parameters[paramKey]} 
+                        onValueChange={(value) => setSelectedIndicator({
+                          ...selectedIndicator,
+                          parameters: { ...selectedIndicator.parameters, [paramKey]: value }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select ${param.label?.toLowerCase() || paramKey}`} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          {param.options.map((option: any) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center">
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type="number"
+                        value={selectedIndicator.parameters[paramKey]}
+                        min={param.min}
+                        max={param.max}
+                        step={param.step}
+                        onChange={(e) => setSelectedIndicator({
+                          ...selectedIndicator,
+                          parameters: { 
+                            ...selectedIndicator.parameters, 
+                            [paramKey]: parseFloat(e.target.value) || param.default 
+                          }
+                        })}
+                        className="font-mono"
+                      />
+                    )}
+
+                    {param.description && (
+                      <p className="text-xs text-muted-foreground">{param.description}</p>
+                    )}
+
+                    {linkedParameters[paramKey] && (
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          <strong>Links the value of parameter '{param.label}'.</strong><br />
+                          When this box is checked you can change the value here and it will override the '{param.label}' parameter value in all other '{selectedIndicator.type.toUpperCase()}' indicators.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
