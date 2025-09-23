@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, Trash2, TrendingUp, Activity, BarChart3, Zap } from 'lucide-react';
+import { Search, Plus, Trash2, TrendingUp, Activity, BarChart3, Zap, ChevronDown } from 'lucide-react';
 
 // Comprehensive 40+ indicator library
 const INDICATOR_LIBRARY = [
@@ -78,7 +78,10 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedIndicatorType, setSelectedIndicatorType] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const categories = ['all', ...Array.from(new Set(INDICATOR_LIBRARY.map(i => i.category)))];
   
@@ -87,6 +90,54 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
     const matchesCategory = selectedCategory === 'all' || indicator.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+        setFocusedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsDropdownOpen(true);
+        setFocusedIndex(0);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        setFocusedIndex(prev => Math.min(prev + 1, filteredIndicators.length - 1));
+        e.preventDefault();
+        break;
+      case 'ArrowUp':
+        setFocusedIndex(prev => Math.max(prev - 1, 0));
+        e.preventDefault();
+        break;
+      case 'Enter':
+        if (focusedIndex >= 0 && focusedIndex < filteredIndicators.length) {
+          addIndicator(filteredIndicators[focusedIndex].id);
+        }
+        e.preventDefault();
+        break;
+      case 'Escape':
+        setIsDropdownOpen(false);
+        setFocusedIndex(-1);
+        inputRef.current?.blur();
+        e.preventDefault();
+        break;
+    }
+  };
 
   const addIndicator = (indicatorType: string) => {
     const indicatorDef = INDICATOR_LIBRARY.find(i => i.id === indicatorType);
@@ -107,7 +158,9 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
     };
 
     onChange([...indicators, newIndicator]);
-    setSelectedIndicatorType('');
+    setSearchTerm('');
+    setIsDropdownOpen(false);
+    setFocusedIndex(-1);
   };
 
   const removeIndicator = (indicatorId: string) => {
@@ -146,17 +199,74 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
           </p>
         </CardHeader>
         <CardContent>
-          {/* Search and Filter */}
+          {/* Integrated Search and Dropdown */}
           <div className="flex gap-3 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search indicators..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex-1 relative" ref={dropdownRef}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+                <Input
+                  ref={inputRef}
+                  placeholder="Search and select indicators..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                    setFocusedIndex(-1);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onKeyDown={handleKeyDown}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDropdownOpen(!isDropdownOpen);
+                    setFocusedIndex(-1);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              {/* Dropdown Results */}
+              {isDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-80 overflow-y-auto">
+                  {filteredIndicators.length > 0 ? (
+                    <div className="p-1">
+                      {filteredIndicators.map((indicator, index) => (
+                        <button
+                          key={indicator.id}
+                          type="button"
+                          onClick={() => addIndicator(indicator.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors ${
+                            index === focusedIndex ? 'bg-accent text-accent-foreground' : ''
+                          }`}
+                          onMouseEnter={() => setFocusedIndex(index)}
+                        >
+                          <indicator.icon className="w-4 h-4 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{indicator.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{indicator.category}</div>
+                          </div>
+                          <Badge variant="outline" className="shrink-0">
+                            {indicator.category}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No indicators found</p>
+                      <p className="text-xs">Try adjusting your search or category filter</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-48">
                 <SelectValue />
@@ -169,36 +279,6 @@ export const IndicatorLibrary: React.FC<IndicatorLibraryProps> = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Add Indicator */}
-          <div className="flex gap-2 mb-6">
-            <Select value={selectedIndicatorType} onValueChange={addIndicator}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select indicator to add..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-80">
-                {filteredIndicators.map(indicator => (
-                  <SelectItem key={indicator.id} value={indicator.id}>
-                    <div className="flex items-center gap-2 w-full">
-                      <indicator.icon className="w-4 h-4" />
-                      <span className="flex-1">{indicator.name}</span>
-                      <Badge variant="outline" className="ml-auto">
-                        {indicator.category}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
-              variant="outline" 
-              size="default"
-              onClick={() => setSelectedIndicatorType("")}
-              disabled={!selectedIndicatorType}
-            >
-              Clear
-            </Button>
           </div>
 
           {/* Active Indicators */}
