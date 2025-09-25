@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -17,8 +16,13 @@ import {
   Settings,
   Zap,
   BarChart3,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
+  CheckCircle
 } from 'lucide-react';
+import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
 import { SignalBuilder } from './chartingpath/SignalBuilder';
 import { StrategyModules } from './chartingpath/StrategyModules';
@@ -31,6 +35,12 @@ export interface ChartingPathStrategy {
   id?: string;
   name: string;
   description?: string;
+  market?: {
+    instrumentCategory: string;
+    instrument: string;
+    timeframes: string[];
+    tradingHours: string;
+  };
   patterns: any[];
   indicators: any[];
   signals: any[];
@@ -70,6 +80,12 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
       patterns: [],
       indicators: [],
       signals: [],
+      market: {
+        instrumentCategory: 'forex',
+        instrument: '',
+        timeframes: [],
+        tradingHours: 'london-ny'
+      },
       riskManagement: {
         riskPerTrade: 2.0,
         maxDrawdown: 10.0,
@@ -118,9 +134,17 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     }
   );
 
-  const [activeTab, setActiveTab] = useState('indicators');
+  const [currentStep, setCurrentStep] = useState(0);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestResults, setBacktestResults] = useState(null);
+
+  const steps = [
+    { id: 'market', title: 'Market Selection', description: 'Choose financial asset & timeframe' },
+    { id: 'patterns', title: 'Pattern Selection', description: 'Select chart patterns to trade' },
+    { id: 'money', title: 'Money Management', description: 'Configure risk & position sizing' },
+    { id: 'backtest', title: 'Backtest & Optimize', description: 'Test strategy performance' },
+    { id: 'export', title: 'Export Strategy', description: 'Generate trading code' }
+  ];
 
   const updateStrategy = (section: keyof ChartingPathStrategy, data: any) => {
     setStrategy(prev => ({
@@ -147,22 +171,53 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     onSave?.(strategy);
   };
 
+  const getStepCompletion = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: // Market
+        return strategy.market?.instrument && strategy.market?.timeframes?.length > 0;
+      case 1: // Patterns
+        return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
+      case 2: // Money Management
+        return strategy.riskManagement && strategy.moneyManagement;
+      case 3: // Backtest
+        return strategy.backtestResults != null;
+      case 4: // Export
+        return getStepCompletion(1) && getStepCompletion(2); // Can export if patterns and money mgmt are set
+      default:
+        return false;
+    }
+  };
+
+  const canProceedToStep = (stepIndex: number) => {
+    if (stepIndex === 0) return true;
+    return getStepCompletion(stepIndex - 1);
+  };
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1 && canProceedToStep(currentStep + 1)) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (stepIndex: number) => {
+    if (canProceedToStep(stepIndex)) {
+      setCurrentStep(stepIndex);
+    }
+  };
+
   const getCompletionPercentage = () => {
-    let completed = 0;
-    let total = 6;
-
-    if (strategy.patterns.length > 0) completed++;
-    if (strategy.patterns.length > 0 && strategy.multiPatternSettings) completed++;
-    if (strategy.riskManagement) completed++;
-    if (strategy.moneyManagement) completed++;
-    if (strategy.stopLoss && strategy.takeProfit) completed++;
-    if (strategy.backtestResults) completed++;
-
-    return (completed / total) * 100;
+    const completedSteps = steps.filter((_, index) => getStepCompletion(index)).length;
+    return (completedSteps / steps.length) * 100;
   };
 
   const canBacktest = () => {
-    return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
+    return getStepCompletion(0) && getStepCompletion(1); // Market + Patterns selected
   };
 
   return (
@@ -238,103 +293,191 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         </CardHeader>
       </Card>
 
-      {/* Main Builder Interface */}
+      {/* Step-Based Builder Interface */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Professional Builder Interface</CardTitle>
+          <CardTitle className="text-lg">Professional Strategy Builder</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Configure every aspect of your trading strategy with professional-grade tools
+            Follow the step-by-step process to build your professional trading strategy
           </p>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7 mb-6">
-              <TabsTrigger value="patterns" className="flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                <span className="hidden sm:inline">Patterns</span>
-              </TabsTrigger>
-              <TabsTrigger value="signals" className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                <span className="hidden sm:inline">Signals</span>
-              </TabsTrigger>
-              <TabsTrigger value="strategy" className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">Strategy</span>
-              </TabsTrigger>
-              <TabsTrigger value="money" className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                <span className="hidden sm:inline">Money</span>
-              </TabsTrigger>
-              <TabsTrigger value="backtest" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Backtest</span>
-              </TabsTrigger>
-              <TabsTrigger value="export" className="flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export</span>
-              </TabsTrigger>
-              <TabsTrigger value="presets" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Presets</span>
-              </TabsTrigger>
-            </TabsList>
+          {/* Step Navigation */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <Button
+                    variant={index === currentStep ? "default" : getStepCompletion(index) ? "outline" : "ghost"}
+                    size="sm"
+                    onClick={() => goToStep(index)}
+                    disabled={!canProceedToStep(index)}
+                    className={`flex items-center gap-2 ${
+                      index === currentStep ? 'bg-primary text-primary-foreground' : 
+                      getStepCompletion(index) ? 'bg-green-50 border-green-200 text-green-700' : 
+                      'text-muted-foreground'
+                    }`}
+                  >
+                    {getStepCompletion(index) ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-current/10 flex items-center justify-center text-xs font-medium">
+                        {index + 1}
+                      </div>
+                    )}
+                    <span className="hidden md:inline">{step.title}</span>
+                  </Button>
+                  {index < steps.length - 1 && (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground mx-2" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <TabsContent value="patterns" className="mt-6">
-              <PatternLibrary
-                patterns={strategy.patterns}
-                onChange={(patterns) => updateStrategy('patterns', patterns)}
-              />
-            </TabsContent>
+          {/* Step Content */}
+          <div className="min-h-[400px]">
+            {currentStep === 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 1: Market Selection</h3>
+                </div>
+                <MarketStep
+                  answers={{ market: strategy.market }}
+                  onAnswersChange={(_, data) => updateStrategy('market', data)}
+                  subscriptionPlan="professional"
+                />
+              </div>
+            )}
 
-            <TabsContent value="signals" className="mt-6">
-              <SignalBuilder
-                patterns={strategy.patterns}
-                indicators={strategy.indicators}
-                signals={strategy.signals}
-                onChange={(signals) => updateStrategy('signals', signals)}
-              />
-            </TabsContent>
+            {currentStep === 1 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 2: Pattern Selection</h3>
+                </div>
+                {getStepCompletion(0) ? (
+                  <PatternLibrary
+                    patterns={strategy.patterns}
+                    onChange={(patterns) => updateStrategy('patterns', patterns)}
+                  />
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please complete Market Selection first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
 
-            <TabsContent value="strategy" className="mt-6">
-              <StrategyModules
-                strategy={strategy}
-                onChange={updateStrategy}
-              />
-            </TabsContent>
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 3: Money Management</h3>
+                </div>
+                {getStepCompletion(1) ? (
+                  <MoneyManagement
+                    settings={strategy.moneyManagement}
+                    riskSettings={strategy.riskManagement}
+                    onChange={(data) => {
+                      updateStrategy('moneyManagement', data.moneyManagement);
+                      updateStrategy('riskManagement', data.riskSettings);
+                    }}
+                  />
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please complete Pattern Selection first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
 
-            <TabsContent value="money" className="mt-6">
-              <MoneyManagement
-                settings={strategy.moneyManagement}
-                riskSettings={strategy.riskManagement}
-                onChange={(data) => {
-                  updateStrategy('moneyManagement', data.moneyManagement);
-                  updateStrategy('riskManagement', data.riskSettings);
-                }}
-              />
-            </TabsContent>
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 4: Backtest & Optimize</h3>
+                </div>
+                {getStepCompletion(2) ? (
+                  <EnhancedBacktestEngine
+                    strategy={strategy}
+                    results={backtestResults}
+                    isRunning={isBacktesting}
+                    onBacktest={handleBacktest}
+                  />
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please complete Money Management setup first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
 
-            <TabsContent value="backtest" className="mt-6">
-              <EnhancedBacktestEngine
-                strategy={strategy}
-                results={backtestResults}
-                isRunning={isBacktesting}
-                onBacktest={handleBacktest}
-              />
-            </TabsContent>
+            {currentStep === 4 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Download className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 5: Export Strategy</h3>
+                </div>
+                {getStepCompletion(1) && getStepCompletion(2) ? (
+                  <ExportPanel strategy={strategy} />
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please complete Pattern Selection and Money Management first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
 
-            <TabsContent value="export" className="mt-6">
-              <ExportPanel
-                strategy={strategy}
-              />
-            </TabsContent>
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between mt-6 pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className="flex items-center gap-2"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Step {currentStep + 1} of {steps.length}
+              </span>
+            </div>
 
-            <TabsContent value="presets" className="mt-6">
-              <PresetManager
-                currentStrategy={strategy}
-                onLoadPreset={(preset) => setStrategy(preset)}
-              />
-            </TabsContent>
-          </Tabs>
+            <Button
+              onClick={nextStep}
+              disabled={currentStep === steps.length - 1 || !getStepCompletion(currentStep)}
+              className="flex items-center gap-2"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
