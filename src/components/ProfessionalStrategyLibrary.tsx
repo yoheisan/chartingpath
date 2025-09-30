@@ -25,17 +25,17 @@ import {
   BarChart3,
   DollarSign
 } from 'lucide-react';
-import { professionalStrategies, ProfessionalStrategy } from '@/utils/ProfessionalStrategyTemplates';
+import { chartPatternTemplates, ChartPatternTemplate } from '@/utils/ChartPatternTemplates';
 
 interface ProfessionalStrategyLibraryProps {
-  onStrategySelect: (strategy: any) => void;
+  onPatternSelect: (pattern: ChartPatternTemplate) => void;
 }
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'complexity' | 'category';
 
 export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryProps> = ({
-  onStrategySelect
+  onPatternSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -46,28 +46,28 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
   // Get unique values for filters
   const categories = useMemo(() => 
-    [...new Set(professionalStrategies.map(s => s.category))], 
+    [...new Set(chartPatternTemplates.map(s => s.category))], 
     []
   );
   
   const complexityLevels = useMemo(() => 
-    [...new Set(professionalStrategies.map(s => s.complexity))], 
+    [...new Set(chartPatternTemplates.map(s => s.complexity))], 
     []
   );
   
   const assetTypes = useMemo(() => 
-    [...new Set(professionalStrategies.flatMap(s => s.assetTypes))], 
+    [...new Set(chartPatternTemplates.flatMap(s => s.assetTypes))], 
     []
   );
 
-  // Filter and sort strategies
-  const filteredStrategies = useMemo(() => {
-    let filtered = professionalStrategies.filter(strategy => {
-      const matchesSearch = strategy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           strategy.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || strategy.category === selectedCategory;
-      const matchesComplexity = selectedComplexity === 'all' || strategy.complexity === selectedComplexity;
-      const matchesAssetType = selectedAssetType === 'all' || strategy.assetTypes.includes(selectedAssetType);
+  // Filter and sort patterns
+  const filteredPatterns = useMemo(() => {
+    let filtered = chartPatternTemplates.filter(pattern => {
+      const matchesSearch = pattern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           pattern.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || pattern.category === selectedCategory;
+      const matchesComplexity = selectedComplexity === 'all' || pattern.complexity === selectedComplexity;
+      const matchesAssetType = selectedAssetType === 'all' || pattern.assetTypes.includes(selectedAssetType);
       
       return matchesSearch && matchesCategory && matchesComplexity && matchesAssetType;
     });
@@ -102,22 +102,22 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'Trend': return 'bg-blue-500';
-      case 'Mean Reversion': return 'bg-green-500';
-      case 'Momentum': return 'bg-orange-500';
-      case 'Arbitrage': return 'bg-purple-500';
-      case 'Market Neutral': return 'bg-gray-500';
+      case 'Reversal': return 'bg-red-500';
+      case 'Continuation': return 'bg-blue-500';
+      case 'Candlestick': return 'bg-green-500';
+      case 'Harmonic': return 'bg-purple-500';
+      case 'Breakout': return 'bg-orange-500';
       default: return 'bg-blue-500';
     }
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'Trend': return TrendingUp;
-      case 'Mean Reversion': return BarChart3;
-      case 'Momentum': return Activity;
-      case 'Arbitrage': return DollarSign;
-      case 'Market Neutral': return Target;
+      case 'Reversal': return TrendingUp;
+      case 'Continuation': return BarChart3;
+      case 'Candlestick': return Activity;
+      case 'Harmonic': return Target;
+      case 'Breakout': return Zap;
       default: return TrendingUp;
     }
   };
@@ -131,24 +131,24 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
   const GridView = () => (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-      {filteredStrategies.map(strategy => {
-        const IconComponent = strategy.icon;
+      {filteredPatterns.map(pattern => {
+        const IconComponent = pattern.icon;
         
         return (
-          <Card key={strategy.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-            {/* Strategy Header */}
-            <div className={`h-2 ${getCategoryColor(strategy.category)}`} />
+          <Card key={pattern.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Pattern Header */}
+            <div className={`h-2 ${getCategoryColor(pattern.category)}`} />
             
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${strategy.color} text-white`}>
+                  <div className={`p-2 rounded-lg ${pattern.color} text-white`}>
                     <IconComponent className="w-5 h-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{strategy.name}</CardTitle>
+                    <CardTitle className="text-lg">{pattern.name}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {strategy.description}
+                      {pattern.description}
                     </p>
                   </div>
                 </div>
@@ -157,18 +157,27 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               {/* Category and Complexity */}
               <div className="flex gap-2 mt-3">
                 <Badge variant="outline" className="text-xs">
-                  {strategy.category}
+                  {pattern.category}
                 </Badge>
-                <Badge className={getComplexityColor(strategy.complexity)}>
-                  {strategy.complexity}
+                <Badge className={getComplexityColor(pattern.complexity)}>
+                  {pattern.complexity}
                 </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {pattern.accuracy} Accuracy
+                </Badge>
+              </div>
+
+              {/* Default Targets */}
+              <div className="mt-2 flex gap-3 text-xs">
+                <span className="text-green-600 font-medium">Target: {pattern.defaultTarget}%</span>
+                <span className="text-red-600 font-medium">Stop: {pattern.defaultStopLoss}%</span>
               </div>
 
               {/* Supported Assets */}
               <div className="mt-2">
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Assets:</span> {strategy.assetTypes.slice(0, 3).join(', ')}
-                  {strategy.assetTypes.length > 3 && ` +${strategy.assetTypes.length - 3} more`}
+                  <span className="font-medium">Assets:</span> {pattern.assetTypes.slice(0, 3).join(', ')}
+                  {pattern.assetTypes.length > 3 && ` +${pattern.assetTypes.length - 3} more`}
                 </p>
               </div>
             </CardHeader>
@@ -178,9 +187,9 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               <div>
                 <h4 className="font-medium text-sm mb-2 flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  Optimal: {strategy.timeframes.optimal}
+                  Optimal: {pattern.timeframes.optimal}
                 </h4>
-                <p className="text-xs text-muted-foreground">{strategy.timeframes.description}</p>
+                <p className="text-xs text-muted-foreground">{pattern.timeframes.description}</p>
               </div>
 
               <Separator />
@@ -188,19 +197,19 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               {/* Professional Usage */}
               <div>
                 <div className="flex gap-2 mb-2">
-                  {strategy.professionalUse.hedgeFunds && (
+                  {pattern.professionalUse.hedgeFunds && (
                     <Badge variant="outline" className="text-xs">
                       <Crown className="w-3 h-3 mr-1" />
                       Hedge Funds
                     </Badge>
                   )}
-                  {strategy.professionalUse.institutionalTraders && (
+                  {pattern.professionalUse.institutionalTraders && (
                     <Badge variant="outline" className="text-xs">
                       <Building2 className="w-3 h-3 mr-1" />
                       Institutions
                     </Badge>
                   )}
-                  {strategy.professionalUse.retailTraders && (
+                  {pattern.professionalUse.retailTraders && (
                     <Badge variant="outline" className="text-xs">
                       <Users className="w-3 h-3 mr-1" />
                       Retail
@@ -213,11 +222,11 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               <div className="pt-2">
                 <Button 
                   size="sm" 
-                  onClick={() => onStrategySelect(strategy)}
+                  onClick={() => onPatternSelect(pattern)}
                   className="w-full"
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />
-                  Select Strategy
+                  Build Strategy with This Pattern
                 </Button>
               </div>
             </CardContent>
@@ -229,42 +238,43 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
   const ListView = () => (
     <div className="space-y-3">
-      {filteredStrategies.map(strategy => {
-        const IconComponent = strategy.icon;
-        const CategoryIcon = getCategoryIcon(strategy.category);
+      {filteredPatterns.map(pattern => {
+        const IconComponent = pattern.icon;
+        const CategoryIcon = getCategoryIcon(pattern.category);
         
         return (
-          <Card key={strategy.id} className="hover:shadow-md transition-shadow">
+          <Card key={pattern.id} className="hover:shadow-md transition-shadow">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className={`p-2 rounded-lg ${strategy.color} text-white shrink-0`}>
+                  <div className={`p-2 rounded-lg ${pattern.color} text-white shrink-0`}>
                     <IconComponent className="w-5 h-5" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-base truncate">{strategy.name}</h3>
+                      <h3 className="font-semibold text-base truncate">{pattern.name}</h3>
                       <div className="flex gap-2 shrink-0">
                         <Badge variant="outline" className="text-xs">
                           <CategoryIcon className="w-3 h-3 mr-1" />
-                          {strategy.category}
+                          {pattern.category}
                         </Badge>
-                        <Badge className={`${getComplexityColor(strategy.complexity)} text-xs`}>
-                          {strategy.complexity}
+                        <Badge className={`${getComplexityColor(pattern.complexity)} text-xs`}>
+                          {pattern.complexity}
                         </Badge>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2 truncate">
-                      {strategy.description}
+                      {pattern.description}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {strategy.timeframes.optimal}
+                        {pattern.timeframes.optimal}
                       </span>
-                      <span>Assets: {strategy.assetTypes.slice(0, 2).join(', ')}</span>
-                      {strategy.professionalUse.hedgeFunds && (
+                      <span className="text-green-600 font-medium">+{pattern.defaultTarget}%</span>
+                      <span className="text-red-600 font-medium">-{pattern.defaultStopLoss}%</span>
+                      {pattern.professionalUse.hedgeFunds && (
                         <Badge variant="outline" className="text-xs">
                           <Crown className="w-3 h-3 mr-1" />
                           Institutional
@@ -276,11 +286,11 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                 
                 <Button 
                   size="sm" 
-                  onClick={() => onStrategySelect(strategy)}
+                  onClick={() => onPatternSelect(pattern)}
                   className="shrink-0"
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />
-                  Select
+                  Build
                 </Button>
               </div>
             </CardContent>
@@ -296,15 +306,15 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
-            Professional Strategy Library
+            <Target className="w-5 h-5" />
+            Professional Chart Pattern Library
             <Badge variant="outline" className="ml-2">
-              {filteredStrategies.length} strategies
+              {filteredPatterns.length} patterns
             </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Industry-standard trading strategies used by professional traders worldwide. 
-            Filter, search, and select strategies to customize with your preferred assets.
+            Industry-standard chart patterns used by professional traders worldwide. 
+            Select a pattern to build a complete trading strategy with customizable targets and stop losses.
           </p>
         </CardHeader>
       </Card>
@@ -318,7 +328,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search strategies..."
+                  placeholder="Search patterns..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -410,12 +420,12 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
         </CardContent>
       </Card>
 
-      {/* Strategy List/Grid */}
-      {filteredStrategies.length === 0 ? (
+      {/* Pattern List/Grid */}
+      {filteredPatterns.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">No strategies found</h3>
+            <h3 className="text-lg font-medium mb-2">No patterns found</h3>
             <p className="text-muted-foreground mb-4">
               Try adjusting your search terms or filters.
             </p>
@@ -436,10 +446,10 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
           <div className="flex items-start gap-2">
             <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
             <div className="space-y-2">
-              <p className="font-medium text-sm">Professional Strategy Templates</p>
+              <p className="font-medium text-sm">Professional Chart Patterns</p>
               <p className="text-sm text-muted-foreground">
-                These strategies represent industry-standard configurations used by institutional traders, 
-                hedge funds, and retail professionals. Select any strategy to customize parameters, 
+                These patterns represent proven technical formations used by institutional traders, 
+                hedge funds, and retail professionals. Select any pattern to build a complete strategy with customizable targets and stops,
                 choose specific assets, and run comprehensive backtests.
               </p>
             </div>

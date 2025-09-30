@@ -142,37 +142,40 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     return !!(strategyAnswers.market?.instrument && strategyAnswers.market?.timeframes && strategyAnswers.market.timeframes.length > 0 && strategyAnswers.style?.approach);
   };
 
-  // Handle asset-focused strategy selection
-  const handleAssetStrategySelect = (strategy: any) => {
-    // Convert professional strategy template to guided strategy answers
-    const newAnswers: GuidedStrategyAnswers = {
-      market: { 
+  // Handle chart pattern selection from library
+  const handlePatternSelect = (pattern: any) => {
+    // Create a new ChartingPath strategy with the selected pattern
+    const newStrategy: ChartingPathStrategy = {
+      name: `${pattern.name} Strategy`,
+      description: pattern.description,
+      patterns: [{
+        ...pattern,
+        enabled: true
+      }],
+      targetGainPercent: pattern.defaultTarget,
+      stopLossPercent: pattern.defaultStopLoss,
+      market: {
         instrumentCategory: 'forex',
-        timeframes: [strategy.timeframes.optimal],
         instrument: '',
+        timeframes: pattern.timeframes.supported.length > 0 ? [pattern.timeframes.supported[0]] : ['1H'],
         tradingHours: 'london-ny'
       },
-      risk: { 
-        maxDrawdown: 15, 
-        riskPerTrade: parseFloat(strategy.parameters.riskManagement.positionSizing.match(/[\d.]+/)?.[0] || '2'),
-        leverage: 10
-      },
-      style: { 
-        approach: strategy.id,
-        timeHorizon: 'intraday',
-        complexity: 'intermediate'
+      positionSizing: {
+        method: 'risk_based',
+        riskPerTrade: 2.0,
+        maxPositions: 3
       }
     };
     
-    setStrategyAnswers(newAnswers);
+    setCurrentChartingPathStrategy(newStrategy);
     setActiveTab('builder');
     
-    // Scroll to top of Strategy Builder after a brief delay to ensure tab change completes
+    // Scroll to top after tab change
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
     
-    toast.success(`${strategy.name} selected! Please choose your financial instrument and timeframe in Strategy Builder.`);
+    toast.success(`${pattern.name} pattern selected! Complete your strategy setup in the builder.`);
   };
 
   return (
@@ -235,7 +238,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="quick-select" className="flex items-center gap-2">
             <Target className="w-4 h-4" />
-            Professional Library
+            Pattern Library
           </TabsTrigger>
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -250,7 +253,7 @@ export const StrategyWorkspaceInterface: React.FC = () => {
         {/* Quick Select Tab */}
         <TabsContent value="quick-select" className="space-y-6">
           <ProfessionalStrategyLibrary
-            onStrategySelect={handleAssetStrategySelect}
+            onPatternSelect={handlePatternSelect}
           />
         </TabsContent>
 
