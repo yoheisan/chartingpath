@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
   Activity, 
-  TrendingUp, 
+  TrendingUp,
+  TrendingDown,
   Shield, 
   DollarSign, 
   Target, 
@@ -24,12 +25,9 @@ import {
 } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
-import { SignalBuilder } from './chartingpath/SignalBuilder';
-import { StrategyModules } from './chartingpath/StrategyModules';
-import { MoneyManagement } from './chartingpath/MoneyManagement';
+import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
 import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
-import { PresetManager } from './chartingpath/PresetManager';
 
 export interface ChartingPathStrategy {
   id?: string;
@@ -38,24 +36,16 @@ export interface ChartingPathStrategy {
   market?: {
     instrumentCategory: string;
     instrument: string;
-    timeframes: string[];
+    timeframes: string[]; // Array to match MarketStep component
     tradingHours: string;
   };
-  patterns: any[];
-  indicators: any[];
-  signals: any[];
-  riskManagement: any;
-  moneyManagement: any;
-  orderTypes: any;
-  stopLoss: any;
-  takeProfit: any;
-  advancedControls: any;
-  sessionFilters: any;
-  multiPatternSettings: {
-    maxConcurrentPatterns: number;
-    patternPriority: 'first' | 'highest_probability' | 'risk_reward';
-    deduplication: boolean;
-    portfolioRiskCap: number;
+  patterns: any[]; // Selected chart patterns to trade
+  targetGainPercent: number; // Target profit in %
+  stopLossPercent: number; // Stop loss in %
+  positionSizing: {
+    method: 'fixed_percent' | 'fixed_amount' | 'risk_based';
+    riskPerTrade: number; // % of account to risk per trade
+    maxPositions: number; // Max concurrent positions
   };
   backtestResults?: any;
   created_at?: Date;
@@ -75,61 +65,21 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 }) => {
   const [strategy, setStrategy] = useState<ChartingPathStrategy>(
     initialStrategy || {
-      name: 'New Professional Pattern Strategy',
-      description: 'Multi-pattern strategy built with ChartingPath Builder',
+      name: 'New Chart Pattern Strategy',
+      description: 'Pattern-based trading strategy',
       patterns: [],
-      indicators: [],
-      signals: [],
+      targetGainPercent: 3.0,
+      stopLossPercent: 1.5,
       market: {
         instrumentCategory: 'forex',
         instrument: '',
-        timeframes: [],
+        timeframes: ['1H'],
         tradingHours: 'london-ny'
       },
-      riskManagement: {
+      positionSizing: {
+        method: 'risk_based',
         riskPerTrade: 2.0,
-        maxDrawdown: 10.0,
-        maxTradesPerDay: 5,
-        positionSizing: 'fixed_percent'
-      },
-      moneyManagement: {
-        method: 'fixed_percent',
-        amount: 2.0,
-        scaling: false,
-        martingale: false
-      },
-      orderTypes: {
-        market: true,
-        limit: false,
-        stop: false,
-        pending: false
-      },
-      stopLoss: {
-        type: 'pattern',
-        value: 2.0,
-        trailing: false
-      },
-      takeProfit: {
-        type: 'pattern',
-        value: 2.0,
-        trailing: false
-      },
-      advancedControls: {
-        maxLifespan: 0,
-        maxSpread: 0,
-        pipGap: 0,
-        timeGap: 0
-      },
-      sessionFilters: {
-        enabled: false,
-        sessions: [],
-        excludeNews: false
-      },
-      multiPatternSettings: {
-        maxConcurrentPatterns: 3,
-        patternPriority: 'highest_probability',
-        deduplication: true,
-        portfolioRiskCap: 6.0
+        maxPositions: 3
       }
     }
   );
@@ -139,11 +89,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const [backtestResults, setBacktestResults] = useState(null);
 
   const steps = [
-    { id: 'market', title: 'Market Selection', description: 'Choose financial asset & timeframe' },
-    { id: 'patterns', title: 'Pattern Selection', description: 'Select chart patterns to trade' },
-    { id: 'money', title: 'Money Management', description: 'Configure risk & position sizing' },
-    { id: 'backtest', title: 'Backtest & Optimize', description: 'Test strategy performance' },
-    { id: 'export', title: 'Export Strategy', description: 'Generate trading code' }
+    { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
+    { id: 'patterns', title: 'Chart Patterns', description: 'Choose patterns to trade' },
+    { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
+    { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
+    { id: 'export', title: 'Export', description: 'Generate trading code' }
   ];
 
   const updateStrategy = (section: keyof ChartingPathStrategy, data: any) => {
@@ -173,16 +123,16 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 
   const getStepCompletion = (stepIndex: number) => {
     switch (stepIndex) {
-      case 0: // Market
+      case 0: // Market & Timeframe
         return strategy.market?.instrument && strategy.market?.timeframes?.length > 0;
       case 1: // Patterns
         return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
-      case 2: // Money Management
-        return strategy.riskManagement && strategy.moneyManagement;
+      case 2: // Target & Stop Loss
+        return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
       case 3: // Backtest
         return strategy.backtestResults != null;
       case 4: // Export
-        return getStepCompletion(1) && getStepCompletion(2); // Can export if patterns and money mgmt are set
+        return getStepCompletion(1) && getStepCompletion(2);
       default:
         return false;
     }
@@ -229,12 +179,12 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             <div>
               <CardTitle className="text-2xl flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <Activity className="w-6 h-6 text-primary" />
+                  <Target className="w-6 h-6 text-primary" />
                 </div>
-                ChartingPath Strategy Builder
+                Chart Pattern Strategy Builder
               </CardTitle>
               <p className="text-muted-foreground mt-2">
-                Build multi-pattern trading strategies using professional chart patterns with the Detect → Confirm → Enter → Manage → Invalidate framework
+                Build pattern-based strategies by selecting chart patterns, setting target % gains and stop loss %, then backtest and export
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -341,13 +291,17 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Globe className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 1: Market Selection</h3>
+                  <h3 className="text-lg font-semibold">Step 1: Select Financial Instrument & Timeframe</h3>
                 </div>
-                <MarketStep
-                  answers={{ market: strategy.market }}
-                  onAnswersChange={(_, data) => updateStrategy('market', data)}
-                  subscriptionPlan="professional"
-                />
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <MarketStep
+                      answers={{ market: strategy.market }}
+                      onAnswersChange={(_, data) => updateStrategy('market', data)}
+                      subscriptionPlan="professional"
+                    />
+                  </CardContent>
+                </Card>
               </div>
             )}
 
@@ -355,7 +309,10 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 2: Pattern Selection</h3>
+                  <h3 className="text-lg font-semibold">Step 2: Select Chart Patterns to Trade</h3>
+                  <Badge variant="secondary" className="ml-auto">
+                    {strategy.patterns.filter(p => p.enabled).length} Selected
+                  </Badge>
                 </div>
                 {getStepCompletion(0) ? (
                   <PatternLibrary
@@ -367,7 +324,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete Market Selection first</span>
+                        <span>Please select a financial instrument and timeframe first</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -378,16 +335,18 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             {currentStep === 2 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <DollarSign className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 3: Money Management</h3>
+                  <Target className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 3: Set Target % Gain & Stop Loss %</h3>
                 </div>
                 {getStepCompletion(1) ? (
-                  <MoneyManagement
-                    settings={strategy.moneyManagement}
-                    riskSettings={strategy.riskManagement}
+                  <TargetStopLossSettings
+                    targetGainPercent={strategy.targetGainPercent}
+                    stopLossPercent={strategy.stopLossPercent}
+                    positionSizing={strategy.positionSizing}
                     onChange={(data) => {
-                      updateStrategy('moneyManagement', data.moneyManagement);
-                      updateStrategy('riskManagement', data.riskSettings);
+                      updateStrategy('targetGainPercent', data.targetGainPercent);
+                      updateStrategy('stopLossPercent', data.stopLossPercent);
+                      updateStrategy('positionSizing', data.positionSizing);
                     }}
                   />
                 ) : (
@@ -395,7 +354,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete Pattern Selection first</span>
+                        <span>Please select chart patterns first</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -407,7 +366,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 4: Backtest & Optimize</h3>
+                  <h3 className="text-lg font-semibold">Step 4: Backtest Pattern Strategy</h3>
                 </div>
                 {getStepCompletion(2) ? (
                   <EnhancedBacktestEngine
@@ -421,7 +380,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete Money Management setup first</span>
+                        <span>Please set target % and stop loss % first</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -442,7 +401,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete Pattern Selection and Money Management first</span>
+                        <span>Please complete pattern selection and target/stop loss setup first</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -491,12 +450,16 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                 <span>{strategy.patterns.length} Patterns</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-accent" />
-                <span>{strategy.signals.length} Signals</span>
+                <TrendingUp className="w-4 h-4 text-green-500" />
+                <span>Target: {strategy.targetGainPercent}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-orange-500" />
-                <span>Max {strategy.multiPatternSettings?.maxConcurrentPatterns || 3} Concurrent</span>
+                <TrendingDown className="w-4 h-4 text-red-500" />
+                <span>Stop: {strategy.stopLossPercent}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-primary" />
+                <span>Risk: {strategy.positionSizing.riskPerTrade}% / trade</span>
               </div>
               {backtestResults && (
                 <div className="flex items-center gap-2">
