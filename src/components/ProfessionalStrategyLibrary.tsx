@@ -40,7 +40,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
-  const [selectedAssetType, setSelectedAssetType] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('name');
 
@@ -54,11 +53,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     [...new Set(chartPatternTemplates.map(s => s.complexity))], 
     []
   );
-  
-  const assetTypes = useMemo(() => 
-    [...new Set(chartPatternTemplates.flatMap(s => s.assetTypes))], 
-    []
-  );
 
   // Filter and sort patterns
   const filteredPatterns = useMemo(() => {
@@ -67,9 +61,8 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                            pattern.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || pattern.category === selectedCategory;
       const matchesComplexity = selectedComplexity === 'all' || pattern.complexity === selectedComplexity;
-      const matchesAssetType = selectedAssetType === 'all' || pattern.assetTypes.includes(selectedAssetType);
       
-      return matchesSearch && matchesCategory && matchesComplexity && matchesAssetType;
+      return matchesSearch && matchesCategory && matchesComplexity;
     });
 
     // Sort strategies
@@ -88,7 +81,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     });
 
     return filtered;
-  }, [searchTerm, selectedCategory, selectedComplexity, selectedAssetType, sortBy]);
+  }, [searchTerm, selectedCategory, selectedComplexity, sortBy]);
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -126,7 +119,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     setSearchTerm('');
     setSelectedCategory('all');
     setSelectedComplexity('all');
-    setSelectedAssetType('all');
   };
 
   const GridView = () => (
@@ -171,14 +163,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               <div className="mt-2 flex gap-3 text-xs">
                 <span className="text-green-600 font-medium">Target: {pattern.defaultTarget}%</span>
                 <span className="text-red-600 font-medium">Stop: {pattern.defaultStopLoss}%</span>
-              </div>
-
-              {/* Supported Assets */}
-              <div className="mt-2">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Assets:</span> {pattern.assetTypes.slice(0, 3).join(', ')}
-                  {pattern.assetTypes.length > 3 && ` +${pattern.assetTypes.length - 3} more`}
-                </p>
               </div>
             </CardHeader>
 
@@ -313,7 +297,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
             </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Industry-standard chart patterns used by professional traders worldwide. 
+            Universal chart patterns that work across all asset classes (Forex, Stocks, Crypto, Commodities). 
             Select a pattern to build a complete trading strategy with customizable targets and stop losses.
           </p>
         </CardHeader>
@@ -353,7 +337,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
             </div>
 
             {/* Filter Controls */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Category" />
@@ -378,18 +362,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                 </SelectContent>
               </Select>
 
-              <Select value={selectedAssetType} onValueChange={setSelectedAssetType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Asset Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Assets</SelectItem>
-                  {assetTypes.map(asset => (
-                    <SelectItem key={asset} value={asset}>{asset}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
@@ -403,14 +375,13 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
             </div>
 
             {/* Active Filters & Clear */}
-            {(searchTerm || selectedCategory !== 'all' || selectedComplexity !== 'all' || selectedAssetType !== 'all') && (
+            {(searchTerm || selectedCategory !== 'all' || selectedComplexity !== 'all') && (
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 {searchTerm && <Badge variant="secondary">Search: {searchTerm}</Badge>}
                 {selectedCategory !== 'all' && <Badge variant="secondary">Category: {selectedCategory}</Badge>}
                 {selectedComplexity !== 'all' && <Badge variant="secondary">Level: {selectedComplexity}</Badge>}
-                {selectedAssetType !== 'all' && <Badge variant="secondary">Asset: {selectedAssetType}</Badge>}
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   Clear all
                 </Button>
@@ -446,10 +417,10 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
           <div className="flex items-start gap-2">
             <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
             <div className="space-y-2">
-              <p className="font-medium text-sm">Professional Chart Patterns</p>
+              <p className="font-medium text-sm">Universal Chart Patterns</p>
               <p className="text-sm text-muted-foreground">
-                These patterns represent proven technical formations used by institutional traders, 
-                hedge funds, and retail professionals. Select any pattern to build a complete strategy with customizable targets and stops,
+                These patterns are universal across all asset classes and timeframes, representing market psychology and price action. 
+                They work equally well on Forex, Stocks, Crypto, and Commodities. Select any pattern to build a complete strategy with customizable targets and stops,
                 choose specific assets, and run comprehensive backtests.
               </p>
             </div>
