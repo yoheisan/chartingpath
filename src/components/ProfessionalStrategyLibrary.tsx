@@ -39,18 +39,12 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('name');
 
   // Get unique values for filters
   const categories = useMemo(() => 
     [...new Set(chartPatternTemplates.map(s => s.category))], 
-    []
-  );
-  
-  const complexityLevels = useMemo(() => 
-    [...new Set(chartPatternTemplates.map(s => s.complexity))], 
     []
   );
 
@@ -60,9 +54,8 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
       const matchesSearch = pattern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            pattern.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || pattern.category === selectedCategory;
-      const matchesComplexity = selectedComplexity === 'all' || pattern.complexity === selectedComplexity;
       
-      return matchesSearch && matchesCategory && matchesComplexity;
+      return matchesSearch && matchesCategory;
     });
 
     // Sort strategies
@@ -81,7 +74,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     });
 
     return filtered;
-  }, [searchTerm, selectedCategory, selectedComplexity, sortBy]);
+  }, [searchTerm, selectedCategory, sortBy]);
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -118,7 +111,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCategory('all');
-    setSelectedComplexity('all');
   };
 
   const GridView = () => (
@@ -146,13 +138,10 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                 </div>
               </div>
               
-              {/* Category and Complexity */}
+              {/* Category and Accuracy */}
               <div className="flex gap-2 mt-3">
                 <Badge variant="outline" className="text-xs">
                   {pattern.category}
-                </Badge>
-                <Badge className={getComplexityColor(pattern.complexity)}>
-                  {pattern.complexity}
                 </Badge>
                 <Badge variant="secondary" className="text-xs">
                   {pattern.accuracy} Accuracy
@@ -242,9 +231,6 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                         <Badge variant="outline" className="text-xs">
                           <CategoryIcon className="w-3 h-3 mr-1" />
                           {pattern.category}
-                        </Badge>
-                        <Badge className={`${getComplexityColor(pattern.complexity)} text-xs`}>
-                          {pattern.complexity}
                         </Badge>
                       </div>
                     </div>
@@ -337,7 +323,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
             </div>
 
             {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Category" />
@@ -350,38 +336,24 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                 </SelectContent>
               </Select>
 
-              <Select value={selectedComplexity} onValueChange={setSelectedComplexity}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Complexity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  {complexityLevels.map(level => (
-                    <SelectItem key={level} value={level}>{level}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="complexity">Complexity</SelectItem>
                   <SelectItem value="category">Category</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Active Filters & Clear */}
-            {(searchTerm || selectedCategory !== 'all' || selectedComplexity !== 'all') && (
+            {(searchTerm || selectedCategory !== 'all') && (
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 {searchTerm && <Badge variant="secondary">Search: {searchTerm}</Badge>}
                 {selectedCategory !== 'all' && <Badge variant="secondary">Category: {selectedCategory}</Badge>}
-                {selectedComplexity !== 'all' && <Badge variant="secondary">Level: {selectedComplexity}</Badge>}
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   Clear all
                 </Button>
