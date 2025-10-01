@@ -21,6 +21,8 @@ import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { ChartingPathManager } from './ChartingPathManager';
 
 interface SavedStrategy {
   id: string;
@@ -97,9 +99,53 @@ export const StrategyWorkspaceInterface: React.FC = () => {
   };
 
   // Handle ChartingPath strategy save
-  const handleChartingPathStrategySave = (strategy: ChartingPathStrategy) => {
-    setCurrentChartingPathStrategy(strategy);
-    toast.success('ChartingPath strategy saved successfully!');
+  const handleChartingPathStrategySave = async (strategy: ChartingPathStrategy) => {
+    if (!user) {
+      toast.error('Please sign in to save strategies');
+      return;
+    }
+
+    try {
+      const strategyData = {
+        user_id: user.id,
+        name: strategy.name,
+        description: strategy.description || '',
+        strategy_code: JSON.stringify(strategy),
+        strategy_type: 'charting_path',
+        is_active: false
+      };
+
+      if (strategy.id) {
+        // Update existing strategy
+        const { error } = await supabase
+          .from('user_strategies')
+          .update({
+            ...strategyData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', strategy.id);
+
+        if (error) throw error;
+      } else {
+        // Create new strategy
+        const { data, error } = await supabase
+          .from('user_strategies')
+          .insert([strategyData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        // Update local state with new ID
+        strategy.id = data.id;
+      }
+
+      setCurrentChartingPathStrategy(strategy);
+      toast.success('Strategy saved successfully!');
+    } catch (error) {
+      console.error('Error saving strategy:', error);
+      toast.error('Failed to save strategy');
+    }
   };
 
   // Handle ChartingPath strategy backtest
@@ -225,6 +271,13 @@ export const StrategyWorkspaceInterface: React.FC = () => {
     }, 100);
   };
 
+  // Handle loading a charting path strategy
+  const handleLoadChartingPathStrategy = (strategy: ChartingPathStrategy) => {
+    setCurrentChartingPathStrategy(strategy);
+    setActiveTab('builder');
+    toast.success(`Loaded strategy: ${strategy.name}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -330,10 +383,30 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
         {/* My Strategies Tab */}
         <TabsContent value="library" className="space-y-6">
-          <GuidedStrategyManager 
-            onLoadStrategy={handleLoadStrategy} 
-            onEditStrategy={handleLoadStrategy}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Guided Strategies */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Bot className="w-5 h-5 text-primary" />
+                Guided Strategies
+              </h3>
+              <GuidedStrategyManager 
+                onLoadStrategy={handleLoadStrategy} 
+                onEditStrategy={handleLoadStrategy}
+              />
+            </div>
+
+            {/* Chart Pattern Strategies */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
+                Chart Pattern Strategies
+              </h3>
+              <ChartingPathManager 
+                onLoadStrategy={handleLoadChartingPathStrategy}
+              />
+            </div>
+          </div>
         </TabsContent>
 
       </Tabs>
