@@ -23,7 +23,9 @@ import {
   List,
   TrendingUp,
   BarChart3,
-  DollarSign
+  DollarSign,
+  ArrowUpAZ,
+  ArrowDownZA
 } from 'lucide-react';
 import { chartPatternTemplates, ChartPatternTemplate } from '@/utils/ChartPatternTemplates';
 
@@ -32,7 +34,7 @@ interface ProfessionalStrategyLibraryProps {
 }
 
 type ViewMode = 'grid' | 'list';
-type SortBy = 'name' | 'complexity' | 'category';
+type SortBy = 'name-asc' | 'name-desc';
 
 export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryProps> = ({
   onPatternSelect
@@ -40,7 +42,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortBy>('name');
+  const [sortBy, setSortBy] = useState<SortBy>('name-asc');
 
   // Get unique values for filters
   const categories = useMemo(() => 
@@ -58,16 +60,13 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
       return matchesSearch && matchesCategory;
     });
 
-    // Sort strategies
+    // Sort patterns
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'name':
+        case 'name-asc':
           return a.name.localeCompare(b.name);
-        case 'complexity':
-          const complexityOrder = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-          return complexityOrder.indexOf(a.complexity) - complexityOrder.indexOf(b.complexity);
-        case 'category':
-          return a.category.localeCompare(b.category);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
         default:
           return 0;
       }
@@ -328,7 +327,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                 <SelectTrigger>
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-popover">
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>{category}</SelectItem>
@@ -338,11 +337,22 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Sort" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="category">Category</SelectItem>
+                <SelectContent className="z-50 bg-popover">
+                  <SelectItem value="name-asc">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpAZ className="w-4 h-4" />
+                      A-Z
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="name-desc">
+                    <div className="flex items-center gap-2">
+                      <ArrowDownZA className="w-4 h-4" />
+                      Z-A
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
