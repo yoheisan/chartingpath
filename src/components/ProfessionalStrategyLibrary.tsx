@@ -34,13 +34,12 @@ interface ProfessionalStrategyLibraryProps {
 }
 
 type ViewMode = 'grid' | 'list';
-type SortBy = 'name-asc' | 'name-desc';
+type SortBy = 'name-asc' | 'name-desc' | 'category-reversal' | 'category-continuation' | 'category-candlestick' | 'category-harmonic' | 'category-breakout';
 
 export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryProps> = ({
   onPatternSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('name-asc');
 
@@ -49,6 +48,11 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     [...new Set(chartPatternTemplates.map(s => s.category))], 
     []
   );
+
+  // Determine selected category from sortBy
+  const selectedCategory = sortBy.startsWith('category-') 
+    ? sortBy.replace('category-', '').charAt(0).toUpperCase() + sortBy.replace('category-', '').slice(1)
+    : 'all';
 
   // Filter and sort patterns
   const filteredPatterns = useMemo(() => {
@@ -62,14 +66,13 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
     // Sort patterns
     filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        default:
-          return 0;
+      if (sortBy === 'name-asc') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'name-desc') {
+        return b.name.localeCompare(a.name);
       }
+      // For category filters, sort by name within category
+      return a.name.localeCompare(b.name);
     });
 
     return filtered;
@@ -109,7 +112,7 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('all');
+    setSortBy('name-asc');
   };
 
   const GridView = () => (
@@ -322,25 +325,16 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
             </div>
 
             {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-popover">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
+            <div className="flex gap-4">
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-[200px]">
                   <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort" />
+                  <SelectValue placeholder="Sort & Filter" />
                 </SelectTrigger>
                 <SelectContent className="z-50 bg-popover">
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    SORT
+                  </div>
                   <SelectItem value="name-asc">
                     <div className="flex items-center gap-2">
                       <ArrowUpAZ className="w-4 h-4" />
@@ -353,6 +347,19 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                       Z-A
                     </div>
                   </SelectItem>
+                  
+                  <div className="h-px bg-border my-1" />
+                  
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    FILTER BY CATEGORY
+                  </div>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={`category-${category.toLowerCase()}`}>
+                      <div className="flex items-center gap-2">
+                        {category}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
