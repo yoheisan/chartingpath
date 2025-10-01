@@ -214,7 +214,15 @@ export const StrategyWorkspaceInterface: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
     
-    toast.success(`${pattern.name} pattern selected! Complete your strategy setup in the builder.`);
+    toast.success(`${pattern.name} pattern selected! Configure your strategy in the builder.`);
+  };
+
+  // Handle return to pattern library from builder
+  const handleBackToPatternLibrary = () => {
+    setActiveTab('quick-select');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   return (
@@ -298,6 +306,21 @@ export const StrategyWorkspaceInterface: React.FC = () => {
 
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
+          {/* Quick Navigation Back to Pattern Library */}
+          {currentChartingPathStrategy?.patterns && currentChartingPathStrategy.patterns.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToPatternLibrary}
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary"
+              >
+                <Target className="w-4 h-4" />
+                ← Back to Pattern Library
+              </Button>
+            </div>
+          )}
+          
           <ChartingPathStrategyBuilder
             initialStrategy={currentChartingPathStrategy}
             onSave={handleChartingPathStrategySave}

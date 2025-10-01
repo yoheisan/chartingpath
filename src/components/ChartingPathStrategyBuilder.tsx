@@ -175,6 +175,50 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 
   return (
     <div className="space-y-6">
+      {/* Selected Pattern Display */}
+      {strategy.patterns.filter(p => p.enabled).length > 0 && (
+        <Card className="border-2 border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
+          <CardContent className="pt-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <h3 className="font-semibold text-green-800 dark:text-green-200">
+                    Active Chart Pattern{strategy.patterns.filter(p => p.enabled).length > 1 ? 's' : ''}
+                  </h3>
+                  <Badge className="bg-green-600 text-white">
+                    {strategy.patterns.filter(p => p.enabled).length} Selected
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {strategy.patterns.filter(p => p.enabled).map((pattern, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-background rounded-lg border border-green-200 dark:border-green-800">
+                      <Target className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-sm">{pattern.name}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {pattern.category}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Strategy will generate signals based on these patterns
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentStep(1)}
+                className="ml-4 flex items-center gap-2 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                <Settings className="w-4 h-4" />
+                Change Patterns
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardHeader>
