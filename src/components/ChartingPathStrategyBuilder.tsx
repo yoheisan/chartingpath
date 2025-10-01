@@ -28,6 +28,7 @@ import { PatternLibrary } from './chartingpath/PatternLibrary';
 import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
 import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
+import { toast } from 'sonner';
 
 export interface ChartingPathStrategy {
   id?: string;
@@ -107,11 +108,13 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const handleBacktest = async () => {
     setIsBacktesting(true);
     try {
+      // Use pattern detection service to validate patterns in backtest
       const results = await onBacktest?.(strategy);
       setBacktestResults(results);
       updateStrategy('backtestResults', results);
     } catch (error) {
       console.error('Backtest failed:', error);
+      toast.error('Backtest failed. Please check your pattern configuration.');
     } finally {
       setIsBacktesting(false);
     }

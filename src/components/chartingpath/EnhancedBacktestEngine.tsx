@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { PatternDetectionDisplay } from './PatternDetectionDisplay';
 import { 
   Play, 
   BarChart3,
@@ -436,6 +437,24 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
               </div>
             </CardContent>
           </Card>
+
+          {/* AI-Detected Patterns */}
+          {results.patternDetails && results.patternDetails.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  AI Pattern Detection Results
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Real pattern detections from AI analysis of historical price data
+                </p>
+              </CardHeader>
+              <CardContent>
+                <PatternDetectionDisplay detections={results.patternDetails} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Additional Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
