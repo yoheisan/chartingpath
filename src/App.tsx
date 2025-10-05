@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import { StrategyDetail } from "./pages/StrategyDetail";
 import PipCalculator from "./pages/PipCalculator";
 import RiskCalculator from "./pages/RiskCalculator";
+import MarketBreadthReport from "./pages/MarketBreadthReport";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import Pricing from "./pages/Pricing";
 import MemberScripts from "./pages/MemberScripts";
@@ -61,6 +62,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tools/pip-calculator" element={<PipCalculator />} />
           <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
+          <Route path="/tools/market-breadth" element={<MarketBreadthReport />} />
           <Route path="/tools/script-generator" element={<ScriptGenerator />} />
           <Route path="/chart-patterns/generator" element={<PatternGenerator />} />
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />

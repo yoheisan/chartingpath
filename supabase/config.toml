@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.fetch-market-data]
 verify_jwt = false
+
+[functions.generate-market-report]
+verify_jwt = false
+
+[functions.send-market-report]
+verify_jwt = false

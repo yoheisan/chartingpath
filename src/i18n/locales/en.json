@@ -20,6 +20,7 @@
     "scriptGenerator": "Script Generator",
     "pipCalculator": "Pip Calculator",
     "riskCalculator": "Risk Calculator",
+    "marketBreadth": "Market Breadth Report",
     "memberArea": "Member Area",
     "login": "Login",
     "logout": "Logout"

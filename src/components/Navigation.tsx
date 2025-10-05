@@ -61,6 +61,12 @@ const Navigation = () => {
                     {t('navigation.riskCalculator', 'Risk Calculator')}
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/tools/market-breadth" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    {t('navigation.marketBreadth', 'Market Breadth Report')}
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
