@@ -1422,12 +1422,6 @@ const FAQ = () => {
                 Can't find the answer you're looking for? Our support team is here to help you succeed with your trading strategies.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild>
-                  <Link to="/members/community">
-                    <Users className="h-4 w-4 mr-2" />
-                    Join Community
-                  </Link>
-                </Button>
                 <Button variant="outline" asChild>
                   <Link to="/pricing">
                     <Crown className="h-4 w-4 mr-2" />

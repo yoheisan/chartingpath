@@ -13,7 +13,6 @@ import Pricing from "./pages/Pricing";
 import MemberScripts from "./pages/MemberScripts";
 import MemberCourses from "./pages/MemberCourses";
 import MemberDownloads from "./pages/MemberDownloads";
-import MemberCommunity from "./pages/MemberCommunity";
 import MemberAlerts from "./pages/MemberAlerts";
 import MemberAccount from "./pages/MemberAccount";
 import MemberDashboard from "./pages/MemberDashboard";
@@ -64,7 +63,6 @@ const App = () => (
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
-          <Route path="/members/community" element={<MemberCommunity />} />
           <Route path="/members/alerts" element={<MemberAlerts />} />
           <Route path="/members/account" element={<MemberAccount />} />
           <Route path="/auth" element={<Auth />} />

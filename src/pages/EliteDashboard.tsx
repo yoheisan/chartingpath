@@ -157,13 +157,6 @@ const EliteDashboard = () => {
       icon: Download,
       link: "/members/scripts",
       gradient: "from-blue-500 to-purple-500"
-    },
-    {
-      title: "Elite Community",
-      description: "Connect with pro traders",
-      icon: Users,
-      link: "/members/community",
-      gradient: "from-purple-500 to-pink-500"
     }
   ];
 

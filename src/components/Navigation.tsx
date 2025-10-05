@@ -95,9 +95,6 @@ const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/members/community" className="text-muted-foreground hover:text-foreground transition-colors">
-              Community
-            </Link>
             <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
               FAQ
             </Link>

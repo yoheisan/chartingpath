@@ -7,7 +7,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import UserManagement from "@/components/UserManagement";
-import CommunityAnalyticsDashboard from "@/components/CommunityAnalyticsDashboard";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -142,14 +141,6 @@ const AdminDashboard = () => {
             User Management
           </Button>
           <Button
-            variant={activeTab === "community" ? "default" : "outline"}
-            onClick={() => setActiveTab("community")}
-            className="flex items-center gap-2"
-          >
-            <Users className="h-4 w-4" />
-            Community
-          </Button>
-          <Button
             variant="outline"
             onClick={() => navigate("/admin/translations")}
             className="flex items-center gap-2"
@@ -169,7 +160,6 @@ const AdminDashboard = () => {
 
         {/* Tab Content */}
         {activeTab === "users" && <UserManagement userRole={userRole} />}
-        {activeTab === "community" && <CommunityAnalyticsDashboard />}
         
         {activeTab === "settings" && (
           <Card>
