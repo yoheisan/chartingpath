@@ -152,11 +152,6 @@ const CryptoMarket = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Getting Started with Cryptocurrency Trading</CardTitle>
-              <CardDescription>Your roadmap to trading digital assets</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <CardHeader>
               <CardTitle>Getting Started with Crypto Trading</CardTitle>
               <CardDescription>Navigate the crypto market safely with these essential steps</CardDescription>
             </CardHeader>
