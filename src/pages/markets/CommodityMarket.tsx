@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, DollarSign, Fuel, Clock, BarChart3, Wheat } from "lucide-react";
+import { TrendingUp, DollarSign, Fuel, Clock, BarChart3, Wheat, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CommodityMarket = () => {
   return (
@@ -91,77 +92,117 @@ const CommodityMarket = () => {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-3">Energy Commodities</h4>
-                  <div className="space-y-2">
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Crude Oil (WTI, Brent)</p>
-                      <p className="text-sm text-muted-foreground">Most traded commodity globally</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Natural Gas</p>
-                      <p className="text-sm text-muted-foreground">Heating and power generation</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Gasoline</p>
-                      <p className="text-sm text-muted-foreground">Refined petroleum product</p>
-                    </div>
-                  </div>
-                </div>
+                <Link to="/markets/commodities/energy">
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Fuel className="h-5 w-5" />
+                          Energy Commodities
+                        </span>
+                        <ArrowRight className="h-4 w-4" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Crude Oil (WTI, Brent)</p>
+                        <p className="text-sm text-muted-foreground">Most traded commodity globally</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Natural Gas</p>
+                        <p className="text-sm text-muted-foreground">Heating and power generation</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Gasoline</p>
+                        <p className="text-sm text-muted-foreground">Refined petroleum product</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
 
-                <div>
-                  <h4 className="font-semibold mb-3">Precious Metals</h4>
-                  <div className="space-y-2">
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Gold</p>
-                      <p className="text-sm text-muted-foreground">Safe-haven asset</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Silver</p>
-                      <p className="text-sm text-muted-foreground">Industrial and investment metal</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Platinum</p>
-                      <p className="text-sm text-muted-foreground">Automotive and jewelry</p>
-                    </div>
-                  </div>
-                </div>
+                <Link to="/markets/commodities/precious-metals">
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <DollarSign className="h-5 w-5" />
+                          Precious Metals
+                        </span>
+                        <ArrowRight className="h-4 w-4" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Gold</p>
+                        <p className="text-sm text-muted-foreground">Safe-haven asset</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Silver</p>
+                        <p className="text-sm text-muted-foreground">Industrial and investment metal</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Platinum</p>
+                        <p className="text-sm text-muted-foreground">Automotive and jewelry</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
 
-                <div>
-                  <h4 className="font-semibold mb-3">Agricultural Commodities</h4>
-                  <div className="space-y-2">
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Corn</p>
-                      <p className="text-sm text-muted-foreground">Major grain crop</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Wheat</p>
-                      <p className="text-sm text-muted-foreground">Staple food commodity</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Coffee & Sugar</p>
-                      <p className="text-sm text-muted-foreground">Soft commodities</p>
-                    </div>
-                  </div>
-                </div>
+                <Link to="/markets/commodities/agricultural">
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Wheat className="h-5 w-5" />
+                          Agricultural Commodities
+                        </span>
+                        <ArrowRight className="h-4 w-4" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Corn</p>
+                        <p className="text-sm text-muted-foreground">Major grain crop</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Wheat</p>
+                        <p className="text-sm text-muted-foreground">Staple food commodity</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Coffee & Sugar</p>
+                        <p className="text-sm text-muted-foreground">Soft commodities</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
 
-                <div>
-                  <h4 className="font-semibold mb-3">Industrial Metals</h4>
-                  <div className="space-y-2">
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Copper</p>
-                      <p className="text-sm text-muted-foreground">Construction and electronics</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Aluminum</p>
-                      <p className="text-sm text-muted-foreground">Manufacturing metal</p>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="font-medium">Zinc & Nickel</p>
-                      <p className="text-sm text-muted-foreground">Industrial applications</p>
-                    </div>
-                  </div>
-                </div>
+                <Link to="/markets/commodities/industrial-metals">
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5" />
+                          Industrial Metals
+                        </span>
+                        <ArrowRight className="h-4 w-4" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Copper</p>
+                        <p className="text-sm text-muted-foreground">Construction and electronics</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Aluminum</p>
+                        <p className="text-sm text-muted-foreground">Manufacturing metal</p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <p className="font-medium">Zinc & Nickel</p>
+                        <p className="text-sm text-muted-foreground">Industrial applications</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               </div>
             </CardContent>
           </Card>
