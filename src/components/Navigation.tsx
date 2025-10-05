@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown } from "lucide-react";
+import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown, DollarSign, Globe, Zap, Fuel } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import {
@@ -91,6 +91,38 @@ const Navigation = () => {
                   <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
                     {t('navigation.patternQuiz', 'Pattern Quiz')}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                Markets
+                <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-background z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/markets/stocks" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Stock Market
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/markets/forex" className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Forex (FX)
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/markets/crypto" className="flex items-center gap-2">
+                    <Zap className="h-4 w-4" />
+                    Cryptocurrency
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/markets/commodities" className="flex items-center gap-2">
+                    <Fuel className="h-4 w-4" />
+                    Commodities
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -34,6 +34,10 @@ import BacktestVault from "./pages/BacktestVault";
 import StrategyWorkspace from "./pages/StrategyWorkspace";
 import EliteDashboard from "./pages/EliteDashboard";
 import { TranslationManagement } from "./pages/TranslationManagement";
+import StockMarket from "./pages/markets/StockMarket";
+import ForexMarket from "./pages/markets/ForexMarket";
+import CryptoMarket from "./pages/markets/CryptoMarket";
+import CommodityMarket from "./pages/markets/CommodityMarket";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +55,10 @@ const App = () => (
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
+          <Route path="/markets/stocks" element={<StockMarket />} />
+          <Route path="/markets/forex" element={<ForexMarket />} />
+          <Route path="/markets/crypto" element={<CryptoMarket />} />
+          <Route path="/markets/commodities" element={<CommodityMarket />} />
           <Route path="/strategy-workspace" element={<StrategyWorkspace />} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
