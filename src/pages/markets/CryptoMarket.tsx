@@ -87,33 +87,78 @@ const CryptoMarket = () => {
           <Card>
             <CardHeader>
               <CardTitle>Top Cryptocurrencies</CardTitle>
-              <CardDescription>Leading digital assets by market cap</CardDescription>
+              <CardDescription>Understanding the leading digital assets and their unique characteristics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Bitcoin (BTC)</h4>
-                  <p className="text-sm text-muted-foreground">First cryptocurrency, digital gold</p>
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-card">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-lg">Bitcoin (BTC)</h4>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">#1 Market Cap</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    The first and largest cryptocurrency, created in 2009 by Satoshi Nakamoto. Often called "digital gold," Bitcoin serves as a store of value and inflation hedge. Limited supply of 21 million coins.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Proof of Work</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Most secure</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Decentralized</span>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Ethereum (ETH)</h4>
-                  <p className="text-sm text-muted-foreground">Smart contract platform</p>
+
+                <div className="p-4 border rounded-lg bg-card">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-lg">Ethereum (ETH)</h4>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">#2 Market Cap</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    The leading smart contract platform enabling decentralized applications (dApps), DeFi protocols, and NFTs. Transitioned to Proof of Stake in 2022, reducing energy consumption by 99.95%.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Smart contracts</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">DeFi ecosystem</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Proof of Stake</span>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Binance Coin (BNB)</h4>
-                  <p className="text-sm text-muted-foreground">Exchange token ecosystem</p>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-semibold mb-2">Binance Coin (BNB)</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Native token of the Binance ecosystem, used for trading fee discounts, transaction fees on BNB Chain, and powering decentralized applications. Regularly burned to reduce supply.
+                    </p>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Exchange token</span>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-semibold mb-2">Solana (SOL)</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      High-performance blockchain capable of 65,000+ transactions per second with sub-second finality. Popular for NFTs, DeFi, and Web3 applications due to low fees.
+                    </p>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">High throughput</span>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-semibold mb-2">Cardano (ADA)</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Research-driven blockchain using peer-reviewed academic research. Focuses on sustainability, scalability, and interoperability with a strong emphasis on developing nations.
+                    </p>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Academic approach</span>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-semibold mb-2">Ripple (XRP)</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Digital payment protocol designed for fast, low-cost cross-border transactions. Partnered with major financial institutions for international money transfers.
+                    </p>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Payment focus</span>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Solana (SOL)</h4>
-                  <p className="text-sm text-muted-foreground">High-speed blockchain</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Cardano (ADA)</h4>
-                  <p className="text-sm text-muted-foreground">Research-driven blockchain</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Ripple (XRP)</h4>
-                  <p className="text-sm text-muted-foreground">Payment settlement system</p>
+
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-sm">
+                    <strong>Other notable cryptocurrencies:</strong> Polkadot (DOT), Polygon (MATIC), Avalanche (AVAX), Chainlink (LINK), Litecoin (LTC)
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -122,19 +167,97 @@ const CryptoMarket = () => {
           <Card>
             <CardHeader>
               <CardTitle>Getting Started with Crypto Trading</CardTitle>
+              <CardDescription>Navigate the crypto market safely with these essential steps</CardDescription>
             </CardHeader>
             <CardContent>
-              <ol className="space-y-3 list-decimal list-inside">
-                <li>Choose a reputable exchange (Coinbase, Binance, Kraken)</li>
-                <li>Set up secure wallet storage (hardware wallet recommended)</li>
-                <li>Understand blockchain technology basics</li>
-                <li>Learn about different types of cryptocurrencies</li>
-                <li>Start with small amounts and major cryptocurrencies</li>
-                <li>Use two-factor authentication (2FA) for security</li>
-                <li>Never invest more than you can afford to lose</li>
-                <li>Stay updated on regulatory changes and news</li>
-                <li>Beware of scams and do thorough research (DYOR)</li>
-              </ol>
+              <div className="space-y-4">
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">1. Choose a Reputable Exchange</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Select established exchanges with strong security records, regulatory compliance, and insurance coverage. Consider trading fees, available cryptocurrencies, and user experience.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Beginners: Coinbase, Kraken, Gemini (more regulated) | Advanced: Binance, KuCoin (more options)
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">2. Set Up Secure Wallet Storage</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Use hardware wallets (Ledger, Trezor) for long-term storage. Keep small amounts on exchanges for trading. Never share your private keys or seed phrases with anyone.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Hot wallets (exchange, mobile) for trading | Cold wallets (hardware) for long-term holding
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">3. Understand Blockchain Basics</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Learn fundamentals: blockchain technology, consensus mechanisms (PoW vs PoS), transaction confirmations, gas fees, and how cryptocurrencies differ from traditional finance.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Key concepts: Decentralization, immutability, transparency, cryptographic security
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">4. Research Different Crypto Types</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Understand categories: Layer 1s (Bitcoin, Ethereum), Layer 2s (Polygon, Arbitrum), DeFi tokens, NFT platforms, stablecoins (USDT, USDC), and meme coins. Each has different risk profiles.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Read whitepapers, check GitHub activity, review tokenomics, assess real-world utility
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">5. Start Small with Major Cryptos</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Begin with Bitcoin and Ethereum (70-80% of portfolio). Invest only what you can afford to lose completely. Start with $100-500 to learn without significant risk.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Avoid: Low market cap altcoins, new projects without history, meme coins as a beginner
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">6. Enable Maximum Security</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Activate 2FA (use authenticator apps, not SMS), whitelist withdrawal addresses, use unique strong passwords, enable withdrawal address whitelisting, and consider anti-phishing codes.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Security layers: 2FA + withdrawal whitelist + email confirmations + password manager
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">7. Practice Risk Management</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Never invest more than you can afford to lose. Crypto is highly speculative and volatile. Diversify across multiple cryptocurrencies. Don't use leverage as a beginner. Set stop-losses.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Rule: If losing this money would affect your daily life, don't invest it
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">8. Stay Informed and Vigilant</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Follow regulatory news, major partnerships, technological upgrades, and market sentiment. Use tools like CoinMarketCap, CoinGecko, and crypto news aggregators.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Red flags: Guaranteed returns, pressure to invest quickly, unknown teams, copied whitepapers
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">9. DYOR (Do Your Own Research)</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Never invest based solely on social media hype, influencer recommendations, or FOMO. Verify information from multiple sources. Understand tax implications in your country.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

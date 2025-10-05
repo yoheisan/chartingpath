@@ -169,19 +169,97 @@ const CommodityMarket = () => {
           <Card>
             <CardHeader>
               <CardTitle>Getting Started with Commodity Trading</CardTitle>
+              <CardDescription>Your comprehensive guide to entering commodity markets</CardDescription>
             </CardHeader>
             <CardContent>
-              <ol className="space-y-3 list-decimal list-inside">
-                <li>Choose a broker that offers commodity futures or CFDs</li>
-                <li>Understand futures contracts and expiration dates</li>
-                <li>Learn about supply and demand fundamentals</li>
-                <li>Study seasonal patterns and cycles</li>
-                <li>Monitor geopolitical events affecting commodities</li>
-                <li>Start with commodity ETFs before futures</li>
-                <li>Use proper position sizing due to leverage</li>
-                <li>Understand storage costs and contango/backwardation</li>
-                <li>Follow inventory reports and economic data</li>
-              </ol>
+              <div className="space-y-4">
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">1. Choose Specialized Broker</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Select brokers offering commodity futures, CFDs, or options. Ensure they provide access to major exchanges (CME, ICE, LME) and offer competitive margin requirements.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Popular platforms: Interactive Brokers, TD Ameritrade, E*TRADE (futures) | Plus500, IG (CFDs)
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">2. Master Futures Contract Mechanics</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Learn contract specifications: size, tick value, expiration dates, delivery terms, margin requirements. Understand rollover process when moving between contract months.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Example: 1 crude oil contract = 1,000 barrels, $10 per $1 price move, expires monthly
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">3. Study Supply and Demand Factors</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Analyze production levels, inventory data, weather conditions, economic growth, currency movements, and geopolitical tensions. Each commodity has unique fundamental drivers.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Key reports: EIA (energy), USDA (agriculture), WASDE (crops), warehouse stocks (metals)
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">4. Understand Seasonal Patterns</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Study historical price patterns: heating oil peaks in winter, natural gas demand rises in summer/winter, agricultural commodities follow planting/harvest cycles, gold rises during uncertainty.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Seasonal trades: Natural gas (winter spike), corn (harvest lows), crude oil (summer driving)
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">5. Monitor Geopolitical Events</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Track OPEC decisions, Middle East tensions, trade wars, sanctions, central bank policies, and weather events (hurricanes, droughts). These significantly impact commodity prices.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Impact examples: OPEC cuts = oil up, drought = grain up, strong dollar = commodities down
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">6. Begin with Commodity ETFs</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Start with ETFs (GLD, USO, DBA) before trading futures. ETFs provide commodity exposure without leverage, expiration dates, or rollover costs. Lower risk for beginners.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Popular ETFs: GLD (gold), SLV (silver), USO (oil), DBA (agriculture), PDBC (broad commodities)
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">7. Practice Strict Position Sizing</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Commodity futures use significant leverage (10-20x). Never risk more than 1-2% of capital per trade. Use stop-losses. Calculate position size based on contract value and volatility.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Warning: One crude oil contract represents $80,000+ in value with only $5,000 margin
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">8. Learn Market Structure Concepts</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Understand contango (future prices higher than spot) vs backwardation (future prices lower). Storage costs, interest rates, and convenience yield affect futures pricing.
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Contango erodes long positions over time | Backwardation benefits long positions
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold mb-2">9. Track Critical Data Releases</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Follow regular reports: weekly petroleum status (EIA - Wednesday 10:30am ET), crop reports (USDA - monthly), inventory data (warehouses), weather forecasts, economic indicators.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

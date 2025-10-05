@@ -87,21 +87,62 @@ const StockMarket = () => {
           <Card>
             <CardHeader>
               <CardTitle>Major Stock Indices</CardTitle>
-              <CardDescription>Track the overall market performance</CardDescription>
+              <CardDescription>Track the overall market performance and economic health</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">S&P 500</h4>
-                  <p className="text-sm text-muted-foreground">500 largest US companies</p>
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-card">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-lg">S&P 500 (Standard & Poor's 500)</h4>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Most Popular</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Tracks 500 of the largest publicly traded companies in the United States, representing approximately 80% of the total US stock market capitalization.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Market-cap weighted</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Diversified sectors</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Benchmark index</span>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Dow Jones</h4>
-                  <p className="text-sm text-muted-foreground">30 major US industrial companies</p>
+
+                <div className="p-4 border rounded-lg bg-card">
+                  <h4 className="font-semibold text-lg mb-2">Dow Jones Industrial Average (DJIA)</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    The oldest and most well-known US stock index, tracking 30 large-cap blue-chip companies. Despite its name, it includes companies from various sectors beyond industrials.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Price-weighted</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">30 companies</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Historic indicator</span>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">NASDAQ Composite</h4>
-                  <p className="text-sm text-muted-foreground">Tech-heavy US index</p>
+
+                <div className="p-4 border rounded-lg bg-card">
+                  <h4 className="font-semibold text-lg mb-2">NASDAQ Composite</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Includes all stocks listed on the NASDAQ exchange, heavily weighted toward technology companies. Contains over 3,000 stocks, making it broader than the S&P 500.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Tech-focused</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">3,000+ stocks</span>
+                    <span className="text-xs bg-muted px-2 py-1 rounded">Growth indicator</span>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4 mt-4">
+                  <div className="p-3 border rounded-lg">
+                    <h5 className="font-semibold text-sm mb-1">Russell 2000</h5>
+                    <p className="text-xs text-muted-foreground">Small-cap US companies index</p>
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <h5 className="font-semibold text-sm mb-1">FTSE 100</h5>
+                    <p className="text-xs text-muted-foreground">100 largest UK companies</p>
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <h5 className="font-semibold text-sm mb-1">Nikkei 225</h5>
+                    <p className="text-xs text-muted-foreground">Leading Japanese index</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -109,18 +150,90 @@ const StockMarket = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
+              <CardTitle>Getting Started with Stock Trading</CardTitle>
+              <CardDescription>Your roadmap to becoming a successful stock trader</CardDescription>
             </CardHeader>
             <CardContent>
-              <ol className="space-y-3 list-decimal list-inside">
-                <li>Choose a reputable broker with low fees and good platform</li>
-                <li>Learn fundamental analysis (company financials, earnings reports)</li>
-                <li>Study technical analysis and chart patterns</li>
-                <li>Start with a demo account or paper trading</li>
-                <li>Begin with established companies (blue-chip stocks)</li>
-                <li>Diversify your portfolio across sectors</li>
-                <li>Set clear entry and exit strategies</li>
-              </ol>
+              <div className="space-y-4">
+                <div className="space-y-4">
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">1. Choose a Reputable Broker</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Select a regulated broker with competitive fees, user-friendly platform, and good customer support. Consider commission structures, account minimums, and available research tools.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Popular options: Fidelity, Charles Schwab, Interactive Brokers, TD Ameritrade
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">2. Master Fundamental Analysis</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Learn to evaluate company health through financial statements, earnings reports, P/E ratios, revenue growth, debt levels, and competitive positioning in their industry.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Key metrics: EPS, P/E ratio, PEG ratio, debt-to-equity, ROE, profit margins
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">3. Study Technical Analysis</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Understand chart patterns, support/resistance levels, moving averages, RSI, MACD, and volume analysis. Technical analysis helps identify optimal entry and exit points.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Essential tools: Candlestick patterns, trend lines, Fibonacci retracements
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">4. Practice with Paper Trading</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Use demo accounts to practice strategies without risking real money. Track your performance, learn from mistakes, and build confidence before committing capital.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Minimum practice period: 2-3 months of consistent profitable trading
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">5. Start with Blue-Chip Stocks</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Begin with established, financially stable companies with proven track records. These large-cap stocks tend to be less volatile and more predictable for beginners.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Examples: Apple, Microsoft, Johnson & Johnson, Coca-Cola, Procter & Gamble
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">6. Diversify Your Portfolio</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Spread investments across different sectors (technology, healthcare, finance, consumer goods, energy) to reduce risk. Don't put all your capital in one stock or sector.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Recommended: 10-15 stocks across 5-7 different sectors
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">7. Develop Clear Trading Strategies</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Set specific entry and exit rules, stop-loss levels (typically 5-10% below entry), and profit targets. Use risk-reward ratios of at least 1:2 (risk $1 to potentially make $2).
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Never risk more than 1-2% of your total capital on a single trade
+                    </p>
+                  </div>
+
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-semibold mb-2">8. Continue Education</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Stay updated on market news, economic indicators, and company developments. Read annual reports, follow financial news, and learn from experienced investors.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
