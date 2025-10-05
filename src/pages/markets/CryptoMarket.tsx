@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, DollarSign, Zap, Clock, BarChart3, Shield } from "lucide-react";
+import { TrendingUp, DollarSign, Zap, Clock, BarChart3, Shield, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CryptoMarket = () => {
   return (
@@ -84,87 +85,77 @@ const CryptoMarket = () => {
             </Card>
           </div>
 
+          <div className="grid md:grid-cols-3 gap-6">
+            <Link to="/markets/crypto/bitcoin">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Bitcoin (BTC)</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>#1 Market Cap - Digital Gold</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    First cryptocurrency, store of value, 21M supply cap.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Proof of Work</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Halving Cycles</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link to="/markets/crypto/ethereum">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Ethereum (ETH)</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>#2 Market Cap - Smart Contracts</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Programmable blockchain, DeFi, NFTs, Layer 2s.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Proof of Stake</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">EIP-1559</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link to="/markets/crypto/altcoins">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Altcoins</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>Layer 1s, DeFi, Meme Coins</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Solana, Cardano, stablecoins, and high-risk tokens.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Layer 1s</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Stablecoins</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
           <Card>
             <CardHeader>
-              <CardTitle>Top Cryptocurrencies</CardTitle>
-              <CardDescription>Understanding the leading digital assets and their unique characteristics</CardDescription>
+              <CardTitle>Getting Started with Cryptocurrency Trading</CardTitle>
+              <CardDescription>Your roadmap to trading digital assets</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-card">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-lg">Bitcoin (BTC)</h4>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">#1 Market Cap</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    The first and largest cryptocurrency, created in 2009 by Satoshi Nakamoto. Often called "digital gold," Bitcoin serves as a store of value and inflation hedge. Limited supply of 21 million coins.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Proof of Work</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Most secure</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Decentralized</span>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg bg-card">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-lg">Ethereum (ETH)</h4>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">#2 Market Cap</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    The leading smart contract platform enabling decentralized applications (dApps), DeFi protocols, and NFTs. Transitioned to Proof of Stake in 2022, reducing energy consumption by 99.95%.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Smart contracts</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">DeFi ecosystem</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Proof of Stake</span>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-semibold mb-2">Binance Coin (BNB)</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Native token of the Binance ecosystem, used for trading fee discounts, transaction fees on BNB Chain, and powering decentralized applications. Regularly burned to reduce supply.
-                    </p>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Exchange token</span>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-semibold mb-2">Solana (SOL)</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      High-performance blockchain capable of 65,000+ transactions per second with sub-second finality. Popular for NFTs, DeFi, and Web3 applications due to low fees.
-                    </p>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">High throughput</span>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-semibold mb-2">Cardano (ADA)</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Research-driven blockchain using peer-reviewed academic research. Focuses on sustainability, scalability, and interoperability with a strong emphasis on developing nations.
-                    </p>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Academic approach</span>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-semibold mb-2">Ripple (XRP)</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Digital payment protocol designed for fast, low-cost cross-border transactions. Partnered with major financial institutions for international money transfers.
-                    </p>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Payment focus</span>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-sm">
-                    <strong>Other notable cryptocurrencies:</strong> Polkadot (DOT), Polygon (MATIC), Avalanche (AVAX), Chainlink (LINK), Litecoin (LTC)
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
             <CardHeader>
               <CardTitle>Getting Started with Crypto Trading</CardTitle>
               <CardDescription>Navigate the crypto market safely with these essential steps</CardDescription>

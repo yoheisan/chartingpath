@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, DollarSign, Building2, BarChart3, Users, Clock, Globe } from "lucide-react";
+import { TrendingUp, DollarSign, Building2, BarChart3, Users, Clock, Globe, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const StockMarket = () => {
   return (
@@ -84,69 +85,97 @@ const StockMarket = () => {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Major Stock Indices</CardTitle>
-              <CardDescription>Track the overall market performance and economic health</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-card">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-lg">S&P 500 (Standard & Poor's 500)</h4>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Most Popular</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Tracks 500 of the largest publicly traded companies in the United States, representing approximately 80% of the total US stock market capitalization.
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link to="/markets/forex/major-pairs">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Major Currency Pairs</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>Most liquid forex pairs</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    EUR/USD, GBP/USD, USD/JPY, USD/CHF - Tightest spreads and highest liquidity.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Market-cap weighted</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Diversified sectors</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Benchmark index</span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">EUR/USD</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">GBP/USD</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">USD/JPY</span>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            </Link>
 
-                <div className="p-4 border rounded-lg bg-card">
-                  <h4 className="font-semibold text-lg mb-2">Dow Jones Industrial Average (DJIA)</h4>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    The oldest and most well-known US stock index, tracking 30 large-cap blue-chip companies. Despite its name, it includes companies from various sectors beyond industrials.
+            <Link to="/markets/forex/cross-pairs">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Cross & Exotic Pairs</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>Higher volatility opportunities</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    EUR/GBP, GBP/JPY, AUD/JPY and emerging market currencies.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Price-weighted</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">30 companies</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Historic indicator</span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">EUR/JPY</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">GBP/JPY</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Exotics</span>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
 
-                <div className="p-4 border rounded-lg bg-card">
-                  <h4 className="font-semibold text-lg mb-2">NASDAQ Composite</h4>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Includes all stocks listed on the NASDAQ exchange, heavily weighted toward technology companies. Contains over 3,000 stocks, making it broader than the S&P 500.
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link to="/markets/stocks/sectors">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Stock Market Sectors</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>11 GICS sectors explained</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Technology, Healthcare, Financials, and 8 more sectors for diversification.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Tech-focused</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">3,000+ stocks</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">Growth indicator</span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Tech</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Healthcare</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Finance</span>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            </Link>
 
-                <div className="grid md:grid-cols-3 gap-4 mt-4">
-                  <div className="p-3 border rounded-lg">
-                    <h5 className="font-semibold text-sm mb-1">Russell 2000</h5>
-                    <p className="text-xs text-muted-foreground">Small-cap US companies index</p>
+            <Link to="/markets/stocks/indices">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Major Stock Indices</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                  <CardDescription>Track overall market performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    S&P 500, Dow Jones, NASDAQ, and international indices.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">S&P 500</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">NASDAQ</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Dow Jones</span>
                   </div>
-                  <div className="p-3 border rounded-lg">
-                    <h5 className="font-semibold text-sm mb-1">FTSE 100</h5>
-                    <p className="text-xs text-muted-foreground">100 largest UK companies</p>
-                  </div>
-                  <div className="p-3 border rounded-lg">
-                    <h5 className="font-semibold text-sm mb-1">Nikkei 225</h5>
-                    <p className="text-xs text-muted-foreground">Leading Japanese index</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
 
           <Card>
             <CardHeader>

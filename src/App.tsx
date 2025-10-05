@@ -42,6 +42,13 @@ import EnergyCommodities from "./pages/markets/commodities/EnergyCommodities";
 import PreciousMetals from "./pages/markets/commodities/PreciousMetals";
 import AgriculturalCommodities from "./pages/markets/commodities/AgriculturalCommodities";
 import IndustrialMetals from "./pages/markets/commodities/IndustrialMetals";
+import MajorCurrencyPairs from "./pages/markets/forex/MajorCurrencyPairs";
+import CrossCurrencyPairs from "./pages/markets/forex/CrossCurrencyPairs";
+import MajorIndices from "./pages/markets/stocks/MajorIndices";
+import StockSectors from "./pages/markets/stocks/StockSectors";
+import Bitcoin from "./pages/markets/crypto/Bitcoin";
+import Ethereum from "./pages/markets/crypto/Ethereum";
+import Altcoins from "./pages/markets/crypto/Altcoins";
 
 const queryClient = new QueryClient();
 
@@ -60,8 +67,15 @@ const App = () => (
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
+          <Route path="/markets/stocks/indices" element={<MajorIndices />} />
+          <Route path="/markets/stocks/sectors" element={<StockSectors />} />
           <Route path="/markets/forex" element={<ForexMarket />} />
+          <Route path="/markets/forex/major-pairs" element={<MajorCurrencyPairs />} />
+          <Route path="/markets/forex/cross-pairs" element={<CrossCurrencyPairs />} />
           <Route path="/markets/crypto" element={<CryptoMarket />} />
+          <Route path="/markets/crypto/bitcoin" element={<Bitcoin />} />
+          <Route path="/markets/crypto/ethereum" element={<Ethereum />} />
+          <Route path="/markets/crypto/altcoins" element={<Altcoins />} />
           <Route path="/markets/commodities" element={<CommodityMarket />} />
           <Route path="/markets/commodities/energy" element={<EnergyCommodities />} />
           <Route path="/markets/commodities/precious-metals" element={<PreciousMetals />} />

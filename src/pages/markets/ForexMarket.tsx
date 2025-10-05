@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, DollarSign, Globe, Clock, BarChart3, Users } from "lucide-react";
+import { TrendingUp, DollarSign, Globe, Clock, BarChart3, Users, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ForexMarket = () => {
   return (
@@ -84,10 +85,39 @@ const ForexMarket = () => {
             </Card>
           </div>
 
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link to="/markets/forex/major-pairs">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Major Currency Pairs</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">EUR/USD, GBP/USD, USD/JPY, USD/CHF - Tightest spreads.</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/markets/forex/cross-pairs">
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Cross & Exotic Pairs</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">EUR/GBP, GBP/JPY, AUD/JPY and emerging markets.</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
           <Card>
             <CardHeader>
-              <CardTitle>Major Currency Pairs</CardTitle>
-              <CardDescription>Understanding the most liquid and traded forex pairs</CardDescription>
+              <CardTitle>Getting Started with Forex Trading</CardTitle>
+              <CardDescription>Your roadmap to currency trading</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
