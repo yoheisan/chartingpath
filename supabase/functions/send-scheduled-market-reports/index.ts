@@ -75,6 +75,117 @@ serve(async (req) => {
 
         console.log(`Generating report for ${sub.email}`);
 
+        const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
+        if (!FINNHUB_API_KEY) {
+          console.error("FINNHUB_API_KEY not configured, skipping report for", sub.email);
+          continue;
+        }
+
+        // Fetch real-time market data from Finnhub
+        console.log("Fetching real-time market data from Finnhub...");
+        
+        const marketData: any = {
+          timestamp: new Date().toISOString(),
+          timezone: sub.timezone,
+        };
+
+        // Fetch stock market data
+        if (sub.markets.includes("stocks")) {
+          const stockSymbols = ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"];
+          const stockPromises = stockSymbols.map(symbol =>
+            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+              .then(r => r.json())
+              .then(data => ({ symbol, ...data }))
+          );
+          marketData.stocks = await Promise.all(stockPromises);
+          
+          // Fetch market news
+          const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
+          marketData.news = await newsResponse.json();
+        }
+
+        // Fetch forex data
+        if (sub.markets.includes("forex")) {
+          const forexPairs = ["OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY", "OANDA:AUD_USD"];
+          const forexPromises = forexPairs.map(symbol =>
+            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+              .then(r => r.json())
+              .then(data => ({ symbol, ...data }))
+          );
+          marketData.forex = await Promise.all(forexPromises);
+        }
+
+        // Fetch crypto data
+        if (sub.markets.includes("crypto")) {
+          const cryptoSymbols = ["BINANCE:BTCUSDT", "BINANCE:ETHUSDT"];
+          const cryptoPromises = cryptoSymbols.map(symbol =>
+            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+              .then(r => r.json())
+              .then(data => ({ symbol, ...data }))
+          );
+          marketData.crypto = await Promise.all(cryptoPromises);
+        }
+
+        // Fetch commodities data
+        if (sub.markets.includes("commodities")) {
+          const commoditySymbols = ["OANDA:XAU_USD", "OANDA:XAG_USD", "OANDA:BCO_USD", "OANDA:WTICO_USD"];
+          const commodityPromises = commoditySymbols.map(symbol =>
+            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+              .then(r => r.json())
+              .then(data => ({ symbol, ...data }))
+          );
+          marketData.commodities = await Promise.all(commodityPromises);
+        }
+
+        console.log("Market data fetched successfully");
+
+        // Format market data for AI prompt
+        let marketDataSummary = `**Real-Time Market Data (${new Date().toLocaleString('en-US', { timeZone: sub.timezone })}):**\n\n`;
+        
+        if (marketData.stocks) {
+          marketDataSummary += "**Stock Indices:**\n";
+          marketData.stocks.forEach((stock: any) => {
+            const changePercent = ((stock.c - stock.pc) / stock.pc * 100).toFixed(2);
+            marketDataSummary += `- ${stock.symbol}: $${stock.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
+          });
+          marketDataSummary += "\n";
+          
+          if (marketData.news && marketData.news.length > 0) {
+            marketDataSummary += "**Top Market News:**\n";
+            marketData.news.slice(0, 5).forEach((article: any) => {
+              marketDataSummary += `- ${article.headline} (${article.source})\n`;
+            });
+            marketDataSummary += "\n";
+          }
+        }
+        
+        if (marketData.forex) {
+          marketDataSummary += "**Forex Pairs:**\n";
+          marketData.forex.forEach((pair: any) => {
+            const changePercent = ((pair.c - pair.pc) / pair.pc * 100).toFixed(2);
+            marketDataSummary += `- ${pair.symbol}: ${pair.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
+          });
+          marketDataSummary += "\n";
+        }
+        
+        if (marketData.crypto) {
+          marketDataSummary += "**Cryptocurrencies:**\n";
+          marketData.crypto.forEach((crypto: any) => {
+            const changePercent = ((crypto.c - crypto.pc) / crypto.pc * 100).toFixed(2);
+            marketDataSummary += `- ${crypto.symbol}: $${crypto.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
+          });
+          marketDataSummary += "\n";
+        }
+        
+        if (marketData.commodities) {
+          marketDataSummary += "**Commodities:**\n";
+          marketData.commodities.forEach((commodity: any) => {
+            const changePercent = ((commodity.c - commodity.pc) / commodity.pc * 100).toFixed(2);
+            marketDataSummary += `- ${commodity.symbol}: $${commodity.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
+          });
+          marketDataSummary += "\n";
+        }
+
         // Generate report
         const timeSpanText = sub.time_span === "previous_day" ? "previous trading day" : "past 5 trading sessions";
         const marketList = sub.markets.join(", ");
@@ -94,31 +205,31 @@ serve(async (req) => {
 
         const systemPrompt = `You are a senior financial market analyst writing for Financial Times. Your writing style mirrors the FT's precision, authority, and editorial excellence.
 
+CRITICAL: You are analyzing REAL-TIME market data provided below. Use the exact prices, percentages, and news headlines given. Do NOT make up data or use historical examples.
+
 WRITING STYLE REQUIREMENTS:
 - Use proper institution names (e.g., "Bank of Japan" or "BoJ", not "Central Bank")
 - Use specific terminology: Federal Reserve/Fed, European Central Bank/ECB, Bank of England/BoE, Bank of Japan/BoJ, People's Bank of China/PBoC
 - Write in active voice with clear, declarative sentences
+- Use the EXACT numbers and percentages from the provided data
+- Reference the actual news headlines provided
 - Use specific numbers, percentages, and basis points (bps) when referencing moves
-- Reference actual indices by name: S&P 500, Nasdaq Composite, Dow Jones, FTSE 100, DAX, Nikkei 225, etc.
-- Cite real economic indicators: NFP, CPI, PMI, GDP, jobless claims, etc.
-- Reference actual currency pairs: EUR/USD, GBP/USD, USD/JPY, etc.
-- Name specific cryptocurrencies: Bitcoin (BTC), Ethereum (ETH), etc.
-- Mention real commodities: WTI crude, Brent crude, gold, copper, wheat, etc.
 
-CONTENT ACCURACY:
-- Base your analysis on real market patterns and historical behaviors you know from your training data
-- Use precise financial terminology and proper institution names
-- Reference actual geopolitical events, central bank actions, and economic data releases that typically move markets
-- Acknowledge when you're providing general market context vs. specific recent data
+CONTENT REQUIREMENTS:
+- Base your analysis EXCLUSIVELY on the real-time data provided below
+- Use the exact prices and percentage changes given
+- Reference the actual news headlines provided
+- Do NOT invent data or historical comparisons not in the provided data
+- Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 
 STRUCTURE (use ## for main sections, ### for subsections):
-1. **Market Overview** - Opening paragraph summarizing the day's sentiment across markets
-2. **Equity Markets** - Major indices performance, sector rotation, notable movers
-3. **Foreign Exchange** - Currency pair movements, central bank influence, interest rate differentials
-4. **Cryptocurrencies** - Bitcoin/Ethereum performance, market sentiment, regulatory developments
-5. **Commodities** - Energy, metals, agricultural products - supply/demand factors
-6. **Economic Data & Central Banks** - Key releases, policy statements, forward guidance
-7. **Cross-Asset Correlations** - How different markets influenced each other
+1. **Market Overview** - Opening paragraph summarizing today's sentiment across provided markets
+2. **Equity Markets** - Analyze the exact index data provided with actual percentages
+3. **Foreign Exchange** - Currency pair movements from the provided data
+4. **Cryptocurrencies** - Bitcoin/Ethereum performance from provided data
+5. **Commodities** - Energy, metals from provided data
+6. **Market Drivers** - Analyze the news headlines provided
+7. **Cross-Asset Correlations** - How different markets influenced each other based on the data
 8. **Outlook** - What traders should watch for next session
 
 FORMATTING:
@@ -129,18 +240,21 @@ ${toneInstruction}
 - Write in a professional, authoritative tone
 - Mobile-friendly and email-ready formatting
 
-CRITICAL: This must read like it was edited by FT's editorial team - precise, factual, and professionally formatted.`;
+CRITICAL: This must read like it was edited by FT's editorial team - precise, factual, and professionally formatted. Use ONLY the data provided below.`;
 
-        const userPrompt = `Generate a market breadth report for the ${timeSpanText}.
+        const userPrompt = `Generate a comprehensive market breadth report for today (${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}).
 
-**Parameters:**
-- Timezone: ${sub.timezone}
-- Markets: ${marketList}
+${marketDataSummary}
+
+**Analysis Requirements:**
+- Use the EXACT prices and percentage changes provided above
+- Reference the actual news headlines provided
+- Analyze how these specific movements relate to each other
+- Provide insights based on this real-time data
 - Tone: ${sub.tone}
+- Timezone: ${sub.timezone}
 
-${toneInstruction}
-
-Provide a thorough analysis covering all requested markets with actionable insights for traders.`;
+Provide a thorough analysis of the real-time market data above with actionable insights for traders.`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
