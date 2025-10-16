@@ -17,6 +17,7 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
+    const EODHD_API_KEY = Deno.env.get("EODHD_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -24,6 +25,10 @@ serve(async (req) => {
     
     if (!FINNHUB_API_KEY) {
       throw new Error("FINNHUB_API_KEY is not configured");
+    }
+
+    if (!EODHD_API_KEY) {
+      throw new Error("EODHD_API_KEY is not configured");
     }
 
     // Fetch real-time market data from Finnhub
@@ -62,18 +67,32 @@ serve(async (req) => {
       }
     }
 
-    // Fetch forex data
+    // Fetch forex data using EODHD
     if (markets.includes("forex")) {
-      const forexPairs = ["OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY", "OANDA:AUD_USD"];
-      const forexPromises = forexPairs.map(async symbol => {
+      const forexPairs = [
+        { symbol: "EURUSD", name: "EUR/USD" },
+        { symbol: "GBPUSD", name: "GBP/USD" },
+        { symbol: "USDJPY", name: "USD/JPY" },
+        { symbol: "AUDUSD", name: "AUD/USD" }
+      ];
+      const forexPromises = forexPairs.map(async ({ symbol, name }) => {
         try {
-          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.FOREX?api_token=${EODHD_API_KEY}&fmt=json`);
           const data = await response.json();
-          console.log(`Forex data for ${symbol}:`, JSON.stringify(data));
-          return { symbol, ...data };
+          console.log(`Forex data for ${name}:`, JSON.stringify(data));
+          
+          // Convert EODHD format to match our expected format
+          const current = data.close || 0;
+          const previous = data.previousClose || current;
+          return { 
+            symbol: name, 
+            c: current, 
+            pc: previous,
+            error: !data.close 
+          };
         } catch (error) {
-          console.error(`Error fetching forex data for ${symbol}:`, error);
-          return { symbol, c: 0, pc: 0, error: true };
+          console.error(`Error fetching forex data for ${name}:`, error);
+          return { symbol: name, c: 0, pc: 0, error: true };
         }
       });
       marketData.forex = await Promise.all(forexPromises);
@@ -96,18 +115,32 @@ serve(async (req) => {
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
-    // Fetch commodities data
+    // Fetch commodities data using EODHD
     if (markets.includes("commodities")) {
-      const commoditySymbols = ["OANDA:XAU_USD", "OANDA:XAG_USD", "OANDA:BCO_USD", "OANDA:WTICO_USD"];
-      const commodityPromises = commoditySymbols.map(async symbol => {
+      const commodities = [
+        { symbol: "GC", name: "Gold (XAU/USD)" },
+        { symbol: "SI", name: "Silver (XAG/USD)" },
+        { symbol: "CL", name: "WTI Crude (WTICO/USD)" },
+        { symbol: "BZ", name: "Brent Crude (BCO/USD)" }
+      ];
+      const commodityPromises = commodities.map(async ({ symbol, name }) => {
         try {
-          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.COMM?api_token=${EODHD_API_KEY}&fmt=json`);
           const data = await response.json();
-          console.log(`Commodity data for ${symbol}:`, JSON.stringify(data));
-          return { symbol, ...data };
+          console.log(`Commodity data for ${name}:`, JSON.stringify(data));
+          
+          // Convert EODHD format to match our expected format
+          const current = data.close || 0;
+          const previous = data.previousClose || current;
+          return { 
+            symbol: name, 
+            c: current, 
+            pc: previous,
+            error: !data.close 
+          };
         } catch (error) {
-          console.error(`Error fetching commodity data for ${symbol}:`, error);
-          return { symbol, c: 0, pc: 0, error: true };
+          console.error(`Error fetching commodity data for ${name}:`, error);
+          return { symbol: name, c: 0, pc: 0, error: true };
         }
       });
       marketData.commodities = await Promise.all(commodityPromises);

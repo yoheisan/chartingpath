@@ -76,8 +76,15 @@ serve(async (req) => {
         console.log(`Generating report for ${sub.email}`);
 
         const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
+        const EODHD_API_KEY = Deno.env.get("EODHD_API_KEY");
+        
         if (!FINNHUB_API_KEY) {
           console.error("FINNHUB_API_KEY not configured, skipping report for", sub.email);
+          continue;
+        }
+
+        if (!EODHD_API_KEY) {
+          console.error("EODHD_API_KEY not configured, skipping report for", sub.email);
           continue;
         }
 
@@ -104,14 +111,30 @@ serve(async (req) => {
           marketData.news = await newsResponse.json();
         }
 
-        // Fetch forex data
+        // Fetch forex data using EODHD
         if (sub.markets.includes("forex")) {
-          const forexPairs = ["OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY", "OANDA:AUD_USD"];
-          const forexPromises = forexPairs.map(symbol =>
-            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-              .then(r => r.json())
-              .then(data => ({ symbol, ...data }))
-          );
+          const forexPairs = [
+            { symbol: "EURUSD", name: "EUR/USD" },
+            { symbol: "GBPUSD", name: "GBP/USD" },
+            { symbol: "USDJPY", name: "USD/JPY" },
+            { symbol: "AUDUSD", name: "AUD/USD" }
+          ];
+          const forexPromises = forexPairs.map(async ({ symbol, name }) => {
+            try {
+              const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.FOREX?api_token=${EODHD_API_KEY}&fmt=json`);
+              const data = await response.json();
+              const current = data.close || 0;
+              const previous = data.previousClose || current;
+              return { 
+                symbol: name, 
+                c: current, 
+                pc: previous 
+              };
+            } catch (error) {
+              console.error(`Error fetching forex data for ${name}:`, error);
+              return { symbol: name, c: 0, pc: 0 };
+            }
+          });
           marketData.forex = await Promise.all(forexPromises);
         }
 
@@ -126,14 +149,30 @@ serve(async (req) => {
           marketData.crypto = await Promise.all(cryptoPromises);
         }
 
-        // Fetch commodities data
+        // Fetch commodities data using EODHD
         if (sub.markets.includes("commodities")) {
-          const commoditySymbols = ["OANDA:XAU_USD", "OANDA:XAG_USD", "OANDA:BCO_USD", "OANDA:WTICO_USD"];
-          const commodityPromises = commoditySymbols.map(symbol =>
-            fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-              .then(r => r.json())
-              .then(data => ({ symbol, ...data }))
-          );
+          const commodities = [
+            { symbol: "GC", name: "Gold (XAU/USD)" },
+            { symbol: "SI", name: "Silver (XAG/USD)" },
+            { symbol: "CL", name: "WTI Crude (WTICO/USD)" },
+            { symbol: "BZ", name: "Brent Crude (BCO/USD)" }
+          ];
+          const commodityPromises = commodities.map(async ({ symbol, name }) => {
+            try {
+              const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.COMM?api_token=${EODHD_API_KEY}&fmt=json`);
+              const data = await response.json();
+              const current = data.close || 0;
+              const previous = data.previousClose || current;
+              return { 
+                symbol: name, 
+                c: current, 
+                pc: previous 
+              };
+            } catch (error) {
+              console.error(`Error fetching commodity data for ${name}:`, error);
+              return { symbol: name, c: 0, pc: 0 };
+            }
+          });
           marketData.commodities = await Promise.all(commodityPromises);
         }
 
