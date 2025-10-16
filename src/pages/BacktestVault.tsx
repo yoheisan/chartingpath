@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
+import MemberNavigation from "@/components/MemberNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,6 +218,8 @@ const BacktestVault = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
+        <MemberNavigation />
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

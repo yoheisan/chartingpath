@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Play, CheckCircle, Clock, ArrowLeft, BookOpen, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import MemberNavigation from "@/components/MemberNavigation";
 
 const MemberCourses = () => {
   const courses = [
@@ -73,6 +74,8 @@ const MemberCourses = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
+        
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
