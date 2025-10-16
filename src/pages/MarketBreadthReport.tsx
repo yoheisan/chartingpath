@@ -17,6 +17,11 @@ const MarketBreadthReport = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
   
+  // Report generation settings (separate from email subscription)
+  const [reportTimezone, setReportTimezone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+  
   // Email subscription settings
   const [subscription, setSubscription] = useState({
     email: "",
@@ -71,13 +76,14 @@ const MarketBreadthReport = () => {
     }
   };
 
-  const handleGenerateInstant = async () => {
+  const handleGenerateInstant = async (customTimezone?: string) => {
     setIsGenerating(true);
 
     try {
+      const timezoneToUse = customTimezone || reportTimezone;
       const { data, error } = await supabase.functions.invoke("generate-market-report", {
         body: {
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: timezoneToUse,
           markets: ["stocks", "forex", "crypto", "commodities"],
           timeSpan: "previous_day",
           tone: "professional",
@@ -185,8 +191,58 @@ const MarketBreadthReport = () => {
                 Today's Market Analysis
               </CardTitle>
               <CardDescription>
-                Comprehensive market breadth report for all markets based on your local timezone
+                Comprehensive market breadth report for all markets based on your selected timezone
               </CardDescription>
+              
+              {/* Timezone Selector for Report */}
+              <div className="pt-4 flex items-end gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="report-timezone" className="text-sm">
+                    Report Timezone
+                  </Label>
+                  <Select
+                    value={reportTimezone}
+                    onValueChange={(value) => setReportTimezone(value)}
+                  >
+                    <SelectTrigger id="report-timezone">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="America/New_York">Eastern (ET)</SelectItem>
+                      <SelectItem value="America/Chicago">Central (CT)</SelectItem>
+                      <SelectItem value="America/Denver">Mountain (MT)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Pacific (PT)</SelectItem>
+                      <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                      <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                      <SelectItem value="Europe/Berlin">Berlin (CET)</SelectItem>
+                      <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                      <SelectItem value="Asia/Hong_Kong">Hong Kong (HKT)</SelectItem>
+                      <SelectItem value="Asia/Singapore">Singapore (SGT)</SelectItem>
+                      <SelectItem value="Asia/Shanghai">Shanghai (CST)</SelectItem>
+                      <SelectItem value="Australia/Sydney">Sydney (AEST)</SelectItem>
+                      <SelectItem value="Pacific/Auckland">Auckland (NZST)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current: {new Date().toLocaleString('en-US', { 
+                      timeZone: reportTimezone, 
+                      dateStyle: 'medium', 
+                      timeStyle: 'short' 
+                    })}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleGenerateInstant(reportTimezone)}
+                  disabled={isGenerating}
+                  variant="outline"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Regenerate"
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {isGenerating ? (
