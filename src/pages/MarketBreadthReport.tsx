@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, TrendingUp, Mail, Clock, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +33,7 @@ const MarketBreadthReport = () => {
 
   useEffect(() => {
     loadSubscription();
+    handleGenerateInstant();
   }, []);
 
   const loadSubscription = async () => {
@@ -58,7 +58,7 @@ const MarketBreadthReport = () => {
           markets: data.markets,
           timezone: data.timezone,
           frequency: data.frequency,
-          send_time: data.send_time.substring(0, 5), // Format HH:MM
+          send_time: data.send_time.substring(0, 5),
           tone: data.tone,
           time_span: data.time_span,
           is_active: data.is_active,
@@ -73,7 +73,6 @@ const MarketBreadthReport = () => {
 
   const handleGenerateInstant = async () => {
     setIsGenerating(true);
-    setReport("");
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-market-report", {
@@ -88,14 +87,10 @@ const MarketBreadthReport = () => {
       if (error) throw error;
 
       setReport(data.report);
-      toast({
-        title: "Report Generated",
-        description: "Your market breadth report is ready.",
-      });
     } catch (error) {
       console.error("Error generating report:", error);
       toast({
-        title: "Generation Failed",
+        title: "Error Generating Report",
         description: error.message || "Failed to generate report. Please try again.",
         variant: "destructive",
       });
@@ -181,91 +176,58 @@ const MarketBreadthReport = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="instant" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="instant">Instant Report</TabsTrigger>
-            <TabsTrigger value="scheduled">Scheduled Emails</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          {/* Market Report Display */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Today's Market Analysis
+              </CardTitle>
+              <CardDescription>
+                Comprehensive market breadth report for all markets based on your local timezone
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isGenerating ? (
+                <div className="text-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Generating your market analysis...</p>
+                </div>
+              ) : report ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{report}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Loading market analysis...</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          <TabsContent value="instant" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Generate Instant Report</CardTitle>
-                  <CardDescription>View a comprehensive report covering all markets right now</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg space-y-2">
-                    <p className="text-sm font-medium">Report Settings:</p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Markets: All (Stocks, Forex, Crypto, Commodities)</li>
-                      <li>• Timezone: Your local timezone</li>
-                      <li>• Time Span: Previous Day</li>
-                      <li>• Tone: Professional</li>
-                    </ul>
-                  </div>
-
-                  <Button
-                    onClick={handleGenerateInstant}
-                    disabled={isGenerating}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating Report...
-                      </>
-                    ) : (
-                      <>
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        Generate Report
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="lg:row-span-2">
-                <CardHeader>
-                  <CardTitle>Your Market Report</CardTitle>
-                  <CardDescription>
-                    {report ? "AI-generated market analysis" : "Generate report to view analysis"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {report ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none max-h-[600px] overflow-y-auto">
-                      <ReactMarkdown>{report}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Your market breadth report will appear here</p>
-                      <p className="text-sm mt-2">Click Generate Report to view the latest market analysis</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="scheduled" className="space-y-6">
-            {isLoadingSubscription ? (
-              <Card>
-                <CardContent className="py-12 text-center">
+          {/* Email Subscription Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Email Subscription
+              </CardTitle>
+              <CardDescription>
+                Receive automated market reports delivered to your inbox
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSubscription ? (
+                <div className="py-12 text-center">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
                   <p className="text-muted-foreground">Loading subscription settings...</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Email Subscription Settings</CardTitle>
-                    <CardDescription>Configure automated market reports delivered to your inbox</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+                </div>
+              ) : (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* Settings Form */}
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Enable Email Reports</Label>
@@ -452,15 +414,17 @@ const MarketBreadthReport = () => {
                         </>
                       )}
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subscription Preview</CardTitle>
-                    <CardDescription>Review your email report settings</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  {/* Subscription Preview */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Subscription Preview</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Review your email report settings
+                      </p>
+                    </div>
+
                     <div className="p-4 bg-muted rounded-lg space-y-3">
                       <div className="flex items-start gap-2">
                         <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -526,12 +490,12 @@ const MarketBreadthReport = () => {
                         </p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
