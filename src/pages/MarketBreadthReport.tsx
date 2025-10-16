@@ -203,7 +203,7 @@ const MarketBreadthReport = () => {
               </CardDescription>
               
               {/* Timezone Selector for Report */}
-              <div className="pt-4 flex items-end gap-4">
+              <div className="pt-4">
                 <div className="flex-1">
                   <Label htmlFor="report-timezone" className="text-sm">
                     Report Timezone
@@ -239,17 +239,6 @@ const MarketBreadthReport = () => {
                     })}
                   </p>
                 </div>
-                <Button
-                  onClick={() => handleGenerateInstant(reportTimezone)}
-                  disabled={isGenerating}
-                  variant="outline"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Regenerate"
-                  )}
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
