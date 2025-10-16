@@ -41,6 +41,14 @@ const MarketBreadthReport = () => {
     handleGenerateInstant();
   }, []);
 
+  // Auto-regenerate report when timezone changes
+  useEffect(() => {
+    // Skip initial render (already handled by the above useEffect)
+    if (reportTimezone !== Intl.DateTimeFormat().resolvedOptions().timeZone) {
+      handleGenerateInstant(reportTimezone);
+    }
+  }, [reportTimezone]);
+
   const loadSubscription = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
