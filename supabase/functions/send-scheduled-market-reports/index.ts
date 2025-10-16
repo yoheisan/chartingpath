@@ -76,15 +76,9 @@ serve(async (req) => {
         console.log(`Generating report for ${sub.email}`);
 
         const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
-        const EODHD_API_KEY = Deno.env.get("EODHD_API_KEY");
         
         if (!FINNHUB_API_KEY) {
           console.error("FINNHUB_API_KEY not configured, skipping report for", sub.email);
-          continue;
-        }
-
-        if (!EODHD_API_KEY) {
-          console.error("EODHD_API_KEY not configured, skipping report for", sub.email);
           continue;
         }
 
@@ -111,20 +105,22 @@ serve(async (req) => {
           marketData.news = await newsResponse.json();
         }
 
-        // Fetch forex data using EODHD
+        // Fetch forex data using Yahoo Finance (free, no auth required)
         if (sub.markets.includes("forex")) {
           const forexPairs = [
-            { symbol: "EURUSD", name: "EUR/USD" },
-            { symbol: "GBPUSD", name: "GBP/USD" },
-            { symbol: "USDJPY", name: "USD/JPY" },
-            { symbol: "AUDUSD", name: "AUD/USD" }
+            { symbol: "EURUSD=X", name: "EUR/USD" },
+            { symbol: "GBPUSD=X", name: "GBP/USD" },
+            { symbol: "USDJPY=X", name: "USD/JPY" },
+            { symbol: "AUDUSD=X", name: "AUD/USD" }
           ];
           const forexPromises = forexPairs.map(async ({ symbol, name }) => {
             try {
-              const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.FOREX?api_token=${EODHD_API_KEY}&fmt=json`);
+              const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
               const data = await response.json();
-              const current = data.close || 0;
-              const previous = data.previousClose || current;
+              const quote = data?.chart?.result?.[0];
+              const meta = quote?.meta;
+              const current = meta?.regularMarketPrice || 0;
+              const previous = meta?.previousClose || meta?.chartPreviousClose || current;
               return { 
                 symbol: name, 
                 c: current, 
@@ -149,20 +145,22 @@ serve(async (req) => {
           marketData.crypto = await Promise.all(cryptoPromises);
         }
 
-        // Fetch commodities data using EODHD
+        // Fetch commodities data using Yahoo Finance (free, no auth required)
         if (sub.markets.includes("commodities")) {
           const commodities = [
-            { symbol: "GC", name: "Gold (XAU/USD)" },
-            { symbol: "SI", name: "Silver (XAG/USD)" },
-            { symbol: "CL", name: "WTI Crude (WTICO/USD)" },
-            { symbol: "BZ", name: "Brent Crude (BCO/USD)" }
+            { symbol: "GC=F", name: "Gold (XAU/USD)" },
+            { symbol: "SI=F", name: "Silver (XAG/USD)" },
+            { symbol: "CL=F", name: "WTI Crude" },
+            { symbol: "BZ=F", name: "Brent Crude" }
           ];
           const commodityPromises = commodities.map(async ({ symbol, name }) => {
             try {
-              const response = await fetch(`https://eodhd.com/api/real-time/${symbol}.COMM?api_token=${EODHD_API_KEY}&fmt=json`);
+              const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
               const data = await response.json();
-              const current = data.close || 0;
-              const previous = data.previousClose || current;
+              const quote = data?.chart?.result?.[0];
+              const meta = quote?.meta;
+              const current = meta?.regularMarketPrice || 0;
+              const previous = meta?.previousClose || meta?.chartPreviousClose || current;
               return { 
                 symbol: name, 
                 c: current, 
