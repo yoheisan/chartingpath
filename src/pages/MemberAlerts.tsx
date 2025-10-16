@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Navigation from "@/components/Navigation";
 import MemberNavigation from "@/components/MemberNavigation";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -249,10 +250,16 @@ const MemberAlerts = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading alerts...</p>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <MemberNavigation />
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading alerts...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -261,8 +268,10 @@ const MemberAlerts = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
-          <div className="text-center">
+        <Navigation />
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <MemberNavigation />
+          <div className="text-center mt-8">
             <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
             <p className="text-muted-foreground mb-8">
               Please log in to access chart pattern alerts.
@@ -284,7 +293,10 @@ const MemberAlerts = () => {
   if (profile?.subscription_plan === 'starter' && activeAlerts.length >= 1) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <Navigation />
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <MemberNavigation />
+          
           {/* Back Navigation */}
           <div className="mb-6">
             <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -380,8 +392,10 @@ const MemberAlerts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MemberNavigation />
+      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
+        
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
