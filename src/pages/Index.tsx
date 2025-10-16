@@ -5,18 +5,22 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe } from "lucide-react";
+import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-trading-space.jpg';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const { t } = useTranslation();
+  const { toast } = useToast();
   
   // Detect user language on first visit
   useEffect(() => {
@@ -42,6 +46,44 @@ const Index = () => {
         event_category: 'engagement',
         event_label: 'homepage_hero'
       });
+    }
+  };
+
+  const handleSendScripts = async () => {
+    if (!email || !email.includes("@")) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-starter-scripts", {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Scripts Sent!",
+        description: "Check your email for your free starter scripts.",
+      });
+
+      setShowEmailModal(false);
+      setEmail("");
+    } catch (error) {
+      console.error("Error sending scripts:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send scripts. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -293,13 +335,35 @@ const Index = () => {
                 <input 
                   type="email" 
                   placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendScripts()}
                   className="w-full px-4 py-2 border rounded-lg"
+                  disabled={isSending}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowEmailModal(false)} className="flex-1">
-                    Send Scripts
+                  <Button 
+                    onClick={handleSendScripts} 
+                    className="flex-1"
+                    disabled={isSending}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Scripts"
+                    )}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowEmailModal(false)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowEmailModal(false);
+                      setEmail("");
+                    }}
+                    disabled={isSending}
+                  >
                     Cancel
                   </Button>
                 </div>
