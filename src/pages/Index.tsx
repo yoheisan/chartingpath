@@ -264,21 +264,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Community Section */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-4xl text-center">
-          <Users className="h-16 w-16 text-primary mx-auto mb-8" />
-          <h2 className="text-4xl font-bold mb-6">Join a Global Trading Community</h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Learn together, share strategies, and get support in our free and premium Discord channels.
-          </p>
-          <Button size="lg" asChild className="px-8 py-4 text-lg">
-            <a href="https://discord.gg/chartingpath" target="_blank" rel="noopener noreferrer">
-              Join the Community
-            </a>
-          </Button>
-        </div>
-      </section>
 
 
 
