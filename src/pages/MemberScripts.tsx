@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
 import Navigation from "@/components/Navigation";
@@ -15,6 +16,7 @@ const MemberScripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [selectedStrategy, setSelectedStrategy] = useState("all");
+  const [previewScript, setPreviewScript] = useState<typeof scripts[0] | null>(null);
   const { toast } = useToast();
 
   const scripts = [
@@ -26,7 +28,41 @@ const MemberScripts = () => {
       strategy: "Trend Following",
       downloads: 2847,
       rating: 4.9,
-      premium: false
+      premium: false,
+      code: `//@version=5
+strategy("Moving Average Crossover", overlay=true)
+
+// Inputs
+fastLength = input.int(9, "Fast MA Length", minval=1)
+slowLength = input.int(21, "Slow MA Length", minval=1)
+riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
+
+// Calculate Moving Averages
+fastMA = ta.sma(close, fastLength)
+slowMA = ta.sma(close, slowLength)
+
+// Plot MAs
+plot(fastMA, "Fast MA", color=color.blue, linewidth=2)
+plot(slowMA, "Slow MA", color=color.red, linewidth=2)
+
+// Entry Conditions
+longCondition = ta.crossover(fastMA, slowMA)
+shortCondition = ta.crossunder(fastMA, slowMA)
+
+// Position Sizing
+accountSize = strategy.equity
+riskAmount = accountSize * (riskPercent / 100)
+stopLoss = ta.atr(14) * 2
+positionSize = riskAmount / stopLoss
+
+// Execute Trades
+if longCondition
+    strategy.entry("Long", strategy.long, qty=positionSize)
+    strategy.exit("Exit Long", "Long", stop=close - stopLoss, limit=close + stopLoss * 2)
+
+if shortCondition
+    strategy.entry("Short", strategy.short, qty=positionSize)
+    strategy.exit("Exit Short", "Short", stop=close + stopLoss, limit=close - stopLoss * 2)`
     },
     {
       id: 2,
@@ -36,7 +72,47 @@ const MemberScripts = () => {
       strategy: "Reversal",
       downloads: 2134,
       rating: 4.8,
-      premium: false
+      premium: false,
+      code: `//@version=5
+strategy("RSI Overbought/Oversold", overlay=false)
+
+// Inputs
+rsiLength = input.int(14, "RSI Length", minval=1)
+rsiOverbought = input.int(70, "Overbought Level", minval=50, maxval=100)
+rsiOversold = input.int(30, "Oversold Level", minval=0, maxval=50)
+riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
+
+// Calculate RSI
+rsi = ta.rsi(close, rsiLength)
+
+// Plot RSI
+plot(rsi, "RSI", color=color.purple, linewidth=2)
+hline(rsiOverbought, "Overbought", color=color.red, linestyle=hline.style_dashed)
+hline(rsiOversold, "Oversold", color=color.green, linestyle=hline.style_dashed)
+hline(50, "Middle", color=color.gray, linestyle=hline.style_dotted)
+
+// Entry Conditions
+longCondition = ta.crossover(rsi, rsiOversold)
+shortCondition = ta.crossunder(rsi, rsiOverbought)
+
+// Risk Management
+stopLoss = ta.atr(14) * 1.5
+accountSize = strategy.equity
+riskAmount = accountSize * (riskPercent / 100)
+positionSize = riskAmount / stopLoss
+
+// Execute Trades
+if longCondition
+    strategy.entry("Long", strategy.long, qty=positionSize)
+    strategy.exit("Exit Long", "Long", stop=close - stopLoss, limit=close + stopLoss * 2)
+
+if shortCondition
+    strategy.entry("Short", strategy.short, qty=positionSize)
+    strategy.exit("Exit Short", "Short", stop=close + stopLoss, limit=close - stopLoss * 2)
+
+// Alerts
+alertcondition(longCondition, "RSI Buy Signal", "RSI crossed above oversold level")
+alertcondition(shortCondition, "RSI Sell Signal", "RSI crossed below overbought level")`
     },
     {
       id: 3,
@@ -46,7 +122,55 @@ const MemberScripts = () => {
       strategy: "Breakout",
       downloads: 1956,
       rating: 4.7,
-      premium: false
+      premium: false,
+      code: `//@version=5
+strategy("Support & Resistance Breakout", overlay=true)
+
+// Inputs
+lookbackPeriod = input.int(20, "Lookback Period", minval=5)
+breakoutConfirmation = input.int(2, "Confirmation Candles", minval=1)
+riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
+
+// Calculate Support and Resistance
+resistance = ta.highest(high, lookbackPeriod)
+support = ta.lowest(low, lookbackPeriod)
+
+// Plot Levels
+plot(resistance, "Resistance", color=color.red, linewidth=2, style=plot.style_stepline)
+plot(support, "Support", color=color.green, linewidth=2, style=plot.style_stepline)
+
+// Breakout Detection
+var int bullishCount = 0
+var int bearishCount = 0
+
+if close > resistance[1]
+    bullishCount := bullishCount + 1
+else
+    bullishCount := 0
+
+if close < support[1]
+    bearishCount := bearishCount + 1
+else
+    bearishCount := 0
+
+// Entry Conditions
+longCondition = bullishCount >= breakoutConfirmation
+shortCondition = bearishCount >= breakoutConfirmation
+
+// Position Sizing
+accountSize = strategy.equity
+stopDistance = ta.atr(14) * 2
+riskAmount = accountSize * (riskPercent / 100)
+positionSize = riskAmount / stopDistance
+
+// Execute Trades
+if longCondition
+    strategy.entry("Long", strategy.long, qty=positionSize)
+    strategy.exit("Exit Long", "Long", stop=support, limit=close + (close - support) * 2)
+
+if shortCondition
+    strategy.entry("Short", strategy.short, qty=positionSize)
+    strategy.exit("Exit Short", "Short", stop=resistance, limit=close - (resistance - close) * 2)`
     },
     {
       id: 4,
@@ -56,7 +180,8 @@ const MemberScripts = () => {
       strategy: "Trend Following",
       downloads: 1247,
       rating: 4.8,
-      premium: false
+      premium: false,
+      code: "// Golden Cross strategy code available after download"
     },
     {
       id: 5,
@@ -66,7 +191,8 @@ const MemberScripts = () => {
       strategy: "Breakout",
       downloads: 892,
       rating: 4.6,
-      premium: true
+      premium: true,
+      code: "# Bollinger Band Squeeze Python code available for Premium members"
     },
     {
       id: 6,
@@ -76,7 +202,8 @@ const MemberScripts = () => {
       strategy: "Reversal",
       downloads: 634,
       rating: 4.9,
-      premium: true
+      premium: true,
+      code: "// RSI Divergence MQL5 code available for Premium members"
     }
   ];
 
@@ -88,17 +215,33 @@ const MemberScripts = () => {
     );
   });
 
-  const handleDownload = (scriptId: number, scriptName: string) => {
+  const handleDownload = (script: typeof scripts[0]) => {
     // Analytics event
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'script_downloaded', {
         event_category: 'Members',
-        event_label: scriptName,
-        value: scriptId
+        event_label: script.name,
+        value: script.id
       });
     }
-    // Simulate download
-    console.log(`Downloading script: ${scriptName}`);
+
+    // Create download
+    const element = document.createElement('a');
+    const file = new Blob([script.code], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${script.name.replace(/\s+/g, '_')}.${script.language === 'Pine Script' ? 'pine' : script.language === 'Python' ? 'py' : 'mq5'}`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    toast({
+      title: "Download Started",
+      description: `${script.name} has been downloaded successfully.`,
+    });
+  };
+
+  const handlePreview = (script: typeof scripts[0]) => {
+    setPreviewScript(script);
   };
 
   const upgradeToElite = async () => {
@@ -277,12 +420,13 @@ const MemberScripts = () => {
                   <div className="flex gap-2">
                     <Button 
                       className="flex-1"
-                      onClick={() => handleDownload(script.id, script.name)}
+                      onClick={() => handleDownload(script)}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => handlePreview(script)}>
+                      <Eye className="h-4 w-4 mr-2" />
                       Preview
                     </Button>
                   </div>
@@ -318,6 +462,44 @@ const MemberScripts = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewScript} onOpenChange={() => setPreviewScript(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              {previewScript?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {previewScript?.description}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Badge variant="secondary">{previewScript?.language}</Badge>
+              <Badge variant="outline">{previewScript?.strategy}</Badge>
+            </div>
+            
+            <div className="bg-muted rounded-lg p-4">
+              <pre className="text-sm overflow-x-auto">
+                <code>{previewScript?.code}</code>
+              </pre>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button onClick={() => previewScript && handleDownload(previewScript)} className="flex-1">
+                <Download className="h-4 w-4 mr-2" />
+                Download Script
+              </Button>
+              <Button variant="outline" onClick={() => setPreviewScript(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
