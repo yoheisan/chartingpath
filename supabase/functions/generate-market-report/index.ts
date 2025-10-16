@@ -37,48 +37,79 @@ serve(async (req) => {
     // Fetch stock market data
     if (markets.includes("stocks")) {
       const stockSymbols = ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"];
-      const stockPromises = stockSymbols.map(symbol =>
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-          .then(r => r.json())
-          .then(data => ({ symbol, ...data }))
-      );
+      const stockPromises = stockSymbols.map(async symbol => {
+        try {
+          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const data = await response.json();
+          console.log(`Stock data for ${symbol}:`, JSON.stringify(data));
+          return { symbol, ...data };
+        } catch (error) {
+          console.error(`Error fetching stock data for ${symbol}:`, error);
+          return { symbol, c: 0, pc: 0, error: true };
+        }
+      });
       marketData.stocks = await Promise.all(stockPromises);
       
       // Fetch market news
-      const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
-      marketData.news = await newsResponse.json();
+      try {
+        const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
+        const newsData = await newsResponse.json();
+        console.log(`News data:`, JSON.stringify(newsData).substring(0, 200));
+        marketData.news = newsData;
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        marketData.news = [];
+      }
     }
 
     // Fetch forex data
     if (markets.includes("forex")) {
       const forexPairs = ["OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY", "OANDA:AUD_USD"];
-      const forexPromises = forexPairs.map(symbol =>
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-          .then(r => r.json())
-          .then(data => ({ symbol, ...data }))
-      );
+      const forexPromises = forexPairs.map(async symbol => {
+        try {
+          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const data = await response.json();
+          console.log(`Forex data for ${symbol}:`, JSON.stringify(data));
+          return { symbol, ...data };
+        } catch (error) {
+          console.error(`Error fetching forex data for ${symbol}:`, error);
+          return { symbol, c: 0, pc: 0, error: true };
+        }
+      });
       marketData.forex = await Promise.all(forexPromises);
     }
 
     // Fetch crypto data
     if (markets.includes("crypto")) {
       const cryptoSymbols = ["BINANCE:BTCUSDT", "BINANCE:ETHUSDT"];
-      const cryptoPromises = cryptoSymbols.map(symbol =>
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-          .then(r => r.json())
-          .then(data => ({ symbol, ...data }))
-      );
+      const cryptoPromises = cryptoSymbols.map(async symbol => {
+        try {
+          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const data = await response.json();
+          console.log(`Crypto data for ${symbol}:`, JSON.stringify(data));
+          return { symbol, ...data };
+        } catch (error) {
+          console.error(`Error fetching crypto data for ${symbol}:`, error);
+          return { symbol, c: 0, pc: 0, error: true };
+        }
+      });
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
     // Fetch commodities data
     if (markets.includes("commodities")) {
       const commoditySymbols = ["OANDA:XAU_USD", "OANDA:XAG_USD", "OANDA:BCO_USD", "OANDA:WTICO_USD"];
-      const commodityPromises = commoditySymbols.map(symbol =>
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-          .then(r => r.json())
-          .then(data => ({ symbol, ...data }))
-      );
+      const commodityPromises = commoditySymbols.map(async symbol => {
+        try {
+          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const data = await response.json();
+          console.log(`Commodity data for ${symbol}:`, JSON.stringify(data));
+          return { symbol, ...data };
+        } catch (error) {
+          console.error(`Error fetching commodity data for ${symbol}:`, error);
+          return { symbol, c: 0, pc: 0, error: true };
+        }
+      });
       marketData.commodities = await Promise.all(commodityPromises);
     }
 
