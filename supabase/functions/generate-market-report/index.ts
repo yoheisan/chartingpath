@@ -147,8 +147,49 @@ serve(async (req) => {
 
     console.log("Market data fetched successfully");
 
+    // Determine session context based on timezone
+    const getSessionContext = (tz: string) => {
+      const hour = new Date().toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false });
+      const hourNum = parseInt(hour);
+      
+      // Determine which region the user is in
+      if (tz.includes('Asia') || tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore')) {
+        return {
+          region: 'Asia',
+          usSession: 'overnight US session',
+          europeSession: 'European session',
+          localSession: 'Asian session'
+        };
+      } else if (tz.includes('Europe') || tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin')) {
+        return {
+          region: 'Europe',
+          usSession: 'overnight US session',
+          asiaSession: 'earlier Asian session',
+          localSession: 'European session'
+        };
+      } else if (tz.includes('America') || tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles')) {
+        return {
+          region: 'Americas',
+          asiaSession: 'overnight Asian session',
+          europeSession: 'earlier European session',
+          localSession: 'US session'
+        };
+      } else {
+        return {
+          region: 'Global',
+          usSession: 'US session',
+          europeSession: 'European session',
+          asiaSession: 'Asian session',
+          localSession: 'current session'
+        };
+      }
+    };
+
+    const sessionContext = getSessionContext(timezone);
+    const userLocalTime = new Date().toLocaleString('en-US', { timeZone: timezone, dateStyle: 'full', timeStyle: 'short' });
+
     // Format market data for AI prompt
-    let marketDataSummary = `**Real-Time Market Data (${new Date().toLocaleString('en-US', { timeZone: timezone })}):**\n\n`;
+    let marketDataSummary = `**Real-Time Market Data**\n**Your Local Time: ${userLocalTime} (${timezone})**\n\n`;
     
     if (marketData.stocks) {
       marketDataSummary += "**Stock Indices:**\n";
@@ -223,12 +264,23 @@ WRITING STYLE REQUIREMENTS:
 - Reference the actual news headlines provided
 - Use specific numbers, percentages, and basis points (bps) when referencing moves
 
+SESSION CONTEXT REQUIREMENTS:
+- The reader is in the ${sessionContext.region} region (timezone: ${timezone})
+- When referring to market data from other regions, use session-aware language:
+  ${sessionContext.usSession ? `- US market data: "${sessionContext.usSession}"` : ''}
+  ${sessionContext.europeSession ? `- European market data: "${sessionContext.europeSession}"` : ''}
+  ${sessionContext.asiaSession ? `- Asian market data: "${sessionContext.asiaSession}"` : ''}
+- Example: For Asian readers viewing US data, write "the overnight US session saw..." or "US markets closed..."
+- Example: For US readers viewing Asian data, write "the overnight Asian session..." or "Asian markets earlier today..."
+- Always provide temporal context so readers understand WHEN the data is from relative to their local time
+
 CONTENT REQUIREMENTS:
 - Base your analysis EXCLUSIVELY on the real-time data provided below
 - Use the exact prices and percentage changes given
 - Reference the actual news headlines provided
 - Do NOT invent data or historical comparisons not in the provided data
 - Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+- Reader's local time is: ${userLocalTime}
 
 STRUCTURE (use ## for main sections, ### for subsections):
 1. **Market Overview** - Opening paragraph summarizing today's sentiment across provided markets
@@ -250,19 +302,24 @@ ${toneInstruction}
 
 CRITICAL: This must read like it was edited by FT's editorial team - precise, factual, and professionally formatted. Use ONLY the data provided below.`;
 
-    const userPrompt = `Generate a comprehensive market breadth report for today (${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}).
+    const userPrompt = `Generate a comprehensive market breadth report.
+
+**Reader Context:**
+- Location: ${sessionContext.region} region
+- Local Time: ${userLocalTime}
+- Timezone: ${timezone}
 
 ${marketDataSummary}
 
 **Analysis Requirements:**
 - Use the EXACT prices and percentage changes provided above
 - Reference the actual news headlines provided
+- Use session-aware language based on the reader's timezone (e.g., "${sessionContext.usSession}" for US data, "${sessionContext.asiaSession || sessionContext.europeSession || 'other sessions'}" for other regions)
 - Analyze how these specific movements relate to each other
-- Provide insights based on this real-time data
+- Provide insights based on this real-time data with temporal context
 - Tone: ${tone}
-- Timezone: ${timezone}
 
-Provide a thorough analysis of the real-time market data above with actionable insights for traders.`;
+Provide a thorough analysis of the real-time market data above with actionable insights for traders in the ${sessionContext.region} region.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
