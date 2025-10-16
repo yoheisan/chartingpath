@@ -20,6 +20,36 @@ const MemberScripts = () => {
   const scripts = [
     {
       id: 1,
+      name: "Moving Average Crossover",
+      description: "A classic trend-following strategy that generates signals when short-term and long-term moving averages cross. Works on any timeframe with built-in risk management, stop loss and take profit included.",
+      language: "Pine Script",
+      strategy: "Trend Following",
+      downloads: 2847,
+      rating: 4.9,
+      premium: false
+    },
+    {
+      id: 2,
+      name: "RSI Overbought/Oversold",
+      description: "Identify potential reversal points using the Relative Strength Index indicator. Customizable RSI periods with alert system included, works on multiple markets.",
+      language: "Pine Script",
+      strategy: "Reversal",
+      downloads: 2134,
+      rating: 4.8,
+      premium: false
+    },
+    {
+      id: 3,
+      name: "Support & Resistance Breakout",
+      description: "Automatically identify and trade key support and resistance level breakouts. Features dynamic level detection, breakout confirmation, and position sizing calculator.",
+      language: "Pine Script",
+      strategy: "Breakout",
+      downloads: 1956,
+      rating: 4.7,
+      premium: false
+    },
+    {
+      id: 4,
       name: "Golden Cross Strategy",
       description: "Moving average crossover with RSI confirmation",
       language: "Pine Script",
@@ -29,7 +59,7 @@ const MemberScripts = () => {
       premium: false
     },
     {
-      id: 2,
+      id: 5,
       name: "Bollinger Band Squeeze",
       description: "Volatility breakout strategy with volume confirmation",
       language: "Python",
@@ -39,7 +69,7 @@ const MemberScripts = () => {
       premium: true
     },
     {
-      id: 3,
+      id: 6,
       name: "RSI Divergence Detector",
       description: "Automatic divergence detection and alert system",
       language: "MQL5",
@@ -47,8 +77,7 @@ const MemberScripts = () => {
       downloads: 634,
       rating: 4.9,
       premium: true
-    },
-    // Add more scripts...
+    }
   ];
 
   const filteredScripts = scripts.filter(script => {
