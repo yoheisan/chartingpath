@@ -195,8 +195,21 @@ const MarketBreadthReport = () => {
                   <p className="text-muted-foreground">Generating your market analysis...</p>
                 </div>
               ) : report ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{report}</ReactMarkdown>
+                <div className="ft-article max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({node, ...props}) => <h1 className="text-3xl font-serif font-bold mb-6 text-foreground leading-tight" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-2xl font-serif font-bold mt-8 mb-4 text-foreground leading-tight" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-xl font-serif font-semibold mt-6 mb-3 text-foreground leading-snug" {...props} />,
+                      p: ({node, ...props}) => <p className="text-base font-sans leading-relaxed mb-4 text-foreground/90" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 space-y-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 space-y-2" {...props} />,
+                      li: ({node, ...props}) => <li className="text-base leading-relaxed text-foreground/90" {...props} />,
+                    }}
+                  >
+                    {report}
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
