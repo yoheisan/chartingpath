@@ -26,6 +26,8 @@ import PatternGenerator from "./pages/PatternGenerator";
 import PatternLibraryPage from "./pages/PatternLibraryPage";
 import TradingStrategiesPage from "./pages/TradingStrategiesPage";
 import PatternQuizPage from "./pages/PatternQuizPage";
+import PatternIdentificationQuizPage from "./pages/PatternIdentificationQuizPage";
+import TradingKnowledgeQuizPage from "./pages/TradingKnowledgeQuizPage";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import FAQ from "./pages/FAQ";
@@ -72,6 +74,8 @@ const App = () => (
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
+          <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
+          <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
           <Route path="/markets/stocks/sectors" element={<StockSectors />} />

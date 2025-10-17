@@ -735,6 +735,7 @@ export const PatternQuiz = () => {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState<boolean[]>(new Array(100).fill(false));
+  const [userAnswers, setUserAnswers] = useState<number[]>(new Array(100).fill(-1));
   const [isComplete, setIsComplete] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -929,6 +930,10 @@ export const PatternQuiz = () => {
     newAnswered[currentQuestion] = true;
     setAnswered(newAnswered);
     
+    const newUserAnswers = [...userAnswers];
+    newUserAnswers[currentQuestion] = answerIndex;
+    setUserAnswers(newUserAnswers);
+    
     if (answerIndex === currentQ.correctAnswer) {
       setScore(score + 1);
     }
@@ -940,6 +945,40 @@ export const PatternQuiz = () => {
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
+      // Calculate scores by category
+      const categoryScores = {
+        visual: { score: 0, total: 0 },
+        characteristics: { score: 0, total: 0 },
+        risk: { score: 0, total: 0 }
+      };
+
+      questions.forEach((q, index) => {
+        const isCorrect = userAnswers[index] === q.correctAnswer;
+        if (q.type === 'visual') {
+          categoryScores.visual.total++;
+          if (isCorrect) categoryScores.visual.score++;
+        } else if (q.type === 'characteristics') {
+          categoryScores.characteristics.total++;
+          if (isCorrect) categoryScores.characteristics.score++;
+        } else if (q.type === 'risk') {
+          categoryScores.risk.total++;
+          if (isCorrect) categoryScores.risk.score++;
+        }
+      });
+
+      // Save scores to localStorage
+      const savedScores = JSON.parse(localStorage.getItem('quizScores') || '{"patternVisual":{"score":0,"total":0},"patternCharacteristics":{"score":0,"total":0},"riskManagement":{"score":0,"total":0}}');
+      
+      savedScores.patternCharacteristics = {
+        score: savedScores.patternCharacteristics.score + categoryScores.characteristics.score,
+        total: savedScores.patternCharacteristics.total + categoryScores.characteristics.total
+      };
+      savedScores.riskManagement = {
+        score: savedScores.riskManagement.score + categoryScores.risk.score,
+        total: savedScores.riskManagement.total + categoryScores.risk.total
+      };
+      
+      localStorage.setItem('quizScores', JSON.stringify(savedScores));
       setIsComplete(true);
     }
   };
@@ -953,6 +992,7 @@ export const PatternQuiz = () => {
     setShowResult(false);
     setScore(0);
     setAnswered(new Array(100).fill(false));
+    setUserAnswers(new Array(100).fill(-1));
     setIsComplete(false);
   };
 

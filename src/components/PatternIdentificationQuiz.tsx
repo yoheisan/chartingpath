@@ -242,6 +242,13 @@ export const PatternIdentificationQuiz = () => {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
+      // Save scores to localStorage
+      const savedScores = JSON.parse(localStorage.getItem('quizScores') || '{"patternVisual":{"score":0,"total":0},"patternCharacteristics":{"score":0,"total":0},"riskManagement":{"score":0,"total":0}}');
+      savedScores.patternVisual = {
+        score: savedScores.patternVisual.score + score,
+        total: savedScores.patternVisual.total + questions.length
+      };
+      localStorage.setItem('quizScores', JSON.stringify(savedScores));
       setQuizComplete(true);
     }
   };
