@@ -1756,6 +1756,7 @@ export class PatternCalculator {
       case 'head-shoulders':
         return this.generateHeadAndShoulders();
       case 'inverted-head-shoulders':
+      case 'inverse-head-shoulders':
         return this.generateInvertedHeadAndShoulders();
       case 'double-top':
         return this.generateDoubleTop();
