@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, RotateCcw, Save, Play } from "lucide-react";
 import { PatternCalculator } from "@/utils/PatternCalculator";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuizQuestion {
   id: string;
@@ -737,6 +739,10 @@ const generateAllQuestions = (): QuizQuestion[] => {
 };
 
 export const PatternQuiz = () => {
+  const { toast } = useToast();
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [savedProgress, setSavedProgress] = useState<any>(null);
+  
   const [questions] = useState(() => {
     const allQuestions = generateAllQuestions();
     return allQuestions.sort(() => Math.random() - 0.5); // Randomize
@@ -750,6 +756,16 @@ export const PatternQuiz = () => {
   const [userAnswers, setUserAnswers] = useState<number[]>(new Array(100).fill(-1));
   const [isComplete, setIsComplete] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Check for saved progress on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('tradingQuizProgress');
+    if (saved) {
+      const progress = JSON.parse(saved);
+      setSavedProgress(progress);
+      setShowResumeDialog(true);
+    }
+  }, []);
 
   const currentQ = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -991,11 +1007,15 @@ export const PatternQuiz = () => {
       };
       
       localStorage.setItem('quizScores', JSON.stringify(savedScores));
+      // Clear saved progress when quiz is complete
+      localStorage.removeItem('tradingQuizProgress');
       setIsComplete(true);
     }
   };
 
   const handleRestart = () => {
+    // Clear saved progress
+    localStorage.removeItem('tradingQuizProgress');
     // Randomize questions again
     const allQuestions = generateAllQuestions();
     const newQuestions = allQuestions.sort(() => Math.random() - 0.5);
@@ -1006,6 +1026,44 @@ export const PatternQuiz = () => {
     setAnswered(new Array(100).fill(false));
     setUserAnswers(new Array(100).fill(-1));
     setIsComplete(false);
+  };
+
+  const handleSaveAndExit = () => {
+    const progress = {
+      currentQuestion,
+      score,
+      answered,
+      userAnswers,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('tradingQuizProgress', JSON.stringify(progress));
+    toast({
+      title: "Progress Saved",
+      description: "You can continue this quiz later from where you left off."
+    });
+  };
+
+  const handleResume = () => {
+    if (savedProgress) {
+      setCurrentQuestion(savedProgress.currentQuestion);
+      setScore(savedProgress.score);
+      setAnswered(savedProgress.answered);
+      setUserAnswers(savedProgress.userAnswers);
+      setShowResumeDialog(false);
+      toast({
+        title: "Quiz Resumed",
+        description: `Continuing from question ${savedProgress.currentQuestion + 1}`
+      });
+    }
+  };
+
+  const handleStartFresh = () => {
+    localStorage.removeItem('tradingQuizProgress');
+    setShowResumeDialog(false);
+    toast({
+      title: "New Quiz Started",
+      description: "Previous progress has been cleared."
+    });
   };
 
   if (isComplete) {
@@ -1051,17 +1109,51 @@ export const PatternQuiz = () => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium">Question {currentQuestion + 1} of {questions.length}</span>
-            <span className="text-sm text-muted-foreground">{score} correct</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </CardContent>
-      </Card>
+    <>
+      {/* Resume Dialog */}
+      <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume Quiz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have a saved quiz in progress from{' '}
+              {savedProgress && new Date(savedProgress.timestamp).toLocaleDateString()}. 
+              Would you like to continue where you left off or start a new quiz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleStartFresh}>
+              Start Fresh
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleResume}>
+              <Play className="mr-2 h-4 w-4" />
+              Continue Quiz
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="w-full max-w-4xl mx-auto space-y-6">
+        {/* Progress Bar */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">Question {currentQuestion + 1} of {questions.length}</span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">{score} correct</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleSaveAndExit}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Save & Exit
+                </Button>
+              </div>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </CardContent>
+        </Card>
 
       {/* Question Card */}
       <Card>
@@ -1149,6 +1241,7 @@ export const PatternQuiz = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
