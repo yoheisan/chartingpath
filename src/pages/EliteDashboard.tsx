@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -162,8 +161,6 @@ const EliteDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Elite Header */}
         <div className="text-center mb-12">

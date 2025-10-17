@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -160,7 +159,6 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back Navigation */}
         <div className="mb-6">

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navigation from "@/components/Navigation";
 import MemberNavigation from "@/components/MemberNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -195,7 +194,6 @@ const BacktestVault = () => {
   if (!canAccessVault) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto text-center">
             <CardContent className="p-12">
@@ -215,8 +213,6 @@ const BacktestVault = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <div className="container mx-auto px-4 py-8">
         <MemberNavigation />
         

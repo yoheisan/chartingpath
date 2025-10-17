@@ -1,4 +1,3 @@
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Zap, Clock, BarChart3, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -6,8 +5,6 @@ import { Link } from "react-router-dom";
 const CryptoMarket = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <main className="container mx-auto px-6 py-12 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">

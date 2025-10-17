@@ -1,11 +1,9 @@
-import Navigation from "@/components/Navigation";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

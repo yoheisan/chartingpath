@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 
 const RiskCalculator = () => {
   const [accountBalance, setAccountBalance] = useState("");
@@ -60,7 +59,6 @@ const RiskCalculator = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

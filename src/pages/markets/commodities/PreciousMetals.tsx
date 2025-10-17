@@ -1,4 +1,3 @@
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Coins, TrendingUp, ExternalLink, ArrowLeft, Shield } from "lucide-react";
@@ -7,8 +6,6 @@ import { Link } from "react-router-dom";
 const PreciousMetals = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <main className="container mx-auto px-6 py-12 max-w-6xl">
         <Link to="/markets/commodities">
           <Button variant="ghost" className="mb-6">

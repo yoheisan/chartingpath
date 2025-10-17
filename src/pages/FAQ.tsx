@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import Navigation from "@/components/Navigation";
 import { 
   ArrowLeft, 
   Search, 
@@ -1309,7 +1308,6 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">

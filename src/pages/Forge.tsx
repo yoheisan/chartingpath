@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Download, Copy, Save, Upload, RefreshCw, TestTube, Code2, Lock, Crown, Zap } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { forgeToSite, siteToForge } from "@/adapters/forge";
@@ -260,8 +259,6 @@ if shortCondition
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <main className="container mx-auto px-6 py-8 max-w-6xl">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="sm" asChild>

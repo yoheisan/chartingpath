@@ -36,7 +36,6 @@ import {
   LogIn
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useUserProfile } from "@/hooks/useUserProfile";
   import { PairTradingBuilder, PairTradingConfig } from "@/components/PairTradingBuilder";
@@ -562,7 +561,6 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-6 py-8 max-w-4xl">
           <div className="text-center py-16">
             <Lock className="h-16 w-16 mx-auto mb-6 text-muted-foreground" />
@@ -585,7 +583,6 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
