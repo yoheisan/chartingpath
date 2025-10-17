@@ -5,7 +5,7 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, Loader2 } from "lucide-react";
+import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, Loader2, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
@@ -305,6 +305,106 @@ const Index = () => {
 
 
 
+
+      {/* Market Breadth Report Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <Badge className="mb-4" variant="secondary">AI-Powered Analysis</Badge>
+              <h2 className="text-4xl font-bold mb-6">
+                Daily Market Breadth Report
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8">
+                Get comprehensive AI-powered market analysis delivered to your inbox. Stay informed about what happened across stocks, forex, crypto, and commodities—all in one report.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Multi-Market Coverage</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Analyze stocks, forex, cryptocurrencies, and commodities in one comprehensive report
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <Bot className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">AI-Powered Insights</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Advanced AI summarizes complex market movements into actionable insights
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <Globe className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Customizable Delivery</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Choose your timezone, preferred markets, and delivery schedule
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button size="lg" asChild className="px-8">
+                <Link to="/tools/market-breadth-report">
+                  View Sample Report <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            
+            <Card className="p-8 shadow-elegant">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg">Today's Market Snapshot</h4>
+                    <p className="text-sm text-muted-foreground">Updated daily across all markets</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Stock Market</span>
+                    <Badge variant="secondary">Covered</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Forex Market</span>
+                    <Badge variant="secondary">Covered</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Cryptocurrency</span>
+                    <Badge variant="secondary">Covered</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Commodities</span>
+                    <Badge variant="secondary">Covered</Badge>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground text-center">
+                    ✨ Free to use • 📧 Email delivery available
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
 
       {/* Footer CTA */}
       <section className="py-20 px-6 bg-primary text-primary-foreground">
