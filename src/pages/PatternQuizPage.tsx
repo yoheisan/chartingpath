@@ -1,4 +1,4 @@
-import { PatternQuiz } from "@/components/PatternQuiz";
+import { PatternIdentificationQuiz } from "@/components/PatternIdentificationQuiz";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
@@ -15,13 +15,13 @@ const PatternQuizPage = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Pattern Quiz</h1>
+          <h1 className="text-4xl font-bold mb-4">Pattern Identification Quiz</h1>
           <p className="text-xl text-muted-foreground">
-            Test your knowledge of chart patterns and improve your trading skills with our interactive quiz
+            Learn to recognize chart patterns by sight - identify patterns without labels to master pattern recognition
           </p>
         </div>
         
-        <PatternQuiz />
+        <PatternIdentificationQuiz />
       </div>
     </div>
   );
