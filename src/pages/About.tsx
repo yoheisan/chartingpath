@@ -1,12 +1,9 @@
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, Eye, Heart, Globe, Users, TrendingUp, Shield, BookOpen, Zap } from "lucide-react";
 
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <div className="container mx-auto px-6 py-12 max-w-6xl">
         {/* Hero Section */}
         <div className="text-center mb-16">
