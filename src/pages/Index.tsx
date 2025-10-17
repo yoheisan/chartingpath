@@ -358,7 +358,7 @@ const Index = () => {
               </div>
 
               <Button size="lg" asChild className="px-8">
-                <Link to="/tools/market-breadth-report">
+                <Link to="/tools/market-breadth">
                   View Sample Report <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
