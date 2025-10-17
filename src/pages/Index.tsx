@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,8 +88,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
