@@ -186,13 +186,49 @@ const MarketBreadthReport = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-12 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        {/* Hero Section */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Market Breadth Report
           </h1>
-          <p className="text-xl text-muted-foreground">
-            AI-powered market analysis summarizing what happened across all markets
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Catch up on what happened in the market daily before trading hours
           </p>
+        </div>
+
+        {/* Value Proposition Cards */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <Card className="border-primary/20 bg-gradient-to-br from-background to-muted/20">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <Mail className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Daily Market Intelligence</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get comprehensive AI-powered market analysis delivered to your inbox. Stay informed about what happened across all markets—all in one report.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/20 bg-gradient-to-br from-background to-muted/20">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Multi-Market Coverage</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Track movements across stocks, forex, crypto, and commodities. Get cross-market insights and correlations that matter for your trading decisions.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
