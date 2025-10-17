@@ -10,9 +10,11 @@ import { Loader2, TrendingUp, Mail, Clock, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
+import { useMarketReport } from "@/contexts/MarketReportContext";
 
 const MarketBreadthReport = () => {
   const { toast } = useToast();
+  const { cachedReport, isReportFresh } = useMarketReport();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
   
@@ -37,7 +39,13 @@ const MarketBreadthReport = () => {
 
   useEffect(() => {
     loadSubscription();
-    handleGenerateInstant();
+    
+    // Use cached report if available and fresh
+    if (cachedReport && isReportFresh(reportTimezone)) {
+      setReport(cachedReport.report);
+    } else {
+      handleGenerateInstant();
+    }
   }, []);
 
   // Auto-regenerate report when timezone changes

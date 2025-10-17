@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-trading-space.jpg';
+import { useMarketReport } from '@/contexts/MarketReportContext';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "library" | "strategies" | "quiz">("generator");
@@ -20,8 +21,9 @@ const Index = () => {
   const [isSending, setIsSending] = useState(false);
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { prefetchReport } = useMarketReport();
   
-  // Detect user language on first visit
+  // Detect user language on first visit and prefetch market report
   useEffect(() => {
     const detectAndSetLanguage = async () => {
       try {
@@ -35,6 +37,10 @@ const Index = () => {
     };
     
     detectAndSetLanguage();
+    
+    // Pre-fetch market report in background
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    prefetchReport(timezone);
   }, []);
 
   const handleEmailOptIn = () => {
