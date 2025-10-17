@@ -39,7 +39,6 @@ const Navigation = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/strategy-workspace" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    <TrendingUp className="h-4 w-4 ml-1" />
                     Strategy Workspace
                   </Link>
                 </DropdownMenuItem>
