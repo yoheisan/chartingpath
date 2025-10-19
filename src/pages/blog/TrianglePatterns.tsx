@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import trianglePatterns from "@/assets/triangle-patterns.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const TrianglePatterns = () => {
   return (
@@ -31,17 +31,13 @@ const TrianglePatterns = () => {
             </AlertDescription>
           </Alert>
 
-          {/* Main Image */}
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={trianglePatterns} 
-              alt="Triangle Patterns Comparison Chart" 
-              className="w-full h-auto"
-            />
-          </div>
-
           {/* Ascending Triangle */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Ascending Triangle (Bullish)</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="ascending-triangle" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Ascending Triangle features a flat horizontal resistance line at the top and a rising support line 
             at the bottom. This pattern demonstrates buyers becoming increasingly aggressive while sellers hold a 
@@ -90,6 +86,11 @@ const TrianglePatterns = () => {
 
           {/* Descending Triangle */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Descending Triangle (Bearish)</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="descending-triangle" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Descending Triangle has a flat horizontal support line at the bottom and a falling resistance line 
             at the top. Sellers become increasingly aggressive while buyers defend a specific price level.
@@ -137,6 +138,11 @@ const TrianglePatterns = () => {
 
           {/* Symmetrical Triangle */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Symmetrical Triangle (Neutral)</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="symmetrical-triangle" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Symmetrical Triangle features both lines converging—a rising support line and a falling resistance line. 
             This represents market equilibrium with gradually decreasing volatility before the breakout.

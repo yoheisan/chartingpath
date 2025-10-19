@@ -194,7 +194,18 @@ export const PatternChartDisplay = ({ patternType, className = "" }: PatternChar
     // Title
     const patternNames: Record<string, string> = {
       "head-shoulders": "Head and Shoulders",
-      "inverted-head-shoulders": "Inverted Head and Shoulders"
+      "inverted-head-shoulders": "Inverted Head and Shoulders",
+      "double-top": "Double Top",
+      "double-bottom": "Double Bottom",
+      "ascending-triangle": "Ascending Triangle",
+      "descending-triangle": "Descending Triangle",
+      "symmetrical-triangle": "Symmetrical Triangle",
+      "rising-wedge": "Rising Wedge",
+      "falling-wedge": "Falling Wedge",
+      "bull-flag": "Bull Flag",
+      "bear-flag": "Bear Flag",
+      "pennant": "Pennant",
+      "cup-handle": "Cup with Handle"
     };
     
     ctx.fillStyle = "hsl(210, 40%, 98%)";

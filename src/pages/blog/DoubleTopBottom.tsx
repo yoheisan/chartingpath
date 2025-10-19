@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import doubleTopPattern from "@/assets/double-top-pattern.png";
-import doubleBottomPattern from "@/assets/double-bottom-pattern.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const DoubleTopBottom = () => {
   return (
@@ -35,12 +34,8 @@ const DoubleTopBottom = () => {
           {/* Double Top Section */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Double Top Pattern (Bearish Reversal)</h2>
           
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={doubleTopPattern} 
-              alt="Double Top Pattern Chart" 
-              className="w-full h-auto"
-            />
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="double-top" />
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">
@@ -92,12 +87,8 @@ const DoubleTopBottom = () => {
           {/* Double Bottom Section */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Double Bottom Pattern (Bullish Reversal)</h2>
           
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={doubleBottomPattern} 
-              alt="Double Bottom Pattern Chart" 
-              className="w-full h-auto"
-            />
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="double-bottom" />
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">

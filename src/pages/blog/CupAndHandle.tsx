@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import cupHandlePattern from "@/assets/cup-handle-pattern.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const CupAndHandle = () => {
   return (
@@ -31,12 +31,8 @@ const CupAndHandle = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={cupHandlePattern} 
-              alt="Cup and Handle Pattern Chart" 
-              className="w-full h-auto"
-            />
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="cup-handle" />
           </div>
 
           {/* Pattern Structure */}

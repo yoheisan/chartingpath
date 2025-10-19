@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, TrendingUp, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import wedgePatterns from "@/assets/wedge-patterns.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const WedgePatterns = () => {
   return (
@@ -31,16 +31,13 @@ const WedgePatterns = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={wedgePatterns} 
-              alt="Rising and Falling Wedge Patterns" 
-              className="w-full h-auto"
-            />
-          </div>
-
           {/* Rising Wedge */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Rising Wedge (Bearish Reversal)</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="rising-wedge" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Rising Wedge forms during an uptrend with both support and resistance lines sloping upward, 
             but converging. This indicates weakening momentum despite higher prices—a classic sign of exhaustion.
@@ -89,6 +86,11 @@ const WedgePatterns = () => {
 
           {/* Falling Wedge */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Falling Wedge (Bullish Reversal)</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="falling-wedge" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Falling Wedge forms during a downtrend with both lines sloping downward but converging. 
             This shows weakening selling pressure despite lower prices—buyers are stepping in.

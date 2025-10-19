@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, Target, CheckCircle, AlertTriangle, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import flagPennantPatterns from "@/assets/flag-pennant-patterns.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const FlagPennant = () => {
   return (
@@ -31,16 +31,13 @@ const FlagPennant = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={flagPennantPatterns} 
-              alt="Bull Flag and Pennant Patterns" 
-              className="w-full h-auto"
-            />
-          </div>
-
           {/* Bull Flag */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Bull Flag Pattern</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="bull-flag" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Bull Flag forms during a strong uptrend. After a sharp price advance (the "flagpole"), 
             price consolidates in a tight downward-sloping channel before breaking out to continue the uptrend.
@@ -88,6 +85,11 @@ const FlagPennant = () => {
 
           {/* Bear Flag */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Bear Flag Pattern</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="bear-flag" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Bear Flag forms during a downtrend. After a sharp decline (flagpole), price consolidates in a 
             tight upward-sloping channel before breaking down to continue the downtrend.
@@ -121,6 +123,11 @@ const FlagPennant = () => {
 
           {/* Pennants */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Pennant Patterns</h2>
+          
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="pennant" />
+          </div>
+          
           <p className="text-muted-foreground leading-relaxed mb-6">
             Pennants are similar to flags but form small symmetrical triangles instead of channels. 
             They indicate even tighter consolidation and often lead to explosive breakouts.
