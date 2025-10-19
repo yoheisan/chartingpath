@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, AlertTriangle, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import headShouldersPattern from "@/assets/head-shoulders-pattern.png";
-import inverseHeadShouldersPattern from "@/assets/inverse-head-shoulders-pattern.png";
+import invertedHeadShoulders from "@/assets/inverted-head-shoulders.png";
 
 const HeadAndShoulders = () => {
   return (
@@ -38,13 +37,11 @@ const HeadAndShoulders = () => {
           {/* Pattern Structure */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Pattern Structure</h2>
           
-          {/* Chart Image */}
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={headShouldersPattern} 
-              alt="Head and Shoulders Pattern Chart" 
-              className="w-full h-auto"
-            />
+          {/* Chart Image - Using Pattern Generator for dynamic visualization */}
+          <div className="my-8 p-6 rounded-lg border border-border bg-muted/20">
+            <p className="text-sm text-muted-foreground text-center">
+              Visit our <a href="/chart-patterns/generator" className="text-primary hover:underline">Pattern Generator</a> to see an interactive Head and Shoulders pattern visualization.
+            </p>
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">
@@ -167,7 +164,7 @@ const HeadAndShoulders = () => {
           {/* Inverse Pattern Chart Image */}
           <div className="my-8 rounded-lg overflow-hidden border border-border">
             <img 
-              src={inverseHeadShouldersPattern} 
+              src={invertedHeadShoulders} 
               alt="Inverse Head and Shoulders Pattern Chart" 
               className="w-full h-auto"
             />
