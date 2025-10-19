@@ -446,12 +446,12 @@ const MoneyManagement = () => {
                 Start tracking your capital allocation and develop a comprehensive money management plan for long-term success.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/member/dashboard">
+                <Link to="/members/dashboard">
                   <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                     Track Performance
                   </button>
                 </Link>
-                <Link to="/risk-calculator">
+                <Link to="/tools/risk-calculator">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Risk Calculator
                   </button>

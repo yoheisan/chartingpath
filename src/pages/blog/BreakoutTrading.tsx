@@ -326,7 +326,7 @@ const BreakoutTrading = () => {
                     Strategy Builder
                   </button>
                 </Link>
-                <Link to="/backtest-workspace">
+                <Link to="/strategy-workspace">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Backtest Breakouts
                   </button>

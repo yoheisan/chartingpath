@@ -485,7 +485,7 @@ const TradingJournal = () => {
                 Begin tracking your trades systematically and watch your performance improve through data-driven insights.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/member/dashboard">
+                <Link to="/members/dashboard">
                   <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                     Access Trading Dashboard
                   </button>

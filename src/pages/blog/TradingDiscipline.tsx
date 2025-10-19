@@ -453,12 +453,12 @@ const TradingDiscipline = () => {
                 Start building your discipline foundation with structured practice and accountability tools.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/paper-trading">
+                <Link to="/members/trading">
                   <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                     Practice With Demo
                   </button>
                 </Link>
-                <Link to="/member/dashboard">
+                <Link to="/members/dashboard">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Track Discipline Score
                   </button>

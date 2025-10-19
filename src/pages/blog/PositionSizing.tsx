@@ -402,12 +402,12 @@ const PositionSizing = () => {
                 Use our risk calculator to practice position sizing across different markets and scenarios.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/risk-calculator">
+                <Link to="/tools/risk-calculator">
                   <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                     Risk Calculator
                   </button>
                 </Link>
-                <Link to="/paper-trading">
+                <Link to="/members/trading">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Practice Trading
                   </button>
