@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, TrendingUp, BarChart3, Target, Shield, Brain } from "lucide-react";
@@ -208,6 +209,13 @@ const blogPosts = [
 const categories = ["All", "Chart Patterns", "Technical Analysis", "Price Action", "Risk Management", "Psychology"];
 
 const Blog = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+  // Filter posts based on selected category
+  const filteredPosts = selectedCategory === "All" 
+    ? blogPosts 
+    : blogPosts.filter(post => post.category === selectedCategory);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-12 max-w-7xl">
@@ -226,7 +234,12 @@ const Blog = () => {
           {categories.map((category) => (
             <button
               key={category}
-              className="px-4 py-2 rounded-full border border-border hover:bg-accent transition-colors"
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full border transition-colors ${
+                selectedCategory === category
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border hover:bg-accent"
+              }`}
             >
               {category}
             </button>
@@ -235,7 +248,7 @@ const Blog = () => {
 
         {/* Blog Posts Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => {
+          {filteredPosts.map((post) => {
             const Icon = post.icon;
             return (
               <Link key={post.id} to={`/learn/${post.id}`}>
