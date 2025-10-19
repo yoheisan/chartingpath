@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, AlertTriangle, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import invertedHeadShoulders from "@/assets/inverted-head-shoulders.png";
+import headShouldersDetailed from "@/assets/head-shoulders-detailed.png";
+import inverseHeadShouldersDetailed from "@/assets/inverse-head-shoulders-detailed.png";
 
 const HeadAndShoulders = () => {
   return (
@@ -37,11 +38,13 @@ const HeadAndShoulders = () => {
           {/* Pattern Structure */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Pattern Structure</h2>
           
-          {/* Chart Image - Using Pattern Generator for dynamic visualization */}
-          <div className="my-8 p-6 rounded-lg border border-border bg-muted/20">
-            <p className="text-sm text-muted-foreground text-center">
-              Visit our <a href="/chart-patterns/generator" className="text-primary hover:underline">Pattern Generator</a> to see an interactive Head and Shoulders pattern visualization.
-            </p>
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img 
+              src={headShouldersDetailed} 
+              alt="Head and Shoulders Pattern Chart with detailed annotations showing left shoulder, head, right shoulder, neckline, entry point, target, and stop loss levels" 
+              className="w-full h-auto"
+            />
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">
@@ -164,8 +167,8 @@ const HeadAndShoulders = () => {
           {/* Inverse Pattern Chart Image */}
           <div className="my-8 rounded-lg overflow-hidden border border-border">
             <img 
-              src={invertedHeadShoulders} 
-              alt="Inverse Head and Shoulders Pattern Chart" 
+              src={inverseHeadShouldersDetailed} 
+              alt="Inverse Head and Shoulders Pattern Chart with detailed annotations showing bullish reversal setup with left shoulder, head, right shoulder, neckline resistance, entry, target, and stop loss levels" 
               className="w-full h-auto"
             />
           </div>
