@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import Navigation from '@/components/Navigation';
 import MemberNavigation from '@/components/MemberNavigation';
 import { TradingChart } from '@/components/TradingChart';
 import { PortfolioSummary } from '@/components/PortfolioSummary';
@@ -258,21 +257,16 @@ const PaperTrading = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Please log in to access Paper Trading</h1>
-          <p className="text-muted-foreground">You need to be logged in to practice trading.</p>
-        </div>
+      <div className="container mx-auto px-6 py-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Please log in to access Paper Trading</h1>
+        <p className="text-muted-foreground">You need to be logged in to practice trading.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        <MemberNavigation />
+    <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <MemberNavigation />
         
         {/* Header */}
         <div className="mb-8">

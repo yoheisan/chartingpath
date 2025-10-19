@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navigation from "@/components/Navigation";
 import MemberNavigation from "@/components/MemberNavigation";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -250,16 +249,13 @@ const MemberAlerts = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <MemberNavigation />
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading alerts...</p>
             </div>
-          </div>
         </div>
       </div>
     );
@@ -267,10 +263,8 @@ const MemberAlerts = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <MemberNavigation />
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
           <div className="text-center mt-8">
             <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
             <p className="text-muted-foreground mb-8">
@@ -279,7 +273,6 @@ const MemberAlerts = () => {
             <Button asChild>
               <Link to="/auth">Log In</Link>
             </Button>
-          </div>
         </div>
       </div>
     );
@@ -292,10 +285,8 @@ const MemberAlerts = () => {
   // Show upsell screen for Starter users only if they've used their test alert
   if (profile?.subscription_plan === 'starter' && activeAlerts.length >= 1) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <MemberNavigation />
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
           
           {/* Back Navigation */}
           <div className="mb-6">
@@ -383,18 +374,15 @@ const MemberAlerts = () => {
                   <strong>Disclaimer:</strong> Alerts are for educational use only and do not constitute financial advice. Trading involves risk of loss.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          </CardContent>
+      </Card>
+    </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <MemberNavigation />
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <MemberNavigation />
         
         {/* Back Navigation */}
         <div className="mb-6">
@@ -644,8 +632,7 @@ const MemberAlerts = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 };

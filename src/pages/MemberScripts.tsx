@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
-import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -284,10 +283,8 @@ if shortCondition
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <MemberNavigation />
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <MemberNavigation />
         
         {/* Back Navigation */}
         <div className="mb-6">
