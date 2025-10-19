@@ -213,6 +213,12 @@ serve(async (req) => {
 
         const sessionContext = getSessionContext(sub.timezone);
         const userLocalTime = new Date().toLocaleString('en-US', { timeZone: sub.timezone, dateStyle: 'full', timeStyle: 'short' });
+        
+        // Determine day of week in user's timezone
+        const userDayOfWeek = new Date().toLocaleString('en-US', { timeZone: sub.timezone, weekday: 'long' });
+        const isSaturday = userDayOfWeek === 'Saturday';
+        const isSunday = userDayOfWeek === 'Sunday';
+        const isWeekend = isSaturday || isSunday;
 
         // Format market data for AI prompt
         let marketDataSummary = `**Real-Time Market Data**\n**Your Local Time: ${userLocalTime} (${sub.timezone})**\n\n`;
@@ -262,7 +268,17 @@ serve(async (req) => {
         }
 
         // Generate report
-        const timeSpanText = sub.time_span === "previous_day" ? "previous trading day" : "past 5 trading sessions";
+        let timeSpanText = sub.time_span === "previous_day" ? "previous trading day" : "past 5 trading sessions";
+        let weekendContext = "";
+        
+        if (isSunday) {
+          timeSpanText = "the past week's trading activity";
+          weekendContext = "Note: Today is Sunday. Stock, forex, and commodity markets are closed. Analyze the week's performance from Monday through Friday. Cryptocurrency markets continue trading 24/7, so crypto data reflects current pricing.";
+        } else if (isSaturday) {
+          timeSpanText = "Friday's trading session and the week's performance";
+          weekendContext = "Note: Today is Saturday. Stock, forex, and commodity markets closed Friday and will reopen Monday. For stocks, forex, and commodities, focus on Friday's closing action and weekly trends. Cryptocurrency markets continue trading 24/7, so crypto data reflects current pricing.";
+        }
+        
         const marketList = sub.markets.join(", ");
 
         let toneInstruction = "";
@@ -307,16 +323,18 @@ CONTENT REQUIREMENTS:
 - Do NOT invent data or historical comparisons not in the provided data
 - Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 - Reader's local time is: ${userLocalTime}
+- Day of week: ${userDayOfWeek}
+${weekendContext ? `\n${weekendContext}\n` : ''}
 
 STRUCTURE (use ## for main sections, ### for subsections):
-1. **Market Overview** - Opening paragraph summarizing today's sentiment across provided markets
-2. **Equity Markets** - Analyze the exact index data provided with actual percentages
-3. **Foreign Exchange** - Currency pair movements from the provided data
-4. **Cryptocurrencies** - Bitcoin/Ethereum performance from provided data
-5. **Commodities** - Energy, metals from provided data
-6. **Market Drivers** - Analyze the news headlines provided
+1. **Market Overview** - ${isWeekend ? 'Opening paragraph summarizing the week\'s sentiment and Friday\'s closing action' : 'Opening paragraph summarizing today\'s sentiment'} across provided markets
+2. **Equity Markets** - Analyze the exact index data provided with actual percentages${isWeekend ? ' (Friday close and weekly performance)' : ''}
+3. **Foreign Exchange** - Currency pair movements from the provided data${isWeekend ? ' (Friday close and weekly trends)' : ''}
+4. **Cryptocurrencies** - Bitcoin/Ethereum performance from provided data (${isWeekend ? '24/7 trading continues' : 'current session'})
+5. **Commodities** - Energy, metals from provided data${isWeekend ? ' (Friday close and weekly performance)' : ''}
+6. **Market Drivers** - Analyze the news headlines provided${isWeekend ? ' from the week' : ''}
 7. **Cross-Asset Correlations** - How different markets influenced each other based on the data
-8. **Outlook** - What traders should watch for next session
+8. **Outlook** - What traders should watch for ${isWeekend ? 'when markets reopen Monday' : 'next session'}
 
 FORMATTING:
 ${toneInstruction}
@@ -328,24 +346,26 @@ ${toneInstruction}
 
 CRITICAL: This must read like it was edited by FT's editorial team - precise, factual, and professionally formatted. Use ONLY the data provided below.`;
 
-        const userPrompt = `Generate a comprehensive market breadth report.
+        const userPrompt = `Generate a comprehensive market breadth report for ${timeSpanText}.
 
 **Reader Context:**
 - Location: ${sessionContext.region} region
 - Local Time: ${userLocalTime}
 - Timezone: ${sub.timezone}
+- Day: ${userDayOfWeek}
+${weekendContext ? `\n**Weekend Context:** ${weekendContext}\n` : ''}
 
 ${marketDataSummary}
 
 **Analysis Requirements:**
 - Use the EXACT prices and percentage changes provided above
 - Reference the actual news headlines provided
-- Use session-aware language based on the reader's timezone (e.g., "${sessionContext.usSession}" for US data, "${sessionContext.asiaSession || sessionContext.europeSession || 'other sessions'}" for other regions)
+${isWeekend ? '- Focus on the weekly perspective and what happened in the most recent trading session (Friday)\n- Note that crypto markets trade 24/7 while traditional markets are closed\n' : ''}- Use session-aware language based on the reader's timezone (e.g., "${sessionContext.usSession}" for US data, "${sessionContext.asiaSession || sessionContext.europeSession || 'other sessions'}" for other regions)
 - Analyze how these specific movements relate to each other
 - Provide insights based on this real-time data with temporal context
 - Tone: ${sub.tone}
 
-Provide a thorough analysis of the real-time market data above with actionable insights for traders in the ${sessionContext.region} region.`;
+Provide a thorough analysis of ${timeSpanText} with actionable insights for traders in the ${sessionContext.region} region${isWeekend ? ', keeping in mind that most markets are closed for the weekend' : ''}.`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
