@@ -38,9 +38,9 @@ interface SavedChartingPathStrategy {
   backtest_results?: any;
 }
 
-export const StrategyWorkspaceInterface: React.FC = () => {
+export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ initialTab = 'quick-select' }) => {
   const { user, subscriptionPlan } = useUserProfile();
-  const [activeTab, setActiveTab] = useState('quick-select');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [currentChartingPathStrategy, setCurrentChartingPathStrategy] = useState<ChartingPathStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({

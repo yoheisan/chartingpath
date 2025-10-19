@@ -361,7 +361,7 @@ const PinBarStrategy = () => {
                     Pattern Recognition
                   </button>
                 </Link>
-                <Link to="/forge">
+                <Link to="/strategy-workspace?tab=builder">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Build Pin Bar Strategy
                   </button>
