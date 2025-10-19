@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Navigation from "@/components/Navigation";
 import MemberNavigation from "@/components/MemberNavigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -151,7 +150,6 @@ const MemberDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -164,7 +162,6 @@ const MemberDashboard = () => {
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-6 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-4">Please log in to access your member dashboard.</p>
@@ -181,8 +178,6 @@ const MemberDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         <MemberNavigation />
 
