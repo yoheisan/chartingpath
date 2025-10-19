@@ -13,12 +13,12 @@ export const topicLinks: Record<string, { url: string; title: string }> = {
     title: "Double Top and Bottom Patterns"
   },
   "triple-top": {
-    url: "/learn/triple-patterns",
-    title: "Triple Top and Bottom Patterns"
+    url: "/learn/double-top-bottom",
+    title: "Double Top and Bottom Patterns"
   },
   "triple-bottom": {
-    url: "/learn/triple-patterns",
-    title: "Triple Top and Bottom Patterns"
+    url: "/learn/double-top-bottom",
+    title: "Double Top and Bottom Patterns"
   },
   "ascending-triangle": {
     url: "/learn/triangle-patterns",
@@ -53,16 +53,16 @@ export const topicLinks: Record<string, { url: string; title: string }> = {
     title: "Cup and Handle Pattern"
   },
   "rectangle": {
-    url: "/learn/rectangle-pattern",
-    title: "Rectangle Pattern Trading"
+    url: "/learn/flag-pennant",
+    title: "Flags and Pennants Guide"
   },
   "diamond": {
-    url: "/learn/diamond-pattern",
-    title: "Diamond Pattern Guide"
+    url: "/learn/triangle-patterns",
+    title: "Triangle Patterns Complete Guide"
   },
   "rounding-bottom": {
-    url: "/learn/rounding-patterns",
-    title: "Rounding Bottom Pattern"
+    url: "/learn/cup-and-handle",
+    title: "Cup and Handle Pattern"
   },
   "support-resistance": {
     url: "/learn/support-resistance",

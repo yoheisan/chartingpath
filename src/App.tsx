@@ -56,6 +56,11 @@ import Ethereum from "./pages/markets/crypto/Ethereum";
 import Altcoins from "./pages/markets/crypto/Altcoins";
 import Blog from "./pages/Blog";
 import HeadAndShoulders from "./pages/blog/HeadAndShoulders";
+import DoubleTopBottom from "./pages/blog/DoubleTopBottom";
+import TrianglePatterns from "./pages/blog/TrianglePatterns";
+import WedgePatterns from "./pages/blog/WedgePatterns";
+import FlagPennant from "./pages/blog/FlagPennant";
+import CupAndHandle from "./pages/blog/CupAndHandle";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +85,11 @@ const App = () => (
           <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
           <Route path="/learn" element={<Blog />} />
           <Route path="/learn/head-and-shoulders" element={<HeadAndShoulders />} />
+          <Route path="/learn/double-top-bottom" element={<DoubleTopBottom />} />
+          <Route path="/learn/triangle-patterns" element={<TrianglePatterns />} />
+          <Route path="/learn/wedge-patterns" element={<WedgePatterns />} />
+          <Route path="/learn/flag-pennant" element={<FlagPennant />} />
+          <Route path="/learn/cup-and-handle" element={<CupAndHandle />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
           <Route path="/markets/stocks/sectors" element={<StockSectors />} />
