@@ -321,7 +321,7 @@ const BreakoutTrading = () => {
                 Test your breakout trading skills with our interactive tools and build strategies based on this powerful technique.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/forge">
+                <Link to="/strategy-workspace">
                   <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                     Strategy Builder
                   </button>
