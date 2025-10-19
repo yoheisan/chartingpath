@@ -75,6 +75,12 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
+                  <Link to="/learn" className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    Learning Center
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/generator" className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     {t('navigation.patternGenerator', 'Pattern Generator')}

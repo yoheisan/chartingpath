@@ -50,6 +50,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">Learning</h3>
             <nav className="flex flex-col gap-2">
+              <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Learning Center
+              </Link>
               <Link to="/chart-patterns/generator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.patternGenerator', 'Pattern Generator')}
               </Link>
