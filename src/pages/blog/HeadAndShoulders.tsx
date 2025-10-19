@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, AlertTriangle, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import headShouldersDetailed from "@/assets/head-shoulders-detailed.png";
-import inverseHeadShouldersDetailed from "@/assets/inverse-head-shoulders-detailed.png";
+import headShouldersPattern from "@/assets/head-shoulders-pattern.png";
+import inverseHeadShouldersPattern from "@/assets/inverse-head-shoulders-pattern.png";
 
 const HeadAndShoulders = () => {
   return (
@@ -41,7 +41,7 @@ const HeadAndShoulders = () => {
           {/* Chart Image */}
           <div className="my-8 rounded-lg overflow-hidden border border-border">
             <img 
-              src={headShouldersDetailed} 
+              src={headShouldersPattern} 
               alt="Head and Shoulders Pattern Chart with detailed annotations showing left shoulder, head, right shoulder, neckline, entry point, target, and stop loss levels" 
               className="w-full h-auto"
             />
@@ -167,7 +167,7 @@ const HeadAndShoulders = () => {
           {/* Inverse Pattern Chart Image */}
           <div className="my-8 rounded-lg overflow-hidden border border-border">
             <img 
-              src={inverseHeadShouldersDetailed} 
+              src={inverseHeadShouldersPattern} 
               alt="Inverse Head and Shoulders Pattern Chart with detailed annotations showing bullish reversal setup with left shoulder, head, right shoulder, neckline resistance, entry, target, and stop loss levels" 
               className="w-full h-auto"
             />
