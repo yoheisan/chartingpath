@@ -628,6 +628,52 @@ const FAQ = () => {
                   </div>
                 </div>
               )
+            },
+            {
+              question: "What is the Market Breadth Report?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Market Breadth Report is an AI-powered daily market analysis tool that provides comprehensive insights across multiple asset classes.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Key Features:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Multi-Market Coverage:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Stocks (SPY, QQQ, DIA)<br/>
+                            • Forex (EUR/USD, GBP/USD, USD/JPY)<br/>
+                            • Crypto (Bitcoin, Ethereum)<br/>
+                            • Commodities (Gold, Silver, Oil)
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Analysis Types:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Real-time price movements<br/>
+                            • Market sentiment analysis<br/>
+                            • Cross-asset correlations<br/>
+                            • Trading outlook and opportunities
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Email Subscription</h4>
+                      <div className="text-sm space-y-2">
+                        <div>• Daily or weekly reports delivered to your inbox</div>
+                        <div>• Customizable market selection</div>
+                        <div>• Timezone-aware delivery</div>
+                        <div>• Professional or concise tone options</div>
+                        <div>• Weekend reports cover Friday's action and weekly trends</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Free Feature:</strong> Available to all members. Generate instant reports or subscribe for automated delivery.</p>
+                    </div>
+                  </div>
+                </div>
+              )
             }
           ]
         },
@@ -662,6 +708,226 @@ const FAQ = () => {
                   </div>
                   <div className="bg-muted/50 border border-border p-3 rounded-lg">
                     <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Feature:</strong> Available for Pro+ and Elite subscribers. Maintains complex logic, custom functions, and optimization parameters.</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the Strategy Workspace?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Strategy Workspace is our all-in-one platform combining strategy building, backtesting, and analysis tools in a unified interface.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Integrated Features:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Pattern Library:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • 20+ classic chart patterns<br/>
+                            • Detailed formation criteria<br/>
+                            • Success rates and statistics<br/>
+                            • Real market examples
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Strategy Builder:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Visual strategy creation<br/>
+                            • Multi-indicator combinations<br/>
+                            • Pine Script generation<br/>
+                            • Risk management tools
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Backtester:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Historical performance testing<br/>
+                            • Multiple market data sources<br/>
+                            • Detailed metrics and reports<br/>
+                            • Parameter optimization
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Strategy Execution:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Real-time signal monitoring<br/>
+                            • Automated trade logging<br/>
+                            • Performance tracking<br/>
+                            • Risk alerts
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Unified Workflow:</strong> Build, test, analyze, and execute strategies all in one place without switching tools.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is Paper Trading and how does it work?",
+              answer: (
+                <div className="space-y-4">
+                  <p>Paper Trading allows you to practice trading with virtual money in real market conditions, testing strategies without financial risk.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Features:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Portfolio Management:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • $10,000 starting virtual balance<br/>
+                            • Real-time P&L tracking<br/>
+                            • Position management<br/>
+                            • Trade history
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Trade Execution:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Long and short positions<br/>
+                            • Stop-loss & take-profit orders<br/>
+                            • Multiple position sizes<br/>
+                            • Trade notes and tags
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Performance Tracking:</h4>
+                      <div className="text-sm space-y-1">
+                        <div>• Win rate and profit factor calculations</div>
+                        <div>• Maximum drawdown monitoring</div>
+                        <div>• Average win/loss analysis</div>
+                        <div>• Learning achievements and milestones</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Best Practice:</strong> Use paper trading to validate your strategies before risking real capital. Track your performance over at least 50 trades.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the Backtest Vault?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Backtest Vault is your personal repository for saving, organizing, and comparing backtest results across different strategies and timeframes.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Storage & Organization:</h4>
+                      <div className="text-sm space-y-2">
+                        <div>• Unlimited backtest storage</div>
+                        <div>• Tag and categorize results</div>
+                        <div>• Star favorite strategies</div>
+                        <div>• Search and filter by metrics</div>
+                        <div>• Export results to CSV/PDF</div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Comparison Tools:</h4>
+                      <div className="text-sm space-y-2">
+                        <div>• Side-by-side strategy comparison</div>
+                        <div>• Performance metric rankings</div>
+                        <div>• Equity curve overlays</div>
+                        <div>• Risk-adjusted return analysis</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> Regularly review your vault to identify which strategies perform best in different market conditions.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "How does the Alert System work?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Alert System monitors markets 24/7 and notifies you when specific chart patterns or conditions are detected.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Alert Types:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Pattern Alerts:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Head & Shoulders detection<br/>
+                            • Double Top/Bottom formations<br/>
+                            • Triangle breakouts<br/>
+                            • Cup & Handle patterns
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Technical Alerts:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Moving average crossovers<br/>
+                            • RSI/MACD signals<br/>
+                            • Support/Resistance tests<br/>
+                            • Volume spikes
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Subscription Limits:</h4>
+                      <div className="text-sm space-y-1">
+                        <div><strong>Starter:</strong> 0 alerts (upgrade required)</div>
+                        <div><strong>Pro:</strong> 3 simultaneous alerts</div>
+                        <div><strong>Elite:</strong> Unlimited alerts</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Delivery:</strong> Receive alerts via email with chart screenshots, pattern details, and suggested entry/exit levels.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "How do I use the Quiz Hub?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Quiz Hub helps you test and improve your trading knowledge through interactive quizzes covering patterns, technical analysis, and trading psychology.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Available Quizzes:</h4>
+                      <div className="grid gap-3 text-sm">
+                        <div>
+                          <strong>Pattern Identification Quiz:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Test your ability to recognize chart patterns by sight. Learn to identify formations without labels.
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Pattern Quiz:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Answer questions about pattern characteristics, trading rules, and success rates.
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Trading Knowledge Quiz:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Comprehensive assessment covering risk management, technical analysis, and trading psychology.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Learning Features:</h4>
+                      <div className="text-sm space-y-1">
+                        <div>• Immediate feedback on answers</div>
+                        <div>• Detailed explanations for correct/incorrect answers</div>
+                        <div>• Progress tracking and mastery levels</div>
+                        <div>• Recommended learning paths based on results</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Study Tip:</strong> Take each quiz multiple times to reinforce learning. Focus on topics where you scored below 70%.</p>
+                    </div>
                   </div>
                 </div>
               )
@@ -791,6 +1057,70 @@ const FAQ = () => {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the Learning Center?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Learning Center is our comprehensive educational hub with in-depth articles covering all aspects of technical analysis and trading.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Content Categories:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Chart Patterns:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Head & Shoulders<br/>
+                            • Double Top/Bottom<br/>
+                            • Triangles, Wedges, Flags<br/>
+                            • Cup & Handle, Rectangles
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Technical Analysis:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Support & Resistance<br/>
+                            • Moving Averages, RSI, MACD<br/>
+                            • Fibonacci Retracements<br/>
+                            • Volume Analysis
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Price Action:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Candlestick Patterns<br/>
+                            • Breakout Trading<br/>
+                            • Pin Bar Strategy<br/>
+                            • Price Action Basics
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Risk & Psychology:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Position Sizing<br/>
+                            • Risk Management<br/>
+                            • Trading Psychology<br/>
+                            • Trading Discipline
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Article Features:</h4>
+                      <div className="text-sm space-y-1">
+                        <div>• Detailed explanations with visual examples</div>
+                        <div>• Practical trading strategies and setups</div>
+                        <div>• Real-world application guidance</div>
+                        <div>• Links to related tools and quizzes</div>
+                        <div>• Mobile-friendly reading experience</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Filter by Category:</strong> Use the category filters to focus on specific topics. Start with Chart Patterns if you're new to technical analysis.</p>
                     </div>
                   </div>
                 </div>
@@ -1125,6 +1455,115 @@ const FAQ = () => {
                     </div>
                     <div className="bg-muted/50 border border-border p-3 rounded-lg">
                       <p className="text-sm text-muted-foreground"><strong className="text-foreground">Quality Assurance:</strong> All scripts are tested and documented with performance metrics and usage instructions.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the Elite Dashboard?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Elite Dashboard is an exclusive feature for Elite subscribers, providing advanced tools and personalized insights.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Elite Features:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Advanced Analytics:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Portfolio performance metrics<br/>
+                            • Strategy win/loss analysis<br/>
+                            • Risk-adjusted returns<br/>
+                            • Custom performance reports
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Exclusive Tools:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Unlimited pattern alerts<br/>
+                            • Priority backtesting queue<br/>
+                            • Advanced market scanning<br/>
+                            • Strategy optimization tools
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">Priority Support:</h4>
+                      <div className="text-sm space-y-1">
+                        <div>• Direct email support with 4-12 hour response time</div>
+                        <div>• Weekly strategy review sessions</div>
+                        <div>• Custom indicator development assistance</div>
+                        <div>• One-on-one onboarding call</div>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 p-3 rounded-lg">
+                      <p className="text-sm"><strong className="text-purple-600 dark:text-purple-400">Elite Only:</strong> Access to beta features, exclusive webinars, and the Elite traders community.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What are the Market Coverage pages?",
+              answer: (
+                <div className="space-y-4">
+                  <p>Market Coverage pages provide detailed information about trading different asset classes with specific strategies and considerations for each market.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Available Markets:</h4>
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <strong>Stocks:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Major indices (S&P 500, NASDAQ, Dow)<br/>
+                            • Stock sectors analysis<br/>
+                            • Earnings season strategies<br/>
+                            • Growth vs value approaches
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Forex:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Major currency pairs<br/>
+                            • Cross currency pairs<br/>
+                            • Session timing strategies<br/>
+                            • Economic calendar impact
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Cryptocurrency:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Bitcoin & Ethereum analysis<br/>
+                            • Altcoin opportunities<br/>
+                            • 24/7 market dynamics<br/>
+                            • Volatility management
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Commodities:</strong>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            • Precious metals (Gold, Silver)<br/>
+                            • Energy markets (Oil, Natural Gas)<br/>
+                            • Agricultural commodities<br/>
+                            • Industrial metals
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">What Each Page Includes:</h4>
+                      <div className="text-sm space-y-1">
+                        <div>• Market characteristics and trading hours</div>
+                        <div>• Recommended strategies for each asset class</div>
+                        <div>• Volatility patterns and seasonal trends</div>
+                        <div>• Risk management considerations</div>
+                        <div>• Correlation with other markets</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Educational Focus:</strong> Learn how different markets behave and adapt your trading approach accordingly.</p>
                     </div>
                   </div>
                 </div>
