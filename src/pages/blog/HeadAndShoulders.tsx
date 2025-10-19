@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, AlertTriangle, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import headShouldersPattern from "@/assets/head-shoulders-pattern.png";
-import inverseHeadShouldersPattern from "@/assets/inverse-head-shoulders-pattern.png";
+import { PatternChartDisplay } from "@/components/PatternChartDisplay";
 
 const HeadAndShoulders = () => {
   return (
@@ -39,12 +38,8 @@ const HeadAndShoulders = () => {
           <h2 className="text-2xl font-bold mt-12 mb-4">Pattern Structure</h2>
           
           {/* Chart Image */}
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={headShouldersPattern} 
-              alt="Head and Shoulders Pattern Chart with detailed annotations showing left shoulder, head, right shoulder, neckline, entry point, target, and stop loss levels" 
-              className="w-full h-auto"
-            />
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="head-shoulders" />
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">
@@ -165,12 +160,8 @@ const HeadAndShoulders = () => {
           <h2 className="text-2xl font-bold mt-12 mb-4">Inverse Head and Shoulders</h2>
           
           {/* Inverse Pattern Chart Image */}
-          <div className="my-8 rounded-lg overflow-hidden border border-border">
-            <img 
-              src={inverseHeadShouldersPattern} 
-              alt="Inverse Head and Shoulders Pattern Chart with detailed annotations showing bullish reversal setup with left shoulder, head, right shoulder, neckline resistance, entry, target, and stop loss levels" 
-              className="w-full h-auto"
-            />
+          <div className="my-8 rounded-lg overflow-hidden border border-border bg-[hsl(223,39%,4%)]">
+            <PatternChartDisplay patternType="inverted-head-shoulders" />
           </div>
 
           <p className="text-muted-foreground leading-relaxed mb-6">
