@@ -54,6 +54,8 @@ import StockSectors from "./pages/markets/stocks/StockSectors";
 import Bitcoin from "./pages/markets/crypto/Bitcoin";
 import Ethereum from "./pages/markets/crypto/Ethereum";
 import Altcoins from "./pages/markets/crypto/Altcoins";
+import Blog from "./pages/Blog";
+import HeadAndShoulders from "./pages/blog/HeadAndShoulders";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +78,8 @@ const App = () => (
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
           <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
+          <Route path="/learn" element={<Blog />} />
+          <Route path="/learn/head-and-shoulders" element={<HeadAndShoulders />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
           <Route path="/markets/stocks/sectors" element={<StockSectors />} />

@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, Trophy, RotateCcw, Save, Play } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, RotateCcw, Save, Play, BookOpen } from "lucide-react";
 import { PatternCalculator } from "@/utils/PatternCalculator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+import { getTopicLink } from "@/utils/quizTopicLinks";
 
 interface QuizQuestion {
   id: string;
@@ -1233,6 +1235,19 @@ export const PatternQuiz = () => {
                 </div>
                 <p className="text-sm text-muted-foreground">{currentQ.explanation}</p>
               </div>
+
+              {/* Learn More Link */}
+              {(() => {
+                const topicLink = getTopicLink(currentQ.question, currentQ.options[currentQ.correctAnswer]);
+                return topicLink && (
+                  <Link to={topicLink.url}>
+                    <Button variant="outline" className="w-full" size="lg">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Learn More: {topicLink.title}
+                    </Button>
+                  </Link>
+                );
+              })()}
               
               <Button onClick={handleNext} className="w-full" size="lg">
                 {currentQuestion < questions.length - 1 ? "Next Question" : "View Results"}
