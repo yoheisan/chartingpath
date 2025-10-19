@@ -61,6 +61,12 @@ import TrianglePatterns from "./pages/blog/TrianglePatterns";
 import WedgePatterns from "./pages/blog/WedgePatterns";
 import FlagPennant from "./pages/blog/FlagPennant";
 import CupAndHandle from "./pages/blog/CupAndHandle";
+import SupportResistance from "./pages/blog/SupportResistance";
+import TrendAnalysis from "./pages/blog/TrendAnalysis";
+import VolumeAnalysis from "./pages/blog/VolumeAnalysis";
+import CandlestickPatterns from "./pages/blog/CandlestickPatterns";
+import RiskManagement from "./pages/blog/RiskManagement";
+import TradingPsychology from "./pages/blog/TradingPsychology";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +96,12 @@ const App = () => (
           <Route path="/learn/wedge-patterns" element={<WedgePatterns />} />
           <Route path="/learn/flag-pennant" element={<FlagPennant />} />
           <Route path="/learn/cup-and-handle" element={<CupAndHandle />} />
+          <Route path="/learn/support-resistance" element={<SupportResistance />} />
+          <Route path="/learn/trend-analysis" element={<TrendAnalysis />} />
+          <Route path="/learn/volume-analysis" element={<VolumeAnalysis />} />
+          <Route path="/learn/candlestick-patterns" element={<CandlestickPatterns />} />
+          <Route path="/learn/risk-management" element={<RiskManagement />} />
+          <Route path="/learn/trading-psychology" element={<TradingPsychology />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
           <Route path="/markets/stocks/sectors" element={<StockSectors />} />
