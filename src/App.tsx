@@ -67,6 +67,12 @@ import VolumeAnalysis from "./pages/blog/VolumeAnalysis";
 import CandlestickPatterns from "./pages/blog/CandlestickPatterns";
 import RiskManagement from "./pages/blog/RiskManagement";
 import TradingPsychology from "./pages/blog/TradingPsychology";
+import RectanglePattern from "./pages/blog/RectanglePattern";
+import MovingAverages from "./pages/blog/MovingAverages";
+import RSIIndicator from "./pages/blog/RSIIndicator";
+import MACDIndicator from "./pages/blog/MACDIndicator";
+import FibonacciRetracements from "./pages/blog/FibonacciRetracements";
+import PriceActionBasics from "./pages/blog/PriceActionBasics";
 
 const queryClient = new QueryClient();
 
@@ -96,10 +102,16 @@ const App = () => (
           <Route path="/learn/wedge-patterns" element={<WedgePatterns />} />
           <Route path="/learn/flag-pennant" element={<FlagPennant />} />
           <Route path="/learn/cup-and-handle" element={<CupAndHandle />} />
+          <Route path="/learn/rectangle-pattern" element={<RectanglePattern />} />
           <Route path="/learn/support-resistance" element={<SupportResistance />} />
           <Route path="/learn/trend-analysis" element={<TrendAnalysis />} />
           <Route path="/learn/volume-analysis" element={<VolumeAnalysis />} />
+          <Route path="/learn/moving-averages" element={<MovingAverages />} />
+          <Route path="/learn/rsi-indicator" element={<RSIIndicator />} />
+          <Route path="/learn/macd-indicator" element={<MACDIndicator />} />
+          <Route path="/learn/fibonacci-retracements" element={<FibonacciRetracements />} />
           <Route path="/learn/candlestick-patterns" element={<CandlestickPatterns />} />
+          <Route path="/learn/price-action-basics" element={<PriceActionBasics />} />
           <Route path="/learn/risk-management" element={<RiskManagement />} />
           <Route path="/learn/trading-psychology" element={<TradingPsychology />} />
           <Route path="/markets/stocks" element={<StockMarket />} />

@@ -28,6 +28,38 @@ const blogPosts = [
     readTime: "10 min read"
   },
   {
+    id: "wedge-patterns",
+    title: "Rising and Falling Wedge Patterns",
+    description: "Identify and trade wedge patterns with proper entry timing, target calculation, and risk management.",
+    category: "Chart Patterns",
+    icon: TrendingUp,
+    readTime: "8 min read"
+  },
+  {
+    id: "flag-pennant",
+    title: "Flags and Pennants: Continuation Pattern Mastery",
+    description: "Learn to spot and trade flag and pennant patterns for high-probability trend continuation trades.",
+    category: "Chart Patterns",
+    icon: BarChart3,
+    readTime: "7 min read"
+  },
+  {
+    id: "cup-and-handle",
+    title: "Cup and Handle Pattern: Growth Stock Strategy",
+    description: "Detailed analysis of the cup and handle pattern including formation criteria and breakout trading.",
+    category: "Chart Patterns",
+    icon: TrendingUp,
+    readTime: "9 min read"
+  },
+  {
+    id: "rectangle-pattern",
+    title: "Rectangle Pattern: Trading Range Breakouts",
+    description: "Master rectangle consolidation patterns and learn to trade powerful breakouts with high accuracy.",
+    category: "Chart Patterns",
+    icon: BarChart3,
+    readTime: "8 min read"
+  },
+  {
     id: "support-resistance",
     title: "Support and Resistance: The Foundation of Technical Analysis",
     description: "Deep dive into identifying key support and resistance levels, psychological levels, and horizontal zones.",
@@ -52,12 +84,68 @@ const blogPosts = [
     readTime: "8 min read"
   },
   {
+    id: "moving-averages",
+    title: "Moving Averages: Dynamic Support and Resistance",
+    description: "Complete guide to Simple, Exponential, and Weighted Moving Averages for trend identification and trading signals.",
+    category: "Technical Analysis",
+    icon: TrendingUp,
+    readTime: "10 min read"
+  },
+  {
+    id: "rsi-indicator",
+    title: "RSI Indicator: Identifying Overbought and Oversold Conditions",
+    description: "Master the Relative Strength Index for momentum trading, divergences, and reversal signals.",
+    category: "Technical Analysis",
+    icon: BarChart3,
+    readTime: "9 min read"
+  },
+  {
+    id: "macd-indicator",
+    title: "MACD Indicator: Trend Following and Momentum",
+    description: "Learn to use the Moving Average Convergence Divergence indicator for entries, exits, and trend confirmation.",
+    category: "Technical Analysis",
+    icon: TrendingUp,
+    readTime: "10 min read"
+  },
+  {
+    id: "fibonacci-retracements",
+    title: "Fibonacci Retracements: Finding Key Support and Resistance",
+    description: "Use Fibonacci ratios to identify optimal entry points, profit targets, and reversal zones.",
+    category: "Technical Analysis",
+    icon: Target,
+    readTime: "11 min read"
+  },
+  {
     id: "candlestick-patterns",
     title: "Japanese Candlestick Patterns Guide",
     description: "Complete guide to bullish and bearish candlestick patterns including doji, hammer, engulfing, and more.",
     category: "Price Action",
     icon: BarChart3,
     readTime: "15 min read"
+  },
+  {
+    id: "price-action-basics",
+    title: "Price Action Trading: Reading Raw Market Dynamics",
+    description: "Master pure price action trading without indicators - read market structure, swings, and momentum.",
+    category: "Price Action",
+    icon: TrendingUp,
+    readTime: "12 min read"
+  },
+  {
+    id: "breakout-trading",
+    title: "Breakout Trading Strategy: Capturing Strong Moves",
+    description: "Learn to identify, confirm, and trade breakouts from consolidation patterns with precision.",
+    category: "Price Action",
+    icon: Target,
+    readTime: "10 min read"
+  },
+  {
+    id: "pin-bar-strategy",
+    title: "Pin Bar Strategy: High-Probability Reversal Setups",
+    description: "Trade pin bars (hammer/shooting star) at key levels for excellent risk-reward opportunities.",
+    category: "Price Action",
+    icon: BarChart3,
+    readTime: "9 min read"
   },
   {
     id: "risk-management",
@@ -68,6 +156,22 @@ const blogPosts = [
     readTime: "10 min read"
   },
   {
+    id: "position-sizing",
+    title: "Position Sizing: The Key to Long-Term Survival",
+    description: "Calculate optimal position sizes based on account risk, volatility, and market conditions.",
+    category: "Risk Management",
+    icon: Target,
+    readTime: "9 min read"
+  },
+  {
+    id: "money-management",
+    title: "Money Management: Building and Protecting Capital",
+    description: "Advanced capital allocation strategies, portfolio management, and drawdown recovery techniques.",
+    category: "Risk Management",
+    icon: Shield,
+    readTime: "11 min read"
+  },
+  {
     id: "trading-psychology",
     title: "Trading Psychology: Mastering Your Mindset",
     description: "Overcome emotional trading, develop discipline, and build a winning trader's mindset.",
@@ -76,28 +180,28 @@ const blogPosts = [
     readTime: "11 min read"
   },
   {
-    id: "wedge-patterns",
-    title: "Rising and Falling Wedge Patterns",
-    description: "Identify and trade wedge patterns with proper entry timing, target calculation, and risk management.",
-    category: "Chart Patterns",
-    icon: TrendingUp,
-    readTime: "8 min read"
+    id: "trading-discipline",
+    title: "Trading Discipline: Following Your Plan Consistently",
+    description: "Build unshakeable discipline to follow your trading rules even during drawdowns and winning streaks.",
+    category: "Psychology",
+    icon: Target,
+    readTime: "10 min read"
   },
   {
-    id: "flag-pennant",
-    title: "Flags and Pennants: Continuation Pattern Mastery",
-    description: "Learn to spot and trade flag and pennant patterns for high-probability trend continuation trades.",
-    category: "Chart Patterns",
-    icon: BarChart3,
-    readTime: "7 min read"
-  },
-  {
-    id: "cup-and-handle",
-    title: "Cup and Handle Pattern: Growth Stock Strategy",
-    description: "Detailed analysis of the cup and handle pattern including formation criteria and breakout trading.",
-    category: "Chart Patterns",
-    icon: TrendingUp,
+    id: "fear-and-greed",
+    title: "Overcoming Fear and Greed: The Trader's Greatest Enemies",
+    description: "Understand and control the two emotions that destroy more traders than any technical mistake.",
+    category: "Psychology",
+    icon: Brain,
     readTime: "9 min read"
+  },
+  {
+    id: "trading-journal",
+    title: "Trading Journal: Your Path to Consistent Improvement",
+    description: "Learn how to maintain a comprehensive trading journal that accelerates your learning curve.",
+    category: "Psychology",
+    icon: BookOpen,
+    readTime: "8 min read"
   }
 ];
 
