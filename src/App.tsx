@@ -73,6 +73,13 @@ import RSIIndicator from "./pages/blog/RSIIndicator";
 import MACDIndicator from "./pages/blog/MACDIndicator";
 import FibonacciRetracements from "./pages/blog/FibonacciRetracements";
 import PriceActionBasics from "./pages/blog/PriceActionBasics";
+import BreakoutTrading from "./pages/blog/BreakoutTrading";
+import PinBarStrategy from "./pages/blog/PinBarStrategy";
+import PositionSizing from "./pages/blog/PositionSizing";
+import MoneyManagement from "./pages/blog/MoneyManagement";
+import TradingDiscipline from "./pages/blog/TradingDiscipline";
+import FearAndGreed from "./pages/blog/FearAndGreed";
+import TradingJournal from "./pages/blog/TradingJournal";
 
 const queryClient = new QueryClient();
 
@@ -112,8 +119,15 @@ const App = () => (
           <Route path="/learn/fibonacci-retracements" element={<FibonacciRetracements />} />
           <Route path="/learn/candlestick-patterns" element={<CandlestickPatterns />} />
           <Route path="/learn/price-action-basics" element={<PriceActionBasics />} />
+          <Route path="/learn/breakout-trading" element={<BreakoutTrading />} />
+          <Route path="/learn/pin-bar-strategy" element={<PinBarStrategy />} />
           <Route path="/learn/risk-management" element={<RiskManagement />} />
+          <Route path="/learn/position-sizing" element={<PositionSizing />} />
+          <Route path="/learn/money-management" element={<MoneyManagement />} />
           <Route path="/learn/trading-psychology" element={<TradingPsychology />} />
+          <Route path="/learn/trading-discipline" element={<TradingDiscipline />} />
+          <Route path="/learn/fear-and-greed" element={<FearAndGreed />} />
+          <Route path="/learn/trading-journal" element={<TradingJournal />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
           <Route path="/markets/stocks/sectors" element={<StockSectors />} />
