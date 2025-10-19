@@ -458,11 +458,6 @@ const TradingDiscipline = () => {
                     Practice With Demo
                   </button>
                 </Link>
-                <Link to="/members/dashboard">
-                  <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                    Track Discipline Score
-                  </button>
-                </Link>
               </div>
             </CardContent>
           </Card>
