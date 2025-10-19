@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingDown, AlertTriangle, Target, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import headShouldersPattern from "@/assets/head-shoulders-pattern.png";
+import inverseHeadShouldersPattern from "@/assets/inverse-head-shoulders-pattern.png";
 
 const HeadAndShoulders = () => {
   return (
@@ -35,6 +37,16 @@ const HeadAndShoulders = () => {
 
           {/* Pattern Structure */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Pattern Structure</h2>
+          
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img 
+              src={headShouldersPattern} 
+              alt="Head and Shoulders Pattern Chart" 
+              className="w-full h-auto"
+            />
+          </div>
+
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Head and Shoulders pattern consists of three distinct peaks:
           </p>
@@ -151,6 +163,16 @@ const HeadAndShoulders = () => {
 
           {/* Inverse Pattern */}
           <h2 className="text-2xl font-bold mt-12 mb-4">Inverse Head and Shoulders</h2>
+          
+          {/* Inverse Pattern Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img 
+              src={inverseHeadShouldersPattern} 
+              alt="Inverse Head and Shoulders Pattern Chart" 
+              className="w-full h-auto"
+            />
+          </div>
+
           <p className="text-muted-foreground leading-relaxed mb-6">
             The Inverse Head and Shoulders is the bullish counterpart, appearing at the end of a downtrend. 
             All the same principles apply, but in reverse:
