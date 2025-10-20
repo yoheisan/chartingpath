@@ -522,7 +522,6 @@ const PaperTrading = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 };

@@ -458,7 +458,6 @@ if shortCondition
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Preview Dialog */}
       <Dialog open={!!previewScript} onOpenChange={() => setPreviewScript(null)}>
