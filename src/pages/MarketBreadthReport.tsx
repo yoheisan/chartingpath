@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, TrendingUp, Mail, Clock, Calendar } from "lucide-react";
+import { Loader2, TrendingUp, Mail, Clock, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -235,13 +235,27 @@ const MarketBreadthReport = () => {
           {/* Market Report Display */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Today's Market Analysis
-              </CardTitle>
-              <CardDescription>
-                Comprehensive market breadth report for all markets based on your selected timezone
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Today's Market Analysis
+                  </CardTitle>
+                  <CardDescription>
+                    Comprehensive market breadth report for all markets based on your selected timezone
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleGenerateInstant()}
+                  disabled={isGenerating}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                  Update
+                </Button>
+              </div>
               
               {/* Timezone Selector for Report */}
               <div className="pt-4">
