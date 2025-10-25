@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.unsubscribe-market-report]
 verify_jwt = false
+
+[functions.send-sample-market-report]
+verify_jwt = false
