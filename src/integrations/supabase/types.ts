@@ -787,6 +787,7 @@ export type Database = {
           time_span: string
           timezone: string
           tone: string
+          unsubscribe_token: string | null
           updated_at: string
           user_id: string
         }
@@ -801,6 +802,7 @@ export type Database = {
           time_span?: string
           timezone?: string
           tone?: string
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id: string
         }
@@ -815,6 +817,7 @@ export type Database = {
           time_span?: string
           timezone?: string
           tone?: string
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id?: string
         }

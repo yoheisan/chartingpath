@@ -32,6 +32,7 @@ serve(async (req) => {
 
     console.log("Saving subscription for user:", user.id);
 
+    // Ensure is_active is set to true when saving (reactivate if resubscribing)
     const { error } = await supabase
       .from("market_report_subscriptions")
       .upsert({
@@ -43,7 +44,7 @@ serve(async (req) => {
         send_time: subscription.send_time + ":00",
         tone: subscription.tone,
         time_span: subscription.time_span,
-        is_active: subscription.is_active,
+        is_active: subscription.is_active !== false, // Default to true if not explicitly false
       }, {
         onConflict: "user_id"
       });

@@ -403,6 +403,11 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
           .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
           .replace(/- (.*)/g, '<li style="margin-left: 20px;">$1</li>');
 
+        // Generate unsubscribe and preferences URLs
+        const baseUrl = supabaseUrl.replace('/rest/v1', '');
+        const unsubscribeUrl = `${baseUrl}/functions/v1/unsubscribe-market-report?token=${sub.unsubscribe_token}`;
+        const preferencesUrl = `${baseUrl.replace('https://dgznlsckoamseqcpzfqm.supabase.co', 'https://your-domain.com')}/tools/market-breadth`;
+
         const emailHtml = `
           <!DOCTYPE html>
           <html>
@@ -412,32 +417,82 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
               <title>Market Breadth Report</title>
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px 20px;">
-                <div style="text-align: center; margin-bottom: 32px;">
-                  <h1 style="color: #1a1a1a; font-size: 28px; margin: 0 0 8px 0;">Market Breadth Report</h1>
-                  <p style="color: #666; font-size: 14px; margin: 0;">Generated on ${new Date().toLocaleString('en-US', { timeZone: sub.timezone })}</p>
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <!-- Brand Header -->
+                <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 20px; text-align: center;">
+                  <div style="background-color: rgba(255, 255, 255, 0.15); width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                  </div>
+                  <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px 0; font-weight: 700;">Market Breadth Report</h1>
+                  <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; margin: 0;">Professional Market Analysis & Insights</p>
                 </div>
 
-                <div style="background-color: #f9f9f9; border-left: 4px solid #4f46e5; padding: 16px; margin-bottom: 24px;">
-                  <p style="margin: 0; font-size: 14px; color: #333;">
-                    <strong>Markets:</strong> ${marketListUpper}<br>
-                    <strong>Time Span:</strong> ${timeSpanLabel}<br>
-                    <strong>Timezone:</strong> ${sub.timezone}<br>
-                    <strong>Tone:</strong> ${sub.tone.charAt(0).toUpperCase() + sub.tone.slice(1)}
-                  </p>
+                <div style="padding: 40px 20px;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <p style="color: #666; font-size: 14px; margin: 0;">Generated on ${new Date().toLocaleString('en-US', { timeZone: sub.timezone })}</p>
+                  </div>
+
+                  <!-- Report Settings Summary -->
+                  <div style="background: linear-gradient(135deg, #f9f9f9 0%, #f3f4f6 100%); border-left: 4px solid #4f46e5; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 14px; color: #333; line-height: 1.8;">
+                      <strong style="color: #4f46e5;">📊 Markets:</strong> ${marketListUpper}<br>
+                      <strong style="color: #4f46e5;">📅 Time Span:</strong> ${timeSpanLabel}<br>
+                      <strong style="color: #4f46e5;">🌍 Timezone:</strong> ${sub.timezone}<br>
+                      <strong style="color: #4f46e5;">📝 Tone:</strong> ${sub.tone.charAt(0).toUpperCase() + sub.tone.slice(1)}
+                    </p>
+                  </div>
+
+                  <!-- Report Content -->
+                  <div style="color: #333; font-size: 14px; line-height: 1.8;">
+                    <p style="margin: 12px 0;">${htmlReport}</p>
+                  </div>
+
+                  <!-- Disclaimer -->
+                  <div style="margin-top: 40px; padding: 20px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                    <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6;">
+                      <strong>⚠️ Disclaimer:</strong> This report is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or an offer to buy or sell securities. Always consult with a qualified financial advisor before making investment decisions.
+                    </p>
+                  </div>
+
+                  <!-- Preferences CTA -->
+                  <div style="margin-top: 32px; text-align: center; padding: 24px; background-color: #f9fafb; border-radius: 8px;">
+                    <p style="color: #374151; font-size: 14px; margin: 0 0 16px 0;">Want to customize your report settings?</p>
+                    <a href="${preferencesUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">Manage Preferences</a>
+                  </div>
                 </div>
 
-                <div style="color: #333; font-size: 14px; line-height: 1.6;">
-                  <p style="margin: 12px 0;">${htmlReport}</p>
-                </div>
+                <!-- Footer -->
+                <div style="background-color: #f9fafb; padding: 32px 20px; border-top: 1px solid #e5e7eb;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">Market Analysis Platform</p>
+                    <p style="color: #6b7280; font-size: 14px; margin: 0;">Your trusted source for market intelligence</p>
+                  </div>
 
-                <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0; text-align: center;">
-                  <p style="color: #888; font-size: 12px; margin: 0;">
-                    This report is for informational purposes only and should not be considered financial advice.
-                  </p>
-                  <p style="color: #888; font-size: 12px; margin: 8px 0 0 0;">
-                    Generated by Market Analysis Tool
-                  </p>
+                  <!-- Footer Links -->
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <a href="${preferencesUrl}" style="color: #4f46e5; text-decoration: none; font-size: 13px; margin: 0 12px;">Preferences</a>
+                    <span style="color: #d1d5db;">|</span>
+                    <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Unsubscribe</a>
+                    <span style="color: #d1d5db;">|</span>
+                    <a href="https://your-domain.com/privacy" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy Policy</a>
+                  </div>
+
+                  <!-- Legal Footer -->
+                  <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
+                      You are receiving this email because you subscribed to Market Breadth Reports at ${sub.email}
+                    </p>
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
+                      Market Analysis Platform<br>
+                      123 Financial District, Suite 456<br>
+                      New York, NY 10004, United States
+                    </p>
+                    <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                      © ${new Date().getFullYear()} Market Analysis Platform. All rights reserved.
+                    </p>
+                  </div>
                 </div>
               </div>
             </body>
@@ -445,10 +500,14 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
         `;
 
         await resend.emails.send({
-          from: "Market Analysis <onboarding@resend.dev>",
+          from: "Market Analysis <noreply@your-domain.com>",
           to: [sub.email],
-          subject: `Market Breadth Report - ${timeSpanLabel} (${new Date().toLocaleDateString()})`,
+          subject: `📊 Market Breadth Report - ${timeSpanLabel} (${new Date().toLocaleDateString()})`,
           html: emailHtml,
+          headers: {
+            'List-Unsubscribe': `<${unsubscribeUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
         });
 
         console.log(`Report sent successfully to ${sub.email}`);

@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.send-starter-scripts]
 verify_jwt = false
+
+[functions.unsubscribe-market-report]
+verify_jwt = false
