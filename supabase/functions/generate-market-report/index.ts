@@ -66,23 +66,43 @@ serve(async (req) => {
         marketData.news = [];
       }
 
-      // Fetch geopolitical news from NewsAPI
+      // Fetch geopolitical news from NewsAPI with region-specific focus
       try {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const fromDate = yesterday.toISOString().split('T')[0];
 
+        // Determine region from timezone
+        const getRegionKeywords = (tz: string): string => {
+          if (tz.startsWith('America/')) {
+            return '(United States OR US OR Federal Reserve OR Fed OR Congress OR White House OR Trump OR Biden OR Washington)';
+          } else if (tz.startsWith('Europe/')) {
+            return '(European Union OR EU OR ECB OR Brexit OR UK OR Germany OR France OR Brussels)';
+          } else if (tz.startsWith('Asia/')) {
+            if (tz.includes('Tokyo')) return '(Japan OR BOJ OR Tokyo OR yen)';
+            if (tz.includes('Shanghai') || tz.includes('Hong_Kong')) return '(China OR PBOC OR Beijing OR yuan OR Hong Kong)';
+            if (tz.includes('Singapore')) return '(Singapore OR Southeast Asia OR ASEAN)';
+            return '(Asia OR China OR Japan OR India)';
+          } else if (tz.startsWith('Australia/')) {
+            return '(Australia OR RBA OR Sydney OR AUD)';
+          }
+          return '(G7 OR G20 OR global)'; // Default fallback
+        };
+
+        const regionKeywords = getRegionKeywords(timezone);
+
+        // Fetch region-specific news
         const newsApiResponse = await fetch(
           `https://newsapi.org/v2/everything?` +
-          `q=(government OR political OR geopolitical OR trade OR sanctions OR election OR policy) AND (market OR economy OR financial)&` +
+          `q=${regionKeywords} AND (government OR political OR geopolitical OR trade OR sanctions OR election OR policy OR central bank) AND (market OR economy OR financial OR stocks OR bonds)&` +
           `from=${fromDate}&` +
           `sortBy=relevancy&` +
           `language=en&` +
-          `pageSize=10&` +
+          `pageSize=15&` +
           `apiKey=${NEWS_API_KEY}`
         );
         const geopoliticalNews = await newsApiResponse.json();
-        console.log(`NewsAPI geopolitical data:`, JSON.stringify(geopoliticalNews).substring(0, 200));
+        console.log(`NewsAPI region-specific (${timezone}) data:`, JSON.stringify(geopoliticalNews).substring(0, 200));
         
         if (geopoliticalNews.status === 'ok' && geopoliticalNews.articles) {
           marketData.geopoliticalNews = geopoliticalNews.articles;
