@@ -17,7 +17,7 @@ export type Database = {
       admin_sessions: {
         Row: {
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean | null
           login_time: string
           logout_time: string | null
@@ -26,7 +26,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           login_time?: string
           logout_time?: string | null
@@ -35,7 +35,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           login_time?: string
           logout_time?: string | null
@@ -1640,10 +1640,7 @@ export type Database = {
         Args: { p_subscription_id: string; p_user_id: string }
         Returns: Json
       }
-      get_backtester_v2_usage: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
+      get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
       get_translations: {
         Args: { p_language_code?: string }
         Returns: {
@@ -1651,10 +1648,7 @@ export type Database = {
           value: string
         }[]
       }
-      get_user_language: {
-        Args: { p_user_id?: string }
-        Returns: string
-      }
+      get_user_language: { Args: { p_user_id?: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1666,14 +1660,8 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
-      is_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      make_first_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      make_first_user_admin: { Args: never; Returns: undefined }
       process_plan_change: {
         Args: {
           p_billing_cycle?: string
