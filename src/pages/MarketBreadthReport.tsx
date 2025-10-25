@@ -56,6 +56,16 @@ const MarketBreadthReport = () => {
     }
   }, [reportTimezone]);
 
+  // Auto-regenerate report every 15 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing market report...');
+      handleGenerateInstant();
+    }, 15 * 60 * 1000); // 15 minutes in milliseconds
+
+    return () => clearInterval(interval);
+  }, [reportTimezone]);
+
   const loadSubscription = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
