@@ -17,6 +17,7 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
+    const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -24,6 +25,10 @@ serve(async (req) => {
     
     if (!FINNHUB_API_KEY) {
       throw new Error("FINNHUB_API_KEY is not configured");
+    }
+
+    if (!NEWS_API_KEY) {
+      throw new Error("NEWS_API_KEY is not configured");
     }
 
     // Fetch real-time market data from Finnhub
@@ -50,15 +55,43 @@ serve(async (req) => {
       });
       marketData.stocks = await Promise.all(stockPromises);
       
-      // Fetch market news
+      // Fetch market news from Finnhub
       try {
         const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
         const newsData = await newsResponse.json();
-        console.log(`News data:`, JSON.stringify(newsData).substring(0, 200));
+        console.log(`Finnhub news data:`, JSON.stringify(newsData).substring(0, 200));
         marketData.news = newsData;
       } catch (error) {
-        console.error('Error fetching news:', error);
+        console.error('Error fetching Finnhub news:', error);
         marketData.news = [];
+      }
+
+      // Fetch geopolitical news from NewsAPI
+      try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const fromDate = yesterday.toISOString().split('T')[0];
+
+        const newsApiResponse = await fetch(
+          `https://newsapi.org/v2/everything?` +
+          `q=(government OR political OR geopolitical OR trade OR sanctions OR election OR policy) AND (market OR economy OR financial)&` +
+          `from=${fromDate}&` +
+          `sortBy=relevancy&` +
+          `language=en&` +
+          `pageSize=10&` +
+          `apiKey=${NEWS_API_KEY}`
+        );
+        const geopoliticalNews = await newsApiResponse.json();
+        console.log(`NewsAPI geopolitical data:`, JSON.stringify(geopoliticalNews).substring(0, 200));
+        
+        if (geopoliticalNews.status === 'ok' && geopoliticalNews.articles) {
+          marketData.geopoliticalNews = geopoliticalNews.articles;
+        } else {
+          marketData.geopoliticalNews = [];
+        }
+      } catch (error) {
+        console.error('Error fetching geopolitical news:', error);
+        marketData.geopoliticalNews = [];
       }
     }
 
@@ -212,6 +245,15 @@ serve(async (req) => {
         });
         marketDataSummary += "\n";
       }
+
+      if (marketData.geopoliticalNews && marketData.geopoliticalNews.length > 0) {
+        marketDataSummary += "**Geopolitical & Policy Developments:**\n";
+        marketData.geopoliticalNews.slice(0, 5).forEach((article: any) => {
+          const sourceName = article.source?.name || 'Unknown';
+          marketDataSummary += `- ${article.title} (${sourceName})\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
     
     if (marketData.forex) {
@@ -307,7 +349,11 @@ STRUCTURE (use ## for main sections, ### for subsections):
 3. **Foreign Exchange** - Currency pair movements from the provided data${isWeekend ? ' (Friday close and weekly trends)' : ''}
 4. **Cryptocurrencies** - Bitcoin/Ethereum performance from provided data (${isWeekend ? '24/7 trading continues' : 'current session'})
 5. **Commodities** - Energy, metals from provided data${isWeekend ? ' (Friday close and weekly performance)' : ''}
-6. **Market Drivers** - Analyze the news headlines provided${isWeekend ? ' from the week' : ''}
+6. **Market Drivers** - Analyze the news headlines and geopolitical developments provided${isWeekend ? ' from the week' : ''}
+   - Present geopolitical events factually without subjective judgment
+   - Focus on reported facts: what officials announced, what policies were enacted, what events occurred
+   - Avoid speculative or opinion-based commentary on political events
+   - Connect geopolitical developments to market movements using factual data
 7. **Cross-Asset Correlations** - How different markets influenced each other based on the data
 8. **Outlook** - What traders should watch for ${isWeekend ? 'when markets reopen Monday' : 'next session'}
 
