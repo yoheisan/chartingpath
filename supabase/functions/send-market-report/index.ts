@@ -77,7 +77,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Market Analysis <onboarding@resend.dev>",
+      from: "ChartingPath Market Reports <reports@chartingpath.com>",
       to: [email],
       subject: `Market Breadth Report - ${timeSpanText} (${new Date().toLocaleDateString()})`,
       html: emailHtml,

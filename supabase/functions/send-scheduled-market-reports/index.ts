@@ -406,7 +406,7 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
         // Generate unsubscribe and preferences URLs
         const baseUrl = supabaseUrl.replace('/rest/v1', '');
         const unsubscribeUrl = `${baseUrl}/functions/v1/unsubscribe-market-report?token=${sub.unsubscribe_token}`;
-        const preferencesUrl = `${baseUrl.replace('https://dgznlsckoamseqcpzfqm.supabase.co', 'https://your-domain.com')}/tools/market-breadth`;
+        const preferencesUrl = `https://chartingpath.com/tools/market-breadth`;
 
         const emailHtml = `
           <!DOCTYPE html>
@@ -500,7 +500,7 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
         `;
 
         await resend.emails.send({
-          from: "Market Analysis <noreply@your-domain.com>",
+          from: "ChartingPath Market Reports <reports@chartingpath.com>",
           to: [sub.email],
           subject: `📊 Market Breadth Report - ${timeSpanLabel} (${new Date().toLocaleDateString()})`,
           html: emailHtml,

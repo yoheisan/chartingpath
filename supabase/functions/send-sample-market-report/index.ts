@@ -303,7 +303,7 @@ Provide a thorough analysis with actionable insights for traders.`;
     `;
 
     await resend.emails.send({
-      from: "Market Analysis <onboarding@resend.dev>",
+      from: "ChartingPath Market Reports <reports@chartingpath.com>",
       to: [email],
       subject: `📊 Sample Market Breadth Report - ${new Date().toLocaleDateString()}`,
       html: emailHtml,

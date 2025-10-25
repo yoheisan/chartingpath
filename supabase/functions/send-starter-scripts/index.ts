@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending starter scripts to:", email);
 
     const emailResponse = await resend.emails.send({
-      from: "ChartingPath <onboarding@resend.dev>",
+      from: "ChartingPath <onboarding@chartingpath.com>",
       to: [email],
       subject: "Your Free Trading Starter Scripts - Now Available!",
       html: `
