@@ -68,17 +68,27 @@ serve(async (req) => {
       ? events.filter(e => impact_levels.includes(e.impact_level))
       : events;
 
-    // Upsert events into database
-    for (const event of filteredEvents) {
-      const { error } = await supabase
+    // Delete old events and insert new ones
+    const { error: deleteError } = await supabase
+      .from("economic_events")
+      .delete()
+      .gte("scheduled_time", new Date(start_date).toISOString())
+      .lte("scheduled_time", new Date(end_date).toISOString());
+    
+    if (deleteError) {
+      console.error("Error deleting old events:", deleteError);
+    }
+    
+    // Insert events into database
+    if (filteredEvents.length > 0) {
+      const { error: insertError } = await supabase
         .from("economic_events")
-        .upsert(event, {
-          onConflict: "event_name,scheduled_time",
-          ignoreDuplicates: false
-        });
+        .insert(filteredEvents);
       
-      if (error) {
-        console.error("Error upserting event:", error);
+      if (insertError) {
+        console.error("Error inserting events:", insertError);
+      } else {
+        console.log(`Successfully inserted ${filteredEvents.length} events`);
       }
     }
 
