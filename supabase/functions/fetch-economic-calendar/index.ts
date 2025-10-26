@@ -27,10 +27,10 @@ serve(async (req) => {
   try {
     const { start_date, end_date, regions, impact_levels } = await req.json();
     
-    const TRADING_ECONOMICS_API_KEY = Deno.env.get("TRADING_ECONOMICS_API_KEY");
+    const ALPHA_VANTAGE_API_KEY = Deno.env.get("ALPHA_VANTAGE_API_KEY");
     
-    if (!TRADING_ECONOMICS_API_KEY) {
-      throw new Error("TRADING_ECONOMICS_API_KEY not configured");
+    if (!ALPHA_VANTAGE_API_KEY) {
+      throw new Error("ALPHA_VANTAGE_API_KEY not configured");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -42,20 +42,36 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch from Trading Economics API
-    // Format: https://api.tradingeconomics.com/calendar/country/{countries}/startdate/enddate
-    const countries = regions?.join(',') || 'united states,euro area,united kingdom,japan,china';
-    const url = `https://api.tradingeconomics.com/calendar/country/${countries}/${start_date}/${end_date}?c=${TRADING_ECONOMICS_API_KEY}`;
+    // For demo/free tier: Use mock data or FRED API for US data
+    // Alpha Vantage has economic indicators but limited calendar functionality
+    // Here we'll create a hybrid approach: fetch key indicators and format as calendar events
     
-    console.log("Fetching economic calendar from:", url);
+    console.log("Fetching economic calendar data...");
     
-    const response = await fetch(url);
+    // Fetch key US indicators from Alpha Vantage
+    const indicators = ['CPI', 'RETAIL_SALES', 'UNEMPLOYMENT', 'NONFARM_PAYROLL'];
+    const data = [];
     
-    if (!response.ok) {
-      throw new Error(`Trading Economics API error: ${response.status}`);
+    for (const indicator of indicators) {
+      const url = `https://www.alphavantage.co/query?function=ECONOMIC_INDICATOR&name=${indicator}&interval=monthly&apikey=${ALPHA_VANTAGE_API_KEY}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data) {
+          // Transform to calendar event format
+          const latestData = result.data[0];
+          data.push({
+            Event: indicator.replace('_', ' '),
+            Country: 'United States',
+            Category: indicator,
+            Date: latestData.date,
+            Actual: latestData.value,
+            Importance: indicator === 'NONFARM_PAYROLL' ? 3 : 2
+          });
+        }
+      }
     }
-
-    const data = await response.json();
     
     // Transform and store events
     const events: EconomicEvent[] = data.map((item: any) => ({
