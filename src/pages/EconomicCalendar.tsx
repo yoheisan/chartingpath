@@ -129,13 +129,15 @@ const EconomicCalendar = () => {
     setLoading(true);
     try {
       const today = new Date();
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
       const nextWeek = new Date(today);
       nextWeek.setDate(today.getDate() + 7);
 
       const { data, error } = await supabase
         .from("economic_events")
         .select("*")
-        .gte("scheduled_time", today.toISOString())
+        .gte("scheduled_time", oneWeekAgo.toISOString())
         .lte("scheduled_time", nextWeek.toISOString())
         .order("scheduled_time", { ascending: true });
 
@@ -175,14 +177,17 @@ const EconomicCalendar = () => {
   const refreshCalendar = async () => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
+      const today = new Date();
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
+      const startDate = oneWeekAgo.toISOString().split('T')[0];
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
       const endDate = nextWeek.toISOString().split('T')[0];
 
       const { data, error } = await supabase.functions.invoke("fetch-economic-calendar", {
         body: {
-          start_date: today,
+          start_date: startDate,
           end_date: endDate,
           regions: preferences.regions,
           impact_levels: preferences.impact_levels,
@@ -266,7 +271,7 @@ const EconomicCalendar = () => {
                     Upcoming Events ({upcomingEvents.length})
                   </CardTitle>
                   <CardDescription>
-                    Events scheduled for the next 7 days
+                    Events scheduled for the next 7 days (updates in real-time)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -313,7 +318,7 @@ const EconomicCalendar = () => {
                   <CardHeader>
                     <CardTitle>Recent Releases ({releasedEvents.length})</CardTitle>
                     <CardDescription>
-                      Latest economic data releases with market impact analysis
+                      Economic data released in the past 7 days with market impact analysis
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
