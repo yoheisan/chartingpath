@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown, DollarSign, Globe, Zap, Fuel } from "lucide-react";
+import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown, DollarSign, Globe, Zap, Fuel, Calendar } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import {
@@ -64,6 +64,12 @@ const Navigation = () => {
                   <Link to="/tools/market-breadth" className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     {t('navigation.marketBreadth', 'Market Breadth Report')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/tools/economic-calendar" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Economic Calendar
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
