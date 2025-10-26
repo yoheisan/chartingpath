@@ -49,6 +49,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.fetch-economic-calendar]
+verify_jwt = false
 verify_jwt = true
 
 [functions.send-economic-alert]
