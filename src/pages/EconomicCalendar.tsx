@@ -11,8 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide-react";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 
 interface EconomicEvent {
   id: string;
@@ -227,12 +225,9 @@ const EconomicCalendar = () => {
   const releasedEvents = events.filter(e => e.released);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-secondary/20">
-      <Navigation />
-      
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Real-Time Economic Calendar
@@ -547,11 +542,8 @@ const EconomicCalendar = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 export default EconomicCalendar;
