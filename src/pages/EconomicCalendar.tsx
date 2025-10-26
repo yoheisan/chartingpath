@@ -74,6 +74,28 @@ const EconomicCalendar = () => {
   useEffect(() => {
     checkAuth();
     fetchEvents();
+
+    // Realtime subscription for instant updates (zero latency)
+    const channel = supabase
+      .channel('economic-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'economic_events'
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          // Refresh events on any database change
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const checkAuth = async () => {
