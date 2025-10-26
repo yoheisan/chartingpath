@@ -81,6 +81,7 @@ import MoneyManagement from "./pages/blog/MoneyManagement";
 import TradingDiscipline from "./pages/blog/TradingDiscipline";
 import FearAndGreed from "./pages/blog/FearAndGreed";
 import TradingJournal from "./pages/blog/TradingJournal";
+import EmailPreview from "./pages/EmailPreview";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,7 @@ const App = () => (
           <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
           <Route path="/tools/market-breadth" element={<MarketBreadthReport />} />
           <Route path="/tools/script-generator" element={<ScriptGenerator />} />
+          <Route path="/email-preview" element={<EmailPreview />} />
           <Route path="/chart-patterns/generator" element={<PatternGenerator />} />
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
