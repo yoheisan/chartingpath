@@ -47,3 +47,9 @@ verify_jwt = false
 
 [functions.send-sample-market-report]
 verify_jwt = false
+
+[functions.fetch-economic-calendar]
+verify_jwt = true
+
+[functions.send-economic-alert]
+verify_jwt = false

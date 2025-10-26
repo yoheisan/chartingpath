@@ -638,6 +638,140 @@ export type Database = {
         }
         Relationships: []
       }
+      economic_alerts: {
+        Row: {
+          delivery_method: string
+          event_id: string | null
+          id: string
+          sent_at: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          delivery_method: string
+          event_id?: string | null
+          id?: string
+          sent_at?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          delivery_method?: string
+          event_id?: string | null
+          id?: string
+          sent_at?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "economic_alerts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "economic_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      economic_calendar_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean | null
+          email_frequency: string | null
+          id: string
+          impact_levels: string[] | null
+          indicator_types: string[] | null
+          regions: string[] | null
+          telegram_chat_id: string | null
+          telegram_enabled: boolean | null
+          twitter_enabled: boolean | null
+          twitter_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          impact_levels?: string[] | null
+          indicator_types?: string[] | null
+          regions?: string[] | null
+          telegram_chat_id?: string | null
+          telegram_enabled?: boolean | null
+          twitter_enabled?: boolean | null
+          twitter_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          impact_levels?: string[] | null
+          indicator_types?: string[] | null
+          regions?: string[] | null
+          telegram_chat_id?: string | null
+          telegram_enabled?: boolean | null
+          twitter_enabled?: boolean | null
+          twitter_username?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      economic_events: {
+        Row: {
+          actual_value: string | null
+          country_code: string
+          created_at: string
+          event_name: string
+          forecast_value: string | null
+          id: string
+          impact_level: string
+          indicator_type: string
+          market_impact: string | null
+          previous_value: string | null
+          region: string
+          released: boolean | null
+          scheduled_time: string
+          updated_at: string
+        }
+        Insert: {
+          actual_value?: string | null
+          country_code: string
+          created_at?: string
+          event_name: string
+          forecast_value?: string | null
+          id?: string
+          impact_level: string
+          indicator_type: string
+          market_impact?: string | null
+          previous_value?: string | null
+          region: string
+          released?: boolean | null
+          scheduled_time: string
+          updated_at?: string
+        }
+        Update: {
+          actual_value?: string | null
+          country_code?: string
+          created_at?: string
+          event_name?: string
+          forecast_value?: string | null
+          id?: string
+          impact_level?: string
+          indicator_type?: string
+          market_impact?: string | null
+          previous_value?: string | null
+          region?: string
+          released?: boolean | null
+          scheduled_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       extracted_strings: {
         Row: {
           context_element: string | null
