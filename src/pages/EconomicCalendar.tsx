@@ -60,6 +60,7 @@ const EconomicCalendar = () => {
   const [events, setEvents] = useState<EconomicEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>({
     regions: ["US", "EU", "UK"],
     indicator_types: ["inflation", "employment", "gdp", "interest_rate"],
@@ -221,8 +222,42 @@ const EconomicCalendar = () => {
     });
   };
 
-  const upcomingEvents = events.filter(e => !e.released);
-  const releasedEvents = events.filter(e => e.released);
+  const getCountryFlag = (region: string) => {
+    const flags: Record<string, string> = {
+      US: "🇺🇸",
+      EU: "🇪🇺",
+      UK: "🇬🇧",
+      JP: "🇯🇵",
+      CN: "🇨🇳",
+      AU: "🇦🇺",
+      CA: "🇨🇦",
+    };
+    return flags[region] || "🌍";
+  };
+
+  const getCountryName = (region: string) => {
+    const names: Record<string, string> = {
+      US: "United States",
+      EU: "Eurozone",
+      UK: "United Kingdom",
+      JP: "Japan",
+      CN: "China",
+      AU: "Australia",
+      CA: "Canada",
+    };
+    return names[region] || region;
+  };
+
+  // Get unique countries from events
+  const availableCountries = Array.from(new Set(events.map(e => e.region)));
+
+  // Filter events by selected countries
+  const filteredByCountry = selectedCountries.length > 0
+    ? events.filter(e => selectedCountries.includes(e.region))
+    : events;
+
+  const upcomingEvents = filteredByCountry.filter(e => !e.released);
+  const releasedEvents = filteredByCountry.filter(e => e.released);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -238,11 +273,43 @@ const EconomicCalendar = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex gap-4 justify-center flex-wrap items-center">
             <Button onClick={refreshCalendar} disabled={loading}>
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh Calendar
             </Button>
+            
+            {/* Country Filter */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium">Filter by country:</Label>
+              <div className="flex gap-2 flex-wrap">
+                {REGIONS.map((region) => (
+                  <Button
+                    key={region.value}
+                    variant={selectedCountries.includes(region.value) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCountries(prev =>
+                        prev.includes(region.value)
+                          ? prev.filter(c => c !== region.value)
+                          : [...prev, region.value]
+                      );
+                    }}
+                  >
+                    {getCountryFlag(region.value)} {region.value}
+                  </Button>
+                ))}
+                {selectedCountries.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCountries([])}
+                  >
+                    Clear All
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           <Tabs defaultValue="calendar" className="w-full">
@@ -281,8 +348,11 @@ const EconomicCalendar = () => {
                           <div className="flex items-start justify-between">
                             <div className="space-y-1">
                               <h3 className="font-semibold">{event.event_name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {event.country_code} • {formatDateTime(event.scheduled_time)}
+                              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span className="text-xl">{getCountryFlag(event.region)}</span>
+                                <span>{getCountryName(event.region)}</span>
+                                <span>•</span>
+                                <span>{formatDateTime(event.scheduled_time)}</span>
                               </p>
                             </div>
                             {getImpactBadge(event.impact_level)}
@@ -323,8 +393,11 @@ const EconomicCalendar = () => {
                           <div className="flex items-start justify-between">
                             <div className="space-y-1">
                               <h3 className="font-semibold">{event.event_name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {event.country_code} • {formatDateTime(event.scheduled_time)}
+                              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span className="text-xl">{getCountryFlag(event.region)}</span>
+                                <span>{getCountryName(event.region)}</span>
+                                <span>•</span>
+                                <span>{formatDateTime(event.scheduled_time)}</span>
                               </p>
                             </div>
                             {getImpactBadge(event.impact_level)}
