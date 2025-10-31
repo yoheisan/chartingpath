@@ -315,11 +315,11 @@ const EconomicCalendar = () => {
   const thisWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) <= endOfWeek);
   const nextWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) > endOfWeek);
   
-  // Only show released events from the last 7 days, sorted by most recent first
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(now.getDate() - 7);
+  // Only show released events from the last 48 hours (2 days), sorted by most recent first
+  const twoDaysAgo = new Date(now);
+  twoDaysAgo.setDate(now.getDate() - 2);
   const releasedEvents = filteredEvents
-    .filter(e => e.released && new Date(e.scheduled_time) >= sevenDaysAgo)
+    .filter(e => e.released && new Date(e.scheduled_time) >= twoDaysAgo)
     .sort((a, b) => new Date(b.scheduled_time).getTime() - new Date(a.scheduled_time).getTime());
 
   // Group by day
