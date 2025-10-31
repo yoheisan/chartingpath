@@ -270,7 +270,18 @@ const EconomicCalendar = () => {
     ? events.filter(e => selectedCountries.includes(e.region))
     : events;
 
+  const now = new Date();
+  const endOfWeek = new Date(now);
+  endOfWeek.setDate(now.getDate() + (7 - now.getDay())); // End of current week (Sunday)
+  endOfWeek.setHours(23, 59, 59, 999);
+  
+  const startOfNextWeek = new Date(endOfWeek);
+  startOfNextWeek.setDate(endOfWeek.getDate() + 1);
+  startOfNextWeek.setHours(0, 0, 0, 0);
+
   const upcomingEvents = filteredByCountry.filter(e => !e.released);
+  const thisWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) <= endOfWeek);
+  const nextWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) > endOfWeek);
   const releasedEvents = filteredByCountry.filter(e => e.released);
 
   return (
@@ -356,7 +367,7 @@ const EconomicCalendar = () => {
             </TabsList>
 
             <TabsContent value="calendar" className="space-y-6 mt-6">
-              {/* Upcoming Events */}
+              {/* Upcoming Events with This Week / Next Week Tabs */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -370,55 +381,116 @@ const EconomicCalendar = () => {
                     </CardTitle>
                   </div>
                   <CardDescription>
-                    Events scheduled for the next 7 days • Updates instantly via WebSocket
+                    Events scheduled ahead • Updates instantly via WebSocket
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {upcomingEvents.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-8">
-                        No upcoming events. Click refresh to load latest data.
-                      </p>
-                    ) : (
-                      upcomingEvents.map((event) => (
-                        <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-start gap-3 flex-1">
-                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-                                <img 
-                                  src={getCountryFlag(event.region)} 
-                                  alt={`${getCountryName(event.region)} flag`}
-                                  className="w-full h-full object-cover"
-                                />
+                  <Tabs defaultValue="this-week" className="w-full">
+                    <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+                      <TabsTrigger value="this-week">
+                        This Week ({thisWeekEvents.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="next-week">
+                        Next Week ({nextWeekEvents.length})
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="this-week" className="mt-4">
+                      <div className="space-y-4">
+                        {thisWeekEvents.length === 0 ? (
+                          <p className="text-center text-muted-foreground py-8">
+                            No events scheduled for this week. Click refresh to load latest data.
+                          </p>
+                        ) : (
+                          thisWeekEvents.map((event) => (
+                            <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+                                    <img 
+                                      src={getCountryFlag(event.region)} 
+                                      alt={`${getCountryName(event.region)} flag`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="space-y-1 flex-1">
+                                    <h3 className="font-semibold">{event.event_name}</h3>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                      <span className="font-medium">{getCountryName(event.region)}</span>
+                                      <span>•</span>
+                                      <span>{formatDateTime(event.scheduled_time)}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                                {getImpactBadge(event.impact_level)}
                               </div>
-                              <div className="space-y-1 flex-1">
-                                <h3 className="font-semibold">{event.event_name}</h3>
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <span className="font-medium">{getCountryName(event.region)}</span>
-                                  <span>•</span>
-                                  <span>{formatDateTime(event.scheduled_time)}</span>
-                                </p>
-                              </div>
-                            </div>
-                            {getImpactBadge(event.impact_level)}
-                          </div>
-                          {event.forecast_value && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Forecast:</span>{" "}
-                              <span className="font-medium">{event.forecast_value}</span>
-                              {event.previous_value && (
-                                <>
-                                  {" | "}
-                                  <span className="text-muted-foreground">Previous:</span>{" "}
-                                  <span className="font-medium">{event.previous_value}</span>
-                                </>
+                              {event.forecast_value && (
+                                <div className="text-sm">
+                                  <span className="text-muted-foreground">Forecast:</span>{" "}
+                                  <span className="font-medium">{event.forecast_value}</span>
+                                  {event.previous_value && (
+                                    <>
+                                      {" | "}
+                                      <span className="text-muted-foreground">Previous:</span>{" "}
+                                      <span className="font-medium">{event.previous_value}</span>
+                                    </>
+                                  )}
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
+                          ))
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="next-week" className="mt-4">
+                      <div className="space-y-4">
+                        {nextWeekEvents.length === 0 ? (
+                          <p className="text-center text-muted-foreground py-8">
+                            No events scheduled for next week. Click refresh to load latest data.
+                          </p>
+                        ) : (
+                          nextWeekEvents.map((event) => (
+                            <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+                                    <img 
+                                      src={getCountryFlag(event.region)} 
+                                      alt={`${getCountryName(event.region)} flag`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="space-y-1 flex-1">
+                                    <h3 className="font-semibold">{event.event_name}</h3>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                      <span className="font-medium">{getCountryName(event.region)}</span>
+                                      <span>•</span>
+                                      <span>{formatDateTime(event.scheduled_time)}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                                {getImpactBadge(event.impact_level)}
+                              </div>
+                              {event.forecast_value && (
+                                <div className="text-sm">
+                                  <span className="text-muted-foreground">Forecast:</span>{" "}
+                                  <span className="font-medium">{event.forecast_value}</span>
+                                  {event.previous_value && (
+                                    <>
+                                      {" | "}
+                                      <span className="text-muted-foreground">Previous:</span>{" "}
+                                      <span className="font-medium">{event.previous_value}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
 

@@ -175,6 +175,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
   const events = [];
   const start = new Date(startDate);
   const end = new Date(endDate);
+  const now = new Date();
   
   // Define major economic indicators by region
   const economicIndicators = {
@@ -192,6 +193,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
       { name: 'Eurozone CPI', type: 'inflation', impact: 3, typical_day: 17 },
       { name: 'Eurozone GDP', type: 'gdp', impact: 3, typical_day: 30 },
       { name: 'German Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 23 },
+      { name: 'Eurozone Retail Sales', type: 'retail', impact: 2, typical_day: 5 },
     ],
     UK: [
       { name: 'Bank of England Rate Decision', type: 'interest_rate', impact: 3, typical_day: 21 },
@@ -237,46 +239,60 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
     SG: [
       { name: 'Singapore GDP', type: 'gdp', impact: 2, typical_day: 14 },
       { name: 'Singapore CPI', type: 'inflation', impact: 2, typical_day: 23 },
+      { name: 'Singapore Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 3 },
+      { name: 'Singapore Trade Balance', type: 'trade', impact: 2, typical_day: 17 },
     ],
   };
   
-  // For each region, generate events that fall within the date range
+  // Calculate date range in days
+  const daysBetween = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // For each region, generate events spread across the date range
   regions.forEach(region => {
     const indicators = economicIndicators[region as keyof typeof economicIndicators] || [];
     
     indicators.forEach((indicator, idx) => {
-      // Generate 1-2 events per indicator across the date range
-      const daysBetween = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      // For upcoming events (future dates), generate at least 1-2 events per indicator
+      // For past events, generate based on the range
       
-      // Place event somewhere in the range based on indicator index
-      const eventDate = new Date(start);
-      const daysOffset = Math.floor((idx / indicators.length) * daysBetween);
-      eventDate.setDate(start.getDate() + daysOffset);
+      // Calculate optimal spacing - try to spread events evenly
+      const eventsPerIndicator = Math.max(1, Math.floor(daysBetween / (indicators.length * 2)));
       
-      // Only generate if within range
-      if (eventDate >= start && eventDate <= end) {
-        const isPast = eventDate < new Date();
-        const event: any = {
-          Event: indicator.name,
-          Country: getCountryName(region),
-          Region: region, // Store the region code directly
-          Category: indicator.type,
-          Date: eventDate.toISOString().split('T')[0],
-          Importance: indicator.impact,
-        };
+      for (let i = 0; i < eventsPerIndicator; i++) {
+        const eventDate = new Date(start);
+        // Spread events across the date range based on indicator index and iteration
+        const offsetDays = Math.floor(((idx * eventsPerIndicator + i) / (indicators.length * eventsPerIndicator)) * daysBetween);
+        eventDate.setDate(start.getDate() + offsetDays);
         
-        // For past events, add actual values
-        if (isPast) {
-          event.Actual = generateRealisticValue(indicator.type);
-          event.Forecast = generateRealisticValue(indicator.type);
-          event.Previous = generateRealisticValue(indicator.type);
-        } else {
-          // For future events, add forecast
-          event.Forecast = generateRealisticValue(indicator.type);
-          event.Previous = generateRealisticValue(indicator.type);
+        // Add some randomization to avoid all events on same days (but keep within range)
+        const randomOffset = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1 day
+        eventDate.setDate(eventDate.getDate() + randomOffset);
+        
+        // Only generate if within range
+        if (eventDate >= start && eventDate <= end) {
+          const isPast = eventDate < now;
+          const event: any = {
+            Event: indicator.name,
+            Country: getCountryName(region),
+            Region: region, // Store the region code directly
+            Category: indicator.type,
+            Date: eventDate.toISOString().split('T')[0],
+            Importance: indicator.impact,
+          };
+          
+          // For past events, add actual values
+          if (isPast) {
+            event.Actual = generateRealisticValue(indicator.type);
+            event.Forecast = generateRealisticValue(indicator.type);
+            event.Previous = generateRealisticValue(indicator.type);
+          } else {
+            // For future events, add forecast
+            event.Forecast = generateRealisticValue(indicator.type);
+            event.Previous = generateRealisticValue(indicator.type);
+          }
+          
+          events.push(event);
         }
-        
-        events.push(event);
       }
     });
   });
