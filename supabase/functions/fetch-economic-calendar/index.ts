@@ -180,7 +180,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
   // Define major economic indicators by region
   const economicIndicators = {
     US: [
-      { name: 'Non-Farm Payrolls', type: 'employment', impact: 3, typical_day: 5 }, // First Friday
+      { name: 'Non-Farm Payrolls', type: 'employment', impact: 3, typical_day: 5 },
       { name: 'CPI (Consumer Price Index)', type: 'inflation', impact: 3, typical_day: 13 },
       { name: 'Federal Reserve Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 20 },
       { name: 'Retail Sales', type: 'retail', impact: 2, typical_day: 15 },
@@ -244,31 +244,30 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
     ],
   };
   
-  // Calculate date range in days
-  const daysBetween = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate total days in range
+  const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   
-  // For each region, generate events spread across the date range
+  // For each region, generate events distributed across the date range
   regions.forEach(region => {
     const indicators = economicIndicators[region as keyof typeof economicIndicators] || [];
     
+    if (indicators.length === 0) {
+      console.log(`No indicators defined for region: ${region}`);
+      return;
+    }
+    
+    // Generate at least 2 events per indicator across the range
     indicators.forEach((indicator, idx) => {
-      // For upcoming events (future dates), generate at least 1-2 events per indicator
-      // For past events, generate based on the range
+      // Calculate how many events to generate (at least 2 per indicator)
+      const numEvents = Math.max(2, Math.ceil(totalDays / 7)); // At least 2, or 1 per week
       
-      // Calculate optimal spacing - try to spread events evenly
-      const eventsPerIndicator = Math.max(1, Math.floor(daysBetween / (indicators.length * 2)));
-      
-      for (let i = 0; i < eventsPerIndicator; i++) {
+      for (let i = 0; i < numEvents; i++) {
+        // Distribute events evenly across the date range
         const eventDate = new Date(start);
-        // Spread events across the date range based on indicator index and iteration
-        const offsetDays = Math.floor(((idx * eventsPerIndicator + i) / (indicators.length * eventsPerIndicator)) * daysBetween);
-        eventDate.setDate(start.getDate() + offsetDays);
+        const dayOffset = Math.floor((totalDays / numEvents) * i) + (idx % 3); // Stagger by indicator
+        eventDate.setDate(start.getDate() + dayOffset);
         
-        // Add some randomization to avoid all events on same days (but keep within range)
-        const randomOffset = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1 day
-        eventDate.setDate(eventDate.getDate() + randomOffset);
-        
-        // Only generate if within range
+        // Ensure within range
         if (eventDate >= start && eventDate <= end) {
           const isPast = eventDate < now;
           const event: any = {
@@ -297,6 +296,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
     });
   });
   
+  console.log(`Generated ${events.length} events across ${regions.length} regions`);
   return events;
 }
 
