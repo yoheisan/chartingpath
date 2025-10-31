@@ -65,6 +65,7 @@ const EconomicCalendar = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedImportance, setSelectedImportance] = useState<string[]>(["high", "medium", "low"]);
   const [preferences, setPreferences] = useState<UserPreferences>({
     regions: ["US", "EU", "UK", "JP", "CN", "AU", "KR", "IN"],
     indicator_types: ["inflation", "employment", "gdp", "interest_rate"],
@@ -290,10 +291,16 @@ const EconomicCalendar = () => {
   // Get unique countries from events
   const availableCountries = Array.from(new Set(events.map(e => e.region)));
 
-  // Filter events by selected countries
-  const filteredByCountry = selectedCountries.length > 0
-    ? events.filter(e => selectedCountries.includes(e.region))
-    : events;
+  // Filter events by selected countries and importance
+  let filteredEvents = events;
+  
+  if (selectedCountries.length > 0) {
+    filteredEvents = filteredEvents.filter(e => selectedCountries.includes(e.region));
+  }
+  
+  if (selectedImportance.length > 0) {
+    filteredEvents = filteredEvents.filter(e => selectedImportance.includes(e.impact_level));
+  }
 
   const now = new Date();
   const endOfWeek = new Date(now);
@@ -304,10 +311,10 @@ const EconomicCalendar = () => {
   startOfNextWeek.setDate(endOfWeek.getDate() + 1);
   startOfNextWeek.setHours(0, 0, 0, 0);
 
-  const upcomingEvents = filteredByCountry.filter(e => !e.released);
+  const upcomingEvents = filteredEvents.filter(e => !e.released);
   const thisWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) <= endOfWeek);
   const nextWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) > endOfWeek);
-  const releasedEvents = filteredByCountry.filter(e => e.released);
+  const releasedEvents = filteredEvents.filter(e => e.released);
 
   // Group by day
   const thisWeekByDay = groupEventsByDay(thisWeekEvents);
@@ -380,6 +387,33 @@ const EconomicCalendar = () => {
                     Clear All
                   </Button>
                 )}
+              </div>
+            </div>
+
+            {/* Importance Filter */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium">Importance:</Label>
+              <div className="flex gap-2">
+                {[
+                  { value: "high", label: "High", variant: "destructive" },
+                  { value: "medium", label: "Medium", variant: "default" },
+                  { value: "low", label: "Low", variant: "secondary" }
+                ].map((importance) => (
+                  <Button
+                    key={importance.value}
+                    variant={selectedImportance.includes(importance.value) ? importance.variant as any : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedImportance(prev =>
+                        prev.includes(importance.value)
+                          ? prev.filter(i => i !== importance.value)
+                          : [...prev, importance.value]
+                      );
+                    }}
+                  >
+                    {importance.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>
