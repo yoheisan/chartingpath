@@ -278,11 +278,22 @@ const EconomicCalendar = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
           <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-primary/20 rounded-full blur animate-pulse"></div>
+                <Badge variant="destructive" className="relative px-4 py-1.5 text-sm font-bold animate-pulse">
+                  ⚡ LIVE
+                </Badge>
+              </div>
+              <Badge variant="secondary" className="px-4 py-1.5 text-sm font-semibold">
+                Faster than Investing.com & Forex Factory
+              </Badge>
+            </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Real-Time Economic Calendar
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get instant alerts for key economic indicators - faster than Investing.com or Forex Factory
+              Instant alerts for key economic indicators - Zero latency with real-time database updates
             </p>
           </div>
 
@@ -348,12 +359,18 @@ const EconomicCalendar = () => {
               {/* Upcoming Events */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    Upcoming Events ({upcomingEvents.length})
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      Upcoming Events ({upcomingEvents.length})
+                      <Badge variant="outline" className="ml-2 gap-1.5">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Real-time
+                      </Badge>
+                    </CardTitle>
+                  </div>
                   <CardDescription>
-                    Events scheduled for the next 7 days (updates in real-time)
+                    Events scheduled for the next 7 days • Updates instantly via WebSocket
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -409,7 +426,13 @@ const EconomicCalendar = () => {
               {releasedEvents.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Releases ({releasedEvents.length})</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Recent Releases ({releasedEvents.length})</CardTitle>
+                      <Badge variant="outline" className="gap-1.5">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Past 7 days
+                      </Badge>
+                    </div>
                     <CardDescription>
                       Economic data released in the past 7 days with market impact analysis
                     </CardDescription>
