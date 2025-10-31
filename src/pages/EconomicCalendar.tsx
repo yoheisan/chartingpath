@@ -229,19 +229,21 @@ const EconomicCalendar = () => {
   };
 
   const getCountryFlag = (region: string) => {
-    const flags: Record<string, string> = {
-      US: "🇺🇸",
-      EU: "🇪🇺",
-      UK: "🇬🇧",
-      JP: "🇯🇵",
-      CN: "🇨🇳",
-      AU: "🇦🇺",
-      CA: "🇨🇦",
-      KR: "🇰🇷",
-      IN: "🇮🇳",
-      SG: "🇸🇬",
+    // Map regions to ISO country codes for flag images
+    const countryCodeMap: Record<string, string> = {
+      US: "us",
+      EU: "eu",
+      UK: "gb",
+      JP: "jp",
+      CN: "cn",
+      AU: "au",
+      CA: "ca",
+      KR: "kr",
+      IN: "in",
+      SG: "sg",
     };
-    return flags[region] || "🌍";
+    const code = countryCodeMap[region] || "un";
+    return `https://flagcdn.com/w80/${code}.png`;
   };
 
   const getCountryName = (region: string) => {
@@ -307,8 +309,14 @@ const EconomicCalendar = () => {
                           : [...prev, region.value]
                       );
                     }}
+                    className="gap-2"
                   >
-                    {getCountryFlag(region.value)} {region.value}
+                    <img 
+                      src={getCountryFlag(region.value)} 
+                      alt={`${region.label} flag`}
+                      className="w-5 h-4 object-cover rounded"
+                    />
+                    {region.value}
                   </Button>
                 ))}
                 {selectedCountries.length > 0 && (
@@ -359,8 +367,12 @@ const EconomicCalendar = () => {
                         <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 flex-1">
-                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-lg">
-                                {getCountryFlag(event.region)}
+                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+                                <img 
+                                  src={getCountryFlag(event.region)} 
+                                  alt={`${getCountryName(event.region)} flag`}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
                               <div className="space-y-1 flex-1">
                                 <h3 className="font-semibold">{event.event_name}</h3>
@@ -408,8 +420,12 @@ const EconomicCalendar = () => {
                         <div key={event.id} className="border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 flex-1">
-                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-lg">
-                                {getCountryFlag(event.region)}
+                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+                                <img 
+                                  src={getCountryFlag(event.region)} 
+                                  alt={`${getCountryName(event.region)} flag`}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
                               <div className="space-y-1 flex-1">
                                 <h3 className="font-semibold">{event.event_name}</h3>
