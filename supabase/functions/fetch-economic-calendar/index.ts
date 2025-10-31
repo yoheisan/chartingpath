@@ -127,6 +127,9 @@ function mapCountryToRegion(country: string): string {
   if (countryUpper.includes("CHINA")) return "CN";
   if (countryUpper.includes("AUSTRALIA")) return "AU";
   if (countryUpper.includes("CANADA")) return "CA";
+  if (countryUpper.includes("KOREA") || countryUpper.includes("KR")) return "KR";
+  if (countryUpper.includes("INDIA") || countryUpper.includes("IN")) return "IN";
+  if (countryUpper.includes("SINGAPORE") || countryUpper.includes("SG")) return "SG";
   return "OTHER";
 }
 
@@ -200,11 +203,40 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
       { name: 'BoJ Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 19 },
       { name: 'Japan CPI', type: 'inflation', impact: 2, typical_day: 24 },
       { name: 'Japan GDP', type: 'gdp', impact: 3, typical_day: 15 },
+      { name: 'Tankan Business Survey', type: 'manufacturing', impact: 2, typical_day: 1 },
     ],
     CN: [
       { name: 'China GDP', type: 'gdp', impact: 3, typical_day: 18 },
       { name: 'China CPI', type: 'inflation', impact: 2, typical_day: 9 },
       { name: 'China Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 31 },
+      { name: 'China Trade Balance', type: 'trade', impact: 2, typical_day: 7 },
+    ],
+    AU: [
+      { name: 'RBA Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 5 },
+      { name: 'Australia CPI', type: 'inflation', impact: 3, typical_day: 25 },
+      { name: 'Australia Employment Change', type: 'employment', impact: 2, typical_day: 18 },
+      { name: 'Australia GDP', type: 'gdp', impact: 3, typical_day: 6 },
+    ],
+    CA: [
+      { name: 'BoC Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 24 },
+      { name: 'Canada CPI', type: 'inflation', impact: 3, typical_day: 19 },
+      { name: 'Canada Employment Change', type: 'employment', impact: 2, typical_day: 8 },
+    ],
+    KR: [
+      { name: 'BoK Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 22 },
+      { name: 'South Korea CPI', type: 'inflation', impact: 2, typical_day: 2 },
+      { name: 'South Korea GDP', type: 'gdp', impact: 3, typical_day: 25 },
+      { name: 'South Korea Trade Balance', type: 'trade', impact: 2, typical_day: 1 },
+    ],
+    IN: [
+      { name: 'RBI Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 8 },
+      { name: 'India CPI', type: 'inflation', impact: 3, typical_day: 12 },
+      { name: 'India GDP', type: 'gdp', impact: 3, typical_day: 31 },
+      { name: 'India Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 1 },
+    ],
+    SG: [
+      { name: 'Singapore GDP', type: 'gdp', impact: 2, typical_day: 14 },
+      { name: 'Singapore CPI', type: 'inflation', impact: 2, typical_day: 23 },
     ],
   };
   
@@ -260,6 +292,9 @@ function getCountryName(region: string): string {
     CN: 'China',
     AU: 'Australia',
     CA: 'Canada',
+    KR: 'South Korea',
+    IN: 'India',
+    SG: 'Singapore',
   };
   return names[region] || region;
 }

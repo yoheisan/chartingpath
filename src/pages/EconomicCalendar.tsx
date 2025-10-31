@@ -44,6 +44,9 @@ const REGIONS = [
   { value: "CN", label: "China" },
   { value: "AU", label: "Australia" },
   { value: "CA", label: "Canada" },
+  { value: "KR", label: "South Korea" },
+  { value: "IN", label: "India" },
+  { value: "SG", label: "Singapore" },
 ];
 
 const INDICATOR_TYPES = [
@@ -62,7 +65,7 @@ const EconomicCalendar = () => {
   const [user, setUser] = useState<any>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>({
-    regions: ["US", "EU", "UK"],
+    regions: ["US", "EU", "UK", "JP", "CN", "AU", "KR", "IN"],
     indicator_types: ["inflation", "employment", "gdp", "interest_rate"],
     impact_levels: ["high"],
     email_enabled: false,
@@ -231,6 +234,9 @@ const EconomicCalendar = () => {
       CN: "🇨🇳",
       AU: "🇦🇺",
       CA: "🇨🇦",
+      KR: "🇰🇷",
+      IN: "🇮🇳",
+      SG: "🇸🇬",
     };
     return flags[region] || "🌍";
   };
@@ -244,6 +250,9 @@ const EconomicCalendar = () => {
       CN: "China",
       AU: "Australia",
       CA: "Canada",
+      KR: "South Korea",
+      IN: "India",
+      SG: "Singapore",
     };
     return names[region] || region;
   };
