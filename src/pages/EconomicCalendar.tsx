@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide-react";
+import { format, startOfDay, isSameDay } from "date-fns";
 
 interface EconomicEvent {
   id: string;
@@ -262,6 +263,30 @@ const EconomicCalendar = () => {
     return names[region] || region;
   };
 
+  // Group events by day of the week in user's timezone
+  const groupEventsByDay = (eventsList: EconomicEvent[]) => {
+    const grouped: Record<string, EconomicEvent[]> = {};
+    
+    eventsList.forEach(event => {
+      const eventDate = new Date(event.scheduled_time);
+      const dayKey = format(eventDate, 'EEEE, MMMM d, yyyy');
+      
+      if (!grouped[dayKey]) {
+        grouped[dayKey] = [];
+      }
+      grouped[dayKey].push(event);
+    });
+    
+    // Sort events within each day by time
+    Object.keys(grouped).forEach(day => {
+      grouped[day].sort((a, b) => 
+        new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()
+      );
+    });
+    
+    return grouped;
+  };
+
   // Get unique countries from events
   const availableCountries = Array.from(new Set(events.map(e => e.region)));
 
@@ -283,6 +308,11 @@ const EconomicCalendar = () => {
   const thisWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) <= endOfWeek);
   const nextWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) > endOfWeek);
   const releasedEvents = filteredByCountry.filter(e => e.released);
+
+  // Group by day
+  const thisWeekByDay = groupEventsByDay(thisWeekEvents);
+  const nextWeekByDay = groupEventsByDay(nextWeekEvents);
+  const releasedByDay = groupEventsByDay(releasedEvents);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -396,47 +426,54 @@ const EconomicCalendar = () => {
                     </TabsList>
 
                     <TabsContent value="this-week" className="mt-4">
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {thisWeekEvents.length === 0 ? (
                           <p className="text-center text-muted-foreground py-8">
                             No events scheduled for this week. Click refresh to load latest data.
                           </p>
                         ) : (
-                          thisWeekEvents.map((event) => (
-                            <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-                                    <img 
-                                      src={getCountryFlag(event.region)} 
-                                      alt={`${getCountryName(event.region)} flag`}
-                                      className="w-full h-full object-cover"
-                                    />
+                          Object.entries(thisWeekByDay).map(([day, dayEvents]) => (
+                            <div key={day} className="space-y-3">
+                              <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
+                              <div className="space-y-3">
+                                {dayEvents.map((event) => (
+                                  <div key={event.id} className="border rounded-lg p-3 space-y-2 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start gap-2 flex-1">
+                                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
+                                          <img 
+                                            src={getCountryFlag(event.region)} 
+                                            alt={`${getCountryName(event.region)} flag`}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="space-y-1 flex-1">
+                                          <h4 className="font-semibold text-sm">{event.event_name}</h4>
+                                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                            <span className="font-medium">{getCountryName(event.region)}</span>
+                                            <span>•</span>
+                                            <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {getImpactBadge(event.impact_level)}
+                                    </div>
+                                    {event.forecast_value && (
+                                      <div className="text-xs pl-8">
+                                        <span className="text-muted-foreground">Forecast:</span>{" "}
+                                        <span className="font-medium">{event.forecast_value}</span>
+                                        {event.previous_value && (
+                                          <>
+                                            {" | "}
+                                            <span className="text-muted-foreground">Previous:</span>{" "}
+                                            <span className="font-medium">{event.previous_value}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="space-y-1 flex-1">
-                                    <h3 className="font-semibold">{event.event_name}</h3>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                      <span className="font-medium">{getCountryName(event.region)}</span>
-                                      <span>•</span>
-                                      <span>{formatDateTime(event.scheduled_time)}</span>
-                                    </p>
-                                  </div>
-                                </div>
-                                {getImpactBadge(event.impact_level)}
+                                ))}
                               </div>
-                              {event.forecast_value && (
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">Forecast:</span>{" "}
-                                  <span className="font-medium">{event.forecast_value}</span>
-                                  {event.previous_value && (
-                                    <>
-                                      {" | "}
-                                      <span className="text-muted-foreground">Previous:</span>{" "}
-                                      <span className="font-medium">{event.previous_value}</span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           ))
                         )}
@@ -444,47 +481,54 @@ const EconomicCalendar = () => {
                     </TabsContent>
 
                     <TabsContent value="next-week" className="mt-4">
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {nextWeekEvents.length === 0 ? (
                           <p className="text-center text-muted-foreground py-8">
                             No events scheduled for next week. Click refresh to load latest data.
                           </p>
                         ) : (
-                          nextWeekEvents.map((event) => (
-                            <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-                                    <img 
-                                      src={getCountryFlag(event.region)} 
-                                      alt={`${getCountryName(event.region)} flag`}
-                                      className="w-full h-full object-cover"
-                                    />
+                          Object.entries(nextWeekByDay).map(([day, dayEvents]) => (
+                            <div key={day} className="space-y-3">
+                              <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
+                              <div className="space-y-3">
+                                {dayEvents.map((event) => (
+                                  <div key={event.id} className="border rounded-lg p-3 space-y-2 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start gap-2 flex-1">
+                                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
+                                          <img 
+                                            src={getCountryFlag(event.region)} 
+                                            alt={`${getCountryName(event.region)} flag`}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="space-y-1 flex-1">
+                                          <h4 className="font-semibold text-sm">{event.event_name}</h4>
+                                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                            <span className="font-medium">{getCountryName(event.region)}</span>
+                                            <span>•</span>
+                                            <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {getImpactBadge(event.impact_level)}
+                                    </div>
+                                    {event.forecast_value && (
+                                      <div className="text-xs pl-8">
+                                        <span className="text-muted-foreground">Forecast:</span>{" "}
+                                        <span className="font-medium">{event.forecast_value}</span>
+                                        {event.previous_value && (
+                                          <>
+                                            {" | "}
+                                            <span className="text-muted-foreground">Previous:</span>{" "}
+                                            <span className="font-medium">{event.previous_value}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="space-y-1 flex-1">
-                                    <h3 className="font-semibold">{event.event_name}</h3>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                      <span className="font-medium">{getCountryName(event.region)}</span>
-                                      <span>•</span>
-                                      <span>{formatDateTime(event.scheduled_time)}</span>
-                                    </p>
-                                  </div>
-                                </div>
-                                {getImpactBadge(event.impact_level)}
+                                ))}
                               </div>
-                              {event.forecast_value && (
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">Forecast:</span>{" "}
-                                  <span className="font-medium">{event.forecast_value}</span>
-                                  {event.previous_value && (
-                                    <>
-                                      {" | "}
-                                      <span className="text-muted-foreground">Previous:</span>{" "}
-                                      <span className="font-medium">{event.previous_value}</span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           ))
                         )}
@@ -510,55 +554,62 @@ const EconomicCalendar = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {releasedEvents.map((event) => (
-                        <div key={event.id} className="border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-start gap-3 flex-1">
-                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-                                <img 
-                                  src={getCountryFlag(event.region)} 
-                                  alt={`${getCountryName(event.region)} flag`}
-                                  className="w-full h-full object-cover"
-                                />
+                    <div className="space-y-6">
+                      {Object.entries(releasedByDay).map(([day, dayEvents]) => (
+                        <div key={day} className="space-y-3">
+                          <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
+                          <div className="space-y-3">
+                            {dayEvents.map((event) => (
+                              <div key={event.id} className="border rounded-lg p-3 space-y-3 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex items-start gap-2 flex-1">
+                                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
+                                      <img 
+                                        src={getCountryFlag(event.region)} 
+                                        alt={`${getCountryName(event.region)} flag`}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="space-y-1 flex-1">
+                                      <h4 className="font-semibold text-sm">{event.event_name}</h4>
+                                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                        <span className="font-medium">{getCountryName(event.region)}</span>
+                                        <span>•</span>
+                                        <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {getImpactBadge(event.impact_level)}
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 text-xs pl-8">
+                                  {event.actual_value && (
+                                    <div>
+                                      <span className="text-muted-foreground">Actual:</span>
+                                      <p className="font-semibold">{event.actual_value}</p>
+                                    </div>
+                                  )}
+                                  {event.forecast_value && (
+                                    <div>
+                                      <span className="text-muted-foreground">Forecast:</span>
+                                      <p className="font-medium">{event.forecast_value}</p>
+                                    </div>
+                                  )}
+                                  {event.previous_value && (
+                                    <div>
+                                      <span className="text-muted-foreground">Previous:</span>
+                                      <p className="font-medium">{event.previous_value}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                {event.market_impact && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-500 p-2 rounded ml-8">
+                                    <p className="text-xs font-medium">Market Impact:</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{event.market_impact}</p>
+                                  </div>
+                                )}
                               </div>
-                              <div className="space-y-1 flex-1">
-                                <h3 className="font-semibold">{event.event_name}</h3>
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <span className="font-medium">{getCountryName(event.region)}</span>
-                                  <span>•</span>
-                                  <span>{formatDateTime(event.scheduled_time)}</span>
-                                </p>
-                              </div>
-                            </div>
-                            {getImpactBadge(event.impact_level)}
+                            ))}
                           </div>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            {event.actual_value && (
-                              <div>
-                                <span className="text-muted-foreground">Actual:</span>
-                                <p className="font-semibold">{event.actual_value}</p>
-                              </div>
-                            )}
-                            {event.forecast_value && (
-                              <div>
-                                <span className="text-muted-foreground">Forecast:</span>
-                                <p className="font-medium">{event.forecast_value}</p>
-                              </div>
-                            )}
-                            {event.previous_value && (
-                              <div>
-                                <span className="text-muted-foreground">Previous:</span>
-                                <p className="font-medium">{event.previous_value}</p>
-                              </div>
-                            )}
-                          </div>
-                          {event.market_impact && (
-                            <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-500 p-3 rounded">
-                              <p className="text-sm font-medium">Market Impact:</p>
-                              <p className="text-sm text-muted-foreground mt-1">{event.market_impact}</p>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
