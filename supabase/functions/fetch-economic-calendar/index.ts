@@ -177,70 +177,131 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
   const end = new Date(endDate);
   const now = new Date();
   
-  // Define major economic indicators by region
+  // Define economic indicators by region with varying importance levels
   const economicIndicators = {
     US: [
+      // High Impact (3)
       { name: 'Non-Farm Payrolls', type: 'employment', impact: 3, typical_day: 5 },
       { name: 'CPI (Consumer Price Index)', type: 'inflation', impact: 3, typical_day: 13 },
       { name: 'Federal Reserve Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 20 },
-      { name: 'Retail Sales', type: 'retail', impact: 2, typical_day: 15 },
       { name: 'GDP Growth Rate', type: 'gdp', impact: 3, typical_day: 28 },
       { name: 'Unemployment Rate', type: 'employment', impact: 3, typical_day: 5 },
+      // Medium Impact (2)
+      { name: 'Retail Sales', type: 'retail', impact: 2, typical_day: 15 },
       { name: 'ISM Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 1 },
+      { name: 'PPI (Producer Price Index)', type: 'inflation', impact: 2, typical_day: 14 },
+      { name: 'Consumer Confidence', type: 'other', impact: 2, typical_day: 26 },
+      { name: 'Durable Goods Orders', type: 'manufacturing', impact: 2, typical_day: 22 },
+      // Low Impact (1)
+      { name: 'Building Permits', type: 'other', impact: 1, typical_day: 17 },
+      { name: 'Housing Starts', type: 'other', impact: 1, typical_day: 16 },
+      { name: 'Factory Orders', type: 'manufacturing', impact: 1, typical_day: 4 },
+      { name: 'Crude Oil Inventories', type: 'other', impact: 1, typical_day: 11 },
     ],
     EU: [
+      // High Impact (3)
       { name: 'ECB Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 14 },
       { name: 'Eurozone CPI', type: 'inflation', impact: 3, typical_day: 17 },
       { name: 'Eurozone GDP', type: 'gdp', impact: 3, typical_day: 30 },
+      // Medium Impact (2)
       { name: 'German Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 23 },
       { name: 'Eurozone Retail Sales', type: 'retail', impact: 2, typical_day: 5 },
+      { name: 'German IFO Business Climate', type: 'other', impact: 2, typical_day: 24 },
+      // Low Impact (1)
+      { name: 'Eurozone Industrial Production', type: 'manufacturing', impact: 1, typical_day: 12 },
+      { name: 'German ZEW Economic Sentiment', type: 'other', impact: 1, typical_day: 19 },
     ],
     UK: [
+      // High Impact (3)
       { name: 'Bank of England Rate Decision', type: 'interest_rate', impact: 3, typical_day: 21 },
       { name: 'UK CPI', type: 'inflation', impact: 3, typical_day: 19 },
-      { name: 'UK Employment Change', type: 'employment', impact: 2, typical_day: 12 },
       { name: 'UK GDP', type: 'gdp', impact: 3, typical_day: 10 },
+      // Medium Impact (2)
+      { name: 'UK Employment Change', type: 'employment', impact: 2, typical_day: 12 },
+      { name: 'UK Retail Sales', type: 'retail', impact: 2, typical_day: 20 },
+      // Low Impact (1)
+      { name: 'UK Manufacturing PMI', type: 'manufacturing', impact: 1, typical_day: 1 },
+      { name: 'UK Services PMI', type: 'other', impact: 1, typical_day: 3 },
     ],
     JP: [
+      // High Impact (3)
       { name: 'BoJ Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 19 },
-      { name: 'Japan CPI', type: 'inflation', impact: 2, typical_day: 24 },
       { name: 'Japan GDP', type: 'gdp', impact: 3, typical_day: 15 },
+      // Medium Impact (2)
+      { name: 'Japan CPI', type: 'inflation', impact: 2, typical_day: 24 },
       { name: 'Tankan Business Survey', type: 'manufacturing', impact: 2, typical_day: 1 },
+      { name: 'Japan Trade Balance', type: 'trade', impact: 2, typical_day: 18 },
+      // Low Impact (1)
+      { name: 'Japan Industrial Production', type: 'manufacturing', impact: 1, typical_day: 29 },
+      { name: 'Japan Retail Sales', type: 'retail', impact: 1, typical_day: 27 },
     ],
     CN: [
+      // High Impact (3)
       { name: 'China GDP', type: 'gdp', impact: 3, typical_day: 18 },
+      // Medium Impact (2)
       { name: 'China CPI', type: 'inflation', impact: 2, typical_day: 9 },
       { name: 'China Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 31 },
       { name: 'China Trade Balance', type: 'trade', impact: 2, typical_day: 7 },
+      { name: 'China Retail Sales', type: 'retail', impact: 2, typical_day: 15 },
+      // Low Impact (1)
+      { name: 'China Industrial Production', type: 'manufacturing', impact: 1, typical_day: 14 },
+      { name: 'China Fixed Asset Investment', type: 'other', impact: 1, typical_day: 13 },
     ],
     AU: [
+      // High Impact (3)
       { name: 'RBA Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 5 },
       { name: 'Australia CPI', type: 'inflation', impact: 3, typical_day: 25 },
-      { name: 'Australia Employment Change', type: 'employment', impact: 2, typical_day: 18 },
       { name: 'Australia GDP', type: 'gdp', impact: 3, typical_day: 6 },
+      // Medium Impact (2)
+      { name: 'Australia Employment Change', type: 'employment', impact: 2, typical_day: 18 },
+      { name: 'Australia Trade Balance', type: 'trade', impact: 2, typical_day: 2 },
+      // Low Impact (1)
+      { name: 'Australia Retail Sales', type: 'retail', impact: 1, typical_day: 30 },
     ],
     CA: [
+      // High Impact (3)
       { name: 'BoC Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 24 },
       { name: 'Canada CPI', type: 'inflation', impact: 3, typical_day: 19 },
+      // Medium Impact (2)
       { name: 'Canada Employment Change', type: 'employment', impact: 2, typical_day: 8 },
+      { name: 'Canada GDP', type: 'gdp', impact: 2, typical_day: 29 },
+      // Low Impact (1)
+      { name: 'Canada Retail Sales', type: 'retail', impact: 1, typical_day: 21 },
     ],
     KR: [
+      // High Impact (3)
       { name: 'BoK Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 22 },
-      { name: 'South Korea CPI', type: 'inflation', impact: 2, typical_day: 2 },
       { name: 'South Korea GDP', type: 'gdp', impact: 3, typical_day: 25 },
+      // Medium Impact (2)
+      { name: 'South Korea CPI', type: 'inflation', impact: 2, typical_day: 2 },
       { name: 'South Korea Trade Balance', type: 'trade', impact: 2, typical_day: 1 },
+      { name: 'South Korea Exports', type: 'trade', impact: 2, typical_day: 15 },
+      // Low Impact (1)
+      { name: 'South Korea Industrial Production', type: 'manufacturing', impact: 1, typical_day: 30 },
+      { name: 'South Korea Retail Sales', type: 'retail', impact: 1, typical_day: 28 },
     ],
     IN: [
+      // High Impact (3)
       { name: 'RBI Interest Rate Decision', type: 'interest_rate', impact: 3, typical_day: 8 },
       { name: 'India CPI', type: 'inflation', impact: 3, typical_day: 12 },
       { name: 'India GDP', type: 'gdp', impact: 3, typical_day: 31 },
+      // Medium Impact (2)
       { name: 'India Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 1 },
+      { name: 'India Trade Balance', type: 'trade', impact: 2, typical_day: 10 },
+      // Low Impact (1)
+      { name: 'India Industrial Production', type: 'manufacturing', impact: 1, typical_day: 11 },
+      { name: 'India Infrastructure Output', type: 'other', impact: 1, typical_day: 29 },
     ],
     SG: [
-      { name: 'Singapore GDP', type: 'gdp', impact: 2, typical_day: 14 },
+      // High Impact (3)
+      { name: 'Singapore GDP', type: 'gdp', impact: 3, typical_day: 14 },
+      // Medium Impact (2)
       { name: 'Singapore CPI', type: 'inflation', impact: 2, typical_day: 23 },
       { name: 'Singapore Manufacturing PMI', type: 'manufacturing', impact: 2, typical_day: 3 },
       { name: 'Singapore Trade Balance', type: 'trade', impact: 2, typical_day: 17 },
+      // Low Impact (1)
+      { name: 'Singapore Retail Sales', type: 'retail', impact: 1, typical_day: 6 },
+      { name: 'Singapore Industrial Production', type: 'manufacturing', impact: 1, typical_day: 26 },
     ],
   };
   
