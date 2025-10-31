@@ -67,7 +67,7 @@ const EconomicCalendar = () => {
   const [preferences, setPreferences] = useState<UserPreferences>({
     regions: ["US", "EU", "UK", "JP", "CN", "AU", "KR", "IN"],
     indicator_types: ["inflation", "employment", "gdp", "interest_rate"],
-    impact_levels: ["high"],
+    impact_levels: ["high", "medium", "low"],
     email_enabled: false,
     telegram_enabled: false,
   });
@@ -133,14 +133,14 @@ const EconomicCalendar = () => {
       const today = new Date();
       const oneWeekAgo = new Date(today);
       oneWeekAgo.setDate(today.getDate() - 7);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 7);
+      const twoWeeksAhead = new Date(today);
+      twoWeeksAhead.setDate(today.getDate() + 14);
 
       const { data, error } = await supabase
         .from("economic_events")
         .select("*")
         .gte("scheduled_time", oneWeekAgo.toISOString())
-        .lte("scheduled_time", nextWeek.toISOString())
+        .lte("scheduled_time", twoWeeksAhead.toISOString())
         .order("scheduled_time", { ascending: true });
 
       if (error) throw error;
@@ -183,9 +183,9 @@ const EconomicCalendar = () => {
       const oneWeekAgo = new Date(today);
       oneWeekAgo.setDate(today.getDate() - 7);
       const startDate = oneWeekAgo.toISOString().split('T')[0];
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 7);
-      const endDate = nextWeek.toISOString().split('T')[0];
+      const twoWeeksAhead = new Date(today);
+      twoWeeksAhead.setDate(today.getDate() + 14);
+      const endDate = twoWeeksAhead.toISOString().split('T')[0];
 
       // Include all regions to ensure APAC data is generated
       const allRegions = ["US", "EU", "UK", "JP", "CN", "AU", "CA", "KR", "IN", "SG"];
@@ -195,12 +195,12 @@ const EconomicCalendar = () => {
           start_date: startDate,
           end_date: endDate,
           regions: allRegions,
-          impact_levels: preferences.impact_levels.length > 0 ? preferences.impact_levels : ["high", "medium", "low"],
+          impact_levels: ["high", "medium", "low"],
         },
       });
 
       if (error) throw error;
-      toast.success(`Refreshed calendar with ${data.count} events from all regions`);
+      toast.success(`Refreshed calendar with ${data.count} events (all importance levels)`);
       fetchEvents();
     } catch (error: any) {
       toast.error("Failed to refresh calendar: " + error.message);
