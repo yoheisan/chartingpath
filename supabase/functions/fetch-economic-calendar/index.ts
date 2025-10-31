@@ -63,12 +63,19 @@ serve(async (req) => {
       released: !!item.Actual
     }));
 
-    // Filter by impact level if specified
-    const filteredEvents = impact_levels && impact_levels.length > 0
-      ? events.filter(e => impact_levels.includes(e.impact_level))
-      : events;
+    // Don't filter by impact level - generate all levels
+    console.log(`Generated ${events.length} events before filtering`);
+    console.log(`Impact levels requested: ${impact_levels?.join(', ') || 'all'}`);
+    
+    // Count events by impact level
+    const impactCounts = {
+      high: events.filter(e => e.impact_level === 'high').length,
+      medium: events.filter(e => e.impact_level === 'medium').length,
+      low: events.filter(e => e.impact_level === 'low').length,
+    };
+    console.log('Events by impact:', impactCounts);
 
-    // Delete old events and insert new ones
+    // Delete ALL events in the date range (regardless of impact level)
     const { error: deleteError } = await supabase
       .from("economic_events")
       .delete()
@@ -79,26 +86,27 @@ serve(async (req) => {
       console.error("Error deleting old events:", deleteError);
     }
     
-    // Insert events into database
-    if (filteredEvents.length > 0) {
+    // Insert ALL events into database (don't filter by impact level)
+    if (events.length > 0) {
       const { error: insertError } = await supabase
         .from("economic_events")
-        .insert(filteredEvents);
+        .insert(events);
       
       if (insertError) {
         console.error("Error inserting events:", insertError);
       } else {
-        console.log(`Successfully inserted ${filteredEvents.length} events`);
+        console.log(`Successfully inserted ${events.length} events (all importance levels)`);
       }
     }
 
-    console.log(`Processed ${filteredEvents.length} economic events`);
+    console.log(`Processed ${events.length} economic events`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        events: filteredEvents,
-        count: filteredEvents.length 
+        events: events,
+        count: events.length,
+        impact_breakdown: impactCounts
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
