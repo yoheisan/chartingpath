@@ -356,16 +356,20 @@ const EconomicCalendar = () => {
                       </p>
                     ) : (
                       upcomingEvents.map((event) => (
-                        <div key={event.id} className="border rounded-lg p-4 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <h3 className="font-semibold">{event.event_name}</h3>
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span className="text-xl">{getCountryFlag(event.region)}</span>
-                                <span>{getCountryName(event.region)}</span>
-                                <span>•</span>
-                                <span>{formatDateTime(event.scheduled_time)}</span>
-                              </p>
+                        <div key={event.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-lg">
+                                {getCountryFlag(event.region)}
+                              </div>
+                              <div className="space-y-1 flex-1">
+                                <h3 className="font-semibold">{event.event_name}</h3>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <span className="font-medium">{getCountryName(event.region)}</span>
+                                  <span>•</span>
+                                  <span>{formatDateTime(event.scheduled_time)}</span>
+                                </p>
+                              </div>
                             </div>
                             {getImpactBadge(event.impact_level)}
                           </div>
@@ -401,16 +405,20 @@ const EconomicCalendar = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {releasedEvents.map((event) => (
-                        <div key={event.id} className="border rounded-lg p-4 space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <h3 className="font-semibold">{event.event_name}</h3>
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span className="text-xl">{getCountryFlag(event.region)}</span>
-                                <span>{getCountryName(event.region)}</span>
-                                <span>•</span>
-                                <span>{formatDateTime(event.scheduled_time)}</span>
-                              </p>
+                        <div key={event.id} className="border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-lg">
+                                {getCountryFlag(event.region)}
+                              </div>
+                              <div className="space-y-1 flex-1">
+                                <h3 className="font-semibold">{event.event_name}</h3>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <span className="font-medium">{getCountryName(event.region)}</span>
+                                  <span>•</span>
+                                  <span>{formatDateTime(event.scheduled_time)}</span>
+                                </p>
+                              </div>
                             </div>
                             {getImpactBadge(event.impact_level)}
                           </div>
