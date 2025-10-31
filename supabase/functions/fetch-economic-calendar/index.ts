@@ -240,45 +240,45 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
     ],
   };
   
-  // Generate events for the date range
-  const currentDate = new Date(start);
-  while (currentDate <= end) {
-    const month = currentDate.getMonth();
-    const day = currentDate.getDate();
+  // For each region, generate events that fall within the date range
+  regions.forEach(region => {
+    const indicators = economicIndicators[region as keyof typeof economicIndicators] || [];
     
-    regions.forEach(region => {
-      const indicators = economicIndicators[region as keyof typeof economicIndicators] || [];
+    indicators.forEach((indicator, idx) => {
+      // Generate 1-2 events per indicator across the date range
+      const daysBetween = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
       
-      indicators.forEach(indicator => {
-        // Check if this day matches the typical release day (with some randomness)
-        if (Math.abs(day - indicator.typical_day) <= 2) {
-          const isPast = currentDate < new Date();
-          const event: any = {
-            Event: indicator.name,
-            Country: getCountryName(region),
-            Category: indicator.type,
-            Date: currentDate.toISOString().split('T')[0],
-            Importance: indicator.impact,
-          };
-          
-          // For past events, add actual values
-          if (isPast) {
-            event.Actual = generateRealisticValue(indicator.type);
-            event.Forecast = generateRealisticValue(indicator.type);
-            event.Previous = generateRealisticValue(indicator.type);
-          } else {
-            // For future events, add forecast
-            event.Forecast = generateRealisticValue(indicator.type);
-            event.Previous = generateRealisticValue(indicator.type);
-          }
-          
-          events.push(event);
+      // Place event somewhere in the range based on indicator index
+      const eventDate = new Date(start);
+      const daysOffset = Math.floor((idx / indicators.length) * daysBetween);
+      eventDate.setDate(start.getDate() + daysOffset);
+      
+      // Only generate if within range
+      if (eventDate >= start && eventDate <= end) {
+        const isPast = eventDate < new Date();
+        const event: any = {
+          Event: indicator.name,
+          Country: getCountryName(region),
+          Category: indicator.type,
+          Date: eventDate.toISOString().split('T')[0],
+          Importance: indicator.impact,
+        };
+        
+        // For past events, add actual values
+        if (isPast) {
+          event.Actual = generateRealisticValue(indicator.type);
+          event.Forecast = generateRealisticValue(indicator.type);
+          event.Previous = generateRealisticValue(indicator.type);
+        } else {
+          // For future events, add forecast
+          event.Forecast = generateRealisticValue(indicator.type);
+          event.Previous = generateRealisticValue(indicator.type);
         }
-      });
+        
+        events.push(event);
+      }
     });
-    
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
+  });
   
   return events;
 }
