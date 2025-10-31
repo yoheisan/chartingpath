@@ -187,17 +187,20 @@ const EconomicCalendar = () => {
       nextWeek.setDate(today.getDate() + 7);
       const endDate = nextWeek.toISOString().split('T')[0];
 
+      // Include all regions to ensure APAC data is generated
+      const allRegions = ["US", "EU", "UK", "JP", "CN", "AU", "CA", "KR", "IN", "SG"];
+
       const { data, error } = await supabase.functions.invoke("fetch-economic-calendar", {
         body: {
           start_date: startDate,
           end_date: endDate,
-          regions: preferences.regions,
-          impact_levels: preferences.impact_levels,
+          regions: allRegions,
+          impact_levels: preferences.impact_levels.length > 0 ? preferences.impact_levels : ["high", "medium", "low"],
         },
       });
 
       if (error) throw error;
-      toast.success(`Refreshed calendar with ${data.count} events`);
+      toast.success(`Refreshed calendar with ${data.count} events from all regions`);
       fetchEvents();
     } catch (error: any) {
       toast.error("Failed to refresh calendar: " + error.message);
