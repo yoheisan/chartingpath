@@ -51,7 +51,7 @@ serve(async (req) => {
     const events: EconomicEvent[] = data.map((item: any) => ({
       event_name: item.Event || item.Category,
       country_code: item.Country,
-      region: mapCountryToRegion(item.Country),
+      region: item.Region, // Use the region directly from generated data
       indicator_type: mapToIndicatorType(item.Category),
       impact_level: mapImpactLevel(item.Importance || 2),
       scheduled_time: new Date(item.Date).toISOString(),
@@ -259,6 +259,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
         const event: any = {
           Event: indicator.name,
           Country: getCountryName(region),
+          Region: region, // Store the region code directly
           Category: indicator.type,
           Date: eventDate.toISOString().split('T')[0],
           Importance: indicator.impact,
