@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide-react";
-import { format, startOfDay, isSameDay } from "date-fns";
+import { format, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 
 interface EconomicEvent {
   id: string;
@@ -325,17 +325,32 @@ const EconomicCalendar = () => {
   }
 
   const now = new Date();
-  const endOfWeek = new Date(now);
-  endOfWeek.setDate(now.getDate() + (7 - now.getDay())); // End of current week (Sunday)
-  endOfWeek.setHours(23, 59, 59, 999);
   
-  const startOfNextWeek = new Date(endOfWeek);
-  startOfNextWeek.setDate(endOfWeek.getDate() + 1);
-  startOfNextWeek.setHours(0, 0, 0, 0);
+  // Week boundaries in user's timezone
+  const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+  const thisWeekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+  
+  const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+  const lastWeekEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+  
+  const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+  const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
 
-  const upcomingEvents = filteredEvents.filter(e => !e.released);
-  const thisWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) <= endOfWeek);
-  const nextWeekEvents = upcomingEvents.filter(e => new Date(e.scheduled_time) > endOfWeek);
+  // Filter events by week ranges
+  const lastWeekEvents = filteredEvents.filter(e => {
+    const eventTime = new Date(e.scheduled_time);
+    return eventTime >= lastWeekStart && eventTime <= lastWeekEnd;
+  });
+  
+  const thisWeekEvents = filteredEvents.filter(e => {
+    const eventTime = new Date(e.scheduled_time);
+    return eventTime >= thisWeekStart && eventTime <= thisWeekEnd;
+  });
+  
+  const nextWeekEvents = filteredEvents.filter(e => {
+    const eventTime = new Date(e.scheduled_time);
+    return eventTime >= nextWeekStart && eventTime <= nextWeekEnd;
+  });
   
   // Only show released events from the last 48 hours (2 days), sorted by most recent first
   const twoDaysAgo = new Date(now);
@@ -345,6 +360,7 @@ const EconomicCalendar = () => {
     .sort((a, b) => new Date(b.scheduled_time).getTime() - new Date(a.scheduled_time).getTime());
 
   // Group by day
+  const lastWeekByDay = groupEventsByDay(lastWeekEvents);
   const thisWeekByDay = groupEventsByDay(thisWeekEvents);
   const nextWeekByDay = groupEventsByDay(nextWeekEvents);
   const releasedByDay = groupEventsByDay(releasedEvents);
@@ -486,146 +502,228 @@ const EconomicCalendar = () => {
             </TabsList>
 
             <TabsContent value="calendar" className="space-y-6 mt-6">
-              {/* Upcoming Events with This Week / Next Week Tabs */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Bell className="h-5 w-5" />
-                      Upcoming Events ({upcomingEvents.length})
-                      <Badge variant="outline" className="ml-2 gap-1.5">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        Real-time
-                      </Badge>
-                    </CardTitle>
-                  </div>
-                  <CardDescription>
-                    Events scheduled ahead • Updates instantly via WebSocket
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="this-week" className="w-full">
-                    <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-                      <TabsTrigger value="this-week">
-                        This Week ({thisWeekEvents.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="next-week">
-                        Next Week ({nextWeekEvents.length})
-                      </TabsTrigger>
-                    </TabsList>
+              {/* Week Navigation Tabs */}
+              <Tabs defaultValue="this-week" className="w-full">
+                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
+                  <TabsTrigger value="last-week">
+                    Last Week ({lastWeekEvents.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="this-week">
+                    This Week ({thisWeekEvents.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="next-week">
+                    Next Week ({nextWeekEvents.length})
+                  </TabsTrigger>
+                </TabsList>
 
-                    <TabsContent value="this-week" className="mt-4">
-                      <div className="space-y-6">
-                        {thisWeekEvents.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-8">
-                            No events scheduled for this week. Click refresh to load latest data.
-                          </p>
-                        ) : (
-                          Object.entries(thisWeekByDay).map(([day, dayEvents]) => (
+                {/* Last Week */}
+                <TabsContent value="last-week">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Last Week Events ({lastWeekEvents.length})
+                      </CardTitle>
+                      <CardDescription>
+                        {format(lastWeekStart, 'MMM d')} - {format(lastWeekEnd, 'MMM d, yyyy')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.keys(lastWeekByDay).length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No events for last week</p>
+                      ) : (
+                        <div className="space-y-6">
+                          {Object.entries(lastWeekByDay).map(([day, dayEvents]) => (
                             <div key={day} className="space-y-3">
-                              <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
+                              <h3 className="font-semibold text-lg border-b pb-2">{day}</h3>
                               <div className="space-y-3">
                                 {dayEvents.map((event) => (
-                                  <div key={event.id} className="border rounded-lg p-3 space-y-2 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex items-start gap-2 flex-1">
-                                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
+                                  <div key={event.id} className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex-1 space-y-2">
+                                        <div className="flex items-center gap-3">
                                           <img 
                                             src={getCountryFlag(event.region)} 
-                                            alt={`${getCountryName(event.region)} flag`}
-                                            className="w-full h-full object-cover"
+                                            alt={`${event.region} flag`}
+                                            className="w-6 h-4 object-cover rounded"
                                           />
+                                          <h4 className="font-semibold text-base">{event.event_name}</h4>
+                                          {getImpactBadge(event.impact_level)}
                                         </div>
-                                        <div className="space-y-1 flex-1">
-                                          <h4 className="font-semibold text-sm">{event.event_name}</h4>
-                                          <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                            <span className="font-medium">{getCountryName(event.region)}</span>
-                                            <span>•</span>
-                                            <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
-                                          </p>
+                                        <p className="text-sm text-muted-foreground">{formatDateTime(event.scheduled_time)}</p>
+                                        <div className="flex gap-4 text-sm">
+                                          {event.actual_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Actual: </span>
+                                              <span className="font-semibold">{event.actual_value}</span>
+                                            </div>
+                                          )}
+                                          {event.forecast_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Forecast: </span>
+                                              <span>{event.forecast_value}</span>
+                                            </div>
+                                          )}
+                                          {event.previous_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Previous: </span>
+                                              <span>{event.previous_value}</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
-                                      {getImpactBadge(event.impact_level)}
                                     </div>
-                                    {event.forecast_value && (
-                                      <div className="text-xs pl-8">
-                                        <span className="text-muted-foreground">Forecast:</span>{" "}
-                                        <span className="font-medium">{event.forecast_value}</span>
-                                        {event.previous_value && (
-                                          <>
-                                            {" | "}
-                                            <span className="text-muted-foreground">Previous:</span>{" "}
-                                            <span className="font-medium">{event.previous_value}</span>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
                                   </div>
                                 ))}
                               </div>
                             </div>
-                          ))
-                        )}
-                      </div>
-                    </TabsContent>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                    <TabsContent value="next-week" className="mt-4">
-                      <div className="space-y-6">
-                        {nextWeekEvents.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-8">
-                            No events scheduled for next week. Click refresh to load latest data.
-                          </p>
-                        ) : (
-                          Object.entries(nextWeekByDay).map(([day, dayEvents]) => (
+                {/* This Week */}
+                <TabsContent value="this-week">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bell className="h-5 w-5" />
+                        This Week Events ({thisWeekEvents.length})
+                        <Badge variant="outline" className="ml-2 gap-1.5">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          Real-time
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        {format(thisWeekStart, 'MMM d')} - {format(thisWeekEnd, 'MMM d, yyyy')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.keys(thisWeekByDay).length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No events for this week</p>
+                      ) : (
+                        <div className="space-y-6">
+                          {Object.entries(thisWeekByDay).map(([day, dayEvents]) => (
                             <div key={day} className="space-y-3">
-                              <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
+                              <h3 className="font-semibold text-lg border-b pb-2">{day}</h3>
                               <div className="space-y-3">
                                 {dayEvents.map((event) => (
-                                  <div key={event.id} className="border rounded-lg p-3 space-y-2 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex items-start gap-2 flex-1">
-                                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
+                                  <div key={event.id} className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex-1 space-y-2">
+                                        <div className="flex items-center gap-3">
                                           <img 
                                             src={getCountryFlag(event.region)} 
-                                            alt={`${getCountryName(event.region)} flag`}
-                                            className="w-full h-full object-cover"
+                                            alt={`${event.region} flag`}
+                                            className="w-6 h-4 object-cover rounded"
                                           />
+                                          <h4 className="font-semibold text-base">{event.event_name}</h4>
+                                          {getImpactBadge(event.impact_level)}
                                         </div>
-                                        <div className="space-y-1 flex-1">
-                                          <h4 className="font-semibold text-sm">{event.event_name}</h4>
-                                          <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                            <span className="font-medium">{getCountryName(event.region)}</span>
-                                            <span>•</span>
-                                            <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
-                                          </p>
+                                        <p className="text-sm text-muted-foreground">{formatDateTime(event.scheduled_time)}</p>
+                                        <div className="flex gap-4 text-sm">
+                                          {event.actual_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Actual: </span>
+                                              <span className="font-semibold">{event.actual_value}</span>
+                                            </div>
+                                          )}
+                                          {event.forecast_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Forecast: </span>
+                                              <span>{event.forecast_value}</span>
+                                            </div>
+                                          )}
+                                          {event.previous_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Previous: </span>
+                                              <span>{event.previous_value}</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
-                                      {getImpactBadge(event.impact_level)}
                                     </div>
-                                    {event.forecast_value && (
-                                      <div className="text-xs pl-8">
-                                        <span className="text-muted-foreground">Forecast:</span>{" "}
-                                        <span className="font-medium">{event.forecast_value}</span>
-                                        {event.previous_value && (
-                                          <>
-                                            {" | "}
-                                            <span className="text-muted-foreground">Previous:</span>{" "}
-                                            <span className="font-medium">{event.previous_value}</span>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
                                   </div>
                                 ))}
                               </div>
                             </div>
-                          ))
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Next Week */}
+                <TabsContent value="next-week">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Next Week Events ({nextWeekEvents.length})
+                      </CardTitle>
+                      <CardDescription>
+                        {format(nextWeekStart, 'MMM d')} - {format(nextWeekEnd, 'MMM d, yyyy')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.keys(nextWeekByDay).length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No events for next week</p>
+                      ) : (
+                        <div className="space-y-6">
+                          {Object.entries(nextWeekByDay).map(([day, dayEvents]) => (
+                            <div key={day} className="space-y-3">
+                              <h3 className="font-semibold text-lg border-b pb-2">{day}</h3>
+                              <div className="space-y-3">
+                                {dayEvents.map((event) => (
+                                  <div key={event.id} className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex-1 space-y-2">
+                                        <div className="flex items-center gap-3">
+                                          <img 
+                                            src={getCountryFlag(event.region)} 
+                                            alt={`${event.region} flag`}
+                                            className="w-6 h-4 object-cover rounded"
+                                          />
+                                          <h4 className="font-semibold text-base">{event.event_name}</h4>
+                                          {getImpactBadge(event.impact_level)}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">{formatDateTime(event.scheduled_time)}</p>
+                                        <div className="flex gap-4 text-sm">
+                                          {event.actual_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Actual: </span>
+                                              <span className="font-semibold">{event.actual_value}</span>
+                                            </div>
+                                          )}
+                                          {event.forecast_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Forecast: </span>
+                                              <span>{event.forecast_value}</span>
+                                            </div>
+                                          )}
+                                          {event.previous_value && (
+                                            <div>
+                                              <span className="text-muted-foreground">Previous: </span>
+                                              <span>{event.previous_value}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
 
               {/* Released Events */}
               {releasedEvents.length > 0 && (
