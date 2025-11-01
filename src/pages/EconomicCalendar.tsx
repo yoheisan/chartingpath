@@ -438,7 +438,7 @@ const EconomicCalendar = () => {
           <div className="flex gap-4 justify-center flex-wrap items-center">
             <Badge variant="outline" className="gap-2 px-4 py-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Auto-refreshing every 5 minutes</span>
+              <span>Real-time • 5-sec polling on high-impact events</span>
             </Badge>
             
             <Badge variant="secondary" className="px-4 py-2">
