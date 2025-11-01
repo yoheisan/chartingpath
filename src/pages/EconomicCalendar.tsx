@@ -146,7 +146,15 @@ const EconomicCalendar = () => {
         .order("scheduled_time", { ascending: true });
 
       if (error) throw error;
-      setEvents(data || []);
+      
+      // Filter out weekend events (Saturday = 6, Sunday = 0)
+      const filteredData = (data || []).filter(event => {
+        const eventDate = new Date(event.scheduled_time);
+        const dayOfWeek = eventDate.getUTCDay();
+        return dayOfWeek !== 0 && dayOfWeek !== 6; // Exclude Sunday (0) and Saturday (6)
+      });
+      
+      setEvents(filteredData);
     } catch (error: any) {
       toast.error("Failed to fetch events: " + error.message);
     } finally {
