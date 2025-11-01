@@ -359,13 +359,6 @@ const EconomicCalendar = () => {
               Instant alerts for key economic indicators - Zero latency with real-time database updates
             </p>
             
-            {/* Demo Data Warning */}
-            <div className="max-w-2xl mx-auto">
-              <Badge variant="outline" className="bg-yellow-500/10 border-yellow-500/30 text-yellow-700 dark:text-yellow-400 px-4 py-2">
-                ⚠️ DEMO MODE: Synthetic data for demonstration - Not actual economic calendar
-              </Badge>
-            </div>
-            
             <div className="flex items-center justify-center gap-2 text-sm">
               <Badge variant="outline" className="font-mono">
                 🕐 {currentTime}
