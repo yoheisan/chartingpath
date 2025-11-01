@@ -1,5 +1,31 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import {
+  scrapeCanadaStatCan,
+  scrapeCanadaBOC,
+  scrapeBrazilIBGE,
+  scrapeBrazilBCB,
+  scrapeMexicoINEGI,
+  scrapeMexicoBanxico,
+  scrapeArgentinaINDEC,
+  scrapeGermanyDestatis,
+  scrapeFranceINSEE,
+  scrapeItalyISTAT,
+  scrapeChinaNBS,
+  scrapeChinaPBOC,
+  scrapeKoreaKOSIS,
+  scrapeKoreaBOK,
+  scrapeIndiaRBI,
+  scrapeIndiaMOSPI,
+  scrapeAustraliasABS,
+  scrapeAustraliaRBA,
+  scrapeIndonesiaBPS,
+  scrapeIndonesiaBI,
+  scrapeTurkeyTurkStat,
+  scrapeSaudiGASTAT,
+  scrapeSouthAfricaStatsSA,
+  scrapeRussiaRosstat,
+} from "./g20-scrapers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,16 +62,47 @@ serve(async (req) => {
     
     console.log("Starting official source scraping...");
     
-    // Race multiple scrapers - fastest wins
+    // Race multiple scrapers - fastest wins (all G20 countries)
     const scrapingPromises = [
+      // Americas
       scrapeUSBLS(),
       scrapeUSFederal(),
+      scrapeCanadaStatCan(),
+      scrapeCanadaBOC(),
+      scrapeBrazilIBGE(),
+      scrapeBrazilBCB(),
+      scrapeMexicoINEGI(),
+      scrapeMexicoBanxico(),
+      scrapeArgentinaINDEC(),
+      
+      // Europe
       scrapeEUEurostat(),
       scrapeEUECB(),
       scrapeUKONS(),
       scrapeUKBOE(),
+      scrapeGermanyDestatis(),
+      scrapeFranceINSEE(),
+      scrapeItalyISTAT(),
+      
+      // Asia-Pacific
       scrapeJapanMOF(),
       scrapeJapanBOJ(),
+      scrapeChinaNBS(),
+      scrapeChinaPBOC(),
+      scrapeKoreaKOSIS(),
+      scrapeKoreaBOK(),
+      scrapeIndiaRBI(),
+      scrapeIndiaMOSPI(),
+      scrapeAustraliasABS(),
+      scrapeAustraliaRBA(),
+      scrapeIndonesiaBPS(),
+      scrapeIndonesiaBI(),
+      
+      // Middle East & Africa
+      scrapeTurkeyTurkStat(),
+      scrapeSaudiGASTAT(),
+      scrapeSouthAfricaStatsSA(),
+      scrapeRussiaRosstat(),
     ];
     
     const results = await Promise.allSettled(scrapingPromises);

@@ -38,16 +38,34 @@ interface UserPreferences {
 }
 
 const REGIONS = [
+  // Americas
   { value: "US", label: "United States" },
+  { value: "CA", label: "Canada" },
+  { value: "BR", label: "Brazil" },
+  { value: "MX", label: "Mexico" },
+  { value: "AR", label: "Argentina" },
+  
+  // Europe
   { value: "EU", label: "Euro Area" },
   { value: "UK", label: "United Kingdom" },
+  { value: "DE", label: "Germany" },
+  { value: "FR", label: "France" },
+  { value: "IT", label: "Italy" },
+  { value: "RU", label: "Russia" },
+  { value: "TR", label: "Turkey" },
+  
+  // Asia-Pacific
   { value: "JP", label: "Japan" },
   { value: "CN", label: "China" },
-  { value: "AU", label: "Australia" },
-  { value: "CA", label: "Canada" },
   { value: "KR", label: "South Korea" },
   { value: "IN", label: "India" },
+  { value: "AU", label: "Australia" },
+  { value: "ID", label: "Indonesia" },
   { value: "SG", label: "Singapore" },
+  
+  // Middle East & Africa
+  { value: "SA", label: "Saudi Arabia" },
+  { value: "ZA", label: "South Africa" },
 ];
 
 const INDICATOR_TYPES = [
@@ -67,7 +85,7 @@ const EconomicCalendar = () => {
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedImportance, setSelectedImportance] = useState<string[]>(["high", "medium", "low"]);
   const [preferences, setPreferences] = useState<UserPreferences>({
-    regions: ["US", "EU", "UK", "JP", "CN", "AU", "KR", "IN"],
+    regions: ["US", "EU", "UK", "JP", "CN", "AU", "CA", "KR", "IN", "DE", "FR", "BR", "MX"],
     indicator_types: ["inflation", "employment", "gdp", "interest_rate"],
     impact_levels: ["high", "medium", "low"],
     email_enabled: false,
@@ -243,16 +261,10 @@ const EconomicCalendar = () => {
   const getCountryFlag = (region: string) => {
     // Map regions to ISO country codes for flag images
     const countryCodeMap: Record<string, string> = {
-      US: "us",
-      EU: "eu",
-      UK: "gb",
-      JP: "jp",
-      CN: "cn",
-      AU: "au",
-      CA: "ca",
-      KR: "kr",
-      IN: "in",
-      SG: "sg",
+      US: "us", CA: "ca", BR: "br", MX: "mx", AR: "ar",
+      EU: "eu", UK: "gb", DE: "de", FR: "fr", IT: "it", RU: "ru", TR: "tr",
+      JP: "jp", CN: "cn", KR: "kr", IN: "in", AU: "au", ID: "id", SG: "sg",
+      SA: "sa", ZA: "za",
     };
     const code = countryCodeMap[region] || "un";
     return `https://flagcdn.com/w80/${code}.png`;
