@@ -121,13 +121,11 @@ serve(async (req) => {
     
     console.log(`Total events scraped: ${allEvents.length}`);
     
-    // Fallback to Alpha Vantage API if scraping yields few results
-    if (allEvents.length < 10) {
-      console.log("Few events scraped, fetching from Alpha Vantage API as fallback...");
-      const apiEvents = await fetchFromAlphaVantage();
-      allEvents.push(...apiEvents);
-      console.log(`Added ${apiEvents.length} events from API fallback`);
-    }
+    // Always fetch from Alpha Vantage API to ensure comprehensive coverage for all G20 countries
+    console.log("Fetching from Alpha Vantage API to ensure full week coverage...");
+    const apiEvents = await fetchFromAlphaVantage();
+    allEvents.push(...apiEvents);
+    console.log(`Added ${apiEvents.length} events from Alpha Vantage API`);
     
     // Upsert events to database (update if exists, insert if new)
     if (allEvents.length > 0) {
@@ -520,7 +518,7 @@ async function fetchFromAlphaVantage(): Promise<ScrapedEvent[]> {
     
     const events: ScrapedEvent[] = [];
     const now = new Date();
-    const twoWeeksAhead = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const threeWeeksAhead = new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000);
     
     // Fetch economic calendar from Alpha Vantage
     const url = `https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${apiKey}`;
@@ -536,8 +534,8 @@ async function fetchFromAlphaVantage(): Promise<ScrapedEvent[]> {
       for (const item of data.data) {
         const releaseDate = new Date(item.date);
         
-        // Only include events within next 2 weeks
-        if (releaseDate > now && releaseDate < twoWeeksAhead) {
+        // Only include events within next 3 weeks
+        if (releaseDate > now && releaseDate < threeWeeksAhead) {
           let impactLevel = "low";
           if (item.importance && item.importance.toLowerCase() === "high") {
             impactLevel = "high";
