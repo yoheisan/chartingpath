@@ -189,33 +189,35 @@ const EconomicCalendar = () => {
   const refreshCalendar = async () => {
     setLoading(true);
     try {
-      const today = new Date();
-      const oneWeekAgo = new Date(today);
-      oneWeekAgo.setDate(today.getDate() - 7);
-      const startDate = oneWeekAgo.toISOString().split('T')[0];
-      const twoWeeksAhead = new Date(today);
-      twoWeeksAhead.setDate(today.getDate() + 14);
-      const endDate = twoWeeksAhead.toISOString().split('T')[0];
-
-      // Include all regions to ensure APAC data is generated
-      const allRegions = ["US", "EU", "UK", "JP", "CN", "AU", "CA", "KR", "IN", "SG"];
-
-      const { data, error } = await supabase.functions.invoke("fetch-economic-calendar", {
-        body: {
-          start_date: startDate,
-          end_date: endDate,
-          regions: allRegions,
-          impact_levels: ["high", "medium", "low"],
-        },
-      });
+      // Use official source scraping instead of commercial APIs
+      const { data, error } = await supabase.functions.invoke("scrape-official-sources");
 
       if (error) throw error;
-      toast.success(`Refreshed calendar with ${data.count} events (all importance levels)`);
+      toast.success(`🎯 Scraped ${data.events_scraped} events from ${data.sources_checked} official sources`);
       fetchEvents();
     } catch (error: any) {
       toast.error("Failed to refresh calendar: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const triggerAggressiveScrape = async () => {
+    try {
+      toast.info("Starting aggressive scraping for imminent releases...");
+      const { data, error } = await supabase.functions.invoke("aggressive-scraper");
+
+      if (error) throw error;
+      
+      if (data.values_detected > 0) {
+        toast.success(`🚀 Detected ${data.values_detected} actual values!`);
+      } else {
+        toast.info(`Checked ${data.events_checked} imminent events - no new data yet`);
+      }
+      
+      fetchEvents();
+    } catch (error: any) {
+      toast.error("Aggressive scraping failed: " + error.message);
     }
   };
 
@@ -383,9 +385,14 @@ const EconomicCalendar = () => {
 
           {/* Quick Actions */}
           <div className="flex gap-4 justify-center flex-wrap items-center">
-            <Button onClick={refreshCalendar} disabled={loading}>
+            <Button onClick={refreshCalendar} disabled={loading} variant="default">
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh Calendar
+              Scrape Official Sources
+            </Button>
+            
+            <Button onClick={triggerAggressiveScrape} variant="destructive">
+              <Bell className="mr-2 h-4 w-4" />
+              Aggressive Scrape (5s intervals)
             </Button>
             
             {/* Country Filter */}

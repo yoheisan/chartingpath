@@ -50,7 +50,12 @@ verify_jwt = false
 
 [functions.fetch-economic-calendar]
 verify_jwt = false
-verify_jwt = true
 
 [functions.send-economic-alert]
+verify_jwt = false
+
+[functions.scrape-official-sources]
+verify_jwt = false
+
+[functions.aggressive-scraper]
 verify_jwt = false
