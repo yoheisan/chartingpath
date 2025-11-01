@@ -336,6 +336,18 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
         const dayOffset = Math.floor((totalDays / numEvents) * i) + (idx % 3); // Stagger by indicator
         eventDate.setDate(start.getDate() + dayOffset);
         
+        // SKIP WEEKENDS - Economic data only releases on weekdays
+        const dayOfWeek = eventDate.getDay();
+        if (dayOfWeek === 0) { // Sunday
+          eventDate.setDate(eventDate.getDate() + 1); // Move to Monday
+        } else if (dayOfWeek === 6) { // Saturday
+          eventDate.setDate(eventDate.getDate() + 2); // Move to Monday
+        }
+        
+        // Set realistic release time based on region and indicator type
+        const releaseTime = getReleaseTime(region, indicator.type);
+        eventDate.setHours(releaseTime.hour, releaseTime.minute, 0, 0);
+        
         // Ensure within range
         if (eventDate >= start && eventDate <= end) {
           const isPast = eventDate < now;
@@ -344,7 +356,7 @@ function generateCalendarEvents(startDate: string, endDate: string, regions: str
             Country: getCountryName(region),
             Region: region, // Store the region code directly
             Category: indicator.type,
-            Date: eventDate.toISOString().split('T')[0],
+            Date: eventDate.toISOString(), // Include full timestamp
             Importance: indicator.impact,
           };
           
@@ -383,6 +395,49 @@ function getCountryName(region: string): string {
     SG: 'Singapore',
   };
   return names[region] || region;
+}
+
+function getReleaseTime(region: string, indicatorType: string): { hour: number; minute: number } {
+  // Return time in UTC for consistent storage
+  // US releases typically at 8:30 AM ET (13:30 UTC) or 10:00 AM ET (15:00 UTC)
+  // EU releases typically at 10:00 AM CET (09:00 UTC)
+  // UK releases typically at 7:00 AM GMT (07:00 UTC)
+  // Asian releases vary
+  
+  switch (region) {
+    case 'US':
+      // Most US data at 8:30 AM ET (13:30 UTC in winter, 12:30 UTC in summer - using winter time)
+      return indicatorType === 'interest_rate' ? { hour: 14, minute: 0 } : { hour: 13, minute: 30 };
+    case 'EU':
+      // EU data at 10:00 AM CET (09:00 UTC)
+      return { hour: 9, minute: 0 };
+    case 'UK':
+      // UK data at 7:00 AM GMT (07:00 UTC)
+      return { hour: 7, minute: 0 };
+    case 'JP':
+      // Japan data typically evening before in UTC (23:50 UTC = 8:50 AM JST)
+      return { hour: 23, minute: 50 };
+    case 'CN':
+      // China data typically at 2:00 AM UTC (10:00 AM China time)
+      return { hour: 2, minute: 0 };
+    case 'AU':
+      // Australia data at 1:30 AM UTC (11:30 AM AEDT)
+      return { hour: 1, minute: 30 };
+    case 'CA':
+      // Canada data at 8:30 AM ET (13:30 UTC)
+      return { hour: 13, minute: 30 };
+    case 'KR':
+      // South Korea at midnight UTC (9:00 AM KST)
+      return { hour: 0, minute: 0 };
+    case 'IN':
+      // India at 7:00 AM IST (1:30 UTC)
+      return { hour: 1, minute: 30 };
+    case 'SG':
+      // Singapore at 8:00 AM SGT (00:00 UTC)
+      return { hour: 0, minute: 0 };
+    default:
+      return { hour: 9, minute: 0 };
+  }
 }
 
 function generateRealisticValue(type: string): string {
