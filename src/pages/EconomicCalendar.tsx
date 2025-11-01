@@ -327,6 +327,15 @@ const EconomicCalendar = () => {
   const nextWeekByDay = groupEventsByDay(nextWeekEvents);
   const releasedByDay = groupEventsByDay(releasedEvents);
 
+  // Get current timezone info
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const currentTime = new Date().toLocaleString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  });
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -349,6 +358,18 @@ const EconomicCalendar = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Instant alerts for key economic indicators - Zero latency with real-time database updates
             </p>
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <Badge variant="outline" className="font-mono">
+                🕐 {currentTime}
+              </Badge>
+              <span className="text-muted-foreground">•</span>
+              <Badge variant="outline" className="font-mono">
+                📍 {userTimezone}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                (All times shown in your local timezone)
+              </span>
+            </div>
           </div>
 
           {/* Quick Actions */}
