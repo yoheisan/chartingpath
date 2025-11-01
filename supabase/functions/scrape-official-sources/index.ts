@@ -121,12 +121,20 @@ serve(async (req) => {
     
     console.log(`Total events scraped: ${allEvents.length}`);
     
+    // Fallback to Alpha Vantage API if scraping yields few results
+    if (allEvents.length < 10) {
+      console.log("Few events scraped, fetching from Alpha Vantage API as fallback...");
+      const apiEvents = await fetchFromAlphaVantage();
+      allEvents.push(...apiEvents);
+      console.log(`Added ${apiEvents.length} events from API fallback`);
+    }
+    
     // Upsert events to database (update if exists, insert if new)
     if (allEvents.length > 0) {
       const { error: upsertError } = await supabase
         .from("economic_events")
         .upsert(allEvents, {
-          onConflict: 'event_name,scheduled_time',
+          onConflict: 'event_name,scheduled_time,region',
           ignoreDuplicates: false
         });
       
@@ -497,6 +505,85 @@ async function scrapeUKBOE(): Promise<ScrapedEvent[]> {
     
   } catch (error) {
     console.error("Error scraping BOE:", error);
+    return [];
+  }
+}
+
+// Alpha Vantage API Fallback - Reliable commercial API
+async function fetchFromAlphaVantage(): Promise<ScrapedEvent[]> {
+  try {
+    const apiKey = Deno.env.get("ALPHA_VANTAGE_API_KEY");
+    if (!apiKey) {
+      console.log("Alpha Vantage API key not configured");
+      return [];
+    }
+    
+    const events: ScrapedEvent[] = [];
+    const now = new Date();
+    const twoWeeksAhead = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    
+    // Fetch economic calendar from Alpha Vantage
+    const url = `https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${apiKey}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Alpha Vantage returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.data) {
+      for (const item of data.data) {
+        const releaseDate = new Date(item.date);
+        
+        // Only include events within next 2 weeks
+        if (releaseDate > now && releaseDate < twoWeeksAhead) {
+          let impactLevel = "low";
+          if (item.importance && item.importance.toLowerCase() === "high") {
+            impactLevel = "high";
+          } else if (item.importance && item.importance.toLowerCase() === "medium") {
+            impactLevel = "medium";
+          }
+          
+          let indicatorType = "other";
+          const eventLower = item.event.toLowerCase();
+          if (eventLower.includes("cpi") || eventLower.includes("inflation")) {
+            indicatorType = "inflation";
+          } else if (eventLower.includes("gdp") || eventLower.includes("growth")) {
+            indicatorType = "gdp";
+          } else if (eventLower.includes("employment") || eventLower.includes("payroll") || eventLower.includes("unemployment")) {
+            indicatorType = "employment";
+          } else if (eventLower.includes("rate") || eventLower.includes("fomc") || eventLower.includes("ecb") || eventLower.includes("boe")) {
+            indicatorType = "interest_rate";
+          } else if (eventLower.includes("pmi") || eventLower.includes("manufacturing")) {
+            indicatorType = "manufacturing";
+          } else if (eventLower.includes("retail")) {
+            indicatorType = "retail";
+          } else if (eventLower.includes("trade")) {
+            indicatorType = "trade";
+          }
+          
+          events.push({
+            event_name: item.event,
+            country_code: item.country || "Unknown",
+            region: item.country_code || "XX",
+            indicator_type: indicatorType,
+            impact_level: impactLevel,
+            scheduled_time: releaseDate.toISOString(),
+            actual_value: item.actual || undefined,
+            forecast_value: item.estimate || undefined,
+            previous_value: item.previous || undefined,
+            released: item.actual !== null && item.actual !== undefined,
+          });
+        }
+      }
+    }
+    
+    console.log(`Alpha Vantage: Found ${events.length} events`);
+    return events;
+    
+  } catch (error) {
+    console.error("Error fetching from Alpha Vantage:", error);
     return [];
   }
 }

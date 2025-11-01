@@ -95,7 +95,29 @@ const EconomicCalendar = () => {
 
   useEffect(() => {
     checkAuth();
+    
+    // Immediate initial scrape on page load
+    const initialScrape = async () => {
+      try {
+        await supabase.functions.invoke("scrape-official-sources");
+      } catch (error) {
+        console.error("Initial scrape failed:", error);
+      }
+    };
+    
+    initialScrape();
     fetchEvents();
+
+    // Auto-refresh every 5 minutes by calling official sources scraper
+    const autoRefreshInterval = setInterval(async () => {
+      try {
+        console.log("Auto-refreshing economic calendar...");
+        await supabase.functions.invoke("scrape-official-sources");
+        fetchEvents();
+      } catch (error) {
+        console.error("Auto-refresh failed:", error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
 
     // Realtime subscription for instant updates (zero latency)
     const channel = supabase
@@ -116,6 +138,7 @@ const EconomicCalendar = () => {
       .subscribe();
 
     return () => {
+      clearInterval(autoRefreshInterval);
       supabase.removeChannel(channel);
     };
   }, []);
@@ -413,15 +436,14 @@ const EconomicCalendar = () => {
 
           {/* Quick Actions */}
           <div className="flex gap-4 justify-center flex-wrap items-center">
-            <Button onClick={refreshCalendar} disabled={loading} variant="default">
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Scrape Official Sources
-            </Button>
+            <Badge variant="outline" className="gap-2 px-4 py-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Auto-refreshing every 5 minutes</span>
+            </Badge>
             
-            <Button onClick={triggerAggressiveScrape} variant="destructive">
-              <Bell className="mr-2 h-4 w-4" />
-              Aggressive Scrape (5s intervals)
-            </Button>
+            <Badge variant="secondary" className="px-4 py-2">
+              Last updated: {new Date().toLocaleTimeString()}
+            </Badge>
             
             {/* Country Filter */}
             <div className="flex items-center gap-2">
