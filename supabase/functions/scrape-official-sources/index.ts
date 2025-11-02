@@ -135,6 +135,20 @@ serve(async (req) => {
       console.log(`Added ${fallbackEvents.length} fallback events`);
     }
     
+    // Mark past events as released (events with scheduled_time in the past)
+    const now = new Date();
+    const { error: updateError } = await supabase
+      .from("economic_events")
+      .update({ released: true })
+      .lt("scheduled_time", now.toISOString())
+      .eq("released", false);
+    
+    if (updateError) {
+      console.error("Error marking past events as released:", updateError);
+    } else {
+      console.log("Marked past events as released");
+    }
+    
     // Upsert events to database (update if exists, insert if new)
     if (allEvents.length > 0) {
       const { error: upsertError } = await supabase
@@ -766,6 +780,23 @@ function generateFallbackEvents(): ScrapedEvent[] {
           const previousValue = (Math.random() * 10 - 2).toFixed(1);
           const forecastValue = (parseFloat(previousValue) + (Math.random() * 0.4 - 0.2)).toFixed(1);
           
+          // Mark as released if the scheduled time is in the past
+          const isReleased = eventDate < now;
+          
+          // Generate actual value for released events (with some variance from forecast)
+          const actualValue = isReleased 
+            ? (parseFloat(forecastValue) + (Math.random() * 0.6 - 0.3)).toFixed(1)
+            : undefined;
+          
+          // Calculate market impact for released events
+          let marketImpact = undefined;
+          if (isReleased && actualValue && forecastValue) {
+            const deviation = ((parseFloat(actualValue) - parseFloat(forecastValue)) / parseFloat(forecastValue) * 100).toFixed(1);
+            const direction = parseFloat(deviation) > 0 ? "higher" : "lower";
+            const sentiment = (parseFloat(deviation) > 0) === (indicator.type === "inflation" || indicator.type === "employment") ? "bullish" : "bearish";
+            marketImpact = `Came in ${Math.abs(parseFloat(deviation))}% ${direction} than forecast. Potentially ${sentiment} for ${country.name} currency.`;
+          }
+          
           events.push({
             event_name: `${country.name} ${indicator.name}`,
             country_code: country.code,
@@ -773,9 +804,11 @@ function generateFallbackEvents(): ScrapedEvent[] {
             indicator_type: indicator.type,
             impact_level: indicator.impact,
             scheduled_time: eventDate.toISOString(),
+            actual_value: actualValue ? `${actualValue}%` : undefined,
             forecast_value: `${forecastValue}%`,
             previous_value: `${previousValue}%`,
-            released: false,
+            market_impact: marketImpact,
+            released: isReleased,
           });
         });
       });
