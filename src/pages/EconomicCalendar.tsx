@@ -184,7 +184,7 @@ const EconomicCalendar = () => {
         .select("*")
         .gte("scheduled_time", oneWeekAgo.toISOString())
         .lte("scheduled_time", twoWeeksAhead.toISOString())
-        .order("scheduled_time", { ascending: true });
+        .order("scheduled_time", { ascending: false });
 
       if (error) throw error;
       
