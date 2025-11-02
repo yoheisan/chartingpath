@@ -363,17 +363,17 @@ const EconomicCalendar = () => {
   const lastWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
     return eventTime >= lastWeekStart && eventTime <= lastWeekEnd;
-  });
+  }).sort((a, b) => new Date(b.scheduled_time).getTime() - new Date(a.scheduled_time).getTime()); // Latest to oldest
   
   const thisWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
     return eventTime >= thisWeekStart && eventTime <= thisWeekEnd;
-  });
+  }).sort((a, b) => new Date(b.scheduled_time).getTime() - new Date(a.scheduled_time).getTime()); // Latest to oldest
   
   const nextWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
     return eventTime >= nextWeekStart && eventTime <= nextWeekEnd;
-  });
+  }).sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()); // Closest to furthest
   
   // Only show released events from the last 48 hours (2 days), sorted by most recent first
   const twoDaysAgo = new Date(now);
