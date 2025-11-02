@@ -452,11 +452,11 @@ const EconomicCalendar = () => {
             </div>
           </div>
 
-          {/* Country Filter - Compact */}
-          <div className="flex items-center gap-2">
-            <Label className="text-xs font-medium whitespace-nowrap">Countries:</Label>
-            <div className="flex gap-1 flex-wrap">
-              {REGIONS.slice(0, 10).map((region) => (
+          {/* Country Filter - All Countries */}
+          <div className="flex items-start gap-2">
+            <Label className="text-xs font-medium whitespace-nowrap pt-1">Countries:</Label>
+            <div className="flex gap-1 flex-wrap max-w-4xl">
+              {REGIONS.map((region) => (
                 <Button
                   key={region.value}
                   variant={selectedCountries.includes(region.value) ? "default" : "outline"}
