@@ -398,118 +398,99 @@ const EconomicCalendar = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3">
-              <div className="relative">
-                <div className="absolute -inset-1 bg-primary/20 rounded-full blur animate-pulse"></div>
-                <Badge variant="destructive" className="relative px-4 py-1.5 text-sm font-bold animate-pulse">
-                  ⚡ LIVE
-                </Badge>
-              </div>
-              <Badge variant="secondary" className="px-4 py-1.5 text-sm font-semibold">
-                Faster than Investing.com & Forex Factory
-              </Badge>
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Real-Time Economic Calendar
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Instant alerts for key economic indicators - Zero latency with real-time database updates
-            </p>
-            
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <Badge variant="outline" className="font-mono">
-                🕐 {currentTime}
-              </Badge>
-              <span className="text-muted-foreground">•</span>
-              <Badge variant="outline" className="font-mono">
-                📍 {userTimezone}
-              </Badge>
-              <span className="text-muted-foreground text-xs">
-                (All times shown in your local timezone)
-              </span>
+    <div className="container mx-auto px-4 py-3">
+      <div className="max-w-7xl mx-auto space-y-3">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Badge variant="destructive" className="px-2 py-1 text-xs font-bold animate-pulse">
+              ⚡ LIVE
+            </Badge>
+            <h1 className="text-2xl font-bold">Economic Calendar</h1>
+            <Badge variant="outline" className="text-xs">
+              {currentTime} • {userTimezone}
+            </Badge>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button onClick={refreshCalendar} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button onClick={triggerAggressiveScrape} variant="outline" size="sm">
+              Aggressive Scrape
+            </Button>
+          </div>
+        </div>
+
+        {/* Inline Filters */}
+        <div className="flex gap-3 items-center flex-wrap border-b pb-2">
+          {/* Importance Filter */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-medium whitespace-nowrap">Importance:</Label>
+            <div className="flex gap-1">
+              {[
+                { value: "high", label: "High", variant: "destructive" },
+                { value: "medium", label: "Med", variant: "default" },
+                { value: "low", label: "Low", variant: "secondary" }
+              ].map((importance) => (
+                <Button
+                  key={importance.value}
+                  variant={selectedImportance.includes(importance.value) ? importance.variant as any : "outline"}
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    setSelectedImportance(prev =>
+                      prev.includes(importance.value)
+                        ? prev.filter(i => i !== importance.value)
+                        : [...prev, importance.value]
+                    );
+                  }}
+                >
+                  {importance.label}
+                </Button>
+              ))}
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex gap-4 justify-center flex-wrap items-center">
-            <Badge variant="outline" className="gap-2 px-4 py-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Real-time • 5-sec polling on high-impact events</span>
-            </Badge>
-            
-            <Badge variant="secondary" className="px-4 py-2">
-              Last updated: {new Date().toLocaleTimeString()}
-            </Badge>
-            
-            {/* Country Filter */}
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Filter by country:</Label>
-              <div className="flex gap-2 flex-wrap">
-                {REGIONS.map((region) => (
-                  <Button
-                    key={region.value}
-                    variant={selectedCountries.includes(region.value) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedCountries(prev =>
-                        prev.includes(region.value)
-                          ? prev.filter(c => c !== region.value)
-                          : [...prev, region.value]
-                      );
-                    }}
-                    className="gap-2"
-                  >
-                    <img 
-                      src={getCountryFlag(region.value)} 
-                      alt={`${region.label} flag`}
-                      className="w-5 h-4 object-cover rounded"
-                    />
-                    {region.value}
-                  </Button>
-                ))}
-                {selectedCountries.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCountries([])}
-                  >
-                    Clear All
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Importance Filter */}
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Importance:</Label>
-              <div className="flex gap-2">
-                {[
-                  { value: "high", label: "High", variant: "destructive" },
-                  { value: "medium", label: "Medium", variant: "default" },
-                  { value: "low", label: "Low", variant: "secondary" }
-                ].map((importance) => (
-                  <Button
-                    key={importance.value}
-                    variant={selectedImportance.includes(importance.value) ? importance.variant as any : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedImportance(prev =>
-                        prev.includes(importance.value)
-                          ? prev.filter(i => i !== importance.value)
-                          : [...prev, importance.value]
-                      );
-                    }}
-                  >
-                    {importance.label}
-                  </Button>
-                ))}
-              </div>
+          {/* Country Filter - Compact */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-medium whitespace-nowrap">Countries:</Label>
+            <div className="flex gap-1 flex-wrap">
+              {REGIONS.slice(0, 10).map((region) => (
+                <Button
+                  key={region.value}
+                  variant={selectedCountries.includes(region.value) ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 px-2 text-xs gap-1"
+                  onClick={() => {
+                    setSelectedCountries(prev =>
+                      prev.includes(region.value)
+                        ? prev.filter(c => c !== region.value)
+                        : [...prev, region.value]
+                    );
+                  }}
+                >
+                  <img 
+                    src={getCountryFlag(region.value)} 
+                    alt={`${region.label} flag`}
+                    className="w-4 h-3 object-cover rounded"
+                  />
+                  {region.value}
+                </Button>
+              ))}
+              {selectedCountries.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setSelectedCountries([])}
+                >
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
+        </div>
 
           <Tabs defaultValue="calendar" className="w-full">
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
@@ -523,7 +504,7 @@ const EconomicCalendar = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="calendar" className="space-y-6 mt-6">
+            <TabsContent value="calendar" className="space-y-3 mt-3">
               {/* Week Navigation Tabs */}
               <Tabs defaultValue="this-week" className="w-full">
                 <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
@@ -541,12 +522,12 @@ const EconomicCalendar = () => {
                 {/* Last Week */}
                 <TabsContent value="last-week">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        Last Week Events ({lastWeekEvents.length})
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Calendar className="h-4 w-4" />
+                        Last Week ({lastWeekEvents.length})
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-xs">
                         {format(lastWeekStart, 'MMM d')} - {format(lastWeekEnd, 'MMM d, yyyy')}
                       </CardDescription>
                     </CardHeader>
@@ -607,16 +588,16 @@ const EconomicCalendar = () => {
                 {/* This Week */}
                 <TabsContent value="this-week">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Bell className="h-5 w-5" />
-                        This Week Events ({thisWeekEvents.length})
-                        <Badge variant="outline" className="ml-2 gap-1.5">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Bell className="h-4 w-4" />
+                        This Week ({thisWeekEvents.length})
+                        <Badge variant="outline" className="ml-2 gap-1.5 text-xs">
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                           Real-time
                         </Badge>
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-xs">
                         {format(thisWeekStart, 'MMM d')} - {format(thisWeekEnd, 'MMM d, yyyy')}
                       </CardDescription>
                     </CardHeader>
@@ -677,12 +658,12 @@ const EconomicCalendar = () => {
                 {/* Next Week */}
                 <TabsContent value="next-week">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        Next Week Events ({nextWeekEvents.length})
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Calendar className="h-4 w-4" />
+                        Next Week ({nextWeekEvents.length})
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-xs">
                         {format(nextWeekStart, 'MMM d')} - {format(nextWeekEnd, 'MMM d, yyyy')}
                       </CardDescription>
                     </CardHeader>
