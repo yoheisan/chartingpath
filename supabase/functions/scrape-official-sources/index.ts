@@ -747,7 +747,7 @@ function generateFallbackEvents(): ScrapedEvent[] {
   for (let weekOffset = 0; weekOffset < 3; weekOffset++) {
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
       const eventDate = new Date(now);
-      eventDate.setDate(now.getDate() + (weekOffset * 7) + dayOffset + 1);
+      eventDate.setDate(now.getDate() + (weekOffset * 7) + dayOffset);
       eventDate.setHours(0, 0, 0, 0);
       
       // Skip weekends for most events (add only 20% of events on weekends)
