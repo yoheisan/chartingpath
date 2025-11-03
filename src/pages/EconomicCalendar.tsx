@@ -367,7 +367,8 @@ const EconomicCalendar = () => {
   
   const thisWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
-    return eventTime >= thisWeekStart && eventTime <= thisWeekEnd;
+    const isInRange = eventTime >= thisWeekStart && eventTime <= thisWeekEnd;
+    return isInRange && !e.released; // Only show unreleased (upcoming) events
   }).sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()); // Nearest to furthest
   
   const nextWeekEvents = filteredEvents.filter(e => {
