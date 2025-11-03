@@ -372,12 +372,14 @@ const EconomicCalendar = () => {
   const thisWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
     const isInRange = eventTime >= thisWeekStart && eventTime <= thisWeekEnd;
-    return isInRange && !e.released; // Only show unreleased (upcoming) events
+    const isUpcoming = eventTime >= now; // Check if event is in the future
+    return isInRange && isUpcoming; // Only show future events in this week
   }).sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()); // Nearest to furthest
   
   const nextWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
-    return eventTime >= nextWeekStart && eventTime <= nextWeekEnd;
+    const isUpcoming = eventTime >= now; // Check if event is in the future
+    return eventTime >= nextWeekStart && eventTime <= nextWeekEnd && isUpcoming;
   }).sort((a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()); // Closest to furthest
   
   // Only show released events from the last 48 hours (2 days), sorted by most recent first
