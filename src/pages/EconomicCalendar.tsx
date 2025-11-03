@@ -363,6 +363,14 @@ const EconomicCalendar = () => {
   const nextWeekStart = isWeekend ? startOfWeek(addWeeks(now, 2), { weekStartsOn: 1 }) : startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
   const nextWeekEnd = isWeekend ? endOfWeek(addWeeks(now, 2), { weekStartsOn: 1 }) : endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
 
+  console.log('Current time:', now);
+  console.log('This Week Range:', thisWeekStart, 'to', thisWeekEnd);
+  console.log('Next Week Range:', nextWeekStart, 'to', nextWeekEnd);
+  console.log('Total events:', filteredEvents.length);
+  if (filteredEvents.length > 0) {
+    console.log('Sample event time:', filteredEvents[0].scheduled_time);
+  }
+
   // Filter events by week ranges
   const lastWeekEvents = filteredEvents.filter(e => {
     const eventTime = new Date(e.scheduled_time);
