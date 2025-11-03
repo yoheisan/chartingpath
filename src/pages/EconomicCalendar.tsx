@@ -728,70 +728,65 @@ const EconomicCalendar = () => {
               {/* Released Events */}
               {releasedEvents.length > 0 && (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle>Recent Releases ({releasedEvents.length})</CardTitle>
-                      <Badge variant="outline" className="gap-1.5">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Calendar className="h-4 w-4" />
+                        Recent Releases ({releasedEvents.length})
+                      </CardTitle>
+                      <Badge variant="outline" className="gap-1.5 text-xs">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                         Past 7 days
                       </Badge>
                     </div>
-                    <CardDescription>
-                      Economic data released in the past 7 days with market impact analysis
+                    <CardDescription className="text-xs">
+                      Economic data released in the past 7 days
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {Object.entries(releasedByDay).map(([day, dayEvents]) => (
-                        <div key={day} className="space-y-3">
-                          <h3 className="font-semibold text-lg sticky top-0 bg-background py-2 border-b">{day}</h3>
-                          <div className="space-y-3">
+                        <div key={day} className="space-y-2">
+                          <h3 className="font-semibold text-sm border-b pb-1.5">{day}</h3>
+                          <div className="space-y-2">
                             {dayEvents.map((event) => (
-                              <div key={event.id} className="border rounded-lg p-3 space-y-3 hover:shadow-md transition-shadow">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex items-start gap-2 flex-1">
-                                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-muted rounded overflow-hidden">
-                                      <img 
-                                        src={getCountryFlag(event.region)} 
-                                        alt={`${getCountryName(event.region)} flag`}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="space-y-1 flex-1">
-                                      <h4 className="font-semibold text-sm">{event.event_name}</h4>
-                                      <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                        <span className="font-medium">{getCountryName(event.region)}</span>
-                                        <span>•</span>
-                                        <span>{format(new Date(event.scheduled_time), 'h:mm a')}</span>
-                                      </p>
-                                    </div>
+                              <div key={event.id} className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <img 
+                                      src={getCountryFlag(event.region)} 
+                                      alt={`${event.region} flag`}
+                                      className="w-5 h-3.5 object-cover rounded flex-shrink-0"
+                                    />
+                                    <h4 className="font-semibold text-sm truncate">{event.event_name}</h4>
+                                    {getImpactBadge(event.impact_level)}
                                   </div>
-                                  {getImpactBadge(event.impact_level)}
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(event.scheduled_time), 'h:mm a')}</span>
                                 </div>
-                                <div className="grid grid-cols-3 gap-4 text-xs pl-8">
+                                <div className="flex gap-4 text-xs mt-2 ml-7">
                                   {event.actual_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Actual:</span>
-                                      <p className="font-semibold">{event.actual_value}</p>
+                                      <span className="text-muted-foreground">Actual: </span>
+                                      <span className="font-semibold">{event.actual_value}</span>
                                     </div>
                                   )}
                                   {event.forecast_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Forecast:</span>
-                                      <p className="font-medium">{event.forecast_value}</p>
+                                      <span className="text-muted-foreground">Forecast: </span>
+                                      <span>{event.forecast_value}</span>
                                     </div>
                                   )}
                                   {event.previous_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Previous:</span>
-                                      <p className="font-medium">{event.previous_value}</p>
+                                      <span className="text-muted-foreground">Previous: </span>
+                                      <span>{event.previous_value}</span>
                                     </div>
                                   )}
                                 </div>
                                 {event.market_impact && (
-                                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-500 p-2 rounded ml-8">
-                                    <p className="text-xs font-medium">Market Impact:</p>
-                                    <p className="text-xs text-muted-foreground mt-1">{event.market_impact}</p>
+                                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-2 border-yellow-500 p-2 rounded text-xs ml-7 mt-2">
+                                    <span className="font-medium">Impact: </span>
+                                    <span className="text-muted-foreground">{event.market_impact}</span>
                                   </div>
                                 )}
                               </div>
