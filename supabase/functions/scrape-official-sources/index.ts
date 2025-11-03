@@ -746,12 +746,12 @@ function generateFallbackEvents(): ScrapedEvent[] {
   // Generate events for next 3 weeks, spread across different days
   for (let weekOffset = 0; weekOffset < 3; weekOffset++) {
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-      const eventDate = new Date(now);
-      eventDate.setDate(now.getDate() + (weekOffset * 7) + dayOffset);
-      eventDate.setHours(0, 0, 0, 0);
+      const baseDate = new Date(now);
+      baseDate.setDate(now.getDate() + (weekOffset * 7) + dayOffset);
+      baseDate.setHours(0, 0, 0, 0);
       
       // Skip weekends for most events (add only 20% of events on weekends)
-      const isWeekend = eventDate.getDay() === 0 || eventDate.getDay() === 6;
+      const isWeekend = baseDate.getDay() === 0 || baseDate.getDay() === 6;
       if (isWeekend && Math.random() > 0.2) continue;
       
       // Select 5-8 random countries per day to have releases
@@ -768,6 +768,9 @@ function generateFallbackEvents(): ScrapedEvent[] {
           .slice(0, numIndicators);
         
         selectedIndicators.forEach(indicator => {
+          // Create a new date object for each event to avoid mutation
+          const eventDate = new Date(baseDate);
+          
           // Set release time based on region
           const releaseHour = country.region === "US" ? 13 : 
                             country.region === "EU" ? 9 : 
