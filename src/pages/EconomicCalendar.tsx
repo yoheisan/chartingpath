@@ -349,15 +349,19 @@ const EconomicCalendar = () => {
 
   const now = new Date();
   
-  // Week boundaries in user's timezone
-  const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
-  const thisWeekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+  // For forward-looking events, "This Week" should be the upcoming trading week
+  // If today is Sunday or weekend, "This Week" = next Monday-Sunday
+  // Otherwise "This Week" = current Monday-Sunday including today and forward
+  const isWeekend = now.getDay() === 0 || now.getDay() === 6; // Sunday or Saturday
+  
+  const thisWeekStart = isWeekend ? startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 }) : startOfWeek(now, { weekStartsOn: 1 });
+  const thisWeekEnd = isWeekend ? endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 }) : endOfWeek(now, { weekStartsOn: 1 });
   
   const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   const lastWeekEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   
-  const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
-  const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+  const nextWeekStart = isWeekend ? startOfWeek(addWeeks(now, 2), { weekStartsOn: 1 }) : startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+  const nextWeekEnd = isWeekend ? endOfWeek(addWeeks(now, 2), { weekStartsOn: 1 }) : endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
 
   // Filter events by week ranges
   const lastWeekEvents = filteredEvents.filter(e => {
