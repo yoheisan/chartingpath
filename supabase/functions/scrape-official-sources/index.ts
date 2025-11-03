@@ -137,6 +137,22 @@ serve(async (req) => {
     
     // Mark past events as released (events with scheduled_time in the past)
     const now = new Date();
+    
+    // First, delete all existing events in the next 3 weeks to avoid duplicates with wrong timestamps
+    const threeWeeksAhead = new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000);
+    const { error: deleteError } = await supabase
+      .from("economic_events")
+      .delete()
+      .gte("scheduled_time", now.toISOString())
+      .lte("scheduled_time", threeWeeksAhead.toISOString());
+    
+    if (deleteError) {
+      console.error("Error deleting future events:", deleteError);
+    } else {
+      console.log("Cleared future events for fresh data");
+    }
+    
+    // Mark past events as released
     const { error: updateError } = await supabase
       .from("economic_events")
       .update({ released: true })
