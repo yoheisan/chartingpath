@@ -795,22 +795,64 @@ function generateFallbackEvents(): ScrapedEvent[] {
           
           eventDate.setHours(releaseHour, 30, 0, 0);
           
-          // Generate realistic values
-          const previousValue = (Math.random() * 10 - 2).toFixed(1);
-          const forecastValue = (parseFloat(previousValue) + (Math.random() * 0.4 - 0.2)).toFixed(1);
+          // Generate realistic values based on indicator type
+          let previousValue: string;
+          let forecastValue: string;
+          let actualValue: string | undefined;
+          
+          if (indicator.type === "interest_rate") {
+            // Interest rates: typically 0.5% - 15% range
+            const baseRate = 3.0 + Math.random() * 8;
+            previousValue = `${baseRate.toFixed(2)}%`;
+            forecastValue = `${(baseRate + (Math.random() * 0.5 - 0.25)).toFixed(2)}%`;
+          } else if (indicator.type === "inflation") {
+            // Inflation: typically 1% - 8% range
+            const baseInflation = 2.0 + Math.random() * 4;
+            previousValue = `${baseInflation.toFixed(1)}%`;
+            forecastValue = `${(baseInflation + (Math.random() * 0.4 - 0.2)).toFixed(1)}%`;
+          } else if (indicator.type === "employment") {
+            // Unemployment rate: typically 3% - 10% range
+            const baseUnemployment = 4.0 + Math.random() * 4;
+            previousValue = `${baseUnemployment.toFixed(1)}%`;
+            forecastValue = `${(baseUnemployment + (Math.random() * 0.3 - 0.15)).toFixed(1)}%`;
+          } else if (indicator.type === "gdp") {
+            // GDP growth: typically -2% to +8% range
+            const baseGDP = Math.random() * 6 - 1;
+            previousValue = `${baseGDP.toFixed(1)}%`;
+            forecastValue = `${(baseGDP + (Math.random() * 0.6 - 0.3)).toFixed(1)}%`;
+          } else if (indicator.type === "trade") {
+            // Trade balance: in billions, can be negative
+            const baseTrade = (Math.random() * 40 - 20);
+            previousValue = `${baseTrade >= 0 ? '+' : ''}${baseTrade.toFixed(1)}B`;
+            forecastValue = `${(baseTrade + (Math.random() * 4 - 2)) >= 0 ? '+' : ''}${(baseTrade + (Math.random() * 4 - 2)).toFixed(1)}B`;
+          } else {
+            // Other indicators: percentage changes typically -5% to +10%
+            const baseValue = Math.random() * 10 - 2;
+            previousValue = `${baseValue.toFixed(1)}%`;
+            forecastValue = `${(baseValue + (Math.random() * 0.4 - 0.2)).toFixed(1)}%`;
+          }
           
           // Mark as released if the scheduled time is in the past
           const isReleased = eventDate < now;
           
           // Generate actual value for released events (with some variance from forecast)
-          const actualValue = isReleased 
-            ? (parseFloat(forecastValue) + (Math.random() * 0.6 - 0.3)).toFixed(1)
-            : undefined;
+          if (isReleased) {
+            if (indicator.type === "trade") {
+              const forecastNum = parseFloat(forecastValue.replace(/[+B]/g, ''));
+              const actualNum = forecastNum + (Math.random() * 4 - 2);
+              actualValue = `${actualNum >= 0 ? '+' : ''}${actualNum.toFixed(1)}B`;
+            } else {
+              const forecastNum = parseFloat(forecastValue.replace('%', ''));
+              actualValue = `${(forecastNum + (Math.random() * 0.6 - 0.3)).toFixed(indicator.type === "interest_rate" ? 2 : 1)}%`;
+            }
+          }
           
           // Calculate market impact for released events
           let marketImpact = undefined;
-          if (isReleased && actualValue && forecastValue) {
-            const deviation = ((parseFloat(actualValue) - parseFloat(forecastValue)) / parseFloat(forecastValue) * 100).toFixed(1);
+          if (isReleased && actualValue) {
+            const forecastNum = parseFloat(forecastValue.replace(/[+%B]/g, ''));
+            const actualNum = parseFloat(actualValue.replace(/[+%B]/g, ''));
+            const deviation = ((actualNum - forecastNum) / Math.abs(forecastNum) * 100).toFixed(1);
             const direction = parseFloat(deviation) > 0 ? "higher" : "lower";
             const sentiment = (parseFloat(deviation) > 0) === (indicator.type === "inflation" || indicator.type === "employment") ? "bullish" : "bearish";
             marketImpact = `Came in ${Math.abs(parseFloat(deviation))}% ${direction} than forecast. Potentially ${sentiment} for ${country.name} currency.`;
@@ -823,9 +865,9 @@ function generateFallbackEvents(): ScrapedEvent[] {
             indicator_type: indicator.type,
             impact_level: indicator.impact,
             scheduled_time: eventDate.toISOString(),
-            actual_value: actualValue ? `${actualValue}%` : undefined,
-            forecast_value: `${forecastValue}%`,
-            previous_value: `${previousValue}%`,
+            actual_value: actualValue,
+            forecast_value: forecastValue,
+            previous_value: previousValue,
             market_impact: marketImpact,
             released: isReleased,
           });
