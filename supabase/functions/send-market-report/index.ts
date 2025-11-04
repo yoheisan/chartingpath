@@ -56,9 +56,13 @@ serve(async (req) => {
             <!-- Brand Header -->
             <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 20px; text-align: center;">
               <div style="background-color: rgba(255, 255, 255, 0.15); width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
+                <img 
+                  src="https://chartingpath.com/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
+                  alt="ChartingPath Logo" 
+                  width="36" 
+                  height="36" 
+                  style="filter: brightness(0) invert(1);"
+                />
               </div>
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px 0; font-weight: 700;">Market Breadth Report</h1>
               <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; margin: 0;">Professional Market Analysis & Insights</p>
