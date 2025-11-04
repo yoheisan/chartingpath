@@ -510,10 +510,7 @@ const EconomicCalendar = () => {
             <TabsContent value="calendar" className="space-y-3 mt-3">
               {/* Week Navigation Tabs */}
               <Tabs defaultValue="this-week" className="w-full">
-                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
-                  <TabsTrigger value="last-week">
-                    Last Week ({lastWeekEvents.length})
-                  </TabsTrigger>
+                <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2">
                   <TabsTrigger value="this-week">
                     This Week ({thisWeekEvents.length})
                   </TabsTrigger>
@@ -521,72 +518,6 @@ const EconomicCalendar = () => {
                     Next Week ({nextWeekEvents.length})
                   </TabsTrigger>
                 </TabsList>
-
-                {/* Last Week */}
-                <TabsContent value="last-week">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Calendar className="h-4 w-4" />
-                        Last Week ({lastWeekEvents.length})
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        {format(lastWeekStart, 'MMM d')} - {format(lastWeekEnd, 'MMM d, yyyy')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {Object.keys(lastWeekByDay).length === 0 ? (
-                        <p className="text-muted-foreground text-center py-8">No events for last week</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {Object.entries(lastWeekByDay).map(([day, dayEvents]) => (
-                            <div key={day} className="space-y-2">
-                              <h3 className="font-semibold text-sm border-b pb-1.5">{day}</h3>
-                              <div className="space-y-2">
-                                {dayEvents.map((event) => (
-                                  <div key={event.id} className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <img 
-                                          src={getCountryFlag(event.region)} 
-                                          alt={`${event.region} flag`}
-                                          className="w-5 h-3.5 object-cover rounded flex-shrink-0"
-                                        />
-                                        <h4 className="font-semibold text-sm truncate">{event.event_name}</h4>
-                                        {getImpactBadge(event.impact_level)}
-                                      </div>
-                                      <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(event.scheduled_time), 'h:mm a')}</span>
-                                    </div>
-                                    <div className="flex gap-4 text-xs mt-2 ml-7">
-                                      {event.actual_value && (
-                                        <div>
-                                          <span className="text-muted-foreground">Actual: </span>
-                                          <span className="font-semibold">{event.actual_value}</span>
-                                        </div>
-                                      )}
-                                      {event.forecast_value && (
-                                        <div>
-                                          <span className="text-muted-foreground">Forecast: </span>
-                                          <span>{event.forecast_value}</span>
-                                        </div>
-                                      )}
-                                      {event.previous_value && (
-                                        <div>
-                                          <span className="text-muted-foreground">Previous: </span>
-                                          <span>{event.previous_value}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
 
                 {/* This Week */}
                 <TabsContent value="this-week">
