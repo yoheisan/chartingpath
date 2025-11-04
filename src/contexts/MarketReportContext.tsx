@@ -20,6 +20,32 @@ export const MarketReportProvider = ({ children }: { children: ReactNode }) => {
 
   const prefetchReport = async (timezone: string) => {
     try {
+      // First, try to fetch from the database
+      const { data: dbReports, error: dbError } = await supabase
+        .from("market_reports")
+        .select("*")
+        .eq("timezone", timezone)
+        .order("generated_at", { ascending: false })
+        .limit(1);
+
+      if (!dbError && dbReports && dbReports.length > 0) {
+        const dbReport = dbReports[0];
+        const reportAge = Date.now() - new Date(dbReport.generated_at).getTime();
+        
+        // If report is less than 15 minutes old, use it
+        if (reportAge < 15 * 60 * 1000) {
+          console.log("Using cached report from database");
+          setCachedReport({
+            report: dbReport.report_content,
+            timestamp: new Date(dbReport.generated_at).getTime(),
+            timezone,
+          });
+          return;
+        }
+      }
+
+      // If no recent report in DB, generate a new one
+      console.log("Generating fresh report");
       const { data, error } = await supabase.functions.invoke("generate-market-report", {
         body: {
           timezone,
