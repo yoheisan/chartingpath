@@ -224,6 +224,7 @@ const MarketBreadthReport = () => {
           markets: subscription.markets,
           timeSpan: subscription.time_span,
           tone: subscription.tone,
+          unsubscribeToken: null, // Test emails don't need unsubscribe links
         },
       });
 

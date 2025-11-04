@@ -32,6 +32,9 @@ serve(async (req) => {
 
     console.log("Saving subscription for user:", user.id);
 
+    // Generate unsubscribe token if creating new subscription
+    const unsubscribeToken = crypto.randomUUID();
+
     // Ensure is_active is set to true when saving (reactivate if resubscribing)
     const { error } = await supabase
       .from("market_report_subscriptions")
@@ -45,6 +48,7 @@ serve(async (req) => {
         tone: subscription.tone,
         time_span: subscription.time_span,
         is_active: subscription.is_active !== false, // Default to true if not explicitly false
+        unsubscribe_token: unsubscribeToken,
       }, {
         onConflict: "user_id"
       });

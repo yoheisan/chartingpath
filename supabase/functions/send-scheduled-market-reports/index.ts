@@ -465,32 +465,34 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
 
                 <!-- Footer -->
                 <div style="background-color: #f9fafb; padding: 32px 20px; border-top: 1px solid #e5e7eb;">
-                  <div style="text-align: center; margin-bottom: 24px;">
-                    <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">Market Analysis Platform</p>
-                    <p style="color: #6b7280; font-size: 14px; margin: 0;">Your trusted source for market intelligence</p>
-                  </div>
+              <div style="text-align: center; margin-bottom: 24px;">
+                <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">ChartingPath</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">Professional Trading Education & Tools</p>
+              </div>
 
                   <!-- Footer Links -->
                   <div style="text-align: center; margin-bottom: 20px;">
-                    <a href="${preferencesUrl}" style="color: #4f46e5; text-decoration: none; font-size: 13px; margin: 0 12px;">Preferences</a>
+                    <a href="${preferencesUrl}" style="color: #4f46e5; text-decoration: none; font-size: 13px; margin: 0 12px;">Manage Preferences</a>
                     <span style="color: #d1d5db;">|</span>
                     <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Unsubscribe</a>
                     <span style="color: #d1d5db;">|</span>
-                    <a href="https://your-domain.com/privacy" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy Policy</a>
+                    <a href="https://chartingpath.com/privacy" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy</a>
+                    <span style="color: #d1d5db;">|</span>
+                    <a href="https://chartingpath.com/terms" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Terms</a>
                   </div>
 
                   <!-- Legal Footer -->
                   <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                     <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
-                      You are receiving this email because you subscribed to Market Breadth Reports at ${sub.email}
+                      You are receiving this email because you subscribed to Market Breadth Reports.
                     </p>
                     <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
-                      Market Analysis Platform<br>
-                      123 Financial District, Suite 456<br>
-                      New York, NY 10004, United States
+                      ChartingPath LLC<br>
+                      30 N Gould St, Suite R<br>
+                      Sheridan, WY 82801, United States
                     </p>
                     <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-                      © ${new Date().getFullYear()} Market Analysis Platform. All rights reserved.
+                      © ${new Date().getFullYear()} ChartingPath. All rights reserved.
                     </p>
                   </div>
                 </div>
