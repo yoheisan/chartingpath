@@ -36,6 +36,7 @@ const MarketBreadthReport = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     loadSubscription();
@@ -191,6 +192,57 @@ const MarketBreadthReport = () => {
         ? prev.markets.filter(m => m !== market)
         : [...prev.markets, market]
     }));
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!subscription.email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!report) {
+      toast({
+        title: "No Report Available",
+        description: "Please generate a report first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingTest(true);
+
+    try {
+      const { error } = await supabase.functions.invoke("send-market-report", {
+        body: {
+          email: subscription.email,
+          report: report,
+          timezone: reportTimezone,
+          markets: subscription.markets,
+          timeSpan: subscription.time_span,
+          tone: subscription.tone,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test Email Sent!",
+        description: `Market report sent to ${subscription.email}`,
+      });
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      toast({
+        title: "Send Failed",
+        description: error.message || "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   return (
@@ -527,24 +579,46 @@ const MarketBreadthReport = () => {
                       </Select>
                     </div>
 
-                    <Button
-                      onClick={handleSaveSubscription}
-                      disabled={isSaving}
-                      className="w-full"
-                      size="lg"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Save Subscription
-                        </>
-                      )}
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleSaveSubscription}
+                        disabled={isSaving}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Save Subscription
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        onClick={handleSendTestEmail}
+                        disabled={isSendingTest || !subscription.email || !report}
+                        variant="outline"
+                        className="w-full"
+                        size="lg"
+                      >
+                        {isSendingTest ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Test Email
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Subscription Preview */}
