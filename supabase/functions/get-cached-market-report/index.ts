@@ -90,7 +90,39 @@ serve(async (req) => {
       }
     );
 
-    if (generateError) throw generateError;
+    if (generateError) {
+      console.error("Generate error:", generateError);
+      
+      // Check if it's a payment error
+      if (generateError.message?.includes("Payment required") || generateError.message?.includes("402")) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Lovable AI credits depleted. Please add credits in Settings → Workspace → Usage to generate new reports.",
+            needsCredits: true
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      // Check if it's a rate limit error
+      if (generateError.message?.includes("Rate limit") || generateError.message?.includes("429")) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Rate limit exceeded. Please try again in a moment.",
+            rateLimited: true
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      throw generateError;
+    }
 
     // Cache the new report (expires in 30 minutes)
     const expiresAt = new Date();

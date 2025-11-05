@@ -100,6 +100,16 @@ const MarketBreadthReport = () => {
       });
 
       if (error) {
+        // Handle payment/credits error
+        if (error.message?.includes("credits") || error.message?.includes("Payment required")) {
+          toast({
+            title: "Credits Required",
+            description: "Please add Lovable AI credits in Settings → Workspace → Usage to generate reports.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         // Handle rate limit error gracefully
         if (error.message?.includes("Rate limit")) {
           toast({
