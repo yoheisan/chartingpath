@@ -10,11 +10,9 @@ import { Loader2, TrendingUp, Mail, Clock, Calendar, RefreshCw } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
-import { useMarketReport } from "@/contexts/MarketReportContext";
 
 const MarketBreadthReport = () => {
   const { toast } = useToast();
-  const { cachedReport, isReportFresh } = useMarketReport();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
   
@@ -40,31 +38,15 @@ const MarketBreadthReport = () => {
 
   useEffect(() => {
     loadSubscription();
-    
-    // Use cached report if available and fresh
-    if (cachedReport && isReportFresh(reportTimezone)) {
-      setReport(cachedReport.report);
-    } else {
-      handleGenerateInstant();
-    }
+    handleGenerateInstant();
   }, []);
 
-  // Auto-regenerate report when timezone changes
+  // Regenerate report when timezone changes
   useEffect(() => {
-    // Skip initial render (already handled by the above useEffect)
+    // Skip initial render
     if (reportTimezone !== Intl.DateTimeFormat().resolvedOptions().timeZone) {
       handleGenerateInstant(reportTimezone);
     }
-  }, [reportTimezone]);
-
-  // Auto-regenerate report every 15 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('Auto-refreshing market report...');
-      handleGenerateInstant();
-    }, 15 * 60 * 1000); // 15 minutes in milliseconds
-
-    return () => clearInterval(interval);
   }, [reportTimezone]);
 
   const loadSubscription = async () => {
@@ -102,23 +84,44 @@ const MarketBreadthReport = () => {
     }
   };
 
-  const handleGenerateInstant = async (customTimezone?: string) => {
+  const handleGenerateInstant = async (customTimezone?: string, force = false) => {
     setIsGenerating(true);
 
     try {
       const timezoneToUse = customTimezone || reportTimezone;
-      const { data, error } = await supabase.functions.invoke("generate-market-report", {
+      const { data, error } = await supabase.functions.invoke("get-cached-market-report", {
         body: {
           timezone: timezoneToUse,
           markets: ["stocks", "forex", "crypto", "commodities"],
           timeSpan: "previous_day",
           tone: "professional",
+          forceGenerate: force,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle rate limit error gracefully
+        if (error.message?.includes("Rate limit")) {
+          toast({
+            title: "Please Wait",
+            description: "You can generate a new report in 30 minutes. Showing cached report.",
+            variant: "default",
+          });
+          return;
+        }
+        throw error;
+      }
 
       setReport(data.report);
+      
+      if (data.cached) {
+        const generatedTime = new Date(data.generated_at).toLocaleTimeString();
+        toast({
+          title: "Cached Report",
+          description: `Showing report from ${generatedTime}. Click Update to generate fresh data.`,
+          variant: "default",
+        });
+      }
     } catch (error) {
       console.error("Error generating report:", error);
       toast({
@@ -311,12 +314,12 @@ const MarketBreadthReport = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleGenerateInstant()}
+                  onClick={() => handleGenerateInstant(reportTimezone, true)}
                   disabled={isGenerating}
                   className="gap-2"
                 >
                   <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                  Update
+                  Generate Fresh Report
                 </Button>
               </div>
               

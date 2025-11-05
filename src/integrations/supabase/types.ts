@@ -431,6 +431,42 @@ export type Database = {
           },
         ]
       }
+      cached_market_reports: {
+        Row: {
+          created_at: string
+          expires_at: string
+          generated_at: string
+          id: string
+          markets: string[]
+          report: string
+          time_span: string
+          timezone: string
+          tone: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          generated_at?: string
+          id?: string
+          markets: string[]
+          report: string
+          time_span: string
+          timezone: string
+          tone: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          markets?: string[]
+          report?: string
+          time_span?: string
+          timezone?: string
+          tone?: string
+        }
+        Relationships: []
+      }
       community_analytics: {
         Row: {
           ai_responses: number
@@ -1711,6 +1747,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_report_requests: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          requested_at: string
+          timezone: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          requested_at?: string
+          timezone: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          requested_at?: string
+          timezone?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1806,10 +1869,15 @@ export type Database = {
         }
         Returns: number
       }
+      check_rate_limit: {
+        Args: { p_ip_address: string; p_timezone: string; p_user_id: string }
+        Returns: boolean
+      }
       check_refund_eligibility: {
         Args: { p_subscription_id: string; p_user_id: string }
         Returns: Json
       }
+      cleanup_expired_reports: { Args: never; Returns: undefined }
       get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
       get_translations: {
         Args: { p_language_code?: string }
