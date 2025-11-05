@@ -420,7 +420,6 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
       }),
     });
 
