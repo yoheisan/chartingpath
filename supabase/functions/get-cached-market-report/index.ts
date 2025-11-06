@@ -514,6 +514,12 @@ ${marketDataSummary}`;
       const generatedReport = data.choices[0].message.content;
 
       console.log("Report generated successfully with OpenAI");
+      console.log("Report length:", generatedReport?.length || 0);
+      
+      if (!generatedReport || generatedReport.trim().length === 0) {
+        console.error("Generated report is empty! Full response:", JSON.stringify(data));
+        throw new Error("OpenAI returned an empty report");
+      }
 
       // Cache the new report (expires in 30 minutes)
     const expiresAt = new Date();
