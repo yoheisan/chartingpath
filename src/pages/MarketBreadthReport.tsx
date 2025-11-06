@@ -91,6 +91,14 @@ const MarketBreadthReport = () => {
 
     try {
       const timezoneToUse = customTimezone || reportTimezone;
+      
+      // Show progress toast
+      toast({
+        title: "Generating Report",
+        description: "Fetching market data and analyzing news... This may take 30-45 seconds.",
+        variant: "default",
+      });
+      
       const { data, error } = await supabase.functions.invoke("get-cached-market-report", {
         body: {
           timezone: timezoneToUse,

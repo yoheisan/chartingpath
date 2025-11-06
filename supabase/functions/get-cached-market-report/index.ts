@@ -261,15 +261,15 @@ serve(async (req) => {
 
     console.log("Market data fetched successfully");
 
-    // Step 1: Summarize each news article using GPT-4o-mini
+    // Step 1: Summarize top news articles using GPT-4o-mini (reduced to 6 total for speed)
     console.log("Summarizing news articles with GPT-4o-mini...");
     const allNewsArticles = [
-      ...(marketData.news || []).slice(0, 5).map((article: any) => ({
+      ...(marketData.news || []).slice(0, 3).map((article: any) => ({
         headline: article.headline,
         summary: article.summary,
         source: article.source
       })),
-      ...(marketData.geopoliticalNews || []).slice(0, 5).map((article: any) => ({
+      ...(marketData.geopoliticalNews || []).slice(0, 3).map((article: any) => ({
         headline: article.title,
         summary: article.description,
         source: article.source?.name || 'Unknown'
