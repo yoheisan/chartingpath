@@ -25,10 +25,10 @@ serve(async (req) => {
 
     console.log(`Generating sample report for ${email}`);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     
-    if (!LOVABLE_API_KEY || !FINNHUB_API_KEY) {
+    if (!OPENAI_API_KEY || !FINNHUB_API_KEY) {
       throw new Error("API keys not configured");
     }
 
@@ -194,23 +194,25 @@ ${marketDataSummary}
 
 Provide a thorough analysis with actionable insights for traders.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-5-2025-08-07",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
+        max_completion_tokens: 2000,
       }),
     });
 
     if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error("OpenAI API error:", aiResponse.status, errorText);
       throw new Error("Failed to generate report");
     }
 

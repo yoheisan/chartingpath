@@ -19,9 +19,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     // Get current time in UTC
@@ -367,24 +367,24 @@ ${isWeekend ? '- Focus on the weekly perspective and what happened in the most r
 
 Provide a thorough analysis of ${timeSpanText} with actionable insights for traders in the ${sessionContext.region} region${isWeekend ? ', keeping in mind that most markets are closed for the weekend' : ''}.`;
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "gpt-5-2025-08-07",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt },
             ],
-            temperature: 0.7,
+            max_completion_tokens: 2000,
           }),
         });
 
         if (!aiResponse.ok) {
-          console.error("AI Gateway error:", aiResponse.status);
+          console.error("OpenAI API error:", aiResponse.status);
           continue;
         }
 

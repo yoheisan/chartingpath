@@ -15,12 +15,12 @@ serve(async (req) => {
     
     console.log("Generating market report:", { timezone, markets, timeSpan, tone });
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
     
     if (!FINNHUB_API_KEY) {
@@ -408,18 +408,19 @@ ${isWeekend ? '- Focus on the weekly perspective and what happened in the most r
 
 Provide a thorough analysis of ${timeSpanText} with actionable insights for traders in the ${sessionContext.region} region${isWeekend ? ', keeping in mind that most markets are closed for the weekend' : ''}.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-5-2025-08-07",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        max_completion_tokens: 2000,
       }),
     });
 
@@ -432,13 +433,13 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to your Lovable AI workspace." }),
+          JSON.stringify({ error: "Payment required. Please check your OpenAI account." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
+      console.error("OpenAI API error:", response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
