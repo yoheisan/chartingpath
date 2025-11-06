@@ -239,11 +239,15 @@ Provide a thorough analysis with actionable insights for traders.`;
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
             <!-- Brand Header -->
-            <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 20px; text-align: center;">
+            <div style="background: linear-gradient(135deg, #ff6633 0%, #ff8000 100%); padding: 32px 20px; text-align: center;">
               <div style="background-color: rgba(255, 255, 255, 0.15); width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
+                <img 
+                  src="https://chartingpath.com/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
+                  alt="ChartingPath Logo" 
+                  width="36" 
+                  height="36" 
+                  style="display: block; filter: brightness(0) invert(1);"
+                />
               </div>
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px 0; font-weight: 700;">Sample Market Report</h1>
               <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; margin: 0;">Professional Market Analysis & Insights</p>
@@ -263,12 +267,12 @@ Provide a thorough analysis with actionable insights for traders.`;
               </div>
 
               <!-- Report Settings Summary -->
-              <div style="background: linear-gradient(135deg, #f9f9f9 0%, #f3f4f6 100%); border-left: 4px solid #4f46e5; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+              <div style="background: linear-gradient(135deg, #f9f9f9 0%, #f3f4f6 100%); border-left: 4px solid #ff6633; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
                 <p style="margin: 0; font-size: 14px; color: #333; line-height: 1.8;">
-                  <strong style="color: #4f46e5;">📊 Markets:</strong> STOCKS, FOREX, CRYPTO, COMMODITIES<br>
-                  <strong style="color: #4f46e5;">📅 Time Span:</strong> Previous Day<br>
-                  <strong style="color: #4f46e5;">🌍 Timezone:</strong> America/New_York<br>
-                  <strong style="color: #4f46e5;">📝 Tone:</strong> Professional
+                  <strong style="color: #ff6633;">📊 Markets:</strong> STOCKS, FOREX, CRYPTO, COMMODITIES<br>
+                  <strong style="color: #ff6633;">📅 Time Span:</strong> Previous Day<br>
+                  <strong style="color: #ff6633;">🌍 Timezone:</strong> America/New_York<br>
+                  <strong style="color: #ff6633;">📝 Tone:</strong> Professional
                 </p>
               </div>
 
@@ -288,15 +292,39 @@ Provide a thorough analysis with actionable insights for traders.`;
               <div style="margin-top: 32px; text-align: center; padding: 24px; background-color: #f9fafb; border-radius: 8px;">
                 <p style="color: #374151; font-size: 16px; margin: 0 0 16px 0; font-weight: 600;">Ready to subscribe?</p>
                 <p style="color: #6b7280; font-size: 14px; margin: 0 0 20px 0;">Get personalized market reports delivered to your inbox daily or weekly.</p>
-                <a href="https://dgznlsckoamseqcpzfqm.supabase.co/tools/market-breadth" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">Subscribe Now</a>
+                <a href="https://chartingpath.com/tools/market-breadth" style="display: inline-block; background: linear-gradient(135deg, #ff6633 0%, #ff8000 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">Subscribe Now</a>
               </div>
             </div>
 
             <!-- Footer -->
             <div style="background-color: #f9fafb; padding: 32px 20px; border-top: 1px solid #e5e7eb;">
-              <div style="text-align: center;">
-                <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">Market Analysis Platform</p>
-                <p style="color: #6b7280; font-size: 14px; margin: 0;">Your trusted source for market intelligence</p>
+              <div style="text-align: center; margin-bottom: 24px;">
+                <p style="color: #1f2937; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">ChartingPath</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">Professional Trading Education & Tools</p>
+              </div>
+              
+              <!-- Footer Links -->
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="https://chartingpath.com/tools/market-breadth" style="color: #ff6633; text-decoration: none; font-size: 13px; margin: 0 12px;">Manage Preferences</a>
+                <span style="color: #d1d5db;">|</span>
+                <a href="https://chartingpath.com/privacy" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy</a>
+                <span style="color: #d1d5db;">|</span>
+                <a href="https://chartingpath.com/terms" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Terms</a>
+              </div>
+
+              <!-- Legal Footer -->
+              <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
+                  This is a sample market report you requested.
+                </p>
+                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
+                  ChartingPath LLC<br>
+                  30 N Gould St, Suite R<br>
+                  Sheridan, WY 82801, United States
+                </p>
+                <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                  © ${new Date().getFullYear()} ChartingPath. All rights reserved.
+                </p>
               </div>
             </div>
           </div>
