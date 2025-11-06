@@ -36,15 +36,17 @@ const MarketBreadthReport = () => {
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [isSendingTest, setIsSendingTest] = useState(false);
 
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
+
   useEffect(() => {
     loadSubscription();
     handleGenerateInstant();
+    setHasInitialLoad(true);
   }, []);
 
-  // Regenerate report when timezone changes
+  // Regenerate report when timezone changes (skip initial render)
   useEffect(() => {
-    // Skip initial render
-    if (reportTimezone !== Intl.DateTimeFormat().resolvedOptions().timeZone) {
+    if (hasInitialLoad) {
       handleGenerateInstant(reportTimezone);
     }
   }, [reportTimezone]);
