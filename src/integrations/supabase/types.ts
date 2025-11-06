@@ -674,6 +674,27 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_ai_usage: {
+        Row: {
+          created_at: string | null
+          date: string
+          updated_at: string | null
+          usd_spent: number
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          updated_at?: string | null
+          usd_spent?: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          updated_at?: string | null
+          usd_spent?: number
+        }
+        Relationships: []
+      }
       economic_alerts: {
         Row: {
           delivery_method: string

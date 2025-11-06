@@ -457,8 +457,76 @@ ${toneInstruction}
 
 ${marketDataSummary}`;
 
-    // Step 2: Generate final report using GPT-5
-    console.log("Generating final report with GPT-5...");
+    // Step 2: Check daily cost guardrail before calling GPT-5
+    console.log("Checking daily AI cost guardrail...");
+    
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Get today's spending from the database
+    const { data: usageData } = await supabaseClient
+      .from('daily_ai_usage')
+      .select('usd_spent')
+      .eq('date', today)
+      .single();
+    
+    const currentSpend = usageData?.usd_spent || 0;
+    console.log(`Today's AI spending: $${currentSpend}`);
+    
+    // Estimate cost for this request
+    // GPT-5: ~$3/1M input tokens, ~$15/1M output tokens
+    // Approximate tokens: characters / 4
+    const inputChars = systemPrompt.length + userPrompt.length;
+    const maxOutputTokens = 8000;
+    const estimatedInputTokens = inputChars / 4;
+    const estimatedInputCost = (estimatedInputTokens / 1000000) * 3; // $3 per 1M tokens
+    const estimatedOutputCost = (maxOutputTokens / 1000000) * 15; // $15 per 1M tokens
+    const estimatedCost = estimatedInputCost + estimatedOutputCost;
+    
+    console.log(`Estimated cost for this request: $${estimatedCost.toFixed(4)}`);
+    console.log(`Total if we proceed: $${(currentSpend + estimatedCost).toFixed(4)}`);
+    
+    // If adding this cost would exceed $1.00, return latest cached report instead
+    if (currentSpend + estimatedCost > 1.0) {
+      console.log(`Daily budget exceeded ($${currentSpend.toFixed(4)} + $${estimatedCost.toFixed(4)} > $1.00). Returning latest cached report.`);
+      
+      // Fetch the most recent cached report (regardless of expiry)
+      const { data: latestCached } = await supabaseClient
+        .from("cached_market_reports")
+        .select("*")
+        .order("generated_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (latestCached) {
+        return new Response(
+          JSON.stringify({ 
+            report: latestCached.report,
+            generated_at: latestCached.generated_at,
+            cached: true,
+            budgetExceeded: true,
+            message: "Daily AI budget reached. Showing latest available report."
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      } else {
+        // No cached report available at all
+        return new Response(
+          JSON.stringify({ 
+            error: "Daily AI budget exceeded and no cached reports available. Please try again tomorrow.",
+            budgetExceeded: true
+          }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+    }
+    
+    // Budget OK - proceed with GPT-5 generation
+    console.log("Budget OK, generating final report with GPT-5...");
     
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -519,6 +587,30 @@ ${marketDataSummary}`;
       if (!generatedReport || generatedReport.trim().length === 0) {
         console.error("Generated report is empty! Full response:", JSON.stringify(data));
         throw new Error("OpenAI returned an empty report");
+      }
+
+      // Record the actual cost in the database
+      const actualInputTokens = data.usage?.prompt_tokens || estimatedInputTokens;
+      const actualOutputTokens = data.usage?.completion_tokens || maxOutputTokens;
+      const actualCost = (actualInputTokens / 1000000) * 3 + (actualOutputTokens / 1000000) * 15;
+      
+      console.log(`Actual cost: $${actualCost.toFixed(4)} (${actualInputTokens} input + ${actualOutputTokens} output tokens)`);
+      
+      // Update daily usage
+      const { error: upsertError } = await supabaseClient
+        .from('daily_ai_usage')
+        .upsert({
+          date: today,
+          usd_spent: currentSpend + actualCost,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'date'
+        });
+      
+      if (upsertError) {
+        console.error("Error updating daily AI usage:", upsertError);
+      } else {
+        console.log(`Updated daily spend to $${(currentSpend + actualCost).toFixed(4)}`);
       }
 
       // Cache the new report (expires in 30 minutes)
