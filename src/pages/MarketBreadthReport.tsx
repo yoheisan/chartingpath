@@ -584,25 +584,6 @@ const MarketBreadthReport = () => {
                       </Select>
                     </div>
 
-                    <div>
-                      <Label htmlFor="sub-tone">Report Tone</Label>
-                      <Select
-                        value={subscription.tone}
-                        onValueChange={(value) =>
-                          setSubscription({ ...subscription, tone: value })
-                        }
-                      >
-                        <SelectTrigger id="sub-tone">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="concise">Concise</SelectItem>
-                          <SelectItem value="narrative">Narrative</SelectItem>
-                          <SelectItem value="professional">Professional</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     <div className="space-y-3">
                       <Button
                         onClick={handleSaveSubscription}
