@@ -95,8 +95,8 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
       name: 'New Chart Pattern Strategy',
       description: 'Pattern-based trading strategy',
       patterns: [],
-      targetGainPercent: 3.0,
-      stopLossPercent: 1.5,
+      targetGainPercent: 0,
+      stopLossPercent: 0,
       market: {
         instrumentCategory: 'forex',
         instrument: '',
