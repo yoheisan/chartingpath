@@ -103,8 +103,8 @@ const MarketBreadthReport = () => {
         // Handle payment/credits error
         if (error.message?.includes("credits") || error.message?.includes("Payment required")) {
           toast({
-            title: "Credits Required",
-            description: "Please add Lovable AI credits in Settings → Workspace → Usage to generate reports.",
+            title: "OpenAI Credits Required",
+            description: "Please check your OpenAI API key and account credits to generate reports.",
             variant: "destructive",
           });
           return;
