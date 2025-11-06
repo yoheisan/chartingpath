@@ -477,20 +477,15 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
                     <a href="https://chartingpath.com/terms" style="color: #6b7280; text-decoration: none; font-size: 13px; margin: 0 12px;">Terms</a>
                   </div>
 
-                  <!-- Legal Footer -->
-                  <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
-                      You are receiving this email because you subscribed to Market Breadth Reports.
-                    </p>
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
-                      ChartingPath LLC<br>
-                      30 N Gould St, Suite R<br>
-                      Sheridan, WY 82801, United States
-                    </p>
-                    <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-                      © ${new Date().getFullYear()} ChartingPath. All rights reserved.
-                    </p>
-                  </div>
+              <!-- Legal Footer -->
+              <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
+                  You are receiving this email because you subscribed to Market Breadth Reports.
+                </p>
+                <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                  © ${new Date().getFullYear()} ChartingPath. All rights reserved.
+                </p>
+              </div>
                 </div>
               </div>
             </body>

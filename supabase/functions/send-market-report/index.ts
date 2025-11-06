@@ -122,11 +122,6 @@ serve(async (req) => {
                 <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
                   ${unsubscribeToken ? `You are receiving this email because you subscribed to Market Breadth Reports.` : 'This is a one-time report you requested.'}
                 </p>
-                <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
-                  ChartingPath LLC<br>
-                  30 N Gould St, Suite R<br>
-                  Sheridan, WY 82801, United States
-                </p>
                 <p style="color: #9ca3af; font-size: 11px; margin: 0;">
                   © ${new Date().getFullYear()} ChartingPath. All rights reserved.
                 </p>
