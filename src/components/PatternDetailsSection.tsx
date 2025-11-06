@@ -278,26 +278,16 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
           <Separator />
 
-          {/* Volume Profile - Expandable */}
-          <Collapsible className="space-y-3">
-            <CollapsibleTrigger className="flex items-center justify-between w-full group">
-              <h4 className="font-medium flex items-center gap-2">
-                <Volume2 className="h-4 w-4" />
-                Volume Profile
-              </h4>
-              <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2">
-              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                {Object.entries(patternDetail.volumeProfile).map(([phase, description]) => (
-                  <div key={phase} className="text-sm">
-                    <span className="font-medium capitalize">{phase}: </span>
-                    <span className="text-muted-foreground">{description}</span>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Volume Profile */}
+          <div className="space-y-3">
+            <h4 className="font-medium flex items-center gap-2">
+              <Volume2 className="h-4 w-4" />
+              Volume Profile & Confirmation
+            </h4>
+            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 rounded-lg border border-primary/10">
+              <p className="text-sm text-muted-foreground">{patternDetail.volumeProfile}</p>
+            </div>
+          </div>
 
           <Separator />
 
