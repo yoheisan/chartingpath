@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, AlertTriangle, Lightbulb, ExternalLink, Info } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, AlertTriangle, Lightbulb, ExternalLink, Info, ChevronDown, XCircle } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { useState } from "react";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
@@ -94,7 +95,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
-              View Full Details
+              View Complete Trading Guide
             </Button>
           </div>
 
@@ -221,37 +222,32 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
           <Separator />
 
-          {/* Key Characteristics Preview */}
+          {/* Key Characteristics - All shown */}
           <div className="space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <Lightbulb className="h-4 w-4" />
               Key Characteristics
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {patternDetail.characteristics.slice(0, 4).map((char, index) => (
+              {patternDetail.characteristics.map((char, index) => (
                 <div key={index} className="flex items-start gap-2 text-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                   {char}
                 </div>
               ))}
             </div>
-            {patternDetail.characteristics.length > 4 && (
-              <p className="text-sm text-muted-foreground italic">
-                +{patternDetail.characteristics.length - 4} more characteristics - view full details for complete information
-              </p>
-            )}
           </div>
 
           <Separator />
 
-          {/* Quick Success Factors */}
+          {/* All Success Factors */}
           <div className="space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
               Critical Success Factors
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {patternDetail.keyFactors.slice(0, 3).map((factor, index) => (
+              {patternDetail.keyFactors.map((factor, index) => (
                 <div key={index} className="flex items-start gap-2 text-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-bullish mt-2 flex-shrink-0" />
                   {factor}
@@ -259,6 +255,67 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               ))}
             </div>
           </div>
+
+          <Separator />
+
+          {/* Common Mistakes - CRITICAL */}
+          <div className="space-y-3">
+            <h4 className="font-medium flex items-center gap-2 text-bearish">
+              <XCircle className="h-4 w-4" />
+              Common Mistakes to Avoid
+            </h4>
+            <div className="bg-bearish/5 p-4 rounded-lg border border-bearish/20">
+              <div className="space-y-2">
+                {patternDetail.commonMistakes.map((mistake, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <XCircle className="h-4 w-4 text-bearish mt-0.5 flex-shrink-0" />
+                    <span>{mistake}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Volume Profile - Expandable */}
+          <Collapsible className="space-y-3">
+            <CollapsibleTrigger className="flex items-center justify-between w-full group">
+              <h4 className="font-medium flex items-center gap-2">
+                <Volume2 className="h-4 w-4" />
+                Volume Profile
+              </h4>
+              <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2">
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                {Object.entries(patternDetail.volumeProfile).map(([phase, description]) => (
+                  <div key={phase} className="text-sm">
+                    <span className="font-medium capitalize">{phase}: </span>
+                    <span className="text-muted-foreground">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <Separator />
+
+          {/* Pattern Formation - Expandable */}
+          <Collapsible className="space-y-3">
+            <CollapsibleTrigger className="flex items-center justify-between w-full group">
+              <h4 className="font-medium flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                How This Pattern Forms
+              </h4>
+              <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">{patternDetail.formation}</p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Psychology Insight */}
           <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-primary">
