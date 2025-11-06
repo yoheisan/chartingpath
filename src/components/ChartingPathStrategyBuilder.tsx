@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { 
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
   Activity, 
   TrendingUp,
   TrendingDown,
@@ -67,6 +69,11 @@ export interface ChartingPathStrategy {
     riskPerTrade: number; // % of account to risk per trade
     maxPositions: number; // Max concurrent positions
   };
+  backtestPeriod?: {
+    startDate: string;
+    endDate: string;
+    preset?: string;
+  };
   backtestResults?: any;
   created_at?: Date;
   updated_at?: Date;
@@ -100,6 +107,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         method: 'risk_based',
         riskPerTrade: 2.0,
         maxPositions: 3
+      },
+      backtestPeriod: {
+        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
+        endDate: new Date().toISOString().split('T')[0], // Today
+        preset: '1year'
       }
     }
   );
@@ -114,7 +126,6 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 
   const steps = [
     { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
-    { id: 'patterns', title: 'Chart Patterns', description: 'Choose patterns to trade' },
     { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
     { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
     { id: 'export', title: 'Export', description: 'Generate trading code' }
@@ -196,15 +207,13 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const getStepCompletion = (stepIndex: number) => {
     switch (stepIndex) {
       case 0: // Market & Timeframe
-        return strategy.market?.instrument && strategy.market?.timeframes?.length > 0;
-      case 1: // Patterns
-        return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
-      case 2: // Target & Stop Loss
+        return strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
+      case 1: // Target & Stop Loss
         return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
-      case 3: // Backtest
+      case 2: // Backtest
         return strategy.backtestResults != null;
-      case 4: // Export
-        return getStepCompletion(1) && getStepCompletion(2);
+      case 3: // Export
+        return getStepCompletion(0) && getStepCompletion(1);
       default:
         return false;
     }
@@ -239,7 +248,38 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   };
 
   const canBacktest = () => {
-    return getStepCompletion(0) && getStepCompletion(1); // Market + Patterns selected
+    return getStepCompletion(0); // Market + Patterns + Targets
+  };
+
+  const handlePresetChange = (preset: string) => {
+    const today = new Date();
+    let startDate = new Date();
+    
+    switch(preset) {
+      case '3months':
+        startDate.setMonth(today.getMonth() - 3);
+        break;
+      case '6months':
+        startDate.setMonth(today.getMonth() - 6);
+        break;
+      case '1year':
+        startDate.setFullYear(today.getFullYear() - 1);
+        break;
+      case '2years':
+        startDate.setFullYear(today.getFullYear() - 2);
+        break;
+      case '5years':
+        startDate.setFullYear(today.getFullYear() - 5);
+        break;
+      default:
+        startDate.setFullYear(today.getFullYear() - 1);
+    }
+    
+    updateStrategy('backtestPeriod', {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: today.toISOString().split('T')[0],
+      preset
+    });
   };
 
   return (
@@ -274,15 +314,15 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                   Strategy will generate signals based on these patterns
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(1)}
-                className="ml-4 flex items-center gap-2 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                <Settings className="w-4 h-4" />
-                Change Patterns
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(0)}
+                  className="ml-4 flex items-center gap-2 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <Settings className="w-4 h-4" />
+                  Change Asset/Timeframe
+                </Button>
             </div>
           </CardContent>
         </Card>
@@ -419,36 +459,9 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 2: Select Chart Patterns to Trade</h3>
-                  <Badge variant="secondary" className="ml-auto">
-                    {strategy.patterns.filter(p => p.enabled).length} Selected
-                  </Badge>
+                  <h3 className="text-lg font-semibold">Step 2: Set Target % Gain & Stop Loss %</h3>
                 </div>
-                {getStepCompletion(0) ? (
-                  <PatternLibrary
-                    patterns={strategy.patterns}
-                    onChange={(patterns) => updateStrategy('patterns', patterns)}
-                  />
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please select a financial instrument and timeframe first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 3: Set Target % Gain & Stop Loss %</h3>
-                </div>
-                {getStepCompletion(1) ? (
+                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
                   <TargetStopLossSettings
                     targetGainPercent={strategy.targetGainPercent}
                     stopLossPercent={strategy.stopLossPercent}
@@ -464,7 +477,148 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please select chart patterns first</span>
+                        <span>Please select chart patterns from the Pattern Library first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 3: Backtest Strategy</h3>
+                </div>
+                {canBacktest() ? (
+                  <div className="space-y-4">
+                    {/* Backtest Period Selection */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Backtest Period</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Select the time period for testing your strategy
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Preset Options */}
+                        <div>
+                          <Label>Quick Select Period</Label>
+                          <Select
+                            value={strategy.backtestPeriod?.preset || '1year'}
+                            onValueChange={handlePresetChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="3months">Last 3 Months</SelectItem>
+                              <SelectItem value="6months">Last 6 Months</SelectItem>
+                              <SelectItem value="1year">Last 1 Year</SelectItem>
+                              <SelectItem value="2years">Last 2 Years</SelectItem>
+                              <SelectItem value="5years">Last 5 Years</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Custom Date Range */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="start-date">Start Date</Label>
+                            <Input
+                              id="start-date"
+                              type="date"
+                              value={strategy.backtestPeriod?.startDate || ''}
+                              onChange={(e) => updateStrategy('backtestPeriod', {
+                                ...strategy.backtestPeriod,
+                                startDate: e.target.value,
+                                preset: 'custom'
+                              })}
+                              max={strategy.backtestPeriod?.endDate || new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="end-date">End Date</Label>
+                            <Input
+                              id="end-date"
+                              type="date"
+                              value={strategy.backtestPeriod?.endDate || ''}
+                              onChange={(e) => updateStrategy('backtestPeriod', {
+                                ...strategy.backtestPeriod,
+                                endDate: e.target.value,
+                                preset: 'custom'
+                              })}
+                              min={strategy.backtestPeriod?.startDate}
+                              max={new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                          <strong>Testing Period:</strong> {strategy.backtestPeriod?.startDate} to {strategy.backtestPeriod?.endDate}
+                          {strategy.backtestPeriod?.startDate && strategy.backtestPeriod?.endDate && (
+                            <span className="ml-2">
+                              ({Math.ceil((new Date(strategy.backtestPeriod.endDate).getTime() - new Date(strategy.backtestPeriod.startDate).getTime()) / (1000 * 60 * 60 * 24))} days)
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Backtest Engine */}
+                    <EnhancedBacktestEngine
+                      strategy={strategy}
+                      results={backtestResults}
+                      isRunning={isBacktesting}
+                      onBacktest={handleBacktest}
+                    />
+
+                    {backtestResults && (
+                      <Card className="border-green-200 bg-green-50/50">
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            Backtest Complete
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Total Return</p>
+                              <p className="text-2xl font-bold text-green-600">
+                                {backtestResults.totalReturn > 0 ? '+' : ''}{backtestResults.totalReturn?.toFixed(2)}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Win Rate</p>
+                              <p className="text-2xl font-bold">
+                                {backtestResults.winRate?.toFixed(1)}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Total Trades</p>
+                              <p className="text-2xl font-bold">
+                                {backtestResults.trades}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Profit Factor</p>
+                              <p className="text-2xl font-bold">
+                                {backtestResults.profitFactor?.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please complete all previous steps first</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -475,34 +629,8 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             {currentStep === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 4: Backtest Pattern Strategy</h3>
-                </div>
-                {getStepCompletion(2) ? (
-                  <EnhancedBacktestEngine
-                    strategy={strategy}
-                    results={backtestResults}
-                    isRunning={isBacktesting}
-                    onBacktest={handleBacktest}
-                  />
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please set target % and stop loss % first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
                   <Download className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 5: Export Strategy</h3>
+                  <h3 className="text-lg font-semibold">Step 4: Export Strategy</h3>
                 </div>
                 {getStepCompletion(1) && getStepCompletion(2) ? (
                   <ExportPanel strategy={strategy} />
@@ -511,7 +639,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete pattern selection and target/stop loss setup first</span>
+                        <span>Please complete targets and backtest first</span>
                       </div>
                     </CardContent>
                   </Card>
