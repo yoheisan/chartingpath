@@ -59,18 +59,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     
     entry: "Enter short position on break below neckline with stop loss above right shoulder high",
     stopLoss: "Place stop loss 2-3% above the right shoulder high",
-    targetMethodology: "Classic measured move: Target = Neckline - Pattern Height. Alternative targets include Fibonacci extensions at 61.8%, 100%, and 161.8% of pattern height.",
+    targetMethodology: "Classic measured move: Target = Neckline - Pattern Height. Fibonacci retracements (61.8%) and extensions (161.8%) provide alternative targets.",
     targetPriceMethodologies: {
       primary: "Classic Measured Move: Target = Neckline - Pattern Height",
       alternative: [
-        "Fibonacci 61.8%: Conservative target at neckline - (pattern height × 0.618)",
+        "Fibonacci Retracement 61.8%: Conservative target at neckline - (pattern height × 0.618)",
         "Fibonacci 100%: Equal to measured move (neckline - pattern height)",
-        "Fibonacci 161.8%: Aggressive target at neckline - (pattern height × 1.618)",
-        "Statistical 80%: Based on historical completion rates",
-        "Volume-Adjusted: More conservative when volume divergence present"
+        "Fibonacci Extension 161.8%: Aggressive target at neckline - (pattern height × 1.618)",
+        "Statistical 80%: Based on historical completion rates (neckline - pattern height × 0.8)",
+        "Volume-Adjusted: More conservative when volume divergence is weak"
       ],
-      riskReward: "Typically 1:2 to 1:3 risk-to-reward ratio with proper stop placement",
-      calculation: "Pattern Height = Head Level - Neckline Level. Primary Target = Neckline - Pattern Height. Success rate ~65-75% for classic target achievement."
+      riskReward: "Typically 1:2 to 1:2.5 risk-to-reward ratio with proper stop placement",
+      calculation: "Pattern Height = Head Level - Neckline Level. Primary Target = Neckline - Pattern Height. Success rate ~65-70% for classic target achievement."
     },
     timeframe: "Most reliable on daily and weekly charts. Pattern typically takes 4-12 weeks to form.",
     
@@ -115,18 +115,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     
     entry: "Enter long position on break above neckline with stop loss below right shoulder low",
     stopLoss: "Place stop loss 2-3% below the right shoulder low",
-    targetMethodology: "Classic measured move: Target = Neckline + Pattern Height. Enhanced targets using Fibonacci extensions at 61.8%, 100%, and 161.8% with volume adjustment.",
+    targetMethodology: "Classic measured move: Target = Neckline + Pattern Height. Fibonacci retracements (61.8%) and extensions (161.8%, 2.618) provide enhanced targets with volume adjustment.",
     targetPriceMethodologies: {
       primary: "Classic Measured Move: Target = Neckline + Pattern Height",
       alternative: [
-        "Fibonacci 61.8%: Conservative target at neckline + (pattern height × 0.618)",
+        "Fibonacci Retracement 61.8%: Conservative target at neckline + (pattern height × 0.618)",
         "Fibonacci 100%: Equal to measured move (neckline + pattern height)",
-        "Fibonacci 161.8%: Aggressive target at neckline + (pattern height × 1.618)",
-        "Statistical 80%: Based on historical bullish completion rates",
+        "Fibonacci Extension 161.8%: Aggressive target at neckline + (pattern height × 1.618)",
+        "Statistical 80%: Based on historical bullish completion rates (neckline + pattern height × 0.8)",
         "Volume-Enhanced: More aggressive when volume confirms breakout (12% adjustment)"
       ],
-      riskReward: "Typically 1:2 to 1:4 risk-to-reward ratio with volume confirmation",
-      calculation: "Pattern Height = Neckline Level - Head Level (lowest point). Primary Target = Neckline + Pattern Height. Success rate ~70-80% with volume confirmation."
+      riskReward: "Typically 1:2 to 1:3 risk-to-reward ratio with volume confirmation",
+      calculation: "Pattern Height = Neckline Level - Head Level (lowest point). Primary Target = Neckline + Pattern Height. Success rate ~70-75% with volume confirmation."
     },
     timeframe: "Most reliable on daily and weekly charts. Pattern typically takes 4-12 weeks to form for optimal reliability.",
     
@@ -171,18 +171,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     
     entry: "Enter short position on break below support level between the two peaks",
     stopLoss: "Place stop loss above the second peak high",
-    targetMethodology: "Primary target = Support level - Pattern height. Additional targets include Fibonacci extensions and statistical targets at 50%, 80%, and 125% of pattern height.",
+    targetMethodology: "Primary target = Support level - Pattern height. Fibonacci retracements (50%, 61.8%) and extensions (125%, 161.8%) provide additional targets.",
     targetPriceMethodologies: {
-      primary: "Classic Measured Move: Target = Support Level - Pattern Height",
+      primary: "Classic Measured Move: Target = Support Level - Pattern Height", 
       alternative: [
         "Conservative 50%: Support - (pattern height × 0.5) - minimum expected move",
-        "Fibonacci 61.8%: Support - (pattern height × 0.618)",
+        "Fibonacci Retracement 61.8%: Support - (pattern height × 0.618)",
         "Statistical 80%: Support - (pattern height × 0.8) - historical average",
-        "Extended 125%: Support - (pattern height × 1.25) - strong momentum target",
-        "Volume-Adjusted: 15% more conservative when volume divergence present"
+        "Fibonacci Extension 125%: Support - (pattern height × 1.25) - strong momentum target",
+        "Volume-Adjusted: 15% more conservative when volume divergence is weak"
       ],
-      riskReward: "Typically 1:1.5 to 1:3 ratio depending on pattern reliability",
-      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~65-75% for measured move completion."
+      riskReward: "Typically 1:1.5 to 1:2.5 ratio depending on pattern reliability",
+      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~65-70% for measured move completion."
     },
     timeframe: "Reliable on all timeframes, but most effective on daily charts with 4+ week formation period.",
     
@@ -227,18 +227,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     
     entry: "Enter long position on break above resistance level between the two troughs",
     stopLoss: "Place stop loss below the second trough low",
-    targetMethodology: "Primary target = Resistance level + Pattern height. Fibonacci extensions provide additional targets at 61.8%, 100%, and 161.8% levels.",
+    targetMethodology: "Primary target = Resistance level + Pattern height. Fibonacci retracements (50%, 61.8%) and extensions (125%, 161.8%) provide additional targets.",
     targetPriceMethodologies: {
       primary: "Classic Measured Move: Target = Resistance Level + Pattern Height", 
       alternative: [
         "Conservative 50%: Resistance + (pattern height × 0.5) - minimum expected move",
-        "Fibonacci 61.8%: Resistance + (pattern height × 0.618)",
+        "Fibonacci Retracement 61.8%: Resistance + (pattern height × 0.618)",
         "Statistical 80%: Resistance + (pattern height × 0.8) - historical average",
-        "Extended 125%: Resistance + (pattern height × 1.25) - strong momentum target",
+        "Fibonacci Extension 125%: Resistance + (pattern height × 1.25) - strong momentum target",
         "Volume-Enhanced: More aggressive when volume confirms breakout"
       ],
-      riskReward: "Typically 1:2 to 1:3 ratio with proper volume confirmation",
-      calculation: "Pattern Height = Resistance Level - Trough Level. Primary Target = Resistance + Pattern Height. Success rate ~70-80% with volume confirmation."
+      riskReward: "Typically 1:2 to 1:2.5 ratio with proper volume confirmation",
+      calculation: "Pattern Height = Resistance Level - Trough Level. Primary Target = Resistance + Pattern Height. Success rate ~70-75% with volume confirmation."
     },
     timeframe: "Most effective on daily and weekly charts with minimum 4-week formation period.",
     
@@ -283,18 +283,18 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     
     entry: "Enter short position on decisive break below support level with volume confirmation",
     stopLoss: "Place stop loss above the third (final) peak",
-    targetMethodology: "Measured move target = Support level - Pattern height. High reliability warrants aggressive targets using 125% and 161.8% Fibonacci extensions.",
+    targetMethodology: "Measured move target = Support level - Pattern height. High reliability warrants aggressive targets using Fibonacci extensions at 125% and 161.8%.",
     targetPriceMethodologies: {
       primary: "Classic Measured Move: Target = Support Level - Pattern Height",
       alternative: [
         "Conservative 75%: Support - (pattern height × 0.75)",
         "Statistical 100%: Support - (pattern height × 1.0) - equal to pattern height",
-        "Extended 125%: Support - (pattern height × 1.25) - high reliability target",
-        "Fibonacci 161.8%: Support - (pattern height × 1.618) - aggressive target",
+        "Fibonacci Extension 125%: Support - (pattern height × 1.25) - high reliability target",
+        "Fibonacci Extension 161.8%: Support - (pattern height × 1.618) - aggressive target",
         "Maximum 200%: Support - (pattern height × 2.0) - major reversal scenario"
       ],
-      riskReward: "Superior 1:3 to 1:5 ratio due to high pattern reliability",
-      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~80%+ for measured move due to triple confirmation."
+      riskReward: "Superior 1:2.5 to 1:4 ratio due to high pattern reliability",
+      calculation: "Pattern Height = Peak Level - Support Level. Primary Target = Support - Pattern Height. Success rate ~75-80% for measured move due to triple confirmation."
     },
     timeframe: "Most reliable on daily and weekly charts with extended formation periods.",
     

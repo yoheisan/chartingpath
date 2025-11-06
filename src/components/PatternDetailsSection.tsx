@@ -61,6 +61,21 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
   return (
     <TooltipProvider>
+      {/* Educational Disclaimer */}
+      <Card className="p-4 bg-muted/30 border-primary/20 mb-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Educational Research Data</p>
+            <p className="text-xs text-muted-foreground">
+              Pattern statistics based on Thomas N. Bulkowski's research from "Encyclopedia of Chart Patterns" (2nd Edition). 
+              Historical accuracy rates are for educational purposes only. Past performance does not guarantee future results. 
+              Always conduct your own analysis and risk no more than 1-2% of trading capital per trade.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-6">
         <div className="space-y-6">
           {/* Header */}
