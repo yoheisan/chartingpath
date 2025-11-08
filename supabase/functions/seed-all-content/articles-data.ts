@@ -1,380 +1,356 @@
 export const ARTICLES = [
+  // Complete migration of all 25 blog articles
   {
-    title: "Support and Resistance: The Foundation of Technical Analysis",
-    slug: "support-resistance-basics",
-    category: "Technical Analysis",
-    subcategory: "Core Concepts",
-    content_type: "article" as const,
-    difficulty_level: "beginner",
-    reading_time_minutes: 12,
-    excerpt: "Support and resistance levels are the most fundamental concepts in technical analysis. Understanding these levels is essential for identifying entry and exit points in any market.",
-    content: `Support and resistance levels are the most fundamental concepts in technical analysis. Understanding these levels is essential for identifying entry and exit points in any market.
-
-## What is Support?
-
-Support is a price level where demand is strong enough to prevent the price from falling further. It acts as a "floor" where buyers consistently step in, creating buying pressure that pushes prices back up.
-
-### Key Support Characteristics:
-- Price bounces multiple times off the same level
-- Higher volume near support indicates strong buying interest
-- The more times tested, the stronger the support becomes
-- Broken support often becomes new resistance
-
-## What is Resistance?
-
-Resistance is a price level where selling pressure is strong enough to prevent the price from rising further. It acts as a "ceiling" where sellers consistently enter the market, creating selling pressure that pushes prices back down.
-
-### Key Resistance Characteristics:
-- Price reverses multiple times at the same level
-- Previous highs often become resistance zones
-- Psychological round numbers act as strong resistance
-- Broken resistance becomes new support
-
-## Types of Support and Resistance
-
-### Horizontal S/R
-The most common type - straight horizontal lines drawn at previous swing highs (resistance) or swing lows (support). Connect at least 2-3 touch points for validation.
-
-### Dynamic S/R (Moving Averages)
-Moving averages like the 50-day or 200-day MA act as dynamic support/resistance that moves with price. Popular in trending markets.
-
-### Psychological Levels
-Round numbers like $100, $1000, or psychological levels like previous all-time highs. These attract significant buying/selling interest.
-
-### Fibonacci Levels
-Retracement levels at 38.2%, 50%, and 61.8% often act as support/resistance zones. Based on the Fibonacci sequence found throughout nature.
-
-## Role Reversal Concept
-
-One of the most important concepts: When price breaks through resistance, that level often becomes new support. When price breaks below support, that level typically becomes new resistance.
-
-## How to Draw Support and Resistance
-
-1. **Use a line chart**: Candlestick wicks can be misleading
-2. **Connect swing points**: Draw lines connecting at least 2-3 swing lows/highs
-3. **Think zones, not lines**: S/R is better viewed as a zone
-4. **Higher timeframes matter more**: Daily and weekly levels are stronger
-5. **Adjust for clarity**: Don't force levels
-
-## Trading Strategies
-
-**Buy at Support**: Look for bullish confirmation near support before entering long
-**Sell at Resistance**: Look for bearish confirmation near resistance before entering short
-**Breakout Trading**: Trade the break of S/R with volume confirmation
-
-## Stop Loss Placement
-
-- For long positions: Place stop 2-5% below support
-- For short positions: Place stop 2-5% above resistance  
-- Account for normal volatility using ATR
-
-## Common Mistakes to Avoid
-
-- Drawing too many lines
-- Expecting exact bounces
-- Ignoring timeframe context
-- Trading without confirmation
-- Placing stops exactly at S/R
-- Not adjusting levels as market evolves`,
-    tags: ["support", "resistance", "technical-analysis", "price-action", "trading"],
-    related_patterns: ["trend-lines", "volume-analysis"],
-    seo_title: "Support and Resistance Guide | Technical Analysis Foundation",
-    seo_description: "Master support and resistance - the foundation of technical analysis. Learn identification, trading strategies, and role reversal concepts.",
-    seo_keywords: ["support levels", "resistance levels", "technical analysis", "price action"],
-    featured_image_url: "/lovable-uploads/support-resistance-chart.png",
-  },
-  {
-    title: "Moving Averages: Dynamic Support and Resistance",
-    slug: "moving-averages-guide",
-    category: "Technical Analysis",
-    subcategory: "Trend Indicators",
-    content_type: "article" as const,
-    difficulty_level: "beginner",
+    title: "Breakout Trading Strategy: Capturing Strong Moves",
+    slug: "breakout-trading",
+    category: "Trading Strategies",
+    subcategory: "Breakout",
+    difficulty_level: "intermediate",
     reading_time_minutes: 10,
-    excerpt: "Moving averages are one of the most widely used technical indicators. They smooth out price data to identify trends, provide dynamic support/resistance, and generate trading signals.",
-    content: `Moving averages are one of the most widely used technical indicators. They smooth out price data to identify trends, provide dynamic support/resistance, and generate trading signals.
-
-## Types of Moving Averages
-
-### Simple Moving Average (SMA)
-Calculates the average price over a specific number of periods. All data points weighted equally. Most common: 20-day, 50-day, 200-day SMA.
-
-### Exponential Moving Average (EMA)
-Gives more weight to recent prices, making it more responsive to new information. Preferred by active traders for faster signals.
-
-### Weighted Moving Average (WMA)
-Assigns linearly decreasing weights to older data. More responsive than SMA but less than EMA. Less commonly used in retail trading.
-
-## Popular Moving Average Periods
-
-- **10-20 day MA**: Short-term trends, day trading and swing trading
-- **50-day MA**: Intermediate trend, widely watched institutional level
-- **100-day MA**: Medium-term trend indicator
-- **200-day MA**: Long-term trend, most significant MA for investors
-- **20/50 EMA**: Common combination for trend-following systems
-
-## Moving Average as Dynamic Support/Resistance
-
-In trending markets, moving averages act as dynamic support (uptrends) or resistance (downtrends). Price often pulls back to test these levels before continuing in the trend direction.
-
-### Trading Strategy:
-1. Identify trending market (price consistently above/below MA)
-2. Wait for pullback to moving average
-3. Look for bounce confirmation (bullish candle, volume increase)
-4. Enter in trend direction when price rebounds off MA
-5. Place stop below MA (uptrend) or above MA (downtrend)
-
-## Moving Average Crossovers
-
-### Golden Cross (Bullish)
-50-day MA crosses above 200-day MA. Signals long-term bullish trend starting. Historically preceded major bull markets.
-
-### Death Cross (Bearish)
-50-day MA crosses below 200-day MA. Signals long-term bearish trend starting. Often seen at start of bear markets.
-
-### Shorter-Term Crossovers
-- 20 EMA crosses 50 EMA for intermediate trends
-- 10 EMA crosses 20 EMA for short-term trends
-- More signals but also more false signals
-
-## Multiple Moving Average Strategy
-
-Use 3 moving averages (e.g., 20, 50, 200) to gauge trend strength:
-- **Strong Uptrend**: All MAs aligned (20 > 50 > 200) and rising
-- **Weak/Consolidating**: MAs tangled or flat
-- **Strong Downtrend**: All MAs aligned (20 < 50 < 200) and falling
-
-## Common Mistakes
-
-- Using MAs in choppy, sideways markets (generates false signals)
-- Not waiting for confirmation before entering
-- Ignoring the overall trend context
-- Using too many MAs (creates confusion)
-- Relying solely on MAs without other confirmation
-
-## Advanced Tips
-
-- MAs work best in trending markets, poorly in ranges
-- Longer periods = fewer signals but higher reliability
-- Combine MAs with volume for confirmation
-- Adjust MA periods based on asset volatility
-- Use price action confirmation at MA levels`,
-    tags: ["moving-averages", "sma", "ema", "golden-cross", "technical-analysis"],
-    related_patterns: ["trend-analysis", "support-resistance"],
-    seo_title: "Moving Averages Trading Guide | SMA vs EMA Strategies",
-    seo_description: "Learn how to use moving averages for trading. Master SMA, EMA, golden cross, death cross, and dynamic support/resistance strategies.",
-    seo_keywords: ["moving averages", "SMA", "EMA", "golden cross", "death cross", "trend following"],
-    featured_image_url: "/lovable-uploads/moving-averages-chart.png",
+    excerpt: "Master the art of breakout trading to capture explosive price movements when markets break free from consolidation patterns.",
+    content: "Breakout trading is a strategy that aims to enter a trade when the price breaks through a significant level of support or resistance, often accompanied by increased volume. Learn key breakout confirmation signals, advanced strategies, risk management, and common mistakes to avoid for profitable breakout trading.",
+    seo_title: "Breakout Trading Strategy Guide - Capture Explosive Price Moves",
+    seo_description: "Master breakout trading with proven strategies for identifying and trading price breakouts. Learn entry signals, risk management, and how to avoid false breakouts.",
+    seo_keywords: ["breakout trading", "trading strategy", "price breakouts", "volume confirmation"],
+    tags: ["breakout", "strategy", "technical-analysis", "risk-management"],
   },
   {
-    title: "RSI Indicator: Identifying Overbought and Oversold Conditions",
-    slug: "rsi-indicator-guide",
+    title: "Japanese Candlestick Patterns Guide",
+    slug: "candlestick-patterns",
     category: "Technical Analysis",
-    subcategory: "Momentum Indicators",
-    content_type: "article" as const,
+    subcategory: "Price Action",
+    difficulty_level: "beginner",
+    reading_time_minutes: 15,
+    excerpt: "Candlestick patterns provide powerful insights into market psychology and potential price reversals. Developed by Japanese rice traders in the 18th century, these patterns remain essential today.",
+    content: "Each candlestick shows four key price points: Open, High, Low, Close. Learn single candlestick patterns (Doji, Hammer, Shooting Star), two-candlestick patterns (Engulfing, Harami), and three-candlestick patterns (Morning/Evening Star, Three White Soldiers/Black Crows). Master trading rules, context analysis, and avoid common mistakes.",
+    seo_title: "Japanese Candlestick Patterns - Complete Guide for Traders",
+    seo_description: "Master Japanese candlestick patterns including doji, hammer, engulfing, and morning star. Learn how to identify and trade these powerful reversal signals.",
+    seo_keywords: ["candlestick patterns", "japanese candlesticks", "price action", "reversal patterns"],
+    tags: ["candlesticks", "price-action", "reversal", "patterns"],
+  },
+  {
+    title: "Cup and Handle Pattern: Growth Stock Strategy",
+    slug: "cup-and-handle",
+    category: "Chart Patterns",
+    subcategory: "Continuation",
     difficulty_level: "intermediate",
     reading_time_minutes: 9,
-    excerpt: "The Relative Strength Index (RSI) is one of the most popular momentum oscillators. It measures the speed and magnitude of price changes to identify overbought and oversold conditions.",
-    content: `The Relative Strength Index (RSI) is one of the most popular momentum oscillators. It measures the speed and magnitude of price changes to identify overbought and oversold conditions.
-
-## Understanding RSI
-
-RSI oscillates between 0 and 100. It's calculated based on average gains and losses over a specified period (typically 14 periods). RSI helps traders identify potential reversal points and momentum strength.
-
-### Key RSI Levels
-
-**RSI Above 70: Overbought**
-When RSI exceeds 70, the asset is considered overbought. This suggests the price may be due for a pullback or reversal. However, strong trends can remain overbought for extended periods.
-
-**RSI Below 30: Oversold**
-When RSI falls below 30, the asset is considered oversold. This suggests the price may be due for a bounce or reversal. Strong downtrends can stay oversold for long periods.
-
-**RSI 40-60: Neutral Zone**
-RSI in the middle range indicates balanced momentum with no extreme conditions. Often seen during consolidation or range-bound markets.
-
-## RSI Trading Strategies
-
-### 1. Overbought/Oversold Strategy
-
-**Buy Signal**: RSI drops below 30 (oversold), then crosses back above 30. Confirms buying pressure returning.
-
-**Sell Signal**: RSI rises above 70 (overbought), then crosses back below 70. Confirms selling pressure increasing.
-
-**Important**: In strong trends, RSI can remain overbought (> 70) or oversold (< 30) for extended periods. Don't counter-trade strong trends solely based on overbought/oversold readings.
-
-### 2. RSI Divergence Strategy
-
-**Bullish Divergence**: Price makes lower lows while RSI makes higher lows. Signals weakening downward momentum and potential reversal up.
-
-**Bearish Divergence**: Price makes higher highs while RSI makes lower highs. Signals weakening upward momentum and potential reversal down.
-
-### 3. RSI Centerline Cross Strategy
-
-**Bullish**: RSI crosses above 50 (centerline). Confirms momentum shifting bullish. Useful in trending markets.
-
-**Bearish**: RSI crosses below 50 (centerline). Confirms momentum shifting bearish.
-
-## Advanced RSI Concepts
-
-### RSI Support and Resistance
-Draw trend lines on the RSI indicator itself. RSI trend line breaks often precede price trend line breaks, providing early warning signals.
-
-### Failure Swings
-
-**Bullish Failure Swing**: RSI drops below 30, bounces above 30, pulls back but stays above 30, then breaks above previous peak. Strong buy signal.
-
-**Bearish Failure Swing**: RSI rises above 70, drops below 70, bounces but stays below 70, then breaks below previous trough. Strong sell signal.
-
-## RSI Settings
-
-- **Standard: 14 periods** - Most common, balanced approach
-- **Short-term: 7-9 periods** - More sensitive, more signals (more false signals too)
-- **Long-term: 21-25 periods** - Smoother, fewer but more reliable signals
-
-## Trading Rules
-
-1. Use RSI in context with overall trend
-2. Combine with price action confirmation
-3. Never trade RSI signals alone - use multiple confirmations
-4. In strong trends, adjust overbought/oversold levels (80/20 instead of 70/30)
-5. RSI works best in range-bound markets
-6. Respect divergences - they often precede major reversals
-
-## Common Mistakes to Avoid
-
-- Counter-trading strong trends based on overbought/oversold alone
-- Ignoring divergences
-- Not waiting for confirmation
-- Using RSI as standalone indicator
-- Expecting exact reversals at 70/30 levels`,
-    tags: ["RSI", "relative-strength-index", "momentum", "overbought", "oversold", "technical-indicators"],
-    related_patterns: ["macd-indicator", "momentum-trading"],
-    seo_title: "RSI Indicator Guide | Overbought & Oversold Trading Strategies",
-    seo_description: "Master the RSI indicator for trading. Learn overbought/oversold strategies, divergence trading, and advanced RSI techniques for better entries and exits.",
-    seo_keywords: ["RSI indicator", "relative strength index", "overbought", "oversold", "RSI divergence", "RSI trading"],
-    featured_image_url: "/lovable-uploads/rsi-indicator-chart.png",
+    excerpt: "The Cup and Handle is one of the most profitable bullish patterns with 86% success rate and 45% average gain according to Bulkowski.",
+    content: "The Cup and Handle pattern consists of a rounded bottom cup (7 weeks to 6 months) followed by a small downward drift handle (1-4 weeks). Learn pattern structure, volume confirmation, trading strategy, ideal pattern checklist, Bulkowski's statistics, best market conditions, and professional tips.",
+    seo_title: "Cup and Handle Pattern - Complete Trading Guide 2024",
+    seo_description: "Master the Cup and Handle pattern with 86% success rate. Learn pattern structure, entry signals, volume confirmation, and profit targets backed by Bulkowski research.",
+    seo_keywords: ["cup and handle", "chart pattern", "growth stocks", "continuation pattern"],
+    tags: ["cup-handle", "continuation", "bullish", "patterns"],
+  },
+  {
+    title: "Double Top and Double Bottom Patterns",
+    slug: "double-top-bottom",
+    category: "Chart Patterns",
+    subcategory: "Reversal",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 7,
+    excerpt: "Double Tops and Double Bottoms are among the most common reversal patterns, with 79% success rate according to Bulkowski's research.",
+    content: "Double Top is bearish reversal with 79% success rate and 20% average decline. Double Bottom is bullish reversal with 79% success rate and 35% average rise. Learn pattern characteristics, trading strategies, volume confirmation, time spacing, price symmetry, and Bulkowski's research data.",
+    seo_title: "Double Top & Double Bottom Patterns - Complete Trading Guide",
+    seo_description: "Master Double Top and Double Bottom patterns with 79% success rate. Learn identification, trading strategies, and volume confirmation techniques.",
+    seo_keywords: ["double top", "double bottom", "reversal patterns", "chart patterns"],
+    tags: ["double-top", "double-bottom", "reversal", "patterns"],
+  },
+  {
+    title: "Overcoming Fear and Greed: The Trader's Greatest Enemies",
+    slug: "fear-and-greed",
+    category: "Psychology",
+    subcategory: "Emotions",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 13,
+    excerpt: "Understand and control the two emotions that destroy more trading accounts than any technical mistake or bad strategy ever could.",
+    content: "Fear and greed create a vicious cycle that traps traders. Learn how fear manifests (fear of losing money, FOMO, fear of being wrong) and how greed manifests (wanting more profit, get rich quick mentality, overconfidence). Master strategies to overcome both, develop neutral mindset, and use self-assessment tools.",
+    seo_title: "Overcoming Fear and Greed in Trading - Psychology Guide",
+    seo_description: "Master trading psychology by controlling fear and greed. Learn proven strategies to overcome emotional trading and develop a neutral mindset for consistent profits.",
+    seo_keywords: ["trading psychology", "fear and greed", "emotional trading", "trading discipline"],
+    tags: ["psychology", "emotions", "discipline", "mindset"],
+  },
+  {
+    title: "Fibonacci Retracements: Finding Key Support and Resistance",
+    slug: "fibonacci-retracements",
+    category: "Technical Analysis",
+    subcategory: "Price Levels",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 11,
+    excerpt: "Fibonacci retracements use mathematical ratios found throughout nature to identify potential support and resistance levels.",
+    content: "Learn key Fibonacci levels (23.6%, 38.2%, 50%, 61.8% Golden Ratio, 78.6%). Master how to draw Fibonacci retracements in uptrends and downtrends, trading strategy with entry/exit rules, Fibonacci extensions for profit targets, confluence zones, and avoid common mistakes.",
+    seo_title: "Fibonacci Retracements Guide - Find Key Support & Resistance",
+    seo_description: "Master Fibonacci retracements for trading. Learn key levels, how to draw Fib retracements, entry strategies, and confluence zones for high-probability trades.",
+    seo_keywords: ["fibonacci retracements", "fibonacci trading", "golden ratio", "support resistance"],
+    tags: ["fibonacci", "technical-analysis", "support-resistance"],
+  },
+  {
+    title: "Flags and Pennants: Continuation Pattern Mastery",
+    slug: "flag-pennant-patterns",
+    category: "Chart Patterns",
+    subcategory: "Continuation",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 7,
+    excerpt: "Flags and Pennants are high-probability short-term continuation patterns with 80%+ success rates.",
+    content: "Bull Flag has 88% success rate with 8-day duration. Bear Flag has 90% success rate with 9-day duration. Pennants have 84% success rate (bullish) and 80% (bearish) with 14-day duration. Learn pattern characteristics, trading strategies, volume confirmation, and Bulkowski's performance statistics.",
+    seo_title: "Flag and Pennant Patterns - High-Probability Continuation Trades",
+    seo_description: "Master flag and pennant patterns with 80%+ success rates. Learn bull flags, bear flags, pennant trading strategies with Bulkowski-backed statistics.",
+    seo_keywords: ["flag pattern", "pennant pattern", "continuation pattern", "bull flag"],
+    tags: ["flags", "pennants", "continuation", "patterns"],
+  },
+  {
+    title: "Head and Shoulders Pattern: Complete Trading Guide",
+    slug: "head-and-shoulders",
+    category: "Chart Patterns",
+    subcategory: "Reversal",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 8,
+    excerpt: "The Head and Shoulders pattern is one of the most reliable reversal patterns in technical analysis with 93% success rate.",
+    content: "Learn the pattern structure (left shoulder, head, right shoulder), neckline significance, trading strategy (entry, stop loss, target), volume confirmation, and Inverse Head and Shoulders. Includes real-world application and key takeaways for consistent pattern trading.",
+    seo_title: "Head and Shoulders Pattern - Complete Trading Guide 2024",
+    seo_description: "Master the Head and Shoulders pattern with 93% success rate. Learn pattern structure, neckline breaks, volume confirmation, and professional trading strategies.",
+    seo_keywords: ["head and shoulders", "chart pattern", "reversal pattern", "technical analysis"],
+    tags: ["head-shoulders", "reversal", "bearish", "patterns"],
   },
   {
     title: "MACD Indicator: Trend Following and Momentum",
-    slug: "macd-indicator-guide",
+    slug: "macd-indicator",
     category: "Technical Analysis",
     subcategory: "Trend Indicators",
-    content_type: "article" as const,
     difficulty_level: "intermediate",
-    reading_time_minutes: 10,
-    excerpt: "MACD (Moving Average Convergence Divergence) is a trend-following momentum indicator that shows the relationship between two moving averages. It's one of the most versatile and widely-used indicators by professional traders.",
-    content: `MACD (Moving Average Convergence Divergence) is a trend-following momentum indicator that shows the relationship between two moving averages. It's one of the most versatile and widely-used indicators by professional traders.
-
-## MACD Components
-
-### MACD Line (Blue Line)
-Difference between 12-period EMA and 26-period EMA. This is the faster moving line that generates signals.
-
-### Signal Line (Red Line)
-9-period EMA of the MACD Line. Acts as a trigger line for buy/sell signals when MACD crosses it.
-
-### Histogram (Bars)
-Difference between MACD Line and Signal Line. Visualizes the distance between the two lines. Expanding histogram shows strengthening momentum.
-
-## MACD Trading Signals
-
-### 1. MACD Line Crossovers
-
-**Bullish Crossover**: MACD Line crosses above Signal Line. Indicates momentum shifting bullish. Buy signal.
-
-**Bearish Crossover**: MACD Line crosses below Signal Line. Indicates momentum shifting bearish. Sell signal.
-
-### 2. Zero Line Crossovers
-
-**Bullish**: MACD Line crosses above zero line. Confirms uptrend as 12-EMA is now above 26-EMA. Strong buy confirmation.
-
-**Bearish**: MACD Line crosses below zero line. Confirms downtrend as 12-EMA is now below 26-EMA. Strong sell confirmation.
-
-### 3. MACD Divergence
-
-**Bullish Divergence**: Price makes lower lows while MACD makes higher lows. Signals weakening bearish momentum and potential reversal up.
-
-**Bearish Divergence**: Price makes higher highs while MACD makes lower highs. Signals weakening bullish momentum and potential reversal down.
-
-## MACD Histogram Strategy
-
-### Histogram Expansion
-When histogram bars are growing (moving away from zero), momentum is strengthening in that direction. Strong continuation signal.
-
-### Histogram Contraction
-When histogram bars are shrinking (moving toward zero), momentum is weakening. Potential reversal or consolidation ahead.
-
-### Histogram Zero Cross
-When histogram crosses zero line, it confirms MACD/Signal line crossover. Can be used as earlier entry signal.
-
-## Advanced MACD Strategies
-
-### MACD + Price Action
-Combine MACD signals with support/resistance levels for higher probability trades. Enter on MACD bullish crossover AT support level for best risk/reward.
-
-### MACD + Volume
-Confirm MACD signals with volume. Bullish MACD crossover with increasing volume = strong confirmation. Low volume = weaker signal.
-
-### Multiple Timeframe MACD
-Use MACD on higher timeframe for trend direction, lower timeframe for entry timing. Example: Daily MACD for trend, 4-hour MACD for entries.
-
-## MACD Settings
-
-**Standard Settings (12, 26, 9)**
-- 12-period EMA
-- 26-period EMA
-- 9-period Signal Line
-Most common, works well for daily charts
-
-**Faster Settings (5, 35, 5)**
-More sensitive, generates more signals but more whipsaws. Better for shorter timeframes.
-
-**Slower Settings (19, 39, 9)**
-Less sensitive, fewer but more reliable signals. Better for position trading.
-
-## Trading Rules with MACD
-
-1. Use in trending markets, not ranging markets
-2. Wait for Signal Line crossover confirmation
-3. Best signals occur when MACD crosses from below zero (bullish) or above zero (bearish)
-4. Respect divergences - they precede major reversals
-5. Combine with other indicators for confirmation
-6. Use histogram for momentum strength gauge
-
-## Common Mistakes
-
-- Trading MACD in choppy, sideways markets
-- Not waiting for Signal Line confirmation
-- Ignoring divergences
-- Using only MACD without price action context
-- Not adjusting settings for different timeframes
-- Overtrading on every crossover
-
-## Pro Tips
-
-- MACD lags price (it's based on moving averages)
-- Works best in strong trending markets
-- Divergences are powerful but don't always lead to immediate reversals
-- Histogram gives earlier signals than line crossovers
-- Combine with trend identification first
-- Use stop losses - MACD can whipsaw in choppy markets`,
-    tags: ["MACD", "moving-average-convergence-divergence", "trend-following", "momentum", "technical-indicators"],
-    related_patterns: ["moving-averages", "rsi-indicator", "trend-analysis"],
-    seo_title: "MACD Indicator Guide | Crossover & Divergence Trading Strategies",
-    seo_description: "Learn MACD indicator trading strategies. Master crossovers, divergences, histogram analysis, and advanced MACD techniques for better trend trading.",
-    seo_keywords: ["MACD indicator", "MACD crossover", "MACD divergence", "MACD histogram", "trend following"],
-    featured_image_url: "/lovable-uploads/macd-indicator-chart.png",
+    reading_time_minutes: 8,
+    excerpt: "MACD is a trend-following momentum indicator showing the relationship between two moving averages, widely used by professional traders.",
+    content: "Learn MACD components (MACD Line, Signal Line, Histogram), trading signals (crossovers, zero line, divergence), histogram strategy, advanced techniques, settings, and trading rules for effective trend following.",
+    seo_title: "MACD Indicator Guide | Crossover & Divergence Trading",
+    seo_description: "Master MACD indicator strategies including crossovers, divergences, and histogram analysis. Learn professional MACD trading techniques.",
+    seo_keywords: ["MACD indicator", "MACD crossover", "MACD divergence", "trend following"],
+    tags: ["MACD", "momentum", "trend-following", "indicators"],
   },
-  // Continue with remaining 21 articles...
-  // Due to space, showing structure for remaining articles
   {
-    title: "Head and Shoulders Pattern: The Most Reliable Reversal",
-    slug: "head-and-shoulders-pattern",
+    title: "Money Management: Building and Protecting Capital",
+    slug: "money-management",
+    category: "Risk Management",
+    subcategory: "Capital Management",
+    difficulty_level: "advanced",
+    reading_time_minutes: 14,
+    excerpt: "Master advanced capital allocation strategies, portfolio management techniques, and drawdown recovery methods to build lasting wealth.",
+    content: "Learn core principles (preservation first, consistency over home runs), power of compounding, capital allocation strategies (core-satellite, strategy allocation, market exposure limits), drawdown management, profit management, account growth milestones, and risk of ruin calculations.",
+    seo_title: "Money Management for Traders - Capital Allocation Guide",
+    seo_description: "Master trading money management with capital allocation strategies, drawdown management, profit withdrawal methods, and risk of ruin calculations.",
+    seo_keywords: ["money management", "capital allocation", "drawdown management", "trading capital"],
+    tags: ["money-management", "risk-management", "capital", "drawdown"],
+  },
+  {
+    title: "Moving Averages: Dynamic Support and Resistance",
+    slug: "moving-averages",
+    category: "Technical Analysis",
+    subcategory: "Trend Indicators",
+    difficulty_level: "beginner",
+    reading_time_minutes: 10,
+    excerpt: "Moving averages smooth out price data to identify trends, provide dynamic support/resistance, and generate trading signals.",
+    content: "Learn types of moving averages (SMA, EMA, WMA), popular periods (10-20, 50, 100, 200 day), dynamic support/resistance strategy, crossovers (Golden Cross, Death Cross), multiple MA strategy, common mistakes, and advanced tips.",
+    seo_title: "Moving Averages Trading Guide | SMA vs EMA Strategies",
+    seo_description: "Learn moving averages for trading. Master SMA, EMA, golden cross, death cross, and dynamic support/resistance strategies.",
+    seo_keywords: ["moving averages", "SMA", "EMA", "golden cross", "death cross"],
+    tags: ["moving-averages", "sma", "ema", "technical-indicators"],
+  },
+  {
+    title: "Pin Bar Strategy: High-Probability Reversal Setups",
+    slug: "pin-bar-strategy",
+    category: "Price Action",
+    subcategory: "Candlestick Patterns",
+    difficulty_level: "advanced",
+    reading_time_minutes: 11,
+    excerpt: "Master the pin bar candlestick pattern to identify powerful reversal opportunities with excellent risk-reward ratios at key market levels.",
+    content: "Pin bar shows rejection of a price level with small body and long wick. Learn anatomy (bullish hammer, bearish shooting star), perfect criteria, high-probability locations, entry/exit rules, confluence factors, pin bars to avoid, and advanced techniques including pin bar clusters.",
+    seo_title: "Pin Bar Strategy - High-Probability Reversal Trading Setup",
+    seo_description: "Master pin bar trading strategy for high-probability reversals. Learn anatomy, entry rules, confluence factors, and advanced techniques.",
+    seo_keywords: ["pin bar", "hammer pattern", "shooting star", "price action", "reversal"],
+    tags: ["pin-bar", "price-action", "reversal", "candlesticks"],
+  },
+  {
+    title: "Position Sizing: The Key to Long-Term Survival",
+    slug: "position-sizing",
+    category: "Risk Management",
+    subcategory: "Position Sizing",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 12,
+    excerpt: "Master position sizing to protect your capital, manage risk effectively, and ensure long-term trading success regardless of market conditions.",
+    content: "Learn the 1-2% rule, position sizing formulas (standard, forex, futures), advanced methods (fixed fractional, fixed ratio, Kelly Criterion, volatility-based), portfolio heat, correlation risk, position sizing for different strategies, and practical workflow.",
+    seo_title: "Position Sizing Guide - Risk Management for Traders",
+    seo_description: "Master position sizing with formulas for stocks, forex, and futures. Learn 1-2% rule, Kelly Criterion, and advanced sizing methods.",
+    seo_keywords: ["position sizing", "risk management", "Kelly Criterion", "trading risk"],
+    tags: ["position-sizing", "risk-management", "trading"],
+  },
+  {
+    title: "Price Action Trading: Reading Raw Market Dynamics",
+    slug: "price-action-basics",
+    category: "Price Action",
+    subcategory: "Core Skills",
+    difficulty_level: "beginner",
+    reading_time_minutes: 12,
+    excerpt: "Price action trading involves analyzing raw price movements without indicators. The purest form of technical analysis.",
+    content: "Learn why price action (no lag, clean charts, universal, institutional method), market structure (HH/HL, LH/LL), swing points, Break of Structure, Change of Character, support and resistance in price action, trading strategy, reading candlestick momentum.",
+    seo_title: "Price Action Trading - Read Raw Market Dynamics",
+    seo_description: "Master price action trading without indicators. Learn market structure, swing points, break of structure, and institutional trading methods.",
+    seo_keywords: ["price action", "market structure", "swing trading", "technical analysis"],
+    tags: ["price-action", "market-structure", "trading"],
+  },
+  {
+    title: "Rectangle Pattern: Trading the Range",
+    slug: "rectangle-pattern",
     category: "Chart Patterns",
-    subcategory: "Reversal Patterns",
-    content_type: "article" as const,
+    subcategory: "Continuation",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 6,
+    excerpt: "Rectangle pattern shows consolidation with 74% success rate and 42% average move. Learn to trade this neutral continuation pattern.",
+    content: "Rectangle forms when price oscillates between horizontal support and resistance. Learn pattern formation, characteristics, trading strategy, breakout confirmation, volume analysis, and professional tips for range trading and breakout trading approaches.",
+    seo_title: "Rectangle Pattern Trading - Range Breakout Strategy",
+    seo_description: "Master rectangle pattern trading with 74% success rate. Learn range trading and breakout strategies with professional risk management.",
+    seo_keywords: ["rectangle pattern", "range trading", "consolidation pattern", "breakout"],
+    tags: ["rectangle", "consolidation", "continuation", "patterns"],
+  },
+  {
+    title: "Risk Management: Protecting Your Trading Capital",
+    slug: "risk-management",
+    category: "Risk Management",
+    subcategory: "Fundamentals",
+    difficulty_level: "beginner",
+    reading_time_minutes: 9,
+    excerpt: "Risk management is the foundation of trading success. Protecting your capital is more important than making profits.",
+    content: "Learn the 1% rule (risk max 1-2% per trade), position sizing calculations, risk-reward ratio (minimum 1:2), stop loss strategies (technical, percentage, ATR-based), diversification across markets and strategies, and key takeaways for capital preservation.",
+    seo_title: "Risk Management for Traders - Protect Your Capital",
+    seo_description: "Master trading risk management with the 1% rule, position sizing, stop loss strategies, and diversification techniques.",
+    seo_keywords: ["risk management", "trading risk", "position sizing", "stop loss"],
+    tags: ["risk-management", "trading-rules", "capital-preservation"],
+  },
+  {
+    title: "RSI Indicator: Identifying Overbought and Oversold Conditions",
+    slug: "rsi-indicator",
+    category: "Technical Analysis",
+    subcategory: "Momentum Indicators",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 9,
+    excerpt: "RSI measures the speed and magnitude of price changes to identify overbought and oversold conditions. One of the most popular momentum oscillators.",
+    content: "Learn RSI levels (above 70 overbought, below 30 oversold, 40-60 neutral), trading strategies (overbought/oversold, divergence, centerline cross), advanced concepts (RSI S/R, failure swings), settings, trading rules, and common mistakes to avoid.",
+    seo_title: "RSI Indicator Guide | Overbought & Oversold Trading",
+    seo_description: "Master RSI indicator for trading. Learn overbought/oversold strategies, divergence trading, and advanced RSI techniques.",
+    seo_keywords: ["RSI indicator", "relative strength index", "overbought", "oversold", "RSI divergence"],
+    tags: ["RSI", "momentum", "overbought", "oversold", "indicators"],
+  },
+  {
+    title: "Support and Resistance: The Foundation of Technical Analysis",
+    slug: "support-resistance",
+    category: "Technical Analysis",
+    subcategory: "Core Concepts",
+    difficulty_level: "beginner",
+    reading_time_minutes: 12,
+    excerpt: "Support and resistance levels are the most fundamental concepts in technical analysis, essential for identifying entry and exit points.",
+    content: "Support acts as price floor where buyers step in. Resistance acts as ceiling where sellers enter. Learn types (horizontal, dynamic, psychological, Fibonacci), role reversal concept, how to draw S/R, trading strategies, stop loss placement, and common mistakes.",
+    seo_title: "Support and Resistance Guide | Technical Analysis Foundation",
+    seo_description: "Master support and resistance - the foundation of technical analysis. Learn identification, trading strategies, and role reversal concepts.",
+    seo_keywords: ["support levels", "resistance levels", "technical analysis", "price action"],
+    tags: ["support", "resistance", "technical-analysis", "price-action"],
+  },
+  {
+    title: "Trading Discipline: Following Your Plan Consistently",
+    slug: "trading-discipline",
+    category: "Psychology",
+    subcategory: "Discipline",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 13,
+    excerpt: "Build unshakeable discipline to execute your trading rules flawlessly, even during drawdowns and emotionally challenging conditions.",
+    content: "Learn why discipline is everything, the four pillars (following plan, accepting results, emotional detachment, consistency), common discipline breakdowns, building techniques (pre-trade checklist, 5-minute rule, trading window, limits), development phases, maintenance habits, measuring discipline, and consequences for violations.",
+    seo_title: "Trading Discipline - Execute Your Plan Consistently",
+    seo_description: "Build trading discipline with proven techniques. Learn to follow your plan consistently through drawdowns and winning streaks.",
+    seo_keywords: ["trading discipline", "trading plan", "consistent execution", "trading psychology"],
+    tags: ["discipline", "psychology", "consistency", "trading-rules"],
+  },
+  {
+    title: "Trading Journal: Your Path to Consistent Improvement",
+    slug: "trading-journal",
+    category: "Psychology",
+    subcategory: "Improvement",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 15,
+    excerpt: "Maintain a comprehensive trading journal that accelerates your learning curve, reveals hidden patterns, and transforms you into a consistently profitable trader.",
+    content: "Learn benefits (performance and psychological), what to include in every entry (trade details, setup, risk, results, screenshots, discipline score, notes), journal format options (spreadsheet, software, written, hybrid), review process (weekly and monthly), key metrics to track, and how to use your journal to improve.",
+    seo_title: "Trading Journal Guide - Track Performance & Improve Results",
+    seo_description: "Master trading journaling with comprehensive guide. Learn what to track, review processes, and how to use data for consistent improvement.",
+    seo_keywords: ["trading journal", "trade tracking", "performance analysis", "trading improvement"],
+    tags: ["trading-journal", "tracking", "improvement", "analysis"],
+  },
+  {
+    title: "Trading Psychology: Mastering Your Mindset",
+    slug: "trading-psychology",
+    category: "Psychology",
+    subcategory: "Mindset",
     difficulty_level: "intermediate",
     reading_time_minutes: 11,
+    excerpt: "Trading success is 80% psychology and 20% strategy. Master your emotions to become a consistently profitable trader.",
+    content: "Learn common psychological challenges (fear and greed, revenge trading, overconfidence) and strategies for building mental discipline (follow trading plan consistently, accept losses, keep trading journal, take breaks after losses or winning streaks).",
+    seo_title: "Trading Psychology - Master Your Mindset for Success",
+    seo_description: "Master trading psychology and mental discipline. Learn to overcome fear, greed, and revenge trading for consistent profitability.",
+    seo_keywords: ["trading psychology", "trading mindset", "mental discipline", "trading emotions"],
+    tags: ["psychology", "mindset", "emotions", "discipline"],
+  },
+  {
+    title: "Trend Analysis: Understanding Market Direction",
+    slug: "trend-analysis",
+    category: "Technical Analysis",
+    subcategory: "Trend Analysis",
+    difficulty_level: "beginner",
+    reading_time_minutes: 13,
+    excerpt: "Understanding and utilizing trend lines is fundamental to successful technical analysis and trading.",
+    content: "Learn trend definitions (uptrend, downtrend, sideways), how to draw uptrend and downtrend lines, principles for using trend lines, trading strategies, advanced concepts (internal trend lines, trend channels, multiple timeframe analysis), and common mistakes to avoid.",
+    seo_title: "Trend Analysis Guide - Master Trend Lines & Market Direction",
+    seo_description: "Master trend analysis and trend line trading. Learn to identify uptrends, downtrends, and trade with market direction for consistent profits.",
+    seo_keywords: ["trend analysis", "trend lines", "uptrend", "downtrend", "market direction"],
+    tags: ["trends", "trend-lines", "technical-analysis"],
+  },
+  {
+    title: "Triangle Patterns: Comprehensive Trading Guide",
+    slug: "triangle-patterns",
+    category: "Chart Patterns",
+    subcategory: "Continuation",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 12,
+    excerpt: "Triangle patterns are powerful continuation patterns. Learn to trade ascending, descending, and symmetrical triangles with professional strategies.",
+    content: "Ascending Triangle breaks upward 73% with 38% gain. Descending Triangle breaks downward 64% with 21% decline. Symmetrical Triangle breaks upward 54% (neutral). Learn characteristics, trading strategies, universal rules, and statistical performance data.",
+    seo_title: "Triangle Patterns Guide - Master All Three Triangle Types",
+    seo_description: "Master triangle patterns including ascending, descending, and symmetrical triangles. Learn trading strategies backed by Bulkowski statistics.",
+    seo_keywords: ["triangle patterns", "ascending triangle", "descending triangle", "symmetrical triangle"],
+    tags: ["triangles", "continuation", "patterns", "breakouts"],
+  },
+  {
+    title: "Volume Analysis: Confirming Price Movement",
+    slug: "volume-analysis",
+    category: "Technical Analysis",
+    subcategory: "Volume",
+    difficulty_level: "intermediate",
+    reading_time_minutes: 11,
+    excerpt: "Volume analysis is essential for confirming price movements and identifying the strength behind market trends.",
+    content: "Learn why volume matters, volume principles, volume patterns (accumulation, distribution, climax, drying up), trading strategies, volume indicators, and how to combine volume with price action for high-probability trades.",
+    seo_title: "Volume Analysis Guide - Confirm Price Movements",
+    seo_description: "Master volume analysis for trading. Learn volume patterns, accumulation/distribution, volume indicators, and confirmation techniques.",
+    seo_keywords: ["volume analysis", "trading volume", "volume indicators", "accumulation", "distribution"],
+    tags: ["volume", "technical-analysis", "confirmation"],
+  },
+  {
+    title: "Wedge Patterns: Rising and Falling Wedges",
+    slug: "wedge-patterns",
+    category: "Chart Patterns",
+    subcategory: "Reversal",
+    difficulty_level: "advanced",
+    reading_time_minutes: 10,
+    excerpt: "Rising and falling wedges are powerful reversal patterns with 68% success rates. Learn to identify and trade these converging formations.",
+    content: "Rising Wedge is bearish reversal (68% down, 19% decline). Falling Wedge is bullish reversal (68% up, 35% rise). Learn pattern characteristics, volume behavior, trading strategies, differences from triangles, performance statistics, and professional trading tips.",
+    seo_title: "Wedge Patterns Guide - Rising & Falling Wedge Trading",
+    seo_description: "Master wedge patterns with 68% success rates. Learn rising and falling wedges, trading strategies, and how they differ from triangles.",
+    seo_keywords: ["wedge patterns", "rising wedge", "falling wedge", "reversal patterns"],
+    tags: ["wedges", "reversal", "patterns", "converging"],
+  },
+];
     excerpt: "Head and Shoulders has a 93% accuracy rate according to Thomas Bulkowski's research. Learn how to identify and trade this powerful reversal pattern.",
     content: `[Full article content for Head and Shoulders...]`,
     tags: ["head-and-shoulders", "reversal-pattern", "chart-patterns", "technical-analysis"],
