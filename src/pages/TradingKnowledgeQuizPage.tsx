@@ -1,4 +1,4 @@
-import { PatternQuiz } from "@/components/PatternQuiz";
+import { DatabaseQuiz } from "@/components/DatabaseQuiz";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
@@ -21,7 +21,10 @@ const TradingKnowledgeQuizPage = () => {
           </p>
         </div>
         
-        <PatternQuiz />
+        <DatabaseQuiz 
+          title="Trading Knowledge Quiz"
+          limit={25}
+        />
       </div>
     </div>
   );

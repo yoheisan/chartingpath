@@ -87,7 +87,7 @@ const QuizHub = () => {
               </div>
               <CardTitle className="text-2xl">Pattern Identification Quiz</CardTitle>
               <CardDescription>
-                Learn to recognize chart patterns by sight. Practice identifying patterns without labels to master visual pattern recognition.
+                Learn to recognize chart patterns by sight. Practice identifying patterns from our database of real chart pattern images.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -98,11 +98,11 @@ const QuizHub = () => {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Focus:</span>
-                  <span className="font-medium">Chart pattern visuals</span>
+                  <span className="font-medium">Visual pattern recognition</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Difficulty:</span>
-                  <Badge variant="secondary">Beginner to Intermediate</Badge>
+                  <Badge variant="secondary">Intermediate</Badge>
                 </div>
                 <Link to="/quiz/pattern-identification" className="block">
                   <Button className="w-full" size="lg">
@@ -122,18 +122,18 @@ const QuizHub = () => {
               </div>
               <CardTitle className="text-2xl">Trading Knowledge Quiz</CardTitle>
               <CardDescription>
-                Test your understanding of pattern characteristics, risk management, and professional trading practices. 100 questions covering all aspects.
+                Test your understanding of pattern characteristics, risk management, and professional trading practices from our comprehensive quiz database.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Questions:</span>
-                  <span className="font-medium">100 questions</span>
+                  <span className="font-medium">25+ questions</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Categories:</span>
-                  <span className="font-medium">Visual, Characteristics, Risk</span>
+                  <span className="font-medium">All categories</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Difficulty:</span>

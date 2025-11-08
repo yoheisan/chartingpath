@@ -1,4 +1,4 @@
-import { PatternIdentificationQuiz } from "@/components/PatternIdentificationQuiz";
+import { DatabaseQuiz } from "@/components/DatabaseQuiz";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
@@ -21,7 +21,11 @@ const PatternIdentificationQuizPage = () => {
           </p>
         </div>
         
-        <PatternIdentificationQuiz />
+      <DatabaseQuiz 
+        category="visual_recognition"
+        title="Visual Pattern Identification Quiz"
+        limit={15}
+      />
       </div>
     </div>
   );
