@@ -2,7 +2,7 @@ export const QUIZ_QUESTIONS = [
   // Visual Recognition Questions (15 questions from PatternQuiz.tsx)
   {
     question_code: "v1",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "What pattern is shown in this candlestick chart?",
     pattern_name: "Head and Shoulders",
@@ -14,7 +14,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v2",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "Identify this reversal pattern in the candlestick chart:",
     pattern_name: "Double Bottom",
@@ -26,7 +26,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v3",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "What continuation pattern is displayed in this candlestick chart?",
     pattern_name: "Ascending Triangle",
@@ -38,7 +38,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v4",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "This consolidation pattern in the candlestick chart is called:",
     pattern_name: "Bull Flag",
@@ -50,7 +50,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v5",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "advanced" as const,
     question_text: "What bullish pattern is shown in this candlestick chart?",
     pattern_name: "Cup with Handle",
@@ -62,7 +62,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v6",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "This bearish pattern in the candlestick chart is:",
     pattern_name: "Descending Triangle",
@@ -74,7 +74,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v7",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "What neutral pattern is shown in this candlestick chart?",
     pattern_name: "Symmetrical Triangle",
@@ -86,7 +86,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v8",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "advanced" as const,
     question_text: "This bearish reversal pattern in the candlestick chart is:",
     pattern_name: "Rising Wedge",
@@ -98,7 +98,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v9",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "advanced" as const,
     question_text: "This bullish reversal pattern in the candlestick chart is:",
     pattern_name: "Falling Wedge",
@@ -110,7 +110,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "v10",
-    category: "pattern_recognition" as const,
+    category: "visual_recognition" as const,
     difficulty: "intermediate" as const,
     question_text: "What reversal pattern is displayed in this candlestick chart?",
     pattern_name: "Double Top",
@@ -174,7 +174,7 @@ export const QUIZ_QUESTIONS = [
   // Pattern Characteristics Questions (10 questions from PatternQuiz)
   {
     question_code: "c1",
-    category: "pattern_knowledge" as const,
+    category: "characteristics" as const,
     difficulty: "advanced" as const,
     question_text: "According to Bulkowski, Head and Shoulders patterns fail what percentage of the time?",
     options: JSON.stringify(["7%", "15%", "25%"]),
@@ -184,7 +184,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "c2",
-    category: "pattern_knowledge" as const,
+    category: "characteristics" as const,
     difficulty: "advanced" as const,
     question_text: "Double tops have what average decline according to Encyclopedia of Chart Patterns?",
     options: JSON.stringify(["18%", "25%", "32%"]),
@@ -194,7 +194,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "c3",
-    category: "pattern_knowledge" as const,
+    category: "characteristics" as const,
     difficulty: "advanced" as const,
     question_text: "Cup and Handle patterns require the handle to retrace no more than what percentage?",
     options: JSON.stringify(["25%", "38%", "50%"]),
@@ -204,7 +204,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "c4",
-    category: "pattern_knowledge" as const,
+    category: "characteristics" as const,
     difficulty: "advanced" as const,
     question_text: "Ascending triangles have what breakout direction frequency per Bulkowski?",
     options: JSON.stringify(["63% upward", "73% upward", "83% upward"]),
@@ -214,7 +214,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     question_code: "c5",
-    category: "pattern_knowledge" as const,
+    category: "characteristics" as const,
     difficulty: "intermediate" as const,
     question_text: "According to professional standards, minimum pattern duration should be:",
     options: JSON.stringify(["7 days", "15 days", "21 days"]),
