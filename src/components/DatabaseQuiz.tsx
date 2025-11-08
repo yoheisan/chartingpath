@@ -46,6 +46,7 @@ export const DatabaseQuiz = ({
   const [showExplanation, setShowExplanation] = useState(false);
   const [quizComplete, setQuizComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [imageVersion] = useState(() => Date.now());
 
   useEffect(() => {
     loadQuestions();
@@ -221,7 +222,7 @@ export const DatabaseQuiz = ({
           {currentQuestion.image_url && (
             <div className="mb-6 bg-muted rounded-lg overflow-hidden">
               <img 
-                src={`${currentQuestion.image_url}?v=2025-colored`}
+                src={`${currentQuestion.image_url}?v=${imageVersion}`}
                 alt={currentQuestion.pattern_name || "Chart pattern"} 
                 className="w-full h-auto"
                 onError={(e) => {
