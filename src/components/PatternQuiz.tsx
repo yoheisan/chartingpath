@@ -493,11 +493,11 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v17",
     type: "visual",
     pattern: "Scallop",
-    patternKey: "cup-handle",
+    patternKey: "rounding-bottom",
     question: "This continuation pattern is called:",
     options: ["Flag", "Scallop", "Pennant"],
     correctAnswer: 1,
-    explanation: "Scallops succeed 59% of time with 28% average rise (Bulkowski)."
+    explanation: "Scallop (also called Scallop Ascending or Ascending Scallop) is a bullish continuation pattern with 59% success rate and 28% average rise according to Bulkowski's research. What it is: A scallop is a curved, saucer-shaped consolidation that appears during an uptrend, resembling a series of rounded bowls or scalloped edges. Structure: Unlike sharp consolidations (flags, pennants), scallops form smooth, rounded pullbacks that gradually curve back upward. The pattern looks like a shallow bowl or the letter 'J' on its side. Each scallop typically lasts 3-8 weeks and retraces 20-40% of the prior advance. How to recognize it: Look for a smooth, curved decline followed by a smooth, curved recovery - no sharp angles or V-shaped bottoms. Volume follows the curve, declining during the pullback and increasing as price curves back up. Scallops often appear in series (multiple scallops in sequence) during strong uptrends. What happens: When price breaks above the previous high (completing the scallop), it signals the uptrend is resuming. The breakout should occur on increasing volume. The measured move is typically conservative - the pattern height projected upward, though strong trends may exceed this target. Why professionals watch this: Although only 59% reliable (modest compared to other continuation patterns), scallops are valuable because they represent healthy, gradual corrections in strong uptrends rather than sharp, panicked selling. Professional swing traders at investment firms view scallops as signs of strength - the smooth, controlled nature of the pullback indicates institutional support and orderly profit-taking rather than distribution. Scallops are most reliable in leading growth stocks with strong fundamentals during secular bull markets. The pattern's gradual nature allows patient accumulation during the pullback phase. However, the modest 59% success rate means traders must be selective - only trade scallops in confirmed uptrends with strong volume characteristics."
   },
   {
     id: "v18",
