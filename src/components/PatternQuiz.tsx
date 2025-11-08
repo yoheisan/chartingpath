@@ -522,12 +522,12 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "v20",
     type: "visual",
-    pattern: "Horn Pattern",
+    pattern: "Complex Head and Shoulders",
     patternKey: "head-shoulders",
     question: "This complex pattern is:",
     options: ["Horn Top", "Complex Head and Shoulders", "Triple Top"],
-    correctAnswer: 0,
-    explanation: "Horn patterns combine multiple reversal signals with high reliability."
+    correctAnswer: 1,
+    explanation: "Complex Head and Shoulders is a powerful reversal pattern with 88% success rate according to Bulkowski's research - even more reliable than the standard Head and Shoulders (93%). What it is: This is a variation of the classic Head and Shoulders pattern that includes multiple shoulders on either side of the head, rather than the simple left shoulder-head-right shoulder configuration. Structure: The pattern consists of a central head (highest peak in a topping pattern) flanked by two or more shoulders on each side at approximately the same level. The multiple shoulders create a more complex formation but follow the same principle - failed attempts to break through resistance. A neckline connects the lows between the peaks. How to recognize it: After an uptrend, look for a series of peaks where one central peak (head) is clearly higher than surrounding peaks (shoulders). The key difference from a standard H&S is the presence of 2+ shoulders on either side instead of just one. Volume typically decreases with each successive shoulder, showing diminishing buying pressure. The pattern usually takes several weeks to months to form. What happens: When price breaks below the neckline, it confirms the reversal. The breakdown should occur on increased volume (1.5x+ average). The measured move equals the distance from the head to the neckline, projected downward from the breakdown point. The 88% success rate means this pattern is exceptionally reliable - even slightly better than the standard version. Why professionals trade it: Experienced traders at hedge funds and proprietary trading firms value Complex Head and Shoulders patterns because: (1) the multiple shoulders provide more confirmation of weakening momentum, (2) the extended formation period allows gradual position building, (3) the high success rate justifies larger position sizes, (4) the clear structure provides well-defined entry/exit points. Entry: Short on neckline break, stop above the head, target the measured move. The multiple shoulders make this pattern more reliable because they show repeated failure to advance - bulls have tried multiple times and failed each time."
   },
 
   // Advanced Characteristics - Professional Level
