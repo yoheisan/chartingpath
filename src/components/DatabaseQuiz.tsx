@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 
 interface QuizQuestion {
   id: string;
@@ -218,8 +219,16 @@ export const DatabaseQuiz = ({
 
           <p className="text-lg mb-6">{currentQuestion.question_text}</p>
 
-          {/* Image Display for Visual Questions */}
-          {currentQuestion.image_url && (
+          {/* Pattern Chart Display */}
+          {(currentQuestion.pattern_key || currentQuestion.pattern_name) ? (
+            <div className="mb-6 bg-muted rounded-lg overflow-hidden p-4">
+              <DynamicPatternChart 
+                patternType={currentQuestion.pattern_key || currentQuestion.pattern_name || 'head-shoulders'}
+                width={800}
+                height={400}
+              />
+            </div>
+          ) : currentQuestion.image_url && (
             <div className="mb-6 bg-muted rounded-lg overflow-hidden">
               <img 
                 src={`${currentQuestion.image_url}?v=${imageVersion}`}
