@@ -927,6 +927,54 @@ export type Database = {
         }
         Relationships: []
       }
+      historical_overview_regime: {
+        Row: {
+          asof_date: string
+          created_at: string
+          market_drivers: string
+          market_overview: string
+          updated_at: string
+        }
+        Insert: {
+          asof_date: string
+          created_at?: string
+          market_drivers: string
+          market_overview: string
+          updated_at?: string
+        }
+        Update: {
+          asof_date?: string
+          created_at?: string
+          market_drivers?: string
+          market_overview?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      historical_overview_tactical: {
+        Row: {
+          asof_date: string
+          created_at: string
+          market_drivers: string
+          market_overview: string
+          updated_at: string
+        }
+        Insert: {
+          asof_date: string
+          created_at?: string
+          market_drivers: string
+          market_overview: string
+          updated_at?: string
+        }
+        Update: {
+          asof_date?: string
+          created_at?: string
+          market_drivers?: string
+          market_overview?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           accuracy_percentage: number | null
@@ -1176,6 +1224,69 @@ export type Database = {
         }
         Relationships: []
       }
+      pattern_images: {
+        Row: {
+          alt_text: string
+          created_at: string | null
+          description: string | null
+          file_size_bytes: number | null
+          height: number | null
+          id: string
+          image_path: string
+          image_url: string | null
+          is_active: boolean | null
+          is_bullish: boolean | null
+          mime_type: string | null
+          pattern_key: string
+          pattern_name: string
+          pattern_type: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          width: number | null
+        }
+        Insert: {
+          alt_text: string
+          created_at?: string | null
+          description?: string | null
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          image_path: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_bullish?: boolean | null
+          mime_type?: string | null
+          pattern_key: string
+          pattern_name: string
+          pattern_type?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string
+          created_at?: string | null
+          description?: string | null
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          image_path?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_bullish?: boolean | null
+          mime_type?: string | null
+          pattern_key?: string
+          pattern_name?: string
+          pattern_type?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
       plan_pricing: {
         Row: {
           created_at: string
@@ -1242,6 +1353,129 @@ export type Database = {
           subscription_status?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          attempted_at: string | null
+          device_type: string | null
+          id: string
+          is_correct: boolean
+          question_id: string
+          quiz_session_id: string | null
+          selected_answer: number
+          time_taken_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          device_type?: string | null
+          id?: string
+          is_correct: boolean
+          question_id: string
+          quiz_session_id?: string | null
+          selected_answer: number
+          time_taken_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string | null
+          device_type?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          quiz_session_id?: string | null
+          selected_answer?: number
+          time_taken_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_answer: number
+          created_at: string | null
+          created_by: string | null
+          difficulty: Database["public"]["Enums"]["quiz_difficulty"]
+          display_order: number | null
+          explanation: string
+          id: string
+          image_metadata: Json | null
+          image_url: string | null
+          is_active: boolean | null
+          options: Json
+          pattern_key: string | null
+          pattern_name: string | null
+          question_code: string
+          question_text: string
+          related_patterns: string[] | null
+          tags: string[] | null
+          times_correct: number | null
+          times_shown: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_answer: number
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: Database["public"]["Enums"]["quiz_difficulty"]
+          display_order?: number | null
+          explanation: string
+          id?: string
+          image_metadata?: Json | null
+          image_url?: string | null
+          is_active?: boolean | null
+          options: Json
+          pattern_key?: string | null
+          pattern_name?: string | null
+          question_code: string
+          question_text: string
+          related_patterns?: string[] | null
+          tags?: string[] | null
+          times_correct?: number | null
+          times_shown?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["quiz_category"]
+          correct_answer?: number
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: Database["public"]["Enums"]["quiz_difficulty"]
+          display_order?: number | null
+          explanation?: string
+          id?: string
+          image_metadata?: Json | null
+          image_url?: string | null
+          is_active?: boolean | null
+          options?: Json
+          pattern_key?: string | null
+          pattern_name?: string | null
+          question_code?: string
+          question_text?: string
+          related_patterns?: string[] | null
+          tags?: string[] | null
+          times_correct?: number | null
+          times_shown?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1878,7 +2112,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      quiz_analytics: {
+        Row: {
+          avg_time_taken_seconds: number | null
+          category: Database["public"]["Enums"]["quiz_category"] | null
+          difficulty: Database["public"]["Enums"]["quiz_difficulty"] | null
+          id: string | null
+          pattern_name: string | null
+          question_code: string | null
+          success_rate_percentage: number | null
+          times_correct: number | null
+          times_shown: number | null
+          unique_users_attempted: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_prorata_amount: {
@@ -1900,6 +2148,28 @@ export type Database = {
       }
       cleanup_expired_reports: { Args: never; Returns: undefined }
       get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
+      get_quiz_questions: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["quiz_category"]
+          p_difficulty?: Database["public"]["Enums"]["quiz_difficulty"]
+          p_limit?: number
+        }
+        Returns: {
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_answer: number
+          difficulty: Database["public"]["Enums"]["quiz_difficulty"]
+          explanation: string
+          id: string
+          image_metadata: Json
+          image_url: string
+          options: Json
+          pattern_key: string
+          pattern_name: string
+          question_code: string
+          question_text: string
+          tags: string[]
+        }[]
+      }
       get_translations: {
         Args: { p_language_code?: string }
         Returns: {
@@ -1962,6 +2232,13 @@ export type Database = {
         | "ema_cross_bearish"
         | "rsi_divergence_bullish"
         | "rsi_divergence_bearish"
+      quiz_category:
+        | "visual_recognition"
+        | "characteristics"
+        | "statistics"
+        | "risk_management"
+        | "professional_practices"
+      quiz_difficulty: "beginner" | "intermediate" | "advanced" | "expert"
       subscription_plan: "starter" | "pro" | "elite" | "free" | "pro_plus"
       timeframe: "15m" | "1h" | "4h" | "1d"
     }
@@ -2106,6 +2383,14 @@ export const Constants = {
         "rsi_divergence_bullish",
         "rsi_divergence_bearish",
       ],
+      quiz_category: [
+        "visual_recognition",
+        "characteristics",
+        "statistics",
+        "risk_management",
+        "professional_practices",
+      ],
+      quiz_difficulty: ["beginner", "intermediate", "advanced", "expert"],
       subscription_plan: ["starter", "pro", "elite", "free", "pro_plus"],
       timeframe: ["15m", "1h", "4h", "1d"],
     },
