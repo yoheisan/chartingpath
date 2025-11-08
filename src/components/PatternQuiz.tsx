@@ -186,12 +186,12 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "v11",
     type: "visual",
-    pattern: "Triple Bottom",
-    patternKey: "triple-bottom",
+    pattern: "Inverse Head and Shoulders",
+    patternKey: "inverse-head-shoulders",
     question: "This bullish reversal is called:",
     options: ["Triple Bottom", "Inverse Head and Shoulders", "Double Bottom"],
-    correctAnswer: 0,
-    explanation: "Triple bottoms succeed 79% of time with 37% average rise."
+    correctAnswer: 1,
+    explanation: "Inverse Head and Shoulders (also called Head and Shoulders Bottom) is one of the most reliable bullish reversal patterns with 87% success rate and 38% average rise according to Bulkowski's Encyclopedia. This pattern is the upside-down version of the regular Head and Shoulders top. Structure: The pattern consists of three troughs (valleys) where the middle trough (head) is deepest, flanked by two shallower troughs (shoulders) at approximately the same level. A neckline connects the peaks between the troughs. Why it works: After a downtrend, this pattern shows three unsuccessful attempts by sellers to push price lower. The head represents the final capitulation - maximum selling pressure. When price recovers above the neckline, it confirms that sellers are exhausted and buyers have gained control. The 87% success rate makes this pattern extremely reliable - professional traders at institutional firms actively seek it because the risk/reward is compelling. Entry: Buy when price breaks above the neckline with strong volume (at least 1.5x average). Stop loss: Place below the head (lowest point). Target: Measure the distance from the head to neckline, then project that same distance upward from the breakout point - this gives the minimum expected move. The 38% average gain is substantial, and the pattern's clear structure provides excellent risk management. This is why it's taught in every professional trading program at firms like Goldman Sachs and J.P. Morgan."
   },
   {
     id: "v12",
