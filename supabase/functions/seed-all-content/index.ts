@@ -37,39 +37,45 @@ Deno.serve(async (req) => {
 
     console.log('Starting content migration...');
 
-    // Insert articles
+    // Upsert articles (update if slug exists, insert if new)
     const { data: insertedArticles, error: articlesError } = await supabase
       .from('learning_articles')
-      .insert(ARTICLES.map(article => ({
+      .upsert(ARTICLES.map(article => ({
         ...article,
         author_id: user.id,
         status: 'published',
         published_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })))
+      })), {
+        onConflict: 'slug',
+        ignoreDuplicates: false
+      })
       .select();
 
     if (articlesError) {
-      console.error('Articles insert error:', articlesError);
-      throw new Error(`Failed to insert articles: ${articlesError.message}`);
+      console.error('Articles upsert error:', articlesError);
+      throw new Error(`Failed to upsert articles: ${articlesError.message}`);
     }
 
-    // Insert quiz questions
+    // Upsert quiz questions (update if question_code exists, insert if new)
     const { data: insertedQuestions, error: questionsError } = await supabase
       .from('quiz_questions')
-      .insert(QUIZ_QUESTIONS.map(q => ({
+      .upsert(QUIZ_QUESTIONS.map(q => ({
         ...q,
         created_by: user.id,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })))
+      })), {
+        onConflict: 'question_code',
+        ignoreDuplicates: false
+      })
       .select();
 
     if (questionsError) {
-      console.error('Quiz questions insert error:', questionsError);
-      throw new Error(`Failed to insert quiz questions: ${questionsError.message}`);
+      console.error('Quiz questions upsert error:', questionsError);
+      throw new Error(`Failed to upsert quiz questions: ${questionsError.message}`);
     }
 
     console.log(`Migration complete: ${insertedArticles?.length} articles, ${insertedQuestions?.length} quiz questions`);
