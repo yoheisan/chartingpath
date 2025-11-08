@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -139,6 +139,14 @@ const AdminDashboard = () => {
           >
             <Users className="h-4 w-4" />
             User Management
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/admin/content")}
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Content Management
           </Button>
           <Button
             variant="outline"
