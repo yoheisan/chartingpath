@@ -221,7 +221,7 @@ export const DatabaseQuiz = ({
           {currentQuestion.image_url && (
             <div className="mb-6 bg-muted rounded-lg overflow-hidden">
               <img 
-                src={currentQuestion.image_url} 
+                src={`${currentQuestion.image_url}?v=${Date.now()}`} 
                 alt={currentQuestion.pattern_name || "Chart pattern"} 
                 className="w-full h-auto"
                 onError={(e) => {
