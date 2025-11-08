@@ -493,7 +493,7 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v17",
     type: "visual",
     pattern: "Scallop",
-    patternKey: "rounding-bottom",
+    patternKey: "cup-handle",
     question: "This continuation pattern is called:",
     options: ["Flag", "Scallop", "Pennant"],
     correctAnswer: 1,
