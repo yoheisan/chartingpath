@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import movingAveragesChart from "@/assets/moving-averages-chart.png";
 
 const MovingAverages = () => {
   return (
@@ -31,6 +32,11 @@ const MovingAverages = () => {
           </Alert>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">Types of Moving Averages</h2>
+          
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img src={movingAveragesChart} alt="Moving Averages Chart - Golden Cross" className="w-full h-auto" />
+          </div>
           
           <div className="grid gap-4 mb-8">
             <Card>

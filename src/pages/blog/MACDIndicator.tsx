@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import macdChart from "@/assets/macd-indicator-chart.png";
 
 const MACDIndicator = () => {
   return (
@@ -31,6 +32,11 @@ const MACDIndicator = () => {
           </Alert>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">MACD Components</h2>
+          
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img src={macdChart} alt="MACD Indicator with Histogram and Signal Lines" className="w-full h-auto" />
+          </div>
           
           <div className="grid gap-4 mb-8">
             <Card>

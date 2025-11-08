@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Target, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import supportResistanceChart from "@/assets/support-resistance-chart.png";
 
 const SupportResistance = () => {
   return (
@@ -35,6 +36,11 @@ const SupportResistance = () => {
             Support is a price level where demand is strong enough to prevent the price from falling further. 
             It acts as a "floor" where buyers consistently step in, creating buying pressure that pushes prices back up.
           </p>
+
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img src={supportResistanceChart} alt="Support and Resistance Levels Chart" className="w-full h-auto" />
+          </div>
 
           <div className="bg-accent/50 p-6 rounded-lg mb-8">
             <h3 className="text-xl font-semibold mb-4">Key Support Characteristics:</h3>

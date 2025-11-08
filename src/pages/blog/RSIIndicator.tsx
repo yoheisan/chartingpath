@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, BarChart3, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import rsiChart from "@/assets/rsi-indicator-chart.png";
 
 const RSIIndicator = () => {
   return (
@@ -35,6 +36,11 @@ const RSIIndicator = () => {
             RSI oscillates between 0 and 100. It's calculated based on average gains and losses over a specified period (typically 14 periods). 
             RSI helps traders identify potential reversal points and momentum strength.
           </p>
+
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img src={rsiChart} alt="RSI Indicator with Overbought and Oversold Levels" className="w-full h-auto" />
+          </div>
 
           <div className="grid gap-4 mb-8">
             <Card>

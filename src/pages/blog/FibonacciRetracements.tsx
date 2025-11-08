@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Target, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import fibonacciChart from "@/assets/fibonacci-retracement-chart.png";
 
 const FibonacciRetracements = () => {
   return (
@@ -31,6 +32,11 @@ const FibonacciRetracements = () => {
           </Alert>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">Key Fibonacci Levels</h2>
+          
+          {/* Chart Image */}
+          <div className="my-8 rounded-lg overflow-hidden border border-border">
+            <img src={fibonacciChart} alt="Fibonacci Retracement Levels Chart" className="w-full h-auto" />
+          </div>
           
           <div className="grid gap-4 mb-8">
             <Card>
