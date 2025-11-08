@@ -229,11 +229,14 @@ export const AIArticleGenerator = ({ onArticleGenerated }: { onArticleGenerated?
         <div className="text-sm text-muted-foreground space-y-2 pt-4 border-t">
           <p className="font-semibold">How it works:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>AI generates a comprehensive 1500-2500 word article</li>
+            <li>OpenAI GPT-5 Mini generates a comprehensive 1500-2500 word article</li>
             <li>Includes proper structure, examples, and trading strategies</li>
             <li>Automatically creates SEO metadata</li>
             <li>Saves as draft for review before publishing</li>
           </ul>
+          <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-2">
+            ⚡ Using your OpenAI API account
+          </p>
         </div>
       </CardContent>
     </Card>
