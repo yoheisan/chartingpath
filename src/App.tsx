@@ -56,7 +56,8 @@ import StockSectors from "./pages/markets/stocks/StockSectors";
 import Bitcoin from "./pages/markets/crypto/Bitcoin";
 import Ethereum from "./pages/markets/crypto/Ethereum";
 import Altcoins from "./pages/markets/crypto/Altcoins";
-import Blog from "./pages/Blog";
+import BlogV2 from "./pages/BlogV2";
+import DynamicArticle from "./pages/blog/DynamicArticle";
 import HeadAndShoulders from "./pages/blog/HeadAndShoulders";
 import DoubleTopBottom from "./pages/blog/DoubleTopBottom";
 import TrianglePatterns from "./pages/blog/TrianglePatterns";
@@ -109,7 +110,8 @@ const App = () => (
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
           <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
-          <Route path="/learn" element={<Blog />} />
+          <Route path="/learn" element={<BlogV2 />} />
+          <Route path="/blog/:slug" element={<DynamicArticle />} />
           <Route path="/learn/head-and-shoulders" element={<HeadAndShoulders />} />
           <Route path="/learn/double-top-bottom" element={<DoubleTopBottom />} />
           <Route path="/learn/triangle-patterns" element={<TrianglePatterns />} />
