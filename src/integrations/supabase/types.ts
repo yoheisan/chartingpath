@@ -162,6 +162,87 @@ export type Database = {
           },
         ]
       }
+      article_likes: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_likes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "article_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_likes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learning_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_views: {
+        Row: {
+          article_id: string
+          id: string
+          ip_address: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_views_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "article_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_views_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learning_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backtest_presets: {
         Row: {
           created_at: string
@@ -975,6 +1056,111 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_articles: {
+        Row: {
+          author_id: string | null
+          canonical_url: string | null
+          category: string
+          content: string
+          content_type: Database["public"]["Enums"]["content_type"]
+          created_at: string | null
+          difficulty_level: string | null
+          display_order: number | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_featured: boolean | null
+          last_edited_by: string | null
+          like_count: number | null
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
+          published_at: string | null
+          reading_time_minutes: number | null
+          related_articles: string[] | null
+          related_patterns: string[] | null
+          scheduled_publish_at: string | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string
+          status: Database["public"]["Enums"]["content_status"]
+          subcategory: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          canonical_url?: string | null
+          category: string
+          content: string
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string | null
+          difficulty_level?: string | null
+          display_order?: number | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          last_edited_by?: string | null
+          like_count?: number | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          related_articles?: string[] | null
+          related_patterns?: string[] | null
+          scheduled_publish_at?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["content_status"]
+          subcategory?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          canonical_url?: string | null
+          category?: string
+          content?: string
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string | null
+          difficulty_level?: string | null
+          display_order?: number | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          last_edited_by?: string | null
+          like_count?: number | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          related_articles?: string[] | null
+          related_patterns?: string[] | null
+          scheduled_publish_at?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          subcategory?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           accuracy_percentage: number | null
@@ -1420,12 +1606,16 @@ export type Database = {
           image_metadata: Json | null
           image_url: string | null
           is_active: boolean | null
+          last_edited_by: string | null
           options: Json
           pattern_key: string | null
           pattern_name: string | null
           question_code: string
           question_text: string
           related_patterns: string[] | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
           tags: string[] | null
           times_correct: number | null
           times_shown: number | null
@@ -1443,12 +1633,16 @@ export type Database = {
           image_metadata?: Json | null
           image_url?: string | null
           is_active?: boolean | null
+          last_edited_by?: string | null
           options: Json
           pattern_key?: string | null
           pattern_name?: string | null
           question_code: string
           question_text: string
           related_patterns?: string[] | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
           tags?: string[] | null
           times_correct?: number | null
           times_shown?: number | null
@@ -1466,12 +1660,16 @@ export type Database = {
           image_metadata?: Json | null
           image_url?: string | null
           is_active?: boolean | null
+          last_edited_by?: string | null
           options?: Json
           pattern_key?: string | null
           pattern_name?: string | null
           question_code?: string
           question_text?: string
           related_patterns?: string[] | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
           tags?: string[] | null
           times_correct?: number | null
           times_shown?: number | null
@@ -2112,6 +2310,23 @@ export type Database = {
       }
     }
     Views: {
+      article_analytics: {
+        Row: {
+          category: string | null
+          content_type: Database["public"]["Enums"]["content_type"] | null
+          created_at: string | null
+          id: string | null
+          like_count: number | null
+          published_at: string | null
+          slug: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          title: string | null
+          unique_likers: number | null
+          unique_viewers: number | null
+          view_count: number | null
+        }
+        Relationships: []
+      }
       quiz_analytics: {
         Row: {
           avg_time_taken_seconds: number | null
@@ -2147,6 +2362,32 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_reports: { Args: never; Returns: undefined }
+      get_article_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          category: string
+          content: string
+          content_type: Database["public"]["Enums"]["content_type"]
+          difficulty_level: string
+          excerpt: string
+          featured_image_url: string
+          id: string
+          like_count: number
+          og_description: string
+          og_image_url: string
+          og_title: string
+          published_at: string
+          reading_time_minutes: number
+          seo_description: string
+          seo_keywords: string[]
+          seo_title: string
+          slug: string
+          subcategory: string
+          tags: string[]
+          title: string
+          view_count: number
+        }[]
+      }
       get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
       get_quiz_questions: {
         Args: {
@@ -2199,6 +2440,7 @@ export type Database = {
         }
         Returns: Json
       }
+      publish_scheduled_articles: { Args: never; Returns: number }
       set_user_language: {
         Args: {
           p_detected_country?: string
@@ -2232,6 +2474,14 @@ export type Database = {
         | "ema_cross_bearish"
         | "rsi_divergence_bullish"
         | "rsi_divergence_bearish"
+      content_status: "draft" | "published" | "archived" | "scheduled"
+      content_type:
+        | "article"
+        | "tutorial"
+        | "guide"
+        | "blog_post"
+        | "pattern_analysis"
+        | "strategy_guide"
       quiz_category:
         | "visual_recognition"
         | "characteristics"
@@ -2382,6 +2632,15 @@ export const Constants = {
         "ema_cross_bearish",
         "rsi_divergence_bullish",
         "rsi_divergence_bearish",
+      ],
+      content_status: ["draft", "published", "archived", "scheduled"],
+      content_type: [
+        "article",
+        "tutorial",
+        "guide",
+        "blog_post",
+        "pattern_analysis",
+        "strategy_guide",
       ],
       quiz_category: [
         "visual_recognition",

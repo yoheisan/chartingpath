@@ -23,6 +23,7 @@ import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminContentManagement from "./pages/AdminContentManagement";
 import PatternGenerator from "./pages/PatternGenerator";
 import PatternLibraryPage from "./pages/PatternLibraryPage";
 import TradingStrategiesPage from "./pages/TradingStrategiesPage";
@@ -167,6 +168,7 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/content" element={<AdminContentManagement />} />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           <Route path="/terms" element={<Terms />} />
