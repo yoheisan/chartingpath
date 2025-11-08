@@ -10,7 +10,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 
 const AdminContentManagement = () => {
   const { t } = useTranslations();
-  const [activeTab, setActiveTab] = useState("generate");
+  const [activeTab, setActiveTab] = useState("migrate");
 
   return (
     <div className="min-h-screen bg-background">
