@@ -11,7 +11,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 0,
     explanation: "Head and Shoulders has 93% accuracy rate according to Thomas Bulkowski's Encyclopedia of Chart Patterns, with average decline of 17%. Professional traders at top Wall Street firms use this pattern specifically because of its high success rate.",
     tags: ["reversal", "bearish", "pattern-recognition"],
-    image_url: "/src/assets/patterns/head-shoulders.png",
+    image_url: "/patterns/head-shoulders.png",
     image_metadata: { alt: "Head and Shoulders chart pattern showing left shoulder, higher head peak, and right shoulder with downward neckline break" },
   },
   {
@@ -25,7 +25,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 1,
     explanation: "Double Bottom is a bullish reversal pattern with 79% success rate and 35% average rise according to Bulkowski's research. After a downtrend, the pattern shows two distinct attempts by sellers to push price lower, both finding support at approximately the same level.",
     tags: ["reversal", "bullish", "pattern-recognition"],
-    image_url: "/src/assets/patterns/double-bottom.png",
+    image_url: "/patterns/double-bottom.png",
     image_metadata: { alt: "Double Bottom chart pattern showing two valley lows at same price level with upward breakout" },
   },
   {
@@ -39,7 +39,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 0,
     explanation: "Ascending Triangle is a bullish continuation pattern that breaks upward 73% of the time with 38% average rise. The pattern has a flat horizontal resistance line on top and a rising support line on the bottom.",
     tags: ["continuation", "bullish", "triangle"],
-    image_url: "/src/assets/patterns/ascending-triangle.png",
+    image_url: "/patterns/ascending-triangle.png",
     image_metadata: { alt: "Ascending Triangle chart pattern with flat horizontal resistance and rising support trendline" },
   },
   {
@@ -53,7 +53,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 1,
     explanation: "Bull Flag is one of the most reliable continuation patterns with 88% success rate and typically forms over 8 days. The pole is a sharp price advance on strong volume, followed by a rectangular consolidation on decreasing volume.",
     tags: ["continuation", "bullish", "flag"],
-    image_url: "/src/assets/patterns/bull-flag.png",
+    image_url: "/patterns/bull-flag.png",
     image_metadata: { alt: "Bull Flag chart pattern with steep upward pole and rectangular consolidation flag" },
   },
   {
@@ -67,7 +67,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 1,
     explanation: "Cup and Handle has 86% success rate and 45% average gain. This pattern was popularized by William O'Neil who identified it in his study of the biggest stock market winners.",
     tags: ["continuation", "bullish", "cup-handle"],
-    image_url: "/src/assets/patterns/cup-handle.png",
+    image_url: "/patterns/cup-handle.png",
     image_metadata: { alt: "Cup with Handle chart pattern showing U-shaped cup formation with small downward handle" },
   },
   {
@@ -81,7 +81,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 0,
     explanation: "Descending Triangle breaks downward 64% of the time with 21% average decline. The pattern has a flat horizontal support line on the bottom and a descending resistance line on top.",
     tags: ["continuation", "bearish", "triangle"],
-    image_url: "/src/assets/patterns/descending-triangle.png",
+    image_url: "/patterns/descending-triangle.png",
     image_metadata: { alt: "Descending Triangle chart pattern with flat horizontal support and descending resistance trendline" },
   },
   {
@@ -95,7 +95,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 1,
     explanation: "Symmetrical Triangle breaks upward 54% of the time (slight upward bias). This pattern represents equilibrium between buyers and sellers.",
     tags: ["continuation", "neutral", "triangle"],
-    image_url: "/src/assets/patterns/symmetrical-triangle.png",
+    image_url: "/patterns/symmetrical-triangle.png",
     image_metadata: { alt: "Symmetrical Triangle chart pattern with converging trendlines forming triangle shape" },
   },
   {
@@ -109,7 +109,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 0,
     explanation: "Rising Wedge breaks downward 68% of the time with 19% average decline. Despite rising price action, this pattern signals weakening momentum and impending reversal.",
     tags: ["reversal", "bearish", "wedge"],
-    image_url: "/src/assets/patterns/rising-wedge.png",
+    image_url: "/patterns/rising-wedge.png",
     image_metadata: { alt: "Rising Wedge chart pattern with both trendlines sloping upward and converging" },
   },
   {
@@ -123,7 +123,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 1,
     explanation: "Falling Wedge breaks upward 68% of the time with 35% average rise. Despite declining price action, this pattern signals diminishing selling pressure and impending reversal.",
     tags: ["reversal", "bullish", "wedge"],
-    image_url: "/src/assets/patterns/falling-wedge.png",
+    image_url: "/patterns/falling-wedge.png",
     image_metadata: { alt: "Falling Wedge chart pattern with both trendlines sloping downward and converging" },
   },
   {
@@ -137,7 +137,7 @@ export const QUIZ_QUESTIONS = [
     correct_answer: 0,
     explanation: "Double Top has 79% success rate and 20% average decline. This pattern signals the end of an uptrend as price fails twice to break through a resistance level.",
     tags: ["reversal", "bearish", "pattern-recognition"],
-    image_url: "/src/assets/patterns/double-top.png",
+    image_url: "/patterns/double-top.png",
     image_metadata: { alt: "Double Top chart pattern showing two peak highs at same price level with M-shape formation" },
   },
   // Risk Management Questions (5 questions)
