@@ -351,13 +351,3 @@ export const ARTICLES = [
     tags: ["wedges", "reversal", "patterns", "converging"],
   },
 ];
-    excerpt: "Head and Shoulders has a 93% accuracy rate according to Thomas Bulkowski's research. Learn how to identify and trade this powerful reversal pattern.",
-    content: `[Full article content for Head and Shoulders...]`,
-    tags: ["head-and-shoulders", "reversal-pattern", "chart-patterns", "technical-analysis"],
-    related_patterns: ["double-top", "triple-top"],
-    seo_title: "Head and Shoulders Pattern Guide | 93% Accuracy Trading",
-    seo_description: "Master the Head and Shoulders pattern with 93% success rate. Learn identification, entry points, price targets, and risk management strategies.",
-    seo_keywords: ["head and shoulders pattern", "reversal pattern", "chart patterns", "technical analysis"],
-  },
-  // Add remaining 20 articles with similar structure...
-];
