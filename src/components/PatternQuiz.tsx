@@ -435,7 +435,7 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     question: "Two Sigma's research shows optimal pattern position size is:",
     options: ["Equal weight", "Volatility adjusted", "Market cap weighted"],
     correctAnswer: 1,
-    explanation: "Two Sigma is a $60 billion quantitative hedge fund that uses artificial intelligence, machine learning, and distributed computing to analyze massive datasets. Founded by David Siegel and John Overdeck (both former D.E. Shaw quants), Two Sigma employs over 1,600 people including data scientists and engineers. Their research shows optimal pattern position size is volatility-adjusted, not equal weight or market cap weighted. Why this matters: A $50 stock moving 1% daily (low volatility) requires different position sizing than a $50 stock moving 5% daily (high volatility). Equal weighting means your low-volatility position barely moves your P&L while your high-volatility position dominates risk. Two Sigma's approach: calculate each stock's volatility, then size positions so each contributes equal risk dollars to the portfolio. Example: If AAPL has 20% annual volatility and a biotech has 60% volatility, you'd hold 3x more AAPL to equalize risk contribution. This mathematical approach ensures no single position can blow up your account, and it forces discipline - you can't oversize risky positions just because you 'like' them. This is how professionals achieve consistent returns across varying market conditions."
+    explanation: "Two Sigma is a $60 billion quantitative hedge fund that uses artificial intelligence, machine learning, and distributed computing to analyze massive datasets. Founded by David Siegel and John Overdeck (both former D.E. Shaw quants), Two Sigma employs over 1,600 people including data scientists and engineers. Their research shows optimal pattern position size is volatility-adjusted, not equal weight or market cap weighted. Why this matters: A $50 stock moving 1% daily (low volatility) requires different position sizing than a $50 stock moving 5% daily (high volatility). Equal weighting means your low-volatility position barely moves your P&L (Profit and Loss) while your high-volatility position dominates risk. Two Sigma's approach: calculate each stock's volatility, then size positions so each contributes equal risk dollars to the portfolio. Example: If AAPL has 20% annual volatility and a biotech has 60% volatility, you'd hold 3x more AAPL to equalize risk contribution. This mathematical approach ensures no single position can blow up your account, and it forces discipline - you can't oversize risky positions just because you 'like' them. This is how professionals achieve consistent returns across varying market conditions."
   },
   {
     id: "r11",
@@ -703,20 +703,20 @@ const generateAllQuestions = (): QuizQuestion[] => {
     { practice: "Jane Street hedges pattern positions with cross-asset volatility swaps", risk: "Correlation risk" },
     { practice: "Optiver limits pattern size to 0.1% of daily volume to avoid impact", risk: "Market impact" },
     { practice: "Flow Traders exit patterns when bid-ask spreads exceed 3 basis points", risk: "Liquidity risk" },
-    { practice: "IMC requires real-time Greeks monitoring for all pattern option hedges", risk: "Greeks exposure" },
+    { practice: "IMC Trading (IMC) requires real-time Greeks monitoring for all pattern option hedges", risk: "Greeks exposure" },
     { practice: "Tower Research uses machine learning to predict pattern failure probability", risk: "Model risk" },
-    { practice: "SIG applies dynamic position sizing based on realized volatility", risk: "Volatility risk" },
+    { practice: "Susquehanna International Group (SIG) applies dynamic position sizing based on realized volatility", risk: "Volatility risk" },
     { practice: "Cumberland cuts pattern exposure by 50% during earnings weeks", risk: "Event risk" },
     { practice: "Hudson River Trading uses cross-venue arbitrage for pattern execution", risk: "Execution risk" },
     { practice: "Susquehanna employs exotic options for asymmetric pattern payoffs", risk: "Complexity risk" },
-    { practice: "DRW limits pattern trades to most liquid 500 stocks only", risk: "Liquidity constraint" },
+    { practice: "DRW Trading (DRW) limits pattern trades to most liquid 500 stocks only", risk: "Liquidity constraint" },
     { practice: "Akuna Capital uses reinforcement learning for pattern entry timing", risk: "Timing risk" },
     { practice: "Geneva Trading applies sector-neutral positioning in pattern portfolios", risk: "Sector concentration" },
     { practice: "Wolverine requires pattern trades to have positive gamma exposure", risk: "Gamma risk" },
     { practice: "Peak6 uses alternative data to validate pattern setups", risk: "Information edge" },
     { practice: "Group One employs dynamic hedging ratios based on regime detection", risk: "Regime change" },
     { practice: "Tradebot limits pattern holding periods to 3-7 days maximum", risk: "Time decay" },
-    { practice: "GTS uses cross-asset momentum filters for pattern selection", risk: "Asset allocation" },
+    { practice: "GTS Securities (GTS) uses cross-asset momentum filters for pattern selection", risk: "Asset allocation" },
     { practice: "Getco applies real-time risk attribution to pattern strategies", risk: "Risk attribution" },
     { practice: "Knight Capital required pattern algorithms to self-limit position size", risk: "Operational risk" }
   ];
