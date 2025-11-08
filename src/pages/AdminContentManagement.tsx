@@ -4,11 +4,12 @@ import { Card } from "@/components/ui/card";
 import { ArticleManager } from "@/components/admin/ArticleManager";
 import { QuizManager } from "@/components/admin/QuizManager";
 import { PatternImageManager } from "@/components/admin/PatternImageManager";
+import { ContentSeeder } from "@/components/admin/ContentSeeder";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const AdminContentManagement = () => {
   const { t } = useTranslations();
-  const [activeTab, setActiveTab] = useState("articles");
+  const [activeTab, setActiveTab] = useState("seed");
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,7 +23,10 @@ const AdminContentManagement = () => {
 
         <Card className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsTrigger value="seed">
+                Seed Content
+              </TabsTrigger>
               <TabsTrigger value="articles">
                 Learning Articles
               </TabsTrigger>
@@ -33,6 +37,10 @@ const AdminContentManagement = () => {
                 Pattern Images
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="seed">
+              <ContentSeeder />
+            </TabsContent>
 
             <TabsContent value="articles">
               <ArticleManager />

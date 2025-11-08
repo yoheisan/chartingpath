@@ -1,5 +1,8 @@
 project_id = "dgznlsckoamseqcpzfqm"
 
+[functions.seed-content]
+verify_jwt = true
+
 [functions.generate-market-reports-background]
 verify_jwt = false
 
