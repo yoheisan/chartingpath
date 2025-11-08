@@ -22,6 +22,7 @@ interface QuizQuestion {
   explanation: string;
   pattern_name: string | null;
   pattern_key: string | null;
+  image_url: string | null;
   tags: string[];
   seo_title: string | null;
   seo_description: string | null;
@@ -47,6 +48,7 @@ export const QuizManager = () => {
     explanation: "",
     pattern_name: "",
     pattern_key: "",
+    image_url: "",
     tags: "",
     seo_title: "",
     seo_description: "",
@@ -127,6 +129,7 @@ export const QuizManager = () => {
       explanation: "",
       pattern_name: "",
       pattern_key: "",
+      image_url: "",
       tags: "",
       seo_title: "",
       seo_description: "",
@@ -147,6 +150,7 @@ export const QuizManager = () => {
       explanation: question.explanation,
       pattern_name: question.pattern_name || "",
       pattern_key: question.pattern_key || "",
+      image_url: question.image_url || "",
       tags: question.tags.join(", "),
       seo_title: question.seo_title || "",
       seo_description: question.seo_description || "",
@@ -250,6 +254,28 @@ export const QuizManager = () => {
                     placeholder="e.g., head-shoulders, double-top"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="image_url">Image URL (for visual questions)</Label>
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  placeholder="/patterns/head-shoulders.png"
+                />
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={formData.image_url} 
+                      alt="Preview" 
+                      className="max-w-xs rounded border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -376,6 +402,13 @@ export const QuizManager = () => {
                     <div>Options: {question.options.join(" | ")}</div>
                     <div>Correct: Option {question.correct_answer + 1} ({question.options[question.correct_answer]})</div>
                     <div>Stats: {question.times_shown} shown, {successRate(question)}% success rate</div>
+                    {question.image_url && (
+                      <div className="mt-2">
+                        <a href={question.image_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          📷 {question.image_url}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
