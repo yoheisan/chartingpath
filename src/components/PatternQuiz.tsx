@@ -207,7 +207,7 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "v13",
     type: "visual",
     pattern: "Rectangle",
-    patternKey: "rectangle",
+    patternKey: "double-top",
     question: "This consolidation pattern is:",
     options: ["Rectangle", "Flag", "Pennant"],
     correctAnswer: 0,
