@@ -89,6 +89,7 @@ import FearAndGreed from "./pages/blog/FearAndGreed";
 import TradingJournal from "./pages/blog/TradingJournal";
 import EmailPreview from "./pages/EmailPreview";
 import EconomicCalendar from "./pages/EconomicCalendar";
+import SocialMediaCMS from "./pages/SocialMediaCMS";
 
 const queryClient = new QueryClient();
 
@@ -180,6 +181,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/content" element={<AdminContentManagement />} />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
+          <Route path="/admin/social-cms" element={<SocialMediaCMS />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
