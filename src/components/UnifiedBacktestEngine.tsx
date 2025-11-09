@@ -133,17 +133,44 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
 
       if (error) throw error;
 
-      // Simulate advanced V2 backtest
+      // Run real BacktesterV2 engine
+      const { BacktesterV2Adapter } = await import('@/adapters/backtesterV2');
+      const adapter = new BacktesterV2Adapter();
+      
+      // Simulate progress updates while running
       const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(progressInterval);
-            completeBacktest(run.id);
-            return 100;
-          }
-          return prev + (hasV2Access ? 3 : 8); // Slower for V2 (more processing)
-        });
-      }, hasV2Access ? 400 : 200);
+        setProgress(prev => Math.min(prev + (hasV2Access ? 5 : 10), 95));
+      }, hasV2Access ? 500 : 300);
+
+      try {
+        const backtestParams = {
+          instrument: params.instrument,
+          timeframe: params.timeframe,
+          period: 'custom',
+          fromDate: params.fromDate,
+          toDate: params.toDate,
+          initialCapital: params.initialCapital,
+          positionSizingType: 'percentage',
+          positionSize: params.riskPerTrade,
+          stopLoss: strategyAnswers.risk?.maxDrawdown || 5,
+          takeProfit: 10,
+          orderType: 'market',
+          commission: params.commission,
+          slippage: params.slippage
+        };
+
+        const result = await adapter.runBacktest(backtestParams, strategyAnswers);
+        
+        clearInterval(progressInterval);
+        setProgress(100);
+        
+        // Update run record with results
+        await completeBacktest(run.id, result);
+        
+      } catch (backtestError) {
+        clearInterval(progressInterval);
+        throw backtestError;
+      }
 
     } catch (error: any) {
       console.error('Error running backtest:', error);
@@ -151,113 +178,42 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
       if (error.message.includes('limit')) {
         toast.error('Daily backtest limit reached. Upgrade for unlimited runs.');
       } else {
-        toast.error('Failed to run backtest');
+        toast.error(`Backtest failed: ${error.message}`);
       }
       
       setIsBacktesting(false);
+      setProgress(0);
     }
   };
 
-  const completeBacktest = async (runId: string) => {
-    // Generate results based on strategy parameters
-    const targetReturn = 15;
-    const winRate = 65;
-    const maxDrawdown = strategyAnswers.risk?.maxDrawdown || 10;
-    const riskRewardRatio = 2;
-
-    const totalTrades = Math.floor(hasV2Access ? 120 + Math.random() * 200 : 60 + Math.random() * 100);
-    const trades = [];
-    const equityCurve = [];
-    const drawdownData = [];
-    
-    let currentEquity = params.initialCapital;
-    let peakEquity = currentEquity;
-    let winningTrades = 0;
-    let totalWinAmount = 0;
-    let totalLossAmount = 0;
-    
-    // Generate trades based on strategy characteristics
-    for (let i = 0; i < totalTrades; i++) {
-      const isWin = Math.random() < (winRate / 100);
-      const entryTime = new Date(Date.now() - (totalTrades - i) * (hasV2Access ? 8 : 24) * 60 * 60 * 1000);
-      const exitTime = new Date(entryTime.getTime() + (hasV2Access ? 2 + Math.random() * 12 : 4 + Math.random() * 24) * 60 * 60 * 1000);
-      
-      const tradeSize = currentEquity * (params.riskPerTrade / 100);
-      
-      let pnl = 0;
-      if (isWin) {
-        pnl = tradeSize * (0.01 + Math.random() * 0.04) * (riskRewardRatio / 2);
-        winningTrades++;
-        totalWinAmount += pnl;
-      } else {
-        pnl = -tradeSize * (0.01 + Math.random() * 0.02);
-        totalLossAmount += Math.abs(pnl);
-      }
-      
-      // Apply costs
-      const costs = tradeSize * (params.commission + params.slippage) / 100;
-      pnl -= costs;
-      
-      currentEquity += pnl;
-      peakEquity = Math.max(peakEquity, currentEquity);
-      
-      trades.push({
-        id: `trade_${i + 1}`,
-        entry_time: entryTime.toISOString(),
-        exit_time: exitTime.toISOString(),
-        entry_price: 1.0500 + Math.random() * 0.1,
-        exit_price: 1.0500 + Math.random() * 0.1,
-        quantity: Math.floor(tradeSize / 100),
-        pnl: pnl,
-        pnl_percentage: (pnl / tradeSize) * 100,
-        trade_type: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        reason: isWin ? 'Take Profit Hit' : 'Stop Loss Hit',
-        r_multiple: pnl / (tradeSize * 0.02)
-      });
-      
-      equityCurve.push({
-        date: exitTime.toISOString().split('T')[0],
-        equity: currentEquity,
-        trade_number: i + 1
-      });
-      
-      const drawdown = ((peakEquity - currentEquity) / peakEquity) * 100;
-      drawdownData.push({
-        date: exitTime.toISOString().split('T')[0],
-        drawdown: drawdown,
-        equity: currentEquity
-      });
-    }
-    
-    const netPnl = currentEquity - params.initialCapital;
-    const actualWinRate = (winningTrades / totalTrades) * 100;
-    const avgWin = winningTrades > 0 ? totalWinAmount / winningTrades : 0;
-    const avgLoss = (totalTrades - winningTrades) > 0 ? totalLossAmount / (totalTrades - winningTrades) : 0;
-    const profitFactor = avgLoss > 0 ? (totalWinAmount / totalLossAmount) : 0;
-    const actualMaxDrawdown = Math.max(...drawdownData.map(d => d.drawdown));
-    
+  const completeBacktest = async (runId: string, engineResult: any) => {
+    // Use results from the real BacktesterV2 engine
     const results = {
       id: runId,
-      strategy_name: generateStrategyName(),
-      instrument: params.instrument,
-      timeframe: params.timeframe,
-      from_date: params.fromDate,
-      to_date: params.toDate,
+      strategy_name: engineResult.strategy_name,
+      instrument: engineResult.instrument,
+      timeframe: engineResult.timeframe,
+      from_date: engineResult.from_date,
+      to_date: engineResult.to_date,
       status: 'completed',
-      win_rate: actualWinRate,
-      profit_factor: profitFactor,
-      net_pnl: netPnl,
-      max_drawdown: actualMaxDrawdown,
-      total_trades: totalTrades,
-      avg_win: avgWin,
-      avg_loss: -avgLoss,
-      trade_log: trades,
-      equity_curve_data: equityCurve,
-      drawdown_data: drawdownData,
-      sharpe_ratio: hasV2Access ? 1.2 + Math.random() * 0.8 : 0.8 + Math.random() * 0.6,
-      expectancy: netPnl / totalTrades,
-      cagr: ((currentEquity / params.initialCapital) ** (365 / 365) - 1) * 100,
-      created_at: new Date().toISOString()
+      win_rate: engineResult.win_rate,
+      profit_factor: engineResult.profit_factor,
+      net_pnl: engineResult.net_pnl,
+      max_drawdown: engineResult.max_drawdown,
+      total_trades: engineResult.total_trades,
+      avg_win: engineResult.avg_win,
+      avg_loss: engineResult.avg_loss,
+      trade_log: engineResult.trade_log,
+      equity_curve_data: engineResult.equity_curve_data,
+      drawdown_data: engineResult.equity_curve_data.map((point: any) => ({
+        date: point.date,
+        drawdown: point.drawdown || 0,
+        equity: point.equity
+      })),
+      sharpe_ratio: engineResult.sharpe_ratio,
+      expectancy: engineResult.net_pnl / (engineResult.total_trades || 1),
+      cagr: ((engineResult.equity_curve_data[engineResult.equity_curve_data.length - 1]?.equity / params.initialCapital) ** (365 / 365) - 1) * 100,
+      created_at: engineResult.created_at
     };
 
     try {
@@ -279,10 +235,10 @@ export const UnifiedBacktestEngine: React.FC<UnifiedBacktestEngineProps> = ({
       setIsBacktesting(false);
       setProgress(0);
       onBacktestComplete(results);
-      toast.success(`${hasV2Access ? 'V2 ' : ''}Backtest completed successfully!`);
+      toast.success(`${hasV2Access ? 'V2 ' : ''}Backtest completed with real engine!`);
     } catch (error) {
       console.error('Error completing backtest:', error);
-      toast.error('Failed to complete backtest');
+      toast.error('Failed to save backtest results');
       setIsBacktesting(false);
     }
   };
