@@ -156,7 +156,7 @@ const QuizHub = () => {
             Deep dive into specific markets with specialized knowledge tests
           </p>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {/* Stock Market Quiz */}
             <Card className="border-primary/20 hover:border-primary/40 transition-colors">
               <CardHeader>
