@@ -18,6 +18,7 @@ interface QuestionWithoutImage {
 
 export function QuizImageGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [abortRequested, setAbortRequested] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [results, setResults] = useState<Array<{
@@ -52,12 +53,19 @@ export function QuizImageGenerator() {
     }
 
     setIsGenerating(true);
+    setAbortRequested(false);
     setProgress(0);
     setResults([]);
 
     const total = questions.length;
 
     for (let i = 0; i < questions.length; i++) {
+      // Check if abort was requested
+      if (abortRequested) {
+        toast.info("Generation aborted by user");
+        break;
+      }
+
       const question = questions[i];
       setCurrentQuestion(question.question_text);
 
@@ -100,6 +108,7 @@ export function QuizImageGenerator() {
     }
 
     setIsGenerating(false);
+    setAbortRequested(false);
     setCurrentQuestion("");
     
     const successCount = results.filter(r => r.status === 'success').length;
@@ -107,6 +116,11 @@ export function QuizImageGenerator() {
     
     // Refetch to update the list
     refetch();
+  };
+
+  const handleAbort = () => {
+    setAbortRequested(true);
+    toast.warning("Aborting generation after current image...");
   };
 
   return (
@@ -141,23 +155,42 @@ export function QuizImageGenerator() {
                   Questions without images
                 </div>
               </div>
-              <Button 
-                onClick={generateImages}
-                disabled={isGenerating || !questions || questions.length === 0}
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Image className="mr-2 h-4 w-4" />
-                    Generate All Images
-                  </>
+              <div className="flex gap-2">
+                {isGenerating && (
+                  <Button 
+                    onClick={handleAbort}
+                    disabled={abortRequested}
+                    variant="destructive"
+                    size="lg"
+                  >
+                    {abortRequested ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Aborting...
+                      </>
+                    ) : (
+                      'Abort'
+                    )}
+                  </Button>
                 )}
-              </Button>
+                <Button 
+                  onClick={generateImages}
+                  disabled={isGenerating || !questions || questions.length === 0}
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Image className="mr-2 h-4 w-4" />
+                      Generate All Images
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {isGenerating && (
