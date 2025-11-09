@@ -40,8 +40,8 @@ serve(async (req) => {
 
     // Generate social media teaser based on report type
     const teaserPrompt = reportType === 'pre_market'
-      ? `Create a compelling PRE-MARKET social media teaser (max 240 characters) from this market report. Focus on key overnight moves and what to watch. End with "Register at ChartingPath.com for full analysis 📊"`
-      : `Create a compelling POST-MARKET social media teaser (max 240 characters) from this market report. Focus on major market moves and closing sentiment. End with "Register at ChartingPath.com for full analysis 📊"`;
+      ? `Create a compelling PRE-MARKET social media teaser (max 220 characters) from this market report. Focus on key overnight moves and what to watch. End with "Get Free Starter Scripts at ChartingPath.com 🚀"`
+      : `Create a compelling POST-MARKET social media teaser (max 220 characters) from this market report. Focus on major market moves and closing sentiment. End with "Get Free Starter Scripts at ChartingPath.com 🚀"`;
 
     console.log('Generating social teaser with OpenAI...');
     
