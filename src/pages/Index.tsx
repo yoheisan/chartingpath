@@ -5,9 +5,9 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, Loader2, TrendingUp } from "lucide-react";
+import { Users, Bot, CheckCircle, ArrowRight, BarChart3, Shield, Calculator, Globe, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,12 +19,19 @@ const Index = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { t } = useTranslation();
   const { toast } = useToast();
   const { prefetchReport } = useMarketReport();
+  const navigate = useNavigate();
   
-  // Detect user language on first visit and prefetch market report
+  // Check authentication status and detect user language
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    
     const detectAndSetLanguage = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('detect-user-language');
@@ -36,61 +43,31 @@ const Index = () => {
       }
     };
     
+    checkAuth();
     detectAndSetLanguage();
     
     // Pre-fetch market report in background
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     prefetchReport(timezone);
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleEmailOptIn = () => {
-    setShowEmailModal(true);
-    // Track analytics event
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'lead_captured', {
-        event_category: 'engagement',
-        event_label: 'homepage_hero'
-      });
+  const handleGetScripts = () => {
+    if (!isAuthenticated) {
+      // Redirect to auth page if not logged in
+      navigate('/auth');
+    } else {
+      // Redirect to member scripts page if logged in
+      navigate('/members/scripts');
     }
   };
 
-  const handleSendScripts = async () => {
-    if (!email || !email.includes("@")) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSending(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("send-starter-scripts", {
-        body: { email },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Scripts Sent!",
-        description: "Check your email for your free starter scripts.",
-      });
-
-      setShowEmailModal(false);
-      setEmail("");
-    } catch (error) {
-      console.error("Error sending scripts:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send scripts. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -412,69 +389,19 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer CTA */}
-      <section className="py-20 px-6 bg-primary text-primary-foreground">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to automate your trading strategies?</h2>
-          <p className="text-xl mb-8 opacity-90">Get started today with our free starter pack.</p>
-          <Button size="lg" variant="secondary" onClick={handleEmailOptIn} className="px-8 py-4 text-lg">
-            Get Free Starter Scripts
-          </Button>
-        </div>
-      </section>
-
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Get Your Free Starter Scripts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Enter your email to receive our free starter pack with 3 ready-to-use trading scripts.
-              </p>
-              <div className="space-y-4">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendScripts()}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  disabled={isSending}
-                />
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleSendScripts} 
-                    className="flex-1"
-                    disabled={isSending}
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      "Send Scripts"
-                    )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowEmailModal(false);
-                      setEmail("");
-                    }}
-                    disabled={isSending}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Footer CTA - Only show to non-authenticated users */}
+      {!isAuthenticated && (
+        <section className="py-20 px-6 bg-primary text-primary-foreground">
+          <div className="container mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl font-bold mb-6">Ready to automate your trading strategies?</h2>
+            <p className="text-xl mb-8 opacity-90">Get started today with our free starter pack.</p>
+            <Button size="lg" variant="secondary" onClick={handleGetScripts} className="px-8 py-4 text-lg">
+              Get Free Starter Scripts
+            </Button>
+          </div>
+        </section>
       )}
+
 
       {/* Footer Disclaimer */}
       <footer className="py-8 px-6 bg-background border-t">
