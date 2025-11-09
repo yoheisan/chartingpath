@@ -5,6 +5,7 @@ import { ContentLibraryManager } from "@/components/cms/ContentLibraryManager";
 import { ScheduledPostsManager } from "@/components/cms/ScheduledPostsManager";
 import { SocialAccountsManager } from "@/components/cms/SocialAccountsManager";
 import { PostAnalytics } from "@/components/cms/PostAnalytics";
+import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
 import { Calendar, Library, Settings, TrendingUp } from "lucide-react";
 
 export default function SocialMediaCMS() {
@@ -40,6 +41,7 @@ export default function SocialMediaCMS() {
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-4">
+          <MarketReportScheduler />
           <Card className="p-6">
             <ScheduledPostsManager />
           </Card>

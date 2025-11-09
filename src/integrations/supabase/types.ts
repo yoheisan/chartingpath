@@ -1880,6 +1880,7 @@ export type Database = {
           platform: string
           post_type: string
           posted_at: string | null
+          recurrence_pattern: string | null
           recurrence_rule: string | null
           report_config: Json | null
           scheduled_time: string
@@ -1901,6 +1902,7 @@ export type Database = {
           platform: string
           post_type: string
           posted_at?: string | null
+          recurrence_pattern?: string | null
           recurrence_rule?: string | null
           report_config?: Json | null
           scheduled_time: string
@@ -1922,6 +1924,7 @@ export type Database = {
           platform?: string
           post_type?: string
           posted_at?: string | null
+          recurrence_pattern?: string | null
           recurrence_rule?: string | null
           report_config?: Json | null
           scheduled_time?: string
