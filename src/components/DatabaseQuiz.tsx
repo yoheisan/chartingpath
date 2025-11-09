@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 
 interface QuizQuestion {
   id: string;
@@ -48,6 +47,26 @@ export const DatabaseQuiz = ({
   const [quizComplete, setQuizComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [imageVersion] = useState(() => Date.now());
+
+  // Map pattern keys to static image URLs from pattern generator
+  const getPatternImageUrl = (patternKey: string | null, patternName: string | null): string | null => {
+    const key = (patternKey || patternName || '').toLowerCase().replace(/\s+/g, '-');
+    const patternMap: Record<string, string> = {
+      'head-shoulders': '/patterns/head-shoulders.png',
+      'head-and-shoulders': '/patterns/head-shoulders.png',
+      'double-top': '/patterns/double-top.png',
+      'double-bottom': '/patterns/double-bottom.png',
+      'ascending-triangle': '/patterns/ascending-triangle.png',
+      'descending-triangle': '/patterns/descending-triangle.png',
+      'symmetrical-triangle': '/patterns/symmetrical-triangle.png',
+      'bull-flag': '/patterns/bull-flag.png',
+      'cup-handle': '/patterns/cup-handle.png',
+      'cup-and-handle': '/patterns/cup-handle.png',
+      'rising-wedge': '/patterns/rising-wedge.png',
+      'falling-wedge': '/patterns/falling-wedge.png',
+    };
+    return patternMap[key] || null;
+  };
 
   useEffect(() => {
     loadQuestions();
@@ -220,27 +239,24 @@ export const DatabaseQuiz = ({
           <p className="text-lg mb-6">{currentQuestion.question_text}</p>
 
           {/* Pattern Chart Display */}
-          {(currentQuestion.pattern_key || currentQuestion.pattern_name) ? (
-            <div className="mb-6 bg-muted rounded-lg overflow-hidden p-4">
-              <DynamicPatternChart 
-                patternType={currentQuestion.pattern_key || currentQuestion.pattern_name || 'head-shoulders'}
-                width={800}
-                height={400}
-              />
-            </div>
-          ) : currentQuestion.image_url && (
-            <div className="mb-6 bg-muted rounded-lg overflow-hidden">
-              <img 
-                src={`${currentQuestion.image_url}?v=${imageVersion}`}
-                alt={currentQuestion.pattern_name || "Chart pattern"} 
-                className="w-full h-auto"
-                onError={(e) => {
-                  console.error('Failed to load image:', currentQuestion.image_url);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+          {(() => {
+            const patternImageUrl = getPatternImageUrl(currentQuestion.pattern_key, currentQuestion.pattern_name);
+            const imageUrl = patternImageUrl || currentQuestion.image_url;
+            
+            return imageUrl && (
+              <div className="mb-6 bg-muted rounded-lg overflow-hidden">
+                <img 
+                  src={`${imageUrl}?v=${imageVersion}`}
+                  alt={currentQuestion.pattern_name || "Chart pattern"} 
+                  className="w-full h-auto"
+                  onError={(e) => {
+                    console.error('Failed to load image:', imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            );
+          })()}
 
           {/* Answer Options */}
           <div className="grid grid-cols-1 gap-3">
