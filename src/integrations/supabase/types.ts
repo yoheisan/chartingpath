@@ -2488,6 +2488,10 @@ export type Database = {
         | "statistics"
         | "risk_management"
         | "professional_practices"
+        | "stock_market"
+        | "forex"
+        | "cryptocurrency"
+        | "commodities"
       quiz_difficulty: "beginner" | "intermediate" | "advanced" | "expert"
       subscription_plan: "starter" | "pro" | "elite" | "free" | "pro_plus"
       timeframe: "15m" | "1h" | "4h" | "1d"
@@ -2648,6 +2652,10 @@ export const Constants = {
         "statistics",
         "risk_management",
         "professional_practices",
+        "stock_market",
+        "forex",
+        "cryptocurrency",
+        "commodities",
       ],
       quiz_difficulty: ["beginner", "intermediate", "advanced", "expert"],
       subscription_plan: ["starter", "pro", "elite", "free", "pro_plus"],
