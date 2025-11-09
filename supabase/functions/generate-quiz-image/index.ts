@@ -39,27 +39,52 @@ serve(async (req) => {
     let permanentImageUrl: string;
 
     try {
-      // Generate image using OpenAI
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: imagePrompt,
-          n: 1,
-          size: '1024x1024',
-          quality: 'hd'
-        }),
-        signal: controller.signal
-      });
+      // Generate image using OpenAI with retry logic
+      let response;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          response = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-image-1',
+              prompt: imagePrompt,
+              n: 1,
+              size: '1024x1024',
+              quality: 'medium',
+              output_format: 'png'
+            }),
+            signal: controller.signal
+          });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI generation error:', response.status, errorText);
-        throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
+          if (response.ok) {
+            break;
+          }
+
+          if (response.status === 500 && retryCount < maxRetries - 1) {
+            console.log(`OpenAI 500 error, retrying (attempt ${retryCount + 1}/${maxRetries})...`);
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            continue;
+          }
+
+          const errorText = await response.text();
+          console.error('OpenAI generation error:', response.status, errorText);
+          throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
+        } catch (error) {
+          if (error.name === 'AbortError' || retryCount >= maxRetries - 1) {
+            throw error;
+          }
+          retryCount++;
+          console.log(`Request error, retrying (attempt ${retryCount}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
       }
 
       const data = await response.json();
