@@ -32,91 +32,109 @@ serve(async (req) => {
     const imagePrompt = generateImagePrompt(questionText, category);
     console.log(`Using prompt: ${imagePrompt}`);
 
-    // Generate image using OpenAI
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: imagePrompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'hd'
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI generation error:', errorText);
-      throw new Error(`Failed to generate image: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    const tempImageUrl = data.data?.[0]?.url;
+    // Create AbortController with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 second timeout
     
-    if (!tempImageUrl) {
-      throw new Error('No image generated in response');
-    }
+    let permanentImageUrl: string;
 
-    console.log('Image generated, downloading from OpenAI...');
-
-    // Download the image from OpenAI's temporary URL
-    const imageResponse = await fetch(tempImageUrl);
-    if (!imageResponse.ok) {
-      throw new Error('Failed to download image from OpenAI');
-    }
-    
-    const imageBlob = await imageResponse.blob();
-    const imageBuffer = await imageBlob.arrayBuffer();
-    
-    console.log('Image downloaded, uploading to Supabase Storage...');
-
-    // Upload to Supabase Storage
-    const fileName = `${questionId}-${Date.now()}.png`;
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
-      .from('quiz-images')
-      .upload(fileName, imageBuffer, {
-        contentType: 'image/png',
-        upsert: false
+    try {
+      // Generate image using OpenAI
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: imagePrompt,
+          n: 1,
+          size: '1024x1024',
+          quality: 'hd'
+        }),
+        signal: controller.signal
       });
 
-    if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      throw new Error(`Failed to upload to storage: ${uploadError.message}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI generation error:', response.status, errorText);
+        throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
+      }
 
-    // Get public URL
-    const { data: urlData } = supabaseClient.storage
-      .from('quiz-images')
-      .getPublicUrl(fileName);
-    
-    const permanentImageUrl = urlData.publicUrl;
-    console.log('Image uploaded successfully to:', permanentImageUrl);
+      const data = await response.json();
+      const tempImageUrl = data.data?.[0]?.url;
+      
+      if (!tempImageUrl) {
+        throw new Error('No image URL in OpenAI response');
+      }
 
-    const { error: updateError } = await supabaseClient
-      .from('quiz_questions')
-      .update({ 
-        image_url: permanentImageUrl,
-        image_metadata: {
-          generated_at: new Date().toISOString(),
-          prompt: imagePrompt,
-          model: 'dall-e-3',
-          storage_path: fileName
-        }
-      })
-      .eq('id', questionId);
+      console.log('Image generated, downloading from OpenAI...');
 
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      throw updateError;
+      // Download the image from OpenAI's temporary URL with timeout
+      const imageResponse = await fetch(tempImageUrl, { signal: controller.signal });
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download image: ${imageResponse.status}`);
+      }
+      
+      const imageBlob = await imageResponse.blob();
+      const imageBuffer = await imageBlob.arrayBuffer();
+      
+      console.log(`Image downloaded (${imageBuffer.byteLength} bytes), uploading to Supabase Storage...`);
+
+      // Upload to Supabase Storage
+      const fileName = `${questionId}-${Date.now()}.png`;
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: uploadData, error: uploadError } = await supabaseClient.storage
+        .from('quiz-images')
+        .upload(fileName, imageBuffer, {
+          contentType: 'image/png',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabaseClient.storage
+        .from('quiz-images')
+        .getPublicUrl(fileName);
+      
+      permanentImageUrl = urlData.publicUrl;
+      console.log('Image uploaded successfully to:', permanentImageUrl);
+
+      const { error: updateError } = await supabaseClient
+        .from('quiz_questions')
+        .update({ 
+          image_url: permanentImageUrl,
+          image_metadata: {
+            generated_at: new Date().toISOString(),
+            prompt: imagePrompt,
+            model: 'dall-e-3',
+            storage_path: fileName
+          }
+        })
+        .eq('id', questionId);
+
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      clearTimeout(timeoutId);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error('Request timeout after 55 seconds');
+        throw new Error('Image generation timeout - please try again');
+      }
+      throw error;
     }
 
     return new Response(
