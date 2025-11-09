@@ -60,17 +60,26 @@ function generateOAuthHeader(
   );
 }
 
-async function postToTwitter(content: string, credentials: any): Promise<any> {
+async function postToTwitter(content: string): Promise<any> {
   const url = "https://api.x.com/2/tweets";
   const method = "POST";
+  
+  const apiKey = Deno.env.get('TWITTER_API_KEY');
+  const apiSecret = Deno.env.get('TWITTER_API_SECRET');
+  const accessToken = Deno.env.get('TWITTER_ACCESS_TOKEN');
+  const accessTokenSecret = Deno.env.get('TWITTER_ACCESS_TOKEN_SECRET');
+
+  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
+    throw new Error('Twitter credentials not configured');
+  }
   
   const oauthHeader = generateOAuthHeader(
     method,
     url,
-    credentials.api_key,
-    credentials.api_secret,
-    credentials.access_token,
-    credentials.access_token_secret
+    apiKey,
+    apiSecret,
+    accessToken,
+    accessTokenSecret
   );
 
   console.log('Posting to Twitter...');
@@ -163,7 +172,7 @@ serve(async (req) => {
     // Post to the appropriate platform
     if (account.platform === 'twitter') {
       const fullContent = link_back_url ? `${content}\n\n${link_back_url}` : content;
-      platformResponse = await postToTwitter(fullContent, account.credentials);
+      platformResponse = await postToTwitter(fullContent);
       platformPostId = platformResponse.data?.id;
     } else if (account.platform === 'instagram') {
       const fullContent = link_back_url ? `${content}\n\n${link_back_url}` : content;
