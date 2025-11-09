@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface CreatePostDialogProps {
@@ -30,7 +38,8 @@ interface CreatePostDialogProps {
 export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) {
   const [postType, setPostType] = useState<"market_report" | "content_library" | "custom">("market_report");
   const [platform, setPlatform] = useState<"twitter" | "instagram" | "both">("both");
-  const [scheduledTime, setScheduledTime] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState("09:00");
   const [timezone, setTimezone] = useState("America/New_York");
   const [recurrencePattern, setRecurrencePattern] = useState<string>("");
   const [title, setTitle] = useState("");
@@ -62,6 +71,25 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
       
       if (!accountId) {
         throw new Error("No social media account found. Please add an account first.");
+      }
+
+      // Build scheduled time based on whether it's recurring or not
+      let scheduledTime: string;
+      if (recurrencePattern && recurrencePattern !== "none") {
+        // For recurring posts, use today's date with the selected time
+        const today = new Date();
+        const [hours, minutes] = selectedTime.split(":");
+        today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        scheduledTime = today.toISOString();
+      } else {
+        // For one-time posts, require both date and time
+        if (!selectedDate) {
+          throw new Error("Please select a date for the post");
+        }
+        const [hours, minutes] = selectedTime.split(":");
+        const dateTime = new Date(selectedDate);
+        dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        scheduledTime = dateTime.toISOString();
       }
       
       const postData = {
@@ -100,7 +128,8 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
   const resetForm = () => {
     setPostType("market_report");
     setPlatform("both");
-    setScheduledTime("");
+    setSelectedDate(undefined);
+    setSelectedTime("09:00");
     setRecurrencePattern("");
     setTitle("");
     setContent("");
@@ -185,13 +214,61 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
             </div>
           )}
 
+          <div className="space-y-2">
+            <Label>Recurrence Pattern</Label>
+            <Select value={recurrencePattern || "none"} onValueChange={(v) => setRecurrencePattern(v === "none" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select recurrence" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">One-time post</SelectItem>
+                <SelectItem value="daily">Daily (every day)</SelectItem>
+                <SelectItem value="weekdays">Weekdays only (Mon-Fri)</SelectItem>
+                <SelectItem value="weekly">Weekly (same day each week)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {recurrencePattern && recurrencePattern !== "none" ? "Post will automatically repeat on schedule" : "Post will only run once"}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
+            {(!recurrencePattern || recurrencePattern === "none") && (
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label>Scheduled Time</Label>
+              <Label>Time</Label>
               <Input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
               />
             </div>
 
@@ -211,23 +288,6 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Recurrence Pattern</Label>
-            <Select value={recurrencePattern || "none"} onValueChange={(v) => setRecurrencePattern(v === "none" ? "" : v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select recurrence" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">One-time post</SelectItem>
-                <SelectItem value="daily">Daily (every day)</SelectItem>
-                <SelectItem value="weekdays">Weekdays only (Mon-Fri)</SelectItem>
-                <SelectItem value="weekly">Weekly (same day each week)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {recurrencePattern && recurrencePattern !== "none" ? "Post will automatically repeat on schedule" : "Post will only run once"}
-            </p>
-          </div>
         </div>
 
         <div className="flex justify-end gap-2">
