@@ -321,8 +321,9 @@ export const DatabaseQuiz = ({
                 );
               })()}
 
-              {/* Professional Standards & Sources for all categories */}
-              {currentQuestion.category === 'professional_practices' && (
+              {/* Professional Standards & Sources - show when mentioned in explanation or by category */}
+              {(currentQuestion.explanation.toLowerCase().includes('professional standard') || 
+                currentQuestion.category === 'professional_practices') && (
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                     <span className="text-primary">📚</span> Professional Standards Sources
