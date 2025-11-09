@@ -12,7 +12,7 @@ import { PATTERN_DETAILS } from "@/utils/PatternDetails";
 interface QuizQuestion {
   id: string;
   question_code: string;
-  category: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices';
+  category: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | 'stock_market' | 'forex' | 'cryptocurrency' | 'commodities';
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   question_text: string;
   options: any; // Json type from Supabase
@@ -29,7 +29,7 @@ interface ProcessedQuestion extends Omit<QuizQuestion, 'options'> {
 }
 
 interface DatabaseQuizProps {
-  category?: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | null;
+  category?: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | 'stock_market' | 'forex' | 'cryptocurrency' | 'commodities' | null;
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
   limit?: number;
   title?: string;
