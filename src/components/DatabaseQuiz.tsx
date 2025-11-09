@@ -7,6 +7,7 @@ import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { PATTERN_DETAILS } from "@/utils/PatternDetails";
 
 interface QuizQuestion {
   id: string;
@@ -268,15 +269,57 @@ export const DatabaseQuiz = ({
 
           {/* Explanation */}
           {showExplanation && (
-            <div className={`mt-6 p-4 rounded-lg ${
-              selectedAnswer === currentQuestion.correct_answer 
-                ? 'bg-green-500/10 border border-green-500' 
-                : 'bg-red-500/10 border border-red-500'
-            }`}>
-              <p className="font-semibold mb-2">
-                {selectedAnswer === currentQuestion.correct_answer ? '✓ Correct!' : '✗ Incorrect'}
-              </p>
-              <p className="text-sm">{currentQuestion.explanation}</p>
+            <div className="mt-6 space-y-4">
+              <div className={`p-4 rounded-lg ${
+                selectedAnswer === currentQuestion.correct_answer 
+                  ? 'bg-green-500/10 border border-green-500' 
+                  : 'bg-red-500/10 border border-red-500'
+              }`}>
+                <p className="font-semibold mb-2">
+                  {selectedAnswer === currentQuestion.correct_answer ? '✓ Correct!' : '✗ Incorrect'}
+                </p>
+                <p className="text-sm">{currentQuestion.explanation}</p>
+              </div>
+
+              {/* Pattern Details - Formation and Identification */}
+              {(currentQuestion.pattern_key || currentQuestion.pattern_name) && (() => {
+                const patternKey = currentQuestion.pattern_key || currentQuestion.pattern_name?.toLowerCase().replace(/\s+/g, '-');
+                const patternDetails = patternKey ? PATTERN_DETAILS[patternKey] : null;
+                
+                return patternDetails && (
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                        <span className="text-primary">📋</span> How This Pattern Forms
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{patternDetails.formation}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                        <span className="text-primary">🔍</span> How to Identify It
+                      </h4>
+                      <ul className="space-y-1">
+                        {patternDetails.characteristics.map((char, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="text-primary mt-0.5">•</span>
+                            <span>{char}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {patternDetails.confirmation && (
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                          <span className="text-primary">✓</span> Confirmation
+                        </h4>
+                        <p className="text-sm text-muted-foreground">{patternDetails.confirmation}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
