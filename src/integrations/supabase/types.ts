@@ -728,6 +728,51 @@ export type Database = {
           },
         ]
       }
+      content_library: {
+        Row: {
+          content: string
+          content_type: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          last_posted_at: string | null
+          link_back_url: string | null
+          post_count: number
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          content_type: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          last_posted_at?: string | null
+          link_back_url?: string | null
+          post_count?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          last_posted_at?: string | null
+          link_back_url?: string | null
+          post_count?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       country_language_mapping: {
         Row: {
           country_code: string
@@ -1506,6 +1551,78 @@ export type Database = {
         }
         Relationships: []
       }
+      post_history: {
+        Row: {
+          account_id: string | null
+          clicks: number | null
+          comments: number | null
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          likes: number | null
+          link_back_url: string | null
+          platform: string
+          platform_post_id: string | null
+          platform_response: Json | null
+          post_type: string
+          posted_at: string
+          scheduled_post_id: string | null
+          shares: number | null
+        }
+        Insert: {
+          account_id?: string | null
+          clicks?: number | null
+          comments?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          link_back_url?: string | null
+          platform: string
+          platform_post_id?: string | null
+          platform_response?: Json | null
+          post_type: string
+          posted_at?: string
+          scheduled_post_id?: string | null
+          shares?: number | null
+        }
+        Update: {
+          account_id?: string | null
+          clicks?: number | null
+          comments?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          link_back_url?: string | null
+          platform?: string
+          platform_post_id?: string | null
+          platform_response?: Json | null
+          post_type?: string
+          posted_at?: string
+          scheduled_post_id?: string | null
+          shares?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_history_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "social_media_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_history_scheduled_post_id_fkey"
+            columns: ["scheduled_post_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -1749,6 +1866,87 @@ export type Database = {
           },
         ]
       }
+      scheduled_posts: {
+        Row: {
+          account_id: string | null
+          content: string | null
+          content_library_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          is_recurring: boolean
+          link_back_url: string | null
+          platform: string
+          post_type: string
+          posted_at: string | null
+          recurrence_rule: string | null
+          report_config: Json | null
+          scheduled_time: string
+          status: string
+          timezone: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          content?: string | null
+          content_library_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          is_recurring?: boolean
+          link_back_url?: string | null
+          platform: string
+          post_type: string
+          posted_at?: string | null
+          recurrence_rule?: string | null
+          report_config?: Json | null
+          scheduled_time: string
+          status?: string
+          timezone?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          content?: string | null
+          content_library_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          is_recurring?: boolean
+          link_back_url?: string | null
+          platform?: string
+          post_type?: string
+          posted_at?: string | null
+          recurrence_rule?: string | null
+          report_config?: Json | null
+          scheduled_time?: string
+          status?: string
+          timezone?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "social_media_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_content_library_id_fkey"
+            columns: ["content_library_id"]
+            isOneToOne: false
+            referencedRelation: "content_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_scan_sessions: {
         Row: {
           completed_at: string | null
@@ -1785,6 +1983,36 @@ export type Database = {
           scan_status?: string
           total_strings_found?: number | null
           version_number?: number
+        }
+        Relationships: []
+      }
+      social_media_accounts: {
+        Row: {
+          account_name: string
+          created_at: string
+          credentials: Json
+          id: string
+          is_active: boolean
+          platform: string
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          created_at?: string
+          credentials: Json
+          id?: string
+          is_active?: boolean
+          platform: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          created_at?: string
+          credentials?: Json
+          id?: string
+          is_active?: boolean
+          platform?: string
+          updated_at?: string
         }
         Relationships: []
       }
