@@ -55,28 +55,61 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
+    const tempImageUrl = data.data?.[0]?.url;
     
-    if (!imageUrl) {
+    if (!tempImageUrl) {
       throw new Error('No image generated in response');
     }
 
-    console.log('Image generated successfully');
+    console.log('Image generated, downloading from OpenAI...');
 
-    // Update the question with the image URL
+    // Download the image from OpenAI's temporary URL
+    const imageResponse = await fetch(tempImageUrl);
+    if (!imageResponse.ok) {
+      throw new Error('Failed to download image from OpenAI');
+    }
+    
+    const imageBlob = await imageResponse.blob();
+    const imageBuffer = await imageBlob.arrayBuffer();
+    
+    console.log('Image downloaded, uploading to Supabase Storage...');
+
+    // Upload to Supabase Storage
+    const fileName = `${questionId}-${Date.now()}.png`;
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('quiz-images')
+      .upload(fileName, imageBuffer, {
+        contentType: 'image/png',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw new Error(`Failed to upload to storage: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('quiz-images')
+      .getPublicUrl(fileName);
+    
+    const permanentImageUrl = urlData.publicUrl;
+    console.log('Image uploaded successfully to:', permanentImageUrl);
+
     const { error: updateError } = await supabaseClient
       .from('quiz_questions')
       .update({ 
-        image_url: imageUrl,
+        image_url: permanentImageUrl,
         image_metadata: {
           generated_at: new Date().toISOString(),
           prompt: imagePrompt,
-          model: 'dall-e-3'
+          model: 'dall-e-3',
+          storage_path: fileName
         }
       })
       .eq('id', questionId);
@@ -89,7 +122,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        imageUrl,
+        imageUrl: permanentImageUrl,
         questionId 
       }),
       { 
