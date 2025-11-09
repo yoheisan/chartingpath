@@ -158,7 +158,7 @@ const AdminDashboard = () => {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/social-media-cms")}
+            onClick={() => navigate("/admin/social-cms")}
             className="flex items-center gap-2"
           >
             <Share2 className="h-4 w-4" />
