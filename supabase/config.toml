@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.seed-qa-content]
 verify_jwt = false
+
+[functions.generate-quiz-image]
+verify_jwt = true

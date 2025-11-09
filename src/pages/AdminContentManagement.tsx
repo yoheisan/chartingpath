@@ -6,6 +6,7 @@ import { QuizManager } from "@/components/admin/QuizManager";
 import { PatternImageManager } from "@/components/admin/PatternImageManager";
 import { AIArticleGenerator } from "@/components/admin/AIArticleGenerator";
 import { ContentMigration } from "@/components/admin/ContentMigration";
+import { QuizImageGenerator } from "@/components/admin/QuizImageGenerator";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const AdminContentManagement = () => {
@@ -24,7 +25,7 @@ const AdminContentManagement = () => {
 
         <Card className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger value="migrate">
                 Migrate Content
               </TabsTrigger>
@@ -36,6 +37,9 @@ const AdminContentManagement = () => {
               </TabsTrigger>
               <TabsTrigger value="quizzes">
                 Quiz Questions
+              </TabsTrigger>
+              <TabsTrigger value="quiz-images">
+                Quiz Images
               </TabsTrigger>
               <TabsTrigger value="images">
                 Pattern Images
@@ -56,6 +60,10 @@ const AdminContentManagement = () => {
 
             <TabsContent value="quizzes">
               <QuizManager />
+            </TabsContent>
+
+            <TabsContent value="quiz-images">
+              <QuizImageGenerator />
             </TabsContent>
 
             <TabsContent value="images">
