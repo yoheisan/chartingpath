@@ -30,6 +30,10 @@ import TradingStrategiesPage from "./pages/TradingStrategiesPage";
 import PatternQuizPage from "./pages/PatternQuizPage";
 import PatternIdentificationQuizPage from "./pages/PatternIdentificationQuizPage";
 import TradingKnowledgeQuizPage from "./pages/TradingKnowledgeQuizPage";
+import StockMarketQuiz from "./pages/StockMarketQuiz";
+import ForexQuiz from "./pages/ForexQuiz";
+import CryptoQuiz from "./pages/CryptoQuiz";
+import CommoditiesQuiz from "./pages/CommoditiesQuiz";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import FAQ from "./pages/FAQ";
@@ -110,6 +114,10 @@ const App = () => (
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
           <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
+          <Route path="/quiz/stock-market" element={<StockMarketQuiz />} />
+          <Route path="/quiz/forex" element={<ForexQuiz />} />
+          <Route path="/quiz/crypto" element={<CryptoQuiz />} />
+          <Route path="/quiz/commodities" element={<CommoditiesQuiz />} />
           <Route path="/learn" element={<BlogV2 />} />
           <Route path="/blog/:slug" element={<DynamicArticle />} />
           <Route path="/learn/head-and-shoulders" element={<HeadAndShoulders />} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Brain, Eye, Award, BookOpen } from "lucide-react";
+import { ArrowLeft, Brain, Eye, Award, BookOpen, TrendingUp, DollarSign, Bitcoin, Boxes } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +76,7 @@ const QuizHub = () => {
           </div>
         )}
 
-        {/* Quiz Cards */}
+        {/* Main Quiz Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {/* Pattern Identification Quiz */}
           <Card className="border-primary/20 hover:border-primary/40 transition-colors">
@@ -147,6 +147,100 @@ const QuizHub = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Market-Specific Quizzes Section */}
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold text-center mb-2">Market-Specific Quizzes</h2>
+          <p className="text-center text-muted-foreground mb-8">
+            Deep dive into specific markets with specialized knowledge tests
+          </p>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stock Market Quiz */}
+            <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                  <Badge variant="outline" className="text-xs">Stocks</Badge>
+                </div>
+                <CardTitle className="text-lg">Stock Market</CardTitle>
+                <CardDescription className="text-sm">
+                  Valuation, market hours, and stock fundamentals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/quiz/stock-market" className="block">
+                  <Button className="w-full" variant="outline">
+                    Start Quiz
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Forex Quiz */}
+            <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                  <Badge variant="outline" className="text-xs">Forex</Badge>
+                </div>
+                <CardTitle className="text-lg">Forex Trading</CardTitle>
+                <CardDescription className="text-sm">
+                  Currency pairs, pips, and central bank impacts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/quiz/forex" className="block">
+                  <Button className="w-full" variant="outline">
+                    Start Quiz
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Crypto Quiz */}
+            <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Bitcoin className="h-6 w-6 text-primary" />
+                  <Badge variant="outline" className="text-xs">Crypto</Badge>
+                </div>
+                <CardTitle className="text-lg">Cryptocurrency</CardTitle>
+                <CardDescription className="text-sm">
+                  Bitcoin, DeFi, and blockchain fundamentals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/quiz/crypto" className="block">
+                  <Button className="w-full" variant="outline">
+                    Start Quiz
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Commodities Quiz */}
+            <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Boxes className="h-6 w-6 text-primary" />
+                  <Badge variant="outline" className="text-xs">Commodities</Badge>
+                </div>
+                <CardTitle className="text-lg">Commodities</CardTitle>
+                <CardDescription className="text-sm">
+                  Gold, oil, futures, and commodity markets
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/quiz/commodities" className="block">
+                  <Button className="w-full" variant="outline">
+                    Start Quiz
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Benefits Section */}
