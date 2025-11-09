@@ -56,14 +56,23 @@ serve(async (req) => {
     if (post.post_type === 'market_report') {
       console.log('Generating market report teaser...');
       
-      const reportType = post.content.includes('PRE-MARKET') || post.content.includes('Pre-Market')
-        ? 'pre_market'
-        : 'post_market';
+      // Use stored report config or fallback to defaults
+      const reportConfig = post.report_config || {};
+      const reportType = reportConfig.timeSpan || 
+        (post.content.includes('PRE-MARKET') || post.content.includes('Pre-Market')
+          ? 'pre_market'
+          : 'post_market');
+      const timezone = post.timezone || 'America/New_York';
 
       const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(
         'generate-social-market-teaser',
         {
-          body: { reportType, timezone: 'America/New_York' }
+          body: { 
+            reportType,
+            timezone,
+            markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
+            tone: reportConfig.tone || 'professional'
+          }
         }
       );
 
@@ -77,7 +86,7 @@ serve(async (req) => {
           .update({ content })
           .eq('id', post.id);
       }
-    } 
+    }
     // If it's Q&A content and content_library_id is set, get fresh content
     else if (post.post_type === 'qa_content' && post.content_library_id) {
       console.log('Fetching Q&A content from library...');
@@ -144,12 +153,15 @@ serve(async (req) => {
         .insert({
           account_id: post.account_id,
           post_type: post.post_type,
+          platform: post.platform,
           content: post.post_type === 'market_report' ? post.content : '', // Will be generated fresh
           content_library_id: post.content_library_id,
           image_url: post.image_url,
           link_back_url: post.link_back_url,
           scheduled_time: nextTime,
+          timezone: post.timezone,
           recurrence_pattern: post.recurrence_pattern,
+          report_config: post.report_config,
           status: 'scheduled'
         });
       
