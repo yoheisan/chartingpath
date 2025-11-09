@@ -33,8 +33,10 @@ export function QuizImageGenerator() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quiz_questions")
-        .select("id, question_code, category, question_text, image_url")
+        .select("id, question_code, category, question_text, image_url, pattern_key, pattern_name")
         .is("image_url", null)
+        .is("pattern_key", null)
+        .is("pattern_name", null)
         .eq("is_active", true)
         .order("category", { ascending: true });
 
@@ -118,6 +120,12 @@ export function QuizImageGenerator() {
           <p className="text-muted-foreground mt-1">
             Generate AI images for quiz questions that don't have visuals
           </p>
+          <div className="mt-2 p-3 bg-primary/10 rounded-md border border-primary/20">
+            <p className="text-sm text-primary flex items-center gap-2">
+              <span className="font-semibold">✓ Protected:</span>
+              Pattern questions with existing images are automatically excluded
+            </p>
+          </div>
         </div>
 
         {isLoading ? (
