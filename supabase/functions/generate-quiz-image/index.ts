@@ -21,9 +21,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
 
     console.log(`Generating image for question: ${questionId}`);
@@ -39,28 +39,25 @@ serve(async (req) => {
     let permanentImageUrl: string;
 
     try {
-      // Generate image using Lovable AI Gateway (Gemini image model)
+      // Generate image using OpenAI with retry logic
       let response;
       let retryCount = 0;
       const maxRetries = 3;
       
       while (retryCount < maxRetries) {
         try {
-          response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          response = await fetch('https://api.openai.com/v1/images/generations', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-flash-image',
-              messages: [
-                {
-                  role: 'user',
-                  content: imagePrompt
-                }
-              ],
-              modalities: ['image', 'text']
+              model: 'dall-e-3',
+              prompt: imagePrompt,
+              n: 1,
+              size: '1024x1024',
+              quality: 'standard'
             }),
             signal: controller.signal
           });
@@ -70,15 +67,15 @@ serve(async (req) => {
           }
 
           if (response.status === 500 && retryCount < maxRetries - 1) {
-            console.log(`AI Gateway 500 error, retrying (attempt ${retryCount + 1}/${maxRetries})...`);
+            console.log(`OpenAI 500 error, retrying (attempt ${retryCount + 1}/${maxRetries})...`);
             retryCount++;
             await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
             continue;
           }
 
           const errorText = await response.text();
-          console.error('AI Gateway error:', response.status, errorText);
-          throw new Error(`AI Gateway error (${response.status}): ${errorText.substring(0, 200)}`);
+          console.error('OpenAI generation error:', response.status, errorText);
+          throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
         } catch (error) {
           if (error.name === 'AbortError' || retryCount >= maxRetries - 1) {
             throw error;
@@ -90,19 +87,24 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      const base64Image = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const tempImageUrl = data.data?.[0]?.url;
       
-      if (!base64Image || !base64Image.startsWith('data:image/')) {
-        throw new Error('No valid base64 image in AI Gateway response');
+      if (!tempImageUrl) {
+        throw new Error('No image URL in OpenAI response');
       }
 
-      console.log('Image generated, converting from base64...');
+      console.log('Image generated, downloading from OpenAI...');
 
-      // Convert base64 to blob
-      const base64Data = base64Image.split(',')[1];
-      const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      // Download the image from OpenAI's temporary URL
+      const imageResponse = await fetch(tempImageUrl, { signal: controller.signal });
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download image: ${imageResponse.status}`);
+      }
       
-      console.log(`Image converted (${imageBuffer.byteLength} bytes), uploading to Supabase Storage...`);
+      const imageBlob = await imageResponse.blob();
+      const imageBuffer = await imageBlob.arrayBuffer();
+      
+      console.log(`Image downloaded (${imageBuffer.byteLength} bytes), uploading to Supabase Storage...`);
 
       // Upload to Supabase Storage
       const fileName = `${questionId}-${Date.now()}.png`;
@@ -138,7 +140,7 @@ serve(async (req) => {
           image_metadata: {
             generated_at: new Date().toISOString(),
             prompt: imagePrompt,
-            model: 'google/gemini-2.5-flash-image',
+            model: 'dall-e-3',
             storage_path: fileName
           }
         })
