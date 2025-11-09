@@ -99,47 +99,11 @@ export class SupabaseMarketDataProvider {
         }
       }
       
-      // Final fallback: generate mock data
-      console.warn('[DataProvider] All providers failed, using mock data');
-      return this.generateMockData(symbols, start, end);
+      // No fallback - throw error so users know data fetch failed
+      throw new Error(`Failed to fetch real market data for ${symbols.join(', ')}. Please try again or contact support.`);
     }
   }
 
-  /**
-   * Generate realistic mock data as final fallback
-   */
-  private generateMockData(symbols: string[], start: string, end: string): PriceFrame {
-    console.log('[DataProvider] Generating mock data');
-    
-    const dates: string[] = [];
-    const data: number[][] = [];
-    
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    for (let i = 0; i <= daysDiff; i++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
-      dates.push(currentDate.toISOString().split('T')[0]);
-      
-      const prices = symbols.map((symbol) => {
-        const basePrice = symbol.includes('USD') ? 1.1000 : 100.0;
-        const trend = i * 0.0001;
-        const volatility = (Math.random() - 0.5) * 0.02;
-        return basePrice + trend + (basePrice * volatility);
-      });
-      
-      data.push(prices);
-    }
-    
-    return {
-      index: dates,
-      columns: symbols,
-      data: data,
-      meta: { provider: 'mock', note: 'Fallback synthetic data' }
-    };
-  }
 
   async loadIntraday(symbol: string, start: string, end: string, interval: "1m"|"5m"): Promise<PriceFrame> {
     // For now, EODHD doesn't support intraday in our setup
