@@ -219,7 +219,18 @@ export const DatabaseQuiz = ({
 
           <p className="text-lg mb-6">{currentQuestion.question_text}</p>
 
-          {/* Pattern Chart Display */}
+          {/* Image Display - For questions with image_url */}
+          {currentQuestion.image_url && !currentQuestion.pattern_key && !currentQuestion.pattern_name && (
+            <div className="mb-6 rounded-lg overflow-hidden border">
+              <img 
+                src={currentQuestion.image_url} 
+                alt={currentQuestion.question_text}
+                className="w-full h-auto max-h-[400px] object-contain bg-muted"
+              />
+            </div>
+          )}
+
+          {/* Pattern Chart Display - For pattern-specific questions */}
           {(currentQuestion.pattern_key || currentQuestion.pattern_name) && (
             <div className="mb-6 rounded-lg overflow-hidden">
               <DynamicPatternChart 
