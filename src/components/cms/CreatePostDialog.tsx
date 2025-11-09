@@ -211,19 +211,19 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
 
           <div className="space-y-2">
             <Label>Recurrence Pattern</Label>
-            <Select value={recurrencePattern} onValueChange={setRecurrencePattern}>
+            <Select value={recurrencePattern || "none"} onValueChange={(v) => setRecurrencePattern(v === "none" ? "" : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="One-time post" />
+                <SelectValue placeholder="Select recurrence" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">One-time post</SelectItem>
+                <SelectItem value="none">One-time post</SelectItem>
                 <SelectItem value="daily">Daily (every day)</SelectItem>
                 <SelectItem value="weekdays">Weekdays only (Mon-Fri)</SelectItem>
                 <SelectItem value="weekly">Weekly (same day each week)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              {recurrencePattern ? "Post will automatically repeat on schedule" : "Post will only run once"}
+              {recurrencePattern && recurrencePattern !== "none" ? "Post will automatically repeat on schedule" : "Post will only run once"}
             </p>
           </div>
         </div>
