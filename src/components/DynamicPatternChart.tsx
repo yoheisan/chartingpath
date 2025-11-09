@@ -6,13 +6,32 @@ interface DynamicPatternChartProps {
   className?: string;
   width?: number;
   height?: number;
+  showTitle?: boolean;
 }
+
+const PATTERN_TYPES: Record<string, { name: string; type: "reversal" | "continuation" | "candlestick" }> = {
+  "head-shoulders": { name: "Head and Shoulders", type: "reversal" },
+  "head-and-shoulders": { name: "Head and Shoulders", type: "reversal" },
+  "inverted-head-shoulders": { name: "Inverted Head and Shoulders", type: "reversal" },
+  "double-top": { name: "Double Top", type: "reversal" },
+  "double-bottom": { name: "Double Bottom", type: "reversal" },
+  "ascending-triangle": { name: "Ascending Triangle", type: "continuation" },
+  "descending-triangle": { name: "Descending Triangle", type: "continuation" },
+  "symmetrical-triangle": { name: "Symmetrical Triangle", type: "continuation" },
+  "bull-flag": { name: "Bull Flag", type: "continuation" },
+  "bear-flag": { name: "Bear Flag", type: "continuation" },
+  "cup-handle": { name: "Cup with Handle", type: "continuation" },
+  "cup-and-handle": { name: "Cup with Handle", type: "continuation" },
+  "rising-wedge": { name: "Rising Wedge", type: "reversal" },
+  "falling-wedge": { name: "Falling Wedge", type: "reversal" },
+};
 
 export const DynamicPatternChart = ({ 
   patternType, 
   className = "",
-  width = 800,
-  height = 400
+  width = 1000,
+  height = 600,
+  showTitle = true
 }: DynamicPatternChartProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -27,113 +46,258 @@ export const DynamicPatternChart = ({
     canvas.width = width;
     canvas.height = height;
 
-    // Clear canvas
-    ctx.fillStyle = "hsl(var(--background))";
-    ctx.fillRect(0, 0, width, height);
+    // Get pattern data
+    const patternData = PatternCalculator.getPatternData(patternType);
+    if (!patternData || !patternData.candles || patternData.candles.length === 0) {
+      console.error("No pattern data generated for:", patternType);
+      return;
+    }
 
-    try {
-      // Get pattern data
-      const patternData = PatternCalculator.getPatternData(patternType);
-      if (!patternData || !patternData.candles || patternData.candles.length === 0) {
-        console.error("No pattern data generated for:", patternType);
-        return;
-      }
+    const { candles, annotations, keyLevels } = patternData;
+    const currentPattern = PATTERN_TYPES[patternType] || { name: patternType, type: "continuation" };
 
-      const data = patternData.candles;
-      const padding = 60;
-      const chartWidth = width - padding * 2;
-      const chartHeight = height - padding * 2;
+    // Clear canvas with dark background
+    ctx.fillStyle = "hsl(223, 39%, 4%)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Calculate price range
-      const prices = data.flatMap(d => [d.high, d.low]);
-      const maxPrice = Math.max(...prices);
-      const minPrice = Math.min(...prices);
-      const priceRange = maxPrice - minPrice;
+    // Chart dimensions
+    const padding = 80;
+    const chartWidth = canvas.width - padding * 2;
+    const chartHeight = canvas.height - padding * 2 - 100;
+    const chartLeft = padding;
+    const chartTop = padding;
 
-      // Helper function to convert price to Y coordinate
-      const priceToY = (price: number) => {
-        return padding + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
-      };
+    // Draw grid
+    ctx.strokeStyle = "hsl(215, 15%, 20%)";
+    ctx.lineWidth = 0.5;
+    
+    for (let i = 0; i <= 10; i++) {
+      const x = chartLeft + (i * chartWidth) / 10;
+      ctx.beginPath();
+      ctx.moveTo(x, chartTop);
+      ctx.lineTo(x, chartTop + chartHeight);
+      ctx.stroke();
+    }
 
-      // Helper function to convert index to X coordinate
-      const indexToX = (index: number) => {
-        return padding + (index / (data.length - 1)) * chartWidth;
-      };
+    for (let i = 0; i <= 8; i++) {
+      const y = chartTop + (i * chartHeight) / 8;
+      ctx.beginPath();
+      ctx.moveTo(chartLeft, y);
+      ctx.lineTo(chartLeft + chartWidth, y);
+      ctx.stroke();
+    }
 
-      // Draw grid
-      ctx.strokeStyle = "hsl(var(--border))";
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i <= 5; i++) {
-        const y = padding + (i / 5) * chartHeight;
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width - padding, y);
-        ctx.stroke();
-      }
+    // Calculate price range
+    const prices = candles.flatMap(d => [d.high, d.low]);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice;
+    const padding_price = priceRange * 0.1;
+    const adjustedMinPrice = minPrice - padding_price;
+    const adjustedMaxPrice = maxPrice + padding_price;
+    const adjustedRange = adjustedMaxPrice - adjustedMinPrice;
 
-      // Draw candlesticks
-      data.forEach((candle, index) => {
-        const x = indexToX(index);
-        const candleWidth = chartWidth / data.length * 0.6;
+    const priceToY = (price: number) => {
+      return chartTop + chartHeight - ((price - adjustedMinPrice) / adjustedRange) * chartHeight;
+    };
 
-        const openY = priceToY(candle.open);
-        const closeY = priceToY(candle.close);
-        const highY = priceToY(candle.high);
-        const lowY = priceToY(candle.low);
+    const indexToX = (index: number) => {
+      return chartLeft + (index + 0.5) * (chartWidth / candles.length);
+    };
 
-        const isGreen = candle.close >= candle.open;
-        
-        // Draw wick
-        ctx.strokeStyle = isGreen ? "hsl(var(--success))" : "hsl(var(--destructive))";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x, highY);
-        ctx.lineTo(x, lowY);
-        ctx.stroke();
+    const drawRoundedRect = (x: number, y: number, width: number, height: number, radius: number) => {
+      const r = Math.min(radius, height / 2, width / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + r, r);
+      ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+      ctx.arcTo(x, y + height, x, y + height - r, r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+    };
 
-        // Draw body
-        ctx.fillStyle = isGreen ? "hsl(var(--success))" : "hsl(var(--destructive))";
-        const bodyY = Math.min(openY, closeY);
-        const bodyHeight = Math.abs(closeY - openY) || 1;
-        ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
-      });
-
-      // Draw pattern annotations if available
-      if (patternData.annotations) {
-        patternData.annotations.forEach((annotation) => {
-          if (annotation.points && annotation.points.length > 1) {
-            ctx.strokeStyle = annotation.color || "hsl(var(--primary))";
-            ctx.lineWidth = 2;
-            ctx.setLineDash(annotation.style === "dashed" ? [5, 5] : []);
-            ctx.beginPath();
-            annotation.points.forEach((point, idx) => {
-              const x = indexToX(point.x);
-              const y = priceToY(point.y);
-              if (idx === 0) {
-                ctx.moveTo(x, y);
-              } else {
-                ctx.lineTo(x, y);
-              }
-            });
-            ctx.stroke();
-            ctx.setLineDash([]);
-          }
-        });
-      }
-
-      // Draw axes
-      ctx.strokeStyle = "hsl(var(--foreground))";
+    // Draw candlesticks
+    const candleWidth = Math.max(8, chartWidth / (candles.length * 1.5));
+    candles.forEach((candle, index) => {
+      const x = indexToX(index);
+      const yOpen = priceToY(candle.open);
+      const yClose = priceToY(candle.close);
+      const yHigh = priceToY(candle.high);
+      const yLow = priceToY(candle.low);
+      const isBullish = candle.close > candle.open;
+      
+      ctx.strokeStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, height - padding);
-      ctx.lineTo(width - padding, height - padding);
+      ctx.moveTo(x, yHigh);
+      ctx.lineTo(x, yLow);
       ctx.stroke();
 
-    } catch (error) {
-      console.error("Error generating pattern:", error);
+      ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      const bodyTop = Math.min(yOpen, yClose);
+      const bodyHeight = Math.abs(yClose - yOpen);
+      
+      if (bodyHeight < 3) {
+        ctx.strokeStyle = "hsl(210, 40%, 98%)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x - candleWidth/2 * 0.8, yOpen);
+        ctx.lineTo(x + candleWidth/2 * 0.8, yOpen);
+        ctx.stroke();
+      } else {
+        ctx.fillRect(x - candleWidth/2 * 0.8, bodyTop, candleWidth * 0.8, bodyHeight);
+      }
+    });
+
+    // Draw pattern annotations
+    annotations.forEach(annotation => {
+      ctx.strokeStyle = annotation.color;
+      ctx.fillStyle = annotation.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash(annotation.style === 'dashed' ? [5, 5] : []);
+      
+      if (annotation.type === 'peak') {
+        const point = annotation.points[0];
+        const x = indexToX(point.x);
+        const y = priceToY(point.y);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        if (annotation.label) {
+          ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "center";
+          const textMetrics = ctx.measureText(annotation.label);
+          const textWidth = textMetrics.width;
+          const textHeight = 14;
+          
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.fillRect(x - textWidth/2 - 4, y - 25 - textHeight/2, textWidth + 8, textHeight + 4);
+          
+          ctx.fillStyle = annotation.color;
+          ctx.fillText(annotation.label, x, y - 20);
+        }
+      } else if (annotation.points.length >= 2) {
+        ctx.beginPath();
+        const firstPoint = annotation.points[0];
+        ctx.moveTo(indexToX(firstPoint.x), priceToY(firstPoint.y));
+        
+        for (let i = 1; i < annotation.points.length; i++) {
+          const point = annotation.points[i];
+          ctx.lineTo(indexToX(point.x), priceToY(point.y));
+        }
+        ctx.stroke();
+        
+        if (annotation.label) {
+          ctx.fillStyle = annotation.color;
+          ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "left";
+          const lastPoint = annotation.points[annotation.points.length - 1];
+          ctx.fillText(annotation.label, indexToX(lastPoint.x) + 10, priceToY(lastPoint.y) - 5);
+        }
+      }
+      
+      ctx.setLineDash([]);
+    });
+
+    // Draw volume histogram
+    const volumeTop = chartTop + chartHeight + 20;
+    const volumeHeight = 80;
+    const maxVolume = Math.max(...candles.map(c => c.volume));
+    
+    candles.forEach((candle, index) => {
+      const x = indexToX(index);
+      const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
+      const isBullish = candle.close > candle.open;
+      
+      ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.6)" : "rgba(239, 68, 68, 0.6)";
+      ctx.fillRect(x - candleWidth/2 * 0.6, volumeTop + volumeHeight - volumeBarHeight, 
+                   candleWidth * 0.6, volumeBarHeight);
+    });
+
+    // Draw axes labels
+    ctx.fillStyle = "hsl(217, 10%, 65%)";
+    ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "right";
+    
+    for (let i = 0; i <= 8; i++) {
+      const price = adjustedMinPrice + (i / 8) * adjustedRange;
+      const y = chartTop + chartHeight - (i * chartHeight) / 8;
+      ctx.fillText(price.toFixed(2), chartLeft - 10, y + 4);
     }
-  }, [patternType, width, height]);
+
+    ctx.textAlign = "left";
+    ctx.fillText("Volume", chartLeft, volumeTop - 5);
+
+    // Key levels display
+    if (keyLevels.entry || keyLevels.target || keyLevels.stopLoss) {
+      ctx.fillStyle = "hsl(210, 40%, 98%)";
+      ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "left";
+      let labelY = chartTop + 20;
+      
+      if (keyLevels.entry) {
+        ctx.fillText(`Entry: ${keyLevels.entry.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+        labelY += 15;
+      }
+      if (keyLevels.target) {
+        ctx.fillStyle = "hsl(142, 76%, 36%)";
+        ctx.fillText(`Target: ${keyLevels.target.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+        labelY += 15;
+      }
+      if (keyLevels.stopLoss) {
+        ctx.fillStyle = "hsl(0, 84%, 60%)";
+        ctx.fillText(`Stop Loss: ${keyLevels.stopLoss.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
+      }
+    }
+
+    if (showTitle) {
+      // Title and Pattern Type Badge
+      ctx.fillStyle = "hsl(210, 40%, 98%)";
+      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "left";
+      
+      const titleMetrics = ctx.measureText(currentPattern.name);
+      ctx.fillText(currentPattern.name, chartLeft, chartTop - 30);
+
+      // Pattern type badge
+      const badgeText = currentPattern.type.toUpperCase();
+      const badgeColor = currentPattern.type === "reversal" ? "#dc2626" : 
+                        currentPattern.type === "continuation" ? "#3b82f6" : "#6b7280";
+      
+      ctx.font = "bold 12px -apple-system, BlinkMacSystemFont, sans-serif";
+      const badgeTextMetrics = ctx.measureText(badgeText);
+      const badgeWidth = badgeTextMetrics.width + 16;
+      const badgeHeight = 22;
+      const badgeX = chartLeft + titleMetrics.width + 15;
+      const badgeY = chartTop - 42;
+      
+      ctx.fillStyle = badgeColor;
+      drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
+      ctx.fill();
+      
+      ctx.fillStyle = "white";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(badgeText, badgeX + badgeWidth/2, badgeY + badgeHeight/2 - 2);
+      
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+
+      // Subtitle
+      ctx.fillStyle = "hsl(217, 10%, 65%)";
+      ctx.font = "14px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("Professional Trading Education", chartLeft, chartTop - 10);
+
+      // Watermark
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("ChartingPath.com", chartLeft + 10, canvas.height - 15);
+    }
+  }, [patternType, width, height, showTitle]);
 
   return (
     <canvas 
