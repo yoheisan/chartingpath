@@ -320,6 +320,58 @@ export const DatabaseQuiz = ({
                   </div>
                 );
               })()}
+
+              {/* Professional Standards & Sources for all categories */}
+              {currentQuestion.category === 'professional_practices' && (
+                <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="text-primary">📚</span> Professional Standards Sources
+                  </h4>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Information based on industry standards from:</p>
+                    <ul className="ml-4 space-y-1">
+                      <li>• CFA Institute - Standards of Practice Handbook</li>
+                      <li>• SEC (Securities and Exchange Commission) - Trading Regulations</li>
+                      <li>• FINRA (Financial Industry Regulatory Authority) - Conduct Rules</li>
+                      <li>• CME Group - Risk Management Best Practices</li>
+                      <li>• Market Technicians Association (MTA) - Technical Analysis Standards</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {currentQuestion.category === 'risk_management' && (
+                <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="text-primary">📚</span> Risk Management Standards
+                  </h4>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Based on frameworks from:</p>
+                    <ul className="ml-4 space-y-1">
+                      <li>• CFA Institute - Risk Management & Performance Standards</li>
+                      <li>• GARP (Global Association of Risk Professionals) - FRM Standards</li>
+                      <li>• Basel Committee - Risk Management Principles</li>
+                      <li>• CME Group & ICE - Position Sizing Guidelines</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {currentQuestion.category === 'statistics' && (
+                <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="text-primary">📚</span> Statistical Standards
+                  </h4>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Methodologies recognized by:</p>
+                    <ul className="ml-4 space-y-1">
+                      <li>• CFA Institute - Quantitative Methods Standards</li>
+                      <li>• Academic research from Journal of Technical Analysis</li>
+                      <li>• Industry standards from Bloomberg & Reuters methodologies</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
