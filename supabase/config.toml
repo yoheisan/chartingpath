@@ -77,3 +77,15 @@ verify_jwt = false
 
 [functions.schedule-market-reports]
 verify_jwt = false
+
+[functions.generate-social-market-teaser]
+verify_jwt = false
+
+[functions.post-to-social-media]
+verify_jwt = false
+
+[functions.social-media-scheduler]
+verify_jwt = false
+
+[functions.seed-qa-content]
+verify_jwt = false
