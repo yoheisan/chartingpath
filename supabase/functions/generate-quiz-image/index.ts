@@ -21,9 +21,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
 
     console.log(`Generating image for question: ${questionId}`);
@@ -32,33 +32,37 @@ serve(async (req) => {
     const imagePrompt = generateImagePrompt(questionText, category);
     console.log(`Using prompt: ${imagePrompt}`);
 
-    // Generate image using Lovable AI
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Generate image using OpenAI
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
-        messages: [
-          {
-            role: 'user',
-            content: imagePrompt
-          }
-        ],
-        modalities: ['image', 'text']
+        model: 'gpt-image-1',
+        prompt: imagePrompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'high',
+        response_format: 'b64_json'
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI generation error:', errorText);
+      console.error('OpenAI generation error:', errorText);
       throw new Error(`Failed to generate image: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const base64Image = data.data?.[0]?.b64_json;
+    
+    if (!base64Image) {
+      throw new Error('No image generated in response');
+    }
+
+    const imageUrl = `data:image/png;base64,${base64Image}`;
 
     if (!imageUrl) {
       throw new Error('No image generated in response');
@@ -79,7 +83,7 @@ serve(async (req) => {
         image_metadata: {
           generated_at: new Date().toISOString(),
           prompt: imagePrompt,
-          model: 'google/gemini-2.5-flash-image-preview'
+          model: 'gpt-image-1'
         }
       })
       .eq('id', questionId);
