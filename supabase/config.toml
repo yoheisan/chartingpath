@@ -39,6 +39,9 @@ verify_jwt = false
 [functions.fetch-market-data]
 verify_jwt = false
 
+[functions.fetch-yahoo-finance]
+verify_jwt = false
+
 [functions.generate-market-report]
 verify_jwt = false
 
