@@ -44,8 +44,7 @@ serve(async (req) => {
         prompt: imagePrompt,
         n: 1,
         size: '1024x1024',
-        quality: 'high',
-        response_format: 'b64_json'
+        quality: 'high'
       })
     });
 
@@ -56,14 +55,8 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const base64Image = data.data?.[0]?.b64_json;
+    const imageUrl = data.data?.[0]?.url;
     
-    if (!base64Image) {
-      throw new Error('No image generated in response');
-    }
-
-    const imageUrl = `data:image/png;base64,${base64Image}`;
-
     if (!imageUrl) {
       throw new Error('No image generated in response');
     }
