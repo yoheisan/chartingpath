@@ -32,7 +32,7 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
   const [platform, setPlatform] = useState<"twitter" | "instagram" | "both">("both");
   const [scheduledTime, setScheduledTime] = useState("");
   const [timezone, setTimezone] = useState("America/New_York");
-  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrencePattern, setRecurrencePattern] = useState<string>("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [reportConfig, setReportConfig] = useState({
@@ -60,30 +60,38 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     mutationFn: async () => {
       const accountId = accounts?.find(a => a.platform === platform || platform === "both")?.id;
       
-      const { error } = await supabase.from("scheduled_posts").insert({
-        post_type: postType,
-        platform,
+      if (!accountId) {
+        throw new Error("No social media account found. Please add an account first.");
+      }
+      
+      const postData = {
         account_id: accountId,
+        post_type: postType,
+        platform: platform,
+        content: postType === "custom" ? content : `${reportConfig.timeSpan} report - ${reportConfig.markets.join(", ")}`,
         scheduled_time: scheduledTime,
-        timezone,
-        is_recurring: isRecurring,
-        recurrence_rule: isRecurring ? "daily" : null,
-        title: title || null,
-        content: postType === "custom" ? content : null,
-        report_config: postType === "market_report" ? reportConfig : null,
-        link_back_url: "https://yoursite.com/tools/market-breadth",
-      });
+        recurrence_pattern: recurrencePattern || null,
+        status: "scheduled",
+        link_back_url: "https://chartingpath.com/tools/market-breadth",
+        image_url: null,
+        content_library_id: null,
+      };
+      
+      const { error } = await supabase
+        .from("scheduled_posts")
+        .insert([postData]);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
-      toast.success("Post scheduled successfully");
+      toast.success(recurrencePattern ? "Recurring post scheduled successfully" : "Post scheduled successfully");
       onOpenChange(false);
       resetForm();
     },
-    onError: () => {
-      toast.error("Failed to schedule post");
+    onError: (error: any) => {
+      console.error("Schedule error:", error);
+      toast.error(error.message || "Failed to schedule post");
     },
   });
 
@@ -91,7 +99,7 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     setPostType("market_report");
     setPlatform("both");
     setScheduledTime("");
-    setIsRecurring(false);
+    setRecurrencePattern("");
     setTitle("");
     setContent("");
   };
@@ -201,9 +209,22 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
-            <Label>Recurring Daily</Label>
+          <div className="space-y-2">
+            <Label>Recurrence Pattern</Label>
+            <Select value={recurrencePattern} onValueChange={setRecurrencePattern}>
+              <SelectTrigger>
+                <SelectValue placeholder="One-time post" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">One-time post</SelectItem>
+                <SelectItem value="daily">Daily (every day)</SelectItem>
+                <SelectItem value="weekdays">Weekdays only (Mon-Fri)</SelectItem>
+                <SelectItem value="weekly">Weekly (same day each week)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {recurrencePattern ? "Post will automatically repeat on schedule" : "Post will only run once"}
+            </p>
           </div>
         </div>
 

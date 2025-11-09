@@ -11,6 +11,7 @@ interface ScheduledPost {
   scheduled_time: string;
   title: string | null;
   status: string;
+  recurrence_pattern?: string | null;
   social_media_accounts: {
     account_name: string;
     platform: string;
@@ -78,6 +79,14 @@ export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPost
                 <span>
                   {format(new Date(post.scheduled_time), "PPP 'at' p")}
                 </span>
+                {post.recurrence_pattern && (
+                  <Badge variant="outline" className="gap-1">
+                    <Clock className="h-3 w-3" />
+                    {post.recurrence_pattern === 'daily' ? 'Daily' : 
+                     post.recurrence_pattern === 'weekdays' ? 'Weekdays' : 
+                     post.recurrence_pattern === 'weekly' ? 'Weekly' : post.recurrence_pattern}
+                  </Badge>
+                )}
                 {post.social_media_accounts && (
                   <span>
                     → {post.social_media_accounts.account_name}
