@@ -98,7 +98,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
       targetGainPercent: 0,
       stopLossPercent: 0,
       market: {
-        instrumentCategory: 'forex',
+        instrumentCategory: 'stocks',
         instrument: '',
         timeframes: ['1H'],
         tradingHours: 'london-ny'

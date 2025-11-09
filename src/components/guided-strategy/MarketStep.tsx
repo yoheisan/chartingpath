@@ -17,9 +17,74 @@ interface MarketStepProps {
 }
 
 const instrumentCategories = {
+  stocks: {
+    label: 'Stocks',
+    icon: TrendingUp,
+    instruments: [
+      // Tech Giants
+      { symbol: 'AAPL', name: 'Apple Inc.' },
+      { symbol: 'MSFT', name: 'Microsoft Corporation' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc. (Google)' },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+      { symbol: 'META', name: 'Meta Platforms (Facebook)' },
+      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+      { symbol: 'TSLA', name: 'Tesla Inc.' },
+      { symbol: 'NFLX', name: 'Netflix Inc.' },
+      { symbol: 'AMD', name: 'Advanced Micro Devices' },
+      { symbol: 'INTC', name: 'Intel Corporation' },
+      { symbol: 'CRM', name: 'Salesforce Inc.' },
+      { symbol: 'ORCL', name: 'Oracle Corporation' },
+      { symbol: 'ADBE', name: 'Adobe Inc.' },
+      { symbol: 'CSCO', name: 'Cisco Systems' },
+      { symbol: 'AVGO', name: 'Broadcom Inc.' },
+      
+      // Financial Services
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+      { symbol: 'BAC', name: 'Bank of America' },
+      { symbol: 'WFC', name: 'Wells Fargo' },
+      { symbol: 'GS', name: 'Goldman Sachs' },
+      { symbol: 'MS', name: 'Morgan Stanley' },
+      { symbol: 'V', name: 'Visa Inc.' },
+      { symbol: 'MA', name: 'Mastercard Inc.' },
+      { symbol: 'AXP', name: 'American Express' },
+      { symbol: 'BLK', name: 'BlackRock Inc.' },
+      
+      // Healthcare & Pharma
+      { symbol: 'JNJ', name: 'Johnson & Johnson' },
+      { symbol: 'UNH', name: 'UnitedHealth Group' },
+      { symbol: 'PFE', name: 'Pfizer Inc.' },
+      { symbol: 'ABBV', name: 'AbbVie Inc.' },
+      { symbol: 'TMO', name: 'Thermo Fisher Scientific' },
+      { symbol: 'MRK', name: 'Merck & Co.' },
+      { symbol: 'LLY', name: 'Eli Lilly and Company' },
+      
+      // Consumer & Retail
+      { symbol: 'WMT', name: 'Walmart Inc.' },
+      { symbol: 'HD', name: 'Home Depot' },
+      { symbol: 'DIS', name: 'Walt Disney Company' },
+      { symbol: 'NKE', name: 'Nike Inc.' },
+      { symbol: 'MCD', name: 'McDonald\'s Corporation' },
+      { symbol: 'SBUX', name: 'Starbucks Corporation' },
+      { symbol: 'KO', name: 'Coca-Cola Company' },
+      { symbol: 'PEP', name: 'PepsiCo Inc.' },
+      
+      // Energy & Industrial
+      { symbol: 'XOM', name: 'Exxon Mobil' },
+      { symbol: 'CVX', name: 'Chevron Corporation' },
+      { symbol: 'COP', name: 'ConocoPhillips' },
+      { symbol: 'BA', name: 'Boeing Company' },
+      { symbol: 'CAT', name: 'Caterpillar Inc.' },
+      { symbol: 'GE', name: 'General Electric' },
+      
+      // Communication
+      { symbol: 'T', name: 'AT&T Inc.' },
+      { symbol: 'VZ', name: 'Verizon Communications' },
+      { symbol: 'CMCSA', name: 'Comcast Corporation' },
+    ]
+  },
   forex: {
     label: 'Foreign Exchange (FX)',
-    icon: TrendingUp,
+    icon: Globe,
     instruments: [
       { symbol: 'EUR/USD', name: 'Euro/US Dollar' },
       { symbol: 'GBP/USD', name: 'British Pound/US Dollar' },
@@ -48,8 +113,8 @@ const instrumentCategories = {
     ]
   },
   indices: {
-    label: 'Major Indices',
-    icon: Globe,
+    label: 'ETFs & Indices',
+    icon: TrendingUp,
     instruments: [
       { symbol: 'SPY', name: 'S&P 500 ETF' },
       { symbol: 'QQQ', name: 'NASDAQ 100 ETF' },
@@ -59,6 +124,10 @@ const instrumentCategories = {
       { symbol: 'DIA', name: 'Dow Jones ETF' },
       { symbol: 'EWZ', name: 'Brazil ETF' },
       { symbol: 'FXI', name: 'China Large Cap ETF' },
+      { symbol: 'GLD', name: 'Gold ETF' },
+      { symbol: 'SLV', name: 'Silver ETF' },
+      { symbol: 'TLT', name: 'Treasury Bond ETF' },
+      { symbol: 'VNQ', name: 'Real Estate ETF' },
     ]
   }
 };
@@ -82,8 +151,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
   
   const currentAnswers = answers.market || {
-    instrumentCategory: 'forex',
-    instrument: 'EUR/USD',
+    instrumentCategory: 'stocks',
+    instrument: 'AAPL',
     timeframes: ['1h'],
     tradingHours: 'london-ny'
   };
@@ -292,7 +361,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               </PopoverContent>
             </Popover>
             <p className="text-sm text-muted-foreground">
-              Search across all markets: Foreign Exchange, Cryptocurrencies, and Major Indices. Just start typing the ticker symbol.
+              Search across all markets: Stocks, Foreign Exchange, Cryptocurrencies, and ETFs. Just start typing the ticker symbol.
             </p>
           </div>
 

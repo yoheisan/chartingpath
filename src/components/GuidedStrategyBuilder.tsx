@@ -66,8 +66,8 @@ export const GuidedStrategyBuilder: React.FC<GuidedStrategyBuilderProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<GuidedStrategyAnswers>({
     market: { 
-      instrumentCategory: 'forex',
-      instrument: 'EUR/USD', 
+      instrumentCategory: 'stocks',
+      instrument: 'AAPL', 
       timeframes: ['1h'], 
       tradingHours: 'london-ny' 
     },

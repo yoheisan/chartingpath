@@ -45,8 +45,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [currentChartingPathStrategy, setCurrentChartingPathStrategy] = useState<ChartingPathStrategy | null>(null);
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
     market: { 
-      instrumentCategory: 'forex',
-      instrument: 'EUR/USD',
+      instrumentCategory: 'stocks',
+      instrument: 'AAPL',
       timeframes: ['1h'],
       tradingHours: 'london-ny'
     },
@@ -245,7 +245,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       targetGainPercent: pattern.defaultTarget,
       stopLossPercent: pattern.defaultStopLoss,
       market: {
-        instrumentCategory: 'forex',
+        instrumentCategory: 'stocks',
         instrument: '',
         timeframes: pattern.timeframes.supported.length > 0 ? [pattern.timeframes.supported[0]] : ['1H'],
         tradingHours: 'london-ny'
