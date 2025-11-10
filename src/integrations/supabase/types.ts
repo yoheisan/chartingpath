@@ -1101,6 +1101,81 @@ export type Database = {
         }
         Relationships: []
       }
+      historical_prices: {
+        Row: {
+          close: number
+          created_at: string | null
+          date: string
+          high: number
+          id: string
+          instrument_type: string
+          low: number
+          open: number
+          symbol: string
+          timeframe: string
+          updated_at: string | null
+          volume: number | null
+        }
+        Insert: {
+          close: number
+          created_at?: string | null
+          date: string
+          high: number
+          id?: string
+          instrument_type: string
+          low: number
+          open: number
+          symbol: string
+          timeframe: string
+          updated_at?: string | null
+          volume?: number | null
+        }
+        Update: {
+          close?: number
+          created_at?: string | null
+          date?: string
+          high?: number
+          id?: string
+          instrument_type?: string
+          low?: number
+          open?: number
+          symbol?: string
+          timeframe?: string
+          updated_at?: string | null
+          volume?: number | null
+        }
+        Relationships: []
+      }
+      instrument_search_analytics: {
+        Row: {
+          created_at: string | null
+          id: string
+          instrument_type: string
+          search_query: string
+          selected_instrument: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instrument_type: string
+          search_query: string
+          selected_instrument?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instrument_type?: string
+          search_query?: string
+          selected_instrument?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       learning_articles: {
         Row: {
           author_id: string | null

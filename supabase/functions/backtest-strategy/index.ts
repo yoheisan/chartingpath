@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -87,6 +88,36 @@ async function fetchHistoricalData(
   endDate: string,
   timeframe: string
 ): Promise<any[]> {
+  // Initialize Supabase client
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Check cache first
+  const { data: cachedData, error: cacheError } = await supabase
+    .from('historical_prices')
+    .select('*')
+    .eq('symbol', symbol)
+    .eq('timeframe', timeframe)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (!cacheError && cachedData && cachedData.length > 0) {
+    console.log(`✅ Cache HIT: ${symbol} ${timeframe} (${cachedData.length} records)`);
+    return cachedData.map((row: any) => ({
+      timestamp: new Date(row.date).getTime(),
+      date: row.date,
+      open: parseFloat(row.open),
+      high: parseFloat(row.high),
+      low: parseFloat(row.low),
+      close: parseFloat(row.close),
+      volume: row.volume ? parseInt(row.volume) : 0
+    }));
+  }
+
+  console.log(`❌ Cache MISS: Fetching ${symbol} from Yahoo Finance...`);
+
   // Convert timeframe to Yahoo Finance interval
   const intervalMap: Record<string, string> = {
     '1m': '1m',
@@ -107,17 +138,13 @@ async function fetchHistoricalData(
   // Adjust symbol format based on category
   let yahooSymbol = symbol;
   if (category === 'forex') {
-    // Convert EUR/USD to EURUSD=X
     yahooSymbol = symbol.replace('/', '') + '=X';
   } else if (category === 'crypto') {
-    // Convert BTC/USD to BTC-USD
     yahooSymbol = symbol.replace('/', '-');
   }
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`;
   
-  console.log('Fetching from Yahoo Finance:', url);
-
   const response = await fetch(url);
   
   if (!response.ok) {
@@ -135,7 +162,7 @@ async function fetchHistoricalData(
   const quotes = result.indicators.quote[0];
   
   // Convert to OHLCV format
-  return timestamps.map((timestamp: number, index: number) => ({
+  const historicalData = timestamps.map((timestamp: number, index: number) => ({
     timestamp: timestamp * 1000,
     date: new Date(timestamp * 1000).toISOString(),
     open: quotes.open[index],
@@ -149,6 +176,36 @@ async function fetchHistoricalData(
     bar.low !== null && 
     bar.close !== null
   );
+
+  // Cache the fetched data
+  if (historicalData.length > 0) {
+    const cacheRecords = historicalData.map((d: any) => ({
+      symbol,
+      instrument_type: category,
+      timeframe,
+      date: d.date,
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+      volume: d.volume
+    }));
+
+    const { error: insertError } = await supabase
+      .from('historical_prices')
+      .upsert(cacheRecords, { 
+        onConflict: 'symbol,timeframe,date',
+        ignoreDuplicates: true 
+      });
+
+    if (!insertError) {
+      console.log(`✅ Cached ${cacheRecords.length} records for ${symbol}`);
+    } else {
+      console.error('Cache insert error:', insertError);
+    }
+  }
+
+  return historicalData;
 }
 
 function detectPatternsInData(data: any[], patterns: any[]): any[] {

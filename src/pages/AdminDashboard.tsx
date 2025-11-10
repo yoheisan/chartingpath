@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2 } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import UserManagement from "@/components/UserManagement";
+import { InstrumentSearchAnalytics } from "@/components/admin/InstrumentSearchAnalytics";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -165,6 +166,14 @@ const AdminDashboard = () => {
             Social Media CMS
           </Button>
           <Button
+            variant={activeTab === "analytics" ? "default" : "outline"}
+            onClick={() => setActiveTab("analytics")}
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Search Analytics
+          </Button>
+          <Button
             variant={activeTab === "settings" ? "default" : "outline"}
             onClick={() => setActiveTab("settings")}
             className="flex items-center gap-2"
@@ -176,6 +185,8 @@ const AdminDashboard = () => {
 
         {/* Tab Content */}
         {activeTab === "users" && <UserManagement userRole={userRole} />}
+        
+        {activeTab === "analytics" && <InstrumentSearchAnalytics />}
         
         {activeTab === "settings" && (
           <Card>

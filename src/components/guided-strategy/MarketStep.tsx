@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { TrendingUp, Globe, Clock, Zap, HelpCircle, Search } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 import { POPULAR_STOCKS, searchStocks, StockSymbol } from '@/data/stockSymbols';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MarketStepProps {
   answers: Partial<GuidedStrategyAnswers>;
@@ -88,6 +89,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstrumentType, setSelectedInstrumentType] = useState<'stocks' | 'forex' | 'crypto' | 'indices'>('stocks');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
   
   const currentAnswers = answers.market || {
     instrumentCategory: 'stocks',
@@ -141,14 +144,59 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     });
   };
 
-  const handleInstrumentChange = (instrument: string) => {
+  const handleInstrumentChange = async (instrument: string) => {
     onAnswersChange('market', {
       ...currentAnswers,
       instrument
     });
     setIsSearchOpen(false);
+    
+    // Track instrument selection
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('instrument_search_analytics').insert({
+        user_id: user?.id || null,
+        search_query: searchQuery || '',
+        instrument_type: selectedInstrumentType,
+        selected_instrument: instrument,
+        session_id: sessionIdRef.current
+      });
+    } catch (error) {
+      console.error('Failed to track search:', error);
+    }
+    
     setSearchQuery('');
   };
+
+  // Track search queries with debounce
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          await supabase.from('instrument_search_analytics').insert({
+            user_id: user?.id || null,
+            search_query: searchQuery,
+            instrument_type: selectedInstrumentType,
+            selected_instrument: null,
+            session_id: sessionIdRef.current
+          });
+        } catch (error) {
+          console.error('Failed to track search:', error);
+        }
+      }, 2000); // Track after 2 seconds of no typing
+    }
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, selectedInstrumentType]);
 
   const handleTimeframeChange = (value: string) => {
     onAnswersChange('market', {
