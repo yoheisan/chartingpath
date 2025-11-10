@@ -56,7 +56,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "Tokyo Pre-Market Analysis 📊",
-          content: "Tokyo pre-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("Asia/Tokyo", 8, 30),
           timezone: "Asia/Tokyo",
           recurrence_pattern: "weekdays",
@@ -74,7 +74,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "Tokyo Post-Market Report 📈",
-          content: "Tokyo post-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("Asia/Tokyo", 15, 30),
           timezone: "Asia/Tokyo",
           recurrence_pattern: "weekdays",
@@ -92,7 +92,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "London Pre-Market Analysis 🇬🇧",
-          content: "London pre-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("Europe/London", 7, 30),
           timezone: "Europe/London",
           recurrence_pattern: "weekdays",
@@ -110,7 +110,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "London Post-Market Report 💷",
-          content: "London post-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("Europe/London", 16, 45),
           timezone: "Europe/London",
           recurrence_pattern: "weekdays",
@@ -128,7 +128,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "US Pre-Market Analysis 🇺🇸",
-          content: "US pre-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("America/New_York", 9, 0),
           timezone: "America/New_York",
           recurrence_pattern: "weekdays",
@@ -146,7 +146,7 @@ export function MarketReportScheduler() {
           post_type: "market_report",
           platform: "twitter",
           title: "US Post-Market Report 💹",
-          content: "US post-market report",
+          content: "", // Will be generated fresh by scheduler
           scheduled_time: createScheduledTime("America/New_York", 16, 30),
           timezone: "America/New_York",
           recurrence_pattern: "weekdays",
