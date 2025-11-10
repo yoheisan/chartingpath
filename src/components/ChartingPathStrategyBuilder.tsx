@@ -667,7 +667,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                             <div>
                               <p className="text-sm text-muted-foreground">Total Trades</p>
                               <p className="text-2xl font-bold">
-                                {backtestResults.trades}
+                                {backtestResults.totalTrades || backtestResults.trades?.length || 0}
                               </p>
                             </div>
                             <div>
