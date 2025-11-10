@@ -52,8 +52,8 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   onBacktest
 }) => {
   const [backtestConfig, setBacktestConfig] = useState({
-    symbol: 'EURUSD',
-    timeframe: 'H1',
+    symbol: strategy?.market?.instrument || 'EURUSD',
+    timeframe: strategy?.market?.timeframes?.[0] || 'H1',
     startDate: '2023-01-01',
     endDate: '2024-01-01',
     spread: 1.5,
@@ -62,6 +62,17 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     initialBalance: 10000,
     testModel: 'control_points'
   });
+
+  // Update config when strategy changes
+  React.useEffect(() => {
+    if (strategy?.market?.instrument) {
+      setBacktestConfig(prev => ({
+        ...prev,
+        symbol: strategy.market.instrument,
+        timeframe: strategy.market.timeframes?.[0] || prev.timeframe
+      }));
+    }
+  }, [strategy?.market?.instrument, strategy?.market?.timeframes]);
 
   const [interactiveParams, setInteractiveParams] = useState({
     riskPerTrade: strategy.riskManagement?.riskPerTrade || 2.0,
