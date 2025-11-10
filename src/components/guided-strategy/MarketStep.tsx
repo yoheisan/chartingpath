@@ -87,6 +87,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstrumentType, setSelectedInstrumentType] = useState<'stocks' | 'forex' | 'crypto' | 'indices'>('stocks');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   const currentAnswers = answers.market || {
     instrumentCategory: 'stocks',
@@ -145,6 +146,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
       ...currentAnswers,
       instrument
     });
+    setIsSearchOpen(false);
+    setSearchQuery('');
   };
 
   const handleTimeframeChange = (value: string) => {
@@ -184,138 +187,147 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               placeholder="Symbol, ISIN, or CUSIP"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchOpen(true)}
               className="pl-10 pr-20 h-11 bg-muted/30 border-border/50 focus:bg-background"
             />
-            {searchQuery && (
+            {isSearchOpen && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery('');
+                }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-xs text-muted-foreground hover:text-foreground"
               >
-                Clear
+                ✕
               </Button>
             )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant={selectedInstrumentType === 'stocks' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleInstrumentTypeChange('stocks')}
-              className="rounded-full h-8 px-4"
-            >
-              Stocks
-            </Button>
-            <Button
-              variant={selectedInstrumentType === 'forex' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleInstrumentTypeChange('forex')}
-              className="rounded-full h-8 px-4"
-            >
-              Forex
-            </Button>
-            <Button
-              variant={selectedInstrumentType === 'crypto' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleInstrumentTypeChange('crypto')}
-              className="rounded-full h-8 px-4"
-            >
-              Crypto
-            </Button>
-            <Button
-              variant={selectedInstrumentType === 'indices' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleInstrumentTypeChange('indices')}
-              className="rounded-full h-8 px-4"
-            >
-              Indices
-            </Button>
-          </div>
+          {/* Filter Pills & Results - Only show when search is open */}
+          {isSearchOpen && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* Filter Pills */}
+              <div className="flex gap-2 flex-wrap pb-2 border-b border-border/50">
+                <Button
+                  variant={selectedInstrumentType === 'stocks' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleInstrumentTypeChange('stocks')}
+                  className="rounded-full h-8 px-4 text-xs"
+                >
+                  Stocks
+                </Button>
+                <Button
+                  variant={selectedInstrumentType === 'forex' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleInstrumentTypeChange('forex')}
+                  className="rounded-full h-8 px-4 text-xs"
+                >
+                  Forex
+                </Button>
+                <Button
+                  variant={selectedInstrumentType === 'crypto' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleInstrumentTypeChange('crypto')}
+                  className="rounded-full h-8 px-4 text-xs"
+                >
+                  Crypto
+                </Button>
+                <Button
+                  variant={selectedInstrumentType === 'indices' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleInstrumentTypeChange('indices')}
+                  className="rounded-full h-8 px-4 text-xs"
+                >
+                  Indices
+                </Button>
+              </div>
 
-          {/* Results List */}
-          <div className="space-y-2">
-            {selectedInstrumentType === 'stocks' ? (
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-1 pr-4">
-                  {filteredStocks.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-sm text-muted-foreground">
-                        {searchQuery ? 'No stocks found. Try a different search term.' : 'Start typing to search 500+ stocks...'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        NYSE • NASDAQ • S&P 500 • Russell 2000 • Dow Jones
-                      </p>
+              {/* Results List */}
+              <div className="space-y-2">
+                {selectedInstrumentType === 'stocks' ? (
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-1 pr-4">
+                      {filteredStocks.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-sm text-muted-foreground">
+                            {searchQuery ? 'No stocks found. Try a different search term.' : 'Start typing to search 500+ stocks...'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            NYSE • NASDAQ • S&P 500 • Russell 2000 • Dow Jones
+                          </p>
+                        </div>
+                      ) : (
+                        filteredStocks.map((stock) => (
+                          <div
+                            key={stock.symbol}
+                            className={cn(
+                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all group',
+                              currentAnswers.instrument === stock.symbol
+                                ? 'bg-primary/10 border border-primary/20'
+                                : 'hover:bg-muted/50 border border-transparent'
+                            )}
+                            onClick={() => handleInstrumentChange(stock.symbol)}
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
+                              {stock.symbol.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{stock.symbol}</div>
+                              <div className="text-xs text-muted-foreground truncate">{stock.name}</div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-muted-foreground">
+                                {stock.exchange || 'stock'}
+                              </span>
+                              {stock.index && (
+                                <Badge variant="secondary" className="text-xs h-5">
+                                  {stock.index}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  ) : (
-                    filteredStocks.map((stock) => (
-                      <div
-                        key={stock.symbol}
-                        className={cn(
-                          'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all group',
-                          currentAnswers.instrument === stock.symbol
-                            ? 'bg-primary/10 border border-primary/20'
-                            : 'hover:bg-muted/50 border border-transparent'
-                        )}
-                        onClick={() => handleInstrumentChange(stock.symbol)}
-                      >
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
-                          {stock.symbol.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm">{stock.symbol}</div>
-                          <div className="text-xs text-muted-foreground truncate">{stock.name}</div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-muted-foreground">
-                            {stock.exchange || 'stock'}
-                          </span>
-                          {stock.index && (
-                            <Badge variant="secondary" className="text-xs h-5">
-                              {stock.index}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-1 pr-4">
-                  {getOtherInstruments().map((instrument) => {
-                    const Icon = selectedInstrumentType === 'forex' ? Globe : 
-                                 selectedInstrumentType === 'crypto' ? Zap : TrendingUp;
-                    return (
-                      <div
-                        key={instrument.symbol}
-                        className={cn(
-                          'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all',
-                          currentAnswers.instrument === instrument.symbol
-                            ? 'bg-primary/10 border border-primary/20'
-                            : 'hover:bg-muted/50 border border-transparent'
-                        )}
-                        onClick={() => handleInstrumentChange(instrument.symbol)}
-                      >
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm">{instrument.symbol}</div>
-                          <div className="text-xs text-muted-foreground truncate">{instrument.name}</div>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {selectedInstrumentType}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            )}
-          </div>
+                  </ScrollArea>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-1 pr-4">
+                      {getOtherInstruments().map((instrument) => {
+                        const Icon = selectedInstrumentType === 'forex' ? Globe : 
+                                     selectedInstrumentType === 'crypto' ? Zap : TrendingUp;
+                        return (
+                          <div
+                            key={instrument.symbol}
+                            className={cn(
+                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all',
+                              currentAnswers.instrument === instrument.symbol
+                                ? 'bg-primary/10 border border-primary/20'
+                                : 'hover:bg-muted/50 border border-transparent'
+                            )}
+                            onClick={() => handleInstrumentChange(instrument.symbol)}
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{instrument.symbol}</div>
+                              <div className="text-xs text-muted-foreground truncate">{instrument.name}</div>
+                            </div>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {selectedInstrumentType}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Timeframe Selection */}
           <div className="space-y-3">
