@@ -150,11 +150,13 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     }));
   };
 
-  const handleBacktest = async () => {
+  const handleBacktest = async (strategyOverride?: ChartingPathStrategy) => {
     setIsBacktesting(true);
     try {
+      // Use the override strategy if provided (from EnhancedBacktestEngine), otherwise use current strategy
+      const strategyToTest = strategyOverride || strategy;
       // Use pattern detection service to validate patterns in backtest
-      const results = await onBacktest?.(strategy);
+      const results = await onBacktest?.(strategyToTest);
       setBacktestResults(results);
       updateStrategy('backtestResults', results);
     } catch (error) {

@@ -42,7 +42,7 @@ interface EnhancedBacktestEngineProps {
   strategy: any;
   results: any;
   isRunning: boolean;
-  onBacktest: () => void;
+  onBacktest: (strategy: any) => void;
 }
 
 export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
@@ -93,7 +93,22 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     console.log('Running enhanced pattern-based backtest with config:', backtestConfig);
     console.log('Interactive parameters:', interactiveParams);
     console.log('Strategy patterns:', strategy.patterns);
-    onBacktest();
+    
+    // Pass the backtest config to the strategy
+    const strategyWithConfig = {
+      ...strategy,
+      backtestPeriod: {
+        startDate: backtestConfig.startDate,
+        endDate: backtestConfig.endDate
+      },
+      market: {
+        ...strategy.market,
+        instrument: backtestConfig.symbol,
+        timeframes: [backtestConfig.timeframe]
+      }
+    };
+    
+    onBacktest(strategyWithConfig);
   };
 
   // Mock pattern-specific results
@@ -353,10 +368,9 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
           {isRunning && (
             <div className="mt-4">
               <div className="flex items-center justify-between text-sm mb-2">
-                <span>Processing patterns...</span>
-                <span>67%</span>
+                <span>Running backtest...</span>
               </div>
-              <Progress value={67} className="h-2" />
+              <Progress value={undefined} className="h-2" />
             </div>
           )}
         </CardContent>
