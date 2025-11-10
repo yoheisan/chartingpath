@@ -152,10 +152,22 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const handleChartingPathBacktest = async (strategy: ChartingPathStrategy): Promise<any> => {
     setIsBacktesting(true);
     try {
+      // Ensure strategy has required properties
+      if (!strategy.market?.instrument) {
+        throw new Error('Please select an instrument before running backtest');
+      }
+      if (!strategy.backtestPeriod?.startDate || !strategy.backtestPeriod?.endDate) {
+        throw new Error('Please set backtest period dates');
+      }
+      if (!strategy.patterns?.some(p => p.enabled)) {
+        throw new Error('Please enable at least one pattern');
+      }
+
       console.log('Starting real backtest with strategy:', {
-        instrument: strategy.market?.instrument,
-        patterns: strategy.patterns?.filter(p => p.enabled).map(p => p.name),
-        dateRange: `${strategy.backtestPeriod?.startDate} to ${strategy.backtestPeriod?.endDate}`
+        instrument: strategy.market.instrument,
+        instrumentCategory: strategy.market.instrumentCategory,
+        patterns: strategy.patterns.filter(p => p.enabled).map(p => p.name),
+        dateRange: `${strategy.backtestPeriod.startDate} to ${strategy.backtestPeriod.endDate}`
       });
 
       // Call the real backtest edge function

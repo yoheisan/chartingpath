@@ -15,20 +15,37 @@ serve(async (req) => {
   try {
     const { strategy } = await req.json();
     
+    // Extract data with fallbacks for both nested and flat structures
+    const instrument = strategy.market?.instrument || strategy.instrument;
+    const instrumentCategory = strategy.market?.instrumentCategory || strategy.instrumentCategory || 'stocks';
+    const startDate = strategy.backtestPeriod?.startDate || strategy.startDate;
+    const endDate = strategy.backtestPeriod?.endDate || strategy.endDate;
+    const timeframe = strategy.market?.timeframes?.[0] || strategy.timeframe || '1d';
+    
     console.log('Starting real backtest for:', {
-      instrument: strategy.market?.instrument,
-      startDate: strategy.backtestPeriod?.startDate,
-      endDate: strategy.backtestPeriod?.endDate,
+      instrument,
+      instrumentCategory,
+      startDate,
+      endDate,
+      timeframe,
       patterns: strategy.patterns?.filter((p: any) => p.enabled).map((p: any) => p.name)
     });
 
+    // Validate required parameters
+    if (!instrument) {
+      throw new Error('Instrument is required');
+    }
+    if (!startDate || !endDate) {
+      throw new Error('Start date and end date are required');
+    }
+
     // Fetch real historical data based on instrument type
     const historicalData = await fetchHistoricalData(
-      strategy.market?.instrument,
-      strategy.market?.instrumentCategory,
-      strategy.backtestPeriod?.startDate,
-      strategy.backtestPeriod?.endDate,
-      strategy.market?.timeframes?.[0] || '1d'
+      instrument,
+      instrumentCategory,
+      startDate,
+      endDate,
+      timeframe
     );
 
     if (!historicalData || historicalData.length === 0) {
