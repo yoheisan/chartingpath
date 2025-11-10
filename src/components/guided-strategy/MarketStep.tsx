@@ -159,10 +159,9 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5" />
+        <Card className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
               Select Your Financial Instrument & Timeframe
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -170,173 +169,151 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
-                    <strong>Search any financial instrument</strong> by typing the ticker symbol (e.g., EURUSD, BTC/USD, SPY). 
-                    Then <strong>select your timeframe</strong> which determines your trade duration and monitoring frequency.
+                    <strong>Search any financial instrument</strong> by typing the ticker symbol. 
+                    Then <strong>select your timeframe</strong> for your trading strategy.
                   </p>
                 </TooltipContent>
               </Tooltip>
             </CardTitle>
           </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Asset Class Selector */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium flex items-center gap-2">
-              Select Asset Class
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    Choose your asset type. Stocks include NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones. All data is free via Yahoo Finance.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <CardContent className="space-y-4">
+          {/* TradingView-style Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Symbol, ISIN, or CUSIP"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-20 h-11 bg-muted/30 border-border/50 focus:bg-background"
+            />
+            {searchQuery && (
               <Button
-                variant={selectedInstrumentType === 'stocks' ? 'default' : 'outline'}
-                onClick={() => handleInstrumentTypeChange('stocks')}
-                className="flex flex-col items-start gap-1 h-auto py-3"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-xs text-muted-foreground hover:text-foreground"
               >
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-medium">Stocks</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">500+ symbols</Badge>
+                Clear
               </Button>
-              <Button
-                variant={selectedInstrumentType === 'forex' ? 'default' : 'outline'}
-                onClick={() => handleInstrumentTypeChange('forex')}
-                className="flex flex-col items-start gap-1 h-auto py-3"
-              >
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  <span className="font-medium">Forex</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">Major pairs</Badge>
-              </Button>
-              <Button
-                variant={selectedInstrumentType === 'crypto' ? 'default' : 'outline'}
-                onClick={() => handleInstrumentTypeChange('crypto')}
-                className="flex flex-col items-start gap-1 h-auto py-3"
-              >
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  <span className="font-medium">Crypto</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">Top coins</Badge>
-              </Button>
-              <Button
-                variant={selectedInstrumentType === 'indices' ? 'default' : 'outline'}
-                onClick={() => handleInstrumentTypeChange('indices')}
-                className="flex flex-col items-start gap-1 h-auto py-3"
-              >
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-medium">ETFs</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">Indices</Badge>
-              </Button>
-            </div>
+            )}
           </div>
 
-          {/* Search & Select Instrument */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              Search & Select Financial Instrument
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    {selectedInstrumentType === 'stocks' 
-                      ? 'Search from NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones stocks. Includes 500+ symbols.'
-                      : 'Browse available instruments in the selected category'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
+          {/* Filter Pills */}
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={selectedInstrumentType === 'stocks' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleInstrumentTypeChange('stocks')}
+              className="rounded-full h-8 px-4"
+            >
+              Stocks
+            </Button>
+            <Button
+              variant={selectedInstrumentType === 'forex' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleInstrumentTypeChange('forex')}
+              className="rounded-full h-8 px-4"
+            >
+              Forex
+            </Button>
+            <Button
+              variant={selectedInstrumentType === 'crypto' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleInstrumentTypeChange('crypto')}
+              className="rounded-full h-8 px-4"
+            >
+              Crypto
+            </Button>
+            <Button
+              variant={selectedInstrumentType === 'indices' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleInstrumentTypeChange('indices')}
+              className="rounded-full h-8 px-4"
+            >
+              Indices
+            </Button>
+          </div>
 
+          {/* Results List */}
+          <div className="space-y-2">
             {selectedInstrumentType === 'stocks' ? (
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search stocks by symbol or name (e.g., AAPL, Apple, Microsoft)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                
-                <ScrollArea className="h-[300px] rounded-md border p-4">
-                  <div className="space-y-2">
-                    {filteredStocks.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        {searchQuery ? 'No stocks found. Try a different search term.' : 'Start typing to search stocks...'}
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-1 pr-4">
+                  {filteredStocks.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-sm text-muted-foreground">
+                        {searchQuery ? 'No stocks found. Try a different search term.' : 'Start typing to search 500+ stocks...'}
                       </p>
-                    ) : (
-                      filteredStocks.map((stock) => (
-                        <div
-                          key={stock.symbol}
-                          className={cn(
-                            'flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors',
-                            currentAnswers.instrument === stock.symbol
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted/50 hover:bg-muted'
-                          )}
-                          onClick={() => handleInstrumentChange(stock.symbol)}
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-semibold">{stock.symbol}</span>
-                            <span className="text-sm opacity-80">{stock.name}</span>
-                          </div>
-                          <div className="flex gap-2 flex-wrap justify-end">
-                            {stock.exchange && (
-                              <Badge variant="outline" className="text-xs">
-                                {stock.exchange}
-                              </Badge>
-                            )}
-                            {stock.sector && (
-                              <Badge variant="secondary" className="text-xs">
-                                {stock.sector}
-                              </Badge>
-                            )}
-                            {stock.index && (
-                              <Badge variant="secondary" className="text-xs">
-                                {stock.index}
-                              </Badge>
-                            )}
-                          </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        NYSE • NASDAQ • S&P 500 • Russell 2000 • Dow Jones
+                      </p>
+                    </div>
+                  ) : (
+                    filteredStocks.map((stock) => (
+                      <div
+                        key={stock.symbol}
+                        className={cn(
+                          'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all group',
+                          currentAnswers.instrument === stock.symbol
+                            ? 'bg-primary/10 border border-primary/20'
+                            : 'hover:bg-muted/50 border border-transparent'
+                        )}
+                        onClick={() => handleInstrumentChange(stock.symbol)}
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
+                          {stock.symbol.charAt(0)}
                         </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {!searchQuery && (
-                  <p className="text-xs text-muted-foreground">
-                    💡 Showing popular stocks. Search to browse 500+ stocks from NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones.
-                  </p>
-                )}
-              </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{stock.symbol}</div>
+                          <div className="text-xs text-muted-foreground truncate">{stock.name}</div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-muted-foreground">
+                            {stock.exchange || 'stock'}
+                          </span>
+                          {stock.index && (
+                            <Badge variant="secondary" className="text-xs h-5">
+                              {stock.index}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             ) : (
-              <Select value={currentAnswers.instrument} onValueChange={handleInstrumentChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select instrument" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getOtherInstruments().map((instrument) => (
-                    <SelectItem key={instrument.symbol} value={instrument.symbol}>
-                      {instrument.symbol} - {instrument.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-1 pr-4">
+                  {getOtherInstruments().map((instrument) => {
+                    const Icon = selectedInstrumentType === 'forex' ? Globe : 
+                                 selectedInstrumentType === 'crypto' ? Zap : TrendingUp;
+                    return (
+                      <div
+                        key={instrument.symbol}
+                        className={cn(
+                          'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all',
+                          currentAnswers.instrument === instrument.symbol
+                            ? 'bg-primary/10 border border-primary/20'
+                            : 'hover:bg-muted/50 border border-transparent'
+                        )}
+                        onClick={() => handleInstrumentChange(instrument.symbol)}
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{instrument.symbol}</div>
+                          <div className="text-xs text-muted-foreground truncate">{instrument.name}</div>
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {selectedInstrumentType}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             )}
           </div>
 
