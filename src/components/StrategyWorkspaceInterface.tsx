@@ -177,11 +177,13 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
       if (error) {
         console.error('Backtest error:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to start backtest');
       }
 
       if (!data.success) {
-        throw new Error(data.error || 'Backtest failed');
+        const errorMsg = data.error || 'Backtest failed';
+        console.error('Backtest failed:', errorMsg, data);
+        throw new Error(errorMsg);
       }
 
       console.log('Backtest completed successfully:', {
@@ -206,7 +208,21 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     } catch (error) {
       console.error('Backtest error:', error);
       setIsBacktesting(false);
-      toast.error(error instanceof Error ? error.message : 'Backtest failed. Please check your configuration.');
+      
+      // Extract meaningful error message
+      let errorMessage = 'Backtest failed. Please check your configuration.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+      
+      toast.error(errorMessage, {
+        duration: 6000,
+        description: errorMessage.includes('Yahoo Finance') ? 
+          'Try using daily (1d) timeframe for longer date ranges, or reduce your date range for hourly data.' : 
+          undefined
+      });
       throw error;
     }
   };
