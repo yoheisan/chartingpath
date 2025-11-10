@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TrendingUp, Globe, Clock, Zap, HelpCircle, Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { TrendingUp, Globe, Clock, Zap, HelpCircle, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
+import { POPULAR_STOCKS, searchStocks, StockSymbol } from '@/data/stockSymbols';
 
 interface MarketStepProps {
   answers: Partial<GuidedStrategyAnswers>;
@@ -16,72 +18,8 @@ interface MarketStepProps {
   subscriptionPlan: string;
 }
 
-const instrumentCategories = {
-  stocks: {
-    label: 'Stocks',
-    icon: TrendingUp,
-    instruments: [
-      // Tech Giants
-      { symbol: 'AAPL', name: 'Apple Inc.' },
-      { symbol: 'MSFT', name: 'Microsoft Corporation' },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. (Google)' },
-      { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-      { symbol: 'META', name: 'Meta Platforms (Facebook)' },
-      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
-      { symbol: 'TSLA', name: 'Tesla Inc.' },
-      { symbol: 'NFLX', name: 'Netflix Inc.' },
-      { symbol: 'AMD', name: 'Advanced Micro Devices' },
-      { symbol: 'INTC', name: 'Intel Corporation' },
-      { symbol: 'CRM', name: 'Salesforce Inc.' },
-      { symbol: 'ORCL', name: 'Oracle Corporation' },
-      { symbol: 'ADBE', name: 'Adobe Inc.' },
-      { symbol: 'CSCO', name: 'Cisco Systems' },
-      { symbol: 'AVGO', name: 'Broadcom Inc.' },
-      
-      // Financial Services
-      { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
-      { symbol: 'BAC', name: 'Bank of America' },
-      { symbol: 'WFC', name: 'Wells Fargo' },
-      { symbol: 'GS', name: 'Goldman Sachs' },
-      { symbol: 'MS', name: 'Morgan Stanley' },
-      { symbol: 'V', name: 'Visa Inc.' },
-      { symbol: 'MA', name: 'Mastercard Inc.' },
-      { symbol: 'AXP', name: 'American Express' },
-      { symbol: 'BLK', name: 'BlackRock Inc.' },
-      
-      // Healthcare & Pharma
-      { symbol: 'JNJ', name: 'Johnson & Johnson' },
-      { symbol: 'UNH', name: 'UnitedHealth Group' },
-      { symbol: 'PFE', name: 'Pfizer Inc.' },
-      { symbol: 'ABBV', name: 'AbbVie Inc.' },
-      { symbol: 'TMO', name: 'Thermo Fisher Scientific' },
-      { symbol: 'MRK', name: 'Merck & Co.' },
-      { symbol: 'LLY', name: 'Eli Lilly and Company' },
-      
-      // Consumer & Retail
-      { symbol: 'WMT', name: 'Walmart Inc.' },
-      { symbol: 'HD', name: 'Home Depot' },
-      { symbol: 'DIS', name: 'Walt Disney Company' },
-      { symbol: 'NKE', name: 'Nike Inc.' },
-      { symbol: 'MCD', name: 'McDonald\'s Corporation' },
-      { symbol: 'SBUX', name: 'Starbucks Corporation' },
-      { symbol: 'KO', name: 'Coca-Cola Company' },
-      { symbol: 'PEP', name: 'PepsiCo Inc.' },
-      
-      // Energy & Industrial
-      { symbol: 'XOM', name: 'Exxon Mobil' },
-      { symbol: 'CVX', name: 'Chevron Corporation' },
-      { symbol: 'COP', name: 'ConocoPhillips' },
-      { symbol: 'BA', name: 'Boeing Company' },
-      { symbol: 'CAT', name: 'Caterpillar Inc.' },
-      { symbol: 'GE', name: 'General Electric' },
-      
-      // Communication
-      { symbol: 'T', name: 'AT&T Inc.' },
-      { symbol: 'VZ', name: 'Verizon Communications' },
-      { symbol: 'CMCSA', name: 'Comcast Corporation' },
-    ]
-  },
+// Forex, Crypto, and Indices instruments (non-stock assets)
+const otherInstrumentCategories = {
   forex: {
     label: 'Foreign Exchange (FX)',
     icon: Globe,
@@ -147,8 +85,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   onAnswersChange,
   subscriptionPlan
 }) => {
-  const [instrumentSearchOpen, setInstrumentSearchOpen] = useState(false);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedInstrumentType, setSelectedInstrumentType] = useState<'stocks' | 'forex' | 'crypto' | 'indices'>('stocks');
   
   const currentAnswers = answers.market || {
     instrumentCategory: 'stocks',
@@ -157,11 +95,48 @@ export const MarketStep: React.FC<MarketStepProps> = ({
     tradingHours: 'london-ny'
   };
 
-  const handleInstrumentCategoryChange = (category: string) => {
-    onAnswersChange('market', {
-      ...currentAnswers,
-      instrumentCategory: category,
-      instrument: '', // Reset instrument when category changes
+  // Search and filter stocks
+  const filteredStocks = useMemo(() => {
+    if (selectedInstrumentType !== 'stocks') {
+      return [];
+    }
+    return searchStocks(searchQuery, 100);
+  }, [searchQuery, selectedInstrumentType]);
+
+  // Get other instruments (forex, crypto, indices)
+  const getOtherInstruments = () => {
+    if (selectedInstrumentType === 'forex') {
+      return otherInstrumentCategories.forex.instruments;
+    }
+    if (selectedInstrumentType === 'crypto') {
+      return otherInstrumentCategories.crypto.instruments;
+    }
+    if (selectedInstrumentType === 'indices') {
+      return otherInstrumentCategories.indices.instruments;
+    }
+    return [];
+  };
+
+  const handleInstrumentTypeChange = (type: 'stocks' | 'forex' | 'crypto' | 'indices') => {
+    setSelectedInstrumentType(type);
+    setSearchQuery('');
+    
+    // Set default instrument based on type
+    let defaultInstrument = '';
+    if (type === 'stocks') {
+      defaultInstrument = 'AAPL';
+    } else if (type === 'forex') {
+      defaultInstrument = otherInstrumentCategories.forex.instruments[0]?.symbol || '';
+    } else if (type === 'crypto') {
+      defaultInstrument = otherInstrumentCategories.crypto.instruments[0]?.symbol || '';
+    } else if (type === 'indices') {
+      defaultInstrument = otherInstrumentCategories.indices.instruments[0]?.symbol || '';
+    }
+    
+    onAnswersChange('market', { 
+      ...currentAnswers, 
+      instrumentCategory: type,
+      instrument: defaultInstrument
     });
   };
 
@@ -178,17 +153,6 @@ export const MarketStep: React.FC<MarketStepProps> = ({
       timeframes: [value]
     });
   };
-
-  const selectedCategory = currentAnswers.instrumentCategory;
-  const availableInstruments = selectedCategory ? instrumentCategories[selectedCategory as keyof typeof instrumentCategories]?.instruments || [] : [];
-  
-  // Create a comprehensive list of all instruments for global search
-  const allInstruments = Object.values(instrumentCategories).flatMap(category => 
-    category.instruments.map(instrument => ({
-      ...instrument,
-      category: category.label
-    }))
-  );
   
   const isComplete = currentAnswers.instrument && currentAnswers.timeframes?.length > 0;
 
@@ -214,155 +178,166 @@ export const MarketStep: React.FC<MarketStepProps> = ({
             </CardTitle>
           </CardHeader>
         <CardContent className="space-y-6">
-          {/* Unified Instrument Search - Primary Interface */}
+          {/* Asset Class Selector */}
           <div className="space-y-3">
-            <Label htmlFor="instrument-select" className="text-base font-medium flex items-center gap-2">
+            <Label className="text-base font-medium flex items-center gap-2">
+              Select Asset Class
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Choose your asset type. Stocks include NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones. All data is free via Yahoo Finance.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </Label>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <Button
+                variant={selectedInstrumentType === 'stocks' ? 'default' : 'outline'}
+                onClick={() => handleInstrumentTypeChange('stocks')}
+                className="flex flex-col items-start gap-1 h-auto py-3"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="font-medium">Stocks</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">500+ symbols</Badge>
+              </Button>
+              <Button
+                variant={selectedInstrumentType === 'forex' ? 'default' : 'outline'}
+                onClick={() => handleInstrumentTypeChange('forex')}
+                className="flex flex-col items-start gap-1 h-auto py-3"
+              >
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  <span className="font-medium">Forex</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">Major pairs</Badge>
+              </Button>
+              <Button
+                variant={selectedInstrumentType === 'crypto' ? 'default' : 'outline'}
+                onClick={() => handleInstrumentTypeChange('crypto')}
+                className="flex flex-col items-start gap-1 h-auto py-3"
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  <span className="font-medium">Crypto</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">Top coins</Badge>
+              </Button>
+              <Button
+                variant={selectedInstrumentType === 'indices' ? 'default' : 'outline'}
+                onClick={() => handleInstrumentTypeChange('indices')}
+                className="flex flex-col items-start gap-1 h-auto py-3"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="font-medium">ETFs</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">Indices</Badge>
+              </Button>
+            </div>
+          </div>
+
+          {/* Search & Select Instrument */}
+          <div className="space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
               <Search className="w-4 h-4" />
               Search & Select Financial Instrument
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    {selectedInstrumentType === 'stocks' 
+                      ? 'Search from NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones stocks. Includes 500+ symbols.'
+                      : 'Browse available instruments in the selected category'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             </Label>
-            <Popover open={instrumentSearchOpen} onOpenChange={setInstrumentSearchOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={instrumentSearchOpen}
-                  className="w-full justify-between bg-background hover:bg-accent/50"
-                >
-                  {currentAnswers.instrument ? (
-                    <div className="flex items-center gap-2 flex-1 text-left">
-                      <span className="font-medium">{currentAnswers.instrument}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {allInstruments.find(
-                          (instrument) => instrument.symbol === currentAnswers.instrument
-                        )?.name}
-                      </span>
-                      <span className="ml-auto text-xs px-2 py-1 bg-primary/10 text-primary rounded">
-                        {allInstruments.find(
-                          (instrument) => instrument.symbol === currentAnswers.instrument
-                        )?.category}
-                      </span>
-                    </div>
-                  ) : (
-                    "Search any instrument by ticker (e.g., EURUSD, BTC/USD, SPY)..."
-                  )}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput 
-                    placeholder="Type ticker symbol or instrument name..." 
-                    className="h-9" 
+
+            {selectedInstrumentType === 'stocks' ? (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search stocks by symbol or name (e.g., AAPL, Apple, Microsoft)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
                   />
-                  
-                  {/* Category Filter Tabs */}
-                  <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30">
-                    <Button
-                      type="button"
-                      variant={selectedCategoryFilter === 'ALL' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setSelectedCategoryFilter('ALL')}
-                      className="h-7 px-3 text-xs"
-                    >
-                      All
-                    </Button>
-                    {Object.entries(instrumentCategories).map(([key, category]) => (
-                      <Button
-                        key={key}
-                        type="button"
-                        variant={selectedCategoryFilter === key ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setSelectedCategoryFilter(key)}
-                        className="h-7 px-3 text-xs"
-                      >
-                        {category.label.replace('Foreign Exchange', 'Forex')}
-                      </Button>
-                    ))}
+                </div>
+                
+                <ScrollArea className="h-[300px] rounded-md border p-4">
+                  <div className="space-y-2">
+                    {filteredStocks.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        {searchQuery ? 'No stocks found. Try a different search term.' : 'Start typing to search stocks...'}
+                      </p>
+                    ) : (
+                      filteredStocks.map((stock) => (
+                        <div
+                          key={stock.symbol}
+                          className={cn(
+                            'flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors',
+                            currentAnswers.instrument === stock.symbol
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted/50 hover:bg-muted'
+                          )}
+                          onClick={() => handleInstrumentChange(stock.symbol)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{stock.symbol}</span>
+                            <span className="text-sm opacity-80">{stock.name}</span>
+                          </div>
+                          <div className="flex gap-2 flex-wrap justify-end">
+                            {stock.exchange && (
+                              <Badge variant="outline" className="text-xs">
+                                {stock.exchange}
+                              </Badge>
+                            )}
+                            {stock.sector && (
+                              <Badge variant="secondary" className="text-xs">
+                                {stock.sector}
+                              </Badge>
+                            )}
+                            {stock.index && (
+                              <Badge variant="secondary" className="text-xs">
+                                {stock.index}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
-                  
-                  <CommandList>
-                    <CommandEmpty>No instruments found. Try searching by ticker symbol.</CommandEmpty>
-                    {selectedCategoryFilter === 'ALL' 
-                      ? Object.entries(instrumentCategories).map(([categoryKey, category]) => (
-                          <CommandGroup key={categoryKey} heading={category.label}>
-                            {category.instruments.map((instrument) => (
-                              <CommandItem
-                                key={instrument.symbol}
-                                value={`${instrument.symbol} ${instrument.name}`}
-                                onSelect={() => {
-                                  // Auto-set category when instrument is selected
-                                  handleInstrumentCategoryChange(categoryKey);
-                                  handleInstrumentChange(instrument.symbol);
-                                  setInstrumentSearchOpen(false);
-                                }}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="font-medium">{instrument.symbol}</span>
-                                    <span className="text-xs text-muted-foreground">{instrument.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
-                                      {category.label}
-                                    </span>
-                                    <Check
-                                      className={cn(
-                                        "h-4 w-4",
-                                        currentAnswers.instrument === instrument.symbol
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        ))
-                      : instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories] && (
-                          <CommandGroup heading={instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].label}>
-                            {instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].instruments.map((instrument) => (
-                              <CommandItem
-                                key={instrument.symbol}
-                                value={`${instrument.symbol} ${instrument.name}`}
-                                onSelect={() => {
-                                  // Auto-set category when instrument is selected
-                                  handleInstrumentCategoryChange(selectedCategoryFilter);
-                                  handleInstrumentChange(instrument.symbol);
-                                  setInstrumentSearchOpen(false);
-                                }}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="font-medium">{instrument.symbol}</span>
-                                    <span className="text-xs text-muted-foreground">{instrument.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs px-2 py-1 bg-muted rounded text-muted-foreground">
-                                      {instrumentCategories[selectedCategoryFilter as keyof typeof instrumentCategories].label}
-                                    </span>
-                                    <Check
-                                      className={cn(
-                                        "h-4 w-4",
-                                        currentAnswers.instrument === instrument.symbol
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )
-                    }
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <p className="text-sm text-muted-foreground">
-              Search across all markets: Stocks, Foreign Exchange, Cryptocurrencies, and ETFs. Just start typing the ticker symbol.
-            </p>
+                </ScrollArea>
+
+                {!searchQuery && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Showing popular stocks. Search to browse 500+ stocks from NYSE, NASDAQ, S&P 500, Russell 2000, and Dow Jones.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <Select value={currentAnswers.instrument} onValueChange={handleInstrumentChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select instrument" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getOtherInstruments().map((instrument) => (
+                    <SelectItem key={instrument.symbol} value={instrument.symbol}>
+                      {instrument.symbol} - {instrument.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Timeframe Selection */}
