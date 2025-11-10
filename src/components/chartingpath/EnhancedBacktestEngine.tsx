@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { PatternDetectionDisplay } from './PatternDetectionDisplay';
+import { toast } from 'sonner';
 import { 
   Play, 
   BarChart3,
@@ -51,11 +52,43 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   isRunning,
   onBacktest
 }) => {
+  // Get valid date range based on timeframe
+  const getMaxDaysForTimeframe = (timeframe: string): number => {
+    const limits: Record<string, number> = {
+      '1m': 7,
+      '5m': 60,
+      '15m': 60,
+      '1h': 730,
+      '4h': 730,
+      '1d': 36500, // ~100 years
+      '1w': 36500
+    };
+    return limits[timeframe] || 730;
+  };
+
+  const getDefaultDateRange = (timeframe: string) => {
+    const maxDays = getMaxDaysForTimeframe(timeframe);
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    // Use 80% of max range to be safe
+    const safeDays = Math.floor(maxDays * 0.8);
+    startDate.setDate(endDate.getDate() - safeDays);
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    };
+  };
+
+  const initialTimeframe = strategy?.market?.timeframes?.[0] || '1h';
+  const initialDates = getDefaultDateRange(initialTimeframe);
+
   const [backtestConfig, setBacktestConfig] = useState({
     symbol: strategy?.market?.instrument || 'EURUSD',
-    timeframe: strategy?.market?.timeframes?.[0] || 'H1',
-    startDate: '2023-01-01',
-    endDate: '2024-01-01',
+    timeframe: initialTimeframe,
+    startDate: initialDates.startDate,
+    endDate: initialDates.endDate,
     spread: 1.5,
     commission: 0,
     slippage: 0.5,
@@ -82,7 +115,30 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   });
 
   const updateConfig = (field: string, value: any) => {
-    setBacktestConfig(prev => ({ ...prev, [field]: value }));
+    setBacktestConfig(prev => {
+      const newConfig = { ...prev, [field]: value };
+      
+      // Auto-adjust date range when timeframe changes
+      if (field === 'timeframe') {
+        const maxDays = getMaxDaysForTimeframe(value);
+        const start = new Date(prev.startDate);
+        const end = new Date(prev.endDate);
+        const currentDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // If current range exceeds the limit, adjust it
+        if (currentDays > maxDays) {
+          const newDates = getDefaultDateRange(value);
+          newConfig.startDate = newDates.startDate;
+          newConfig.endDate = newDates.endDate;
+          
+          toast.info(`Date range adjusted for ${value} timeframe (max ${maxDays} days)`, {
+            description: `New range: ${newDates.startDate} to ${newDates.endDate}`
+          });
+        }
+      }
+      
+      return newConfig;
+    });
   };
 
   const updateInteractiveParam = (field: string, value: number) => {
@@ -192,10 +248,13 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="M15">15 Minutes</SelectItem>
-                        <SelectItem value="H1">1 Hour</SelectItem>
-                        <SelectItem value="H4">4 Hours</SelectItem>
-                        <SelectItem value="D1">Daily</SelectItem>
+                        <SelectItem value="1m">1 Minute (max 7 days)</SelectItem>
+                        <SelectItem value="5m">5 Minutes (max 60 days)</SelectItem>
+                        <SelectItem value="15m">15 Minutes (max 60 days)</SelectItem>
+                        <SelectItem value="1h">1 Hour (max 2 years)</SelectItem>
+                        <SelectItem value="4h">4 Hours (max 2 years)</SelectItem>
+                        <SelectItem value="1d">Daily (unlimited)</SelectItem>
+                        <SelectItem value="1wk">Weekly (unlimited)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -205,7 +264,18 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                     <Input
                       type="date"
                       value={backtestConfig.startDate}
-                      onChange={(e) => updateConfig('startDate', e.target.value)}
+                      onChange={(e) => {
+                        const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
+                        const start = new Date(e.target.value);
+                        const end = new Date(backtestConfig.endDate);
+                        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        if (days > maxDays) {
+                          toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
+                          return;
+                        }
+                        updateConfig('startDate', e.target.value);
+                      }}
                     />
                   </div>
 
@@ -214,7 +284,18 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                     <Input
                       type="date"
                       value={backtestConfig.endDate}
-                      onChange={(e) => updateConfig('endDate', e.target.value)}
+                      onChange={(e) => {
+                        const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
+                        const start = new Date(backtestConfig.startDate);
+                        const end = new Date(e.target.value);
+                        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        if (days > maxDays) {
+                          toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
+                          return;
+                        }
+                        updateConfig('endDate', e.target.value);
+                      }}
                     />
                   </div>
 
