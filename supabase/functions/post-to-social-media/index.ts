@@ -169,14 +169,12 @@ serve(async (req) => {
     let platformResponse;
     let platformPostId;
 
-    // Post to the appropriate platform
+    // Post to the appropriate platform (content already includes link_back_url from scheduler)
     if (account.platform === 'twitter') {
-      const fullContent = link_back_url ? `${content}\n\n${link_back_url}` : content;
-      platformResponse = await postToTwitter(fullContent);
+      platformResponse = await postToTwitter(content);
       platformPostId = platformResponse.data?.id;
     } else if (account.platform === 'instagram') {
-      const fullContent = link_back_url ? `${content}\n\n${link_back_url}` : content;
-      platformResponse = await postToInstagram(fullContent, image_url, account.credentials);
+      platformResponse = await postToInstagram(content, image_url, account.credentials);
       platformPostId = platformResponse.id;
     } else {
       throw new Error(`Unsupported platform: ${account.platform}`);

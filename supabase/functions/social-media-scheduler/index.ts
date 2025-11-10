@@ -64,27 +64,37 @@ serve(async (req) => {
           : 'post_market');
       const timezone = post.timezone || 'America/New_York';
 
-      const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(
-        'generate-social-market-teaser',
-        {
-          body: { 
-            reportType,
-            timezone,
-            markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
-            tone: reportConfig.tone || 'professional'
+      try {
+        const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(
+          'generate-social-market-teaser',
+          {
+            body: { 
+              reportType,
+              timezone,
+              markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
+              tone: reportConfig.tone || 'professional'
+            }
           }
-        }
-      );
+        );
 
-      if (teaserError) {
-        console.error('Error generating teaser:', teaserError);
-      } else if (teaserData?.teaser) {
-        content = teaserData.teaser;
-        // Update the post with generated content
-        await supabaseClient
-          .from('scheduled_posts')
-          .update({ content })
-          .eq('id', post.id);
+        if (teaserError) {
+          console.error('Error generating teaser:', teaserError);
+          throw teaserError;
+        }
+        
+        if (teaserData?.teaser) {
+          content = teaserData.teaser;
+          console.log('Generated teaser content:', content);
+        } else {
+          throw new Error('No teaser content returned');
+        }
+      } catch (error) {
+        console.error('Failed to generate teaser, using fallback:', error);
+        // Fallback content with market info and CTA
+        const marketName = timezone.includes('Tokyo') ? 'Tokyo' : 
+                          timezone.includes('London') ? 'London' : 'US';
+        const timeLabel = reportType === 'pre_market' ? 'Pre-Market' : 'Post-Market';
+        content = `📊 ${marketName} ${timeLabel} Analysis\n\nMarket insights and key levels to watch today!\n\n🚀 Get detailed market reports and free trading scripts at ChartingPath.com`;
       }
     }
     // If it's Q&A content and content_library_id is set, get fresh content
@@ -112,11 +122,19 @@ serve(async (req) => {
       }
     }
 
+    // Ensure content always includes link_back_url if present
+    let finalContent = content;
+    if (post.link_back_url && !content.includes(post.link_back_url)) {
+      finalContent = `${content}\n\n🔗 ${post.link_back_url}`;
+    }
+
+    console.log('Final content to post:', finalContent);
+
     // Update post with final content before posting
     await supabaseClient
       .from('scheduled_posts')
       .update({ 
-        content,
+        content: finalContent,
         image_url: imageUrl,
         status: 'posting'
       })
