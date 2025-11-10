@@ -1,7 +1,8 @@
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ScheduledPost {
@@ -9,6 +10,7 @@ interface ScheduledPost {
   post_type: string;
   platform: string;
   scheduled_time: string;
+  timezone?: string | null;
   title: string | null;
   status: string;
   recurrence_pattern?: string | null;
@@ -75,10 +77,19 @@ export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPost
                 <Badge variant="outline">{post.post_type}</Badge>
                 <Badge variant="secondary">{post.platform}</Badge>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>
-                  {format(new Date(post.scheduled_time), "PPP 'at' p")}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {post.timezone 
+                    ? formatInTimeZone(new Date(post.scheduled_time), post.timezone, "PPP 'at' p")
+                    : format(new Date(post.scheduled_time), "PPP 'at' p")}
                 </span>
+                {post.timezone && (
+                  <Badge variant="outline" className="gap-1">
+                    <Globe className="h-3 w-3" />
+                    {post.timezone}
+                  </Badge>
+                )}
                 {post.recurrence_pattern && (
                   <Badge variant="outline" className="gap-1">
                     <Clock className="h-3 w-3" />

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, setHours, setMinutes, setSeconds, setMilliseconds } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { CalendarIcon } from "lucide-react";
 import {
   Dialog,
@@ -73,23 +74,45 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
         throw new Error("No social media account found. Please add an account first.");
       }
 
-      // Build scheduled time based on whether it's recurring or not
+      // Build scheduled time with proper timezone handling
       let scheduledTime: string;
+      const [hours, minutes] = selectedTime.split(":").map(Number);
+      
       if (recurrencePattern && recurrencePattern !== "none") {
-        // For recurring posts, use today's date with the selected time
-        const today = new Date();
-        const [hours, minutes] = selectedTime.split(":");
-        today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        scheduledTime = today.toISOString();
+        // For recurring posts, use today's date with the selected time in the selected timezone
+        const now = new Date();
+        const zonedDate = toZonedTime(now, timezone);
+        const scheduledDate = setMilliseconds(
+          setSeconds(
+            setMinutes(
+              setHours(zonedDate, hours),
+              minutes
+            ),
+            0
+          ),
+          0
+        );
+        // Convert back to UTC for storage
+        scheduledTime = fromZonedTime(scheduledDate, timezone).toISOString();
       } else {
         // For one-time posts, require both date and time
         if (!selectedDate) {
           throw new Error("Please select a date for the post");
         }
-        const [hours, minutes] = selectedTime.split(":");
-        const dateTime = new Date(selectedDate);
-        dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        scheduledTime = dateTime.toISOString();
+        // Create time in target timezone
+        const zonedDate = toZonedTime(selectedDate, timezone);
+        const scheduledDate = setMilliseconds(
+          setSeconds(
+            setMinutes(
+              setHours(zonedDate, hours),
+              minutes
+            ),
+            0
+          ),
+          0
+        );
+        // Convert back to UTC for storage
+        scheduledTime = fromZonedTime(scheduledDate, timezone).toISOString();
       }
       
       const postData = {
@@ -279,10 +302,16 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="America/New_York">US Eastern</SelectItem>
-                  <SelectItem value="Europe/London">UK</SelectItem>
-                  <SelectItem value="Asia/Tokyo">Asia (Tokyo)</SelectItem>
-                  <SelectItem value="Asia/Hong_Kong">Asia (Hong Kong)</SelectItem>
+                  <SelectItem value="America/New_York">US Eastern (EST/EDT)</SelectItem>
+                  <SelectItem value="America/Los_Angeles">US Pacific (PST/PDT)</SelectItem>
+                  <SelectItem value="America/Chicago">US Central (CST/CDT)</SelectItem>
+                  <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
+                  <SelectItem value="Europe/Paris">Central Europe (CET/CEST)</SelectItem>
+                  <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                  <SelectItem value="Asia/Hong_Kong">Hong Kong (HKT)</SelectItem>
+                  <SelectItem value="Asia/Singapore">Singapore (SGT)</SelectItem>
+                  <SelectItem value="Australia/Sydney">Sydney (AEDT/AEST)</SelectItem>
+                  <SelectItem value="Pacific/Auckland">Auckland (NZDT/NZST)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
