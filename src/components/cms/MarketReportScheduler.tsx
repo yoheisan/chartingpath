@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Calendar, Check, Loader2 } from "lucide-react";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
+import { addDays, setHours, setMinutes, setSeconds, setMilliseconds } from "date-fns";
 
 export function MarketReportScheduler() {
   const [isScheduling, setIsScheduling] = useState(false);
@@ -25,19 +27,37 @@ export function MarketReportScheduler() {
       }
 
       const accountId = accounts[0].id;
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // Helper to create scheduled time in specific timezone
+      const createScheduledTime = (timezone: string, hour: number, minute: number) => {
+        const now = new Date();
+        const tomorrow = addDays(now, 1);
+        // Create time in target timezone
+        const zonedDate = toZonedTime(tomorrow, timezone);
+        const scheduledDate = setMilliseconds(
+          setSeconds(
+            setMinutes(
+              setHours(zonedDate, hour),
+              minute
+            ),
+            0
+          ),
+          0
+        );
+        // Convert back to UTC for storage
+        return fromZonedTime(scheduledDate, timezone).toISOString();
+      };
 
-      // Create scheduled posts for all markets
+      // Create scheduled posts for all markets with correct timezone handling
       const scheduledPosts = [
-        // Tokyo Pre-Market (8:30 AM JST)
+        // Tokyo Pre-Market (8:30 AM JST - 30min before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "Tokyo Pre-Market Analysis 📊",
           content: "Tokyo pre-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 08:30:00").toISOString(),
+          scheduled_time: createScheduledTime("Asia/Tokyo", 8, 30),
           timezone: "Asia/Tokyo",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -48,14 +68,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // Tokyo Post-Market (3:30 PM JST)
+        // Tokyo Post-Market (3:30 PM JST - 30min after market close)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "Tokyo Post-Market Report 📈",
           content: "Tokyo post-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 15:30:00").toISOString(),
+          scheduled_time: createScheduledTime("Asia/Tokyo", 15, 30),
           timezone: "Asia/Tokyo",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -66,14 +86,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // London Pre-Market (7:30 AM GMT)
+        // London Pre-Market (7:30 AM GMT - 30min before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "London Pre-Market Analysis 🇬🇧",
           content: "London pre-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 07:30:00").toISOString(),
+          scheduled_time: createScheduledTime("Europe/London", 7, 30),
           timezone: "Europe/London",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -84,14 +104,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // London Post-Market (5:00 PM GMT)
+        // London Post-Market (4:45 PM GMT - 15min after market close)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "London Post-Market Report 💷",
           content: "London post-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 17:00:00").toISOString(),
+          scheduled_time: createScheduledTime("Europe/London", 16, 45),
           timezone: "Europe/London",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -102,14 +122,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // US Pre-Market (9:00 AM EST)
+        // US Pre-Market (9:00 AM EST - 30min before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "US Pre-Market Analysis 🇺🇸",
           content: "US pre-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 09:00:00").toISOString(),
+          scheduled_time: createScheduledTime("America/New_York", 9, 0),
           timezone: "America/New_York",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -120,14 +140,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // US Post-Market (4:30 PM EST)
+        // US Post-Market (4:30 PM EST - 30min after market close)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "US Post-Market Report 💹",
           content: "US post-market report",
-          scheduled_time: new Date(tomorrow.toLocaleDateString() + " 16:30:00").toISOString(),
+          scheduled_time: createScheduledTime("America/New_York", 16, 30),
           timezone: "America/New_York",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -181,7 +201,7 @@ export function MarketReportScheduler() {
           <div className="flex items-start gap-2">
             <div className="font-medium min-w-[100px]">London:</div>
             <div className="text-muted-foreground">
-              Pre-Market at 7:30 AM GMT • Post-Market at 5:00 PM GMT
+              Pre-Market at 7:30 AM GMT • Post-Market at 4:45 PM GMT
             </div>
           </div>
           <div className="flex items-start gap-2">
