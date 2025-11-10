@@ -148,9 +148,30 @@ async function fetchHistoricalData(
   
   const interval = intervalMap[timeframe] || '1d';
   
+  // Validate date range based on interval (Yahoo Finance limits)
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Yahoo Finance date range limits
+  const limits: Record<string, number> = {
+    '1m': 7,
+    '5m': 60,
+    '15m': 60,
+    '1h': 730,
+    '4h': 730,
+    '1d': 36500, // ~100 years
+    '1wk': 36500
+  };
+  
+  const maxDays = limits[interval] || 730;
+  if (daysDiff > maxDays) {
+    throw new Error(`Date range too large for ${interval} timeframe. Maximum ${maxDays} days allowed, got ${daysDiff} days. Try using a daily (1d) timeframe for longer backtests.`);
+  }
+  
   // Convert dates to Unix timestamps
-  const period1 = Math.floor(new Date(startDate).getTime() / 1000);
-  const period2 = Math.floor(new Date(endDate).getTime() / 1000);
+  const period1 = Math.floor(start.getTime() / 1000);
+  const period2 = Math.floor(end.getTime() / 1000);
 
   // Adjust symbol format based on category
   let yahooSymbol = symbol;
@@ -162,10 +183,14 @@ async function fetchHistoricalData(
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`;
   
+  console.log(`Fetching Yahoo Finance: ${url}`);
+  
   const response = await fetch(url);
   
   if (!response.ok) {
-    throw new Error(`Yahoo Finance API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`Yahoo Finance error ${response.status}:`, errorText);
+    throw new Error(`Yahoo Finance API error: ${response.status}. Symbol: ${yahooSymbol}, Interval: ${interval}, Days: ${daysDiff}. ${response.status === 422 ? 'Try using daily (1d) timeframe for longer date ranges.' : ''}`);
   }
 
   const data = await response.json();
