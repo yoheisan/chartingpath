@@ -49,7 +49,15 @@ import { PatternLibrary } from './chartingpath/PatternLibrary';
 import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
 import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
+import { PatternRulesEditor } from './PatternRulesEditor';
+import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
+
+export interface PatternRules {
+  entry: string;
+  stopLoss: string;
+  target: string;
+}
 
 export interface ChartingPathStrategy {
   id?: string;
@@ -62,6 +70,7 @@ export interface ChartingPathStrategy {
     tradingHours: string;
   };
   patterns: any[]; // Selected chart patterns to trade
+  patternRules?: Record<string, PatternRules>; // Custom rules per pattern
   targetGainPercent: number; // Target profit in %
   stopLossPercent: number; // Stop loss in %
   positionSizing: {
@@ -95,6 +104,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
       name: 'New Chart Pattern Strategy',
       description: 'Pattern-based trading strategy',
       patterns: [],
+      patternRules: {}, // Initialize empty pattern rules
       targetGainPercent: 0,
       stopLossPercent: 0,
       market: {
@@ -126,6 +136,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 
   const steps = [
     { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
+    { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI' },
     { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
     { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
     { id: 'export', title: 'Export', description: 'Generate trading code' }
@@ -208,12 +219,14 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     switch (stepIndex) {
       case 0: // Market & Timeframe
         return strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
-      case 1: // Target & Stop Loss
+      case 1: // Entry & Exit Rules (optional - always marked complete)
+        return true; // Rules are optional, default rules are always available
+      case 2: // Target & Stop Loss
         return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
-      case 2: // Backtest
+      case 3: // Backtest
         return strategy.backtestResults != null;
-      case 3: // Export
-        return getStepCompletion(0) && getStepCompletion(1);
+      case 4: // Export
+        return getStepCompletion(0) && getStepCompletion(2);
       default:
         return false;
     }
@@ -248,7 +261,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   };
 
   const canBacktest = () => {
-    return getStepCompletion(0); // Market + Patterns + Targets
+    return getStepCompletion(0) && getStepCompletion(2); // Market + Targets
   };
 
   const handlePresetChange = (preset: string) => {
@@ -458,8 +471,61 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             {currentStep === 1 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 2: Configure Entry & Exit Rules</h3>
+                </div>
+                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
+                  <div className="space-y-4">
+                    {strategy.patterns
+                      .filter(p => p.enabled)
+                      .map((pattern) => {
+                        const patternDetails = PATTERN_DETAILS[pattern.id];
+                        if (!patternDetails) return null;
+
+                        const defaultRules = {
+                          entry: patternDetails.entry,
+                          stopLoss: patternDetails.stopLoss,
+                          target: patternDetails.targetMethodology
+                        };
+
+                        const customRules = strategy.patternRules?.[pattern.id];
+
+                        return (
+                          <PatternRulesEditor
+                            key={pattern.id}
+                            patternName={pattern.name}
+                            patternId={pattern.id}
+                            defaultRules={defaultRules}
+                            customRules={customRules}
+                            onRulesChange={(rules) => {
+                              const updatedRules = {
+                                ...strategy.patternRules,
+                                [pattern.id]: rules
+                              };
+                              updateStrategy('patternRules', updatedRules);
+                            }}
+                          />
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Please select chart patterns from the Pattern Library first</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 2: Set Target % Gain & Stop Loss %</h3>
+                  <h3 className="text-lg font-semibold">Step 3: Set Target % Gain & Stop Loss %</h3>
                 </div>
                 {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
                   <TargetStopLossSettings
@@ -485,11 +551,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 2 && (
+            {currentStep === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Activity className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 3: Backtest Strategy</h3>
+                  <h3 className="text-lg font-semibold">Step 4: Backtest Strategy</h3>
                 </div>
                 {canBacktest() ? (
                   <div className="space-y-4">
@@ -626,13 +692,13 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Download className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 4: Export Strategy</h3>
+                  <h3 className="text-lg font-semibold">Step 5: Export Strategy</h3>
                 </div>
-                {getStepCompletion(1) && getStepCompletion(2) ? (
+                {getStepCompletion(1) && getStepCompletion(2) && getStepCompletion(3) ? (
                   <ExportPanel strategy={strategy} />
                 ) : (
                   <Card className="border-amber-200 bg-amber-50">
