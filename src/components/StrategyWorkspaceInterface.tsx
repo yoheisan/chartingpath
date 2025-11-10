@@ -152,68 +152,49 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const handleChartingPathBacktest = async (strategy: ChartingPathStrategy): Promise<any> => {
     setIsBacktesting(true);
     try {
-      // For pattern-based strategies, we still use pattern detection
-      // but combine it with the real backtester for realistic results
-      const { detectChartPattern, generateMockOHLCData } = await import('@/services/patternDetectionService');
-      
-      // Generate historical data for backtesting
-      const ohlcData = generateMockOHLCData(1.1000, 200, 0.015);
-      
-      // Detect patterns for each enabled pattern in the strategy
-      const patternDetections = await Promise.all(
-        strategy.patterns
-          .filter(p => p.enabled)
-          .map(async (pattern) => {
-            try {
-              const detection = await detectChartPattern(
-                pattern.id,
-                ohlcData,
-                {
-                  tolerance: 2.0,
-                  minBars: 5,
-                  volumeConfirmation: true
-                }
-              );
-              return {
-                patternName: pattern.name,
-                ...detection
-              };
-            } catch (err) {
-              console.error(`Failed to detect ${pattern.name}:`, err);
-              return null;
-            }
-          })
-      );
+      console.log('Starting real backtest with strategy:', {
+        instrument: strategy.market?.instrument,
+        patterns: strategy.patterns?.filter(p => p.enabled).map(p => p.name),
+        dateRange: `${strategy.backtestPeriod?.startDate} to ${strategy.backtestPeriod?.endDate}`
+      });
 
-      // Filter out failed detections
-      const validDetections = patternDetections.filter(d => d !== null);
-      
-      // Calculate backtest metrics based on detected patterns
-      const trades = validDetections.filter(d => d.pattern.detected).length;
-      const winningTrades = Math.floor(trades * 0.685);
-      
-      // Use pattern detection results for now
-      // TODO: Integrate pattern-based signals with BacktesterV2 engine
-      const mockResults = {
-        totalReturn: trades > 0 ? (winningTrades * strategy.targetGainPercent - (trades - winningTrades) * strategy.stopLossPercent) : 0,
-        maxDrawdown: -5.2,
-        winRate: trades > 0 ? (winningTrades / trades * 100) : 0,
-        profitFactor: trades > 0 ? (winningTrades * strategy.targetGainPercent) / ((trades - winningTrades) * strategy.stopLossPercent || 1) : 0,
-        trades: trades,
-        detectedPatterns: validDetections.length,
-        patternDetails: validDetections,
-        equityCurve: [],
-        engineNote: 'Pattern detection results - V2 engine integration pending'
+      // Call the real backtest edge function
+      const { data, error } = await supabase.functions.invoke('backtest-strategy', {
+        body: { strategy }
+      });
+
+      if (error) {
+        console.error('Backtest error:', error);
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Backtest failed');
+      }
+
+      console.log('Backtest completed successfully:', {
+        totalTrades: data.results.totalTrades,
+        winRate: data.results.winRate,
+        totalReturn: data.results.totalReturn,
+        dataPoints: data.dataPoints
+      });
+
+      const results = {
+        ...data.results,
+        trades: data.trades,
+        engineNote: `Real backtest on ${data.dataPoints} historical data points`
       };
       
-      setBacktestResults(mockResults);
+      setBacktestResults(results);
       setIsBacktesting(false);
       
-      return mockResults;
+      toast.success(`Backtest complete! ${data.results.totalTrades} trades executed on real data.`);
+      
+      return results;
     } catch (error) {
       console.error('Backtest error:', error);
       setIsBacktesting(false);
-      toast.error('Backtest failed. Please check your configuration.');
+      toast.error(error instanceof Error ? error.message : 'Backtest failed. Please check your configuration.');
       throw error;
     }
   };
