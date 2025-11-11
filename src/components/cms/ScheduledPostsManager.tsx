@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Calendar, Loader2, Plus } from "lucide-react";
 import { ScheduledPostsList } from "./ScheduledPostsList";
 import { CreatePostDialog } from "./CreatePostDialog";
 import { toast } from "sonner";
@@ -46,6 +46,20 @@ export function ScheduledPostsManager() {
     },
   });
 
+  const runSchedulerMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke('social-media-scheduler');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
+      toast.success("Scheduler ran successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to run scheduler: ${error.message}`);
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,10 +69,29 @@ export function ScheduledPostsManager() {
             Manage automated Market Breadth Reports and content posts
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Schedule Post
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => runSchedulerMutation.mutate()}
+            disabled={runSchedulerMutation.isPending}
+          >
+            {runSchedulerMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Running...
+              </>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4 mr-2" />
+                Run Scheduler Now
+              </>
+            )}
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Schedule Post
+          </Button>
+        </div>
       </div>
 
       <ScheduledPostsList

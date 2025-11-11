@@ -20,15 +20,15 @@ serve(async (req) => {
     const now = new Date();
     console.log('Running social media scheduler at:', now.toISOString());
 
-    // Find posts scheduled for now (within 5 minute window)
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+    // Find posts scheduled for now (within 10 minute window to account for scheduler not running frequently)
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
     const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
 
     const { data: duePost, error: fetchError } = await supabaseClient
       .from('scheduled_posts')
       .select('*')
       .eq('status', 'scheduled')
-      .gte('scheduled_time', fiveMinutesAgo.toISOString())
+      .gte('scheduled_time', tenMinutesAgo.toISOString())
       .lte('scheduled_time', fiveMinutesFromNow.toISOString())
       .order('scheduled_time', { ascending: true })
       .limit(1);
