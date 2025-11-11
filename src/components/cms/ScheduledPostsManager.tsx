@@ -20,6 +20,7 @@ export function ScheduledPostsManager() {
           *,
           social_media_accounts(account_name, platform)
         `)
+        .neq("status", "posted")
         .order("scheduled_time", { ascending: true });
       
       if (error) throw error;
