@@ -65,6 +65,25 @@ serve(async (req) => {
       const timezone = post.timezone || 'America/New_York';
 
       try {
+        // First, get the latest market report to ensure we have fresh data
+        const { data: reportData, error: reportError } = await supabaseClient.functions.invoke(
+          'get-cached-market-report',
+          {
+            body: { 
+              timezone,
+              timeSpan: reportType === 'pre_market' ? 'current_day' : 'previous_day',
+              markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
+              tone: reportConfig.tone || 'professional',
+              forceGenerate: false
+            }
+          }
+        );
+
+        if (reportError) {
+          console.error('Error fetching market report:', reportError);
+        }
+
+        // Now generate the social teaser based on the report
         const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(
           'generate-social-market-teaser',
           {
@@ -72,7 +91,8 @@ serve(async (req) => {
               reportType,
               timezone,
               markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
-              tone: reportConfig.tone || 'professional'
+              tone: reportConfig.tone || 'professional',
+              linkBackUrl: post.link_back_url || 'https://chartingpath.com/tools/market-breadth'
             }
           }
         );
@@ -94,7 +114,8 @@ serve(async (req) => {
         const marketName = timezone.includes('Tokyo') ? 'Tokyo' : 
                           timezone.includes('London') ? 'London' : 'US';
         const timeLabel = reportType === 'pre_market' ? 'Pre-Market' : 'Post-Market';
-        content = `📊 ${marketName} ${timeLabel} Analysis\n\nMarket insights and key levels to watch today!\n\n🚀 Get detailed market reports and free trading scripts at ChartingPath.com`;
+        const linkUrl = post.link_back_url || 'https://chartingpath.com/tools/market-breadth';
+        content = `📊 ${marketName} ${timeLabel} Analysis\n\nKey market insights and trading levels to watch!\n\n🚀 Full Report + Free Starter Scripts → ${linkUrl}`;
       }
     }
     // If it's Q&A content and content_library_id is set, get fresh content
@@ -124,8 +145,13 @@ serve(async (req) => {
 
     // Ensure content always includes link_back_url if present
     let finalContent = content;
-    if (post.link_back_url && !content.includes(post.link_back_url)) {
-      finalContent = `${content}\n\n🔗 ${post.link_back_url}`;
+    if (post.link_back_url) {
+      // For market reports, ensure CTA is always at the end
+      if (post.post_type === 'market_report' && !content.includes(post.link_back_url)) {
+        finalContent = `${content}\n\n🚀 Full Analysis + Free Starter Scripts → ${post.link_back_url}`;
+      } else if (!content.includes(post.link_back_url)) {
+        finalContent = `${content}\n\n🔗 ${post.link_back_url}`;
+      }
     }
 
     console.log('Final content to post:', finalContent);

@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { reportType, timezone } = await req.json(); // reportType: "pre_market" | "post_market"
+    const { reportType, timezone, markets, tone, linkBackUrl } = await req.json(); // reportType: "pre_market" | "post_market"
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -35,33 +35,38 @@ serve(async (req) => {
       .single();
 
     if (reportError || !latestReport) {
+      console.error('Could not fetch latest market report:', reportError);
       throw new Error('Could not fetch latest market report');
     }
+
+    console.log('Using market report for teaser generation, report length:', latestReport.report.length);
+
+    const link = linkBackUrl || 'https://chartingpath.com/tools/market-breadth';
 
     // Generate social media teaser based on report type
     const teaserPrompt = reportType === 'pre_market'
       ? `Create a compelling PRE-MARKET social media post (max 240 characters) from this market report. 
       
-      MUST include:
+      CRITICAL REQUIREMENTS:
       - Eye-catching emoji at start (🔥📊💹⚡️📈)
-      - One key market level or percentage move
-      - Brief actionable insight or key pattern
-      - Strong CTA with link
+      - ONE key market level or percentage move with specific numbers
+      - Brief actionable insight or pattern alert
+      - MUST end with: "Full Analysis + Free Scripts → ${link} 🚀"
       
-      Format: [Emoji] [Key Move/Level] - [Brief insight]. [CTA with "Free Starter Scripts → ChartingPath.com 🚀"]
+      Format: [Emoji] [Specific Move/Level] - [Brief insight]. Full Analysis + Free Scripts → ${link} 🚀
       
-      Example: 🔥 S&P 500 testing 5,200 resistance - Double top forming on 4H. Watch for breakdown! Free Starter Scripts → ChartingPath.com 🚀`
+      Example: 🔥 S&P 500 testing 5,200 resistance - Double top forming on 4H. Full Analysis + Free Scripts → ${link} 🚀`
       : `Create a compelling POST-MARKET social media post (max 240 characters) from this market report.
       
-      MUST include:
+      CRITICAL REQUIREMENTS:
       - Eye-catching emoji at start (📊✅❌💰📉📈)
-      - Closing level/change percentage
-      - Key takeaway or pattern confirmation
-      - Strong CTA with link
+      - Closing level with exact change percentage
+      - Key pattern confirmation or market insight
+      - MUST end with: "Full Analysis + Free Scripts → ${link} 🚀"
       
-      Format: [Emoji] [Market closed at X, +/- Y%] - [Key takeaway]. [CTA with "Free Starter Scripts → ChartingPath.com 🚀"]
+      Format: [Emoji] [Market closed at X, +/- Y%] - [Key takeaway]. Full Analysis + Free Scripts → ${link} 🚀
       
-      Example: ✅ S&P closed at 5,195 (+0.8%) - Bullish engulfing confirmed. Pattern traders won today! Free Starter Scripts → ChartingPath.com 🚀`;
+      Example: ✅ S&P closed at 5,195 (+0.8%) - Bullish engulfing confirmed. Full Analysis + Free Scripts → ${link} 🚀`;
 
     console.log('Generating social teaser with OpenAI...');
     
@@ -76,7 +81,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert financial content creator specializing in viral social media posts. Create punchy, actionable content that captures attention in crowded feeds. Use specific numbers, levels, and chart patterns. Always start with an attention-grabbing emoji. Keep it scannable and action-oriented.'
+            content: 'You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.'
           },
           {
             role: 'user',
