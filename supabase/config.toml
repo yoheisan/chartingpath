@@ -90,6 +90,9 @@ verify_jwt = false
 [functions.social-media-scheduler]
 verify_jwt = false
 
+[functions.prepare-market-report-teasers]
+verify_jwt = false
+
 [functions.seed-qa-content]
 verify_jwt = false
 
