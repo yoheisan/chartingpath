@@ -197,7 +197,8 @@ export function MarketReportScheduler() {
             reportType,
             timezone,
             markets: ["stocks", "forex", "crypto", "commodities"],
-            tone: "professional"
+            tone: "professional",
+            linkBackUrl: "https://chartingpath.com/tools/market-breadth"
           }
         }
       );
@@ -212,6 +213,57 @@ export function MarketReportScheduler() {
       toast.error(error.message || "Failed to generate preview");
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const scheduleTestPost = async (reportType: "pre_market" | "post_market", timezone: string, marketName: string) => {
+    setIsScheduling(true);
+    try {
+      const { data: accounts, error: accountError } = await supabase
+        .from("social_media_accounts")
+        .select("id")
+        .eq("is_active", true)
+        .limit(1);
+
+      if (accountError) throw accountError;
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No active social media account found");
+      }
+
+      // Schedule for 2 minutes from now
+      const scheduledTime = new Date();
+      scheduledTime.setMinutes(scheduledTime.getMinutes() + 2);
+
+      const { error: insertError } = await supabase
+        .from("scheduled_posts")
+        .insert({
+          account_id: accounts[0].id,
+          post_type: "market_report",
+          platform: "twitter",
+          title: `TEST - ${marketName} ${reportType === "pre_market" ? "Pre-Market" : "Post-Market"}`,
+          content: "", // Will be generated fresh
+          scheduled_time: scheduledTime.toISOString(),
+          timezone: timezone,
+          recurrence_pattern: null,
+          report_config: {
+            timeSpan: reportType,
+            markets: ["stocks", "forex", "crypto", "commodities"],
+            tone: "professional"
+          },
+          link_back_url: "https://chartingpath.com/tools/market-breadth",
+          status: "scheduled"
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success(`Test post scheduled for ${marketName} in 2 minutes!`, {
+        description: "Check the Scheduled Posts tab to see it"
+      });
+    } catch (error: any) {
+      console.error("Error scheduling test:", error);
+      toast.error(error.message || "Failed to schedule test post");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -266,35 +318,67 @@ export function MarketReportScheduler() {
             {isScheduled ? "Reports Scheduled" : "Schedule All Market Reports"}
           </Button>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => testContentGeneration("pre_market", "Asia/Tokyo", "Tokyo")}
-              disabled={isTesting}
-            >
-              <TestTube className="mr-2 h-4 w-4" />
-              Test Tokyo
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => testContentGeneration("pre_market", "Europe/London", "London")}
-              disabled={isTesting}
-            >
-              <TestTube className="mr-2 h-4 w-4" />
-              Test London
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => testContentGeneration("pre_market", "America/New_York", "US")}
-              disabled={isTesting}
-              className="col-span-2"
-            >
-              <TestTube className="mr-2 h-4 w-4" />
-              Test US Market
-            </Button>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span>Tokyo Pre-Market</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testContentGeneration("pre_market", "Asia/Tokyo", "Tokyo")}
+                  disabled={isTesting}
+                >
+                  Preview
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => scheduleTestPost("pre_market", "Asia/Tokyo", "Tokyo")}
+                  disabled={isScheduling}
+                >
+                  Post in 2min
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>London Pre-Market</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testContentGeneration("pre_market", "Europe/London", "London")}
+                  disabled={isTesting}
+                >
+                  Preview
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => scheduleTestPost("pre_market", "Europe/London", "London")}
+                  disabled={isScheduling}
+                >
+                  Post in 2min
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>US Post-Market</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testContentGeneration("post_market", "America/New_York", "US")}
+                  disabled={isTesting}
+                >
+                  Preview
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => scheduleTestPost("post_market", "America/New_York", "US")}
+                  disabled={isScheduling}
+                >
+                  Post in 2min
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
