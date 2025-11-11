@@ -257,8 +257,36 @@ export function MarketReportScheduler() {
       if (insertError) throw insertError;
 
       toast.success(`Test post scheduled for ${marketName} in 2 minutes!`, {
-        description: "Check the Scheduled Posts tab to see it"
+        description: "Will auto-generate AI content and publish to X"
       });
+
+      // Wait 2 minutes + 5 seconds buffer, then trigger the scheduler
+      setTimeout(async () => {
+        try {
+          console.log(`Triggering scheduler to process ${marketName} test post...`);
+          const { data, error: schedulerError } = await supabase.functions.invoke(
+            'social-media-scheduler'
+          );
+          
+          if (schedulerError) {
+            console.error('Scheduler error:', schedulerError);
+            toast.error('Failed to publish test post - check edge function logs');
+          } else {
+            console.log('Scheduler result:', data);
+            if (data?.success) {
+              toast.success(`🎉 ${marketName} test post published to X!`, {
+                description: "Check your account to see the AI-generated content"
+              });
+            } else {
+              toast.info('Scheduler ran but post may not be ready yet');
+            }
+          }
+        } catch (error: any) {
+          console.error('Error triggering scheduler:', error);
+          toast.error('Failed to auto-publish test post');
+        }
+      }, 125000); // 2 minutes + 5 seconds buffer
+      
     } catch (error: any) {
       console.error("Error scheduling test:", error);
       toast.error(error.message || "Failed to schedule test post");
