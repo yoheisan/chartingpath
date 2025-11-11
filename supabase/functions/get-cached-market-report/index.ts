@@ -13,9 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const { timezone, markets, timeSpan, tone, forceGenerate } = await req.json();
+    const { timezone, markets: requestMarkets, timeSpan, tone, forceGenerate } = await req.json();
     
-    console.log("Fetching market report:", { timezone, timeSpan, forceGenerate });
+    // Default to all markets if not specified
+    const markets = requestMarkets || ["stocks", "forex", "crypto", "commodities"];
+    
+    console.log("Fetching market report:", { timezone, markets, timeSpan, forceGenerate });
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
