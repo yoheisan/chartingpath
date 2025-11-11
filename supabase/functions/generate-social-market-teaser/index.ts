@@ -32,10 +32,104 @@ serve(async (req) => {
       .eq('timezone', timezone || 'America/New_York')
       .order('generated_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (reportError || !latestReport) {
-      console.error('Could not fetch latest market report:', reportError);
+    // If no cached report exists, generate one
+    if (!latestReport) {
+      console.log('No cached report found, generating new one...');
+      const { data: newReport, error: generateError } = await supabaseClient.functions.invoke('get-cached-market-report', {
+        body: { 
+          timezone: timezone || 'America/New_York',
+          forceGenerate: false 
+        }
+      });
+
+      if (generateError || !newReport?.report) {
+        console.error('Could not generate market report:', generateError);
+        throw new Error('Could not fetch or generate market report');
+      }
+
+      console.log('Using newly generated report for teaser');
+      const report = newReport.report;
+      
+      // Continue with report generation using the new report
+      const link = linkBackUrl || 'https://chartingpath.com/tools/market-breadth';
+
+      const teaserPrompt = reportType === 'pre_market'
+        ? `Create a compelling PRE-MARKET social media post (max 240 characters) from this market report. 
+        
+        CRITICAL REQUIREMENTS:
+        - Eye-catching emoji at start (🔥📊💹⚡️📈)
+        - ONE key market level or percentage move with specific numbers
+        - Brief actionable insight or pattern alert
+        - MUST end with: "Full Analysis + Free Scripts → ${link} 🚀"
+        
+        Format: [Emoji] [Specific Move/Level] - [Brief insight]. Full Analysis + Free Scripts → ${link} 🚀
+        
+        Example: 🔥 S&P 500 testing 5,200 resistance - Double top forming on 4H. Full Analysis + Free Scripts → ${link} 🚀`
+        : `Create a compelling POST-MARKET social media post (max 240 characters) from this market report.
+        
+        CRITICAL REQUIREMENTS:
+        - Eye-catching emoji at start (📊✅❌💰📉📈)
+        - Closing level with exact change percentage
+        - Key pattern confirmation or market insight
+        - MUST end with: "Full Analysis + Free Scripts → ${link} 🚀"
+        
+        Format: [Emoji] [Market closed at X, +/- Y%] - [Key takeaway]. Full Analysis + Free Scripts → ${link} 🚀
+        
+        Example: ✅ S&P closed at 5,195 (+0.8%) - Bullish engulfing confirmed. Full Analysis + Free Scripts → ${link} 🚀`;
+
+      console.log('Generating social teaser with OpenAI...');
+      
+      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.'
+            },
+            {
+              role: 'user',
+              content: `${teaserPrompt}\n\nFull Report:\n${report}`
+            }
+          ],
+          max_tokens: 180,
+          temperature: 0.8,
+        }),
+      });
+
+      if (!openAIResponse.ok) {
+        const errorText = await openAIResponse.text();
+        console.error('OpenAI API error:', errorText);
+        throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+      }
+
+      const openAIData = await openAIResponse.json();
+      const teaser = openAIData.choices[0].message.content.trim();
+
+      console.log('Generated teaser:', teaser);
+
+      return new Response(
+        JSON.stringify({ 
+          teaser,
+          reportType,
+          generatedAt: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
+    if (reportError) {
+      console.error('Error fetching cached report:', reportError);
       throw new Error('Could not fetch latest market report');
     }
 
