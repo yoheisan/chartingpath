@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe } from "lucide-react";
+import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ScheduledPost {
   id: string;
@@ -12,8 +20,11 @@ interface ScheduledPost {
   scheduled_time: string;
   timezone?: string | null;
   title: string | null;
+  content: string;
   status: string;
   recurrence_pattern?: string | null;
+  image_url?: string | null;
+  link_back_url?: string | null;
   social_media_accounts: {
     account_name: string;
     platform: string;
@@ -27,6 +38,21 @@ interface ScheduledPostsListProps {
 }
 
 export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPostsListProps) {
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
+  const [editedContent, setEditedContent] = useState("");
+
+  const handleEditClick = (post: ScheduledPost) => {
+    setEditingPost(post);
+    setEditedContent(post.content || "");
+  };
+
+  const handleSaveEdit = () => {
+    // TODO: Implement update functionality
+    console.log("Save edited content:", editedContent);
+    setEditingPost(null);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -61,68 +87,151 @@ export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPost
   };
 
   return (
-    <div className="space-y-4">
-      {posts.map((post) => (
-        <div
-          key={post.id}
-          className="border rounded-lg p-4 hover:border-primary/50 transition-colors"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                {getStatusIcon(post.status)}
-                <h3 className="font-semibold">
-                  {post.title || `${post.post_type} post`}
-                </h3>
-                <Badge variant="outline">{post.post_type}</Badge>
-                <Badge variant="secondary">{post.platform}</Badge>
+    <>
+      <div className="space-y-4">
+        {posts.map((post) => {
+          const isExpanded = expandedPostId === post.id;
+          return (
+            <div
+              key={post.id}
+              className="border rounded-lg p-4 hover:border-primary/50 transition-colors"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    {getStatusIcon(post.status)}
+                    <h3 className="font-semibold">
+                      {post.title || `${post.post_type} post`}
+                    </h3>
+                    <Badge variant="outline">{post.post_type}</Badge>
+                    <Badge variant="secondary">{post.platform}</Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {post.timezone 
+                        ? formatInTimeZone(new Date(post.scheduled_time), post.timezone, "PPP 'at' p")
+                        : format(new Date(post.scheduled_time), "PPP 'at' p")}
+                    </span>
+                    {post.timezone && (
+                      <Badge variant="outline" className="gap-1">
+                        <Globe className="h-3 w-3" />
+                        {post.timezone}
+                      </Badge>
+                    )}
+                    {post.recurrence_pattern && (
+                      <Badge variant="outline" className="gap-1">
+                        <Clock className="h-3 w-3" />
+                        {post.recurrence_pattern === 'daily' ? 'Daily' : 
+                         post.recurrence_pattern === 'weekdays' ? 'Weekdays' : 
+                         post.recurrence_pattern === 'weekly' ? 'Weekly' : post.recurrence_pattern}
+                      </Badge>
+                    )}
+                    {post.social_media_accounts && (
+                      <span>
+                        → {post.social_media_accounts.account_name}
+                      </span>
+                    )}
+                    <Badge variant={post.status === "scheduled" ? "default" : "secondary"}>
+                      {post.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
+                  >
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditClick(post)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(post.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {post.timezone 
-                    ? formatInTimeZone(new Date(post.scheduled_time), post.timezone, "PPP 'at' p")
-                    : format(new Date(post.scheduled_time), "PPP 'at' p")}
-                </span>
-                {post.timezone && (
-                  <Badge variant="outline" className="gap-1">
-                    <Globe className="h-3 w-3" />
-                    {post.timezone}
-                  </Badge>
-                )}
-                {post.recurrence_pattern && (
-                  <Badge variant="outline" className="gap-1">
-                    <Clock className="h-3 w-3" />
-                    {post.recurrence_pattern === 'daily' ? 'Daily' : 
-                     post.recurrence_pattern === 'weekdays' ? 'Weekdays' : 
-                     post.recurrence_pattern === 'weekly' ? 'Weekly' : post.recurrence_pattern}
-                  </Badge>
-                )}
-                {post.social_media_accounts && (
-                  <span>
-                    → {post.social_media_accounts.account_name}
-                  </span>
-                )}
-                <Badge variant={post.status === "scheduled" ? "default" : "secondary"}>
-                  {post.status}
-                </Badge>
-              </div>
+              
+              {isExpanded && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Content Preview:</h4>
+                    <div className="p-3 bg-muted rounded-lg text-sm whitespace-pre-wrap">
+                      {post.content || post.post_type === 'market_report' 
+                        ? "Content will be generated fresh at posting time based on current market data"
+                        : "No content available"}
+                    </div>
+                  </div>
+                  {post.image_url && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">Image:</h4>
+                      <img 
+                        src={post.image_url} 
+                        alt="Post image" 
+                        className="rounded-lg max-w-xs"
+                      />
+                    </div>
+                  )}
+                  {post.link_back_url && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">Link:</h4>
+                      <a 
+                        href={post.link_back_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {post.link_back_url}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Edit className="h-4 w-4" />
+          );
+        })}
+      </div>
+
+      <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Post Content</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {editingPost?.post_type === 'market_report' && (
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  ⚠️ Market report content is generated fresh at posting time. Editing here will set static content instead.
+                </p>
+              </div>
+            )}
+            <Textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              placeholder="Enter post content..."
+              className="min-h-[200px]"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingPost(null)}>
+                Cancel
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(post.id)}
-              >
-                <Trash2 className="h-4 w-4" />
+              <Button onClick={handleSaveEdit}>
+                Save Changes
               </Button>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

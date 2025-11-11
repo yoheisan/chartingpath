@@ -16,7 +16,10 @@ export function ScheduledPostsManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("scheduled_posts")
-        .select("*, social_media_accounts(account_name, platform)")
+        .select(`
+          *,
+          social_media_accounts(account_name, platform)
+        `)
         .order("scheduled_time", { ascending: true });
       
       if (error) throw error;
