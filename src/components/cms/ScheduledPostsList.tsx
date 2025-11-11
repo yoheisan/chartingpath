@@ -176,18 +176,23 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
                     <Badge variant="secondary">{post.platform}</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {post.timezone 
-                        ? formatInTimeZone(new Date(post.scheduled_time), post.timezone, "PPP 'at' p")
-                        : format(new Date(post.scheduled_time), "PPP 'at' p")}
-                    </span>
-                    {post.timezone && (
-                      <Badge variant="outline" className="gap-1">
+                    <div className="flex flex-col gap-1">
+                      <span className="flex items-center gap-1">
                         <Globe className="h-3 w-3" />
-                        {post.timezone}
-                      </Badge>
-                    )}
+                        <strong>Market Time:</strong> {post.timezone 
+                          ? formatInTimeZone(new Date(post.scheduled_time), post.timezone, "PPP 'at' p")
+                          : format(new Date(post.scheduled_time), "PPP 'at' p")}
+                        {post.timezone && (
+                          <Badge variant="outline" className="ml-1">
+                            {post.timezone}
+                          </Badge>
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <strong>Your Time:</strong> {format(new Date(post.scheduled_time), "PPP 'at' p")}
+                      </span>
+                    </div>
                     {post.recurrence_pattern && (
                       <Badge variant="outline" className="gap-1">
                         <Clock className="h-3 w-3" />
@@ -295,16 +300,30 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="scheduled-time">Scheduled Time</Label>
+              <Label htmlFor="scheduled-time">Scheduled Time (Market Time)</Label>
               <Input
                 id="scheduled-time"
                 type="datetime-local"
                 value={editedScheduledTime}
                 onChange={(e) => setEditedScheduledTime(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                Time in <strong>{editingPost?.timezone || 'America/New_York'}</strong> timezone (same as displayed in the list)
-              </p>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <p>
+                  <Globe className="h-3 w-3 inline mr-1" />
+                  Market timezone: <strong>{editingPost?.timezone || 'America/New_York'}</strong>
+                </p>
+                {editingPost && editedScheduledTime && (
+                  <p>
+                    <Clock className="h-3 w-3 inline mr-1" />
+                    Your local time: <strong>
+                      {format(
+                        fromZonedTime(editedScheduledTime, editingPost.timezone || 'America/New_York'),
+                        "PPP 'at' p"
+                      )}
+                    </strong>
+                  </p>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="content">Content</Label>
