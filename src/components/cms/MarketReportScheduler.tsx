@@ -3,13 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Calendar, Check, Loader2 } from "lucide-react";
+import { Calendar, Check, Loader2, TestTube } from "lucide-react";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { addDays, setHours, setMinutes, setSeconds, setMilliseconds } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function MarketReportScheduler() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [previewContent, setPreviewContent] = useState<string>("");
+  const [showPreview, setShowPreview] = useState(false);
 
   const scheduleMarketReports = async () => {
     setIsScheduling(true);
@@ -178,6 +187,34 @@ export function MarketReportScheduler() {
     }
   };
 
+  const testContentGeneration = async (reportType: "pre_market" | "post_market", timezone: string, marketName: string) => {
+    setIsTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-social-market-teaser",
+        {
+          body: { 
+            reportType,
+            timezone,
+            markets: ["stocks", "forex", "crypto", "commodities"],
+            tone: "professional"
+          }
+        }
+      );
+
+      if (error) throw error;
+
+      setPreviewContent(`📍 ${marketName} ${reportType === "pre_market" ? "Pre-Market" : "Post-Market"}\n⏰ Timezone: ${timezone}\n\n${data.teaser}`);
+      setShowPreview(true);
+      toast.success("Content preview generated!");
+    } catch (error: any) {
+      console.error("Error testing content:", error);
+      toast.error(error.message || "Failed to generate preview");
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-4">
@@ -218,16 +255,65 @@ export function MarketReportScheduler() {
           </div>
         </div>
 
-        <Button 
-          onClick={scheduleMarketReports} 
-          disabled={isScheduling || isScheduled}
-          className="w-full"
-        >
-          {isScheduling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isScheduled && <Check className="mr-2 h-4 w-4" />}
-          {isScheduled ? "Reports Scheduled" : "Schedule All Market Reports"}
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            onClick={scheduleMarketReports} 
+            disabled={isScheduling || isScheduled}
+            className="w-full"
+          >
+            {isScheduling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isScheduled && <Check className="mr-2 h-4 w-4" />}
+            {isScheduled ? "Reports Scheduled" : "Schedule All Market Reports"}
+          </Button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => testContentGeneration("pre_market", "Asia/Tokyo", "Tokyo")}
+              disabled={isTesting}
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              Test Tokyo
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => testContentGeneration("pre_market", "Europe/London", "London")}
+              disabled={isTesting}
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              Test London
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => testContentGeneration("pre_market", "America/New_York", "US")}
+              disabled={isTesting}
+              className="col-span-2"
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              Test US Market
+            </Button>
+          </div>
+        </div>
       </div>
+
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Content Preview</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm">
+              {previewContent}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This is a preview of what will be posted. Actual content is generated fresh at posting time.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
