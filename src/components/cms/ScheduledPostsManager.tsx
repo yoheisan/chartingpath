@@ -64,6 +64,7 @@ export function ScheduledPostsManager() {
         posts={scheduledPosts || []}
         isLoading={isLoading}
         onDelete={(id) => deleteMutation.mutate(id)}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] })}
       />
 
       <CreatePostDialog

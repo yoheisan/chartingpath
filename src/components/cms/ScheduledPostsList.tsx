@@ -3,8 +3,10 @@ import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -35,12 +37,14 @@ interface ScheduledPostsListProps {
   posts: ScheduledPost[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  onRetry?: (id: string) => void;
 }
 
-export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPostsListProps) {
+export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: ScheduledPostsListProps) {
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
   const [editedContent, setEditedContent] = useState("");
+  const [retrying, setRetrying] = useState<string | null>(null);
 
   const handleEditClick = (post: ScheduledPost) => {
     setEditingPost(post);
@@ -51,6 +55,37 @@ export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPost
     // TODO: Implement update functionality
     console.log("Save edited content:", editedContent);
     setEditingPost(null);
+  };
+
+  const handleRetry = async (postId: string) => {
+    setRetrying(postId);
+    try {
+      // Reset status to 'scheduled' and update scheduled time to 2 minutes from now
+      const newScheduledTime = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+      
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({ 
+          status: 'scheduled',
+          scheduled_time: newScheduledTime
+        })
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast.success("Post rescheduled for 2 minutes from now", {
+        description: "The AI content will be generated fresh when it runs"
+      });
+
+      if (onRetry) onRetry(postId);
+    } catch (error: any) {
+      console.error("Error retrying post:", error);
+      toast.error("Failed to retry post", {
+        description: error.message
+      });
+    } finally {
+      setRetrying(null);
+    }
   };
 
   if (isLoading) {
@@ -138,6 +173,16 @@ export function ScheduledPostsList({ posts, isLoading, onDelete }: ScheduledPost
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {post.status === 'failed' && (
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => handleRetry(post.id)}
+                      disabled={retrying === post.id}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${retrying === post.id ? 'animate-spin' : ''}`} />
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm"
