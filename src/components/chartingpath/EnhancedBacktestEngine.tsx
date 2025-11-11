@@ -167,39 +167,75 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     onBacktest(strategyWithConfig);
   };
 
-  // Mock pattern-specific results
-  const patternResults: PatternBacktestResult[] = [
-    {
-      patternId: 'head_shoulders',
-      patternName: 'Head & Shoulders',
-      trades: 45,
-      winRate: 67.8,
-      avgReturn: 1.23,
-      maxDrawdown: -3.2,
-      profitFactor: 1.85,
-      sharpeRatio: 1.42
-    },
-    {
-      patternId: 'double_top',
-      patternName: 'Double Top',
-      trades: 32,
-      winRate: 62.5,
-      avgReturn: 0.98,
-      maxDrawdown: -2.8,
-      profitFactor: 1.67,
-      sharpeRatio: 1.15
-    },
-    {
-      patternId: 'bullish_engulfing',
-      patternName: 'Bullish Engulfing',
-      trades: 78,
-      winRate: 58.9,
-      avgReturn: 0.76,
-      maxDrawdown: -4.1,
-      profitFactor: 1.42,
-      sharpeRatio: 0.98
+  // Calculate pattern-specific results from actual backtest data
+  const patternResults: PatternBacktestResult[] = React.useMemo(() => {
+    if (!results?.trades || results.trades.length === 0) {
+      return [];
     }
-  ];
+
+    const patternMap = new Map<string, {
+      trades: any[];
+      wins: number;
+      totalPnl: number;
+      totalPnlPercent: number;
+    }>();
+
+    results.trades.forEach((trade: any) => {
+      const patternName = trade.patternName || 'Unknown Pattern';
+      if (!patternMap.has(patternName)) {
+        patternMap.set(patternName, { trades: [], wins: 0, totalPnl: 0, totalPnlPercent: 0 });
+      }
+      const pattern = patternMap.get(patternName)!;
+      pattern.trades.push(trade);
+      if (trade.pnl > 0) pattern.wins++;
+      pattern.totalPnl += trade.pnl || 0;
+      pattern.totalPnlPercent += trade.pnlPercent || 0;
+    });
+
+    return Array.from(patternMap.entries()).map(([patternName, data]) => {
+      const totalTrades = data.trades.length;
+      const winRate = (data.wins / totalTrades) * 100;
+      const avgReturn = data.totalPnlPercent / totalTrades;
+      
+      // Calculate max drawdown for this pattern
+      let peak = 0;
+      let maxDD = 0;
+      let runningPnl = 0;
+      data.trades.forEach(trade => {
+        runningPnl += trade.pnlPercent || 0;
+        if (runningPnl > peak) peak = runningPnl;
+        const drawdown = peak - runningPnl;
+        if (drawdown > maxDD) maxDD = drawdown;
+      });
+
+      // Calculate profit factor
+      const grossProfit = data.trades
+        .filter(t => t.pnl > 0)
+        .reduce((sum, t) => sum + t.pnl, 0);
+      const grossLoss = Math.abs(data.trades
+        .filter(t => t.pnl < 0)
+        .reduce((sum, t) => sum + t.pnl, 0));
+      const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
+
+      // Calculate Sharpe ratio (simplified)
+      const returns = data.trades.map(t => t.pnlPercent || 0);
+      const avgRet = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgRet, 2), 0) / returns.length;
+      const stdDev = Math.sqrt(variance);
+      const sharpeRatio = stdDev > 0 ? (avgRet / stdDev) * Math.sqrt(252) : 0;
+
+      return {
+        patternId: patternName.toLowerCase().replace(/\s+/g, '_'),
+        patternName,
+        trades: totalTrades,
+        winRate: parseFloat(winRate.toFixed(1)),
+        avgReturn: parseFloat(avgReturn.toFixed(2)),
+        maxDrawdown: parseFloat((-maxDD).toFixed(2)),
+        profitFactor: parseFloat(profitFactor.toFixed(2)),
+        sharpeRatio: parseFloat(sharpeRatio.toFixed(2))
+      };
+    }).sort((a, b) => b.profitFactor - a.profitFactor);
+  }, [results]);
 
   return (
     <div className="space-y-6">

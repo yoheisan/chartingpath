@@ -50,14 +50,14 @@ export function MarketReportScheduler() {
 
       // Create scheduled posts for all markets with correct timezone handling
       const scheduledPosts = [
-        // Tokyo Pre-Market (8:30 AM JST - 30min before market open)
+        // Tokyo Pre-Market (8:00 AM JST - peak engagement, 1hr before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "Tokyo Pre-Market Analysis 📊",
           content: "", // Will be generated fresh by scheduler
-          scheduled_time: createScheduledTime("Asia/Tokyo", 8, 30),
+          scheduled_time: createScheduledTime("Asia/Tokyo", 8, 0),
           timezone: "Asia/Tokyo",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -86,14 +86,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // London Pre-Market (7:30 AM GMT - 30min before market open)
+        // London Pre-Market (6:45 AM GMT - peak engagement, 1hr 15min before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "London Pre-Market Analysis 🇬🇧",
           content: "", // Will be generated fresh by scheduler
-          scheduled_time: createScheduledTime("Europe/London", 7, 30),
+          scheduled_time: createScheduledTime("Europe/London", 6, 45),
           timezone: "Europe/London",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -122,14 +122,14 @@ export function MarketReportScheduler() {
           status: "scheduled",
           link_back_url: "https://chartingpath.com/tools/market-breadth"
         },
-        // US Pre-Market (9:00 AM EST - 30min before market open)
+        // US Pre-Market (8:45 AM EST - peak engagement, 45min before market open)
         {
           account_id: accountId,
           post_type: "market_report",
           platform: "twitter",
           title: "US Pre-Market Analysis 🇺🇸",
           content: "", // Will be generated fresh by scheduler
-          scheduled_time: createScheduledTime("America/New_York", 9, 0),
+          scheduled_time: createScheduledTime("America/New_York", 8, 45),
           timezone: "America/New_York",
           recurrence_pattern: "weekdays",
           report_config: {
@@ -195,19 +195,19 @@ export function MarketReportScheduler() {
           <div className="flex items-start gap-2">
             <div className="font-medium min-w-[100px]">Tokyo:</div>
             <div className="text-muted-foreground">
-              Pre-Market at 8:30 AM JST • Post-Market at 3:30 PM JST
+              Pre-Market at 8:00 AM JST • Post-Market at 3:30 PM JST
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="font-medium min-w-[100px]">London:</div>
             <div className="text-muted-foreground">
-              Pre-Market at 7:30 AM GMT • Post-Market at 4:45 PM GMT
+              Pre-Market at 6:45 AM GMT • Post-Market at 4:45 PM GMT
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="font-medium min-w-[100px]">US:</div>
             <div className="text-muted-foreground">
-              Pre-Market at 9:00 AM EST • Post-Market at 4:30 PM EST
+              Pre-Market at 8:45 AM EST • Post-Market at 4:30 PM EST
             </div>
           </div>
           <div className="flex items-start gap-2">
