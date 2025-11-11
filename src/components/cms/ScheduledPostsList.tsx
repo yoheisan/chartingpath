@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ScheduledPost {
   id: string;
@@ -44,17 +46,42 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
   const [editedContent, setEditedContent] = useState("");
+  const [editedScheduledTime, setEditedScheduledTime] = useState("");
   const [retrying, setRetrying] = useState<string | null>(null);
 
   const handleEditClick = (post: ScheduledPost) => {
     setEditingPost(post);
     setEditedContent(post.content || "");
+    // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
+    const localDateTime = new Date(post.scheduled_time).toISOString().slice(0, 16);
+    setEditedScheduledTime(localDateTime);
   };
 
-  const handleSaveEdit = () => {
-    // TODO: Implement update functionality
-    console.log("Save edited content:", editedContent);
-    setEditingPost(null);
+  const handleSaveEdit = async () => {
+    if (!editingPost) return;
+    
+    try {
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({ 
+          content: editedContent,
+          scheduled_time: new Date(editedScheduledTime).toISOString()
+        })
+        .eq('id', editingPost.id);
+
+      if (error) throw error;
+
+      toast.success("Post updated successfully");
+      setEditingPost(null);
+      
+      // Refresh the list
+      if (onRetry) onRetry(editingPost.id);
+    } catch (error: any) {
+      console.error("Error updating post:", error);
+      toast.error("Failed to update post", {
+        description: error.message
+      });
+    }
   };
 
   const handleRetry = async (postId: string) => {
@@ -260,12 +287,28 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
                 </p>
               </div>
             )}
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              placeholder="Enter post content..."
-              className="min-h-[200px]"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="scheduled-time">Scheduled Time</Label>
+              <Input
+                id="scheduled-time"
+                type="datetime-local"
+                value={editedScheduledTime}
+                onChange={(e) => setEditedScheduledTime(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Time in your local timezone. Will be converted to UTC for storage.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="content">Content</Label>
+              <Textarea
+                id="content"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                placeholder="Enter post content..."
+                className="min-h-[200px]"
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditingPost(null)}>
                 Cancel
