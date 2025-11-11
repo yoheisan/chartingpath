@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
@@ -52,8 +52,11 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
   const handleEditClick = (post: ScheduledPost) => {
     setEditingPost(post);
     setEditedContent(post.content || "");
-    // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
-    const localDateTime = new Date(post.scheduled_time).toISOString().slice(0, 16);
+    
+    // Convert UTC time to post's timezone for editing
+    const postTimezone = post.timezone || 'America/New_York';
+    const zonedDate = toZonedTime(new Date(post.scheduled_time), postTimezone);
+    const localDateTime = format(zonedDate, "yyyy-MM-dd'T'HH:mm");
     setEditedScheduledTime(localDateTime);
   };
 
@@ -61,11 +64,15 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
     if (!editingPost) return;
     
     try {
+      // Convert from post's timezone back to UTC
+      const postTimezone = editingPost.timezone || 'America/New_York';
+      const utcDate = fromZonedTime(editedScheduledTime, postTimezone);
+      
       const { error } = await supabase
         .from('scheduled_posts')
         .update({ 
           content: editedContent,
-          scheduled_time: new Date(editedScheduledTime).toISOString()
+          scheduled_time: utcDate.toISOString()
         })
         .eq('id', editingPost.id);
 
@@ -296,7 +303,7 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
                 onChange={(e) => setEditedScheduledTime(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Time in your local timezone. Will be converted to UTC for storage.
+                Time in <strong>{editingPost?.timezone || 'America/New_York'}</strong> timezone (same as displayed in the list)
               </p>
             </div>
             <div className="space-y-2">
