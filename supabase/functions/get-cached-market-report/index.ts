@@ -82,13 +82,14 @@ serve(async (req) => {
         .single();
 
       if (cachedReport) {
-        console.log(`Returning cached report for region: ${region}`);
+        console.log(`✓ Returning cached report for region: ${region} (requested timezone: ${timezone})`);
         return new Response(
           JSON.stringify({ 
             report: cachedReport.report,
             generated_at: cachedReport.generated_at,
             cached: true,
-            region
+            region,
+            cache_age_minutes: Math.round((Date.now() - new Date(cachedReport.generated_at).getTime()) / 60000)
           }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -635,7 +636,7 @@ ${marketDataSummary}`;
       await supabaseClient
         .from("cached_market_reports")
         .insert({
-          timezone,
+          timezone: region, // Store by region for cache sharing
           markets,
           time_span: timeSpan,
           tone,
@@ -643,13 +644,14 @@ ${marketDataSummary}`;
           expires_at: expiresAt.toISOString()
         });
 
-      console.log("Report generated and cached");
+      console.log(`Report generated and cached for region: ${region}`);
 
       return new Response(
         JSON.stringify({ 
           report: generatedReport,
           generated_at: new Date().toISOString(),
-          cached: false
+          cached: false,
+          region
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
