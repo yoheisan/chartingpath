@@ -61,9 +61,9 @@ const MarketBreadthReport = () => {
     setHasInitialLoad(true);
   }, []);
 
-  // Set up realtime subscription for auto-refresh
+  // Set up realtime subscription for auto-refresh (timezone-specific)
   useEffect(() => {
-    console.log(`Setting up realtime subscription for region: ${currentRegion}`);
+    console.log(`Setting up realtime subscription for timezone: ${reportTimezone}`);
     
     const channel = supabase
       .channel('market-report-updates')
@@ -73,25 +73,26 @@ const MarketBreadthReport = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'cached_market_reports',
-          filter: `timezone=eq.${currentRegion}`,
+          filter: `timezone=eq.${reportTimezone}`, // Listen to specific timezone
         },
         (payload) => {
           console.log('New report received via realtime:', payload);
           const newReport = payload.new as any;
           
-          // Only update if it's for our region and timespan
-          if (newReport.timezone === currentRegion && newReport.time_span === 'previous_day') {
+          // Only update if it's for our timezone and timespan
+          if (newReport.timezone === reportTimezone && newReport.time_span === 'previous_day') {
             setReport(newReport.report);
             setReportMetadata({
               cached: true,
-              region: currentRegion,
+              region: newReport.region || currentRegion,
               cache_age_minutes: 0,
               generated_at: newReport.generated_at,
             });
             
+            const localName = reportTimezone.split('/')[1] || reportTimezone;
             toast({
               title: "Report Auto-Updated",
-              description: `Fresh ${currentRegion} market analysis just arrived!`,
+              description: `Fresh ${localName} market analysis with local data just arrived!`,
               variant: "default",
               duration: 5000,
             });
@@ -104,7 +105,7 @@ const MarketBreadthReport = () => {
       console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [currentRegion, toast]);
+  }, [reportTimezone, currentRegion, toast]);
 
   // Regenerate report when timezone changes (skip initial render)
   useEffect(() => {
@@ -448,10 +449,10 @@ const MarketBreadthReport = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="America/New_York">Eastern (ET)</SelectItem>
-                      <SelectItem value="America/Chicago">Central (CT)</SelectItem>
-                      <SelectItem value="America/Denver">Mountain (MT)</SelectItem>
-                      <SelectItem value="America/Los_Angeles">Pacific (PT)</SelectItem>
+                      <SelectItem value="America/New_York">New York (ET)</SelectItem>
+                      <SelectItem value="America/Chicago">Chicago (CT)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Los Angeles (PT)</SelectItem>
+                      <SelectItem value="America/Toronto">Toronto (ET)</SelectItem>
                       <SelectItem value="Europe/London">London (GMT)</SelectItem>
                       <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
                       <SelectItem value="Europe/Berlin">Berlin (CET)</SelectItem>

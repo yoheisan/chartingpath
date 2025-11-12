@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.schedule-regional-reports]
 verify_jwt = false
+
+[functions.generate-regional-reports-batch]
+verify_jwt = false

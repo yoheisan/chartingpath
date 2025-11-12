@@ -6,25 +6,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Regional scheduling times (in UTC hours)
+// Regional scheduling times (in UTC hours) with all timezones
 const REGIONAL_SCHEDULE = {
   'Asia': {
     preMarket: 23,   // 11 PM UTC = 8 AM Tokyo (before market open)
     midDay: 3,       // 3 AM UTC = 12 PM Tokyo (mid-day)
     postMarket: 7,   // 7 AM UTC = 4 PM Tokyo (after close)
-    timezone: 'Asia/Tokyo'
+    timezones: [
+      'Asia/Tokyo',
+      'Asia/Shanghai', 
+      'Asia/Hong_Kong',
+      'Asia/Singapore',
+      'Australia/Sydney',
+      'Pacific/Auckland'
+    ]
   },
   'Europe': {
     preMarket: 7,    // 7 AM UTC = 8 AM London (before market open)
     midDay: 11,      // 11 AM UTC = 12 PM London (mid-day)
     postMarket: 16,  // 4 PM UTC = 5 PM London (after close)
-    timezone: 'Europe/London'
+    timezones: [
+      'Europe/London',
+      'Europe/Paris',
+      'Europe/Berlin'
+    ]
   },
   'Americas': {
     preMarket: 13,   // 1 PM UTC = 9 AM NY (before market open)
     midDay: 17,      // 5 PM UTC = 1 PM NY (mid-day)
     postMarket: 21,  // 9 PM UTC = 5 PM NY (after close)
-    timezone: 'America/New_York'
+    timezones: [
+      'America/New_York',
+      'America/Chicago',
+      'America/Los_Angeles',
+      'America/Toronto'
+    ]
   }
 };
 
@@ -43,12 +59,6 @@ serve(async (req) => {
 
     const currentHourUTC = new Date().getUTCHours();
     console.log(`Current UTC hour: ${currentHourUTC}`);
-
-    const reportConfig = {
-      markets: ["stocks", "forex", "crypto", "commodities"],
-      timeSpan: "previous_day",
-      tone: "professional"
-    };
 
     const results = [];
 
@@ -69,56 +79,45 @@ serve(async (req) => {
         currentHourUTC === schedule.midDay ? 'mid-day' :
         'post-market';
 
-      console.log(`Generating ${reportType} report for ${region}...`);
+      console.log(`Generating ${reportType} reports for ${region} (${schedule.timezones.length} timezones)...`);
 
       try {
-        // Use the fast generator with Lovable AI
-        const { data: reportData, error: reportError } = await supabase.functions.invoke(
-          "generate-market-report-fast",
+        // Use the optimized batch generator
+        const { data: batchResult, error: batchError } = await supabase.functions.invoke(
+          "generate-regional-reports-batch",
           {
             body: {
-              timezone: schedule.timezone,
-              ...reportConfig
+              region: region,
+              timezones: schedule.timezones,
+              reportType: reportType
             }
           }
         );
 
-        if (reportError) {
-          console.error(`Error generating report for ${region}:`, reportError);
-          results.push({ region, reportType, success: false, error: reportError.message });
+        if (batchError) {
+          console.error(`Error generating batch for ${region}:`, batchError);
+          results.push({ region, reportType, success: false, error: batchError.message });
           continue;
         }
 
-        // Store with 2-hour expiry
-        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+        console.log(`✓ ${region} ${reportType} batch complete: ${batchResult.generated}/${batchResult.total} reports`);
+        results.push({ 
+          region, 
+          reportType, 
+          success: true, 
+          generated: batchResult.generated,
+          total: batchResult.total
+        });
 
-        const { error: insertError } = await supabase
-          .from("cached_market_reports")
-          .insert({
-            timezone: region, // Store by region
-            report: reportData.report,
-            markets: reportConfig.markets,
-            time_span: reportConfig.timeSpan,
-            tone: reportConfig.tone,
-            generated_at: new Date().toISOString(),
-            expires_at: expiresAt
-          });
-
-        if (insertError) {
-          console.error(`Error caching report for ${region}:`, insertError);
-          results.push({ region, reportType, success: false, error: insertError.message });
-        } else {
-          console.log(`✓ ${region} ${reportType} report cached (expires in 2h)`);
-          results.push({ region, reportType, success: true });
-        }
-
-        // Clean up old regional reports
+        // Clean up old reports for this region's timezones
         const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-        await supabase
-          .from("cached_market_reports")
-          .delete()
-          .eq("timezone", region)
-          .lt("generated_at", fourHoursAgo);
+        for (const timezone of schedule.timezones) {
+          await supabase
+            .from("cached_market_reports")
+            .delete()
+            .eq("timezone", timezone)
+            .lt("generated_at", fourHoursAgo);
+        }
 
       } catch (error) {
         console.error(`Exception for ${region}:`, error);
