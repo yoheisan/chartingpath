@@ -58,12 +58,23 @@ serve(async (req) => {
       }
     }
 
-    // Try to get cached report (valid for 30 minutes)
+    // Map timezone to region for better cache sharing
+    const getRegion = (tz: string): string => {
+      if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) return 'Asia';
+      if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) return 'Europe';
+      if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles') || tz.includes('Toronto')) return 'Americas';
+      if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'Australia';
+      return timezone; // fallback to exact timezone
+    };
+    
+    const region = getRegion(timezone);
+
+    // Try to get cached report (valid for 2 hours)
     if (!forceGenerate) {
       const { data: cachedReport } = await supabaseClient
         .from("cached_market_reports")
         .select("*")
-        .eq("timezone", timezone)
+        .eq("timezone", region)
         .eq("time_span", timeSpan)
         .gte("expires_at", new Date().toISOString())
         .order("generated_at", { ascending: false })
@@ -71,12 +82,13 @@ serve(async (req) => {
         .single();
 
       if (cachedReport) {
-        console.log("Returning cached report");
+        console.log(`Returning cached report for region: ${region}`);
         return new Response(
           JSON.stringify({ 
             report: cachedReport.report,
             generated_at: cachedReport.generated_at,
-            cached: true
+            cached: true,
+            region
           }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -616,9 +628,9 @@ ${marketDataSummary}`;
         console.log(`Updated daily spend to $${(currentSpend + actualCost).toFixed(4)}`);
       }
 
-      // Cache the new report (expires in 30 minutes)
+      // Cache the new report (expires in 2 hours)
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+    expiresAt.setMinutes(expiresAt.getMinutes() + 120);
 
       await supabaseClient
         .from("cached_market_reports")
