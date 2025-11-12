@@ -77,6 +77,41 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers,
     return data;
   }, [run.id]);
 
+  // Cumulative capital gains/loss data from actual trades
+  const cumulativeGainsData = React.useMemo(() => {
+    if (!run.trade_log || run.trade_log.length === 0) {
+      return [];
+    }
+
+    const data = [];
+    let cumulativePnL = 0;
+    const initialCapital = run.initial_capital || 10000;
+
+    // Add starting point
+    data.push({
+      tradeNumber: 0,
+      cumulativePnL: 0,
+      equity: initialCapital,
+      gainPercentage: 0
+    });
+
+    // Calculate cumulative values for each trade
+    run.trade_log.forEach((trade: any, index: number) => {
+      cumulativePnL += trade.pnl;
+      const currentEquity = initialCapital + cumulativePnL;
+      const gainPercentage = (cumulativePnL / initialCapital) * 100;
+
+      data.push({
+        tradeNumber: index + 1,
+        cumulativePnL,
+        equity: currentEquity,
+        gainPercentage
+      });
+    });
+
+    return data;
+  }, [run.trade_log, run.initial_capital]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -315,52 +350,129 @@ const BacktestResults: React.FC<BacktestResultsProps> = ({ run, strategyAnswers,
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Equity Curve</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={equityCurveData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="equity" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 gap-6">
+            {/* Cumulative Capital Gains/Loss Chart - Primary Chart */}
+            {cumulativeGainsData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>CUMULATIVE CAPITAL GAINS / LOSS</span>
+                    <Badge variant="outline" className="uppercase text-xs tracking-wider">
+                      Actual Trades
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={cumulativeGainsData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="tradeNumber" 
+                        label={{ value: 'Trade Number', position: 'insideBottom', offset: -5 }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        label={{ value: 'Cumulative P&L ($)', angle: -90, position: 'insideLeft' }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        label={{ value: 'Gain (%)', angle: 90, position: 'insideRight' }}
+                      />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+                                <p className="font-bold mb-2">Trade #{data.tradeNumber}</p>
+                                <p className={`text-sm ${data.cumulativePnL >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                  Cumulative P&L: {formatCurrency(data.cumulativePnL)}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Current Equity: {formatCurrency(data.equity)}
+                                </p>
+                                <p className={`text-sm ${data.gainPercentage >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                  Total Gain: {data.gainPercentage.toFixed(2)}%
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="cumulativePnL" 
+                        stroke="hsl(var(--foreground))" 
+                        strokeWidth={3}
+                        dot={{ fill: 'hsl(var(--foreground))', r: 3 }}
+                        name="Cumulative P&L"
+                      />
+                      <Line 
+                        yAxisId="right"
+                        type="monotone" 
+                        dataKey="gainPercentage" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name="Gain %"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Drawdown Curve</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={equityCurveData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `${(value as number).toFixed(2)}%`} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="drawdown" 
-                      stroke="hsl(var(--destructive))" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Equity Curve</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={equityCurveData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="equity" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Drawdown Curve</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={equityCurveData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `${(value as number).toFixed(2)}%`} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="drawdown" 
+                        stroke="hsl(var(--destructive))" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Performance Summary */}
