@@ -73,80 +73,128 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `url(${heroImage})`,
-            filter: 'brightness(0.4)'
+        {/* Animated Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-card to-background">
+          <div className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(var(--primary)) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(var(--accent)) 0%, transparent 50%), radial-gradient(circle at 40% 20%, hsl(var(--primary-glow)) 0%, transparent 50%)',
+              animation: 'pulse 8s ease-in-out infinite'
+            }}
+          />
+        </div>
+        
+        {/* Animated Grid Pattern */}
+        <div className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px)',
+            backgroundSize: '100px 100px',
+            animation: 'grid-flow 20s linear infinite'
           }}
         />
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80" />
+        {/* Floating Geometric Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 border border-primary/20 rounded-full animate-float" style={{ animationDelay: '0s' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 border border-accent/20 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 right-1/3 w-48 h-48 border border-primary-glow/20 rotate-45 animate-float" style={{ animationDelay: '4s' }} />
+          
+          {/* Data Grid Lines */}
+          <svg className="absolute inset-0 w-full h-full">
+            <defs>
+              <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="20%" x2="100%" y2="20%" stroke="url(#line-gradient)" strokeWidth="2" className="animate-pulse" />
+            <line x1="0" y1="50%" x2="100%" y2="50%" stroke="url(#line-gradient)" strokeWidth="2" className="animate-pulse" style={{ animationDelay: '1s' }} />
+            <line x1="0" y1="80%" x2="100%" y2="80%" stroke="url(#line-gradient)" strokeWidth="2" className="animate-pulse" style={{ animationDelay: '2s' }} />
+          </svg>
+        </div>
+        
+        {/* Glassmorphism Overlay */}
+        <div className="absolute inset-0 backdrop-blur-[1px]" />
         
         {/* Content */}
         <div className="relative z-10 container mx-auto max-w-5xl text-center px-6">
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
+          {/* Logo with Glow Effect */}
+          <div className="flex items-center justify-center gap-3 mb-8 animate-fade-in">
+            <div className="relative p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-accent blur-xl opacity-50 animate-pulse" />
               <img 
                 src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
                 alt="ChartingPath Logo" 
-                className="h-8 w-8 object-contain brightness-0 invert"
+                className="relative h-8 w-8 object-contain brightness-0 invert"
               />
             </div>
-            <h1 className="text-4xl font-bold text-white">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
               ChartingPath
             </h1>
           </div>
           
-          {/* Main Headline */}
-          <div className="mb-8">
-            <h2 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4 leading-tight">
-              Map the trade<span className="text-primary">.</span><br />
-              Make the trade<span className="text-primary">.</span>
+          {/* Main Headline with Gradient Text */}
+          <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <h2 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 leading-tight">
+              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                Map the trade
+              </span>
+              <span className="text-primary animate-pulse">.</span>
+              <br />
+              <span className="bg-gradient-to-r from-foreground via-accent to-foreground bg-clip-text text-transparent">
+                Make the trade
+              </span>
+              <span className="text-accent animate-pulse" style={{ animationDelay: '0.5s' }}>.</span>
             </h2>
-            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              {t('hero.subtitle', 'The best trades require research, then commitment.')}
-            </p>
+            <div className="relative inline-block">
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                {t('hero.subtitle', 'The best trades require research, then commitment.')}
+              </p>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+            </div>
           </div>
           
-          {/* CTA Button */}
-          <div className="mb-12">
-            <Button 
-              size="lg" 
-              asChild
-              className="px-12 py-6 text-lg font-semibold bg-white text-background hover:bg-white/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              <Link to="/pricing">{t('hero.cta', 'Get started for free')}</Link>
-            </Button>
-            <p className="text-white/70 text-sm mt-4">
+          {/* CTA Button with Advanced Effects */}
+          <div className="mb-12 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="relative inline-block group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition-opacity animate-pulse" />
+              <Button 
+                size="lg" 
+                asChild
+                className="relative px-12 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+              >
+                <Link to="/pricing">{t('hero.cta', 'Get started for free')}</Link>
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-sm mt-4">
               {t('hero.free_text', '$0 forever, no credit card needed')}
             </p>
           </div>
 
-          {/* Features */}
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 text-sm text-white/80">
-            <div className="flex items-center gap-2">
+          {/* Features with Glassmorphism */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/40 backdrop-blur-md border border-border/50 hover:bg-card/60 transition-all">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>{t('features.no_coding', 'No coding required')}</span>
+              <span className="text-sm text-foreground">{t('features.no_coding', 'No coding required')}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/40 backdrop-blur-md border border-border/50 hover:bg-card/60 transition-all">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>{t('features.plug_play', 'Plug & play scripts')}</span>
+              <span className="text-sm text-foreground">{t('features.plug_play', 'Plug & play scripts')}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/40 backdrop-blur-md border border-border/50 hover:bg-card/60 transition-all">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>{t('features.risk_management', 'Risk management built-in')}</span>
+              <span className="text-sm text-foreground">{t('features.risk_management', 'Risk management built-in')}</span>
             </div>
           </div>
         </div>
         
-        {/* Scroll Indicator */}
+        {/* Futuristic Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/60 rounded-full mt-2"></div>
+          <div className="relative">
+            <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex justify-center backdrop-blur-sm bg-card/20">
+              <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-pulse"></div>
+            </div>
+            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
           </div>
         </div>
       </section>
