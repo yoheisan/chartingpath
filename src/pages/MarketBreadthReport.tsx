@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, TrendingUp, Mail, Clock, Calendar, RefreshCw } from "lucide-react";
+import { Loader2, TrendingUp, Mail, Clock, Calendar, RefreshCw, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -15,6 +15,12 @@ const MarketBreadthReport = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
+  const [reportMetadata, setReportMetadata] = useState<{
+    cached: boolean;
+    region?: string;
+    cache_age_minutes?: number;
+    generated_at?: string;
+  }>({ cached: false });
   
   // Report generation settings (separate from email subscription)
   const [reportTimezone, setReportTimezone] = useState(
@@ -38,11 +44,67 @@ const MarketBreadthReport = () => {
 
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
+  // Map timezone to region for realtime matching
+  const getRegion = (tz: string): string => {
+    if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) return 'Asia';
+    if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) return 'Europe';
+    if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles') || tz.includes('Toronto')) return 'Americas';
+    if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'Australia';
+    return tz; // fallback to exact timezone
+  };
+
+  const currentRegion = getRegion(reportTimezone);
+
   useEffect(() => {
     loadSubscription();
     handleGenerateInstant();
     setHasInitialLoad(true);
   }, []);
+
+  // Set up realtime subscription for auto-refresh
+  useEffect(() => {
+    console.log(`Setting up realtime subscription for region: ${currentRegion}`);
+    
+    const channel = supabase
+      .channel('market-report-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'cached_market_reports',
+          filter: `timezone=eq.${currentRegion}`,
+        },
+        (payload) => {
+          console.log('New report received via realtime:', payload);
+          const newReport = payload.new as any;
+          
+          // Only update if it's for our region and timespan
+          if (newReport.timezone === currentRegion && newReport.time_span === 'previous_day') {
+            setReport(newReport.report);
+            setReportMetadata({
+              cached: true,
+              region: currentRegion,
+              cache_age_minutes: 0,
+              generated_at: newReport.generated_at,
+            });
+            
+            toast({
+              title: "Report Auto-Updated",
+              description: `Fresh ${currentRegion} market analysis just arrived!`,
+              variant: "default",
+              duration: 5000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [currentRegion, toast]);
 
   // Regenerate report when timezone changes (skip initial render)
   useEffect(() => {
@@ -133,12 +195,25 @@ const MarketBreadthReport = () => {
       }
 
       setReport(data.report);
+      setReportMetadata({
+        cached: data.cached,
+        region: data.region,
+        cache_age_minutes: data.cache_age_minutes,
+        generated_at: data.generated_at,
+      });
       
       if (data.cached) {
-        const generatedTime = new Date(data.generated_at).toLocaleTimeString();
+        const cacheAge = data.cache_age_minutes || 0;
+        const cacheStatus = cacheAge < 5 ? 'Fresh' : cacheAge < 30 ? 'Recent' : 'Cached';
         toast({
-          title: "Cached Report",
-          description: `Showing report from ${generatedTime}. Click Update to generate fresh data.`,
+          title: `${cacheStatus} Report Loaded`,
+          description: `${data.region} report from ${cacheAge} minutes ago. Auto-updates enabled.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Fresh Report Generated",
+          description: `New ${data.region} analysis completed. Watching for updates...`,
           variant: "default",
         });
       }
@@ -326,9 +401,25 @@ const MarketBreadthReport = () => {
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
                     Today's Market Analysis
+                    {reportMetadata.cached && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                        <Zap className="h-3 w-3" />
+                        {reportMetadata.cache_age_minutes !== undefined && reportMetadata.cache_age_minutes < 5 ? 'Fresh' : 'Cached'}
+                      </span>
+                    )}
                   </CardTitle>
                   <CardDescription>
-                    Comprehensive market breadth report for all markets based on your selected timezone
+                    {reportMetadata.region ? (
+                      <>
+                        {reportMetadata.region} region report
+                        {reportMetadata.cache_age_minutes !== undefined && (
+                          <> • Updated {reportMetadata.cache_age_minutes} min ago</>
+                        )}
+                        <> • Auto-refresh enabled</>
+                      </>
+                    ) : (
+                      <>Comprehensive market breadth report for all markets based on your selected timezone</>
+                    )}
                   </CardDescription>
                 </div>
                 <Button

@@ -115,15 +115,24 @@ LIMIT 10;
 
 1. **User opens Market Breadth page**
    - System checks for cached regional report (2-hour validity)
+   - Sets up realtime WebSocket subscription to `cached_market_reports` table
    
 2. **Cache hit (90% of cases)**
-   - Report loads instantly
+   - Report loads instantly (<1 second)
    - No API costs
+   - Shows cache age badge (e.g., "Fresh" or "Cached - 15 min ago")
    
 3. **Cache miss (10% of cases)**
    - Falls back to on-demand generation
    - Uses GPT-5 for highest quality
    - Caches for 2 hours
+   - Enables realtime subscription
+
+4. **Auto-refresh (NEW!)**
+   - When scheduled backend generates fresh report
+   - Frontend receives INSERT event via WebSocket
+   - Report updates automatically without page refresh
+   - Shows toast: "Report Auto-Updated - Fresh Asia market analysis just arrived!"
 
 ### Scheduled Flow
 
@@ -136,12 +145,64 @@ LIMIT 10;
    - Mid-day: Intraday updates
    - Post-market: Daily recap
    
-3. **Regional caching**
+3. **Regional caching + Realtime push**
    - Stores by region (not timezone)
    - 2-hour expiry
    - Auto-cleanup of old reports
+   - **Broadcasts INSERT event to all connected clients**
+   - All users viewing that region get instant update
+
+### Realtime Architecture
+
+```
+┌─────────────────────┐
+│ User's Browser      │
+│                     │
+│ 1. Loads cached     │
+│    report           │
+│                     │
+│ 2. Subscribes to    │
+│    realtime updates │
+│    for region       │
+└──────────┬──────────┘
+           │
+           │ WebSocket
+           │
+┌──────────▼──────────┐
+│ Supabase Realtime   │
+│                     │
+│ Filters by region:  │
+│ "Asia", "Europe",   │
+│ "Americas"          │
+└──────────┬──────────┘
+           │
+           │ Postgres NOTIFY
+           │
+┌──────────▼───────────────────┐
+│ Scheduled Backend Function   │
+│                              │
+│ Every hour:                  │
+│ 1. Generate fresh report     │
+│ 2. INSERT into DB            │
+│ 3. Triggers realtime event   │
+└──────────────────────────────┘
+```
 
 ## Monitoring
+
+### Check Realtime Connections
+
+Monitor active realtime subscriptions:
+
+```sql
+-- Check active realtime connections (requires pg_stat_activity access)
+SELECT 
+  count(*) as active_connections,
+  application_name
+FROM pg_stat_activity
+WHERE application_name LIKE '%realtime%'
+GROUP BY application_name;
+```
 
 ### Check Cache Status
 
@@ -171,6 +232,29 @@ ORDER BY last_generated DESC;
 ```
 
 ## Troubleshooting
+
+### Realtime Not Working
+
+1. **Check if realtime is enabled on table:**
+```sql
+-- Verify table is in realtime publication
+SELECT * FROM pg_publication_tables 
+WHERE pubname = 'supabase_realtime' 
+AND tablename = 'cached_market_reports';
+```
+
+2. **Check browser console for WebSocket errors:**
+   - Open browser DevTools → Console
+   - Look for "WebSocket connection failed" or similar errors
+   - Verify region filter matches (Asia, Europe, Americas)
+
+3. **Test realtime manually:**
+```sql
+-- Insert a test report
+INSERT INTO cached_market_reports (timezone, report, markets, time_span, tone, expires_at)
+VALUES ('Asia', 'Test report', ARRAY['stocks'], 'previous_day', 'professional', NOW() + INTERVAL '2 hours');
+```
+   - Should trigger toast notification on frontend if subscribed
 
 ### Reports Not Being Generated
 
@@ -220,9 +304,11 @@ Target metrics after optimization:
 
 - **Cache hit rate**: 90%+
 - **Average load time**: <500ms (from cache)
+- **Auto-refresh latency**: <2 seconds (realtime push)
 - **API cost per 1000 users**: $5-10 (down from $100-150)
 - **Report freshness**: 2 hours max age
 - **Generation time**: 5-10 seconds (Gemini) vs 15-30 seconds (GPT-5)
+- **Realtime connection overhead**: Negligible (<1KB/hour)
 
 ## Future Improvements
 
@@ -231,3 +317,6 @@ Target metrics after optimization:
 - Add A/B testing between Gemini and GPT models
 - Create real-time metrics dashboard
 - Implement predictive pre-generation based on user patterns
+- Add offline support with service workers
+- Implement report diff view to highlight changes since last update
+
