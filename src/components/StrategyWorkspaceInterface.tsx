@@ -1,18 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Bot, 
-  TrendingUp, 
-  Settings, 
-  Zap, 
-  ArrowRight,
-  BookOpen,
-  Play,
-  Target
-} from 'lucide-react';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
 import { ProfessionalStrategyLibrary } from './ProfessionalStrategyLibrary';
@@ -293,74 +282,37 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Bot className="h-6 w-6 text-primary" />
-              <TrendingUp className="h-6 w-6 text-accent" />
-            </div>
-            Strategy Workspace
-            <Badge className="bg-gradient-to-r from-primary to-accent text-white">
-              Unified Builder & Tester
-            </Badge>
-          </CardTitle>
-          <p className="text-muted-foreground">
-            Build, configure, test, and save your trading strategies in one seamless workflow
+    <div className="space-y-8">
+      {/* Minimal Header */}
+      <div className="border-l-4 border-foreground pl-6">
+        <h1 className="text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
+        {currentStrategy && currentStrategy.id && (
+          <p className="text-sm text-muted-foreground mt-2">
+            {currentStrategy.name}
           </p>
-        </CardHeader>
-      </Card>
+        )}
+      </div>
 
-      {/* Strategy Connected Status - Only show when strategy is actually loaded */}
-      {currentStrategy && currentStrategy.id && (
-        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-green-800 dark:text-green-200">
-                  Strategy Connected
-                </p>
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  Ready for advanced configuration and backtesting
-                </p>
-                <p className="text-xs text-green-500 dark:text-green-300 mt-1">
-                  "{currentStrategy.name}" has been loaded successfully from My Strategies
-                </p>
-              </div>
-              {isStrategyComplete() && (
-                <Button 
-                  onClick={() => setActiveTab('builder')} 
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Continue Building
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Main Interface */}
-      <Tabs value={activeTab} onValueChange={(value) => {
-        console.log('Tab changed to:', value);
-        setActiveTab(value);
-      }} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="quick-select" className="flex items-center gap-2">
-            <Target className="w-4 h-4" />
-            Pattern Library
+      {/* Minimal Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <TabsList className="grid w-full grid-cols-3 h-14 bg-muted/30 border border-border">
+          <TabsTrigger 
+            value="quick-select" 
+            className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
+          >
+            Patterns
           </TabsTrigger>
-          <TabsTrigger value="builder" className="flex items-center gap-2">
-            <Bot className="w-4 h-4" />
-            Strategy Builder & Tester
+          <TabsTrigger 
+            value="builder" 
+            className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
+          >
+            Builder
           </TabsTrigger>
-          <TabsTrigger value="library" className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
-            My Strategies
+          <TabsTrigger 
+            value="library" 
+            className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
+          >
+            Library
           </TabsTrigger>
         </TabsList>
 
@@ -373,19 +325,14 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
-          {/* Quick Navigation Back to Pattern Library */}
           {currentChartingPathStrategy?.patterns && currentChartingPathStrategy.patterns.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToPatternLibrary}
-                className="flex items-center gap-2 text-muted-foreground hover:text-primary"
-              >
-                <Target className="w-4 h-4" />
-                ← Back to Pattern Library
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              onClick={handleBackToPatternLibrary}
+              className="uppercase text-xs tracking-wider font-bold"
+            >
+              ← Patterns
+            </Button>
           )}
           
           <ChartingPathStrategyBuilder
@@ -397,12 +344,10 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
         {/* My Strategies Tab */}
         <TabsContent value="library" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Guided Strategies */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Bot className="w-5 h-5 text-primary" />
-                Guided Strategies
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
+                Guided
               </h3>
               <GuidedStrategyManager 
                 onLoadStrategy={handleLoadStrategy} 
@@ -410,11 +355,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               />
             </div>
 
-            {/* Chart Pattern Strategies */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-primary" />
-                Chart Pattern Strategies
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
+                Patterns
               </h3>
               <ChartingPathManager 
                 onLoadStrategy={handleLoadChartingPathStrategy}
@@ -424,28 +367,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         </TabsContent>
 
       </Tabs>
-
-      {/* Workflow Guide */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Target className="w-4 h-4" />
-              <span>1. Select or Build</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-blue-500" />
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Settings className="w-4 h-4" />
-              <span>2. Configure & Test</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-blue-500" />
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <BookOpen className="w-4 h-4" />
-              <span>3. Save & Export</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
