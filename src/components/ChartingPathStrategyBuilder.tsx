@@ -453,13 +453,18 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
           {/* Step Content */}
           <div className="min-h-[400px]">
             {currentStep === 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
                   <Globe className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 1: Select Financial Instrument & Timeframe</h3>
+                  <h3 className="text-xl font-bold uppercase tracking-wider">STEP 1</h3>
                 </div>
+                
+                {/* Instrument & Timeframe */}
                 <Card>
-                  <CardContent className="pt-6 space-y-4">
+                  <CardHeader>
+                    <CardTitle className="text-base font-bold uppercase">INSTRUMENT & TIMEFRAME</CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <MarketStep
                       answers={{ market: strategy.market }}
                       onAnswersChange={(_, data) => updateStrategy('market', data)}
@@ -467,6 +472,39 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     />
                   </CardContent>
                 </Card>
+
+                {/* Pattern Selection */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-bold uppercase">SELECT CHART PATTERN</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Choose at least one pattern to enable the Next button
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <PatternLibrary
+                      patterns={strategy.patterns}
+                      onChange={(patterns) => updateStrategy('patterns', patterns)}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Validation Notice */}
+                {(!strategy.market?.instrument || !strategy.patterns.some(p => p.enabled)) && (
+                  <Card className="border-amber-500/50 bg-amber-500/10">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        <span className="font-medium">
+                          {!strategy.market?.instrument && 'Select an instrument'}
+                          {!strategy.market?.instrument && !strategy.patterns.some(p => p.enabled) && ' and '}
+                          {!strategy.patterns.some(p => p.enabled) && 'enable at least one pattern'}
+                          {' to proceed'}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
 
