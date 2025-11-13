@@ -145,26 +145,64 @@ serve(async (req) => {
         
         if (localMarket && localMarket.indices.length > 0) {
           const localPromises = localMarket.indices.map(async symbol => {
+            // Try multiple data sources with fallback
+            
+            // 1. Try Yahoo Finance first (free, no auth, works for indices)
             try {
               const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`);
-              const data = await response.json();
-              const quote = data?.chart?.result?.[0];
-              const meta = quote?.meta;
-              const current = meta?.regularMarketPrice || 0;
-              const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-              return { 
-                symbol: symbol,
-                name: localMarket.name,
-                c: current, 
-                pc: previous,
-                error: !current 
-              };
+              if (response.ok) {
+                const data = await response.json();
+                const quote = data?.chart?.result?.[0];
+                const meta = quote?.meta;
+                const current = meta?.regularMarketPrice || 0;
+                const previous = meta?.previousClose || meta?.chartPreviousClose || current;
+                if (current > 0) {
+                  console.log(`✓ Yahoo: ${symbol} = ${current}`);
+                  return { 
+                    symbol: symbol,
+                    name: localMarket.name,
+                    c: current, 
+                    pc: previous,
+                    error: false 
+                  };
+                }
+              }
             } catch (error) {
-              console.error(`Error fetching local data for ${symbol}:`, error);
-              return { symbol, name: localMarket.name, c: 0, pc: 0, error: true };
+              console.log(`✗ Yahoo failed for ${symbol}:`, error.message);
             }
+
+            // 2. Try Finnhub as fallback (for supported symbols)
+            if (!symbol.startsWith('^') && !symbol.includes('.')) {
+              try {
+                const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.c && data.c > 0) {
+                    console.log(`✓ Finnhub: ${symbol} = ${data.c}`);
+                    return {
+                      symbol: symbol,
+                      name: localMarket.name,
+                      c: data.c,
+                      pc: data.pc,
+                      error: false
+                    };
+                  }
+                }
+              } catch (error) {
+                console.log(`✗ Finnhub failed for ${symbol}:`, error.message);
+              }
+            }
+
+            console.error(`✗✗ ALL sources failed for ${symbol}`);
+            return { symbol, name: localMarket.name, c: 0, pc: 0, error: true };
           });
           localData = await Promise.all(localPromises);
+          
+          // Validate we got at least some data
+          const validData = localData.filter(d => !d.error);
+          if (validData.length === 0) {
+            console.warn(`⚠️  No valid local market data for ${timezone}`);
+          }
         }
 
         // Combine regional + local data
@@ -280,12 +318,24 @@ Keep it under 400 words. Use **bold** for key numbers and terms. Focus on releva
         const aiData = await aiResponse.json();
         const report = aiData.choices[0].message.content;
 
-        console.log(`✓ Generated report for ${timezone}`);
+        // Validate report quality
+        const hasValidData = report.length > 300 && 
+                            !report.toLowerCase().includes("unavailable") && 
+                            !report.toLowerCase().includes("limited breadth") &&
+                            !report.toLowerCase().includes("data not available");
+        
+        if (!hasValidData) {
+          console.warn(`⚠️  Report for ${timezone} may have data issues - length: ${report.length}`);
+        }
+
+        console.log(`✓ Generated report for ${timezone} (${report.length} chars, valid: ${hasValidData})`);
 
         return {
           timezone,
           report,
-          success: true
+          success: true,
+          hasValidData,
+          reportLength: report.length
         };
 
       } catch (error) {
@@ -309,10 +359,10 @@ Keep it under 400 words. Use **bold** for key numbers and terms. Focus on releva
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
 
     for (const report of reports) {
-      if (report.success) {
-        await supabase
+      if (report.success && report.hasValidData) {
+        const { error } = await supabase
           .from("cached_market_reports")
-          .insert({
+          .upsert({
             timezone: report.timezone,
             region: region,
             report: report.report,
@@ -321,20 +371,37 @@ Keep it under 400 words. Use **bold** for key numbers and terms. Focus on releva
             tone: "professional",
             generated_at: new Date().toISOString(),
             expires_at: expiresAt
+          }, {
+            onConflict: "timezone,time_span"
           });
+        
+        if (error) {
+          console.error(`Error caching report for ${report.timezone}:`, error);
+        } else {
+          console.log(`✅ Cached report for ${report.timezone}`);
+        }
+      } else if (report.success && !report.hasValidData) {
+        console.warn(`⚠️  Skipped caching ${report.timezone} - data quality issues`);
       }
     }
 
     const successCount = reports.filter(r => r.success).length;
-    console.log(`Batch complete: ${successCount}/${reports.length} reports generated`);
+    const validCount = reports.filter(r => r.success && r.hasValidData).length;
+    console.log(`\n📊 Batch complete: ${validCount}/${successCount} valid reports (${reports.length} total)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         region,
         generated: successCount,
+        valid: validCount,
         total: reports.length,
-        reports: reports.map(r => ({ timezone: r.timezone, success: r.success }))
+        reports: reports.map(r => ({ 
+          timezone: r.timezone, 
+          success: r.success, 
+          hasValidData: r.hasValidData,
+          reportLength: r.reportLength 
+        }))
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
