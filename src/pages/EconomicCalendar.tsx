@@ -96,6 +96,7 @@ const EconomicCalendar = () => {
   const [selectedTimezone, setSelectedTimezone] = useState<string>(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -135,11 +136,18 @@ const EconomicCalendar = () => {
         },
         (payload) => {
           console.log('Real-time update:', payload);
+          setIsLive(true);
           // Refresh events on any database change
           fetchEvents();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsLive(true);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setIsLive(false);
+        }
+      });
 
     return () => {
       clearInterval(autoRefreshInterval);
@@ -200,8 +208,10 @@ const EconomicCalendar = () => {
       });
       
       setEvents(filteredData);
+      setIsLive(true);
     } catch (error: any) {
       toast.error("Failed to fetch events: " + error.message);
+      setIsLive(false);
     } finally {
       setLoading(false);
     }
@@ -418,8 +428,11 @@ const EconomicCalendar = () => {
         {/* Compact Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <Badge variant="destructive" className="px-2 py-1 text-xs font-bold animate-pulse">
-              ⚡ LIVE
+            <Badge 
+              variant={isLive ? "default" : "destructive"} 
+              className={`px-2 py-1 text-xs font-bold ${isLive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 animate-pulse'}`}
+            >
+              {isLive ? '🟢 LIVE' : '🔴 OFFLINE'}
             </Badge>
             <h1 className="text-2xl font-bold">Economic Calendar</h1>
             <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
