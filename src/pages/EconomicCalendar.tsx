@@ -597,7 +597,7 @@ const EconomicCalendar = () => {
                                         <h4 className="font-semibold text-sm truncate">{event.event_name}</h4>
                                         {getImpactBadge(event.impact_level)}
                                       </div>
-                                      <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">{formatInTimeZone(new Date(event.scheduled_time), selectedTimezone, 'h:mm a')}</span>
                                     </div>
                                     <div className="flex gap-4 text-xs mt-2 ml-7">
                                       {event.actual_value && (
@@ -663,7 +663,7 @@ const EconomicCalendar = () => {
                                         <h4 className="font-semibold text-sm truncate">{event.event_name}</h4>
                                         {getImpactBadge(event.impact_level)}
                                       </div>
-                                      <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">{formatInTimeZone(new Date(event.scheduled_time), selectedTimezone, 'h:mm a')}</span>
                                     </div>
                                     <div className="flex gap-4 text-xs mt-2 ml-7">
                                       {event.actual_value && (
@@ -733,7 +733,7 @@ const EconomicCalendar = () => {
                                     <h4 className="font-semibold text-sm truncate">{event.event_name}</h4>
                                     {getImpactBadge(event.impact_level)}
                                   </div>
-                                  <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(event.scheduled_time), 'h:mm a')}</span>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">{formatInTimeZone(new Date(event.scheduled_time), selectedTimezone, 'h:mm a')}</span>
                                 </div>
                                 <div className="flex gap-4 text-xs mt-2 ml-7">
                                   {event.actual_value && (
