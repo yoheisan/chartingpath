@@ -42,31 +42,69 @@ serve(async (req) => {
     // Fetch stock market data
     if (markets.includes("stocks")) {
       // Select region-appropriate stock indices
-      const getStockSymbols = (tz: string): string[] => {
+      const getStockSymbols = (tz: string): { yahooSymbols: string[]; finnhubSymbols: string[] } => {
         if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
-          return ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"]; // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
+          return { 
+            yahooSymbols: ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"], // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
+            finnhubSymbols: []
+          };
         } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
-          return ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"]; // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
+          return { 
+            yahooSymbols: ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"], // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
+            finnhubSymbols: []
+          };
         } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
-          return ["^AXJO", "^AORD"]; // ASX 200, All Ordinaries
+          return { 
+            yahooSymbols: ["^AXJO", "^AORD"], // ASX 200, All Ordinaries
+            finnhubSymbols: []
+          };
         } else {
-          return ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"]; // US markets (default)
+          return { 
+            yahooSymbols: [],
+            finnhubSymbols: ["SPY", "QQQ", "DIA"] // US ETFs work with Finnhub
+          };
         }
       };
       
       const stockSymbols = getStockSymbols(timezone);
-      const stockPromises = stockSymbols.map(async symbol => {
+      
+      // Fetch from Yahoo Finance (for indices)
+      const yahooPromises = stockSymbols.yahooSymbols.map(async symbol => {
         try {
-          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
           const data = await response.json();
-          console.log(`Stock data for ${symbol}:`, JSON.stringify(data));
-          return { symbol, ...data };
+          
+          const quote = data?.chart?.result?.[0];
+          const meta = quote?.meta;
+          const current = meta?.regularMarketPrice || 0;
+          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
+          
+          return { 
+            symbol, 
+            c: current, 
+            pc: previous,
+            error: !current 
+          };
         } catch (error) {
-          console.error(`Error fetching stock data for ${symbol}:`, error);
+          console.error(`Error fetching Yahoo stock data for ${symbol}:`, error);
           return { symbol, c: 0, pc: 0, error: true };
         }
       });
-      marketData.stocks = await Promise.all(stockPromises);
+      
+      // Fetch from Finnhub (for US symbols)
+      const finnhubPromises = stockSymbols.finnhubSymbols.map(async symbol => {
+        try {
+          const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+          const data = await response.json();
+          console.log(`Finnhub stock data for ${symbol}:`, JSON.stringify(data));
+          return { symbol, ...data };
+        } catch (error) {
+          console.error(`Error fetching Finnhub stock data for ${symbol}:`, error);
+          return { symbol, c: 0, pc: 0, error: true };
+        }
+      });
+      
+      marketData.stocks = await Promise.all([...yahooPromises, ...finnhubPromises]);
       
       // Fetch market news from Finnhub with region-specific categories
       try {
