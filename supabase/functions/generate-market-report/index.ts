@@ -41,7 +41,20 @@ serve(async (req) => {
 
     // Fetch stock market data
     if (markets.includes("stocks")) {
-      const stockSymbols = ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"];
+      // Select region-appropriate stock indices
+      const getStockSymbols = (tz: string): string[] => {
+        if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
+          return ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"]; // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
+        } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
+          return ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"]; // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
+        } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
+          return ["^AXJO", "^AORD"]; // ASX 200, All Ordinaries
+        } else {
+          return ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"]; // US markets (default)
+        }
+      };
+      
+      const stockSymbols = getStockSymbols(timezone);
       const stockPromises = stockSymbols.map(async symbol => {
         try {
           const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
@@ -55,11 +68,24 @@ serve(async (req) => {
       });
       marketData.stocks = await Promise.all(stockPromises);
       
-      // Fetch market news from Finnhub
+      // Fetch market news from Finnhub with region-specific categories
       try {
-        const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
+        // Map timezone to Finnhub news category
+        const getNewsCategory = (tz: string): string => {
+          if (tz.includes('Tokyo')) return 'japan';
+          if (tz.includes('Hong_Kong') || tz.includes('Shanghai')) return 'china';
+          if (tz.includes('Singapore')) return 'singapore';
+          if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'australia';
+          if (tz.includes('London')) return 'uk';
+          if (tz.includes('Berlin') || tz.includes('Frankfurt')) return 'germany';
+          if (tz.includes('Paris')) return 'france';
+          return 'general'; // US/Americas default
+        };
+        
+        const newsCategory = getNewsCategory(timezone);
+        const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=${newsCategory}&token=${FINNHUB_API_KEY}`);
         const newsData = await newsResponse.json();
-        console.log(`Finnhub news data:`, JSON.stringify(newsData).substring(0, 200));
+        console.log(`Finnhub ${newsCategory} news data:`, JSON.stringify(newsData).substring(0, 200));
         marketData.news = newsData;
       } catch (error) {
         console.error('Error fetching Finnhub news:', error);
@@ -363,19 +389,25 @@ CONTENT REQUIREMENTS:
 - Day of week: ${userDayOfWeek}
 ${weekendContext ? `\n${weekendContext}\n` : ''}
 
+REGIONAL FOCUS:
+- This report is for readers in the ${sessionContext.region} region
+- PRIORITIZE local market indices and regional developments
+- Reference other regions' markets as context (e.g., "overnight US session", "European close")
+- Focus on news and economic data most relevant to the ${sessionContext.region} region
+
 STRUCTURE (use ## for main sections, ### for subsections):
-1. **Market Overview** - ${isWeekend ? 'Opening paragraph summarizing the week\'s sentiment and Friday\'s closing action' : 'Opening paragraph summarizing today\'s sentiment'} across provided markets
-2. **Equity Markets** - Analyze the exact index data provided with actual percentages${isWeekend ? ' (Friday close and weekly performance)' : ''}
-3. **Foreign Exchange** - Currency pair movements from the provided data${isWeekend ? ' (Friday close and weekly trends)' : ''}
+1. **Market Overview** - ${isWeekend ? 'Opening paragraph summarizing the week\'s sentiment and Friday\'s closing action' : 'Opening paragraph summarizing today\'s sentiment'} across provided markets, emphasizing ${sessionContext.region} markets
+2. **Equity Markets** - Lead with ${sessionContext.region} indices, then reference other major regions. Analyze exact data with actual percentages${isWeekend ? ' (Friday close and weekly performance)' : ''}
+3. **Foreign Exchange** - Currency pair movements relevant to ${sessionContext.region} region${isWeekend ? ' (Friday close and weekly trends)' : ''}
 4. **Cryptocurrencies** - Bitcoin/Ethereum performance from provided data (${isWeekend ? '24/7 trading continues' : 'current session'})
 5. **Commodities** - Energy, metals from provided data${isWeekend ? ' (Friday close and weekly performance)' : ''}
-6. **Market Drivers** - Analyze the news headlines and geopolitical developments provided${isWeekend ? ' from the week' : ''}
+6. **Market Drivers** - Focus on ${sessionContext.region} economic data, policy decisions, and regional news. Include global developments that impact local markets${isWeekend ? ' from the week' : ''}
    - Present geopolitical events factually without subjective judgment
    - Focus on reported facts: what officials announced, what policies were enacted, what events occurred
    - Avoid speculative or opinion-based commentary on political events
    - Connect geopolitical developments to market movements using factual data
-7. **Cross-Asset Correlations** - How different markets influenced each other based on the data
-8. **Outlook** - What traders should watch for ${isWeekend ? 'when markets reopen Monday' : 'next session'}
+7. **Cross-Asset Correlations** - How different markets influenced each other, with focus on ${sessionContext.region} market relationships
+8. **Outlook** - What ${sessionContext.region} traders should watch for ${isWeekend ? 'when markets reopen Monday' : 'next session'}, including relevant global catalysts
 
 FORMATTING:
 ${toneInstruction}
