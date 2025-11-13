@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown, DollarSign, Globe, Zap, Fuel, Calendar } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
+import { prefetchMarketReport } from "@/utils/marketReportPrefetch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +62,11 @@ const Navigation = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/tools/market-breadth" className="flex items-center gap-2">
+                  <Link 
+                    to="/tools/market-breadth" 
+                    className="flex items-center gap-2"
+                    onMouseEnter={() => prefetchMarketReport()}
+                  >
                     <TrendingUp className="h-4 w-4" />
                     {t('navigation.marketBreadth', 'Market Breadth Report')}
                   </Link>
