@@ -155,6 +155,13 @@ const EconomicCalendar = () => {
     };
   }, []);
 
+  // Auto-refresh when timezone changes
+  useEffect(() => {
+    if (selectedTimezone) {
+      fetchEvents();
+    }
+  }, [selectedTimezone]);
+
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
