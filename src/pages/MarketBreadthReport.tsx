@@ -10,6 +10,7 @@ import { Loader2, TrendingUp, Mail, Clock, Calendar, RefreshCw, Zap } from "luci
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
+import { getPrefetchedReport, clearPrefetchedReport } from "@/utils/marketReportPrefetch";
 
 const MarketBreadthReport = () => {
   const { toast } = useToast();
@@ -57,7 +58,23 @@ const MarketBreadthReport = () => {
 
   useEffect(() => {
     loadSubscription();
-    handleGenerateInstant();
+    
+    // Check for prefetched data first
+    const prefetchedData = getPrefetchedReport();
+    if (prefetchedData) {
+      setReport(prefetchedData.report);
+      setReportMetadata({
+        cached: prefetchedData.cached,
+        region: prefetchedData.region,
+        cache_age_minutes: prefetchedData.cache_age_minutes,
+        generated_at: prefetchedData.generated_at,
+      });
+      clearPrefetchedReport(); // Clear after use
+      setHasInitialLoad(true);
+    } else {
+      handleGenerateInstant();
+    }
+    
     setHasInitialLoad(true);
   }, []);
 
