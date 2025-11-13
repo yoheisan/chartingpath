@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide-react";
 import { format, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface EconomicEvent {
   id: string;
@@ -92,6 +93,9 @@ const EconomicCalendar = () => {
     telegram_enabled: false,
   });
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
 
   useEffect(() => {
     checkAuth();
@@ -272,14 +276,31 @@ const EconomicCalendar = () => {
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
+    return formatInTimeZone(
+      new Date(dateString),
+      selectedTimezone,
+      'MMM d, h:mm a zzz'
+    );
   };
+
+  const TIMEZONES = [
+    { value: "America/New_York", label: "New York (ET)" },
+    { value: "America/Chicago", label: "Chicago (CT)" },
+    { value: "America/Denver", label: "Denver (MT)" },
+    { value: "America/Los_Angeles", label: "Los Angeles (PT)" },
+    { value: "America/Toronto", label: "Toronto (ET)" },
+    { value: "Europe/London", label: "London (GMT)" },
+    { value: "Europe/Paris", label: "Paris (CET)" },
+    { value: "Europe/Berlin", label: "Berlin (CET)" },
+    { value: "Europe/Zurich", label: "Zurich (CET)" },
+    { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+    { value: "Asia/Shanghai", label: "Shanghai (CST)" },
+    { value: "Asia/Hong_Kong", label: "Hong Kong (HKT)" },
+    { value: "Asia/Singapore", label: "Singapore (SGT)" },
+    { value: "Australia/Sydney", label: "Sydney (AEDT)" },
+    { value: "Pacific/Auckland", label: "Auckland (NZDT)" },
+    { value: "UTC", label: "UTC" },
+  ];
 
   const getCountryFlag = (region: string) => {
     // Map regions to ISO country codes for flag images
@@ -309,13 +330,13 @@ const EconomicCalendar = () => {
     return names[region] || region;
   };
 
-  // Group events by day of the week in user's timezone
+  // Group events by day of the week in selected timezone
   const groupEventsByDay = (eventsList: EconomicEvent[]) => {
     const grouped: Record<string, EconomicEvent[]> = {};
     
     eventsList.forEach(event => {
       const eventDate = new Date(event.scheduled_time);
-      const dayKey = format(eventDate, 'EEEE, MMMM d, yyyy');
+      const dayKey = formatInTimeZone(eventDate, selectedTimezone, 'EEEE, MMMM d, yyyy');
       
       if (!grouped[dayKey]) {
         grouped[dayKey] = [];
@@ -391,15 +412,6 @@ const EconomicCalendar = () => {
   const nextWeekByDay = groupEventsByDay(nextWeekEvents);
   const releasedByDay = groupEventsByDay(releasedEvents);
 
-  // Get current timezone info
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const currentTime = new Date().toLocaleString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short'
-  });
-
   return (
     <div className="container mx-auto px-4 py-3">
       <div className="max-w-7xl mx-auto space-y-3">
@@ -410,9 +422,18 @@ const EconomicCalendar = () => {
               ⚡ LIVE
             </Badge>
             <h1 className="text-2xl font-bold">Economic Calendar</h1>
-            <Badge variant="outline" className="text-xs">
-              {currentTime} • {userTimezone}
-            </Badge>
+            <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+              <SelectTrigger className="w-[200px] h-8 text-xs bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border z-50">
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value} className="text-xs">
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex items-center gap-2">
