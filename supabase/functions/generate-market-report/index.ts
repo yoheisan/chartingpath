@@ -332,16 +332,48 @@ serve(async (req) => {
     // Build the prompt based on user preferences
     const marketList = markets.join(", ");
     
-    // Adjust timeSpan text based on day of week
-    let timeSpanText = timeSpan === "previous_day" ? "previous trading day" : "past 5 trading sessions";
+    // Determine if local markets have closed today based on timezone and time
+    const getMarketTiming = (tz: string): { hasClosedToday: boolean; marketName: string; closeTime: string } => {
+      const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false }));
+      
+      if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
+        // Asian markets close around 15:00-16:00 local time
+        return { hasClosedToday: hour >= 16, marketName: 'Asian markets', closeTime: '15:00-16:00' };
+      } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
+        // European markets close around 17:00-17:30 local time
+        return { hasClosedToday: hour >= 18, marketName: 'European markets', closeTime: '17:00-17:30' };
+      } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
+        // Australian markets close around 16:00 local time
+        return { hasClosedToday: hour >= 17, marketName: 'Australian markets', closeTime: '16:00' };
+      } else {
+        // US markets close around 16:00 ET
+        return { hasClosedToday: hour >= 17, marketName: 'US markets', closeTime: '16:00 ET' };
+      }
+    };
+    
+    const marketTiming = getMarketTiming(timezone);
+    
+    // Adjust timeSpan text based on market timing and day of week
+    let timeSpanText = "";
     let weekendContext = "";
     
     if (isSunday) {
-      timeSpanText = "the past week's trading activity";
+      timeSpanText = "the past week's trading activity (Friday's close)";
       weekendContext = "Note: Today is Sunday. Stock, forex, and commodity markets are closed. Analyze the week's performance from Monday through Friday. Cryptocurrency markets continue trading 24/7, so crypto data reflects current pricing.";
     } else if (isSaturday) {
-      timeSpanText = "Friday's trading session and the week's performance";
+      timeSpanText = "Friday's close and the week's performance";
       weekendContext = "Note: Today is Saturday. Stock, forex, and commodity markets closed Friday and will reopen Monday. For stocks, forex, and commodities, focus on Friday's closing action and weekly trends. Cryptocurrency markets continue trading 24/7, so crypto data reflects current pricing.";
+    } else if (timeSpan === "previous_day") {
+      // Weekday - check if markets have closed
+      if (marketTiming.hasClosedToday) {
+        timeSpanText = `today's ${marketTiming.marketName} trading session (closed at ${marketTiming.closeTime} local time)`;
+        weekendContext = `Note: ${marketTiming.marketName} have closed for today. The data reflects today's completed trading session.`;
+      } else {
+        timeSpanText = `yesterday's ${marketTiming.marketName} close`;
+        weekendContext = `Note: ${marketTiming.marketName} have not yet closed for today. The data reflects yesterday's completed trading session.`;
+      }
+    } else {
+      timeSpanText = "the past 5 trading sessions";
     }
     
     let toneInstruction = "";
