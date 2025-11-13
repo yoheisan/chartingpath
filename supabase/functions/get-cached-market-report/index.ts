@@ -127,7 +127,20 @@ serve(async (req) => {
 
     // Fetch stock market data
     if (markets.includes("stocks")) {
-      const stockSymbols = ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"];
+      // Select region-appropriate stock indices
+      const getStockSymbols = (tz: string): string[] => {
+        if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
+          return ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"]; // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
+        } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
+          return ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"]; // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
+        } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
+          return ["^AXJO", "^AORD"]; // ASX 200, All Ordinaries
+        } else {
+          return ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "^DJI"]; // US markets (default)
+        }
+      };
+      
+      const stockSymbols = getStockSymbols(timezone);
       const stockPromises = stockSymbols.map(async symbol => {
         try {
           const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
@@ -140,9 +153,22 @@ serve(async (req) => {
       });
       marketData.stocks = await Promise.all(stockPromises);
       
-      // Fetch market news from Finnhub
+      // Fetch market news from Finnhub with region-specific categories
       try {
-        const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`);
+        // Map timezone to Finnhub news category
+        const getNewsCategory = (tz: string): string => {
+          if (tz.includes('Tokyo')) return 'japan';
+          if (tz.includes('Hong_Kong') || tz.includes('Shanghai')) return 'china';
+          if (tz.includes('Singapore')) return 'singapore';
+          if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'australia';
+          if (tz.includes('London')) return 'uk';
+          if (tz.includes('Berlin') || tz.includes('Frankfurt')) return 'germany';
+          if (tz.includes('Paris')) return 'france';
+          return 'general'; // US/Americas default
+        };
+        
+        const newsCategory = getNewsCategory(timezone);
+        const newsResponse = await fetch(`https://finnhub.io/api/v1/news?category=${newsCategory}&token=${FINNHUB_API_KEY}`);
         const newsData = await newsResponse.json();
         marketData.news = newsData;
       } catch (error) {
@@ -453,11 +479,21 @@ SESSION CONTEXT:
 - Day of week: ${userDayOfWeek}
 ${weekendContext}
 
+REGIONAL FOCUS:
+- This report is for readers in the ${sessionContext.region} region
+- PRIORITIZE local market indices and regional developments
+- Reference other regions' markets as context (e.g., "overnight US session", "European close")
+- Focus on news and economic data most relevant to the ${sessionContext.region} region
+
 STRUCTURE (use ## for main sections):
-1. **Market Overview** - Opening paragraph summarizing sentiment
-2. **Equity Markets** - Analyze the exact index data provided
-3. **Foreign Exchange** - Currency pair movements
+1. **Market Overview** - Opening paragraph summarizing sentiment, emphasizing ${sessionContext.region} markets
+2. **Equity Markets** - Lead with ${sessionContext.region} indices, then reference other major regions
+3. **Foreign Exchange** - Currency pair movements relevant to ${sessionContext.region} region
 4. **Cryptocurrencies** - Bitcoin/Ethereum performance
+5. **Commodities** - Energy, metals from provided data
+6. **Market Drivers** - Focus on ${sessionContext.region} economic data, policy decisions, and regional news
+7. **Cross-Asset Correlations** - How different markets influenced each other, with focus on ${sessionContext.region} relationships
+8. **Outlook** - What ${sessionContext.region} traders should watch for next session
 5. **Commodities** - Energy, metals data
 6. **Market Drivers** - Analyze the news summaries provided
 7. **Cross-Asset Correlations** - How different markets influenced each other
