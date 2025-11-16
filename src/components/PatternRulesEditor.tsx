@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,22 +14,18 @@ import {
   Shield, 
   Target,
   AlertCircle,
-  Loader2
+  Loader2,
+  BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-interface PatternRules {
-  entry: string;
-  stopLoss: string;
-  target: string;
-}
+import { PROFESSIONAL_PATTERN_RULES, PatternRules } from '@/utils/ProfessionalPatternRules';
 
 interface PatternRulesEditorProps {
   patternName: string;
   patternId: string;
-  defaultRules: PatternRules;
+  defaultRules?: PatternRules;
   customRules?: PatternRules;
   onRulesChange: (rules: PatternRules) => void;
 }
@@ -41,7 +37,27 @@ export const PatternRulesEditor: React.FC<PatternRulesEditorProps> = ({
   customRules,
   onRulesChange
 }) => {
-  const [rules, setRules] = useState<PatternRules>(customRules || defaultRules);
+  // Use professional rules as default if not provided
+  const professionalRules = PROFESSIONAL_PATTERN_RULES[patternId] || {
+    entry: 'Enter on pattern breakout with volume confirmation',
+    stopLoss: 'Place stop loss beyond pattern boundary',
+    target: 'Target based on measured move methodology'
+  };
+  
+  const finalDefaultRules = defaultRules || professionalRules;
+  const [rules, setRules] = useState<PatternRules>(customRules || finalDefaultRules);
+  const [showProfessionalRules, setShowProfessionalRules] = useState(false);
+
+  // Update rules when pattern changes
+  useEffect(() => {
+    if (customRules) {
+      setRules(customRules);
+    } else {
+      const newRules = defaultRules || professionalRules;
+      setRules(newRules);
+      onRulesChange(newRules);
+    }
+  }, [patternId]);
   const [aiRequest, setAiRequest] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'entry' | 'stopLoss' | 'target'>('entry');
@@ -91,26 +107,63 @@ export const PatternRulesEditor: React.FC<PatternRulesEditorProps> = ({
     toast.success('Rule reset to default');
   };
 
-  const isModified = (ruleType: 'entry' | 'stopLoss' | 'target') => {
-    return rules[ruleType] !== defaultRules[ruleType];
+  const loadProfessionalRules = () => {
+    setRules(professionalRules);
+    onRulesChange(professionalRules);
+    toast.success('Professional rules loaded for ' + patternName);
   };
+
+  const isModified = (ruleType: 'entry' | 'stopLoss' | 'target') => {
+    return rules[ruleType] !== finalDefaultRules[ruleType];
+  };
+
+  const isUsingProfessionalRules = 
+    rules.entry === professionalRules.entry &&
+    rules.stopLoss === professionalRules.stopLoss &&
+    rules.target === professionalRules.target;
 
   return (
     <Card className="border-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Professional Entry & Exit Rules
-          <Badge variant="outline" className="ml-auto">
-            {patternName}
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Entry & Exit Rules
+            <Badge variant="outline" className="ml-2">
+              {patternName}
+            </Badge>
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {isUsingProfessionalRules && (
+              <Badge variant="default" className="gap-1">
+                <BookOpen className="w-3 h-3" />
+                Professional
+              </Badge>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadProfessionalRules}
+              className="text-xs"
+            >
+              <BookOpen className="w-3 h-3 mr-1" />
+              Load Pro Rules
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            These rules are based on professional trading methodologies. Use AI assistance to customize them for your strategy.
+            <div className="space-y-2">
+              <div>Professional rules include volume confirmation, specific entry triggers, and risk-reward targets based on institutional methodologies.</div>
+              {!isUsingProfessionalRules && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Click "Load Pro Rules" to see detailed professional entry/exit criteria for this pattern.
+                </div>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
 
