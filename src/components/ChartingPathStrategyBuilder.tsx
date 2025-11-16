@@ -536,21 +536,26 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                       .map((pattern) => {
                         // Extract base pattern name (remove timestamp suffix)
                         const basePatternId = pattern.id.replace(/_\d+$/, '');
-                        // Convert underscores to hyphens and "inverse" to "inverted"
-                        const patternKey = basePatternId
+                        // Convert underscores to hyphens and handle naming variations
+                        let patternKey = basePatternId
                           .replace(/_/g, '-')
                           .replace(/^inverse-/, 'inverted-');
+                        
+                        // Handle reversed naming conventions
+                        if (patternKey === 'wedge-rising') patternKey = 'rising-wedge';
+                        if (patternKey === 'wedge-falling') patternKey = 'falling-wedge';
+                        
                         const patternDetails = PATTERN_DETAILS[patternKey];
                         
-                        if (!patternDetails) {
-                          console.warn('No pattern details found for:', patternKey, 'from pattern ID:', pattern.id);
-                          return null;
-                        }
-
-                        const defaultRules = {
+                        // Provide generic defaults for patterns not in PATTERN_DETAILS
+                        const defaultRules = patternDetails ? {
                           entry: patternDetails.entry,
                           stopLoss: patternDetails.stopLoss,
                           target: patternDetails.targetMethodology
+                        } : {
+                          entry: "Define your entry criteria for this pattern",
+                          stopLoss: "Set stop loss based on pattern structure and risk tolerance",
+                          target: "Determine target based on pattern measurement and risk-reward ratio"
                         };
 
                         const customRules = strategy.patternRules?.[pattern.id];
