@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { ProfessionalStrategyLibrary } from './ProfessionalStrategyLibrary';
+
 import { ChartingPathStrategyBuilder, ChartingPathStrategy } from './ChartingPathStrategyBuilder';
 import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
 import BacktestResults from './BacktestResults';
@@ -27,7 +27,7 @@ interface SavedChartingPathStrategy {
   backtest_results?: any;
 }
 
-export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ initialTab = 'quick-select' }) => {
+export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ initialTab = 'builder' }) => {
   const { user, subscriptionPlan } = useUserProfile();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
@@ -230,49 +230,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     return !!(strategyAnswers.market?.instrument && strategyAnswers.market?.timeframes && strategyAnswers.market.timeframes.length > 0 && strategyAnswers.style?.approach);
   };
 
-  // Handle chart pattern selection from library
-  const handlePatternSelect = (pattern: any) => {
-    // Create a new ChartingPath strategy with the selected pattern
-    const newStrategy: ChartingPathStrategy = {
-      name: `${pattern.name} Strategy`,
-      description: pattern.description,
-      patterns: [{
-        ...pattern,
-        enabled: true
-      }],
-      targetGainPercent: pattern.defaultTarget,
-      stopLossPercent: pattern.defaultStopLoss,
-      market: {
-        instrumentCategory: 'stocks',
-        instrument: '',
-        timeframes: pattern.timeframes.supported.length > 0 ? [pattern.timeframes.supported[0]] : ['1H'],
-        tradingHours: 'london-ny'
-      },
-      positionSizing: {
-        method: 'risk_based',
-        riskPerTrade: 2.0,
-        maxPositions: 3
-      }
-    };
-    
-    setCurrentChartingPathStrategy(newStrategy);
-    setActiveTab('builder');
-    
-    // Scroll to top after tab change
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-    
-    toast.success(`${pattern.name} pattern selected! Configure your strategy in the builder.`);
-  };
-
-  // Handle return to pattern library from builder
-  const handleBackToPatternLibrary = () => {
-    setActiveTab('quick-select');
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  };
 
   // Handle loading a charting path strategy
   const handleLoadChartingPathStrategy = (strategy: ChartingPathStrategy) => {
@@ -295,13 +252,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
       {/* Minimal Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-3 h-14 bg-muted/30 border border-border">
-          <TabsTrigger 
-            value="quick-select" 
-            className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
-          >
-            Patterns
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-14 bg-muted/30 border border-border">
           <TabsTrigger 
             value="builder" 
             className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
@@ -316,25 +267,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           </TabsTrigger>
         </TabsList>
 
-        {/* Quick Select Tab */}
-        <TabsContent value="quick-select" className="space-y-6">
-          <ProfessionalStrategyLibrary
-            onPatternSelect={handlePatternSelect}
-          />
-        </TabsContent>
-
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
-          {currentChartingPathStrategy?.patterns && currentChartingPathStrategy.patterns.length > 0 && (
-            <Button
-              variant="ghost"
-              onClick={handleBackToPatternLibrary}
-              className="uppercase text-xs tracking-wider font-bold"
-            >
-              ← Patterns
-            </Button>
-          )}
-          
           <ChartingPathStrategyBuilder
             initialStrategy={currentChartingPathStrategy}
             onSave={handleChartingPathStrategySave}
