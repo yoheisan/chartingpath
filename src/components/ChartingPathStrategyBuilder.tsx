@@ -534,9 +534,9 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     {strategy.patterns
                       .filter(p => p.enabled)
                       .map((pattern) => {
-                        // Extract base pattern ID (remove timestamp suffix) and convert underscores to hyphens
-                        const basePatternId = pattern.id.split('_').slice(0, -1).join('_').replace(/_/g, '-');
-                        const patternDetails = PATTERN_DETAILS[basePatternId];
+                        // Convert underscores to hyphens to match PATTERN_DETAILS keys
+                        const patternKey = pattern.id.replace(/_/g, '-');
+                        const patternDetails = PATTERN_DETAILS[patternKey];
                         if (!patternDetails) return null;
 
                         const defaultRules = {
