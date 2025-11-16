@@ -534,10 +534,20 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     {strategy.patterns
                       .filter(p => p.enabled)
                       .map((pattern) => {
+                        // Debug: log pattern information
+                        console.log('Pattern ID:', pattern.id, 'Pattern:', pattern);
+                        console.log('Available PATTERN_DETAILS keys:', Object.keys(PATTERN_DETAILS));
+                        
                         // Convert underscores to hyphens to match PATTERN_DETAILS keys
                         const patternKey = pattern.id.replace(/_/g, '-');
+                        console.log('Looking up patternKey:', patternKey);
                         const patternDetails = PATTERN_DETAILS[patternKey];
-                        if (!patternDetails) return null;
+                        console.log('Found patternDetails:', patternDetails);
+                        
+                        if (!patternDetails) {
+                          console.warn('No pattern details found for:', patternKey);
+                          return null;
+                        }
 
                         const defaultRules = {
                           entry: patternDetails.entry,
