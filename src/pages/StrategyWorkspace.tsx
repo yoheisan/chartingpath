@@ -4,7 +4,7 @@ import { StrategyWorkspaceInterface } from '@/components/StrategyWorkspaceInterf
 
 const StrategyWorkspace = () => {
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'quick-select';
+  const initialTab = searchParams.get('tab') || 'builder';
 
   return (
     <div className="min-h-screen bg-background">
