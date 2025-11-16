@@ -547,6 +547,25 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                         
                         const patternDetails = PATTERN_DETAILS[patternKey];
                         
+                        // Get pattern name from library or use formatted base ID
+                        const getPatternName = () => {
+                          // Search through all categories in PATTERN_CATEGORIES to find the pattern
+                          const allCategories = Object.values({
+                            classical: { patterns: [] },
+                            triangles: { patterns: [] },
+                            // Add other categories as needed
+                          });
+                          
+                          // Try to find pattern name from the pattern definitions
+                          // Convert base ID to readable name (e.g., 'head_shoulders' -> 'Head & Shoulders')
+                          return basePatternId
+                            .split('_')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+                        };
+                        
+                        const patternName = getPatternName();
+                        
                         // Provide generic defaults for patterns not in PATTERN_DETAILS
                         const defaultRules = patternDetails ? {
                           entry: patternDetails.entry,
@@ -565,11 +584,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                             <div className="flex items-center gap-3 pb-3 border-b border-border">
                               <TrendingUp className="h-5 w-5 text-primary" />
                               <h3 className="text-lg font-semibold text-foreground">
-                                {pattern.name}
+                                {patternName}
                               </h3>
                             </div>
                             <PatternRulesEditor
-                              patternName={pattern.name}
+                              patternName={patternName}
                               patternId={pattern.id}
                               defaultRules={defaultRules}
                               customRules={customRules}
