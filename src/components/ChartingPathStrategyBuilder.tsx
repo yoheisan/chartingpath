@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -137,6 +137,14 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
+  const stepContentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top of step content when step changes
+  useEffect(() => {
+    if (stepContentRef.current) {
+      stepContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentStep]);
 
   const steps = [
     { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
@@ -458,7 +466,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
           </div>
 
           {/* Step Content */}
-          <div className="min-h-[400px]">
+          <div ref={stepContentRef} className="min-h-[400px]">
             {currentStep === 0 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
