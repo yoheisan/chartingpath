@@ -50,6 +50,8 @@ import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
 import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
 import { PatternRulesEditor } from './PatternRulesEditor';
+import { PositionManagementSettings } from './PositionManagementSettings';
+import { DEFAULT_POSITION_MANAGEMENT, PositionManagementRules, PatternRules as ProfessionalPatternRules } from '@/utils/ProfessionalPatternRules';
 import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
 
@@ -78,6 +80,7 @@ export interface ChartingPathStrategy {
     riskPerTrade: number; // % of account to risk per trade
     maxPositions: number; // Max concurrent positions
   };
+  positionManagement?: PositionManagementRules; // Position and overlap management
   backtestPeriod?: {
     startDate: string;
     endDate: string;
@@ -118,6 +121,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         riskPerTrade: 2.0,
         maxPositions: 3
       },
+      positionManagement: DEFAULT_POSITION_MANAGEMENT,
       backtestPeriod: {
         startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
         endDate: new Date().toISOString().split('T')[0], // Today
@@ -137,6 +141,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const steps = [
     { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
     { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI' },
+    { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention' },
     { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
     { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
     { id: 'export', title: 'Export', description: 'Generate trading code' }
@@ -223,12 +228,14 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         return strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
       case 1: // Entry & Exit Rules (optional - always marked complete)
         return true; // Rules are optional, default rules are always available
-      case 2: // Target & Stop Loss
+      case 2: // Position Management
+        return strategy.positionManagement !== undefined;
+      case 3: // Target & Stop Loss
         return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
-      case 3: // Backtest
+      case 4: // Backtest
         return strategy.backtestResults != null;
-      case 4: // Export
-        return getStepCompletion(0) && getStepCompletion(2);
+      case 5: // Export
+        return getStepCompletion(0) && getStepCompletion(3);
       default:
         return false;
     }
@@ -564,8 +571,22 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
             {currentStep === 2 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Step 3: Position Management</h3>
+                </div>
+                <PositionManagementSettings
+                  rules={strategy.positionManagement || DEFAULT_POSITION_MANAGEMENT}
+                  onChange={(rules) => updateStrategy('positionManagement', rules)}
+                  selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
+                />
+              </div>
+            )}
+
+            {currentStep === 5 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 3: Set Target % Gain & Stop Loss %</h3>
+                  <h3 className="text-lg font-semibold">Step 4: Set Target % Gain & Stop Loss %</h3>
                 </div>
                 {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
                   <TargetStopLossSettings
@@ -591,7 +612,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 5 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Activity className="w-5 h-5 text-primary" />
