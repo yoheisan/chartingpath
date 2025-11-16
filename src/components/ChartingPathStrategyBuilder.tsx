@@ -424,7 +424,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
       </Card>
 
       {/* Step-Based Builder Interface */}
-      <Card>
+      <Card ref={stepContentRef}>
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Professional Strategy Builder</CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -466,7 +466,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
           </div>
 
           {/* Step Content */}
-          <div ref={stepContentRef} className="min-h-[400px]">
+          <div className="min-h-[400px]">
             {currentStep === 0 && (
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
