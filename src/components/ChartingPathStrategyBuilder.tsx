@@ -582,7 +582,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 3 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
@@ -612,11 +612,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 4 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Activity className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 4: Backtest Strategy</h3>
+                  <h3 className="text-lg font-semibold">Step 5: Backtest Strategy</h3>
                 </div>
                 {canBacktest() ? (
                   <div className="space-y-4">
@@ -753,20 +753,20 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               </div>
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Download className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Step 5: Export Strategy</h3>
+                  <h3 className="text-lg font-semibold">Step 6: Export Strategy</h3>
                 </div>
-                {getStepCompletion(1) && getStepCompletion(2) && getStepCompletion(3) ? (
+                {getStepCompletion(1) && getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(4) ? (
                   <ExportPanel strategy={strategy} />
                 ) : (
                   <Card className="border-amber-200 bg-amber-50">
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete targets and backtest first</span>
+                        <span>Please complete all previous steps first</span>
                       </div>
                     </CardContent>
                   </Card>
