@@ -556,20 +556,27 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                         const customRules = strategy.patternRules?.[pattern.id];
 
                         return (
-                          <PatternRulesEditor
-                            key={pattern.id}
-                            patternName={pattern.name}
-                            patternId={pattern.id}
-                            defaultRules={defaultRules}
-                            customRules={customRules}
-                            onRulesChange={(rules) => {
-                              const updatedRules = {
-                                ...strategy.patternRules,
-                                [pattern.id]: rules
-                              };
-                              updateStrategy('patternRules', updatedRules);
-                            }}
-                          />
+                          <div key={pattern.id} className="space-y-4 p-6 border border-border rounded-lg bg-card">
+                            <div className="flex items-center gap-3 pb-3 border-b border-border">
+                              <TrendingUp className="h-5 w-5 text-primary" />
+                              <h3 className="text-lg font-semibold text-foreground">
+                                {pattern.name}
+                              </h3>
+                            </div>
+                            <PatternRulesEditor
+                              patternName={pattern.name}
+                              patternId={pattern.id}
+                              defaultRules={defaultRules}
+                              customRules={customRules}
+                              onRulesChange={(rules) => {
+                                const updatedRules = {
+                                  ...strategy.patternRules,
+                                  [pattern.id]: rules
+                                };
+                                updateStrategy('patternRules', updatedRules);
+                              }}
+                            />
+                          </div>
                         );
                       })}
                   </div>
