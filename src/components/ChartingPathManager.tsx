@@ -97,13 +97,20 @@ export const ChartingPathManager: React.FC<ChartingPathManagerProps> = ({
 
   if (strategies.length === 0) {
     return (
-      <Card className="border-dashed">
+      <Card className="border-dashed border-2">
         <CardContent className="pt-8 text-center">
           <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Strategies Yet</h3>
+          <h3 className="text-lg font-semibold mb-2">No Pattern Strategies Yet</h3>
           <p className="text-muted-foreground mb-4">
-            Create your first chart pattern strategy from the Pattern Library
+            Build your first chart pattern strategy using the Builder tab above
           </p>
+          <Button 
+            onClick={() => window.location.hash = '#builder'} 
+            variant="outline"
+            className="mt-2"
+          >
+            Go to Builder
+          </Button>
         </CardContent>
       </Card>
     );

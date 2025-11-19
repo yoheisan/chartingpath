@@ -278,11 +278,20 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
         {/* My Strategies Tab */}
         <TabsContent value="library" className="space-y-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-2">Strategy Library</h2>
+            <p className="text-muted-foreground">
+              Your saved strategies will appear here. Build and save strategies in the Builder tab.
+            </p>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
-                Guided
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
+                  Guided Strategies
+                </h3>
+              </div>
               <GuidedStrategyManager 
                 onLoadStrategy={handleLoadStrategy} 
                 onEditStrategy={handleLoadStrategy}
@@ -290,9 +299,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
-                Patterns
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
+                  Pattern Strategies
+                </h3>
+              </div>
               <ChartingPathManager 
                 onLoadStrategy={handleLoadChartingPathStrategy}
               />
