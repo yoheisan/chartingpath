@@ -1,0 +1,25 @@
+{
+  "name": "Triangle Patterns Trading",
+  "description": "Automated detection of ascending, descending, and symmetrical triangles using trendline regression",
+  "strategy": "TrianglePatterns",
+  "symbols": ["BTCUSD"],
+  "startDate": "2023-01-01",
+  "endDate": "2024-01-01",
+  "initialCapital": 10000,
+  "parameters": {
+    "symbol": "BTCUSD",
+    "lookbackPeriod": 50,
+    "minTrendlineTouches": 2,
+    "trendlineTolerance": 0.03,
+    "breakoutConfirmation": 3,
+    "volumeConfirmation": true,
+    "positionSize": 0.1,
+    "stopLoss": 0.04,
+    "takeProfit": 0.08
+  },
+  "costs": {
+    "commission": 0.001,
+    "spread": 0.002,
+    "slippage": 0.001
+  }
+}
