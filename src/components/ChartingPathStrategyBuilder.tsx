@@ -136,6 +136,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
+  const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const stepContentRef = useRef<HTMLDivElement>(null);
 
   // Scroll to top of step content when step changes
@@ -233,10 +234,10 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     switch (stepIndex) {
       case 0: // Market & Timeframe
         return strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
-      case 1: // Entry & Exit Rules (optional - always marked complete)
-        return true; // Rules are optional, default rules are always available
-      case 2: // Position Management
-        return strategy.positionManagement !== undefined;
+      case 1: // Entry & Exit Rules - requires user confirmation
+        return confirmedSteps.has(1);
+      case 2: // Position Management - requires user confirmation
+        return confirmedSteps.has(2) && strategy.positionManagement !== undefined;
       case 3: // Target & Stop Loss
         return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
       case 4: // Backtest
@@ -613,6 +614,29 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     </CardContent>
                   </Card>
                 )}
+                
+                {/* Confirmation Button for Entry & Exit Rules */}
+                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) && (
+                  <div className="flex justify-end mt-6">
+                    <Button 
+                      onClick={() => {
+                        setConfirmedSteps(prev => new Set([...prev, 1]));
+                        toast.success('Entry & Exit Rules confirmed');
+                      }}
+                      disabled={confirmedSteps.has(1)}
+                      size="lg"
+                    >
+                      {confirmedSteps.has(1) ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Rules Confirmed
+                        </>
+                      ) : (
+                        'Confirm Entry & Exit Rules'
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -627,6 +651,27 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                   onChange={(rules) => updateStrategy('positionManagement', rules)}
                   selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
                 />
+                
+                {/* Confirmation Button for Position Management */}
+                <div className="flex justify-end mt-6">
+                  <Button 
+                    onClick={() => {
+                      setConfirmedSteps(prev => new Set([...prev, 2]));
+                      toast.success('Position Management settings confirmed');
+                    }}
+                    disabled={confirmedSteps.has(2)}
+                    size="lg"
+                  >
+                    {confirmedSteps.has(2) ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Settings Confirmed
+                      </>
+                    ) : (
+                      'Confirm Position Management'
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
 
