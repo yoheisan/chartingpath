@@ -210,7 +210,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Card className="border-2 border-border shadow-lg">
+        <Card className="border-2 border-primary/30 shadow-xl bg-card/95 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               Select Your Financial Instrument & Timeframe
@@ -236,7 +236,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchOpen(true)}
-              className="pl-10 pr-20 h-11 bg-muted/30 border-border/50 focus:bg-background"
+              className="pl-10 pr-20 h-11 bg-muted/30 border-2 border-primary/20 focus:bg-background focus:border-primary/40"
             />
             {isSearchOpen && (
               <Button
