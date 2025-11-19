@@ -1,0 +1,24 @@
+{
+  "name": "Head & Shoulders Pattern Trading",
+  "description": "Professional H&S pattern detection with mathematical validation",
+  "strategy": "HeadAndShoulders",
+  "symbols": ["EURUSD"],
+  "startDate": "2023-01-01",
+  "endDate": "2024-01-01",
+  "initialCapital": 10000,
+  "parameters": {
+    "symbol": "EURUSD",
+    "lookbackPeriod": 50,
+    "shoulderSymmetryTolerance": 0.03,
+    "necklineBreakConfirmation": 2,
+    "volumeConfirmation": true,
+    "positionSize": 1000,
+    "stopLoss": 0.02,
+    "takeProfit": 0.05
+  },
+  "costs": {
+    "commission": 0.0001,
+    "spread": 0.0002,
+    "slippage": 0.0001
+  }
+}
