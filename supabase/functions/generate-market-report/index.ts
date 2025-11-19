@@ -517,7 +517,7 @@ Provide a thorough analysis of ${timeSpanText} with actionable insights for trad
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-5-2025-08-07",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
