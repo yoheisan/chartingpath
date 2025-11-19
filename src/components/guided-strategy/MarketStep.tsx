@@ -210,7 +210,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Card className="border-border/50">
+        <Card className="border-2 border-border shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               Select Your Financial Instrument & Timeframe
@@ -295,7 +295,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               {/* Results List */}
               <div className="space-y-2">
                 {selectedInstrumentType === 'stocks' ? (
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-[400px] border-2 rounded-lg p-2 bg-card/50">
                     <div className="space-y-1 pr-4">
                       {filteredStocks.length === 0 ? (
                         <div className="text-center py-12">
@@ -311,10 +311,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                           <div
                             key={stock.symbol}
                             className={cn(
-                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all group',
+                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all group border-2',
                               currentAnswers.instrument === stock.symbol
-                                ? 'bg-primary/10 border border-primary/20'
-                                : 'hover:bg-muted/50 border border-transparent'
+                                ? 'bg-primary/10 border-primary shadow-sm'
+                                : 'hover:bg-muted/50 border-border/30 hover:border-primary/40'
                             )}
                             onClick={() => handleInstrumentChange(stock.symbol)}
                           >
@@ -341,7 +341,7 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                     </div>
                   </ScrollArea>
                 ) : (
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-[400px] border-2 rounded-lg p-2 bg-card/50">
                     <div className="space-y-1 pr-4">
                       {getOtherInstruments().map((instrument) => {
                         const Icon = selectedInstrumentType === 'forex' ? Globe : 
@@ -350,10 +350,10 @@ export const MarketStep: React.FC<MarketStepProps> = ({
                           <div
                             key={instrument.symbol}
                             className={cn(
-                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all',
+                              'flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all border-2',
                               currentAnswers.instrument === instrument.symbol
-                                ? 'bg-primary/10 border border-primary/20'
-                                : 'hover:bg-muted/50 border border-transparent'
+                                ? 'bg-primary/10 border-primary shadow-sm'
+                                : 'hover:bg-muted/50 border-border/30 hover:border-primary/40'
                             )}
                             onClick={() => handleInstrumentChange(instrument.symbol)}
                           >
