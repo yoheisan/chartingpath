@@ -110,6 +110,28 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
     }
   };
 
+  const getSignalStyle = (signal: 'bullish' | 'bearish' | 'neutral') => {
+    switch (signal) {
+      case 'bullish': 
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+      case 'bearish': 
+        return 'bg-rose-100 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+      case 'neutral': 
+        return 'bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-300 border-slate-200 dark:border-slate-800';
+      default: 
+        return '';
+    }
+  };
+
+  const getSignalLabel = (signal: 'bullish' | 'bearish' | 'neutral') => {
+    switch (signal) {
+      case 'bullish': return '📈 Bullish';
+      case 'bearish': return '📉 Bearish';
+      case 'neutral': return '↔️ Directional';
+      default: return signal;
+    }
+  };
+
   const clearFilters = () => {
     setSearchTerm('');
     setSortBy('name-asc');
@@ -141,7 +163,10 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
               </div>
               
               {/* Category and Accuracy */}
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3 flex-wrap">
+                <Badge variant="outline" className={`text-xs border ${getSignalStyle(pattern.signal)}`}>
+                  {getSignalLabel(pattern.signal)}
+                </Badge>
                 <Badge variant="outline" className="text-xs">
                   {pattern.category}
                 </Badge>
@@ -229,7 +254,10 @@ export const ProfessionalStrategyLibrary: React.FC<ProfessionalStrategyLibraryPr
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-base truncate">{pattern.name}</h3>
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex gap-2 shrink-0 flex-wrap">
+                        <Badge variant="outline" className={`text-xs border ${getSignalStyle(pattern.signal)}`}>
+                          {getSignalLabel(pattern.signal)}
+                        </Badge>
                         <Badge variant="outline" className="text-xs">
                           <CategoryIcon className="w-3 h-3 mr-1" />
                           {pattern.category}
