@@ -58,49 +58,114 @@ export class BacktesterV2Adapter {
     strategyAnswers: GuidedStrategyAnswers
   ): SingleBacktestConfig {
     const approach = strategyAnswers.style?.approach || 'trend-following';
+    const indicators = strategyAnswers.style?.indicators || [];
+    const conditions = strategyAnswers.style?.conditions || [];
+    const advancedParams = strategyAnswers.parameters || {};
     
-    // Map strategy approaches to specific strategy parameters
+    // Extract indicator parameters from configured indicators
+    const getIndicatorParams = () => {
+      const indicatorParams: any = {};
+      
+      indicators.forEach((indicator: any) => {
+        const type = indicator.type;
+        const params = indicator.parameters || {};
+        
+        switch (type) {
+          case 'sma':
+            indicatorParams.fastPeriod = params.length || 20;
+            indicatorParams.slowPeriod = (params.length || 20) * 2; // Default to 2x fast
+            break;
+          case 'ema':
+            indicatorParams.fastPeriod = params.length || 12;
+            indicatorParams.slowPeriod = params.length ? params.length * 2 : 26;
+            break;
+          case 'rsi':
+            indicatorParams.rsiPeriod = params.length || 14;
+            indicatorParams.rsiOverbought = 70;
+            indicatorParams.rsiOversold = 30;
+            break;
+          case 'macd':
+            indicatorParams.macdFast = params.fastLength || 12;
+            indicatorParams.macdSlow = params.slowLength || 26;
+            indicatorParams.macdSignal = params.signalLength || 9;
+            break;
+          case 'bollinger_bands':
+            indicatorParams.bbPeriod = params.length || 20;
+            indicatorParams.bbStdDev = params.stdDev || 2.0;
+            break;
+          case 'atr':
+            indicatorParams.atrPeriod = params.length || 14;
+            indicatorParams.atrMultiplier = advancedParams.atr_mult || 2.0;
+            break;
+          case 'stoch':
+            indicatorParams.stochK = params.kPeriod || 14;
+            indicatorParams.stochD = params.dPeriod || 3;
+            indicatorParams.stochSmooth = params.smooth || 3;
+            break;
+        }
+      });
+      
+      return indicatorParams;
+    };
+    
+    // Map strategy approaches to specific strategy parameters with indicator integration
     const getStrategyParams = () => {
+      const baseParams = {
+        symbol: params.instrument,
+        positionSize: params.positionSize / 100,
+        stopLoss: params.stopLoss ? params.stopLoss / 100 : undefined,
+        takeProfit: params.takeProfit ? params.takeProfit / 100 : undefined,
+        ...getIndicatorParams()
+      };
+
       switch (approach) {
         case 'trend-following':
           return {
+            ...baseParams,
             tradableSymbol: params.instrument,
-            triggerSymbol: params.instrument, 
-            longThreshold: 1.02,  // 2% above moving average
-            shortThreshold: 0.98, // 2% below moving average
-            positionSize: params.positionSize / 100,
-            stopLoss: params.stopLoss ? params.stopLoss / 100 : undefined,
-            takeProfit: params.takeProfit ? params.takeProfit / 100 : undefined
+            triggerSymbol: params.instrument,
+            fastPeriod: baseParams.fastPeriod || 20,
+            slowPeriod: baseParams.slowPeriod || 50,
+            macdFast: baseParams.macdFast || 12,
+            macdSlow: baseParams.macdSlow || 26,
+            macdSignal: baseParams.macdSignal || 9
           };
         case 'mean-reversion':
           return {
+            ...baseParams,
             tradableSymbol: params.instrument,
             triggerSymbol: params.instrument,
-            longThreshold: 0.95,  // Buy when 5% below mean
-            shortThreshold: 1.05, // Sell when 5% above mean
-            positionSize: params.positionSize / 100,
-            stopLoss: params.stopLoss ? params.stopLoss / 100 : undefined,
-            takeProfit: params.takeProfit ? params.takeProfit / 100 : undefined
+            rsiPeriod: baseParams.rsiPeriod || 14,
+            rsiOverbought: baseParams.rsiOverbought || 70,
+            rsiOversold: baseParams.rsiOversold || 30,
+            bbPeriod: baseParams.bbPeriod || 20,
+            bbStdDev: baseParams.bbStdDev || 2.0
           };
         case 'breakout':
           return {
+            ...baseParams,
             tradableSymbol: params.instrument,
             triggerSymbol: params.instrument,
-            longThreshold: 1.05,  // Breakout above 5%
-            shortThreshold: 0.95, // Breakdown below 5%
-            positionSize: params.positionSize / 100,
-            stopLoss: params.stopLoss ? params.stopLoss / 100 : undefined,
-            takeProfit: params.takeProfit ? params.takeProfit / 100 : undefined
+            lookbackPeriod: baseParams.bbPeriod || 20,
+            volatilityThreshold: baseParams.bbStdDev || 2.0,
+            atrPeriod: baseParams.atrPeriod || 14,
+            atrMultiplier: baseParams.atrMultiplier || 2.0
+          };
+        case 'custom':
+          // For custom strategies, use all configured indicators
+          return {
+            ...baseParams,
+            tradableSymbol: params.instrument,
+            triggerSymbol: params.instrument,
+            // Include all indicator parameters
+            indicators: indicators,
+            conditions: conditions
           };
         default:
           return {
+            ...baseParams,
             tradableSymbol: params.instrument,
-            triggerSymbol: params.instrument,
-            longThreshold: 1.0,
-            shortThreshold: 1.0,
-            positionSize: params.positionSize / 100,
-            stopLoss: params.stopLoss ? params.stopLoss / 100 : undefined,
-            takeProfit: params.takeProfit ? params.takeProfit / 100 : undefined
+            triggerSymbol: params.instrument
           };
       }
     };
@@ -237,9 +302,18 @@ export class BacktesterV2Adapter {
     const approach = strategyAnswers.style?.approach?.replace('-', ' ') || 'Custom';
     const instrument = strategyAnswers.market?.instrument || 'Strategy';
     const timeframe = strategyAnswers.market?.timeframes?.[0] || '1h';
+    const indicators = strategyAnswers.style?.indicators || [];
     
-    return `${instrument} ${approach} ${timeframe}`.split(' ').map(word => 
+    // Add indicator names to strategy name if present
+    const indicatorNames = indicators
+      .map((ind: any) => ind.type.toUpperCase())
+      .slice(0, 2) // Limit to first 2 indicators for brevity
+      .join('+');
+    
+    const baseName = `${instrument} ${approach} ${timeframe}`.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
+    
+    return indicatorNames ? `${baseName} [${indicatorNames}]` : baseName;
   }
 }
