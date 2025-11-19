@@ -227,13 +227,21 @@ export const GuidedStrategyManager: React.FC<GuidedStrategyManagerProps> = ({
 
       {/* Strategy List */}
       {sortedStrategies.length === 0 ? (
-        <Card>
+        <Card className="border-dashed border-2">
           <CardContent className="p-6 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Strategies Found</h3>
-            <p className="text-muted-foreground">
-              {searchTerm ? 'No strategies match your search.' : 'Create your first guided strategy to get started.'}
+            <h3 className="text-lg font-medium mb-2">No Guided Strategies Yet</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchTerm ? 'No strategies match your search.' : 'Build your first guided strategy using the Builder tab above'}
             </p>
+            {!searchTerm && (
+              <Button 
+                onClick={() => window.location.hash = '#builder'} 
+                variant="outline"
+              >
+                Go to Builder
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
