@@ -1371,39 +1371,6 @@ export type Database = {
         }
         Relationships: []
       }
-      market_reports: {
-        Row: {
-          created_at: string
-          generated_at: string
-          id: string
-          markets: string[]
-          report_content: string
-          time_span: string
-          timezone: string
-          tone: string
-        }
-        Insert: {
-          created_at?: string
-          generated_at?: string
-          id?: string
-          markets?: string[]
-          report_content: string
-          time_span?: string
-          timezone: string
-          tone?: string
-        }
-        Update: {
-          created_at?: string
-          generated_at?: string
-          id?: string
-          markets?: string[]
-          report_content?: string
-          time_span?: string
-          timezone?: string
-          tone?: string
-        }
-        Relationships: []
-      }
       moderator_reports: {
         Row: {
           assigned_to: string | null
