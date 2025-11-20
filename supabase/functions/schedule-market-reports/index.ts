@@ -1,15 +1,15 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Timezones to pre-generate reports for
+// Single source of truth for timezones
 const TIMEZONES = [
   "America/New_York",
-  "America/Chicago", 
+  "America/Chicago",
   "America/Los_Angeles",
   "Europe/London",
   "Europe/Paris",
@@ -33,8 +33,13 @@ serve(async (req) => {
     );
 
     const results = [];
+    const reportConfig = {
+      markets: ["stocks", "forex", "crypto", "commodities"],
+      timeSpan: "previous_day",
+      tone: "professional"
+    };
 
-    // Generate reports for all major timezones
+    // Generate reports for all timezones
     for (const timezone of TIMEZONES) {
       try {
         console.log(`Generating report for ${timezone}...`);
@@ -45,9 +50,7 @@ serve(async (req) => {
           {
             body: {
               timezone,
-              markets: ["stocks", "forex", "crypto", "commodities"],
-              timeSpan: "previous_day",
-              tone: "professional"
+              ...reportConfig
             }
           }
         );
@@ -66,9 +69,9 @@ serve(async (req) => {
           .from("cached_market_reports")
           .insert({
             timezone,
-            markets: ["stocks", "forex", "crypto", "commodities"],
-            time_span: "previous_day",
-            tone: "professional",
+            markets: reportConfig.markets,
+            time_span: reportConfig.timeSpan,
+            tone: reportConfig.tone,
             report: generatedData.report,
             expires_at: expiresAt.toISOString()
           });
@@ -77,7 +80,7 @@ serve(async (req) => {
           console.error(`Error caching report for ${timezone}:`, cacheError);
           results.push({ timezone, success: false, error: cacheError.message });
         } else {
-          console.log(`Successfully cached report for ${timezone}`);
+          console.log(`✓ Successfully cached report for ${timezone}`);
           results.push({ timezone, success: true });
         }
 
@@ -92,7 +95,7 @@ serve(async (req) => {
     await supabaseClient.rpc("cleanup_expired_reports");
 
     const successCount = results.filter(r => r.success).length;
-    console.log(`Completed: ${successCount}/${TIMEZONES.length} reports generated`);
+    console.log(`✅ Completed: ${successCount}/${TIMEZONES.length} reports generated`);
 
     return new Response(
       JSON.stringify({
