@@ -73,6 +73,21 @@ serve(async (req) => {
         // Check frequency (weekly = only on Mondays)
         if (sub.frequency === "weekly" && currentDay !== 1) continue;
 
+        // Check if report was already sent recently (deduplication)
+        if (sub.last_sent_at) {
+          const lastSentTime = new Date(sub.last_sent_at);
+          const hoursSinceLastSent = (now.getTime() - lastSentTime.getTime()) / (1000 * 60 * 60);
+          
+          // For daily: don't send if already sent within last 12 hours
+          // For weekly: don't send if already sent within last 6 days (144 hours)
+          const cooldownHours = sub.frequency === "weekly" ? 144 : 12;
+          
+          if (hoursSinceLastSent < cooldownHours) {
+            console.log(`Skipping ${sub.email}: Already sent ${hoursSinceLastSent.toFixed(1)} hours ago (cooldown: ${cooldownHours}h)`);
+            continue;
+          }
+        }
+
         console.log(`Generating report for ${sub.email}`);
 
         // Fetch or generate the report via the shared get-cached-market-report function
@@ -211,6 +226,16 @@ serve(async (req) => {
             'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
           },
         });
+
+        // Update last_sent_at timestamp to prevent duplicates
+        const { error: updateError } = await supabase
+          .from('market_report_subscriptions')
+          .update({ last_sent_at: now.toISOString() })
+          .eq('id', sub.id);
+
+        if (updateError) {
+          console.error(`Failed to update last_sent_at for ${sub.email}:`, updateError);
+        }
 
         console.log(`Report sent successfully to ${sub.email}`);
       } catch (error) {

@@ -1327,6 +1327,7 @@ export type Database = {
           frequency: string
           id: string
           is_active: boolean
+          last_sent_at: string | null
           markets: string[]
           send_time: string
           time_span: string
@@ -1342,6 +1343,7 @@ export type Database = {
           frequency?: string
           id?: string
           is_active?: boolean
+          last_sent_at?: string | null
           markets?: string[]
           send_time?: string
           time_span?: string
@@ -1357,6 +1359,7 @@ export type Database = {
           frequency?: string
           id?: string
           is_active?: boolean
+          last_sent_at?: string | null
           markets?: string[]
           send_time?: string
           time_span?: string
