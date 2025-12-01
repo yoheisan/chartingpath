@@ -9,9 +9,6 @@ verify_jwt = true
 [functions.seed-all-content]
 verify_jwt = true
 
-[functions.generate-market-reports-background]
-verify_jwt = false
-
 [functions.pattern-detector]
 verify_jwt = false
 
