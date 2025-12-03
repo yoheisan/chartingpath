@@ -20,9 +20,9 @@ export const MarketReportProvider = ({ children }: { children: ReactNode }) => {
 
   const prefetchReport = async (timezone: string) => {
     try {
-      // First, try to fetch from the database
+      // First, try to fetch from the cached_market_reports table
       const { data: dbReports, error: dbError } = await supabase
-        .from("market_reports")
+        .from("cached_market_reports")
         .select("*")
         .eq("timezone", timezone)
         .order("generated_at", { ascending: false })
@@ -36,7 +36,7 @@ export const MarketReportProvider = ({ children }: { children: ReactNode }) => {
         if (reportAge < 15 * 60 * 1000) {
           console.log("Using cached report from database");
           setCachedReport({
-            report: dbReport.report_content,
+            report: dbReport.report,
             timestamp: new Date(dbReport.generated_at).getTime(),
             timezone,
           });
