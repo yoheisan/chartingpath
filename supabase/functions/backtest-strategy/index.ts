@@ -402,6 +402,18 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
   const trades: any[] = [];
   let balance = 10000; // Starting balance
   
+  // Build pattern lookup for per-pattern TP/SL
+  const patternSettings = new Map<string, { target: number; stopLoss: number }>();
+  for (const pattern of strategy.patterns || []) {
+    if (pattern.enabled) {
+      // Use customTarget/customStopLoss if set, otherwise use defaults
+      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 5;
+      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 2;
+      patternSettings.set(pattern.name, { target, stopLoss });
+      patternSettings.set(pattern.id, { target, stopLoss });
+    }
+  }
+  
   for (const signal of signals) {
     const entryIndex = signal.index;
     if (entryIndex >= data.length - 1) continue;
@@ -409,10 +421,12 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
     const entryPrice = data[entryIndex].close;
     const positionSize = balance * (strategy.positionSizing?.riskPerTrade || 2) / 100;
     
-    // Get pattern-specific rules or use defaults
-    const patternRules = strategy.patternRules?.[signal.patternId];
-    const targetPercent = strategy.targetGainPercent || 5;
-    const stopPercent = strategy.stopLossPercent || 2;
+    // Get pattern-specific TP/SL
+    const settings = patternSettings.get(signal.patternName) || 
+                     patternSettings.get(signal.patternId) || 
+                     { target: 5, stopLoss: 2 };
+    const targetPercent = settings.target;
+    const stopPercent = settings.stopLoss;
     
     let exitIndex = entryIndex + 1;
     let exitPrice = data[exitIndex].close;
@@ -452,7 +466,9 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
       exitReason,
       pnl,
       pnlPercent: ((exitPrice - entryPrice) / entryPrice) * 100,
-      holdingBars: exitIndex - entryIndex
+      holdingBars: exitIndex - entryIndex,
+      targetPercent,
+      stopPercent
     });
   }
   
