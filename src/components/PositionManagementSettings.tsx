@@ -245,12 +245,17 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
           <>
             <Separator />
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">Your Selected Patterns Priority</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Your Selected Patterns Priority</Label>
+                <Badge variant="secondary" className="text-xs">
+                  {selectedPatterns.length} pattern{selectedPatterns.length !== 1 ? 's' : ''} enabled
+                </Badge>
+              </div>
               <p className="text-xs text-muted-foreground">
-                When conflicts occur, patterns are prioritized in this order (1 = highest priority, traded first).
+                When conflicts occur and max trades ({rules.maxSimultaneousTrades}) is reached, patterns are prioritized in this order (1 = highest priority, traded first).
               </p>
               <p className="text-xs text-muted-foreground">
-                <strong>Reliability Score (1-10):</strong> Based on historical backtesting data measuring pattern success rate, 
+                <strong>Reliability Score (1-10):</strong> Based on historical backtesting data measuring pattern success rate,
                 average risk-reward ratio, and consistency across market conditions. Higher scores indicate more dependable patterns.
               </p>
               <div className="grid gap-2">
