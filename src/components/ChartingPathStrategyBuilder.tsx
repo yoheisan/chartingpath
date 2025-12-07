@@ -73,7 +73,7 @@ export interface ChartingPathStrategy {
     timeframes: string[]; // Array to match MarketStep component
     tradingHours: string;
   };
-  patterns: any[]; // Selected chart patterns to trade
+  patterns: any[]; // Selected chart patterns to trade (uses PatternConfig from PatternLibrary with optional custom TP/SL)
   patternRules?: Record<string, PatternRules>; // Custom rules per pattern
   targetGainPercent: number; // Target profit in %
   stopLossPercent: number; // Stop loss in %
@@ -683,6 +683,12 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                       updateStrategy('targetGainPercent', data.targetGainPercent);
                       updateStrategy('stopLossPercent', data.stopLossPercent);
                       updateStrategy('positionSizing', data.positionSizing);
+                    }}
+                    onPatternChange={(patternId, updates) => {
+                      const updatedPatterns = strategy.patterns.map(p => 
+                        p.id === patternId ? { ...p, ...updates } : p
+                      );
+                      updateStrategy('patterns', updatedPatterns);
                     }}
                   />
                 ) : (

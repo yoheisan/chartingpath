@@ -6,16 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Info, BookOpen, Wand2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Info, BookOpen, Wand2, ChevronDown, ChevronUp, Settings2, RotateCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PROFESSIONAL_PATTERN_RULES, PatternRules } from '@/utils/ProfessionalPatternRules';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-interface SelectedPattern {
+export interface SelectedPattern {
   id: string;
   patternType?: string; // Original pattern ID without timestamp
   name: string;
   enabled: boolean;
+  customTarget?: number; // Per-pattern override
+  customStopLoss?: number; // Per-pattern override
+  useCustomTPSL?: boolean; // Toggle to use custom or default
 }
 
 interface TargetStopLossSettingsProps {
@@ -28,6 +32,7 @@ interface TargetStopLossSettingsProps {
   };
   selectedPatterns?: SelectedPattern[];
   onChange: (data: any) => void;
+  onPatternChange?: (patternId: string, updates: Partial<SelectedPattern>) => void;
 }
 
 // Pattern-specific default targets and stop losses (based on professional rules)
@@ -175,10 +180,12 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
   stopLossPercent,
   positionSizing,
   selectedPatterns = [],
-  onChange
+  onChange,
+  onPatternChange
 }) => {
   const [showMethodology, setShowMethodology] = useState<string | null>(null);
   const [expandedPatterns, setExpandedPatterns] = useState(false);
+  const [editingPattern, setEditingPattern] = useState<string | null>(null);
 
   const riskRewardRatio = stopLossPercent > 0 ? targetGainPercent / stopLossPercent : 0;
 
@@ -295,41 +302,141 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
               </Badge>
             </div>
 
-            {/* Pattern Methodologies (Collapsible) */}
+            {/* Pattern-Specific Overrides */}
             <Collapsible open={expandedPatterns} onOpenChange={setExpandedPatterns}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full mt-2 gap-2">
                   {expandedPatterns ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  {expandedPatterns ? 'Hide' : 'Show'} Pattern Methodologies ({enabledPatterns.length})
+                  {expandedPatterns ? 'Hide' : 'Show'} Per-Pattern Settings ({enabledPatterns.length})
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2 pt-3">
-              {recommendedValues.patterns.map((pattern) => {
+              <CollapsibleContent className="space-y-3 pt-3">
+                {recommendedValues.patterns.map((pattern) => {
                   const hasCustomDefaults = !!PATTERN_DEFAULTS[pattern.patternKey];
+                  const originalPattern = selectedPatterns.find(p => p.id === pattern.id);
+                  const useCustom = originalPattern?.useCustomTPSL || false;
+                  const customTarget = originalPattern?.customTarget ?? pattern.target;
+                  const customStopLoss = originalPattern?.customStopLoss ?? pattern.stopLoss;
+                  const isEditing = editingPattern === pattern.id;
+                  
                   return (
                     <div 
                       key={pattern.id}
-                      className="p-3 rounded-lg border bg-muted/30 space-y-2"
+                      className={`p-3 rounded-lg border space-y-3 transition-colors ${
+                        useCustom ? 'bg-primary/5 border-primary/30' : 'bg-muted/30'
+                      }`}
                     >
+                      {/* Header Row */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm">{pattern.name}</span>
                           {!hasCustomDefaults && (
                             <Badge variant="secondary" className="text-xs">Generic</Badge>
                           )}
+                          {useCustom && (
+                            <Badge variant="default" className="text-xs bg-primary/80">
+                              Custom
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex gap-2">
-                          <Badge variant="outline" className="text-xs text-green-600">
-                            T: {pattern.target}%
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-xs ${useCustom ? 'text-green-700 border-green-300 bg-green-50' : 'text-green-600'}`}>
+                            T: {useCustom ? customTarget : pattern.target}%
                           </Badge>
-                          <Badge variant="outline" className="text-xs text-red-600">
-                            SL: {pattern.stopLoss}%
+                          <Badge variant="outline" className={`text-xs ${useCustom ? 'text-red-700 border-red-300 bg-red-50' : 'text-red-600'}`}>
+                            SL: {useCustom ? customStopLoss : pattern.stopLoss}%
                           </Badge>
                         </div>
                       </div>
+
+                      {/* Methodology */}
                       <p className="text-xs text-muted-foreground">
                         {pattern.methodology}
                       </p>
+
+                      {/* Custom Override Toggle */}
+                      {onPatternChange && (
+                        <div className="pt-2 border-t border-border/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id={`custom-${pattern.id}`}
+                                checked={useCustom}
+                                onCheckedChange={(checked) => {
+                                  onPatternChange(pattern.id, { 
+                                    useCustomTPSL: checked,
+                                    customTarget: checked ? customTarget : undefined,
+                                    customStopLoss: checked ? customStopLoss : undefined
+                                  });
+                                }}
+                              />
+                              <Label htmlFor={`custom-${pattern.id}`} className="text-xs cursor-pointer">
+                                Use custom TP/SL for this pattern
+                              </Label>
+                            </div>
+                            {useCustom && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => {
+                                  onPatternChange(pattern.id, {
+                                    customTarget: pattern.target,
+                                    customStopLoss: pattern.stopLoss
+                                  });
+                                }}
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Custom TP/SL Inputs */}
+                          {useCustom && (
+                            <div className="grid grid-cols-2 gap-3 mt-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs flex items-center gap-1">
+                                  <TrendingUp className="w-3 h-3 text-green-500" />
+                                  Target %
+                                </Label>
+                                <Input
+                                  type="number"
+                                  value={customTarget}
+                                  onChange={(e) => onPatternChange(pattern.id, { 
+                                    customTarget: parseFloat(e.target.value) || 0 
+                                  })}
+                                  min={0.1}
+                                  max={50}
+                                  step={0.1}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs flex items-center gap-1">
+                                  <TrendingDown className="w-3 h-3 text-red-500" />
+                                  Stop Loss %
+                                </Label>
+                                <Input
+                                  type="number"
+                                  value={customStopLoss}
+                                  onChange={(e) => onPatternChange(pattern.id, { 
+                                    customStopLoss: parseFloat(e.target.value) || 0 
+                                  })}
+                                  min={0.1}
+                                  max={20}
+                                  step={0.1}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="col-span-2 text-xs text-muted-foreground flex items-center gap-1">
+                                <Info className="w-3 h-3" />
+                                R:R Ratio: 1:{(customTarget / customStopLoss).toFixed(2)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
