@@ -154,12 +154,13 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
       {enabledPatterns.length > 0 && (
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-base">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary" />
-                Pattern-Specific Recommendations
-              </div>
-              <Button 
+            <CardTitle className="flex flex-col gap-2 text-base">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  Pattern-Specific Recommendations
+                </div>
+                <Button
                 variant={isUsingDefaults ? "secondary" : "default"}
                 size="sm"
                 onClick={applyPatternDefaults}
@@ -167,8 +168,16 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
                 className="gap-2"
               >
                 <Wand2 className="w-4 h-4" />
-                {isUsingDefaults ? 'Applied' : 'Apply Defaults'}
-              </Button>
+                  {isUsingDefaults ? 'Applied' : 'Apply Defaults'}
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {enabledPatterns.map((pattern) => (
+                  <Badge key={pattern.id} variant="secondary" className="text-xs font-normal">
+                    {pattern.name}
+                  </Badge>
+                ))}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
