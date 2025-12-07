@@ -121,6 +121,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         riskPerTrade: 2.0,
         maxPositions: 3
       },
+      positionManagement: DEFAULT_POSITION_MANAGEMENT, // Initialize with defaults
       backtestPeriod: {
         startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
         endDate: new Date().toISOString().split('T')[0], // Today
