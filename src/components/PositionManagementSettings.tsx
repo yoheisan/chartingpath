@@ -139,6 +139,45 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
           </div>
         </div>
 
+        <Separator />
+
+        {/* Max Account Drawdown - Stops ALL Trading */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-semibold">Max Account Drawdown (%)</Label>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{rules.maxAccountDrawdown || 20}% limit</Badge>
+              <Badge variant="destructive" className="text-xs">
+                Stops Trading
+              </Badge>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Maximum cumulative loss allowed before halting all trading. This is the "circuit breaker" for the entire backtest.
+          </p>
+          <Alert className="bg-destructive/10 border-destructive/30">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-xs text-destructive dark:text-destructive-foreground">
+              <strong>Backtest Circuit Breaker:</strong> When total realized losses from the initial capital reach this threshold, 
+              NO new trades will be entered for the remainder of the backtest. Unlike Maximum Total Risk (which exits positions 
+              but allows new trades), this completely halts trading activity.
+            </AlertDescription>
+          </Alert>
+          <Slider
+            value={[rules.maxAccountDrawdown || 20]}
+            onValueChange={([value]) => handleChange('maxAccountDrawdown', value)}
+            min={5}
+            max={50}
+            step={5}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Conservative (5-15%)</span>
+            <span>Moderate (20-30%)</span>
+            <span>Aggressive (35-50%)</span>
+          </div>
+        </div>
+
         {/* Risk Calculation Display */}
         <Alert variant={isRiskExceeded ? "destructive" : "default"}>
           {isRiskExceeded ? (

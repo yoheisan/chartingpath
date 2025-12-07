@@ -13,6 +13,7 @@ export interface PositionManagementRules {
   maxSimultaneousTrades: number;
   maxRiskPerTrade: number;
   maxTotalRisk: number;
+  maxAccountDrawdown: number; // Circuit breaker - stops ALL trading when reached
   patternPriority: Record<string, number>; // Higher number = higher priority
   conflictResolution: 'first-formed' | 'higher-priority' | 'higher-quality';
 }
@@ -428,7 +429,8 @@ Exit 50% at 1:1.5 R:R`
 export const DEFAULT_POSITION_MANAGEMENT: PositionManagementRules = {
   maxSimultaneousTrades: 3,
   maxRiskPerTrade: 2.0, // 2% per trade
-  maxTotalRisk: 6.0, // 6% total exposure
+  maxTotalRisk: 6.0, // 6% total exposure - auto-exits all open positions
+  maxAccountDrawdown: 20.0, // 20% max account loss - stops ALL trading
   patternPriority: {
     'cup-handle': 10,
     'head-shoulders': 9,

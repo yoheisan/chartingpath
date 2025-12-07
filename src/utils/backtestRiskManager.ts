@@ -21,10 +21,20 @@ export interface OpenPosition {
 }
 
 export interface RiskManagerConfig {
-  maxTotalRisk: number; // e.g., 6 for 6%
+  maxTotalRisk: number; // e.g., 6 for 6% - triggers auto-exit of all open positions
+  maxAccountDrawdown: number; // e.g., 20 for 20% - stops all trading for the backtest
   riskPerTrade: number; // e.g., 2 for 2%
   maxSimultaneousTrades: number;
   initialBalance: number;
+}
+
+export interface AccountState {
+  initialBalance: number;
+  currentBalance: number;
+  peakBalance: number;
+  totalRealizedPnL: number;
+  currentDrawdownPercent: number;
+  maxDrawdownReached: boolean;
 }
 
 export interface RiskCheckResult {
@@ -210,12 +220,21 @@ export function processBarWithRiskManagement(
 }
 
 /**
- * Check if a new trade can be opened based on current risk exposure
+ * Check if a new trade can be opened based on current risk exposure and account drawdown
  */
 export function canOpenNewTrade(
   openPositions: OpenPosition[],
-  config: RiskManagerConfig
+  config: RiskManagerConfig,
+  accountState?: AccountState
 ): { allowed: boolean; reason?: string } {
+  // Check if max account drawdown has been reached - stops ALL trading
+  if (accountState?.maxDrawdownReached) {
+    return {
+      allowed: false,
+      reason: `Max account drawdown reached (${accountState.currentDrawdownPercent.toFixed(1)}% >= ${config.maxAccountDrawdown}%). Trading halted for this backtest.`
+    };
+  }
+
   // Check max simultaneous trades
   if (openPositions.length >= config.maxSimultaneousTrades) {
     return {
@@ -243,4 +262,47 @@ export function canOpenNewTrade(
   }
 
   return { allowed: true };
+}
+
+/**
+ * Update account state after trades are closed
+ */
+export function updateAccountState(
+  accountState: AccountState,
+  realizedPnL: number,
+  config: RiskManagerConfig
+): AccountState {
+  const newBalance = accountState.currentBalance + realizedPnL;
+  const newPeakBalance = Math.max(accountState.peakBalance, newBalance);
+  const newTotalRealizedPnL = accountState.totalRealizedPnL + realizedPnL;
+  
+  // Calculate drawdown from peak (or initial balance, whichever gives larger drawdown)
+  const drawdownFromPeak = ((newPeakBalance - newBalance) / newPeakBalance) * 100;
+  const drawdownFromInitial = ((accountState.initialBalance - newBalance) / accountState.initialBalance) * 100;
+  const currentDrawdownPercent = Math.max(drawdownFromPeak, drawdownFromInitial, 0);
+  
+  const maxDrawdownReached = currentDrawdownPercent >= config.maxAccountDrawdown;
+
+  return {
+    initialBalance: accountState.initialBalance,
+    currentBalance: newBalance,
+    peakBalance: newPeakBalance,
+    totalRealizedPnL: newTotalRealizedPnL,
+    currentDrawdownPercent,
+    maxDrawdownReached
+  };
+}
+
+/**
+ * Initialize account state at the start of a backtest
+ */
+export function initializeAccountState(initialBalance: number): AccountState {
+  return {
+    initialBalance,
+    currentBalance: initialBalance,
+    peakBalance: initialBalance,
+    totalRealizedPnL: 0,
+    currentDrawdownPercent: 0,
+    maxDrawdownReached: false
+  };
 }
