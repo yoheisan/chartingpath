@@ -30,61 +30,93 @@ interface TargetStopLossSettingsProps {
 }
 
 // Pattern-specific default targets and stop losses (based on professional rules)
+// Pattern-specific default targets and stop losses (based on professional rules)
+// Keys match pattern IDs from PatternLibrary (using underscores)
 const PATTERN_DEFAULTS: Record<string, { target: number; stopLoss: number; methodology: string }> = {
-  'head-shoulders': { 
+  'head_shoulders': { 
     target: 8.0, 
     stopLoss: 3.0, 
     methodology: 'Measured move from neckline to head, projected downward. Target 1 at 61.8%, Target 2 at 100% of measured move.' 
   },
-  'inverted-head-shoulders': { 
+  'inverse_head_shoulders': { 
     target: 8.0, 
     stopLoss: 3.0, 
     methodology: 'Measured move from head to neckline, projected upward. Exit 50% at 1:1 R:R, trail remainder.' 
   },
-  'double-top': { 
+  'double_top': { 
     target: 6.0, 
     stopLoss: 2.5, 
     methodology: 'Pattern height (peak to support) subtracted from support. Target 1 at 61.8%, Target 2 at 100%.' 
   },
-  'double-bottom': { 
+  'double_bottom': { 
     target: 6.0, 
     stopLoss: 2.5, 
     methodology: 'Pattern height (trough to resistance) added to resistance. Exit 50% at 1:1.5 R:R.' 
   },
-  'ascending-triangle': { 
+  'ascending_triangle': { 
     target: 7.0, 
     stopLoss: 2.0, 
     methodology: 'Triangle height added to breakout. 72-75% probability of reaching target.' 
   },
-  'descending-triangle': { 
+  'descending_triangle': { 
     target: 7.0, 
     stopLoss: 2.0, 
     methodology: 'Triangle height subtracted from breakdown. 72-75% probability of measured move.' 
   },
-  'cup-handle': { 
+  'symmetrical_triangle': { 
+    target: 5.0, 
+    stopLoss: 2.0, 
+    methodology: 'Triangle base width projected from breakout. 60-65% probability. Exit 50% at 1:1.5 R:R.' 
+  },
+  'cup_handle': { 
     target: 10.0, 
     stopLoss: 4.0, 
     methodology: 'Cup depth added to breakout. Target 1 at 50%, Target 2 at 100% of cup depth. Trail with 50-day MA.' 
   },
-  'bull-flag': { 
+  'bull_flag': { 
     target: 5.0, 
     stopLoss: 1.5, 
     methodology: 'Flagpole length added to breakout. 68-72% probability. Exit 50% at 1:2 R:R.' 
   },
-  'rising-wedge': { 
+  'bear_flag': { 
+    target: 5.0, 
+    stopLoss: 1.5, 
+    methodology: 'Flagpole length subtracted from breakdown. 68-72% probability. Exit 50% at 1:2 R:R.' 
+  },
+  'rising_wedge': { 
     target: 6.0, 
     stopLoss: 2.5, 
     methodology: 'Wedge height (widest point) projected down. Bearish pattern despite rising price.' 
   },
-  'falling-wedge': { 
+  'falling_wedge': { 
     target: 6.0, 
     stopLoss: 2.5, 
     methodology: 'Wedge height added to breakout. Bullish reversal pattern.' 
   },
-  'symmetrical-triangle': { 
+  'rectangle': { 
     target: 5.0, 
     stopLoss: 2.0, 
-    methodology: 'Triangle base width projected from breakout. 60-65% probability. Exit 50% at 1:1.5 R:R.' 
+    methodology: 'Rectangle height projected from breakout in direction of break.' 
+  },
+  'pennant': { 
+    target: 5.0, 
+    stopLoss: 1.5, 
+    methodology: 'Prior move length projected from pennant apex. Similar to flag pattern.' 
+  },
+  'triple_top': { 
+    target: 7.0, 
+    stopLoss: 3.0, 
+    methodology: 'Pattern height subtracted from support break. Stronger reversal than double top.' 
+  },
+  'triple_bottom': { 
+    target: 7.0, 
+    stopLoss: 3.0, 
+    methodology: 'Pattern height added to resistance break. Stronger reversal than double bottom.' 
+  },
+  'rounding_bottom': { 
+    target: 8.0, 
+    stopLoss: 3.5, 
+    methodology: 'Bowl depth added to rim breakout. Long-term accumulation pattern.' 
   }
 };
 
