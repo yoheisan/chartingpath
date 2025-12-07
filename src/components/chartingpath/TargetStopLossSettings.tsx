@@ -539,23 +539,12 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
             </Alert>
           </div>
 
-          <div className="space-y-2">
-            <Label>Max Concurrent Positions</Label>
-            <Input
-              type="number"
-              value={positionSizing.maxPositions}
-              onChange={(e) => onChange({ 
-                targetGainPercent, 
-                stopLossPercent, 
-                positionSizing: { ...positionSizing, maxPositions: parseInt(e.target.value) || 1 }
-              })}
-              min={1}
-              max={10}
-            />
-            <p className="text-xs text-muted-foreground">
-              Limits how many trades can be open simultaneously.
-            </p>
-          </div>
+          <Alert className="bg-muted/30">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              <strong>Max Concurrent Trades</strong> is configured in <strong>Step 5: Position Management</strong>.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     </div>
