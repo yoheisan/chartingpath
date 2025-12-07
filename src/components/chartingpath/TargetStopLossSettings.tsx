@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 interface SelectedPattern {
   id: string;
+  patternType?: string; // Original pattern ID without timestamp
   name: string;
   enabled: boolean;
 }
@@ -194,8 +195,11 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
     }
 
     const patternData = enabledPatterns.map(p => {
-      const defaults = PATTERN_DEFAULTS[p.id] || { target: 5.0, stopLoss: 2.0, methodology: 'Standard measured move' };
-      return { ...p, ...defaults };
+      // Use patternType if available, otherwise try to extract from id (format: patternId_timestamp)
+      // Pattern IDs like "head_shoulders_1733567890123" should extract "head_shoulders"
+      const patternKey = p.patternType || p.id.replace(/_\d{10,}$/, '');
+      const defaults = PATTERN_DEFAULTS[patternKey] || { target: 5.0, stopLoss: 2.0, methodology: 'Standard measured move' };
+      return { ...p, patternKey, ...defaults };
     });
 
     // Calculate weighted average (could be improved with reliability scores)
@@ -290,8 +294,8 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 pt-3">
-                {recommendedValues.patterns.map((pattern) => {
-                  const hasCustomDefaults = !!PATTERN_DEFAULTS[pattern.id];
+              {recommendedValues.patterns.map((pattern) => {
+                  const hasCustomDefaults = !!PATTERN_DEFAULTS[pattern.patternKey];
                   return (
                     <div 
                       key={pattern.id}
