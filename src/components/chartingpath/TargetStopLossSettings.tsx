@@ -209,27 +209,35 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 pt-3">
-                {recommendedValues.patterns.map((pattern) => (
-                  <div 
-                    key={pattern.id}
-                    className="p-3 rounded-lg border bg-muted/30 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{pattern.name}</span>
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className="text-xs text-green-600">
-                          T: {pattern.target}%
-                        </Badge>
-                        <Badge variant="outline" className="text-xs text-red-600">
-                          SL: {pattern.stopLoss}%
-                        </Badge>
+                {recommendedValues.patterns.map((pattern) => {
+                  const hasCustomDefaults = !!PATTERN_DEFAULTS[pattern.id];
+                  return (
+                    <div 
+                      key={pattern.id}
+                      className="p-3 rounded-lg border bg-muted/30 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{pattern.name}</span>
+                          {!hasCustomDefaults && (
+                            <Badge variant="secondary" className="text-xs">Generic</Badge>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-xs text-green-600">
+                            T: {pattern.target}%
+                          </Badge>
+                          <Badge variant="outline" className="text-xs text-red-600">
+                            SL: {pattern.stopLoss}%
+                          </Badge>
+                        </div>
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        {pattern.methodology}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {pattern.methodology}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </CollapsibleContent>
             </Collapsible>
           </CardContent>
