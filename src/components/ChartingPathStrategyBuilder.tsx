@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Activity, 
   TrendingUp,
@@ -23,6 +24,7 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Globe,
   CheckCircle,
   MoreVertical,
@@ -138,6 +140,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
+  const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
   const stepContentRef = useRef<HTMLDivElement>(null);
 
   // Scroll to top of step content when step changes
@@ -544,28 +547,58 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
 
                         const customRules = strategy.patternRules?.[pattern.id];
 
+                        const isExpanded = expandedPatternRules.has(pattern.id);
+                        const toggleExpanded = () => {
+                          setExpandedPatternRules(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(pattern.id)) {
+                              newSet.delete(pattern.id);
+                            } else {
+                              newSet.add(pattern.id);
+                            }
+                            return newSet;
+                          });
+                        };
+
                         return (
-                          <div key={pattern.id} className="space-y-4 p-6 border border-border rounded-lg bg-card">
-                            <div className="flex items-center gap-3 pb-3 border-b border-border">
-                              <TrendingUp className="h-5 w-5 text-primary" />
-                              <h3 className="text-lg font-semibold text-foreground">
-                                {patternName}
-                              </h3>
-                            </div>
-                            <PatternRulesEditor
-                              patternName={patternName}
-                              patternId={pattern.id}
-                              defaultRules={defaultRules}
-                              customRules={customRules}
-                              onRulesChange={(rules) => {
-                                const updatedRules = {
-                                  ...strategy.patternRules,
-                                  [pattern.id]: rules
-                                };
-                                updateStrategy('patternRules', updatedRules);
-                              }}
-                            />
-                          </div>
+                          <Collapsible 
+                            key={pattern.id} 
+                            open={isExpanded} 
+                            onOpenChange={toggleExpanded}
+                            className="border border-border rounded-lg bg-card overflow-hidden"
+                          >
+                            <CollapsibleTrigger asChild>
+                              <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
+                                <div className="flex items-center gap-3">
+                                  <TrendingUp className="h-5 w-5 text-primary" />
+                                  <h3 className="text-lg font-semibold text-foreground">
+                                    {patternName}
+                                  </h3>
+                                  {customRules && (
+                                    <Badge variant="secondary" className="text-xs">Customized</Badge>
+                                  )}
+                                </div>
+                                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="px-6 pb-6 pt-2 border-t border-border">
+                                <PatternRulesEditor
+                                  patternName={patternName}
+                                  patternId={pattern.id}
+                                  defaultRules={defaultRules}
+                                  customRules={customRules}
+                                  onRulesChange={(rules) => {
+                                    const updatedRules = {
+                                      ...strategy.patternRules,
+                                      [pattern.id]: rules
+                                    };
+                                    updateStrategy('patternRules', updatedRules);
+                                  }}
+                                />
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         );
                       })}
                   </div>
