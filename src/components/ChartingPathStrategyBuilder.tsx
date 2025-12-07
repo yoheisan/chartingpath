@@ -645,6 +645,7 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
                     targetGainPercent={strategy.targetGainPercent}
                     stopLossPercent={strategy.stopLossPercent}
                     positionSizing={strategy.positionSizing}
+                    selectedPatterns={strategy.patterns}
                     onChange={(data) => {
                       updateStrategy('targetGainPercent', data.targetGainPercent);
                       updateStrategy('stopLossPercent', data.stopLossPercent);
