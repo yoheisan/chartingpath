@@ -403,11 +403,17 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                 step={0.1}
                 className="mt-2"
               />
+              <p className="text-xs text-muted-foreground mt-1">Maximum loss per individual trade</p>
             </div>
 
             <div>
               <Label className="flex items-center justify-between">
-                Portfolio Risk Cap
+                <span className="flex items-center gap-2">
+                  Portfolio Risk Cap
+                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                    Auto-Exit
+                  </Badge>
+                </span>
                 <span className="text-primary font-medium">{interactiveParams.portfolioRiskCap}%</span>
               </Label>
               <Slider
@@ -418,6 +424,9 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                 step={0.5}
                 className="mt-2"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                When total loss reaches this %, all trades exit. New patterns still trigger entries.
+              </p>
             </div>
 
             <div>
@@ -448,6 +457,17 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                 step={0.1}
                 className="mt-2"
               />
+            </div>
+          </div>
+
+          {/* Risk Threshold Explanation */}
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-amber-800 dark:text-amber-200">
+                <strong>Auto-Exit Behavior:</strong> If combined losses across all open trades reach {interactiveParams.portfolioRiskCap}%, 
+                all positions are closed immediately. The backtest continues and new trades are opened when the next pattern confirms.
+              </div>
             </div>
           </div>
         </CardContent>

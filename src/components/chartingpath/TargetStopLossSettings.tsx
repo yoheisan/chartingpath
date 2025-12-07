@@ -499,6 +499,14 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
             <p className="text-xs text-muted-foreground">
               Professional traders typically risk 1-2% per trade. Never exceed 5%.
             </p>
+            <Alert className="mt-2 bg-muted/50">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Per-Trade vs Portfolio Risk:</strong> This sets risk per individual trade. 
+                The "Maximum Total Risk" in Position Management controls when ALL trades auto-exit 
+                in backtesting (e.g., 3 trades × 2% = 6% potential exposure).
+              </AlertDescription>
+            </Alert>
           </div>
 
           <div className="space-y-2">
