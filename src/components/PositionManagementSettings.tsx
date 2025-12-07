@@ -194,29 +194,45 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Your Selected Patterns Priority</Label>
               <p className="text-xs text-muted-foreground">
-                When conflicts occur, patterns are prioritized in this order:
+                When conflicts occur, patterns are prioritized in this order (1 = highest priority, traded first). 
+                The score reflects historical reliability based on backtesting data.
               </p>
               <div className="grid gap-2">
                 {selectedPatterns
                   .sort((a, b) => (rules.patternPriority[b] || 0) - (rules.patternPriority[a] || 0))
                   .map((patternId, index) => {
                     const priority = rules.patternPriority[patternId] || 0;
+                    const hasNoPriority = priority === 0;
                     return (
-                      <div key={patternId} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                      <div key={patternId} className={`flex items-center justify-between p-2 rounded ${hasNoPriority ? 'bg-destructive/10 border border-destructive/20' : 'bg-muted/30'}`}>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="w-8 justify-center">{index + 1}</Badge>
                           <span className="text-sm capitalize">{patternId.replace(/-/g, ' ')}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Priority:</span>
-                          <Badge variant={priority >= 8 ? "default" : priority >= 6 ? "secondary" : "outline"}>
-                            {priority}/10
-                          </Badge>
+                          <span className="text-xs text-muted-foreground">Reliability:</span>
+                          {hasNoPriority ? (
+                            <Badge variant="destructive" className="text-xs">
+                              Not rated
+                            </Badge>
+                          ) : (
+                            <Badge variant={priority >= 8 ? "default" : priority >= 6 ? "secondary" : "outline"}>
+                              {priority}/10
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     );
                   })}
               </div>
+              {selectedPatterns.some(p => (rules.patternPriority[p] || 0) === 0) && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Some patterns have no reliability rating. They will be lowest priority when "Higher Priority" conflict resolution is selected.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </>
         )}
