@@ -109,9 +109,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
 
   const [interactiveParams, setInteractiveParams] = useState({
     riskPerTrade: strategy.riskManagement?.riskPerTrade || 2.0,
-    portfolioRiskCap: strategy.multiPatternSettings?.portfolioRiskCap || 6.0,
-    atrMultiplier: 2.0,
-    takeProfitRatio: 2.0
+    portfolioRiskCap: strategy.multiPatternSettings?.portfolioRiskCap || 6.0
   });
 
   const updateConfig = (field: string, value: any) => {
@@ -429,34 +427,15 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
               </p>
             </div>
 
-            <div>
-              <Label className="flex items-center justify-between">
-                ATR Stop Multiplier
-                <span className="text-primary font-medium">{interactiveParams.atrMultiplier}x</span>
-              </Label>
-              <Slider
-                value={[interactiveParams.atrMultiplier]}
-                onValueChange={([value]) => updateInteractiveParam('atrMultiplier', value)}
-                min={1.0}
-                max={4.0}
-                step={0.1}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label className="flex items-center justify-between">
-                Take Profit Ratio
-                <span className="text-primary font-medium">{interactiveParams.takeProfitRatio}:1</span>
-              </Label>
-              <Slider
-                value={[interactiveParams.takeProfitRatio]}
-                onValueChange={([value]) => updateInteractiveParam('takeProfitRatio', value)}
-                min={1.0}
-                max={5.0}
-                step={0.1}
-                className="mt-2"
-              />
+          </div>
+          
+          {/* Note about per-pattern TP/SL */}
+          <div className="p-3 rounded-lg bg-muted/50 border">
+            <div className="flex items-start gap-2">
+              <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                <strong>Take Profit & Stop Loss:</strong> Each trade uses the pattern-specific TP/SL configured in Step 4 of the strategy builder.
+              </div>
             </div>
           </div>
 
