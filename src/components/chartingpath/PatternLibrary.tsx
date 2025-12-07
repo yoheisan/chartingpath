@@ -567,6 +567,10 @@ interface PatternConfig {
     takeProfitMethod: 'pattern' | 'ratio' | 'fixed';
     maxConcurrentTrades: number;
   };
+  // Per-pattern TP/SL overrides
+  customTarget?: number;
+  customStopLoss?: number;
+  useCustomTPSL?: boolean;
 }
 
 interface PatternLibraryProps {
