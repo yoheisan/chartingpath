@@ -197,7 +197,17 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
     const patternData = enabledPatterns.map(p => {
       // Use patternType if available, otherwise try to extract from id (format: patternId_timestamp)
       // Pattern IDs like "head_shoulders_1733567890123" should extract "head_shoulders"
-      const patternKey = p.patternType || p.id.replace(/_\d{10,}$/, '');
+      // The timestamp is always 13 digits (milliseconds since epoch)
+      let patternKey = p.patternType || p.id;
+      
+      // If no patternType, strip the timestamp suffix (underscore followed by 13 digits at the end)
+      if (!p.patternType) {
+        const timestampMatch = p.id.match(/^(.+)_\d{13}$/);
+        if (timestampMatch) {
+          patternKey = timestampMatch[1];
+        }
+      }
+      
       const defaults = PATTERN_DEFAULTS[patternKey] || { target: 5.0, stopLoss: 2.0, methodology: 'Standard measured move' };
       return { ...p, patternKey, ...defaults };
     });
