@@ -555,6 +555,8 @@ const PATTERN_CATEGORIES = {
 
 interface PatternConfig {
   id: string;
+  patternType: string; // Original pattern ID without timestamp
+  name: string; // Display name for the pattern
   category: string;
   enabled: boolean;
   priority: number;
@@ -588,6 +590,8 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
     const newPattern: PatternConfig = {
       id: `${patternId}_${Date.now()}`,
+      patternType: patternId, // Store original pattern ID for matching
+      name: pattern.name, // Store display name
       category: categoryKey,
       enabled: true,
       priority: patterns.length + 1,
@@ -720,9 +724,11 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     );
   };
 
-  const getPatternInfo = (categoryKey: string, patternId: string) => {
+  const getPatternInfo = (categoryKey: string, patternId: string, patternType?: string) => {
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
-    return category?.patterns.find(p => p.id === patternId.split('_')[0]);
+    // Use patternType if provided, otherwise try to extract by removing the timestamp suffix (10+ digits)
+    const basePatternId = patternType || patternId.replace(/_\d{10,}$/, '');
+    return category?.patterns.find(p => p.id === basePatternId);
   };
 
   const filteredCategories = Object.entries(PATTERN_CATEGORIES).filter(([key, category]) => {
@@ -738,7 +744,7 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   const selectedPatternData = patterns.find(p => p.id === selectedPattern);
   const selectedPatternInfo = selectedPatternData ? 
-    getPatternInfo(selectedPatternData.category, selectedPatternData.id) : null;
+    getPatternInfo(selectedPatternData.category, selectedPatternData.id, selectedPatternData.patternType) : null;
 
   return (
     <div className="space-y-6">
@@ -876,7 +882,7 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
                   >
                     <div className="space-y-3">
                       {patterns.map((pattern) => {
-                        const patternInfo = getPatternInfo(pattern.category, pattern.id);
+                        const patternInfo = getPatternInfo(pattern.category, pattern.id, pattern.patternType);
                         if (!patternInfo) return null;
 
                         return (
