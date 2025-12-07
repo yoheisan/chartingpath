@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Info, BookOpen, Wand2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { PROFESSIONAL_PATTERN_RULES, PatternRules } from '@/utils/ProfessionalPatternRules';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+interface SelectedPattern {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
 
 interface TargetStopLossSettingsProps {
   targetGainPercent: number;
@@ -15,25 +25,216 @@ interface TargetStopLossSettingsProps {
     riskPerTrade: number;
     maxPositions: number;
   };
+  selectedPatterns?: SelectedPattern[];
   onChange: (data: any) => void;
 }
+
+// Pattern-specific default targets and stop losses (based on professional rules)
+const PATTERN_DEFAULTS: Record<string, { target: number; stopLoss: number; methodology: string }> = {
+  'head-shoulders': { 
+    target: 8.0, 
+    stopLoss: 3.0, 
+    methodology: 'Measured move from neckline to head, projected downward. Target 1 at 61.8%, Target 2 at 100% of measured move.' 
+  },
+  'inverted-head-shoulders': { 
+    target: 8.0, 
+    stopLoss: 3.0, 
+    methodology: 'Measured move from head to neckline, projected upward. Exit 50% at 1:1 R:R, trail remainder.' 
+  },
+  'double-top': { 
+    target: 6.0, 
+    stopLoss: 2.5, 
+    methodology: 'Pattern height (peak to support) subtracted from support. Target 1 at 61.8%, Target 2 at 100%.' 
+  },
+  'double-bottom': { 
+    target: 6.0, 
+    stopLoss: 2.5, 
+    methodology: 'Pattern height (trough to resistance) added to resistance. Exit 50% at 1:1.5 R:R.' 
+  },
+  'ascending-triangle': { 
+    target: 7.0, 
+    stopLoss: 2.0, 
+    methodology: 'Triangle height added to breakout. 72-75% probability of reaching target.' 
+  },
+  'descending-triangle': { 
+    target: 7.0, 
+    stopLoss: 2.0, 
+    methodology: 'Triangle height subtracted from breakdown. 72-75% probability of measured move.' 
+  },
+  'cup-handle': { 
+    target: 10.0, 
+    stopLoss: 4.0, 
+    methodology: 'Cup depth added to breakout. Target 1 at 50%, Target 2 at 100% of cup depth. Trail with 50-day MA.' 
+  },
+  'bull-flag': { 
+    target: 5.0, 
+    stopLoss: 1.5, 
+    methodology: 'Flagpole length added to breakout. 68-72% probability. Exit 50% at 1:2 R:R.' 
+  },
+  'rising-wedge': { 
+    target: 6.0, 
+    stopLoss: 2.5, 
+    methodology: 'Wedge height (widest point) projected down. Bearish pattern despite rising price.' 
+  },
+  'falling-wedge': { 
+    target: 6.0, 
+    stopLoss: 2.5, 
+    methodology: 'Wedge height added to breakout. Bullish reversal pattern.' 
+  },
+  'symmetrical-triangle': { 
+    target: 5.0, 
+    stopLoss: 2.0, 
+    methodology: 'Triangle base width projected from breakout. 60-65% probability. Exit 50% at 1:1.5 R:R.' 
+  }
+};
 
 export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
   targetGainPercent,
   stopLossPercent,
   positionSizing,
+  selectedPatterns = [],
   onChange
 }) => {
-  const riskRewardRatio = targetGainPercent / stopLossPercent;
+  const [showMethodology, setShowMethodology] = useState<string | null>(null);
+  const [expandedPatterns, setExpandedPatterns] = useState(false);
+
+  const riskRewardRatio = stopLossPercent > 0 ? targetGainPercent / stopLossPercent : 0;
+
+  // Get enabled patterns
+  const enabledPatterns = useMemo(() => 
+    selectedPatterns.filter(p => p.enabled),
+    [selectedPatterns]
+  );
+
+  // Calculate recommended values based on selected patterns
+  const recommendedValues = useMemo(() => {
+    if (enabledPatterns.length === 0) {
+      return { target: 5.0, stopLoss: 2.0, patterns: [] };
+    }
+
+    const patternData = enabledPatterns.map(p => {
+      const defaults = PATTERN_DEFAULTS[p.id] || { target: 5.0, stopLoss: 2.0, methodology: 'Standard measured move' };
+      return { ...p, ...defaults };
+    });
+
+    // Calculate weighted average (could be improved with reliability scores)
+    const avgTarget = patternData.reduce((sum, p) => sum + p.target, 0) / patternData.length;
+    const avgStopLoss = patternData.reduce((sum, p) => sum + p.stopLoss, 0) / patternData.length;
+
+    return {
+      target: Math.round(avgTarget * 10) / 10,
+      stopLoss: Math.round(avgStopLoss * 10) / 10,
+      patterns: patternData
+    };
+  }, [enabledPatterns]);
+
+  const applyPatternDefaults = () => {
+    onChange({ 
+      targetGainPercent: recommendedValues.target, 
+      stopLossPercent: recommendedValues.stopLoss, 
+      positionSizing 
+    });
+  };
+
+  const isUsingDefaults = targetGainPercent === recommendedValues.target && 
+                          stopLossPercent === recommendedValues.stopLoss;
 
   return (
     <div className="space-y-6">
-      {/* Profit Target */}
+      {/* Per-Trade Notice */}
+      <Alert className="border-primary/30 bg-primary/5">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Per-Trade Settings</AlertTitle>
+        <AlertDescription>
+          These settings apply to <strong>each individual trade</strong>. Professional traders customize targets and stops based on the specific pattern being traded.
+        </AlertDescription>
+      </Alert>
+
+      {/* Pattern-Specific Recommendations */}
+      {enabledPatterns.length > 0 && (
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Pattern-Specific Recommendations
+              </div>
+              <Button 
+                variant={isUsingDefaults ? "secondary" : "default"}
+                size="sm"
+                onClick={applyPatternDefaults}
+                disabled={isUsingDefaults}
+                className="gap-2"
+              >
+                <Wand2 className="w-4 h-4" />
+                {isUsingDefaults ? 'Applied' : 'Apply Defaults'}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Recommended Target:</span>
+              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                {recommendedValues.target}%
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Recommended Stop Loss:</span>
+              <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">
+                {recommendedValues.stopLoss}%
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Implied R:R Ratio:</span>
+              <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
+                1:{(recommendedValues.target / recommendedValues.stopLoss).toFixed(2)}
+              </Badge>
+            </div>
+
+            {/* Pattern Methodologies (Collapsible) */}
+            <Collapsible open={expandedPatterns} onOpenChange={setExpandedPatterns}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full mt-2 gap-2">
+                  {expandedPatterns ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {expandedPatterns ? 'Hide' : 'Show'} Pattern Methodologies ({enabledPatterns.length})
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-2 pt-3">
+                {recommendedValues.patterns.map((pattern) => (
+                  <div 
+                    key={pattern.id}
+                    className="p-3 rounded-lg border bg-muted/30 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{pattern.name}</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs text-green-600">
+                          T: {pattern.target}%
+                        </Badge>
+                        <Badge variant="outline" className="text-xs text-red-600">
+                          SL: {pattern.stopLoss}%
+                        </Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {pattern.methodology}
+                    </p>
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Profit Target - Per Trade */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
-            Profit Target
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-500" />
+              Profit Target <span className="text-xs font-normal text-muted-foreground">(per trade)</span>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -69,12 +270,12 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
         </CardContent>
       </Card>
 
-      {/* Stop Loss */}
+      {/* Stop Loss - Per Trade */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-red-500" />
-            Stop Loss
+            Stop Loss <span className="text-xs font-normal text-muted-foreground">(per trade)</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -115,7 +316,7 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Risk:Reward Ratio</span>
+              <span className="text-sm font-medium">Risk:Reward Ratio (per trade)</span>
               <span className="text-2xl font-bold text-primary">
                 1:{riskRewardRatio.toFixed(2)}
               </span>
@@ -124,22 +325,24 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {riskRewardRatio >= 2 
-                  ? '✓ Excellent risk:reward ratio for profitable trading' 
+                  ? '✓ Excellent R:R ratio. Professional traders typically aim for 1:2 or better.' 
                   : riskRewardRatio >= 1.5 
-                  ? '✓ Good risk:reward ratio' 
-                  : '⚠ Consider increasing target or decreasing stop loss for better R:R'}
+                  ? '✓ Good R:R ratio. Allows profitability with 40%+ win rate.' 
+                  : riskRewardRatio > 0
+                  ? '⚠ Consider increasing target or decreasing stop loss. Low R:R requires high win rate.'
+                  : 'Set target and stop loss values to calculate R:R ratio.'}
               </AlertDescription>
             </Alert>
           </div>
         </CardContent>
       </Card>
 
-      {/* Position Sizing */}
+      {/* Position Sizing - Per Trade */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-primary" />
-            Position Sizing
+            Position Sizing <span className="text-xs font-normal text-muted-foreground">(per trade)</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -157,9 +360,9 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="risk_based">Risk-Based (% of Account)</SelectItem>
-                <SelectItem value="fixed_percent">Fixed % of Account</SelectItem>
-                <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                <SelectItem value="risk_based">Risk-Based (% of Account at Risk)</SelectItem>
+                <SelectItem value="fixed_percent">Fixed % of Account Value</SelectItem>
+                <SelectItem value="fixed_amount">Fixed Dollar Amount</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -177,10 +380,13 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
                 positionSizing: { ...positionSizing, riskPerTrade: value[0] }
               })}
               min={0.5}
-              max={10}
+              max={5}
               step={0.5}
               className="w-full"
             />
+            <p className="text-xs text-muted-foreground">
+              Professional traders typically risk 1-2% per trade. Never exceed 5%.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -196,6 +402,9 @@ export const TargetStopLossSettings: React.FC<TargetStopLossSettingsProps> = ({
               min={1}
               max={10}
             />
+            <p className="text-xs text-muted-foreground">
+              Limits how many trades can be open simultaneously.
+            </p>
           </div>
         </CardContent>
       </Card>
