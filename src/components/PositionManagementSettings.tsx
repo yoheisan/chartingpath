@@ -194,8 +194,11 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Your Selected Patterns Priority</Label>
               <p className="text-xs text-muted-foreground">
-                When conflicts occur, patterns are prioritized in this order (1 = highest priority, traded first). 
-                The score reflects historical reliability based on backtesting data.
+                When conflicts occur, patterns are prioritized in this order (1 = highest priority, traded first).
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <strong>Reliability Score (1-10):</strong> Based on historical backtesting data measuring pattern success rate, 
+                average risk-reward ratio, and consistency across market conditions. Higher scores indicate more dependable patterns.
               </p>
               <div className="grid gap-2">
                 {selectedPatterns
