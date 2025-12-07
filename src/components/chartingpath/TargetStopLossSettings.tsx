@@ -31,8 +31,9 @@ interface TargetStopLossSettingsProps {
 
 // Pattern-specific default targets and stop losses (based on professional rules)
 // Pattern-specific default targets and stop losses (based on professional rules)
-// Keys match pattern IDs from PatternLibrary (using underscores)
+// Keys must match pattern IDs exactly from PatternLibrary
 const PATTERN_DEFAULTS: Record<string, { target: number; stopLoss: number; methodology: string }> = {
+  // Classical Patterns
   'head_shoulders': { 
     target: 8.0, 
     stopLoss: 3.0, 
@@ -63,60 +64,108 @@ const PATTERN_DEFAULTS: Record<string, { target: number; stopLoss: number; metho
     stopLoss: 2.0, 
     methodology: 'Triangle height subtracted from breakdown. 72-75% probability of measured move.' 
   },
-  'symmetrical_triangle': { 
+  'flag': { 
     target: 5.0, 
-    stopLoss: 2.0, 
-    methodology: 'Triangle base width projected from breakout. 60-65% probability. Exit 50% at 1:1.5 R:R.' 
+    stopLoss: 1.5, 
+    methodology: 'Flagpole length added to breakout. 68-72% probability. Exit 50% at 1:2 R:R.' 
+  },
+  'wedge_rising': { 
+    target: 6.0, 
+    stopLoss: 2.5, 
+    methodology: 'Wedge height (widest point) projected down. Bearish pattern despite rising price.' 
   },
   'cup_handle': { 
     target: 10.0, 
     stopLoss: 4.0, 
     methodology: 'Cup depth added to breakout. Target 1 at 50%, Target 2 at 100% of cup depth. Trail with 50-day MA.' 
   },
-  'bull_flag': { 
-    target: 5.0, 
+  // Candlestick Patterns
+  'bullish_engulfing': { 
+    target: 3.0, 
     stopLoss: 1.5, 
-    methodology: 'Flagpole length added to breakout. 68-72% probability. Exit 50% at 1:2 R:R.' 
+    methodology: 'Target at nearest resistance. Stop below engulfing candle low.' 
   },
-  'bear_flag': { 
-    target: 5.0, 
+  'bearish_engulfing': { 
+    target: 3.0, 
     stopLoss: 1.5, 
-    methodology: 'Flagpole length subtracted from breakdown. 68-72% probability. Exit 50% at 1:2 R:R.' 
+    methodology: 'Target at nearest support. Stop above engulfing candle high.' 
   },
-  'rising_wedge': { 
+  'hammer': { 
+    target: 3.0, 
+    stopLoss: 1.0, 
+    methodology: 'Target 2-3x the hammer body. Stop below hammer low.' 
+  },
+  'shooting_star': { 
+    target: 3.0, 
+    stopLoss: 1.0, 
+    methodology: 'Target 2-3x the star body. Stop above shooting star high.' 
+  },
+  'morning_star': { 
+    target: 4.0, 
+    stopLoss: 2.0, 
+    methodology: 'Target at prior swing high. Stop below star candle low.' 
+  },
+  'evening_star': { 
+    target: 4.0, 
+    stopLoss: 2.0, 
+    methodology: 'Target at prior swing low. Stop above star candle high.' 
+  },
+  'doji': { 
+    target: 2.5, 
+    stopLoss: 1.0, 
+    methodology: 'Wait for confirmation candle. Target based on context.' 
+  },
+  'inside_bar': { 
+    target: 3.0, 
+    stopLoss: 1.5, 
+    methodology: 'Target = mother bar range projected from breakout.' 
+  },
+  // Harmonic Patterns
+  'gartley': { 
     target: 6.0, 
-    stopLoss: 2.5, 
-    methodology: 'Wedge height (widest point) projected down. Bearish pattern despite rising price.' 
+    stopLoss: 2.0, 
+    methodology: 'Target at 61.8% retracement of AD leg. Stop beyond X point.' 
   },
-  'falling_wedge': { 
+  'bat': { 
     target: 6.0, 
-    stopLoss: 2.5, 
-    methodology: 'Wedge height added to breakout. Bullish reversal pattern.' 
+    stopLoss: 2.0, 
+    methodology: 'Target at 61.8% of AD. Stop below X (bullish) or above X (bearish).' 
   },
-  'rectangle': { 
+  'butterfly': { 
+    target: 7.0, 
+    stopLoss: 2.5, 
+    methodology: 'Target at 61.8-78.6% of CD leg. Extended pattern allows larger targets.' 
+  },
+  'crab': { 
+    target: 8.0, 
+    stopLoss: 3.0, 
+    methodology: 'Extreme extension pattern. Target at 61.8% of CD leg.' 
+  },
+  'cypher': { 
     target: 5.0, 
     stopLoss: 2.0, 
-    methodology: 'Rectangle height projected from breakout in direction of break.' 
+    methodology: 'Target at 38.2-61.8% of CD leg. Tighter stops than other harmonics.' 
   },
-  'pennant': { 
-    target: 5.0, 
+  // Volatility/Breakout Patterns
+  'opening_range_breakout': { 
+    target: 4.0, 
     stopLoss: 1.5, 
-    methodology: 'Prior move length projected from pennant apex. Similar to flag pattern.' 
+    methodology: 'Target = opening range height. Stop at opposite side of range.' 
   },
-  'triple_top': { 
-    target: 7.0, 
-    stopLoss: 3.0, 
-    methodology: 'Pattern height subtracted from support break. Stronger reversal than double top.' 
+  'nr7': { 
+    target: 4.0, 
+    stopLoss: 1.0, 
+    methodology: 'Breakout target = average of prior 7 bars range. Tight stop inside NR7 bar.' 
   },
-  'triple_bottom': { 
-    target: 7.0, 
-    stopLoss: 3.0, 
-    methodology: 'Pattern height added to resistance break. Stronger reversal than double bottom.' 
+  'donchian_breakout': { 
+    target: 5.0, 
+    stopLoss: 2.0, 
+    methodology: 'Trail stop using opposite Donchian band. Let winners run.' 
   },
-  'rounding_bottom': { 
-    target: 8.0, 
-    stopLoss: 3.5, 
-    methodology: 'Bowl depth added to rim breakout. Long-term accumulation pattern.' 
+  'bollinger_squeeze': { 
+    target: 5.0, 
+    stopLoss: 2.0, 
+    methodology: 'Volatility expansion target. Stop at middle band or opposite band.' 
   }
 };
 
