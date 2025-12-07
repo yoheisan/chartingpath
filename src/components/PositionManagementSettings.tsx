@@ -46,6 +46,7 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
           <Info className="h-4 w-4" />
           <AlertDescription>
             These settings prevent over-trading and ensure disciplined position sizing across multiple chart patterns.
+            <span className="block mt-1 font-medium">In backtesting, the Maximum Total Risk triggers auto-exit of all positions when the loss threshold is reached.</span>
           </AlertDescription>
         </Alert>
 
@@ -105,11 +106,24 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-semibold">Maximum Total Risk (%)</Label>
-            <Badge variant="outline">{rules.maxTotalRisk}% total</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{rules.maxTotalRisk}% total</Badge>
+              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                Auto-Exit Trigger
+              </Badge>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
             Hard limit on total account risk across all open positions. Institutional standard: 6-10%
           </p>
+          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
+              <strong>Backtesting Behavior:</strong> When combined losses from all open trades reach this threshold, 
+              ALL positions are automatically closed. New trades will still be entered when the next valid pattern 
+              confirms, allowing the backtest to continue.
+            </AlertDescription>
+          </Alert>
           <Slider
             value={[rules.maxTotalRisk]}
             onValueChange={([value]) => handleChange('maxTotalRisk', value)}
