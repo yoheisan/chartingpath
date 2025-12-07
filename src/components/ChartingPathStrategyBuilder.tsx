@@ -242,8 +242,11 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         return confirmedSteps.has(1);
       case 2: // Position Management - requires user confirmation
         return confirmedSteps.has(2) && strategy.positionManagement !== undefined;
-      case 3: // Target & Stop Loss
-        return strategy.targetGainPercent > 0 && strategy.stopLossPercent > 0;
+      case 3: // Target & Stop Loss - check per-pattern TP/SL (all enabled patterns must have valid values)
+        const enabledPatterns = strategy.patterns.filter(p => p.enabled);
+        if (enabledPatterns.length === 0) return false;
+        // Each pattern has default TP/SL, so just need at least one enabled pattern
+        return true;
       case 4: // Backtest
         return strategy.backtestResults != null;
       case 5: // Export
