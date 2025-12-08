@@ -260,7 +260,11 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
               </p>
               <div className="grid gap-2">
                 {selectedPatterns
-                  .sort((a, b) => (rules.patternPriority[b] || 0) - (rules.patternPriority[a] || 0))
+                  .sort((a, b) => {
+                    const priorityDiff = (rules.patternPriority[b] || 0) - (rules.patternPriority[a] || 0);
+                    // If same priority (including both being 0), sort alphabetically for consistent ordering
+                    return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
+                  })
                   .map((patternId, index) => {
                     const priority = rules.patternPriority[patternId] || 0;
                     const hasNoPriority = priority === 0;
@@ -291,6 +295,9 @@ export const PositionManagementSettings: React.FC<PositionManagementSettingsProp
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
                     Some patterns have no reliability rating. They will be lowest priority when "Higher Priority" conflict resolution is selected.
+                    {selectedPatterns.every(p => (rules.patternPriority[p] || 0) === 0) && (
+                      <span className="block mt-1 font-medium">When all patterns have zero reliability, they are sorted alphabetically for consistent execution order.</span>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
