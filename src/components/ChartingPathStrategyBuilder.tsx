@@ -30,6 +30,7 @@ import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
 import { PatternRulesEditor } from './PatternRulesEditor';
 import { PositionManagementSettings } from './PositionManagementSettings';
+import { TradeDisciplineFilters, DisciplineFilters, DEFAULT_DISCIPLINE_FILTERS } from './chartingpath/TradeDisciplineFilters';
 import { DEFAULT_POSITION_MANAGEMENT, PositionManagementRules, PatternRules as ProfessionalPatternRules } from '@/utils/ProfessionalPatternRules';
 import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
@@ -61,6 +62,7 @@ export interface ChartingPathStrategy {
     maxPositions: number;
   };
   positionManagement?: PositionManagementRules;
+  disciplineFilters?: DisciplineFilters;
   backtestPeriod?: {
     startDate: string;
     endDate: string;
@@ -81,7 +83,8 @@ export const STRATEGY_STEPS = [
   { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period', icon: Globe },
   { id: 'patterns', title: 'Chart Patterns', description: 'Select patterns to trade', icon: Layers },
   { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI', icon: Crosshair },
-  { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention', icon: Shield },
+  { id: 'discipline', title: 'Trade Discipline', description: 'Professional filters to avoid mistakes', icon: Shield },
+  { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention', icon: Settings },
   { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %', icon: Target },
   { id: 'backtest', title: 'Backtest', description: 'Test pattern performance', icon: Play },
   { id: 'export', title: 'Export', description: 'Generate trading code', icon: Download }
@@ -124,6 +127,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
         maxPositions: 3
       },
       positionManagement: DEFAULT_POSITION_MANAGEMENT,
+      disciplineFilters: DEFAULT_DISCIPLINE_FILTERS,
       backtestPeriod: {
         startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
@@ -148,16 +152,18 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
         return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
       case 2: // Entry & Exit Rules
         return confirmedSteps.has(2);
-      case 3: // Position Management
-        return confirmedSteps.has(3) && strategy.positionManagement !== undefined;
-      case 4: // Target & Stop Loss
+      case 3: // Trade Discipline
+        return strategy.disciplineFilters !== undefined;
+      case 4: // Position Management
+        return confirmedSteps.has(4) && strategy.positionManagement !== undefined;
+      case 5: // Target & Stop Loss
         const enabledPatterns = strategy.patterns.filter(p => p.enabled);
         if (enabledPatterns.length === 0) return false;
         return true;
-      case 5: // Backtest
+      case 6: // Backtest
         return strategy.backtestResults != null;
-      case 6: // Export
-        return getStepCompletion(0) && getStepCompletion(1) && getStepCompletion(4);
+      case 7: // Export
+        return getStepCompletion(0) && getStepCompletion(1) && getStepCompletion(5);
       default:
         return false;
     }
@@ -464,14 +470,33 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 4: Position Management */}
+        {/* Section 4: Trade Discipline Filters */}
+        <AccordionItem 
+          value="discipline" 
+          className={`border rounded-lg bg-card ${getSectionStatus('discipline') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('discipline') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[3], 3)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              <TradeDisciplineFilters
+                filters={strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS}
+                onChange={(filters) => updateStrategy('disciplineFilters', filters)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 5: Position Management */}
         <AccordionItem 
           value="position" 
           className={`border rounded-lg bg-card ${getSectionStatus('position') === 'locked' ? 'opacity-50' : ''}`}
           disabled={getSectionStatus('position') === 'locked'}
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[3], 3)}
+            {renderSectionHeader(STRATEGY_STEPS[4], 4)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2 space-y-4">
@@ -483,13 +508,13 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
               <div className="flex justify-end">
                 <Button 
                   onClick={() => {
-                    setConfirmedSteps(prev => new Set([...prev, 3]));
+                    setConfirmedSteps(prev => new Set([...prev, 4]));
                     toast.success('Position Management confirmed');
                   }}
-                  disabled={confirmedSteps.has(3)}
+                  disabled={confirmedSteps.has(4)}
                   size="sm"
                 >
-                  {confirmedSteps.has(3) ? (
+                  {confirmedSteps.has(4) ? (
                     <>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Confirmed
@@ -503,14 +528,14 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 5: Target & Stop Loss */}
+        {/* Section 6: Target & Stop Loss */}
         <AccordionItem 
           value="targets" 
           className={`border rounded-lg bg-card ${getSectionStatus('targets') === 'locked' ? 'opacity-50' : ''}`}
           disabled={getSectionStatus('targets') === 'locked'}
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[4], 4)}
+            {renderSectionHeader(STRATEGY_STEPS[5], 5)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2">
@@ -542,14 +567,14 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 6: Backtest */}
+        {/* Section 7: Backtest */}
         <AccordionItem 
           value="backtest" 
           className={`border rounded-lg bg-card ${!canBacktest() ? 'opacity-50' : ''}`}
           disabled={!canBacktest()}
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[5], 5)}
+            {renderSectionHeader(STRATEGY_STEPS[6], 6)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2 space-y-4">
@@ -649,18 +674,18 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 7: Export */}
+        {/* Section 8: Export */}
         <AccordionItem 
           value="export" 
           className={`border rounded-lg bg-card ${getSectionStatus('export') === 'locked' ? 'opacity-50' : ''}`}
           disabled={getSectionStatus('export') === 'locked'}
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[6], 6)}
+            {renderSectionHeader(STRATEGY_STEPS[7], 7)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2">
-              {getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(4) ? (
+              {getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(5) ? (
                 <ExportPanel strategy={strategy} />
               ) : (
                 <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
