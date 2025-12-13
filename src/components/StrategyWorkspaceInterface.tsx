@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
+import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
 import { Save, SaveAll, Edit, FolderOpen, MoreVertical } from 'lucide-react';
 import {
@@ -22,8 +20,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ChartingPathStrategyBuilder, ChartingPathStrategy, ChartingPathStrategyBuilderRef } from './ChartingPathStrategyBuilder';
-import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
-import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,6 +68,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   // Strategy menu state
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
@@ -257,7 +254,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   // Handle loading a charting path strategy
   const handleLoadChartingPathStrategy = (strategy: ChartingPathStrategy) => {
     setCurrentChartingPathStrategy(strategy);
-    setActiveTab('builder');
+    setShowLoadDialog(false);
     toast.success(`Loaded strategy: ${strategy.name}`);
   };
 
@@ -324,119 +321,63 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Fixed Header with Strategy Menu and Tabs */}
-      <div className="flex-shrink-0 bg-background border-b border-border px-4 py-4 md:px-6 space-y-4">
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      {/* Fixed Header with Strategy Menu */}
+      <div className="flex-shrink-0 bg-background border-b border-border px-4 py-4 md:px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="border-l-4 border-foreground pl-6">
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
-              {currentStrategy && currentStrategy.id && (
+              {currentChartingPathStrategy && currentChartingPathStrategy.id && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {currentStrategy.name}
+                  {currentChartingPathStrategy.name}
                 </p>
               )}
             </div>
             
             {/* Strategy Actions Menu */}
-            {activeTab === 'builder' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Save className="w-4 h-4" />
-                    <span className="hidden sm:inline">Strategy</span>
-                    <MoreVertical className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-popover">
-                  <DropdownMenuItem onClick={handleSaveFromMenu}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Strategy
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={openSaveAsDialog}>
-                    <SaveAll className="w-4 h-4 mr-2" />
-                    Save As...
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={openRenameDialog}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setActiveTab('library')}>
-                    <FolderOpen className="w-4 h-4 mr-2" />
-                    Load Strategy...
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Strategy</span>
+                  <MoreVertical className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuItem onClick={handleSaveFromMenu}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Strategy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openSaveAsDialog}>
+                  <SaveAll className="w-4 h-4 mr-2" />
+                  Save As...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={openRenameDialog}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Load Strategy...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-
-          {/* Tabs inside fixed header */}
-          <TabsList className="grid w-full grid-cols-2 h-14 bg-muted/30 border border-border mt-4">
-            <TabsTrigger 
-              value="builder" 
-              className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
-            >
-              Builder
-            </TabsTrigger>
-            <TabsTrigger 
-              value="library" 
-              className="data-[state=active]:bg-foreground data-[state=active]:text-background font-bold uppercase text-xs tracking-wider"
-            >
-              Library
-            </TabsTrigger>
-          </TabsList>
         </div>
       </div>
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6">
-          {/* Strategy Builder Tab */}
-          <TabsContent value="builder" className="space-y-6 mt-0">
-            <ChartingPathStrategyBuilder
-              ref={builderRef}
-              initialStrategy={currentChartingPathStrategy}
-              onSave={handleChartingPathStrategySave}
-              onBacktest={handleChartingPathBacktest}
-            />
-          </TabsContent>
-
-          {/* My Strategies Tab */}
-          <TabsContent value="library" className="space-y-6 mt-0">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Strategy Library</h2>
-              <p className="text-muted-foreground">
-                Your saved strategies will appear here. Build and save strategies in the Builder tab.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
-                    Guided Strategies
-                  </h3>
-                </div>
-                <GuidedStrategyManager 
-                  onLoadStrategy={handleLoadStrategy} 
-                  onEditStrategy={handleLoadStrategy}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold uppercase tracking-wider border-l-2 border-foreground pl-4">
-                    Pattern Strategies
-                  </h3>
-                </div>
-                <ChartingPathManager 
-                  onLoadStrategy={handleLoadChartingPathStrategy}
-                />
-              </div>
-            </div>
-          </TabsContent>
+          <ChartingPathStrategyBuilder
+            ref={builderRef}
+            initialStrategy={currentChartingPathStrategy}
+            onSave={handleChartingPathStrategySave}
+            onBacktest={handleChartingPathBacktest}
+          />
         </div>
       </div>
 
@@ -497,7 +438,39 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Tabs>
+
+      {/* Load Strategy Dialog */}
+      <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Load Strategy</DialogTitle>
+            <DialogDescription>
+              Select a saved strategy to load
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-l-2 border-foreground pl-3">
+                Guided Strategies
+              </h3>
+              <GuidedStrategyManager 
+                onLoadStrategy={handleLoadStrategy} 
+                onEditStrategy={handleLoadStrategy}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-l-2 border-foreground pl-3">
+                Pattern Strategies
+              </h3>
+              <ChartingPathManager 
+                onLoadStrategy={handleLoadChartingPathStrategy}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
