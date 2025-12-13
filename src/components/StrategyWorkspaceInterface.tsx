@@ -325,49 +325,51 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
   return (
     <div className="space-y-8">
-      {/* Header with Strategy Menu */}
-      <div className="flex items-center justify-between">
-        <div className="border-l-4 border-foreground pl-6">
-          <h1 className="text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
-          {currentStrategy && currentStrategy.id && (
-            <p className="text-sm text-muted-foreground mt-2">
-              {currentStrategy.name}
-            </p>
+      {/* Sticky Header with Strategy Menu */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border -mx-4 px-4 py-4 md:-mx-6 md:px-6">
+        <div className="flex items-center justify-between">
+          <div className="border-l-4 border-foreground pl-6">
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
+            {currentStrategy && currentStrategy.id && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {currentStrategy.name}
+              </p>
+            )}
+          </div>
+          
+          {/* Strategy Actions Menu */}
+          {activeTab === 'builder' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Strategy</span>
+                  <MoreVertical className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuItem onClick={handleSaveFromMenu}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Strategy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openSaveAsDialog}>
+                  <SaveAll className="w-4 h-4 mr-2" />
+                  Save As...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={openRenameDialog}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setActiveTab('library')}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Load Strategy...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
-        
-        {/* Strategy Actions Menu */}
-        {activeTab === 'builder' && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Save className="w-4 h-4" />
-                Strategy
-                <MoreVertical className="w-3 h-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleSaveFromMenu}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Strategy
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={openSaveAsDialog}>
-                <SaveAll className="w-4 h-4 mr-2" />
-                Save As...
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={openRenameDialog}>
-                <Edit className="w-4 h-4 mr-2" />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setActiveTab('library')}>
-                <FolderOpen className="w-4 h-4 mr-2" />
-                Load Strategy...
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
 
       {/* Minimal Tabs */}
