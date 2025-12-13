@@ -231,13 +231,26 @@ export const MarketStep: React.FC<MarketStepProps> = ({
           {/* TradingView-style Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Symbol, ISIN, or CUSIP"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchOpen(true)}
-              className="pl-10 pr-20 h-11 bg-muted/30 border-2 border-primary/20 focus:bg-background focus:border-primary/40"
-            />
+            {!isSearchOpen && currentAnswers.instrument ? (
+              <div
+                onClick={() => setIsSearchOpen(true)}
+                className="pl-10 pr-4 h-11 bg-muted/30 border-2 border-primary/40 rounded-md flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{currentAnswers.instrument}</span>
+                  <Badge variant="secondary" className="text-xs">{selectedInstrumentType}</Badge>
+                </div>
+                <span className="text-xs text-muted-foreground">Click to change</span>
+              </div>
+            ) : (
+              <Input
+                placeholder="Symbol, ISIN, or CUSIP"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchOpen(true)}
+                className="pl-10 pr-20 h-11 bg-muted/30 border-2 border-primary/20 focus:bg-background focus:border-primary/40"
+              />
+            )}
             {isSearchOpen && (
               <Button
                 variant="ghost"
@@ -423,19 +436,6 @@ export const MarketStep: React.FC<MarketStepProps> = ({
         </CardContent>
       </Card>
 
-      {isComplete && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-primary">
-              <Globe className="w-4 h-4" />
-              <span className="font-medium">Market Selection Complete!</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Trading {currentAnswers.instrument} on {currentAnswers.timeframes?.[0] || 'selected timeframe'} timeframe.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
     </TooltipProvider>
   );
