@@ -321,9 +321,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+    <div className="min-h-screen">
       {/* Fixed Header with Strategy Menu */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-4 md:px-6">
+      <div className="fixed top-16 left-0 right-0 z-40 bg-background border-b border-border px-4 py-4 md:px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="border-l-4 border-foreground pl-6">
@@ -369,8 +369,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1">
+      {/* Scrollable Content - with padding to account for fixed header */}
+      <div className="pt-24">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6">
           <ChartingPathStrategyBuilder
             ref={builderRef}
