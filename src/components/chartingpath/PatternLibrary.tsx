@@ -674,57 +674,49 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     };
 
     return (
-      <Card 
+      <div 
         ref={setNodeRef} 
         style={style} 
-        className="p-3 cursor-default"
+        className="flex items-center justify-between bg-card border rounded-md px-3 py-2"
       >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2 flex-1">
-            <div 
-              {...attributes} 
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing touch-none"
-            >
-              <GripVertical className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-            </div>
-            <Switch
-              checked={pattern.enabled}
-              onCheckedChange={(checked) => updatePattern(pattern.id, { enabled: checked })}
-            />
-            <div>
-              <div className="font-medium text-sm">{patternInfo.name}</div>
-              <div className="text-xs text-muted-foreground">
-                Priority: {pattern.priority}
-              </div>
-            </div>
+        <div className="flex items-center gap-2 flex-1">
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical className="w-3 h-3 text-muted-foreground hover:text-foreground transition-colors" />
           </div>
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setSelectedPattern(pattern.id);
-                setConfigDialogOpen(true);
-              }}
-            >
-              <Settings className="w-3 h-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => removePattern(pattern.id)}
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
+          <Switch
+            checked={pattern.enabled}
+            onCheckedChange={(checked) => updatePattern(pattern.id, { enabled: checked })}
+            className="scale-75"
+          />
+          <span className="text-sm font-medium">{patternInfo.name}</span>
+          <Badge variant="outline" className="text-xs">{pattern.priority}</Badge>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Risk: {pattern.riskSettings.riskPerTrade}% • 
-          Stop: {pattern.riskSettings.stopLossMethod} • 
-          Target: {pattern.riskSettings.takeProfitMethod}
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => {
+              setSelectedPattern(pattern.id);
+              setConfigDialogOpen(true);
+            }}
+          >
+            <Settings className="w-3 h-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => removePattern(pattern.id)}
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
         </div>
-      </Card>
+      </div>
     );
   };
 
@@ -750,161 +742,127 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
   const selectedPatternInfo = selectedPatternData ? 
     getPatternInfo(selectedPatternData.category, selectedPatternData.id, selectedPatternData.patternType) : null;
 
+  // Pattern detail dialog state
+  const [detailPattern, setDetailPattern] = useState<{ categoryKey: string; pattern: any } | null>(null);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Professional Pattern Library
-              <Badge variant="outline">{patterns.length} Active</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search patterns..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-card border border-border shadow-lg">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {Object.entries(PATTERN_CATEGORIES).map(([key, category]) => (
-                    <SelectItem key={key} value={key}>{category.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardTitle>
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pattern Categories */}
-        <div className="lg:col-span-2 space-y-4">
-          {filteredCategories.map(([categoryKey, category]) => (
-            <Card key={categoryKey}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <category.icon className="w-5 h-5" />
-                  {category.name}
-                  <Badge variant="secondary">{category.patterns.length}</Badge>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">{category.description}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {category.patterns
-                    .filter(pattern => 
-                      !searchTerm || 
-                      pattern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      pattern.description.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((pattern) => {
-                      const isActive = patterns.some(p => p.id.startsWith(pattern.id));
-                      
-                      return (
-                        <Card key={pattern.id} className={`cursor-pointer transition-all hover:shadow-md ${isActive ? 'ring-2 ring-primary' : ''}`}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h4 className="font-medium text-sm">{pattern.name}</h4>
-                                <Badge 
-                                  variant={pattern.type === 'reversal' ? 'destructive' : 
-                                          pattern.type === 'continuation' ? 'default' : 'secondary'} 
-                                  className="text-xs mt-1"
-                                >
-                                  {pattern.type}
-                                </Badge>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant={isActive ? "secondary" : "outline"}
-                                onClick={() => addPattern(categoryKey, pattern.id)}
-                                disabled={isActive}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-3">
-                              {pattern.description}
-                            </p>
-                            
-                            {/* Framework Preview */}
-                            <div className="space-y-1">
-                              <div className="text-xs font-medium text-primary">Detection Framework:</div>
-                              <div className="text-xs text-muted-foreground">
-                                <div><strong>Detect:</strong> {pattern.framework.detect}</div>
-                                <div><strong>Enter:</strong> {pattern.framework.enter}</div>
-                                <div><strong>Target:</strong> {pattern.framework.manage}</div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
-                  }
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="space-y-4">
+      {/* Search and Filter - Compact */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search patterns..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-
-        {/* Active Patterns Panel */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Active Patterns</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Drag patterns to reorder priority, toggle to enable/disable
-              </p>
-            </CardHeader>
-            <CardContent>
-              {patterns.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No patterns selected</p>
-                  <p className="text-xs">Add patterns from the library to start building your strategy</p>
-                </div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={patterns.map(p => p.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-3">
-                      {patterns.map((pattern) => {
-                        const patternInfo = getPatternInfo(pattern.category, pattern.id, pattern.patternType);
-                        if (!patternInfo) return null;
-
-                        return (
-                          <SortablePattern
-                            key={pattern.id}
-                            pattern={pattern}
-                            patternInfo={patternInfo}
-                          />
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-card border border-border shadow-lg">
+            <SelectItem value="all">All Categories</SelectItem>
+            {Object.entries(PATTERN_CATEGORIES).map(([key, category]) => (
+              <SelectItem key={key} value={key}>{category.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Badge variant="outline" className="py-2">
+          {patterns.filter(p => p.enabled).length} Active
+        </Badge>
       </div>
+
+      {/* Compact Pattern Grid */}
+      <div className="space-y-4">
+        {filteredCategories.map(([categoryKey, category]) => (
+          <div key={categoryKey} className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <category.icon className="w-4 h-4 text-primary" />
+              {category.name}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {category.patterns
+                .filter(pattern => 
+                  !searchTerm || 
+                  pattern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  pattern.description.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((pattern) => {
+                  const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+                  
+                  return (
+                    <div key={pattern.id} className="flex items-center gap-1">
+                      <Badge
+                        variant={isActive ? "default" : "outline"}
+                        className={`cursor-pointer transition-all hover:scale-105 ${
+                          isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                        }`}
+                        onClick={() => {
+                          if (!isActive) {
+                            addPattern(categoryKey, pattern.id);
+                          }
+                        }}
+                      >
+                        {pattern.name}
+                        {isActive && <span className="ml-1">✓</span>}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setDetailPattern({ categoryKey, pattern })}
+                      >
+                        <Eye className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  );
+                })
+              }
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Active Patterns - Compact List */}
+      {patterns.length > 0 && (
+        <Card className="bg-muted/30">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center justify-between">
+              <span>Active Patterns ({patterns.length})</span>
+              <span className="text-xs text-muted-foreground font-normal">Drag to reorder</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={patterns.map(p => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
+                  {patterns.map((pattern) => {
+                    const patternInfo = getPatternInfo(pattern.category, pattern.id, pattern.patternType);
+                    if (!patternInfo) return null;
+
+                    return (
+                      <SortablePattern
+                        key={pattern.id}
+                        pattern={pattern}
+                        patternInfo={patternInfo}
+                      />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pattern Configuration Dialog */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
@@ -1058,6 +1016,77 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Pattern Detail Dialog - View Only */}
+      <Dialog open={!!detailPattern} onOpenChange={(open) => !open && setDetailPattern(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {detailPattern?.pattern.name}
+              <Badge 
+                variant={detailPattern?.pattern.type === 'reversal' ? 'destructive' : 
+                        detailPattern?.pattern.type === 'continuation' ? 'default' : 'secondary'}
+              >
+                {detailPattern?.pattern.type}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {detailPattern && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {detailPattern.pattern.description}
+              </p>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Detection Framework</h4>
+                <div className="text-sm space-y-1 bg-muted/50 p-3 rounded-lg">
+                  <div><strong className="text-primary">Detect:</strong> {detailPattern.pattern.framework.detect}</div>
+                  <div><strong className="text-primary">Confirm:</strong> {detailPattern.pattern.framework.confirm}</div>
+                  <div><strong className="text-primary">Enter:</strong> {detailPattern.pattern.framework.enter}</div>
+                  <div><strong className="text-primary">Manage:</strong> {detailPattern.pattern.framework.manage}</div>
+                  <div><strong className="text-primary">Invalidate:</strong> {detailPattern.pattern.framework.invalidate}</div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Parameters</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {Object.entries(detailPattern.pattern.parameters).map(([key, param]) => (
+                    <div key={key} className="flex justify-between bg-muted/30 px-2 py-1 rounded">
+                      <span className="text-muted-foreground capitalize">
+                        {key.replace(/([A-Z])/g, ' $1').toLowerCase()}:
+                      </span>
+                      <span className="font-medium">
+                        {(param as any).type === 'boolean' 
+                          ? ((param as any).value ? 'Yes' : 'No')
+                          : `${(param as any).value} ${(param as any).unit || ''}`
+                        }
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                className="w-full" 
+                onClick={() => {
+                  const isActive = patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id));
+                  if (!isActive) {
+                    addPattern(detailPattern.categoryKey, detailPattern.pattern.id);
+                  }
+                  setDetailPattern(null);
+                }}
+                disabled={patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id))}
+              >
+                {patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id)) 
+                  ? 'Already Added' 
+                  : 'Add to Strategy'}
+              </Button>
             </div>
           )}
         </DialogContent>
