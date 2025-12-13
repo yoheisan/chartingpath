@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,37 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
+  const [summaryData, setSummaryData] = useState<{
+    instrument?: string;
+    timeframes?: string[];
+    patternsCount: number;
+    targetGainPercent: number;
+    stopLossPercent: number;
+    backtestReturn?: number;
+    completedSteps: number;
+    totalSteps: number;
+  }>({ patternsCount: 0, targetGainPercent: 0, stopLossPercent: 0, completedSteps: 0, totalSteps: 7 });
+
+  // Sync summary data from builder ref
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (builderRef.current) {
+        const strategy = builderRef.current.getStrategy();
+        const results = builderRef.current.getBacktestResults();
+        setSummaryData({
+          instrument: strategy.market?.instrument,
+          timeframes: strategy.market?.timeframes,
+          patternsCount: strategy.patterns?.filter((p: any) => p.enabled).length || 0,
+          targetGainPercent: strategy.targetGainPercent || 0,
+          stopLossPercent: strategy.stopLossPercent || 0,
+          backtestReturn: results?.totalReturn,
+          completedSteps: builderRef.current.getCompletedStepsCount(),
+          totalSteps: builderRef.current.getTotalStepsCount()
+        });
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle backtest completion
   const handleBacktestComplete = (results: any) => {
@@ -322,10 +354,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
   return (
     <div className="min-h-screen">
-      {/* Fixed Header with Strategy Menu */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-background border-b border-border px-4 py-4 md:px-6">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex items-center justify-between">
+      {/* Fixed Header with Strategy Menu and Summary Bar */}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-background border-b border-border">
+        <div className="container mx-auto max-w-7xl px-4 md:px-6">
+          {/* Title Row */}
+          <div className="flex items-center justify-between py-4">
             <div className="border-l-4 border-foreground pl-6">
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
               {currentChartingPathStrategy && currentChartingPathStrategy.id && (
@@ -366,11 +399,59 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Summary Bar */}
+          <div className="pb-3">
+            <div className="bg-muted/30 border border-dashed border-border rounded-lg py-3 px-4">
+              <div className="flex items-center justify-between text-sm flex-wrap gap-2">
+                <div className="flex items-center gap-4 flex-wrap">
+                  {summaryData.instrument && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" />
+                      <span className="font-medium">{summaryData.instrument}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {summaryData.timeframes?.join(', ')}
+                      </Badge>
+                    </div>
+                  )}
+                  {summaryData.patternsCount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-primary" />
+                      <span>{summaryData.patternsCount} Patterns</span>
+                    </div>
+                  )}
+                  {summaryData.targetGainPercent > 0 && (
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      <span>TP: {summaryData.targetGainPercent}%</span>
+                    </div>
+                  )}
+                  {summaryData.stopLossPercent > 0 && (
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="w-4 h-4 text-red-500" />
+                      <span>SL: {summaryData.stopLossPercent}%</span>
+                    </div>
+                  )}
+                  {summaryData.backtestReturn !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-green-500" />
+                      <span className="text-green-600 font-medium">
+                        {summaryData.backtestReturn > 0 ? '+' : ''}{summaryData.backtestReturn?.toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {summaryData.completedSteps}/{summaryData.totalSteps} complete
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Scrollable Content - with padding to account for fixed header */}
-      <div className="pt-24">
+      <div className="pt-40">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6">
           <ChartingPathStrategyBuilder
             ref={builderRef}

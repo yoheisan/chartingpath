@@ -94,6 +94,9 @@ export interface ChartingPathStrategyBuilderRef {
   setCurrentStep: (step: number) => void;
   getStepCompletion: (stepIndex: number) => boolean;
   canProceedToStep: (stepIndex: number) => boolean;
+  getCompletedStepsCount: () => number;
+  getTotalStepsCount: () => number;
+  getBacktestResults: () => any;
 }
 
 export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilderRef, ChartingPathStrategyBuilderProps>(({
@@ -175,8 +178,11 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
       }
     },
     getStepCompletion,
-    canProceedToStep
-  }), [strategy, currentStep, confirmedSteps]);
+    canProceedToStep,
+    getCompletedStepsCount: () => STRATEGY_STEPS.filter((_, i) => getStepCompletion(i)).length,
+    getTotalStepsCount: () => STRATEGY_STEPS.length,
+    getBacktestResults: () => backtestResults
+  }), [strategy, currentStep, confirmedSteps, backtestResults]);
 
   useEffect(() => {
     if (initialStrategy) {
@@ -297,54 +303,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
 
   return (
     <div className="space-y-4">
-      {/* Summary Bar */}
-      <Card className="bg-muted/30 border-dashed">
-        <CardContent className="py-3">
-          <div className="flex items-center justify-between text-sm flex-wrap gap-2">
-            <div className="flex items-center gap-4 flex-wrap">
-              {strategy.market?.instrument && (
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-primary" />
-                  <span className="font-medium">{strategy.market.instrument}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {strategy.market.timeframes?.join(', ')}
-                  </Badge>
-                </div>
-              )}
-              {strategy.patterns.filter(p => p.enabled).length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-primary" />
-                  <span>{strategy.patterns.filter(p => p.enabled).length} Patterns</span>
-                </div>
-              )}
-              {strategy.targetGainPercent > 0 && (
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span>TP: {strategy.targetGainPercent}%</span>
-                </div>
-              )}
-              {strategy.stopLossPercent > 0 && (
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-red-500" />
-                  <span>SL: {strategy.stopLossPercent}%</span>
-                </div>
-              )}
-              {backtestResults && (
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-500" />
-                  <span className="text-green-600 font-medium">
-                    {backtestResults.totalReturn > 0 ? '+' : ''}{backtestResults.totalReturn?.toFixed(1)}%
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {STRATEGY_STEPS.filter((_, i) => getStepCompletion(i)).length}/{STRATEGY_STEPS.length} complete
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Accordion Sections */}
       <Accordion 
         type="multiple" 
