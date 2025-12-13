@@ -2,10 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { GuidedStrategyBuilder, GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-
-import { ChartingPathStrategyBuilder, ChartingPathStrategy } from './ChartingPathStrategyBuilder';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ChartingPathStrategyBuilder, ChartingPathStrategy, ChartingPathStrategyBuilderRef } from './ChartingPathStrategyBuilder';
 import { ConsolidatedBacktestEngine } from './ConsolidatedBacktestEngine';
 import BacktestResults from './BacktestResults';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -52,6 +68,13 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
+  
+  // Strategy menu state
+  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [saveAsName, setSaveAsName] = useState('');
+  const [renameName, setRenameName] = useState('');
+  const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
 
   // Handle backtest completion
   const handleBacktestComplete = (results: any) => {
@@ -238,15 +261,112 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     toast.success(`Loaded strategy: ${strategy.name}`);
   };
 
+  // Strategy menu handlers
+  const handleSaveFromMenu = () => {
+    const strategy = builderRef.current?.getStrategy();
+    if (strategy) {
+      handleChartingPathStrategySave(strategy);
+    }
+  };
+
+  const handleSaveAs = () => {
+    if (!saveAsName.trim()) {
+      toast.error('Please enter a strategy name');
+      return;
+    }
+    const strategy = builderRef.current?.getStrategy();
+    if (strategy) {
+      const newStrategy = {
+        ...strategy,
+        id: undefined,
+        name: saveAsName,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+      handleChartingPathStrategySave(newStrategy);
+      setCurrentChartingPathStrategy(newStrategy);
+    }
+    setShowSaveAsDialog(false);
+    setSaveAsName('');
+  };
+
+  const handleRename = () => {
+    if (!renameName.trim()) {
+      toast.error('Please enter a strategy name');
+      return;
+    }
+    const strategy = builderRef.current?.getStrategy();
+    if (strategy) {
+      const renamedStrategy = {
+        ...strategy,
+        name: renameName,
+        updated_at: new Date()
+      };
+      builderRef.current?.setStrategy(renamedStrategy);
+      handleChartingPathStrategySave(renamedStrategy);
+    }
+    setShowRenameDialog(false);
+    setRenameName('');
+  };
+
+  const openSaveAsDialog = () => {
+    const strategy = builderRef.current?.getStrategy();
+    setSaveAsName((strategy?.name || 'Strategy') + ' (Copy)');
+    setShowSaveAsDialog(true);
+  };
+
+  const openRenameDialog = () => {
+    const strategy = builderRef.current?.getStrategy();
+    setRenameName(strategy?.name || '');
+    setShowRenameDialog(true);
+  };
+
+  const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
+
   return (
     <div className="space-y-8">
-      {/* Minimal Header */}
-      <div className="border-l-4 border-foreground pl-6">
-        <h1 className="text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
-        {currentStrategy && currentStrategy.id && (
-          <p className="text-sm text-muted-foreground mt-2">
-            {currentStrategy.name}
-          </p>
+      {/* Header with Strategy Menu */}
+      <div className="flex items-center justify-between">
+        <div className="border-l-4 border-foreground pl-6">
+          <h1 className="text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
+          {currentStrategy && currentStrategy.id && (
+            <p className="text-sm text-muted-foreground mt-2">
+              {currentStrategy.name}
+            </p>
+          )}
+        </div>
+        
+        {/* Strategy Actions Menu */}
+        {activeTab === 'builder' && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Save className="w-4 h-4" />
+                Strategy
+                <MoreVertical className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleSaveFromMenu}>
+                <Save className="w-4 h-4 mr-2" />
+                Save Strategy
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={openSaveAsDialog}>
+                <SaveAll className="w-4 h-4 mr-2" />
+                Save As...
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={openRenameDialog}>
+                <Edit className="w-4 h-4 mr-2" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setActiveTab('library')}>
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Load Strategy...
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
@@ -270,6 +390,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         {/* Strategy Builder Tab */}
         <TabsContent value="builder" className="space-y-6">
           <ChartingPathStrategyBuilder
+            ref={builderRef}
             initialStrategy={currentChartingPathStrategy}
             onSave={handleChartingPathStrategySave}
             onBacktest={handleChartingPathBacktest}
@@ -312,6 +433,64 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         </TabsContent>
 
       </Tabs>
+
+      {/* Save As Dialog */}
+      <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Strategy As</DialogTitle>
+            <DialogDescription>
+              Create a copy of this strategy with a new name
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Enter strategy name"
+              value={saveAsName}
+              onChange={(e) => setSaveAsName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveAs()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveAsDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAs}>
+              <SaveAll className="w-4 h-4 mr-2" />
+              Save As
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Strategy</DialogTitle>
+            <DialogDescription>
+              Give this strategy a new name
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Enter new name"
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRename}>
+              <Edit className="w-4 h-4 mr-2" />
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

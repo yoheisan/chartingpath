@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +16,6 @@ import {
   Target, 
   Download,
   Play,
-  Save,
-  Share,
   Settings,
   Zap,
   BarChart3,
@@ -26,26 +24,8 @@ import {
   ChevronRight,
   ChevronDown,
   Globe,
-  CheckCircle,
-  MoreVertical,
-  SaveAll,
-  Edit
+  CheckCircle
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
 import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
@@ -94,16 +74,21 @@ export interface ChartingPathStrategy {
 }
 
 interface ChartingPathStrategyBuilderProps {
-  initialStrategy?: ChartingPathStrategy;
+  initialStrategy?: ChartingPathStrategy | null;
   onSave?: (strategy: ChartingPathStrategy) => void;
   onBacktest?: (strategy: ChartingPathStrategy) => Promise<any>;
 }
 
-export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderProps> = ({
+export interface ChartingPathStrategyBuilderRef {
+  getStrategy: () => ChartingPathStrategy;
+  setStrategy: (strategy: ChartingPathStrategy) => void;
+}
+
+export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilderRef, ChartingPathStrategyBuilderProps>(({
   initialStrategy,
   onSave,
   onBacktest
-}) => {
+}, ref) => {
   const [strategy, setStrategy] = useState<ChartingPathStrategy>(
     initialStrategy || {
       name: 'New Chart Pattern Strategy',
@@ -135,13 +120,15 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
   const [currentStep, setCurrentStep] = useState(0);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestResults, setBacktestResults] = useState(null);
-  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
-  const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [saveAsName, setSaveAsName] = useState('');
-  const [renameName, setRenameName] = useState('');
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
   const stepContentRef = useRef<HTMLDivElement>(null);
+
+  // Expose strategy getter/setter to parent
+  useImperativeHandle(ref, () => ({
+    getStrategy: () => strategy,
+    setStrategy: (newStrategy: ChartingPathStrategy) => setStrategy(newStrategy)
+  }), [strategy]);
 
   // Scroll to top of step content when step changes
   useEffect(() => {
@@ -189,50 +176,6 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
     toast.success('Strategy saved successfully!');
   };
 
-  const handleSaveAs = () => {
-    if (!saveAsName.trim()) {
-      toast.error('Please enter a strategy name');
-      return;
-    }
-    const newStrategy = {
-      ...strategy,
-      id: undefined, // Remove ID to create new strategy
-      name: saveAsName,
-      created_at: new Date(),
-      updated_at: new Date()
-    };
-    onSave?.(newStrategy);
-    setShowSaveAsDialog(false);
-    setSaveAsName('');
-    toast.success(`Strategy saved as "${saveAsName}"!`);
-  };
-
-  const handleRename = () => {
-    if (!renameName.trim()) {
-      toast.error('Please enter a strategy name');
-      return;
-    }
-    const renamedStrategy = {
-      ...strategy,
-      name: renameName,
-      updated_at: new Date()
-    };
-    setStrategy(renamedStrategy);
-    onSave?.(renamedStrategy);
-    setShowRenameDialog(false);
-    setRenameName('');
-    toast.success(`Strategy renamed to "${renameName}"!`);
-  };
-
-  const openSaveAsDialog = () => {
-    setSaveAsName(strategy.name + ' (Copy)');
-    setShowSaveAsDialog(true);
-  };
-
-  const openRenameDialog = () => {
-    setRenameName(strategy.name);
-    setShowRenameDialog(true);
-  };
 
   const getStepCompletion = (stepIndex: number) => {
     switch (stepIndex) {
@@ -384,32 +327,6 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
               >
                 {Math.round(getCompletionPercentage())}% Complete
               </Badge>
-              
-              {/* Save Menu Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="ml-2">
-                    <Save className="w-4 h-4 mr-2" />
-                    Save
-                    <MoreVertical className="w-3 h-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleSave}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Strategy
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={openSaveAsDialog}>
-                    <SaveAll className="w-4 h-4 mr-2" />
-                    Save As...
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={openRenameDialog}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Rename
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -919,63 +836,6 @@ export const ChartingPathStrategyBuilder: React.FC<ChartingPathStrategyBuilderPr
         </CardContent>
       </Card>
 
-      {/* Save As Dialog */}
-      <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save Strategy As</DialogTitle>
-            <DialogDescription>
-              Create a copy of this strategy with a new name
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Enter strategy name"
-              value={saveAsName}
-              onChange={(e) => setSaveAsName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveAs()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveAsDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveAs}>
-              <SaveAll className="w-4 h-4 mr-2" />
-              Save As
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Rename Dialog */}
-      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename Strategy</DialogTitle>
-            <DialogDescription>
-              Give this strategy a new name
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Enter new name"
-              value={renameName}
-              onChange={(e) => setRenameName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRename}>
-              <Edit className="w-4 h-4 mr-2" />
-              Rename
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
-};
+});
