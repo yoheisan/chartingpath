@@ -10,11 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Plus, 
   Search, 
   TrendingUp, 
-  Triangle, 
-  Target, 
+  Target,
   Zap,
   Settings,
   Eye,
@@ -582,8 +580,6 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
   patterns,
   onChange
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
@@ -727,16 +723,6 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     return category?.patterns.find(p => p.id === basePatternId);
   };
 
-  const filteredCategories = Object.entries(PATTERN_CATEGORIES).filter(([key, category]) => {
-    if (selectedCategory !== 'all' && key !== selectedCategory) return false;
-    if (!searchTerm) return true;
-    
-    return category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           category.patterns.some(p => 
-             p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             p.description.toLowerCase().includes(searchTerm.toLowerCase())
-           );
-  });
 
   const selectedPatternData = patterns.find(p => p.id === selectedPattern);
   const selectedPatternInfo = selectedPatternData ? 
@@ -747,79 +733,48 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter - Compact */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search patterns..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-card border border-border shadow-lg">
-            <SelectItem value="all">All Categories</SelectItem>
-            {Object.entries(PATTERN_CATEGORIES).map(([key, category]) => (
-              <SelectItem key={key} value={key}>{category.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Badge variant="outline" className="py-2">
-          {patterns.filter(p => p.enabled).length} Active
-        </Badge>
-      </div>
-
-      {/* Compact Pattern Grid */}
+      {/* Compact Pattern Grid - All patterns easily discoverable */}
       <div className="space-y-4">
-        {filteredCategories.map(([categoryKey, category]) => (
+        {Object.entries(PATTERN_CATEGORIES).map(([categoryKey, category]) => (
           <div key={categoryKey} className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <category.icon className="w-4 h-4 text-primary" />
               {category.name}
+              <Badge variant="outline" className="ml-auto text-xs">
+                {patterns.filter(p => p.category === categoryKey && p.enabled).length} active
+              </Badge>
             </div>
             <div className="flex flex-wrap gap-2">
-              {category.patterns
-                .filter(pattern => 
-                  !searchTerm || 
-                  pattern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  pattern.description.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((pattern) => {
-                  const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
-                  
-                  return (
-                    <div key={pattern.id} className="flex items-center gap-1">
-                      <Badge
-                        variant={isActive ? "default" : "outline"}
-                        className={`cursor-pointer transition-all hover:scale-105 ${
-                          isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                        }`}
-                        onClick={() => {
-                          if (!isActive) {
-                            addPattern(categoryKey, pattern.id);
-                          }
-                        }}
-                      >
-                        {pattern.name}
-                        {isActive && <span className="ml-1">✓</span>}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => setDetailPattern({ categoryKey, pattern })}
-                      >
-                        <Eye className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  );
-                })
-              }
+              {category.patterns.map((pattern) => {
+                const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+                
+                return (
+                  <div key={pattern.id} className="flex items-center gap-1">
+                    <Badge
+                      variant={isActive ? "default" : "outline"}
+                      className={`cursor-pointer transition-all hover:scale-105 ${
+                        isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                      }`}
+                      onClick={() => {
+                        if (!isActive) {
+                          addPattern(categoryKey, pattern.id);
+                        }
+                      }}
+                    >
+                      {pattern.name}
+                      {isActive && <span className="ml-1">✓</span>}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0"
+                      onClick={() => setDetailPattern({ categoryKey, pattern })}
+                    >
+                      <Eye className="w-3 h-3" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
