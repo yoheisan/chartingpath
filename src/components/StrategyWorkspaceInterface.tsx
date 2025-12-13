@@ -324,9 +324,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
 
   return (
-    <div className="space-y-8">
-      {/* Sticky Header with Strategy Menu */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border -mx-4 px-4 py-4 md:-mx-6 md:px-6">
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      {/* Sticky Header with Strategy Menu and Tabs */}
+      <div className="sticky top-0 z-40 bg-background border-b border-border -mx-4 px-4 py-4 md:-mx-6 md:px-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="border-l-4 border-foreground pl-6">
             <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
@@ -370,10 +370,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             </DropdownMenu>
           )}
         </div>
-      </div>
 
-      {/* Minimal Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        {/* Tabs inside sticky header */}
         <TabsList className="grid w-full grid-cols-2 h-14 bg-muted/30 border border-border">
           <TabsTrigger 
             value="builder" 
@@ -388,9 +386,12 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             Library
           </TabsTrigger>
         </TabsList>
+      </div>
 
+      {/* Scrollable Content */}
+      <div className="mt-6 space-y-6">
         {/* Strategy Builder Tab */}
-        <TabsContent value="builder" className="space-y-6">
+        <TabsContent value="builder" className="space-y-6 mt-0">
           <ChartingPathStrategyBuilder
             ref={builderRef}
             initialStrategy={currentChartingPathStrategy}
@@ -400,7 +401,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         </TabsContent>
 
         {/* My Strategies Tab */}
-        <TabsContent value="library" className="space-y-6">
+        <TabsContent value="library" className="space-y-6 mt-0">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold mb-2">Strategy Library</h2>
             <p className="text-muted-foreground">
@@ -433,8 +434,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             </div>
           </div>
         </TabsContent>
-
-      </Tabs>
+      </div>
 
       {/* Save As Dialog */}
       <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
@@ -493,7 +493,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Tabs>
   );
 };
 
