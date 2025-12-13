@@ -563,28 +563,38 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${(results.totalReturn || 23.4) > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {(results.totalReturn || 23.4) > 0 ? '+' : ''}{(results.totalReturn || 23.4).toFixed(1)}%
+                  <div className={`text-2xl font-bold ${results.totalReturn > 0 ? 'text-green-500' : results.totalReturn < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                    {results.totalReturn > 0 ? '+' : ''}{(results.totalReturn ?? 0).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Total Return</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-500">
-                    -{Math.abs(results.maxDrawdown || 6.8).toFixed(1)}%
+                  <div className={`text-2xl font-bold ${results.maxDrawdown > 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                    -{Math.abs(results.maxDrawdown ?? 0).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Max Drawdown</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-500">
-                    {(results.winRate || 64.2).toFixed(1)}%
+                  <div className={`text-2xl font-bold ${results.totalTrades > 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                    {(results.winRate ?? 0).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-500">
-                    {(results.profitFactor || 1.67).toFixed(2)}
+                  <div className={`text-2xl font-bold ${results.profitFactor > 0 ? 'text-purple-500' : 'text-muted-foreground'}`}>
+                    {(results.profitFactor ?? 0).toFixed(2)}
                   </div>
                   <div className="text-sm text-muted-foreground">Profit Factor</div>
+                </div>
+                <div className="text-center col-span-2 md:col-span-4 border-t pt-4 mt-2">
+                  <div className={`text-xl font-semibold ${results.totalTrades > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {results.totalTrades ?? 0} trades executed
+                    {results.rawSignals > 0 && results.totalTrades === 0 && (
+                      <span className="text-sm font-normal text-amber-500 ml-2">
+                        ({results.rawSignals} signals filtered by discipline rules)
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
