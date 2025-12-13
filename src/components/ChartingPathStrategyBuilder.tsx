@@ -79,9 +79,22 @@ interface ChartingPathStrategyBuilderProps {
   onBacktest?: (strategy: ChartingPathStrategy) => Promise<any>;
 }
 
+export const STRATEGY_STEPS = [
+  { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
+  { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI' },
+  { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention' },
+  { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
+  { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
+  { id: 'export', title: 'Export', description: 'Generate trading code' }
+];
+
 export interface ChartingPathStrategyBuilderRef {
   getStrategy: () => ChartingPathStrategy;
   setStrategy: (strategy: ChartingPathStrategy) => void;
+  getCurrentStep: () => number;
+  setCurrentStep: (step: number) => void;
+  getStepCompletion: (stepIndex: number) => boolean;
+  canProceedToStep: (stepIndex: number) => boolean;
 }
 
 export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilderRef, ChartingPathStrategyBuilderProps>(({
@@ -124,11 +137,46 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
   const stepContentRef = useRef<HTMLDivElement>(null);
 
-  // Expose strategy getter/setter to parent
+  // Step completion logic (defined before useImperativeHandle)
+  const getStepCompletion = (stepIndex: number): boolean => {
+    switch (stepIndex) {
+      case 0: // Market & Timeframe
+        return !!(strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled));
+      case 1: // Entry & Exit Rules - requires user confirmation
+        return confirmedSteps.has(1);
+      case 2: // Position Management - requires user confirmation
+        return confirmedSteps.has(2) && strategy.positionManagement !== undefined;
+      case 3: // Target & Stop Loss - check per-pattern TP/SL (all enabled patterns must have valid values)
+        const enabledPatterns = strategy.patterns.filter(p => p.enabled);
+        if (enabledPatterns.length === 0) return false;
+        return true;
+      case 4: // Backtest
+        return strategy.backtestResults != null;
+      case 5: // Export
+        return getStepCompletion(0) && getStepCompletion(3);
+      default:
+        return false;
+    }
+  };
+
+  const canProceedToStep = (stepIndex: number): boolean => {
+    if (stepIndex === 0) return true;
+    return getStepCompletion(stepIndex - 1);
+  };
+
+  // Expose strategy getter/setter and step navigation to parent
   useImperativeHandle(ref, () => ({
     getStrategy: () => strategy,
-    setStrategy: (newStrategy: ChartingPathStrategy) => setStrategy(newStrategy)
-  }), [strategy]);
+    setStrategy: (newStrategy: ChartingPathStrategy) => setStrategy(newStrategy),
+    getCurrentStep: () => currentStep,
+    setCurrentStep: (step: number) => {
+      if (canProceedToStep(step)) {
+        setCurrentStep(step);
+      }
+    },
+    getStepCompletion,
+    canProceedToStep
+  }), [strategy, currentStep, confirmedSteps]);
 
   // Update strategy when initialStrategy changes (e.g., loading from library)
   useEffect(() => {
@@ -153,14 +201,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     }
   }, [currentStep]);
 
-  const steps = [
-    { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
-    { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI' },
-    { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention' },
-    { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
-    { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
-    { id: 'export', title: 'Export', description: 'Generate trading code' }
-  ];
+  const steps = STRATEGY_STEPS;
 
   const updateStrategy = (section: keyof ChartingPathStrategy, data: any) => {
     setStrategy(prev => ({
@@ -190,34 +231,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const handleSave = () => {
     onSave?.(strategy);
     toast.success('Strategy saved successfully!');
-  };
-
-
-  const getStepCompletion = (stepIndex: number) => {
-    switch (stepIndex) {
-      case 0: // Market & Timeframe
-        return strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
-      case 1: // Entry & Exit Rules - requires user confirmation
-        return confirmedSteps.has(1);
-      case 2: // Position Management - requires user confirmation
-        return confirmedSteps.has(2) && strategy.positionManagement !== undefined;
-      case 3: // Target & Stop Loss - check per-pattern TP/SL (all enabled patterns must have valid values)
-        const enabledPatterns = strategy.patterns.filter(p => p.enabled);
-        if (enabledPatterns.length === 0) return false;
-        // Each pattern has default TP/SL, so just need at least one enabled pattern
-        return true;
-      case 4: // Backtest
-        return strategy.backtestResults != null;
-      case 5: // Export
-        return getStepCompletion(0) && getStepCompletion(3);
-      default:
-        return false;
-    }
-  };
-
-  const canProceedToStep = (stepIndex: number) => {
-    if (stepIndex === 0) return true;
-    return getStepCompletion(stepIndex - 1);
   };
 
   const nextStep = () => {
@@ -326,38 +339,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
       {/* Step-Based Builder Interface */}
       <Card ref={stepContentRef}>
         <CardContent className="pt-6">
-          {/* Step Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <Button
-                    variant={index === currentStep ? "default" : getStepCompletion(index) ? "outline" : "ghost"}
-                    size="sm"
-                    onClick={() => goToStep(index)}
-                    disabled={!canProceedToStep(index)}
-                    className={`flex items-center gap-2 ${
-                      index === currentStep ? 'bg-primary text-primary-foreground' : 
-                      getStepCompletion(index) ? 'bg-green-50 border-green-200 text-green-700' : 
-                      'text-muted-foreground'
-                    }`}
-                  >
-                    {getStepCompletion(index) ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-current/10 flex items-center justify-center text-xs font-medium">
-                        {index + 1}
-                      </div>
-                    )}
-                    <span className="hidden md:inline">{step.title}</span>
-                  </Button>
-                  {index < steps.length - 1 && (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground mx-2" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Step Content */}
           <div className="min-h-[400px]">
