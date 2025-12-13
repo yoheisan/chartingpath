@@ -45,25 +45,26 @@ interface DisciplineStats {
   rejectionsByFilter: Record<string, number>;
 }
 
+// Default filters are LENIENT to ensure trades execute - user can tighten
 const DEFAULT_DISCIPLINE_FILTERS: DisciplineFilters = {
-  trendAlignmentEnabled: true,
+  trendAlignmentEnabled: false,  // Disabled by default - patterns work in any trend
   trendTimeframe: 'daily',
   trendIndicator: 'ema50',
-  minRiskRewardEnabled: true,
-  minRiskReward: 2.0,
-  volumeConfirmationEnabled: true,
-  volumeMultiplier: 1.5,
-  maxPatternsEnabled: true,
-  maxPatterns: 3,
-  maxConcurrentTradesEnabled: true,
-  maxConcurrentTrades: 2,
-  timeFilterEnabled: true,
-  avoidLowLiquidity: true,
-  avoidNewsEvents: true,
-  atrStopValidationEnabled: true,
-  minAtrMultiplier: 1.0,
-  cooldownEnabled: true,
-  cooldownBars: 5,
+  minRiskRewardEnabled: false,   // Disabled - let pattern define R:R
+  minRiskReward: 1.5,
+  volumeConfirmationEnabled: false, // Disabled - volume data often incomplete
+  volumeMultiplier: 1.2,
+  maxPatternsEnabled: false,
+  maxPatterns: 5,
+  maxConcurrentTradesEnabled: false,
+  maxConcurrentTrades: 3,
+  timeFilterEnabled: false,      // Disabled by default
+  avoidLowLiquidity: false,
+  avoidNewsEvents: false,
+  atrStopValidationEnabled: false,
+  minAtrMultiplier: 0.5,
+  cooldownEnabled: false,
+  cooldownBars: 3,
 };
 
 function calculateSMA(prices: number[], period: number): number {
