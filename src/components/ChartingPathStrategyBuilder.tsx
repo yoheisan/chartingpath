@@ -1,30 +1,27 @@
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
-  Activity, 
   TrendingUp,
   TrendingDown,
-  Shield, 
   DollarSign, 
   Target, 
-  Download,
-  Play,
   Settings,
-  Zap,
   BarChart3,
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   Globe,
-  CheckCircle
+  CheckCircle,
+  Layers,
+  Crosshair,
+  Shield,
+  Play,
+  Download
 } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
@@ -36,6 +33,7 @@ import { PositionManagementSettings } from './PositionManagementSettings';
 import { DEFAULT_POSITION_MANAGEMENT, PositionManagementRules, PatternRules as ProfessionalPatternRules } from '@/utils/ProfessionalPatternRules';
 import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export interface PatternRules {
   entry: string;
@@ -50,19 +48,19 @@ export interface ChartingPathStrategy {
   market?: {
     instrumentCategory: string;
     instrument: string;
-    timeframes: string[]; // Array to match MarketStep component
+    timeframes: string[];
     tradingHours: string;
   };
-  patterns: any[]; // Selected chart patterns to trade (uses PatternConfig from PatternLibrary with optional custom TP/SL)
-  patternRules?: Record<string, PatternRules>; // Custom rules per pattern
-  targetGainPercent: number; // Target profit in %
-  stopLossPercent: number; // Stop loss in %
+  patterns: any[];
+  patternRules?: Record<string, PatternRules>;
+  targetGainPercent: number;
+  stopLossPercent: number;
   positionSizing: {
     method: 'fixed_percent' | 'fixed_amount' | 'risk_based';
-    riskPerTrade: number; // % of account to risk per trade
-    maxPositions: number; // Max concurrent positions
+    riskPerTrade: number;
+    maxPositions: number;
   };
-  positionManagement?: PositionManagementRules; // Position and overlap management
+  positionManagement?: PositionManagementRules;
   backtestPeriod?: {
     startDate: string;
     endDate: string;
@@ -80,12 +78,13 @@ interface ChartingPathStrategyBuilderProps {
 }
 
 export const STRATEGY_STEPS = [
-  { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period' },
-  { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI' },
-  { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention' },
-  { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %' },
-  { id: 'backtest', title: 'Backtest', description: 'Test pattern performance' },
-  { id: 'export', title: 'Export', description: 'Generate trading code' }
+  { id: 'market', title: 'Asset & Timeframe', description: 'Select financial instrument & chart period', icon: Globe },
+  { id: 'patterns', title: 'Chart Patterns', description: 'Select patterns to trade', icon: Layers },
+  { id: 'rules', title: 'Entry & Exit Rules', description: 'Configure trading rules with AI', icon: Crosshair },
+  { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention', icon: Shield },
+  { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %', icon: Target },
+  { id: 'backtest', title: 'Backtest', description: 'Test pattern performance', icon: Play },
+  { id: 'export', title: 'Export', description: 'Generate trading code', icon: Download }
 ];
 
 export interface ChartingPathStrategyBuilderRef {
@@ -107,7 +106,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
       name: 'New Chart Pattern Strategy',
       description: 'Pattern-based trading strategy',
       patterns: [],
-      patternRules: {}, // Initialize empty pattern rules
+      patternRules: {},
       targetGainPercent: 0,
       stopLossPercent: 0,
       market: {
@@ -121,10 +120,10 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
         riskPerTrade: 2.0,
         maxPositions: 3
       },
-      positionManagement: DEFAULT_POSITION_MANAGEMENT, // Initialize with defaults
+      positionManagement: DEFAULT_POSITION_MANAGEMENT,
       backtestPeriod: {
-        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
-        endDate: new Date().toISOString().split('T')[0], // Today
+        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
         preset: '1year'
       }
     }
@@ -135,25 +134,27 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const [backtestResults, setBacktestResults] = useState(null);
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
-  const stepContentRef = useRef<HTMLDivElement>(null);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['market', 'patterns']);
 
-  // Step completion logic (defined before useImperativeHandle)
+  // Step completion logic
   const getStepCompletion = (stepIndex: number): boolean => {
     switch (stepIndex) {
-      case 0: // Market & Timeframe
-        return !!(strategy.market?.instrument && strategy.market?.timeframes?.length > 0 && strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled));
-      case 1: // Entry & Exit Rules - requires user confirmation
-        return confirmedSteps.has(1);
-      case 2: // Position Management - requires user confirmation
-        return confirmedSteps.has(2) && strategy.positionManagement !== undefined;
-      case 3: // Target & Stop Loss - check per-pattern TP/SL (all enabled patterns must have valid values)
+      case 0: // Market
+        return !!(strategy.market?.instrument && strategy.market?.timeframes?.length > 0);
+      case 1: // Patterns
+        return strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled);
+      case 2: // Entry & Exit Rules
+        return confirmedSteps.has(2);
+      case 3: // Position Management
+        return confirmedSteps.has(3) && strategy.positionManagement !== undefined;
+      case 4: // Target & Stop Loss
         const enabledPatterns = strategy.patterns.filter(p => p.enabled);
         if (enabledPatterns.length === 0) return false;
         return true;
-      case 4: // Backtest
+      case 5: // Backtest
         return strategy.backtestResults != null;
-      case 5: // Export
-        return getStepCompletion(0) && getStepCompletion(3);
+      case 6: // Export
+        return getStepCompletion(0) && getStepCompletion(1) && getStepCompletion(4);
       default:
         return false;
     }
@@ -164,7 +165,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     return getStepCompletion(stepIndex - 1);
   };
 
-  // Expose strategy getter/setter and step navigation to parent
   useImperativeHandle(ref, () => ({
     getStrategy: () => strategy,
     setStrategy: (newStrategy: ChartingPathStrategy) => setStrategy(newStrategy),
@@ -178,30 +178,16 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     canProceedToStep
   }), [strategy, currentStep, confirmedSteps]);
 
-  // Update strategy when initialStrategy changes (e.g., loading from library)
   useEffect(() => {
     if (initialStrategy) {
       setStrategy(initialStrategy);
-      // Reset step to beginning when loading a new strategy
-      setCurrentStep(0);
-      // Mark completed steps based on loaded data
       const completedSteps = new Set<number>();
       if (initialStrategy.market?.instrument) completedSteps.add(0);
       if (initialStrategy.patterns?.some(p => p.enabled)) completedSteps.add(1);
-      if (initialStrategy.positionManagement) completedSteps.add(2);
-      if (initialStrategy.targetGainPercent > 0 || initialStrategy.stopLossPercent > 0) completedSteps.add(3);
+      if (initialStrategy.positionManagement) completedSteps.add(3);
       setConfirmedSteps(completedSteps);
     }
   }, [initialStrategy]);
-
-  // Scroll to top of step content when step changes
-  useEffect(() => {
-    if (stepContentRef.current) {
-      stepContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [currentStep]);
-
-  const steps = STRATEGY_STEPS;
 
   const updateStrategy = (section: keyof ChartingPathStrategy, data: any) => {
     setStrategy(prev => ({
@@ -214,9 +200,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const handleBacktest = async (strategyOverride?: ChartingPathStrategy) => {
     setIsBacktesting(true);
     try {
-      // Use the override strategy if provided (from EnhancedBacktestEngine), otherwise use current strategy
       const strategyToTest = strategyOverride || strategy;
-      // Use pattern detection service to validate patterns in backtest
       const results = await onBacktest?.(strategyToTest);
       setBacktestResults(results);
       updateStrategy('backtestResults', results);
@@ -226,38 +210,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     } finally {
       setIsBacktesting(false);
     }
-  };
-
-  const handleSave = () => {
-    onSave?.(strategy);
-    toast.success('Strategy saved successfully!');
-  };
-
-  const nextStep = () => {
-    if (currentStep < steps.length - 1 && canProceedToStep(currentStep + 1)) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const goToStep = (stepIndex: number) => {
-    if (canProceedToStep(stepIndex)) {
-      setCurrentStep(stepIndex);
-    }
-  };
-
-  const getCompletionPercentage = () => {
-    const completedSteps = steps.filter((_, index) => getStepCompletion(index)).length;
-    return (completedSteps / steps.length) * 100;
-  };
-
-  const canBacktest = () => {
-    return getStepCompletion(0) && getStepCompletion(2); // Market + Targets
   };
 
   const handlePresetChange = (preset: string) => {
@@ -291,518 +243,479 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     });
   };
 
+  const canBacktest = () => {
+    return getStepCompletion(0) && getStepCompletion(1) && getStepCompletion(3);
+  };
+
+  const getSectionStatus = (sectionId: string): 'complete' | 'incomplete' | 'locked' => {
+    const stepIndex = STRATEGY_STEPS.findIndex(s => s.id === sectionId);
+    if (getStepCompletion(stepIndex)) return 'complete';
+    if (!canProceedToStep(stepIndex)) return 'locked';
+    return 'incomplete';
+  };
+
+  const renderSectionHeader = (step: typeof STRATEGY_STEPS[0], index: number) => {
+    const status = getSectionStatus(step.id);
+    const IconComponent = step.icon;
+    
+    return (
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            status === 'complete' 
+              ? 'bg-green-500/20 text-green-600' 
+              : status === 'locked' 
+                ? 'bg-muted text-muted-foreground' 
+                : 'bg-primary/10 text-primary'
+          }`}>
+            {status === 'complete' ? (
+              <CheckCircle className="w-4 h-4" />
+            ) : (
+              <IconComponent className="w-4 h-4" />
+            )}
+          </div>
+          <div className="text-left">
+            <div className="font-medium">{step.title}</div>
+            <div className="text-xs text-muted-foreground">{step.description}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {status === 'complete' && (
+            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+              Complete
+            </Badge>
+          )}
+          {status === 'locked' && (
+            <Badge variant="outline" className="text-muted-foreground">
+              Locked
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Selected Pattern Display */}
-      {strategy.patterns.filter(p => p.enabled).length > 0 && (
-        <Card className="border-2 border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
-          <CardContent className="pt-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  <h3 className="font-semibold text-green-800 dark:text-green-200">
-                    Active Chart Pattern{strategy.patterns.filter(p => p.enabled).length > 1 ? 's' : ''}
-                  </h3>
-                  <Badge className="bg-green-600 text-white">
-                    {strategy.patterns.filter(p => p.enabled).length} Selected
+    <div className="space-y-4">
+      {/* Summary Bar */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardContent className="py-3">
+          <div className="flex items-center justify-between text-sm flex-wrap gap-2">
+            <div className="flex items-center gap-4 flex-wrap">
+              {strategy.market?.instrument && (
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{strategy.market.instrument}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {strategy.market.timeframes?.join(', ')}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {strategy.patterns.filter(p => p.enabled).map((pattern, idx) => (
-                    <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-background rounded-lg border border-green-200 dark:border-green-800">
-                      <Target className="w-4 h-4 text-green-600" />
-                      <span className="font-medium text-sm">{pattern.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {pattern.category}
-                      </Badge>
-                    </div>
-                  ))}
+              )}
+              {strategy.patterns.filter(p => p.enabled).length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <span>{strategy.patterns.filter(p => p.enabled).length} Patterns</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Strategy will generate signals based on these patterns
-                </p>
-              </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentStep(0)}
-                  className="ml-4 flex items-center gap-2 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-                >
-                  <Settings className="w-4 h-4" />
-                  Change Asset/Timeframe
-                </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      {/* Step-Based Builder Interface */}
-      <Card ref={stepContentRef}>
-        <CardContent className="pt-6">
-
-          {/* Step Content */}
-          <div className="min-h-[400px]">
-            {currentStep === 0 && (
-              <div className="space-y-6">
-                {/* Instrument & Timeframe */}
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Instrument & Timeframe</h3>
-                  <MarketStep
-                    answers={{ market: strategy.market }}
-                    onAnswersChange={(_, data) => updateStrategy('market', data)}
-                    subscriptionPlan="professional"
-                  />
+              )}
+              {strategy.targetGainPercent > 0 && (
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  <span>TP: {strategy.targetGainPercent}%</span>
                 </div>
-
-                {/* Pattern Selection */}
-                <div className="pt-4">
-                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Chart Patterns</h3>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Select patterns to trade
-                  </p>
-                  <PatternLibrary
-                    patterns={strategy.patterns}
-                    onChange={(patterns) => updateStrategy('patterns', patterns)}
-                  />
+              )}
+              {strategy.stopLossPercent > 0 && (
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="w-4 h-4 text-red-500" />
+                  <span>SL: {strategy.stopLossPercent}%</span>
                 </div>
-
-                {/* Validation Notice */}
-                {(!strategy.market?.instrument || !strategy.patterns.some(p => p.enabled)) && (
-                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>
-                      {!strategy.market?.instrument && 'Select an instrument'}
-                      {!strategy.market?.instrument && !strategy.patterns.some(p => p.enabled) && ' and '}
-                      {!strategy.patterns.some(p => p.enabled) && 'enable at least one pattern'}
-                      {' to continue'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {currentStep === 1 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wide">Entry & Exit Rules</h3>
-                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
-                  <div className="space-y-4">
-                    {strategy.patterns
-                      .filter(p => p.enabled)
-                      .map((pattern) => {
-                        // Extract base pattern name (remove timestamp suffix)
-                        const basePatternId = pattern.id.replace(/_\d+$/, '');
-                        // Convert underscores to hyphens and handle naming variations
-                        let patternKey = basePatternId
-                          .replace(/_/g, '-')
-                          .replace(/^inverse-/, 'inverted-');
-                        
-                        // Handle reversed naming conventions
-                        if (patternKey === 'wedge-rising') patternKey = 'rising-wedge';
-                        if (patternKey === 'wedge-falling') patternKey = 'falling-wedge';
-                        
-                        const patternDetails = PATTERN_DETAILS[patternKey];
-                        
-                        // Get pattern name from library or use formatted base ID
-                        const getPatternName = () => {
-                          // Search through all categories in PATTERN_CATEGORIES to find the pattern
-                          const allCategories = Object.values({
-                            classical: { patterns: [] },
-                            triangles: { patterns: [] },
-                            // Add other categories as needed
-                          });
-                          
-                          // Try to find pattern name from the pattern definitions
-                          // Convert base ID to readable name (e.g., 'head_shoulders' -> 'Head & Shoulders')
-                          return basePatternId
-                            .split('_')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ');
-                        };
-                        
-                        const patternName = getPatternName();
-                        
-                        // Provide generic defaults for patterns not in PATTERN_DETAILS
-                        const defaultRules = patternDetails ? {
-                          entry: patternDetails.entry,
-                          stopLoss: patternDetails.stopLoss,
-                          target: patternDetails.targetMethodology
-                        } : {
-                          entry: "Define your entry criteria for this pattern",
-                          stopLoss: "Set stop loss based on pattern structure and risk tolerance",
-                          target: "Determine target based on pattern measurement and risk-reward ratio"
-                        };
-
-                        const customRules = strategy.patternRules?.[pattern.id];
-
-                        const isExpanded = expandedPatternRules.has(pattern.id);
-                        const toggleExpanded = () => {
-                          setExpandedPatternRules(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(pattern.id)) {
-                              newSet.delete(pattern.id);
-                            } else {
-                              newSet.add(pattern.id);
-                            }
-                            return newSet;
-                          });
-                        };
-
-                        return (
-                          <Collapsible 
-                            key={pattern.id} 
-                            open={isExpanded} 
-                            onOpenChange={toggleExpanded}
-                            className="border border-border rounded-lg bg-card overflow-hidden"
-                          >
-                            <CollapsibleTrigger asChild>
-                              <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left">
-                                <div className="flex items-center gap-3">
-                                  <TrendingUp className="h-5 w-5 text-primary" />
-                                  <h3 className="text-lg font-semibold text-foreground">
-                                    {patternName}
-                                  </h3>
-                                  {customRules && (
-                                    <Badge variant="secondary" className="text-xs">Customized</Badge>
-                                  )}
-                                </div>
-                                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                              </button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <div className="px-6 pb-6 pt-2 border-t border-border">
-                                <PatternRulesEditor
-                                  patternName={patternName}
-                                  patternId={pattern.id}
-                                  defaultRules={defaultRules}
-                                  customRules={customRules}
-                                  onRulesChange={(rules) => {
-                                    const updatedRules = {
-                                      ...strategy.patternRules,
-                                      [pattern.id]: rules
-                                    };
-                                    updateStrategy('patternRules', updatedRules);
-                                  }}
-                                />
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please select chart patterns from the Pattern Library first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Confirmation Button for Entry & Exit Rules */}
-                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) && (
-                  <div className="flex justify-end mt-6">
-                    <Button 
-                      onClick={() => {
-                        setConfirmedSteps(prev => new Set([...prev, 1]));
-                        toast.success('Entry & Exit Rules confirmed');
-                      }}
-                      disabled={confirmedSteps.has(1)}
-                      size="lg"
-                    >
-                      {confirmedSteps.has(1) ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Rules Confirmed
-                        </>
-                      ) : (
-                        'Confirm Entry & Exit Rules'
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wide">Position Management</h3>
-                <PositionManagementSettings
-                  rules={strategy.positionManagement || DEFAULT_POSITION_MANAGEMENT}
-                  onChange={(rules) => updateStrategy('positionManagement', rules)}
-                  selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
-                />
-                
-                {/* Confirmation Button for Position Management */}
-                <div className="flex justify-end mt-6">
-                  <Button 
-                    onClick={() => {
-                      setConfirmedSteps(prev => new Set([...prev, 2]));
-                      toast.success('Position Management settings confirmed');
-                    }}
-                    disabled={confirmedSteps.has(2)}
-                    size="lg"
-                  >
-                    {confirmedSteps.has(2) ? (
-                      <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Settings Confirmed
-                      </>
-                    ) : (
-                      'Confirm Position Management'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wide">Target & Stop Loss</h3>
-                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
-                  <TargetStopLossSettings
-                    targetGainPercent={strategy.targetGainPercent}
-                    stopLossPercent={strategy.stopLossPercent}
-                    positionSizing={strategy.positionSizing}
-                    selectedPatterns={strategy.patterns}
-                    onChange={(data) => {
-                      updateStrategy('targetGainPercent', data.targetGainPercent);
-                      updateStrategy('stopLossPercent', data.stopLossPercent);
-                      updateStrategy('positionSizing', data.positionSizing);
-                    }}
-                    onPatternChange={(patternId, updates) => {
-                      const updatedPatterns = strategy.patterns.map(p => 
-                        p.id === patternId ? { ...p, ...updates } : p
-                      );
-                      updateStrategy('patterns', updatedPatterns);
-                    }}
-                  />
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please select chart patterns from the Pattern Library first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wide">Backtest</h3>
-                {canBacktest() ? (
-                  <div className="space-y-4">
-                    {/* Backtest Period Selection */}
-                    <div className="space-y-4">
-                      <Label>Quick Select Period</Label>
-                      <Select
-                        value={strategy.backtestPeriod?.preset || '1year'}
-                        onValueChange={handlePresetChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="3months">Last 3 Months</SelectItem>
-                          <SelectItem value="6months">Last 6 Months</SelectItem>
-                          <SelectItem value="1year">Last 1 Year</SelectItem>
-                          <SelectItem value="2years">Last 2 Years</SelectItem>
-                          <SelectItem value="5years">Last 5 Years</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* Custom Date Range */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="start-date">Start Date</Label>
-                          <Input
-                            id="start-date"
-                            type="date"
-                            value={strategy.backtestPeriod?.startDate || ''}
-                            onChange={(e) => updateStrategy('backtestPeriod', {
-                              ...strategy.backtestPeriod,
-                              startDate: e.target.value,
-                              preset: 'custom'
-                            })}
-                            max={strategy.backtestPeriod?.endDate || new Date().toISOString().split('T')[0]}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="end-date">End Date</Label>
-                          <Input
-                            id="end-date"
-                            type="date"
-                            value={strategy.backtestPeriod?.endDate || ''}
-                            onChange={(e) => updateStrategy('backtestPeriod', {
-                              ...strategy.backtestPeriod,
-                              endDate: e.target.value,
-                              preset: 'custom'
-                            })}
-                            min={strategy.backtestPeriod?.startDate}
-                            max={new Date().toISOString().split('T')[0]}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                        <strong>Testing Period:</strong> {strategy.backtestPeriod?.startDate} to {strategy.backtestPeriod?.endDate}
-                        {strategy.backtestPeriod?.startDate && strategy.backtestPeriod?.endDate && (
-                          <span className="ml-2">
-                            ({Math.ceil((new Date(strategy.backtestPeriod.endDate).getTime() - new Date(strategy.backtestPeriod.startDate).getTime()) / (1000 * 60 * 60 * 24))} days)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Backtest Engine */}
-                    <EnhancedBacktestEngine
-                      strategy={strategy}
-                      results={backtestResults}
-                      isRunning={isBacktesting}
-                      onBacktest={handleBacktest}
-                    />
-
-                    {backtestResults && (
-                      <Card className="border-green-200 bg-green-50/50">
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                            Backtest Complete
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Total Return</p>
-                              <p className="text-2xl font-bold text-green-600">
-                                {backtestResults.totalReturn > 0 ? '+' : ''}{backtestResults.totalReturn?.toFixed(2)}%
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Win Rate</p>
-                              <p className="text-2xl font-bold">
-                                {backtestResults.winRate?.toFixed(1)}%
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Total Trades</p>
-                              <p className="text-2xl font-bold">
-                                {backtestResults.totalTrades || backtestResults.trades?.length || 0}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Profit Factor</p>
-                              <p className="text-2xl font-bold">
-                                {backtestResults.profitFactor?.toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete all previous steps first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {currentStep === 5 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wide">Export Strategy</h3>
-                {getStepCompletion(1) && getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(4) ? (
-                  <ExportPanel strategy={strategy} />
-                ) : (
-                  <Card className="border-amber-200 bg-amber-50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span>Please complete all previous steps first</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-6 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              className="flex items-center gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Step {currentStep + 1} of {steps.length}
-              </span>
-            </div>
-
-            <Button
-              onClick={nextStep}
-              disabled={currentStep === steps.length - 1 || !getStepCompletion(currentStep)}
-              className="flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status Bar */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-primary" />
-                <span>{strategy.patterns.length} Patterns</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span>Target: {strategy.targetGainPercent}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingDown className="w-4 h-4 text-red-500" />
-                <span>Stop: {strategy.stopLossPercent}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary" />
-                <span>Risk: {strategy.positionSizing.riskPerTrade}% / trade</span>
-              </div>
+              )}
               {backtestResults && (
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-green-500" />
-                  <span>Backtest Complete</span>
+                  <span className="text-green-600 font-medium">
+                    {backtestResults.totalReturn > 0 ? '+' : ''}{backtestResults.totalReturn?.toFixed(1)}%
+                  </span>
                 </div>
               )}
             </div>
-            
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span>Last updated: {strategy.updated_at ? new Date(strategy.updated_at).toLocaleTimeString() : 'Never'}</span>
+            <div className="text-xs text-muted-foreground">
+              {STRATEGY_STEPS.filter((_, i) => getStepCompletion(i)).length}/{STRATEGY_STEPS.length} complete
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Accordion Sections */}
+      <Accordion 
+        type="multiple" 
+        value={expandedSections}
+        onValueChange={setExpandedSections}
+        className="space-y-3"
+      >
+        {/* Section 1: Asset & Timeframe */}
+        <AccordionItem value="market" className="border rounded-lg bg-card">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[0], 0)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              <MarketStep
+                answers={{ market: strategy.market }}
+                onAnswersChange={(_, data) => updateStrategy('market', data)}
+                subscriptionPlan="professional"
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 2: Chart Patterns */}
+        <AccordionItem value="patterns" className="border rounded-lg bg-card">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[1], 1)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              <PatternLibrary
+                patterns={strategy.patterns}
+                onChange={(patterns) => updateStrategy('patterns', patterns)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 3: Entry & Exit Rules */}
+        <AccordionItem 
+          value="rules" 
+          className={`border rounded-lg bg-card ${getSectionStatus('rules') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('rules') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[2], 2)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2 space-y-4">
+              {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
+                <>
+                  {strategy.patterns
+                    .filter(p => p.enabled)
+                    .map((pattern) => {
+                      const basePatternId = pattern.id.replace(/_\d+$/, '');
+                      let patternKey = basePatternId
+                        .replace(/_/g, '-')
+                        .replace(/^inverse-/, 'inverted-');
+                      
+                      if (patternKey === 'wedge-rising') patternKey = 'rising-wedge';
+                      if (patternKey === 'wedge-falling') patternKey = 'falling-wedge';
+                      
+                      const patternDetails = PATTERN_DETAILS[patternKey];
+                      const patternName = basePatternId
+                        .split('_')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                      
+                      const defaultRules = patternDetails ? {
+                        entry: patternDetails.entry,
+                        stopLoss: patternDetails.stopLoss,
+                        target: patternDetails.targetMethodology
+                      } : {
+                        entry: "Define your entry criteria for this pattern",
+                        stopLoss: "Set stop loss based on pattern structure",
+                        target: "Determine target based on pattern measurement"
+                      };
+
+                      const customRules = strategy.patternRules?.[pattern.id];
+                      const isExpanded = expandedPatternRules.has(pattern.id);
+                      const toggleExpanded = () => {
+                        setExpandedPatternRules(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has(pattern.id)) {
+                            newSet.delete(pattern.id);
+                          } else {
+                            newSet.add(pattern.id);
+                          }
+                          return newSet;
+                        });
+                      };
+
+                      return (
+                        <Collapsible 
+                          key={pattern.id} 
+                          open={isExpanded} 
+                          onOpenChange={toggleExpanded}
+                          className="border border-border rounded-lg bg-muted/30 overflow-hidden"
+                        >
+                          <CollapsibleTrigger asChild>
+                            <button className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left">
+                              <div className="flex items-center gap-3">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                                <span className="font-medium text-sm">{patternName}</span>
+                                {customRules && (
+                                  <Badge variant="secondary" className="text-xs">Customized</Badge>
+                                )}
+                              </div>
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="px-4 pb-4 pt-2 border-t border-border">
+                              <PatternRulesEditor
+                                patternName={patternName}
+                                patternId={pattern.id}
+                                defaultRules={defaultRules}
+                                customRules={customRules}
+                                onRulesChange={(rules) => {
+                                  const updatedRules = {
+                                    ...strategy.patternRules,
+                                    [pattern.id]: rules
+                                  };
+                                  updateStrategy('patternRules', updatedRules);
+                                }}
+                              />
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={() => {
+                        setConfirmedSteps(prev => new Set([...prev, 2]));
+                        toast.success('Entry & Exit Rules confirmed');
+                      }}
+                      disabled={confirmedSteps.has(2)}
+                      size="sm"
+                    >
+                      {confirmedSteps.has(2) ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Confirmed
+                        </>
+                      ) : (
+                        'Confirm Rules'
+                      )}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Select chart patterns first</span>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 4: Position Management */}
+        <AccordionItem 
+          value="position" 
+          className={`border rounded-lg bg-card ${getSectionStatus('position') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('position') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[3], 3)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2 space-y-4">
+              <PositionManagementSettings
+                rules={strategy.positionManagement || DEFAULT_POSITION_MANAGEMENT}
+                onChange={(rules) => updateStrategy('positionManagement', rules)}
+                selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
+              />
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => {
+                    setConfirmedSteps(prev => new Set([...prev, 3]));
+                    toast.success('Position Management confirmed');
+                  }}
+                  disabled={confirmedSteps.has(3)}
+                  size="sm"
+                >
+                  {confirmedSteps.has(3) ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Confirmed
+                    </>
+                  ) : (
+                    'Confirm Settings'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 5: Target & Stop Loss */}
+        <AccordionItem 
+          value="targets" 
+          className={`border rounded-lg bg-card ${getSectionStatus('targets') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('targets') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[4], 4)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
+                <TargetStopLossSettings
+                  targetGainPercent={strategy.targetGainPercent}
+                  stopLossPercent={strategy.stopLossPercent}
+                  positionSizing={strategy.positionSizing}
+                  selectedPatterns={strategy.patterns}
+                  onChange={(data) => {
+                    updateStrategy('targetGainPercent', data.targetGainPercent);
+                    updateStrategy('stopLossPercent', data.stopLossPercent);
+                    updateStrategy('positionSizing', data.positionSizing);
+                  }}
+                  onPatternChange={(patternId, updates) => {
+                    const updatedPatterns = strategy.patterns.map(p => 
+                      p.id === patternId ? { ...p, ...updates } : p
+                    );
+                    updateStrategy('patterns', updatedPatterns);
+                  }}
+                />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Select chart patterns first</span>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 6: Backtest */}
+        <AccordionItem 
+          value="backtest" 
+          className={`border rounded-lg bg-card ${!canBacktest() ? 'opacity-50' : ''}`}
+          disabled={!canBacktest()}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[5], 5)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2 space-y-4">
+              {canBacktest() ? (
+                <>
+                  <div className="space-y-3">
+                    <Label className="text-sm">Test Period</Label>
+                    <Select
+                      value={strategy.backtestPeriod?.preset || '1year'}
+                      onValueChange={handlePresetChange}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3months">Last 3 Months</SelectItem>
+                        <SelectItem value="6months">Last 6 Months</SelectItem>
+                        <SelectItem value="1year">Last 1 Year</SelectItem>
+                        <SelectItem value="2years">Last 2 Years</SelectItem>
+                        <SelectItem value="5years">Last 5 Years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="start-date" className="text-xs">Start Date</Label>
+                        <Input
+                          id="start-date"
+                          type="date"
+                          value={strategy.backtestPeriod?.startDate || ''}
+                          onChange={(e) => updateStrategy('backtestPeriod', {
+                            ...strategy.backtestPeriod,
+                            startDate: e.target.value,
+                            preset: 'custom'
+                          })}
+                          max={strategy.backtestPeriod?.endDate}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end-date" className="text-xs">End Date</Label>
+                        <Input
+                          id="end-date"
+                          type="date"
+                          value={strategy.backtestPeriod?.endDate || ''}
+                          onChange={(e) => updateStrategy('backtestPeriod', {
+                            ...strategy.backtestPeriod,
+                            endDate: e.target.value,
+                            preset: 'custom'
+                          })}
+                          min={strategy.backtestPeriod?.startDate}
+                          max={new Date().toISOString().split('T')[0]}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <EnhancedBacktestEngine
+                    strategy={strategy}
+                    results={backtestResults}
+                    isRunning={isBacktesting}
+                    onBacktest={handleBacktest}
+                  />
+                  {backtestResults && (
+                    <Card className="border-green-500/30 bg-green-500/10">
+                      <CardContent className="pt-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Total Return</p>
+                            <p className="text-lg font-bold text-green-600">
+                              {backtestResults.totalReturn > 0 ? '+' : ''}{backtestResults.totalReturn?.toFixed(2)}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Win Rate</p>
+                            <p className="text-lg font-bold">{backtestResults.winRate?.toFixed(1)}%</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Total Trades</p>
+                            <p className="text-lg font-bold">{backtestResults.totalTrades || backtestResults.trades?.length || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Profit Factor</p>
+                            <p className="text-lg font-bold">{backtestResults.profitFactor?.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Complete previous steps to enable backtesting</span>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 7: Export */}
+        <AccordionItem 
+          value="export" 
+          className={`border rounded-lg bg-card ${getSectionStatus('export') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('export') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[6], 6)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              {getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(4) ? (
+                <ExportPanel strategy={strategy} />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Complete all previous steps to export</span>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 });
+
+ChartingPathStrategyBuilder.displayName = 'ChartingPathStrategyBuilder';

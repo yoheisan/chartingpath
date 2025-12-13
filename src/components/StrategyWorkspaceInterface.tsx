@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, ChevronRight, CheckCircle } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ChartingPathStrategyBuilder, ChartingPathStrategy, ChartingPathStrategyBuilderRef, STRATEGY_STEPS } from './ChartingPathStrategyBuilder';
+import { ChartingPathStrategyBuilder, ChartingPathStrategy, ChartingPathStrategyBuilderRef } from './ChartingPathStrategyBuilder';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,38 +72,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
-  
-  // Step navigation state (synced from builder ref)
-  const [currentStep, setCurrentStep] = useState(0);
-  const [, forceUpdate] = useState({});
-  
-  // Sync step state from builder ref
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (builderRef.current) {
-        const step = builderRef.current.getCurrentStep();
-        if (step !== currentStep) {
-          setCurrentStep(step);
-        }
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [currentStep]);
-
-  const handleStepClick = (stepIndex: number) => {
-    if (builderRef.current?.canProceedToStep(stepIndex)) {
-      builderRef.current.setCurrentStep(stepIndex);
-      setCurrentStep(stepIndex);
-    }
-  };
-
-  const getStepCompletion = (stepIndex: number): boolean => {
-    return builderRef.current?.getStepCompletion(stepIndex) ?? false;
-  };
-
-  const canProceedToStep = (stepIndex: number): boolean => {
-    return builderRef.current?.canProceedToStep(stepIndex) ?? stepIndex === 0;
-  };
 
   // Handle backtest completion
   const handleBacktestComplete = (results: any) => {
@@ -353,11 +321,10 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Fixed Header with Strategy Menu and Step Navigation */}
-      <div className="flex-shrink-0 bg-background border-b border-border px-4 py-4 md:px-6 space-y-4">
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* Fixed Header with Strategy Menu */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-4 md:px-6">
         <div className="container mx-auto max-w-7xl">
-          {/* Title and Menu Row */}
           <div className="flex items-center justify-between">
             <div className="border-l-4 border-foreground pl-6">
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
@@ -399,42 +366,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          {/* Step Navigation */}
-          <div className="flex items-center overflow-x-auto pt-4">
-            {STRATEGY_STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center flex-shrink-0">
-                <Button
-                  variant={index === currentStep ? "default" : getStepCompletion(index) ? "outline" : "ghost"}
-                  size="sm"
-                  onClick={() => handleStepClick(index)}
-                  disabled={!canProceedToStep(index)}
-                  className={`flex items-center gap-2 ${
-                    index === currentStep ? 'bg-primary text-primary-foreground' : 
-                    getStepCompletion(index) ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' : 
-                    'text-muted-foreground'
-                  }`}
-                >
-                  {getStepCompletion(index) ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-current/10 flex items-center justify-center text-xs font-medium">
-                      {index + 1}
-                    </div>
-                  )}
-                  <span className="hidden md:inline text-xs">{step.title}</span>
-                </Button>
-                {index < STRATEGY_STEPS.length - 1 && (
-                  <ChevronRight className="w-4 h-4 text-muted-foreground mx-1 flex-shrink-0" />
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6">
           <ChartingPathStrategyBuilder
             ref={builderRef}
