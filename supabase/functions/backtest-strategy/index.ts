@@ -7,6 +7,270 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================
+// DISCIPLINE FILTERS (Bloomberg-Grade)
+// ============================================
+
+interface DisciplineFilters {
+  trendAlignmentEnabled: boolean;
+  trendTimeframe: '4h' | 'daily' | 'weekly';
+  trendIndicator: 'ema50' | 'ema200' | 'sma50' | 'sma200';
+  minRiskRewardEnabled: boolean;
+  minRiskReward: number;
+  volumeConfirmationEnabled: boolean;
+  volumeMultiplier: number;
+  maxPatternsEnabled: boolean;
+  maxPatterns: number;
+  maxConcurrentTradesEnabled: boolean;
+  maxConcurrentTrades: number;
+  timeFilterEnabled: boolean;
+  avoidLowLiquidity: boolean;
+  avoidNewsEvents: boolean;
+  atrStopValidationEnabled: boolean;
+  minAtrMultiplier: number;
+  cooldownEnabled: boolean;
+  cooldownBars: number;
+}
+
+interface DisciplineValidation {
+  allowed: boolean;
+  rejectionReasons: string[];
+}
+
+interface DisciplineStats {
+  totalSignals: number;
+  allowedTrades: number;
+  rejectedTrades: number;
+  rejectionRate: number;
+  rejectionsByFilter: Record<string, number>;
+}
+
+const DEFAULT_DISCIPLINE_FILTERS: DisciplineFilters = {
+  trendAlignmentEnabled: true,
+  trendTimeframe: 'daily',
+  trendIndicator: 'ema50',
+  minRiskRewardEnabled: true,
+  minRiskReward: 2.0,
+  volumeConfirmationEnabled: true,
+  volumeMultiplier: 1.5,
+  maxPatternsEnabled: true,
+  maxPatterns: 3,
+  maxConcurrentTradesEnabled: true,
+  maxConcurrentTrades: 2,
+  timeFilterEnabled: true,
+  avoidLowLiquidity: true,
+  avoidNewsEvents: true,
+  atrStopValidationEnabled: true,
+  minAtrMultiplier: 1.0,
+  cooldownEnabled: true,
+  cooldownBars: 5,
+};
+
+function calculateSMA(prices: number[], period: number): number {
+  if (prices.length < period) return prices[prices.length - 1];
+  const slice = prices.slice(-period);
+  return slice.reduce((sum, p) => sum + p, 0) / period;
+}
+
+function calculateEMA(prices: number[], period: number): number {
+  if (prices.length < period) return prices[prices.length - 1];
+  const multiplier = 2 / (period + 1);
+  let ema = calculateSMA(prices.slice(0, period), period);
+  for (let i = period; i < prices.length; i++) {
+    ema = (prices[i] - ema) * multiplier + ema;
+  }
+  return ema;
+}
+
+function calculateATR(bars: any[], period: number = 14): number {
+  if (bars.length < 2) return 0;
+  const trueRanges: number[] = [];
+  for (let i = 1; i < bars.length; i++) {
+    const highLow = bars[i].high - bars[i].low;
+    const highPrevClose = Math.abs(bars[i].high - bars[i - 1].close);
+    const lowPrevClose = Math.abs(bars[i].low - bars[i - 1].close);
+    trueRanges.push(Math.max(highLow, highPrevClose, lowPrevClose));
+  }
+  if (trueRanges.length < period) {
+    return trueRanges.reduce((sum, tr) => sum + tr, 0) / trueRanges.length;
+  }
+  return trueRanges.slice(-period).reduce((sum, tr) => sum + tr, 0) / period;
+}
+
+function calculateAverageVolume(bars: any[], period: number = 20): number {
+  const volumeBars = bars.filter(b => b.volume != null && b.volume > 0);
+  if (volumeBars.length === 0) return 0;
+  const recentBars = volumeBars.slice(-period);
+  return recentBars.reduce((sum, b) => sum + (b.volume || 0), 0) / recentBars.length;
+}
+
+function analyzeTrend(bars: any[], indicator: string): { direction: string; maValue: number } {
+  const closes = bars.map(b => b.close);
+  const currentPrice = closes[closes.length - 1];
+  
+  let period = 50;
+  let useEma = true;
+  
+  switch (indicator) {
+    case 'ema50': period = 50; useEma = true; break;
+    case 'ema200': period = 200; useEma = true; break;
+    case 'sma50': period = 50; useEma = false; break;
+    case 'sma200': period = 200; useEma = false; break;
+  }
+  
+  const maValue = useEma ? calculateEMA(closes, period) : calculateSMA(closes, period);
+  const priceVsMa = ((currentPrice - maValue) / maValue) * 100;
+  
+  let direction = 'neutral';
+  if (priceVsMa > 0.5) direction = 'bullish';
+  else if (priceVsMa < -0.5) direction = 'bearish';
+  
+  return { direction, maValue };
+}
+
+function isLowLiquidityPeriod(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const utcHour = d.getUTCHours();
+  const utcDay = d.getUTCDay();
+  if (utcDay === 0 || utcDay === 6) return true;
+  if (utcHour >= 21) return true;
+  if (utcHour >= 5 && utcHour <= 6) return true;
+  return false;
+}
+
+function isNearNewsEvent(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const utcHour = d.getUTCHours();
+  const utcMinutes = d.getUTCMinutes();
+  const utcDay = d.getUTCDay();
+  if (utcDay === 0 || utcDay === 6) return false;
+  
+  const newsHours = [
+    { hour: 7, minute: 0 },
+    { hour: 8, minute: 30 },
+    { hour: 12, minute: 30 },
+    { hour: 13, minute: 0 },
+    { hour: 14, minute: 0 },
+  ];
+  
+  for (const news of newsHours) {
+    const minutesFromNews = Math.abs(
+      (utcHour * 60 + utcMinutes) - (news.hour * 60 + news.minute)
+    );
+    if (minutesFromNews <= 30) return true;
+  }
+  return false;
+}
+
+function validateTradeDiscipline(
+  signal: any,
+  historicalBars: any[],
+  openPositions: any[],
+  filters: DisciplineFilters,
+  lastTradeExitBar: number | null,
+  activePatternTypes: Set<string>,
+  stats: DisciplineStats
+): DisciplineValidation {
+  const rejectionReasons: string[] = [];
+  const currentBar = historicalBars[signal.index];
+  
+  // Determine if pattern is bullish or bearish
+  const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag']
+    .some(p => signal.patternId.includes(p));
+  const signalDirection = isBullishPattern ? 'long' : 'short';
+
+  // 1. TREND ALIGNMENT
+  if (filters.trendAlignmentEnabled) {
+    const trend = analyzeTrend(historicalBars.slice(0, signal.index), filters.trendIndicator);
+    const isTrendAligned = 
+      (signalDirection === 'long' && trend.direction === 'bullish') ||
+      (signalDirection === 'short' && trend.direction === 'bearish');
+    
+    if (!isTrendAligned && trend.direction !== 'neutral') {
+      rejectionReasons.push(`Trend not aligned: ${signalDirection} in ${trend.direction} trend`);
+      stats.rejectionsByFilter['Trend'] = (stats.rejectionsByFilter['Trend'] || 0) + 1;
+    }
+  }
+  
+  // 2. MINIMUM RISK/REWARD
+  if (filters.minRiskRewardEnabled && signal.targetPercent && signal.stopPercent) {
+    const rr = signal.targetPercent / signal.stopPercent;
+    if (rr < filters.minRiskReward) {
+      rejectionReasons.push(`R:R ${rr.toFixed(2)}:1 below ${filters.minRiskReward}:1 minimum`);
+      stats.rejectionsByFilter['R:R'] = (stats.rejectionsByFilter['R:R'] || 0) + 1;
+    }
+  }
+  
+  // 3. VOLUME CONFIRMATION
+  if (filters.volumeConfirmationEnabled && currentBar?.volume) {
+    const avgVolume = calculateAverageVolume(historicalBars.slice(0, signal.index), 20);
+    const volumeRatio = currentBar.volume / avgVolume;
+    if (volumeRatio < filters.volumeMultiplier) {
+      rejectionReasons.push(`Volume ${volumeRatio.toFixed(2)}x below ${filters.volumeMultiplier}x`);
+      stats.rejectionsByFilter['Volume'] = (stats.rejectionsByFilter['Volume'] || 0) + 1;
+    }
+  }
+  
+  // 4. PATTERN LIMIT
+  if (filters.maxPatternsEnabled) {
+    if (!activePatternTypes.has(signal.patternId) && activePatternTypes.size >= filters.maxPatterns) {
+      rejectionReasons.push(`Pattern limit: ${activePatternTypes.size}/${filters.maxPatterns}`);
+      stats.rejectionsByFilter['Pattern'] = (stats.rejectionsByFilter['Pattern'] || 0) + 1;
+    }
+  }
+  
+  // 5. MAX CONCURRENT TRADES
+  if (filters.maxConcurrentTradesEnabled) {
+    if (openPositions.length >= filters.maxConcurrentTrades) {
+      rejectionReasons.push(`Max positions: ${openPositions.length}/${filters.maxConcurrentTrades}`);
+      stats.rejectionsByFilter['Max positions'] = (stats.rejectionsByFilter['Max positions'] || 0) + 1;
+    }
+  }
+  
+  // 6. TIME FILTERS
+  if (filters.timeFilterEnabled && currentBar?.date) {
+    if (filters.avoidLowLiquidity && isLowLiquidityPeriod(currentBar.date)) {
+      rejectionReasons.push('Low liquidity period');
+      stats.rejectionsByFilter['liquidity'] = (stats.rejectionsByFilter['liquidity'] || 0) + 1;
+    }
+    if (filters.avoidNewsEvents && isNearNewsEvent(currentBar.date)) {
+      rejectionReasons.push('Near news event');
+      stats.rejectionsByFilter['news'] = (stats.rejectionsByFilter['news'] || 0) + 1;
+    }
+  }
+  
+  // 7. ATR STOP VALIDATION
+  if (filters.atrStopValidationEnabled && signal.stopPercent) {
+    const atr = calculateATR(historicalBars.slice(0, signal.index), 14);
+    const entryPrice = currentBar?.close || signal.entryPrice;
+    const stopDistance = entryPrice * (signal.stopPercent / 100);
+    const stopDistanceAtr = stopDistance / atr;
+    
+    if (stopDistanceAtr < filters.minAtrMultiplier) {
+      rejectionReasons.push(`Stop ${stopDistanceAtr.toFixed(2)} ATR < ${filters.minAtrMultiplier} ATR`);
+      stats.rejectionsByFilter['Stop'] = (stats.rejectionsByFilter['Stop'] || 0) + 1;
+    }
+  }
+  
+  // 8. COOLDOWN
+  if (filters.cooldownEnabled && lastTradeExitBar !== null) {
+    const barsSinceLastTrade = signal.index - lastTradeExitBar;
+    if (barsSinceLastTrade < filters.cooldownBars) {
+      rejectionReasons.push(`Cooldown: ${barsSinceLastTrade}/${filters.cooldownBars} bars`);
+      stats.rejectionsByFilter['Cooldown'] = (stats.rejectionsByFilter['Cooldown'] || 0) + 1;
+    }
+  }
+  
+  return {
+    allowed: rejectionReasons.length === 0,
+    rejectionReasons
+  };
+}
+
+// ============================================
+// MAIN HANDLER
+// ============================================
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,23 +279,27 @@ serve(async (req) => {
   try {
     const { strategy } = await req.json();
     
-    // Extract data with fallbacks for both nested and flat structures
     const instrument = strategy.market?.instrument || strategy.instrument;
     const instrumentCategory = strategy.market?.instrumentCategory || strategy.instrumentCategory || 'stocks';
     const startDate = strategy.backtestPeriod?.startDate || strategy.startDate;
     const endDate = strategy.backtestPeriod?.endDate || strategy.endDate;
     const timeframe = strategy.market?.timeframes?.[0] || strategy.timeframe || '1d';
     
-    console.log('Starting real backtest for:', {
+    // Get discipline filters from strategy or use defaults
+    const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
+    
+    console.log('Starting backtest with discipline filters:', {
       instrument,
       instrumentCategory,
       startDate,
       endDate,
       timeframe,
-      patterns: strategy.patterns?.filter((p: any) => p.enabled).map((p: any) => p.name)
+      patterns: strategy.patterns?.filter((p: any) => p.enabled).map((p: any) => p.name),
+      filtersEnabled: Object.entries(disciplineFilters)
+        .filter(([k, v]) => k.includes('Enabled') && v === true)
+        .map(([k]) => k.replace('Enabled', ''))
     });
 
-    // Validate required parameters
     if (!instrument) {
       throw new Error('Instrument is required');
     }
@@ -39,7 +307,6 @@ serve(async (req) => {
       throw new Error('Start date and end date are required');
     }
 
-    // Fetch real historical data based on instrument type
     const historicalData = await fetchHistoricalData(
       instrument,
       instrumentCategory,
@@ -54,35 +321,45 @@ serve(async (req) => {
 
     console.log(`Fetched ${historicalData.length} data points for backtesting`);
 
-    // Run pattern detection on real data
     const patternSignals = detectPatternsInData(
       historicalData,
-      strategy.patterns?.filter((p: any) => p.enabled) || []
-    );
-
-    console.log(`Detected ${patternSignals.length} pattern signals`);
-
-    // Simulate trades with entry/exit rules
-    const tradeResults = simulateTrades(
-      historicalData,
-      patternSignals,
+      strategy.patterns?.filter((p: any) => p.enabled) || [],
       strategy
     );
 
-    // Calculate performance metrics
-    const performanceMetrics = calculateMetrics(tradeResults, strategy);
+    console.log(`Detected ${patternSignals.length} raw pattern signals`);
+
+    // Apply discipline filters and simulate trades
+    const { trades, disciplineStats } = simulateTradesWithDiscipline(
+      historicalData,
+      patternSignals,
+      strategy,
+      disciplineFilters
+    );
+
+    console.log(`After discipline filtering: ${trades.length} trades from ${patternSignals.length} signals`);
+    console.log(`Rejection rate: ${disciplineStats.rejectionRate.toFixed(1)}%`);
+
+    const performanceMetrics = calculateMetrics(trades, strategy);
 
     console.log('Backtest complete:', {
-      totalTrades: tradeResults.length,
+      totalTrades: trades.length,
+      rawSignals: patternSignals.length,
+      rejectedTrades: disciplineStats.rejectedTrades,
       winRate: performanceMetrics.winRate,
       totalReturn: performanceMetrics.totalReturn
     });
 
     return new Response(JSON.stringify({
       success: true,
-      results: performanceMetrics,
-      trades: tradeResults,
-      dataPoints: historicalData.length
+      results: {
+        ...performanceMetrics,
+        rawSignals: patternSignals.length,
+        disciplineStats
+      },
+      trades,
+      dataPoints: historicalData.length,
+      disciplineStats
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -98,6 +375,10 @@ serve(async (req) => {
   }
 });
 
+// ============================================
+// DATA FETCHING
+// ============================================
+
 async function fetchHistoricalData(
   symbol: string,
   category: string,
@@ -105,12 +386,10 @@ async function fetchHistoricalData(
   endDate: string,
   timeframe: string
 ): Promise<any[]> {
-  // Initialize Supabase client
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Check cache first
   const { data: cachedData, error: cacheError } = await supabase
     .from('historical_prices')
     .select('*')
@@ -135,45 +414,27 @@ async function fetchHistoricalData(
 
   console.log(`❌ Cache MISS: Fetching ${symbol} from Yahoo Finance...`);
 
-  // Convert timeframe to Yahoo Finance interval
   const intervalMap: Record<string, string> = {
-    '1m': '1m',
-    '5m': '5m',
-    '15m': '15m',
-    '1h': '1h',
-    '4h': '4h',
-    '1d': '1d',
-    '1w': '1wk',
+    '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '4h', '1d': '1d', '1w': '1wk',
   };
-  
   const interval = intervalMap[timeframe] || '1d';
   
-  // Validate date range based on interval (Yahoo Finance limits)
   const start = new Date(startDate);
   const end = new Date(endDate);
   const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Yahoo Finance date range limits
   const limits: Record<string, number> = {
-    '1m': 7,
-    '5m': 60,
-    '15m': 60,
-    '1h': 730,
-    '4h': 730,
-    '1d': 36500, // ~100 years
-    '1wk': 36500
+    '1m': 7, '5m': 60, '15m': 60, '1h': 730, '4h': 730, '1d': 36500, '1wk': 36500
   };
   
   const maxDays = limits[interval] || 730;
   if (daysDiff > maxDays) {
-    throw new Error(`Date range too large for ${interval} timeframe. Maximum ${maxDays} days allowed, got ${daysDiff} days. Try using a daily (1d) timeframe for longer backtests.`);
+    throw new Error(`Date range too large for ${interval} timeframe. Maximum ${maxDays} days allowed, got ${daysDiff} days.`);
   }
   
-  // Convert dates to Unix timestamps
   const period1 = Math.floor(start.getTime() / 1000);
   const period2 = Math.floor(end.getTime() / 1000);
 
-  // Adjust symbol format based on category
   let yahooSymbol = symbol;
   if (category === 'forex') {
     yahooSymbol = symbol.replace('/', '') + '=X';
@@ -182,7 +443,6 @@ async function fetchHistoricalData(
   }
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`;
-  
   console.log(`Fetching Yahoo Finance: ${url}`);
   
   const response = await fetch(url);
@@ -190,7 +450,7 @@ async function fetchHistoricalData(
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`Yahoo Finance error ${response.status}:`, errorText);
-    throw new Error(`Yahoo Finance API error: ${response.status}. Symbol: ${yahooSymbol}, Interval: ${interval}, Days: ${daysDiff}. ${response.status === 422 ? 'Try using daily (1d) timeframe for longer date ranges.' : ''}`);
+    throw new Error(`Yahoo Finance API error: ${response.status}. Symbol: ${yahooSymbol}`);
   }
 
   const data = await response.json();
@@ -203,7 +463,6 @@ async function fetchHistoricalData(
   const timestamps = result.timestamp || [];
   const quotes = result.indicators.quote[0];
   
-  // Convert to OHLCV format
   const historicalData = timestamps.map((timestamp: number, index: number) => ({
     timestamp: timestamp * 1000,
     date: new Date(timestamp * 1000).toISOString(),
@@ -213,13 +472,9 @@ async function fetchHistoricalData(
     close: quotes.close[index],
     volume: quotes.volume[index]
   })).filter((bar: any) => 
-    bar.open !== null && 
-    bar.high !== null && 
-    bar.low !== null && 
-    bar.close !== null
+    bar.open !== null && bar.high !== null && bar.low !== null && bar.close !== null
   );
 
-  // Cache the fetched data
   if (historicalData.length > 0) {
     const cacheRecords = historicalData.map((d: any) => ({
       symbol,
@@ -235,27 +490,37 @@ async function fetchHistoricalData(
 
     const { error: insertError } = await supabase
       .from('historical_prices')
-      .upsert(cacheRecords, { 
-        onConflict: 'symbol,timeframe,date',
-        ignoreDuplicates: true 
-      });
+      .upsert(cacheRecords, { onConflict: 'symbol,timeframe,date', ignoreDuplicates: true });
 
     if (!insertError) {
       console.log(`✅ Cached ${cacheRecords.length} records for ${symbol}`);
-    } else {
-      console.error('Cache insert error:', insertError);
     }
   }
 
   return historicalData;
 }
 
-function detectPatternsInData(data: any[], patterns: any[]): any[] {
+// ============================================
+// PATTERN DETECTION
+// ============================================
+
+function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[] {
   const signals: any[] = [];
   
-  // Sliding window pattern detection
+  // Build pattern settings map
+  const patternSettings = new Map<string, { target: number; stopLoss: number }>();
+  for (const pattern of patterns) {
+    if (pattern.enabled) {
+      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 5;
+      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 2;
+      patternSettings.set(pattern.id, { target, stopLoss });
+      patternSettings.set(pattern.name, { target, stopLoss });
+    }
+  }
+  
   for (const pattern of patterns) {
     const windowSize = getPatternWindowSize(pattern.id);
+    const settings = patternSettings.get(pattern.id) || { target: 5, stopLoss: 2 };
     
     for (let i = windowSize; i < data.length; i++) {
       const window = data.slice(i - windowSize, i);
@@ -268,7 +533,9 @@ function detectPatternsInData(data: any[], patterns: any[]): any[] {
           index: i,
           timestamp: data[i].timestamp,
           entryPrice: data[i].close,
-          confidence: 0.75 // Base confidence
+          targetPercent: settings.target,
+          stopPercent: settings.stopLoss,
+          confidence: 0.75
         });
       }
     }
@@ -279,14 +546,9 @@ function detectPatternsInData(data: any[], patterns: any[]): any[] {
 
 function getPatternWindowSize(patternId: string): number {
   const sizeMap: Record<string, number> = {
-    'head-shoulders': 30,
-    'double-top': 20,
-    'double-bottom': 20,
-    'cup-handle': 40,
-    'ascending-triangle': 25,
-    'descending-triangle': 25,
-    'bull-flag': 15,
-    'bear-flag': 15,
+    'head-shoulders': 30, 'double-top': 20, 'double-bottom': 20,
+    'cup-handle': 40, 'ascending-triangle': 25, 'descending-triangle': 25,
+    'bull-flag': 15, 'bear-flag': 15,
   };
   return sizeMap[patternId] || 20;
 }
@@ -298,85 +560,61 @@ function checkPattern(patternId: string, window: any[]): boolean {
   const lows = window.map(d => d.low);
   const closes = window.map(d => d.close);
   
-  // Simplified pattern detection logic
   switch (patternId) {
-    case 'head-shoulders':
-      return detectHeadAndShoulders(highs, lows);
-    case 'double-top':
-      return detectDoubleTop(highs);
-    case 'double-bottom':
-      return detectDoubleBottom(lows);
-    case 'ascending-triangle':
-      return detectAscendingTriangle(highs, lows);
-    case 'cup-handle':
-      return detectCupAndHandle(closes);
-    default:
-      return Math.random() < 0.05; // 5% detection rate for unknown patterns
+    case 'head-shoulders': return detectHeadAndShoulders(highs, lows);
+    case 'double-top': return detectDoubleTop(highs);
+    case 'double-bottom': return detectDoubleBottom(lows);
+    case 'ascending-triangle': return detectAscendingTriangle(highs, lows);
+    case 'cup-handle': return detectCupAndHandle(closes);
+    default: return Math.random() < 0.05;
   }
 }
 
 function detectHeadAndShoulders(highs: number[], lows: number[]): boolean {
   if (highs.length < 20) return false;
-  
   const peaks = findPeaks(highs);
   if (peaks.length < 3) return false;
-  
-  // Check if middle peak is highest
   const lastThreePeaks = peaks.slice(-3);
   if (lastThreePeaks.length === 3) {
     const [left, head, right] = lastThreePeaks.map(i => highs[i]);
     return head > left && head > right && Math.abs(left - right) / left < 0.05;
   }
-  
   return false;
 }
 
 function detectDoubleTop(highs: number[]): boolean {
   const peaks = findPeaks(highs);
   if (peaks.length < 2) return false;
-  
   const lastTwoPeaks = peaks.slice(-2).map(i => highs[i]);
-  const diff = Math.abs(lastTwoPeaks[0] - lastTwoPeaks[1]) / lastTwoPeaks[0];
-  return diff < 0.02; // Within 2%
+  return Math.abs(lastTwoPeaks[0] - lastTwoPeaks[1]) / lastTwoPeaks[0] < 0.02;
 }
 
 function detectDoubleBottom(lows: number[]): boolean {
   const troughs = findTroughs(lows);
   if (troughs.length < 2) return false;
-  
   const lastTwoTroughs = troughs.slice(-2).map(i => lows[i]);
-  const diff = Math.abs(lastTwoTroughs[0] - lastTwoTroughs[1]) / lastTwoTroughs[0];
-  return diff < 0.02;
+  return Math.abs(lastTwoTroughs[0] - lastTwoTroughs[1]) / lastTwoTroughs[0] < 0.02;
 }
 
 function detectAscendingTriangle(highs: number[], lows: number[]): boolean {
   if (lows.length < 15) return false;
-  
   const recentLows = lows.slice(-15);
   const trend = calculateTrend(recentLows);
   const highVolatility = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
-  
   return trend > 0 && highVolatility < 1.05;
 }
 
 function detectCupAndHandle(closes: number[]): boolean {
   if (closes.length < 30) return false;
-  
-  const firstHalf = closes.slice(0, 15);
-  const secondHalf = closes.slice(15, 30);
-  
   const cupBottom = Math.min(...closes.slice(10, 20));
   const cupRims = [closes[0], closes[29]];
-  
   return cupBottom < Math.min(...cupRims) * 0.95;
 }
 
 function findPeaks(data: number[]): number[] {
   const peaks: number[] = [];
   for (let i = 1; i < data.length - 1; i++) {
-    if (data[i] > data[i - 1] && data[i] > data[i + 1]) {
-      peaks.push(i);
-    }
+    if (data[i] > data[i - 1] && data[i] > data[i + 1]) peaks.push(i);
   }
   return peaks;
 }
@@ -384,60 +622,80 @@ function findPeaks(data: number[]): number[] {
 function findTroughs(data: number[]): number[] {
   const troughs: number[] = [];
   for (let i = 1; i < data.length - 1; i++) {
-    if (data[i] < data[i - 1] && data[i] < data[i + 1]) {
-      troughs.push(i);
-    }
+    if (data[i] < data[i - 1] && data[i] < data[i + 1]) troughs.push(i);
   }
   return troughs;
 }
 
 function calculateTrend(data: number[]): number {
   if (data.length < 2) return 0;
-  const firstValue = data[0];
-  const lastValue = data[data.length - 1];
-  return (lastValue - firstValue) / firstValue;
+  return (data[data.length - 1] - data[0]) / data[0];
 }
 
-function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
+// ============================================
+// TRADE SIMULATION WITH DISCIPLINE
+// ============================================
+
+function simulateTradesWithDiscipline(
+  data: any[],
+  signals: any[],
+  strategy: any,
+  filters: DisciplineFilters
+): { trades: any[]; disciplineStats: DisciplineStats } {
   const trades: any[] = [];
-  let balance = 10000; // Starting balance
+  const openPositions: any[] = [];
+  let balance = 10000;
+  let lastTradeExitBar: number | null = null;
+  const activePatternTypes = new Set<string>();
   
-  // Build pattern lookup for per-pattern TP/SL
-  const patternSettings = new Map<string, { target: number; stopLoss: number }>();
-  for (const pattern of strategy.patterns || []) {
-    if (pattern.enabled) {
-      // Use customTarget/customStopLoss if set, otherwise use defaults
-      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 5;
-      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 2;
-      patternSettings.set(pattern.name, { target, stopLoss });
-      patternSettings.set(pattern.id, { target, stopLoss });
-    }
-  }
-  
+  const disciplineStats: DisciplineStats = {
+    totalSignals: signals.length,
+    allowedTrades: 0,
+    rejectedTrades: 0,
+    rejectionRate: 0,
+    rejectionsByFilter: {}
+  };
+
   for (const signal of signals) {
     const entryIndex = signal.index;
     if (entryIndex >= data.length - 1) continue;
     
+    // Validate against discipline filters
+    const validation = validateTradeDiscipline(
+      signal,
+      data,
+      openPositions,
+      filters,
+      lastTradeExitBar,
+      activePatternTypes,
+      disciplineStats
+    );
+    
+    if (!validation.allowed) {
+      disciplineStats.rejectedTrades++;
+      console.log(`Signal rejected at bar ${entryIndex}: ${validation.rejectionReasons.join(', ')}`);
+      continue;
+    }
+    
+    disciplineStats.allowedTrades++;
+    
     const entryPrice = data[entryIndex].close;
     const positionSize = balance * (strategy.positionSizing?.riskPerTrade || 2) / 100;
+    const targetPercent = signal.targetPercent;
+    const stopPercent = signal.stopPercent;
     
-    // Get pattern-specific TP/SL
-    const settings = patternSettings.get(signal.patternName) || 
-                     patternSettings.get(signal.patternId) || 
-                     { target: 5, stopLoss: 2 };
-    const targetPercent = settings.target;
-    const stopPercent = settings.stopLoss;
+    // Add to tracking
+    activePatternTypes.add(signal.patternId);
+    openPositions.push({ patternId: signal.patternId, entryIndex });
     
     let exitIndex = entryIndex + 1;
     let exitPrice = data[exitIndex].close;
     let exitReason = 'timeout';
     
-    // Simulate trade until exit condition
     for (let i = entryIndex + 1; i < Math.min(entryIndex + 50, data.length); i++) {
       const currentPrice = data[i].close;
       const priceChange = (currentPrice - entryPrice) / entryPrice * 100;
       
-      // Check stop loss
       if (priceChange <= -stopPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
@@ -445,7 +703,6 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
         break;
       }
       
-      // Check target
       if (priceChange >= targetPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
@@ -453,6 +710,11 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
         break;
       }
     }
+    
+    // Update tracking
+    lastTradeExitBar = exitIndex;
+    const posIndex = openPositions.findIndex(p => p.entryIndex === entryIndex);
+    if (posIndex >= 0) openPositions.splice(posIndex, 1);
     
     const pnl = ((exitPrice - entryPrice) / entryPrice) * positionSize;
     balance += pnl;
@@ -468,24 +730,27 @@ function simulateTrades(data: any[], signals: any[], strategy: any): any[] {
       pnlPercent: ((exitPrice - entryPrice) / entryPrice) * 100,
       holdingBars: exitIndex - entryIndex,
       targetPercent,
-      stopPercent
+      stopPercent,
+      disciplineApproved: true
     });
   }
   
-  return trades;
+  disciplineStats.rejectionRate = disciplineStats.totalSignals > 0
+    ? (disciplineStats.rejectedTrades / disciplineStats.totalSignals) * 100
+    : 0;
+
+  return { trades, disciplineStats };
 }
+
+// ============================================
+// METRICS CALCULATION
+// ============================================
 
 function calculateMetrics(trades: any[], strategy: any): any {
   if (trades.length === 0) {
     return {
-      totalReturn: 0,
-      totalTrades: 0,
-      winRate: 0,
-      profitFactor: 0,
-      maxDrawdown: 0,
-      avgWin: 0,
-      avgLoss: 0,
-      sharpeRatio: 0
+      totalReturn: 0, totalTrades: 0, winRate: 0, profitFactor: 0,
+      maxDrawdown: 0, avgWin: 0, avgLoss: 0, sharpeRatio: 0
     };
   }
   
@@ -499,7 +764,6 @@ function calculateMetrics(trades: any[], strategy: any): any {
   const initialBalance = 10000;
   const totalReturn = (totalPnl / initialBalance) * 100;
   
-  // Calculate max drawdown
   let peak = initialBalance;
   let maxDrawdown = 0;
   let runningBalance = initialBalance;
@@ -521,7 +785,7 @@ function calculateMetrics(trades: any[], strategy: any): any {
     maxDrawdown: Number(maxDrawdown.toFixed(2)),
     avgWin: winningTrades.length > 0 ? Number((totalProfit / winningTrades.length).toFixed(2)) : 0,
     avgLoss: losingTrades.length > 0 ? Number((totalLoss / losingTrades.length).toFixed(2)) : 0,
-    sharpeRatio: 0, // Would need daily returns for accurate calculation
+    sharpeRatio: 0,
     avgHoldingPeriod: Number((trades.reduce((sum, t) => sum + t.holdingBars, 0) / trades.length).toFixed(1)),
     patternBreakdown: getPatternBreakdown(trades)
   };
@@ -529,20 +793,13 @@ function calculateMetrics(trades: any[], strategy: any): any {
 
 function getPatternBreakdown(trades: any[]): any {
   const breakdown: Record<string, any> = {};
-  
   for (const trade of trades) {
     if (!breakdown[trade.patternName]) {
-      breakdown[trade.patternName] = {
-        trades: 0,
-        wins: 0,
-        totalPnl: 0
-      };
+      breakdown[trade.patternName] = { trades: 0, wins: 0, totalPnl: 0 };
     }
-    
     breakdown[trade.patternName].trades++;
     if (trade.pnl > 0) breakdown[trade.patternName].wins++;
     breakdown[trade.patternName].totalPnl += trade.pnl;
   }
-  
   return breakdown;
 }
