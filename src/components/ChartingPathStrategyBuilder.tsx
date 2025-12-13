@@ -307,36 +307,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </CardContent>
         </Card>
       )}
-
-      {/* Header */}
-      <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Target className="w-6 h-6 text-primary" />
-                </div>
-                {strategy.name}
-              </CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant={getCompletionPercentage() === 100 ? "default" : "secondary"}
-                className="px-3"
-              >
-                {Math.round(getCompletionPercentage())}% Complete
-              </Badge>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <Progress value={getCompletionPercentage()} className="h-2" />
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Step-Based Builder Interface */}
       <Card ref={stepContentRef}>
         <CardContent className="pt-6">
