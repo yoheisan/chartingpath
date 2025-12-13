@@ -41,6 +41,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+// Direction types for patterns
+type PatternDirection = 'bullish' | 'bearish' | 'neutral';
+
 // Pattern Categories
 const PATTERN_CATEGORIES = {
   classical: {
@@ -52,6 +55,7 @@ const PATTERN_CATEGORIES = {
         id: 'head_shoulders',
         name: 'Head & Shoulders',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Three-peak reversal pattern with neckline break confirmation',
         parameters: {
           tolerance: { value: 2.0, min: 0.5, max: 5.0, step: 0.1, unit: '%' },
@@ -71,6 +75,7 @@ const PATTERN_CATEGORIES = {
         id: 'inverse_head_shoulders',
         name: 'Inverse Head & Shoulders',
         type: 'reversal',
+        direction: 'bullish' as PatternDirection,
         description: 'Bullish reversal pattern with three valleys',
         parameters: {
           tolerance: { value: 2.0, min: 0.5, max: 5.0, step: 0.1, unit: '%' },
@@ -90,6 +95,7 @@ const PATTERN_CATEGORIES = {
         id: 'double_top',
         name: 'Double Top',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Bearish reversal with two equal peaks',
         parameters: {
           tolerance: { value: 1.5, min: 0.5, max: 3.0, step: 0.1, unit: '%' },
@@ -108,6 +114,7 @@ const PATTERN_CATEGORIES = {
         id: 'double_bottom',
         name: 'Double Bottom',
         type: 'reversal',
+        direction: 'bullish' as PatternDirection,
         description: 'Bullish reversal with two equal valleys',
         parameters: {
           tolerance: { value: 1.5, min: 0.5, max: 3.0, step: 0.1, unit: '%' },
@@ -126,6 +133,7 @@ const PATTERN_CATEGORIES = {
         id: 'ascending_triangle',
         name: 'Ascending Triangle',
         type: 'continuation',
+        direction: 'bullish' as PatternDirection,
         description: 'Bullish continuation with horizontal resistance',
         parameters: {
           minTouches: { value: 3, min: 2, max: 5, step: 1, unit: 'touches' },
@@ -144,6 +152,7 @@ const PATTERN_CATEGORIES = {
         id: 'descending_triangle',
         name: 'Descending Triangle',
         type: 'continuation',
+        direction: 'bearish' as PatternDirection,
         description: 'Bearish continuation with horizontal support',
         parameters: {
           minTouches: { value: 3, min: 2, max: 5, step: 1, unit: 'touches' },
@@ -162,7 +171,8 @@ const PATTERN_CATEGORIES = {
         id: 'flag',
         name: 'Flag Pattern',
         type: 'continuation',
-        description: 'Brief consolidation after strong move',
+        direction: 'neutral' as PatternDirection,
+        description: 'Brief consolidation after strong move (bullish or bearish)',
         parameters: {
           flagAngle: { value: 30, min: 10, max: 60, step: 5, unit: 'degrees' },
           maxDuration: { value: 20, min: 5, max: 50, step: 1, unit: 'bars' },
@@ -180,6 +190,7 @@ const PATTERN_CATEGORIES = {
         id: 'wedge_rising',
         name: 'Rising Wedge',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Bearish pattern with converging trend lines',
         parameters: {
           convergenceAngle: { value: 45, min: 20, max: 70, step: 5, unit: 'degrees' },
@@ -198,6 +209,7 @@ const PATTERN_CATEGORIES = {
         id: 'cup_handle',
         name: 'Cup & Handle',
         type: 'continuation',
+        direction: 'bullish' as PatternDirection,
         description: 'Bullish continuation after consolidation',
         parameters: {
           cupDepth: { value: 20, min: 10, max: 50, step: 5, unit: '%' },
@@ -223,6 +235,7 @@ const PATTERN_CATEGORIES = {
         id: 'bullish_engulfing',
         name: 'Bullish Engulfing',
         type: 'reversal',
+        direction: 'bullish' as PatternDirection,
         description: 'Large green candle engulfs previous red candle',
         parameters: {
           minBodyRatio: { value: 1.2, min: 1.1, max: 2.0, step: 0.1, unit: 'ratio' },
@@ -241,6 +254,7 @@ const PATTERN_CATEGORIES = {
         id: 'bearish_engulfing',
         name: 'Bearish Engulfing',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Large red candle engulfs previous green candle',
         parameters: {
           minBodyRatio: { value: 1.2, min: 1.1, max: 2.0, step: 0.1, unit: 'ratio' },
@@ -259,6 +273,7 @@ const PATTERN_CATEGORIES = {
         id: 'hammer',
         name: 'Hammer',
         type: 'reversal',
+        direction: 'bullish' as PatternDirection,
         description: 'Bullish reversal with long lower shadow',
         parameters: {
           bodyRatio: { value: 0.3, min: 0.1, max: 0.5, step: 0.05, unit: 'ratio' },
@@ -277,6 +292,7 @@ const PATTERN_CATEGORIES = {
         id: 'shooting_star',
         name: 'Shooting Star',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Bearish reversal with long upper shadow',
         parameters: {
           bodyRatio: { value: 0.3, min: 0.1, max: 0.5, step: 0.05, unit: 'ratio' },
@@ -295,6 +311,7 @@ const PATTERN_CATEGORIES = {
         id: 'morning_star',
         name: 'Morning Star',
         type: 'reversal',
+        direction: 'bullish' as PatternDirection,
         description: 'Three-candle bullish reversal pattern',
         parameters: {
           gapSize: { value: 0.5, min: 0.1, max: 1.5, step: 0.1, unit: 'ATR' },
@@ -313,6 +330,7 @@ const PATTERN_CATEGORIES = {
         id: 'evening_star',
         name: 'Evening Star',
         type: 'reversal',
+        direction: 'bearish' as PatternDirection,
         description: 'Three-candle bearish reversal pattern',
         parameters: {
           gapSize: { value: 0.5, min: 0.1, max: 1.5, step: 0.1, unit: 'ATR' },
@@ -331,7 +349,8 @@ const PATTERN_CATEGORIES = {
         id: 'doji',
         name: 'Doji',
         type: 'reversal',
-        description: 'Indecision candle with equal open/close',
+        direction: 'neutral' as PatternDirection,
+        description: 'Indecision candle - direction depends on context',
         parameters: {
           bodyTolerance: { value: 0.05, min: 0.01, max: 0.1, step: 0.01, unit: 'ATR' },
           contextRequired: { value: true, type: 'boolean' },
@@ -349,7 +368,8 @@ const PATTERN_CATEGORIES = {
         id: 'inside_bar',
         name: 'Inside Bar',
         type: 'continuation',
-        description: 'Consolidation bar within previous bar range',
+        direction: 'neutral' as PatternDirection,
+        description: 'Consolidation bar - breakout direction determines trade',
         parameters: {
           strictInside: { value: true, type: 'boolean' },
           minMotherBarSize: { value: 1.0, min: 0.5, max: 2.0, step: 0.1, unit: 'ATR' },
@@ -374,7 +394,8 @@ const PATTERN_CATEGORIES = {
         id: 'gartley',
         name: 'Gartley Pattern',
         type: 'reversal',
-        description: 'XABCD pattern with specific Fibonacci ratios',
+        direction: 'neutral' as PatternDirection,
+        description: 'XABCD pattern - bullish or bearish based on formation',
         parameters: {
           abRetracement: { value: 61.8, min: 58.0, max: 65.0, step: 0.5, unit: '%' },
           bcRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
@@ -393,7 +414,8 @@ const PATTERN_CATEGORIES = {
         id: 'bat',
         name: 'Bat Pattern',
         type: 'reversal',
-        description: 'More precise Gartley variant',
+        direction: 'neutral' as PatternDirection,
+        description: 'Precise Gartley variant - bullish or bearish based on formation',
         parameters: {
           abRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
           bcRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
@@ -412,7 +434,8 @@ const PATTERN_CATEGORIES = {
         id: 'butterfly',
         name: 'Butterfly Pattern',
         type: 'reversal',
-        description: 'Extension pattern beyond X point',
+        direction: 'neutral' as PatternDirection,
+        description: 'Extension pattern - bullish or bearish based on formation',
         parameters: {
           abRetracement: { value: 78.6, min: 76.0, max: 81.0, step: 0.5, unit: '%' },
           bcRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
@@ -431,7 +454,8 @@ const PATTERN_CATEGORIES = {
         id: 'crab',
         name: 'Crab Pattern',
         type: 'reversal',
-        description: 'Extreme extension harmonic pattern',
+        direction: 'neutral' as PatternDirection,
+        description: 'Extreme extension - bullish or bearish based on formation',
         parameters: {
           abRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
           bcRetracement: { value: 61.8, min: 58.0, max: 65.0, step: 0.5, unit: '%' },
@@ -450,7 +474,8 @@ const PATTERN_CATEGORIES = {
         id: 'cypher',
         name: 'Cypher Pattern',
         type: 'reversal',
-        description: 'Modern harmonic pattern with unique ratios',
+        direction: 'neutral' as PatternDirection,
+        description: 'Modern harmonic - bullish or bearish based on formation',
         parameters: {
           abRetracement: { value: 38.2, min: 35.0, max: 42.0, step: 0.5, unit: '%' },
           bcExtension: { value: 127.2, min: 124.0, max: 130.0, step: 0.5, unit: '%' },
@@ -476,7 +501,8 @@ const PATTERN_CATEGORIES = {
         id: 'opening_range_breakout',
         name: 'Opening Range Breakout',
         type: 'momentum',
-        description: 'Breakout from first hour trading range',
+        direction: 'neutral' as PatternDirection,
+        description: 'Breakout direction determines long or short',
         parameters: {
           rangePeriod: { value: 60, min: 30, max: 120, step: 15, unit: 'minutes' },
           minRangeSize: { value: 20, min: 10, max: 50, step: 5, unit: 'pips' },
@@ -495,7 +521,8 @@ const PATTERN_CATEGORIES = {
         id: 'nr7',
         name: 'NR7 (Narrow Range 7)',
         type: 'volatility',
-        description: 'Narrowest range in 7 periods',
+        direction: 'neutral' as PatternDirection,
+        description: 'Breakout direction determines long or short',
         parameters: {
           lookbackPeriod: { value: 7, min: 5, max: 10, step: 1, unit: 'bars' },
           rangeThreshold: { value: 0.5, min: 0.3, max: 0.8, step: 0.05, unit: 'ATR' },
@@ -513,7 +540,8 @@ const PATTERN_CATEGORIES = {
         id: 'donchian_breakout',
         name: 'Donchian Breakout',
         type: 'momentum',
-        description: 'Breakout from N-period high/low channel',
+        direction: 'neutral' as PatternDirection,
+        description: 'Breakout direction determines long or short',
         parameters: {
           channelPeriod: { value: 20, min: 10, max: 50, step: 5, unit: 'periods' },
           exitPeriod: { value: 10, min: 5, max: 25, step: 1, unit: 'periods' },
@@ -532,7 +560,8 @@ const PATTERN_CATEGORIES = {
         id: 'bollinger_squeeze',
         name: 'Bollinger Band Squeeze',
         type: 'volatility',
-        description: 'Low volatility before expansion',
+        direction: 'neutral' as PatternDirection,
+        description: 'Breakout direction determines long or short',
         parameters: {
           squeezePeriod: { value: 20, min: 15, max: 30, step: 1, unit: 'periods' },
           standardDeviation: { value: 2.0, min: 1.5, max: 2.5, step: 0.1, unit: 'StdDev' },
@@ -558,6 +587,8 @@ interface PatternConfig {
   category: string;
   enabled: boolean;
   priority: number;
+  direction: 'bullish' | 'bearish' | 'neutral'; // Trading direction
+  intendedDirection?: 'long' | 'short'; // User's intended direction for neutral patterns
   parameters: Record<string, any>;
   riskSettings: {
     riskPerTrade: number;
@@ -582,19 +613,27 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 }) => {
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [directionDialog, setDirectionDialog] = useState<{
+    open: boolean;
+    categoryKey: string;
+    patternId: string;
+    patternName: string;
+  } | null>(null);
 
-  const addPattern = (categoryKey: string, patternId: string) => {
+  const addPattern = (categoryKey: string, patternId: string, intendedDirection?: 'long' | 'short') => {
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
     const pattern = category.patterns.find(p => p.id === patternId);
     if (!pattern) return;
 
     const newPattern: PatternConfig = {
       id: `${patternId}_${Date.now()}`,
-      patternType: patternId, // Store original pattern ID for matching
-      name: pattern.name, // Store display name
+      patternType: patternId,
+      name: pattern.name,
       category: categoryKey,
       enabled: true,
       priority: patterns.length + 1,
+      direction: pattern.direction,
+      intendedDirection: pattern.direction === 'neutral' ? intendedDirection : undefined,
       parameters: Object.fromEntries(
         Object.entries(pattern.parameters).map(([key, param]) => [
           key, 
@@ -610,6 +649,30 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     };
 
     onChange([...patterns, newPattern]);
+  };
+
+  const handlePatternClick = (categoryKey: string, patternId: string) => {
+    const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
+    const pattern = category.patterns.find(p => p.id === patternId);
+    if (!pattern) return;
+
+    if (pattern.direction === 'neutral') {
+      setDirectionDialog({
+        open: true,
+        categoryKey,
+        patternId,
+        patternName: pattern.name
+      });
+    } else {
+      addPattern(categoryKey, patternId);
+    }
+  };
+
+  const confirmDirectionAndAdd = (direction: 'long' | 'short') => {
+    if (directionDialog) {
+      addPattern(directionDialog.categoryKey, directionDialog.patternId, direction);
+      setDirectionDialog(null);
+    }
   };
 
   const updatePattern = (id: string, updates: Partial<PatternConfig>) => {
@@ -747,6 +810,8 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             <div className="flex flex-wrap gap-2">
               {category.patterns.map((pattern) => {
                 const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+                const directionIcon = pattern.direction === 'bullish' ? '↑' : pattern.direction === 'bearish' ? '↓' : '↕';
+                const directionColor = pattern.direction === 'bullish' ? 'text-green-500' : pattern.direction === 'bearish' ? 'text-red-500' : 'text-yellow-500';
                 
                 return (
                   <div key={pattern.id} className="flex items-center gap-1">
@@ -757,10 +822,11 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
                       }`}
                       onClick={() => {
                         if (!isActive) {
-                          addPattern(categoryKey, pattern.id);
+                          handlePatternClick(categoryKey, pattern.id);
                         }
                       }}
                     >
+                      <span className={`mr-1 ${isActive ? '' : directionColor}`}>{directionIcon}</span>
                       {pattern.name}
                       {isActive && <span className="ml-1">✓</span>}
                     </Badge>
@@ -778,6 +844,44 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             </div>
           </div>
         ))}
+
+        {/* Direction Confirmation Dialog for Neutral Patterns */}
+        <Dialog open={directionDialog?.open || false} onOpenChange={(open) => !open && setDirectionDialog(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                Confirm Trading Direction
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                <strong>{directionDialog?.patternName}</strong> can be used for both long and short positions. 
+                Please confirm your intended direction:
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex flex-col items-center gap-2 h-auto py-4 border-green-500/50 hover:bg-green-500/10 hover:border-green-500"
+                  onClick={() => confirmDirectionAndAdd('long')}
+                >
+                  <TrendingUp className="w-6 h-6 text-green-500" />
+                  <span className="font-semibold">Long Position</span>
+                  <span className="text-xs text-muted-foreground">Buy / Bullish</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex flex-col items-center gap-2 h-auto py-4 border-red-500/50 hover:bg-red-500/10 hover:border-red-500"
+                  onClick={() => confirmDirectionAndAdd('short')}
+                >
+                  <TrendingUp className="w-6 h-6 text-red-500 rotate-180" />
+                  <span className="font-semibold">Short Position</span>
+                  <span className="text-xs text-muted-foreground">Sell / Bearish</span>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Active Patterns - Compact List */}
