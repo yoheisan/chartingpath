@@ -130,6 +130,22 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     setStrategy: (newStrategy: ChartingPathStrategy) => setStrategy(newStrategy)
   }), [strategy]);
 
+  // Update strategy when initialStrategy changes (e.g., loading from library)
+  useEffect(() => {
+    if (initialStrategy) {
+      setStrategy(initialStrategy);
+      // Reset step to beginning when loading a new strategy
+      setCurrentStep(0);
+      // Mark completed steps based on loaded data
+      const completedSteps = new Set<number>();
+      if (initialStrategy.market?.instrument) completedSteps.add(0);
+      if (initialStrategy.patterns?.some(p => p.enabled)) completedSteps.add(1);
+      if (initialStrategy.positionManagement) completedSteps.add(2);
+      if (initialStrategy.targetGainPercent > 0 || initialStrategy.stopLossPercent > 0) completedSteps.add(3);
+      setConfirmedSteps(completedSteps);
+    }
+  }, [initialStrategy]);
+
   // Scroll to top of step content when step changes
   useEffect(() => {
     if (stepContentRef.current) {
