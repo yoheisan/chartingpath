@@ -322,8 +322,16 @@ serve(async (req) => {
 
     console.log(`Fetched ${historicalData.length} data points for backtesting`);
 
+    // CRITICAL: Limit data points to prevent CPU timeout (edge functions have ~50s limit)
+    const MAX_DATA_POINTS = 3000;
+    let processedData = historicalData;
+    if (historicalData.length > MAX_DATA_POINTS) {
+      console.log(`⚠️ Data too large (${historicalData.length}), trimming to last ${MAX_DATA_POINTS} points`);
+      processedData = historicalData.slice(-MAX_DATA_POINTS);
+    }
+
     const patternSignals = detectPatternsInData(
-      historicalData,
+      processedData,
       strategy.patterns?.filter((p: any) => p.enabled) || [],
       strategy
     );
@@ -332,7 +340,7 @@ serve(async (req) => {
 
     // Apply discipline filters and simulate trades
     const { trades, disciplineStats } = simulateTradesWithDiscipline(
-      historicalData,
+      processedData,
       patternSignals,
       strategy,
       disciplineFilters
@@ -527,13 +535,17 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     }
   }
   
+  // Optimization: Check patterns every N bars to reduce CPU load
+  const STEP_SIZE = Math.max(1, Math.floor(data.length / 500)); // ~500 checks max
+  console.log(`Pattern detection step size: ${STEP_SIZE} (${Math.ceil(data.length / STEP_SIZE)} iterations)`);
+
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
     
     const windowSize = getPatternWindowSize(pattern.id);
     const settings = patternSettings.get(pattern.id) || { target: 2, stopLoss: 1 };
     
-    for (let i = windowSize; i < data.length; i++) {
+    for (let i = windowSize; i < data.length; i += STEP_SIZE) {
       const window = data.slice(i - windowSize, i);
       const isPattern = checkPattern(pattern.id, window);
       
