@@ -60,7 +60,7 @@ interface SignalAnalysisDashboardProps {
   filters: DisciplineFilters;
   patternBreakdown?: PatternBreakdown;
   trades?: TradeDetail[];
-  onFilterAdjust?: (filterKey: string, suggested: boolean) => void;
+  onFilterChange?: (updates: Partial<DisciplineFilters>) => void;
 }
 
 const FILTER_DESCRIPTIONS: Record<string, { 
@@ -133,7 +133,7 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
   filters,
   patternBreakdown,
   trades,
-  onFilterAdjust
+  onFilterChange
 }) => {
   // Sort rejections by count (highest first)
   const sortedRejections = Object.entries(stats.rejectionsByFilter || {})
@@ -148,6 +148,19 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
   // Check if filters are too aggressive
   const isOverFiltering = stats.rejectionRate > 95;
   const isUnderFiltering = stats.rejectionRate < 10;
+
+  // Helper to apply a filter change
+  const applyFilterChange = (updates: Partial<DisciplineFilters>, description: string) => {
+    if (onFilterChange) {
+      onFilterChange(updates);
+      // Show toast notification
+      import('sonner').then(({ toast }) => {
+        toast.success('Filter Updated', {
+          description: description
+        });
+      });
+    }
+  };
   
   // Calculate pattern signal distribution
   const patternSignals = patternBreakdown 
@@ -162,16 +175,37 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
 
   return (
     <div className="space-y-6">
-      {/* Warning Alert for Over/Under Filtering */}
+      {/* Warning Alert for Over Filtering with Quick Fix Button */}
       {isOverFiltering && (
         <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <AlertTitle className="text-amber-600">Filters Too Aggressive</AlertTitle>
-          <AlertDescription className="text-amber-700 dark:text-amber-300">
-            {stats.rejectionRate.toFixed(1)}% of signals are being rejected. 
-            Only {stats.allowedTrades} trades executed from {stats.totalSignals} signals.
-            Consider relaxing filters below to get more trading opportunities.
-          </AlertDescription>
+          <div className="flex items-start justify-between w-full">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div>
+                <AlertTitle className="text-amber-600">Filters Too Aggressive</AlertTitle>
+                <AlertDescription className="text-amber-700 dark:text-amber-300">
+                  {stats.rejectionRate.toFixed(1)}% of signals rejected. 
+                  Only {stats.allowedTrades} trades from {stats.totalSignals} signals.
+                </AlertDescription>
+              </div>
+            </div>
+            {onFilterChange && (
+              <Button 
+                size="sm"
+                variant="default"
+                className="shrink-0 ml-4"
+                onClick={() => applyFilterChange({
+                  avoidLowLiquidity: false,
+                  minAtrMultiplier: 0.5,
+                  trendAlignmentEnabled: false,
+                  cooldownBars: 2
+                }, 'Applied recommended optimizations - run backtest again')}
+              >
+                <Zap className="w-4 h-4 mr-1" />
+                Quick Fix All
+              </Button>
+            )}
+          </div>
         </Alert>
       )}
 
@@ -386,41 +420,113 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
                 <Lightbulb className="h-4 w-4" />
                 <AlertTitle>Optimization Suggestions</AlertTitle>
                 <AlertDescription>
-                  Based on your backtest results, here are recommendations to get more trades while maintaining quality.
+                  Click any button below to apply the optimization directly to your strategy.
                 </AlertDescription>
               </Alert>
 
+              {/* One-Click Apply All Button */}
+              {onFilterChange && isOverFiltering && (
+                <Card className="border-primary bg-primary/5">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="font-medium flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-primary" />
+                          Apply All Recommended Optimizations
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Relaxes aggressive filters to allow more trades while maintaining quality
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => applyFilterChange({
+                          avoidLowLiquidity: false,
+                          minAtrMultiplier: 0.5,
+                          trendAlignmentEnabled: false,
+                          cooldownBars: 2
+                        }, 'Applied all recommended optimizations')}
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Apply All
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <div className="space-y-3">
+                {/* Individual Filter Adjustments */}
                 {sortedRejections.slice(0, 4).map(([filterName, count]) => {
                   const filterInfo = FILTER_DESCRIPTIONS[filterName];
                   const percentage = stats.totalSignals > 0 ? (count / stats.totalSignals * 100) : 0;
                   
                   if (percentage < 10) return null; // Only show significant filters
+
+                  // Determine the specific fix for each filter
+                  const getFilterFix = (): { updates: Partial<DisciplineFilters>; label: string } | null => {
+                    switch(filterName) {
+                      case 'liquidity':
+                        return filters.avoidLowLiquidity 
+                          ? { updates: { avoidLowLiquidity: false }, label: 'Disable Liquidity Filter' }
+                          : null;
+                      case 'Stop':
+                        return filters.minAtrMultiplier > 0.5
+                          ? { updates: { minAtrMultiplier: 0.5 }, label: 'Set ATR to 0.5' }
+                          : null;
+                      case 'Trend':
+                        return filters.trendAlignmentEnabled
+                          ? { updates: { trendAlignmentEnabled: false }, label: 'Disable Trend Filter' }
+                          : null;
+                      case 'Cooldown':
+                        return filters.cooldownBars > 2
+                          ? { updates: { cooldownBars: 2 }, label: 'Reduce to 2 bars' }
+                          : null;
+                      case 'R:R':
+                        return filters.minRiskReward > 1.5
+                          ? { updates: { minRiskReward: 1.5 }, label: 'Lower R:R to 1.5' }
+                          : null;
+                      case 'Volume':
+                        return filters.volumeConfirmationEnabled
+                          ? { updates: { volumeConfirmationEnabled: false }, label: 'Disable Volume Filter' }
+                          : null;
+                      case 'Max positions':
+                        return filters.maxConcurrentTrades < 5
+                          ? { updates: { maxConcurrentTrades: 5 }, label: 'Increase to 5 positions' }
+                          : null;
+                      default:
+                        return null;
+                    }
+                  };
+
+                  const fix = getFilterFix();
                   
                   return (
-                    <Card key={filterName} className="border-l-4 border-l-primary">
+                    <Card key={filterName} className="border-l-4 border-l-amber-500">
                       <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-2 flex-1">
                             <div className="flex items-center gap-2">
-                              {filterInfo?.icon}
+                              <div className="p-1.5 rounded bg-amber-500/10 text-amber-600">
+                                {filterInfo?.icon}
+                              </div>
                               <span className="font-medium">{filterInfo?.name || filterName}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {percentage.toFixed(0)}% impact
+                              <Badge variant="destructive" className="text-xs">
+                                {count} rejected ({percentage.toFixed(0)}%)
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
                               {filterInfo?.recommendation || 'Consider adjusting this filter'}
                             </p>
                           </div>
-                          {onFilterAdjust && (
+                          {onFilterChange && fix && (
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => onFilterAdjust(filterName, false)}
+                              className="shrink-0"
+                              onClick={() => applyFilterChange(fix.updates, `${fix.label} applied`)}
                             >
                               <Zap className="w-3 h-3 mr-1" />
-                              Adjust
+                              {fix.label}
                             </Button>
                           )}
                         </div>
@@ -429,7 +535,7 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
                   );
                 })}
 
-                {/* General Recommendations */}
+                {/* Quick Fixes with Apply Buttons */}
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -437,41 +543,81 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
                       Quick Fixes for More Trades
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
+                  <CardContent className="space-y-3">
                     {filters.timeFilterEnabled && filters.avoidLowLiquidity && (
-                      <div className="flex items-start gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <span>
-                          <strong>Disable "Avoid Low Liquidity"</strong> for daily charts - 
-                          weekends are flagged but don't affect daily candle validity
-                        </span>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                        <div className="flex items-start gap-2 flex-1">
+                          <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-sm">
+                            <strong>Disable "Avoid Low Liquidity"</strong> - weekends are flagged but don't affect daily candles
+                          </span>
+                        </div>
+                        {onFilterChange && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => applyFilterChange({ avoidLowLiquidity: false }, 'Low liquidity filter disabled')}
+                          >
+                            Apply
+                          </Button>
+                        )}
                       </div>
                     )}
                     {filters.atrStopValidationEnabled && filters.minAtrMultiplier >= 1 && (
-                      <div className="flex items-start gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <span>
-                          <strong>Lower ATR multiplier to 0.5</strong> - pattern stops 
-                          are often tighter than 1 ATR
-                        </span>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                        <div className="flex items-start gap-2 flex-1">
+                          <Target className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-sm">
+                            <strong>Lower ATR multiplier to 0.5</strong> - pattern stops are often tighter than 1 ATR
+                          </span>
+                        </div>
+                        {onFilterChange && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => applyFilterChange({ minAtrMultiplier: 0.5 }, 'ATR multiplier set to 0.5')}
+                          >
+                            Apply
+                          </Button>
+                        )}
                       </div>
                     )}
                     {filters.trendAlignmentEnabled && (
-                      <div className="flex items-start gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <span>
-                          <strong>Disable Trend Alignment</strong> for reversal patterns 
-                          (H&S, Double Top/Bottom are counter-trend by nature)
-                        </span>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                        <div className="flex items-start gap-2 flex-1">
+                          <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-sm">
+                            <strong>Disable Trend Alignment</strong> - reversal patterns (H&S, Double Top) are counter-trend
+                          </span>
+                        </div>
+                        {onFilterChange && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => applyFilterChange({ trendAlignmentEnabled: false }, 'Trend alignment disabled')}
+                          >
+                            Apply
+                          </Button>
+                        )}
                       </div>
                     )}
                     {filters.cooldownEnabled && filters.cooldownBars > 3 && (
-                      <div className="flex items-start gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <span>
-                          <strong>Reduce cooldown to 2-3 bars</strong> for daily charts - 
-                          5 bars = 1 trading week between trades
-                        </span>
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                        <div className="flex items-start gap-2 flex-1">
+                          <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-sm">
+                            <strong>Reduce cooldown to 2 bars</strong> - 5 bars = 1 trading week between trades
+                          </span>
+                        </div>
+                        {onFilterChange && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => applyFilterChange({ cooldownBars: 2 }, 'Cooldown reduced to 2 bars')}
+                          >
+                            Apply
+                          </Button>
+                        )}
                       </div>
                     )}
                   </CardContent>

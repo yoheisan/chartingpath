@@ -55,6 +55,7 @@ interface EnhancedBacktestEngineProps {
   results: any;
   isRunning: boolean;
   onBacktest: (strategy: any) => void;
+  onStrategyUpdate?: (updates: Partial<any>) => void;
   progress?: number;
   progressPhase?: string;
 }
@@ -64,11 +65,21 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   results,
   isRunning,
   onBacktest,
+  onStrategyUpdate,
   progress = 0,
   progressPhase = ''
 }) => {
   // Get discipline filters from strategy or use defaults
   const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
+
+  // Handler to update discipline filters in the strategy
+  const handleFilterChange = (updates: Partial<DisciplineFilters>) => {
+    if (onStrategyUpdate) {
+      const newFilters = { ...disciplineFilters, ...updates };
+      onStrategyUpdate({ disciplineFilters: newFilters });
+    }
+  };
+
 
   /**
    * Bar limits per timeframe – capped to prevent edge function timeout.
@@ -608,6 +619,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
               filters={disciplineFilters}
               patternBreakdown={results.patternBreakdown}
               trades={results.trades}
+              onFilterChange={handleFilterChange}
             />
           )}
 
