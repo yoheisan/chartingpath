@@ -640,6 +640,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
                     results={backtestResults}
                     isRunning={isBacktesting}
                     onBacktest={handleBacktest}
+                    onStrategyUpdate={(updates) => setStrategy(prev => ({ ...prev, ...updates }))}
                     progress={backtestProgress}
                     progressPhase={backtestPhase}
                   />
