@@ -1,5 +1,8 @@
 project_id = "dgznlsckoamseqcpzfqm"
 
+[functions.backtest-strategy]
+verify_jwt = false
+
 [functions.generate-article]
 verify_jwt = true
 
