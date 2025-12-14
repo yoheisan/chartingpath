@@ -273,7 +273,7 @@ function validateTradeDiscipline(
 // ============================================
 
 // Cache version to invalidate old metric semantics when changed
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 // Generate cache key from strategy parameters
 function generateCacheKey(strategy: any): string {
@@ -668,9 +668,10 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     }
   }
   
-  // Optimization: Check patterns every N bars to reduce CPU load
-  const STEP_SIZE = Math.max(1, Math.floor(data.length / 500)); // ~500 checks max
-  console.log(`Pattern detection step size: ${STEP_SIZE} (${Math.ceil(data.length / STEP_SIZE)} iterations)`);
+  // Check patterns every bar for daily timeframe (252 bars/year is manageable)
+  // Only optimize for intraday timeframes with lots of bars
+  const STEP_SIZE = data.length > 1000 ? Math.max(1, Math.floor(data.length / 1000)) : 1;
+  console.log(`Pattern detection step size: ${STEP_SIZE} (${Math.ceil(data.length / STEP_SIZE)} iterations for ${data.length} bars)`);
 
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
@@ -679,11 +680,13 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     const windowSize = getPatternWindowSize(patternType);
     const settings = patternSettings.get(pattern.id) || patternSettings.get(patternType) || { target: globalTarget, stopLoss: globalStopLoss };
     
+    let patternSignalCount = 0;
     for (let i = windowSize; i < data.length; i += STEP_SIZE) {
-      const window = data.slice(i - windowSize, i);
+      const window = data.slice(i - windowSize, i + 1); // Include current bar
       const isPattern = checkPattern(patternType, window);
       
       if (isPattern) {
+        patternSignalCount++;
         signals.push({
           patternId: pattern.id,
           patternName: pattern.name,
@@ -697,17 +700,24 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
         });
       }
     }
+    console.log(`Pattern ${pattern.name}: ${patternSignalCount} signals detected`);
   }
   
-  console.log(`Generated ${signals.length} signals with TP/SL: target=${globalTarget}%, stop=${globalStopLoss}%`);
+  console.log(`Generated ${signals.length} total signals with TP/SL: target=${globalTarget}%, stop=${globalStopLoss}%`);
   return signals;
 }
 
 function getPatternWindowSize(patternId: string): number {
   const sizeMap: Record<string, number> = {
-    'head-shoulders': 30, 'double-top': 20, 'double-bottom': 20,
-    'cup-handle': 40, 'ascending-triangle': 25, 'descending-triangle': 25,
+    'head-shoulders': 30, 'inverted-head-shoulders': 30,
+    'double-top': 20, 'double-bottom': 20,
+    'triple-top': 25, 'triple-bottom': 25,
+    'cup-handle': 40, 
+    'ascending-triangle': 25, 'descending-triangle': 25, 'symmetrical-triangle': 25,
     'bull-flag': 15, 'bear-flag': 15,
+    'rising-wedge': 20, 'falling-wedge': 20,
+    'bullish-rectangle': 15, 'bearish-rectangle': 15,
+    'rounding-bottom': 30, 'rounding-top': 30,
   };
   return sizeMap[patternId] || 20;
 }
@@ -721,11 +731,26 @@ function checkPattern(patternId: string, window: any[]): boolean {
   
   switch (patternId) {
     case 'head-shoulders': return detectHeadAndShoulders(highs, lows);
+    case 'inverted-head-shoulders': return detectInvertedHeadAndShoulders(highs, lows);
     case 'double-top': return detectDoubleTop(highs);
     case 'double-bottom': return detectDoubleBottom(lows);
+    case 'triple-top': return detectTripleTop(highs);
+    case 'triple-bottom': return detectTripleBottom(lows);
     case 'ascending-triangle': return detectAscendingTriangle(highs, lows);
+    case 'descending-triangle': return detectDescendingTriangle(highs, lows);
+    case 'symmetrical-triangle': return detectSymmetricalTriangle(highs, lows);
     case 'cup-handle': return detectCupAndHandle(closes);
-    default: return Math.random() < 0.05;
+    case 'bull-flag': return detectBullFlag(highs, lows, closes);
+    case 'bear-flag': return detectBearFlag(highs, lows, closes);
+    case 'rising-wedge': return detectRisingWedge(highs, lows);
+    case 'falling-wedge': return detectFallingWedge(highs, lows);
+    case 'bullish-rectangle': return detectBullishRectangle(highs, lows, closes);
+    case 'bearish-rectangle': return detectBearishRectangle(highs, lows, closes);
+    case 'rounding-bottom': return detectRoundingBottom(lows);
+    case 'rounding-top': return detectRoundingTop(highs);
+    default: 
+      // For unknown patterns, use a simple breakout detection instead of random
+      return detectSimpleBreakout(highs, lows, closes);
   }
 }
 
@@ -768,6 +793,132 @@ function detectCupAndHandle(closes: number[]): boolean {
   const cupBottom = Math.min(...closes.slice(10, 20));
   const cupRims = [closes[0], closes[29]];
   return cupBottom < Math.min(...cupRims) * 0.95;
+}
+
+// Additional pattern detection functions
+function detectInvertedHeadAndShoulders(highs: number[], lows: number[]): boolean {
+  if (lows.length < 20) return false;
+  const troughs = findTroughs(lows);
+  if (troughs.length < 3) return false;
+  const lastThreeTroughs = troughs.slice(-3);
+  if (lastThreeTroughs.length === 3) {
+    const [left, head, right] = lastThreeTroughs.map(i => lows[i]);
+    return head < left && head < right && Math.abs(left - right) / left < 0.05;
+  }
+  return false;
+}
+
+function detectTripleTop(highs: number[]): boolean {
+  const peaks = findPeaks(highs);
+  if (peaks.length < 3) return false;
+  const lastThreePeaks = peaks.slice(-3).map(i => highs[i]);
+  const avg = lastThreePeaks.reduce((a, b) => a + b, 0) / 3;
+  return lastThreePeaks.every(p => Math.abs(p - avg) / avg < 0.03);
+}
+
+function detectTripleBottom(lows: number[]): boolean {
+  const troughs = findTroughs(lows);
+  if (troughs.length < 3) return false;
+  const lastThreeTroughs = troughs.slice(-3).map(i => lows[i]);
+  const avg = lastThreeTroughs.reduce((a, b) => a + b, 0) / 3;
+  return lastThreeTroughs.every(t => Math.abs(t - avg) / avg < 0.03);
+}
+
+function detectDescendingTriangle(highs: number[], lows: number[]): boolean {
+  if (highs.length < 15) return false;
+  const recentHighs = highs.slice(-15);
+  const recentLows = lows.slice(-15);
+  const highTrend = calculateTrend(recentHighs);
+  const lowFlatness = Math.max(...recentLows) / Math.min(...recentLows);
+  return highTrend < -0.01 && lowFlatness < 1.03;
+}
+
+function detectSymmetricalTriangle(highs: number[], lows: number[]): boolean {
+  if (highs.length < 15) return false;
+  const recentHighs = highs.slice(-15);
+  const recentLows = lows.slice(-15);
+  const highTrend = calculateTrend(recentHighs);
+  const lowTrend = calculateTrend(recentLows);
+  return highTrend < -0.005 && lowTrend > 0.005;
+}
+
+function detectBullFlag(highs: number[], lows: number[], closes: number[]): boolean {
+  if (closes.length < 15) return false;
+  // Strong uptrend in first half, consolidation in second half
+  const firstHalf = closes.slice(0, 7);
+  const secondHalf = closes.slice(7);
+  const firstTrend = calculateTrend(firstHalf);
+  const secondRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
+  return firstTrend > 0.03 && secondRange < 0.05;
+}
+
+function detectBearFlag(highs: number[], lows: number[], closes: number[]): boolean {
+  if (closes.length < 15) return false;
+  // Strong downtrend in first half, consolidation in second half
+  const firstHalf = closes.slice(0, 7);
+  const secondHalf = closes.slice(7);
+  const firstTrend = calculateTrend(firstHalf);
+  const secondRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
+  return firstTrend < -0.03 && secondRange < 0.05;
+}
+
+function detectRisingWedge(highs: number[], lows: number[]): boolean {
+  if (highs.length < 15) return false;
+  const highTrend = calculateTrend(highs.slice(-15));
+  const lowTrend = calculateTrend(lows.slice(-15));
+  // Both rising, but lows rising faster (converging)
+  return highTrend > 0.01 && lowTrend > 0.01 && lowTrend > highTrend;
+}
+
+function detectFallingWedge(highs: number[], lows: number[]): boolean {
+  if (highs.length < 15) return false;
+  const highTrend = calculateTrend(highs.slice(-15));
+  const lowTrend = calculateTrend(lows.slice(-15));
+  // Both falling, but highs falling faster (converging)
+  return highTrend < -0.01 && lowTrend < -0.01 && highTrend < lowTrend;
+}
+
+function detectBullishRectangle(highs: number[], lows: number[], closes: number[]): boolean {
+  if (closes.length < 15) return false;
+  const range = (Math.max(...highs) - Math.min(...lows)) / Math.min(...lows);
+  const trend = calculateTrend(closes);
+  return range < 0.05 && trend > 0;
+}
+
+function detectBearishRectangle(highs: number[], lows: number[], closes: number[]): boolean {
+  if (closes.length < 15) return false;
+  const range = (Math.max(...highs) - Math.min(...lows)) / Math.min(...lows);
+  const trend = calculateTrend(closes);
+  return range < 0.05 && trend < 0;
+}
+
+function detectRoundingBottom(lows: number[]): boolean {
+  if (lows.length < 20) return false;
+  const mid = Math.floor(lows.length / 2);
+  const firstHalf = lows.slice(0, mid);
+  const secondHalf = lows.slice(mid);
+  const firstTrend = calculateTrend(firstHalf);
+  const secondTrend = calculateTrend(secondHalf);
+  return firstTrend < -0.02 && secondTrend > 0.02;
+}
+
+function detectRoundingTop(highs: number[]): boolean {
+  if (highs.length < 20) return false;
+  const mid = Math.floor(highs.length / 2);
+  const firstHalf = highs.slice(0, mid);
+  const secondHalf = highs.slice(mid);
+  const firstTrend = calculateTrend(firstHalf);
+  const secondTrend = calculateTrend(secondHalf);
+  return firstTrend > 0.02 && secondTrend < -0.02;
+}
+
+function detectSimpleBreakout(highs: number[], lows: number[], closes: number[]): boolean {
+  if (closes.length < 10) return false;
+  const recentHigh = Math.max(...highs.slice(-10, -1));
+  const recentLow = Math.min(...lows.slice(-10, -1));
+  const currentClose = closes[closes.length - 1];
+  // Breakout above recent high or below recent low
+  return currentClose > recentHigh * 1.01 || currentClose < recentLow * 0.99;
 }
 
 function findPeaks(data: number[]): number[] {
