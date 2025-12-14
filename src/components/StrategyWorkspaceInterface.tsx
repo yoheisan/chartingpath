@@ -236,16 +236,24 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         patterns: strategy.patterns?.filter(p => p.enabled).length
       });
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.error('Backtest timed out after', timeoutMs, 'ms');
-      }, timeoutMs);
+      // Implement a real timeout using Promise.race so the UI never hangs
+      let timeoutId: ReturnType<typeof setTimeout>;
+      const backtestPromise = supabase.functions.invoke('backtest-strategy', {
+        body: { strategy }
+      });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          console.error('Backtest timed out after', timeoutMs, 'ms');
+          reject(new Error('Backtest timed out. Try a shorter date range or daily timeframe.'));
+        }, timeoutMs);
+      });
 
       try {
-        const { data, error } = await supabase.functions.invoke('backtest-strategy', {
-          body: { strategy }
-        });
+        const { data, error } = await Promise.race([
+          backtestPromise,
+          timeoutPromise,
+        ]) as { data: any; error: any };
 
         clearTimeout(timeoutId);
 
@@ -293,12 +301,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         
         return results;
       } catch (fetchError) {
-        clearTimeout(timeoutId);
-        
-        // Check if it was an abort (timeout)
-        if (controller.signal.aborted) {
-          throw new Error('Backtest timed out. Try a shorter date range or daily timeframe.');
-        }
+        console.error('Backtest invocation failed:', fetchError);
         throw fetchError;
       }
     } catch (error) {
