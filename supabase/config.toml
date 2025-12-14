@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.cache-popular-instruments]
 verify_jwt = false
+
+[functions.analyze-mtf-trend]
+verify_jwt = false
