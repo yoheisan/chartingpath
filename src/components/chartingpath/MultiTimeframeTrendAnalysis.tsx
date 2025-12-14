@@ -10,9 +10,12 @@ import {
   RefreshCw,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertCircle
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface TimeframeTrend {
   timeframe: string;
@@ -40,43 +43,6 @@ const TIMEFRAMES = [
   { id: '1M', label: 'Monthly', category: 'macro' as const },
 ];
 
-// Simulated EMA calculation for demo - in production this would use real market data
-const calculateEMA = (prices: number[], period: number): number => {
-  if (prices.length === 0) return 0;
-  const k = 2 / (period + 1);
-  let ema = prices[0];
-  for (let i = 1; i < prices.length; i++) {
-    ema = prices[i] * k + ema * (1 - k);
-  }
-  return ema;
-};
-
-// Generate simulated price data for demo purposes
-const generateSimulatedData = (instrument: string, timeframe: string): { ema20: number; ema50: number; currentPrice: number } => {
-  // Use instrument + timeframe as seed for consistent results
-  const seed = instrument.split('').reduce((a, b) => a + b.charCodeAt(0), 0) + 
-               timeframe.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  
-  // Create pseudo-random but consistent values
-  const basePrice = 100 + (seed % 900);
-  const variation = (Math.sin(seed * 0.1) * 0.05);
-  
-  const ema20 = basePrice * (1 + variation * 0.8);
-  const ema50 = basePrice * (1 + variation * 0.4);
-  const currentPrice = basePrice * (1 + variation);
-  
-  return { ema20, ema50, currentPrice };
-};
-
-const determineTrend = (currentPrice: number, ema20: number, ema50: number): 'up' | 'down' | 'flat' => {
-  const aboveBoth = currentPrice > ema20 && currentPrice > ema50;
-  const belowBoth = currentPrice < ema20 && currentPrice < ema50;
-  
-  if (aboveBoth && ema20 > ema50) return 'up';
-  if (belowBoth && ema20 < ema50) return 'down';
-  return 'flat';
-};
-
 export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisProps> = ({
   instrument,
   onTrendAnalysisComplete
@@ -85,36 +51,44 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const analyzeTrends = async () => {
     if (!instrument) return;
     
     setIsLoading(true);
+    setError(null);
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const analyzedTrends: TimeframeTrend[] = TIMEFRAMES.map(tf => {
-      const { ema20, ema50, currentPrice } = generateSimulatedData(instrument, tf.id);
-      const trend = determineTrend(currentPrice, ema20, ema50);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('analyze-mtf-trend', {
+        body: { 
+          symbol: instrument,
+          timeframes: ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M']
+        }
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to analyze trends');
+      }
+
+      setTrends(data.trends);
+      setLastUpdated(new Date());
       
-      return {
-        timeframe: tf.id,
-        label: tf.label,
-        trend,
-        ema20,
-        ema50,
-        currentPrice,
-        category: tf.category
-      };
-    });
-    
-    setTrends(analyzedTrends);
-    setLastUpdated(new Date());
-    setIsLoading(false);
-    
-    if (onTrendAnalysisComplete) {
-      onTrendAnalysisComplete(analyzedTrends);
+      if (onTrendAnalysisComplete) {
+        onTrendAnalysisComplete(data.trends);
+      }
+
+      console.log('MTF Analysis:', data.summary);
+    } catch (err) {
+      console.error('MTF Analysis error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch trend data');
+      toast.error('Failed to fetch real-time trend data');
+    } finally {
+      setIsLoading(false);
     }
   };
 

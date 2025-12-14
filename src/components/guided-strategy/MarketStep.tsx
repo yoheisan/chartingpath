@@ -94,32 +94,48 @@ const MTF_TIMEFRAMES = [
   { id: '1M', label: 'M', category: 'macro' as const },
 ];
 
-// Simulated trend calculation
-const generateSimulatedTrend = (instrument: string, timeframe: string): 'up' | 'down' | 'flat' => {
-  const seed = instrument.split('').reduce((a, b) => a + b.charCodeAt(0), 0) + 
-               timeframe.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  const variation = Math.sin(seed * 0.1);
-  if (variation > 0.3) return 'up';
-  if (variation < -0.3) return 'down';
-  return 'flat';
-};
-
-// Horizontal Trend Analysis Component
+// Horizontal Trend Analysis Component - uses real data from edge function
 const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [trends, setTrends] = useState<Array<{ id: string; label: string; trend: 'up' | 'down' | 'flat'; category: 'micro' | 'macro' }>>([]);
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const analyzed = MTF_TIMEFRAMES.map(tf => ({
-        ...tf,
-        trend: generateSimulatedTrend(instrument, tf.id)
-      }));
-      setTrends(analyzed);
-      setIsLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
+    const fetchTrends = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('analyze-mtf-trend', {
+          body: { 
+            symbol: instrument,
+            timeframes: ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M']
+          }
+        });
+
+        if (fnError) throw new Error(fnError.message);
+        if (!data?.success) throw new Error(data?.error || 'Failed to analyze');
+
+        const mapped = data.trends.map((t: any) => ({
+          id: t.timeframe,
+          label: t.label,
+          trend: t.trend,
+          category: t.category
+        }));
+        setTrends(mapped);
+      } catch (err) {
+        console.error('MTF trend error:', err);
+        setError('Unable to fetch live data');
+        // Fallback to empty state
+        setTrends([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (instrument) {
+      fetchTrends();
+    }
   }, [instrument]);
 
   const getTrendIcon = (trend: 'up' | 'down' | 'flat') => {
@@ -141,7 +157,6 @@ const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument 
   const upCount = trends.filter(t => t.trend === 'up').length;
   const downCount = trends.filter(t => t.trend === 'down').length;
   const bias = upCount > trends.length * 0.5 ? 'Bullish' : downCount > trends.length * 0.5 ? 'Bearish' : 'Mixed';
-  const biasColor = bias === 'Bullish' ? 'text-green-600' : bias === 'Bearish' ? 'text-red-600' : 'text-yellow-600';
 
   return (
     <div className="mt-4 p-3 bg-muted/30 rounded-lg border space-y-2">
@@ -151,7 +166,7 @@ const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument 
           Multi-Timeframe Trend
           <Badge variant="outline" className="text-xs">{instrument}</Badge>
         </div>
-        {!isLoading && (
+        {!isLoading && trends.length > 0 && (
           <Badge className={`text-xs ${getTrendColor(bias === 'Bullish' ? 'up' : bias === 'Bearish' ? 'down' : 'flat')}`}>
             {bias} Bias
           </Badge>
@@ -164,7 +179,12 @@ const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument 
             <Skeleton key={tf.id} className="h-8 w-10 rounded" />
           ))}
         </div>
-      ) : (
+      ) : error ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" />
+          {error}
+        </div>
+      ) : trends.length > 0 ? (
         <div className="flex gap-1 flex-wrap">
           {trends.map(tf => (
             <div
@@ -176,10 +196,12 @@ const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument 
             </div>
           ))}
         </div>
+      ) : (
+        <div className="text-xs text-muted-foreground">No trend data available</div>
       )}
       
       <p className="text-[10px] text-muted-foreground">
-        EMA 20/50 trend analysis • {bias === 'Bullish' ? 'Consider Long patterns' : bias === 'Bearish' ? 'Consider Short patterns' : 'Use caution with pattern selection'}
+        EMA 20/50 trend analysis (live data) • {bias === 'Bullish' ? 'Consider Long patterns' : bias === 'Bearish' ? 'Consider Short patterns' : 'Use caution with pattern selection'}
       </p>
     </div>
   );
