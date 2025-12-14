@@ -230,18 +230,21 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         body: { strategy }
       });
 
-      const timeoutMs = 30000; // 30s safety timeout so UI never hangs indefinitely
+      const timeoutMs = 10000; // 10s safety timeout so UI never hangs indefinitely
+
+      console.log('Invoking backtest-strategy edge function with timeout', { timeoutMs });
 
       const { data, error } = await Promise.race([
         backtestPromise,
         new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Backtest timed out. Please try again or shorten your date range.')),
-            timeoutMs
-          )
+          setTimeout(() => {
+            console.error('Backtest timed out after', timeoutMs, 'ms');
+            reject(new Error('Backtest timed out. Please try again or shorten your date range.'));
+          }, timeoutMs)
         ),
       ]) as { data: any; error: any };
 
+      console.log('Backtest edge function resolved');
       setBacktestProgress(70);
       setBacktestPhase('Analyzing patterns & signals...');
 
