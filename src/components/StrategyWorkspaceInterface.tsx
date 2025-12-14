@@ -190,8 +190,15 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   };
 
   // Handle ChartingPath strategy backtest
+  // Progress state for backtest
+  const [backtestProgress, setBacktestProgress] = useState(0);
+  const [backtestPhase, setBacktestPhase] = useState('');
+
   const handleChartingPathBacktest = async (strategy: ChartingPathStrategy): Promise<any> => {
     setIsBacktesting(true);
+    setBacktestProgress(0);
+    setBacktestPhase('Initializing...');
+    
     try {
       // Ensure strategy has required properties
       if (!strategy.market?.instrument) {
@@ -204,6 +211,10 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         throw new Error('Please enable at least one pattern');
       }
 
+      // Progress simulation
+      setBacktestProgress(10);
+      setBacktestPhase('Connecting to data provider...');
+      
       console.log('Starting real backtest with strategy:', {
         instrument: strategy.market.instrument,
         instrumentCategory: strategy.market.instrumentCategory,
@@ -211,10 +222,16 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         dateRange: `${strategy.backtestPeriod.startDate} to ${strategy.backtestPeriod.endDate}`
       });
 
+      setBacktestProgress(20);
+      setBacktestPhase('Fetching historical data...');
+
       // Call the real backtest edge function
       const { data, error } = await supabase.functions.invoke('backtest-strategy', {
         body: { strategy }
       });
+
+      setBacktestProgress(70);
+      setBacktestPhase('Analyzing patterns & signals...');
 
       if (error) {
         console.error('Backtest error:', error);
@@ -227,6 +244,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         throw new Error(errorMsg);
       }
 
+      setBacktestProgress(90);
+      setBacktestPhase('Calculating performance metrics...');
+
       console.log('Backtest completed successfully:', {
         totalTrades: data.results.totalTrades,
         winRate: data.results.winRate,
@@ -237,11 +257,17 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       const results = {
         ...data.results,
         trades: data.trades,
+        disciplineStats: data.disciplineStats,
+        rawSignals: data.rawSignals,
         engineNote: `Real backtest on ${data.dataPoints} historical data points`
       };
       
+      setBacktestProgress(100);
+      setBacktestPhase('Complete!');
+      
       setBacktestResults(results);
       setIsBacktesting(false);
+      setBacktestProgress(0);
       
       toast.success(`Backtest complete! ${data.results.totalTrades} trades executed on real data.`);
       
@@ -249,6 +275,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     } catch (error) {
       console.error('Backtest error:', error);
       setIsBacktesting(false);
+      setBacktestProgress(0);
+      setBacktestPhase('');
       
       // Extract meaningful error message
       let errorMessage = 'Backtest failed. Please check your configuration.';
@@ -458,6 +486,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             initialStrategy={currentChartingPathStrategy}
             onSave={handleChartingPathStrategySave}
             onBacktest={handleChartingPathBacktest}
+            isBacktesting={isBacktesting}
+            backtestProgress={backtestProgress}
+            backtestPhase={backtestPhase}
           />
         </div>
       </div>
