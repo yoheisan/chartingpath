@@ -634,9 +634,19 @@ async function fetchHistoricalData(
 function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[] {
   const signals: any[] = [];
   
+  // Use sensible defaults if strategy values are 0 or missing
+  const globalTarget = (strategy.targetGainPercent && strategy.targetGainPercent > 0) 
+    ? strategy.targetGainPercent 
+    : 2; // Default 2% target
+  const globalStopLoss = (strategy.stopLossPercent && strategy.stopLossPercent > 0) 
+    ? strategy.stopLossPercent 
+    : 1; // Default 1% stop loss
+  
   console.log('Pattern detection - Strategy settings:', {
     targetGainPercent: strategy.targetGainPercent,
     stopLossPercent: strategy.stopLossPercent,
+    effectiveTarget: globalTarget,
+    effectiveStopLoss: globalStopLoss,
     patterns: patterns.map(p => ({ id: p.id, enabled: p.enabled, customTarget: p.customTarget, customStopLoss: p.customStopLoss }))
   });
   
@@ -644,12 +654,13 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
   const patternSettings = new Map<string, { target: number; stopLoss: number }>();
   for (const pattern of patterns) {
     if (pattern.enabled) {
-      // Use pattern-specific settings, then strategy settings, then reasonable defaults
-      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 2;
-      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 1;
+      // Use pattern-specific settings if defined and > 0, otherwise use global defaults
+      const target = (pattern.customTarget && pattern.customTarget > 0) ? pattern.customTarget : globalTarget;
+      const stopLoss = (pattern.customStopLoss && pattern.customStopLoss > 0) ? pattern.customStopLoss : globalStopLoss;
       patternSettings.set(pattern.id, { target, stopLoss });
       patternSettings.set(pattern.name, { target, stopLoss });
-      console.log(`Pattern ${pattern.id}: target=${target}%, stopLoss=${stopLoss}%`);
+      patternSettings.set(pattern.patternType, { target, stopLoss });
+      console.log(`Pattern ${pattern.name} (${pattern.id}): target=${target}%, stopLoss=${stopLoss}%`);
     }
   }
   
@@ -660,17 +671,19 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
     
-    const windowSize = getPatternWindowSize(pattern.id);
-    const settings = patternSettings.get(pattern.id) || { target: 2, stopLoss: 1 };
+    const patternType = pattern.patternType || pattern.id;
+    const windowSize = getPatternWindowSize(patternType);
+    const settings = patternSettings.get(pattern.id) || patternSettings.get(patternType) || { target: globalTarget, stopLoss: globalStopLoss };
     
     for (let i = windowSize; i < data.length; i += STEP_SIZE) {
       const window = data.slice(i - windowSize, i);
-      const isPattern = checkPattern(pattern.id, window);
+      const isPattern = checkPattern(patternType, window);
       
       if (isPattern) {
         signals.push({
           patternId: pattern.id,
           patternName: pattern.name,
+          patternType: patternType,
           index: i,
           timestamp: data[i].timestamp,
           entryPrice: data[i].close,
@@ -682,7 +695,7 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     }
   }
   
-  console.log(`Generated ${signals.length} signals with TP/SL settings`);
+  console.log(`Generated ${signals.length} signals with TP/SL: target=${globalTarget}%, stop=${globalStopLoss}%`);
   return signals;
 }
 
@@ -917,35 +930,53 @@ function calculateMetrics(trades: any[], strategy: any): any {
   const winningTrades = trades.filter(t => t.pnl > 0);
   const losingTrades = trades.filter(t => t.pnl <= 0);
   
-  const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+  // Calculate total return as sum of pnlPercent (each trade's % return)
+  const totalReturnPercent = trades.reduce((sum, t) => sum + (t.pnlPercent || 0), 0);
+  
+  // Also track dollar PnL for reference
+  const totalPnlDollars = trades.reduce((sum, t) => sum + t.pnl, 0);
   const totalProfit = winningTrades.reduce((sum, t) => sum + t.pnl, 0);
   const totalLoss = Math.abs(losingTrades.reduce((sum, t) => sum + t.pnl, 0));
   
-  const initialBalance = 10000;
-  const totalReturn = (totalPnl / initialBalance) * 100;
+  // Average win/loss as percentages for clearer interpretation
+  const avgWinPercent = winningTrades.length > 0 
+    ? winningTrades.reduce((sum, t) => sum + (t.pnlPercent || 0), 0) / winningTrades.length 
+    : 0;
+  const avgLossPercent = losingTrades.length > 0 
+    ? Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnlPercent || 0), 0)) / losingTrades.length 
+    : 0;
   
-  let peak = initialBalance;
+  // Calculate max drawdown based on cumulative returns
+  let peak = 0;
   let maxDrawdown = 0;
-  let runningBalance = initialBalance;
+  let cumulativeReturn = 0;
   
   for (const trade of trades) {
-    runningBalance += trade.pnl;
-    if (runningBalance > peak) peak = runningBalance;
-    const drawdown = ((peak - runningBalance) / peak) * 100;
+    cumulativeReturn += (trade.pnlPercent || 0);
+    if (cumulativeReturn > peak) peak = cumulativeReturn;
+    const drawdown = peak - cumulativeReturn;
     if (drawdown > maxDrawdown) maxDrawdown = drawdown;
   }
   
+  // Calculate Sharpe Ratio (simplified: avg return / std dev of returns)
+  const returns = trades.map(t => t.pnlPercent || 0);
+  const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length;
+  const stdDev = Math.sqrt(variance);
+  const sharpeRatio = stdDev > 0 ? (avgReturn / stdDev) * Math.sqrt(252) : 0; // Annualized
+  
   return {
-    totalReturn: Number(totalReturn.toFixed(2)),
+    totalReturn: Number(totalReturnPercent.toFixed(2)),
+    totalPnlDollars: Number(totalPnlDollars.toFixed(2)),
     totalTrades: trades.length,
     winningTrades: winningTrades.length,
     losingTrades: losingTrades.length,
     winRate: Number(((winningTrades.length / trades.length) * 100).toFixed(2)),
-    profitFactor: totalLoss > 0 ? Number((totalProfit / totalLoss).toFixed(2)) : 0,
+    profitFactor: totalLoss > 0 ? Number((totalProfit / totalLoss).toFixed(2)) : (totalProfit > 0 ? Infinity : 0),
     maxDrawdown: Number(maxDrawdown.toFixed(2)),
-    avgWin: winningTrades.length > 0 ? Number((totalProfit / winningTrades.length).toFixed(2)) : 0,
-    avgLoss: losingTrades.length > 0 ? Number((totalLoss / losingTrades.length).toFixed(2)) : 0,
-    sharpeRatio: 0,
+    avgWin: Number(avgWinPercent.toFixed(2)),
+    avgLoss: Number(avgLossPercent.toFixed(2)),
+    sharpeRatio: Number(sharpeRatio.toFixed(2)),
     avgHoldingPeriod: Number((trades.reduce((sum, t) => sum + t.holdingBars, 0) / trades.length).toFixed(1)),
     patternBreakdown: getPatternBreakdown(trades)
   };
