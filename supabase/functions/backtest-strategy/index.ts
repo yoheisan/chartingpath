@@ -273,7 +273,7 @@ function validateTradeDiscipline(
 // ============================================
 
 // Cache version to invalidate old metric semantics when changed
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 // Generate cache key from strategy parameters
 function generateCacheKey(strategy: any): string {
@@ -729,9 +729,17 @@ function checkPattern(patternId: string, window: any[]): boolean {
   const lows = window.map(d => d.low);
   const closes = window.map(d => d.close);
   
-  switch (patternId) {
-    case 'head-shoulders': return detectHeadAndShoulders(highs, lows);
-    case 'inverted-head-shoulders': return detectInvertedHeadAndShoulders(highs, lows);
+  // Normalize pattern ID - handle both underscore and hyphen formats
+  const normalizedId = patternId.toLowerCase().replace(/_/g, '-');
+  
+  switch (normalizedId) {
+    case 'head-shoulders': 
+    case 'head-and-shoulders':
+      return detectHeadAndShoulders(highs, lows);
+    case 'inverted-head-shoulders': 
+    case 'inverse-head-shoulders':
+    case 'inverse-head-and-shoulders':
+      return detectInvertedHeadAndShoulders(highs, lows);
     case 'double-top': return detectDoubleTop(highs);
     case 'double-bottom': return detectDoubleBottom(lows);
     case 'triple-top': return detectTripleTop(highs);
@@ -739,7 +747,9 @@ function checkPattern(patternId: string, window: any[]): boolean {
     case 'ascending-triangle': return detectAscendingTriangle(highs, lows);
     case 'descending-triangle': return detectDescendingTriangle(highs, lows);
     case 'symmetrical-triangle': return detectSymmetricalTriangle(highs, lows);
-    case 'cup-handle': return detectCupAndHandle(closes);
+    case 'cup-handle': 
+    case 'cup-and-handle':
+      return detectCupAndHandle(closes);
     case 'bull-flag': return detectBullFlag(highs, lows, closes);
     case 'bear-flag': return detectBearFlag(highs, lows, closes);
     case 'rising-wedge': return detectRisingWedge(highs, lows);
@@ -748,10 +758,101 @@ function checkPattern(patternId: string, window: any[]): boolean {
     case 'bearish-rectangle': return detectBearishRectangle(highs, lows, closes);
     case 'rounding-bottom': return detectRoundingBottom(lows);
     case 'rounding-top': return detectRoundingTop(highs);
+    // Candlestick patterns
+    case 'hammer': return detectHammer(window);
+    case 'shooting-star': return detectShootingStar(window);
+    case 'bullish-engulfing': return detectBullishEngulfing(window);
+    case 'bearish-engulfing': return detectBearishEngulfing(window);
+    case 'morning-star': return detectMorningStar(window);
+    case 'evening-star': return detectEveningStar(window);
+    case 'doji': return detectDoji(window);
     default: 
-      // For unknown patterns, use a simple breakout detection instead of random
+      console.log(`Unknown pattern: ${patternId} (normalized: ${normalizedId})`);
       return detectSimpleBreakout(highs, lows, closes);
   }
+}
+
+// Candlestick pattern detection functions
+function detectHammer(window: any[]): boolean {
+  if (window.length < 3) return false;
+  const bar = window[window.length - 1];
+  const prevBar = window[window.length - 2];
+  const bodySize = Math.abs(bar.close - bar.open);
+  const range = bar.high - bar.low;
+  if (range === 0) return false;
+  const lowerWick = Math.min(bar.open, bar.close) - bar.low;
+  const upperWick = bar.high - Math.max(bar.open, bar.close);
+  // Hammer: small body at top, long lower wick (2x body), tiny upper wick
+  return bodySize / range < 0.35 && lowerWick > bodySize * 2 && upperWick < bodySize * 0.5 && prevBar.close > bar.close;
+}
+
+function detectShootingStar(window: any[]): boolean {
+  if (window.length < 3) return false;
+  const bar = window[window.length - 1];
+  const prevBar = window[window.length - 2];
+  const bodySize = Math.abs(bar.close - bar.open);
+  const range = bar.high - bar.low;
+  if (range === 0) return false;
+  const lowerWick = Math.min(bar.open, bar.close) - bar.low;
+  const upperWick = bar.high - Math.max(bar.open, bar.close);
+  // Shooting star: small body at bottom, long upper wick (2x body), tiny lower wick
+  return bodySize / range < 0.35 && upperWick > bodySize * 2 && lowerWick < bodySize * 0.5 && prevBar.close < bar.close;
+}
+
+function detectBullishEngulfing(window: any[]): boolean {
+  if (window.length < 2) return false;
+  const curr = window[window.length - 1];
+  const prev = window[window.length - 2];
+  // Previous bar bearish, current bar bullish and engulfs previous
+  return prev.close < prev.open && curr.close > curr.open && 
+         curr.open < prev.close && curr.close > prev.open;
+}
+
+function detectBearishEngulfing(window: any[]): boolean {
+  if (window.length < 2) return false;
+  const curr = window[window.length - 1];
+  const prev = window[window.length - 2];
+  // Previous bar bullish, current bar bearish and engulfs previous
+  return prev.close > prev.open && curr.close < curr.open && 
+         curr.open > prev.close && curr.close < prev.open;
+}
+
+function detectMorningStar(window: any[]): boolean {
+  if (window.length < 3) return false;
+  const first = window[window.length - 3];
+  const star = window[window.length - 2];
+  const third = window[window.length - 1];
+  const starBody = Math.abs(star.close - star.open);
+  const starRange = star.high - star.low;
+  // First: bearish, Star: small body with gap down, Third: bullish closing above first's midpoint
+  return first.close < first.open && 
+         starBody < starRange * 0.3 &&
+         third.close > third.open && 
+         third.close > (first.open + first.close) / 2;
+}
+
+function detectEveningStar(window: any[]): boolean {
+  if (window.length < 3) return false;
+  const first = window[window.length - 3];
+  const star = window[window.length - 2];
+  const third = window[window.length - 1];
+  const starBody = Math.abs(star.close - star.open);
+  const starRange = star.high - star.low;
+  // First: bullish, Star: small body with gap up, Third: bearish closing below first's midpoint
+  return first.close > first.open && 
+         starBody < starRange * 0.3 &&
+         third.close < third.open && 
+         third.close < (first.open + first.close) / 2;
+}
+
+function detectDoji(window: any[]): boolean {
+  if (window.length < 1) return false;
+  const bar = window[window.length - 1];
+  const bodySize = Math.abs(bar.close - bar.open);
+  const range = bar.high - bar.low;
+  if (range === 0) return false;
+  // Doji: very small body relative to range
+  return bodySize / range < 0.1;
 }
 
 function detectHeadAndShoulders(highs: number[], lows: number[]): boolean {
