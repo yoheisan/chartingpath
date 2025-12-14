@@ -662,39 +662,220 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     }
   };
 
-  const selectAllLongs = () => {
-    const newPatterns: PatternConfig[] = [];
-    let priority = patterns.length;
-    
-    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+  // Helper to get all pattern IDs of a certain type
+  const getAllLongPatternIds = () => {
+    const ids: string[] = [];
+    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
       category.patterns.forEach((pattern) => {
-        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
-        if (alreadyExists) return;
-        
-        if (pattern.direction === 'bullish') {
-          priority++;
-          newPatterns.push({
-            id: `${pattern.id}_${Date.now()}_${priority}`,
-            patternType: pattern.id,
-            name: pattern.name,
-            category: categoryKey,
-            enabled: true,
-            priority,
-            direction: pattern.direction,
-            parameters: Object.fromEntries(
-              Object.entries(pattern.parameters).map(([key, param]) => [
-                key, 
-                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
-              ])
-            ),
-            riskSettings: {
-              riskPerTrade: 2.0,
-              stopLossMethod: 'pattern',
-              takeProfitMethod: 'pattern',
-              maxConcurrentTrades: 1
-            }
-          });
-        } else if (pattern.direction === 'neutral') {
+        if (pattern.direction === 'bullish' || pattern.direction === 'neutral') {
+          ids.push(pattern.id);
+        }
+      });
+    });
+    return ids;
+  };
+
+  const getAllShortPatternIds = () => {
+    const ids: string[] = [];
+    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
+      category.patterns.forEach((pattern) => {
+        if (pattern.direction === 'bearish' || pattern.direction === 'neutral') {
+          ids.push(pattern.id);
+        }
+      });
+    });
+    return ids;
+  };
+
+  const getAllBidirectionalPatternIds = () => {
+    const ids: string[] = [];
+    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
+      category.patterns.forEach((pattern) => {
+        if (pattern.direction === 'neutral') {
+          ids.push(pattern.id);
+        }
+      });
+    });
+    return ids;
+  };
+
+  // Check if all patterns of a type are selected
+  const allLongsSelected = () => {
+    const longIds = getAllLongPatternIds();
+    return longIds.every(id => patterns.some(p => p.patternType === id || p.id.startsWith(id)));
+  };
+
+  const allShortsSelected = () => {
+    const shortIds = getAllShortPatternIds();
+    return shortIds.every(id => patterns.some(p => p.patternType === id || p.id.startsWith(id)));
+  };
+
+  const allBidirectionalSelected = () => {
+    const biIds = getAllBidirectionalPatternIds();
+    return biIds.every(id => patterns.some(p => p.patternType === id || p.id.startsWith(id)));
+  };
+
+  const toggleAllLongs = () => {
+    if (allLongsSelected()) {
+      // Deselect all longs (bullish + neutral with long direction)
+      const longIds = getAllLongPatternIds();
+      onChange(patterns.filter(p => !longIds.includes(p.patternType)));
+    } else {
+      // Select all longs
+      const newPatterns: PatternConfig[] = [];
+      let priority = patterns.length;
+      
+      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+        category.patterns.forEach((pattern) => {
+          const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+          if (alreadyExists) return;
+          
+          if (pattern.direction === 'bullish') {
+            priority++;
+            newPatterns.push({
+              id: `${pattern.id}_${Date.now()}_${priority}`,
+              patternType: pattern.id,
+              name: pattern.name,
+              category: categoryKey,
+              enabled: true,
+              priority,
+              direction: pattern.direction,
+              parameters: Object.fromEntries(
+                Object.entries(pattern.parameters).map(([key, param]) => [
+                  key, 
+                  (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+                ])
+              ),
+              riskSettings: {
+                riskPerTrade: 2.0,
+                stopLossMethod: 'pattern',
+                takeProfitMethod: 'pattern',
+                maxConcurrentTrades: 1
+              }
+            });
+          } else if (pattern.direction === 'neutral') {
+            priority++;
+            newPatterns.push({
+              id: `${pattern.id}_${Date.now()}_${priority}`,
+              patternType: pattern.id,
+              name: pattern.name,
+              category: categoryKey,
+              enabled: true,
+              priority,
+              direction: pattern.direction,
+              intendedDirection: 'long',
+              parameters: Object.fromEntries(
+                Object.entries(pattern.parameters).map(([key, param]) => [
+                  key, 
+                  (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+                ])
+              ),
+              riskSettings: {
+                riskPerTrade: 2.0,
+                stopLossMethod: 'pattern',
+                takeProfitMethod: 'pattern',
+                maxConcurrentTrades: 1
+              }
+            });
+          }
+        });
+      });
+      
+      if (newPatterns.length > 0) {
+        onChange([...patterns, ...newPatterns]);
+      }
+    }
+  };
+
+  const toggleAllShorts = () => {
+    if (allShortsSelected()) {
+      // Deselect all shorts (bearish + neutral with short direction)
+      const shortIds = getAllShortPatternIds();
+      onChange(patterns.filter(p => !shortIds.includes(p.patternType)));
+    } else {
+      // Select all shorts
+      const newPatterns: PatternConfig[] = [];
+      let priority = patterns.length;
+      
+      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+        category.patterns.forEach((pattern) => {
+          const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+          if (alreadyExists) return;
+          
+          if (pattern.direction === 'bearish') {
+            priority++;
+            newPatterns.push({
+              id: `${pattern.id}_${Date.now()}_${priority}`,
+              patternType: pattern.id,
+              name: pattern.name,
+              category: categoryKey,
+              enabled: true,
+              priority,
+              direction: pattern.direction,
+              parameters: Object.fromEntries(
+                Object.entries(pattern.parameters).map(([key, param]) => [
+                  key, 
+                  (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+                ])
+              ),
+              riskSettings: {
+                riskPerTrade: 2.0,
+                stopLossMethod: 'pattern',
+                takeProfitMethod: 'pattern',
+                maxConcurrentTrades: 1
+              }
+            });
+          } else if (pattern.direction === 'neutral') {
+            priority++;
+            newPatterns.push({
+              id: `${pattern.id}_${Date.now()}_${priority}`,
+              patternType: pattern.id,
+              name: pattern.name,
+              category: categoryKey,
+              enabled: true,
+              priority,
+              direction: pattern.direction,
+              intendedDirection: 'short',
+              parameters: Object.fromEntries(
+                Object.entries(pattern.parameters).map(([key, param]) => [
+                  key, 
+                  (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+                ])
+              ),
+              riskSettings: {
+                riskPerTrade: 2.0,
+                stopLossMethod: 'pattern',
+                takeProfitMethod: 'pattern',
+                maxConcurrentTrades: 1
+              }
+            });
+          }
+        });
+      });
+      
+      if (newPatterns.length > 0) {
+        onChange([...patterns, ...newPatterns]);
+      }
+    }
+  };
+
+  const toggleAllBidirectional = () => {
+    if (allBidirectionalSelected()) {
+      // Deselect all bidirectional (neutral only)
+      const biIds = getAllBidirectionalPatternIds();
+      onChange(patterns.filter(p => !biIds.includes(p.patternType)));
+    } else {
+      // Select all bidirectional
+      const newPatterns: PatternConfig[] = [];
+      let priority = patterns.length;
+      
+      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+        category.patterns.forEach((pattern) => {
+          if (pattern.direction !== 'neutral') return;
+          
+          const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+          if (alreadyExists) return;
+          
           priority++;
           newPatterns.push({
             id: `${pattern.id}_${Date.now()}_${priority}`,
@@ -718,119 +899,12 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
               maxConcurrentTrades: 1
             }
           });
-        }
-      });
-    });
-    
-    if (newPatterns.length > 0) {
-      onChange([...patterns, ...newPatterns]);
-    }
-  };
-
-  const selectAllShorts = () => {
-    const newPatterns: PatternConfig[] = [];
-    let priority = patterns.length;
-    
-    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
-      category.patterns.forEach((pattern) => {
-        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
-        if (alreadyExists) return;
-        
-        if (pattern.direction === 'bearish') {
-          priority++;
-          newPatterns.push({
-            id: `${pattern.id}_${Date.now()}_${priority}`,
-            patternType: pattern.id,
-            name: pattern.name,
-            category: categoryKey,
-            enabled: true,
-            priority,
-            direction: pattern.direction,
-            parameters: Object.fromEntries(
-              Object.entries(pattern.parameters).map(([key, param]) => [
-                key, 
-                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
-              ])
-            ),
-            riskSettings: {
-              riskPerTrade: 2.0,
-              stopLossMethod: 'pattern',
-              takeProfitMethod: 'pattern',
-              maxConcurrentTrades: 1
-            }
-          });
-        } else if (pattern.direction === 'neutral') {
-          priority++;
-          newPatterns.push({
-            id: `${pattern.id}_${Date.now()}_${priority}`,
-            patternType: pattern.id,
-            name: pattern.name,
-            category: categoryKey,
-            enabled: true,
-            priority,
-            direction: pattern.direction,
-            intendedDirection: 'short',
-            parameters: Object.fromEntries(
-              Object.entries(pattern.parameters).map(([key, param]) => [
-                key, 
-                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
-              ])
-            ),
-            riskSettings: {
-              riskPerTrade: 2.0,
-              stopLossMethod: 'pattern',
-              takeProfitMethod: 'pattern',
-              maxConcurrentTrades: 1
-            }
-          });
-        }
-      });
-    });
-    
-    if (newPatterns.length > 0) {
-      onChange([...patterns, ...newPatterns]);
-    }
-  };
-
-  const selectAllBidirectional = () => {
-    const newPatterns: PatternConfig[] = [];
-    let priority = patterns.length;
-    
-    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
-      category.patterns.forEach((pattern) => {
-        if (pattern.direction !== 'neutral') return;
-        
-        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
-        if (alreadyExists) return;
-        
-        priority++;
-        newPatterns.push({
-          id: `${pattern.id}_${Date.now()}_${priority}`,
-          patternType: pattern.id,
-          name: pattern.name,
-          category: categoryKey,
-          enabled: true,
-          priority,
-          direction: pattern.direction,
-          intendedDirection: 'long', // Default to long, user can flip
-          parameters: Object.fromEntries(
-            Object.entries(pattern.parameters).map(([key, param]) => [
-              key, 
-              (param as any).type === 'boolean' ? (param as any).value : (param as any).value
-            ])
-          ),
-          riskSettings: {
-            riskPerTrade: 2.0,
-            stopLossMethod: 'pattern',
-            takeProfitMethod: 'pattern',
-            maxConcurrentTrades: 1
-          }
         });
       });
-    });
-    
-    if (newPatterns.length > 0) {
-      onChange([...patterns, ...newPatterns]);
+      
+      if (newPatterns.length > 0) {
+        onChange([...patterns, ...newPatterns]);
+      }
     }
   };
 
@@ -1018,30 +1092,39 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       <div className="flex gap-2 flex-wrap">
         <Button
           size="sm"
-          variant="outline"
-          className="border-green-500/50 text-green-600 hover:bg-green-500/10"
-          onClick={selectAllLongs}
+          variant={allLongsSelected() ? "default" : "outline"}
+          className={allLongsSelected() 
+            ? "bg-green-600 text-white hover:bg-green-700" 
+            : "border-green-500/50 text-green-600 hover:bg-green-500/10"
+          }
+          onClick={toggleAllLongs}
         >
           <TrendingUp className="w-4 h-4 mr-1" />
-          Select All Longs
+          {allLongsSelected() ? "Deselect All Longs" : "Select All Longs"}
         </Button>
         <Button
           size="sm"
-          variant="outline"
-          className="border-red-500/50 text-red-600 hover:bg-red-500/10"
-          onClick={selectAllShorts}
+          variant={allShortsSelected() ? "default" : "outline"}
+          className={allShortsSelected() 
+            ? "bg-red-600 text-white hover:bg-red-700" 
+            : "border-red-500/50 text-red-600 hover:bg-red-500/10"
+          }
+          onClick={toggleAllShorts}
         >
           <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
-          Select All Shorts
+          {allShortsSelected() ? "Deselect All Shorts" : "Select All Shorts"}
         </Button>
         <Button
           size="sm"
-          variant="outline"
-          className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
-          onClick={selectAllBidirectional}
+          variant={allBidirectionalSelected() ? "default" : "outline"}
+          className={allBidirectionalSelected() 
+            ? "bg-yellow-600 text-white hover:bg-yellow-700" 
+            : "border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+          }
+          onClick={toggleAllBidirectional}
         >
           <Activity className="w-4 h-4 mr-1" />
-          Select Bidirectional
+          {allBidirectionalSelected() ? "Deselect Bidirectional" : "Select Bidirectional"}
         </Button>
       </div>
 
