@@ -225,10 +225,22 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       setBacktestProgress(20);
       setBacktestPhase('Fetching historical data...');
 
-      // Call the real backtest edge function
-      const { data, error } = await supabase.functions.invoke('backtest-strategy', {
+      // Call the real backtest edge function with a safety timeout
+      const backtestPromise = supabase.functions.invoke('backtest-strategy', {
         body: { strategy }
       });
+
+      const timeoutMs = 30000; // 30s safety timeout so UI never hangs indefinitely
+
+      const { data, error } = await Promise.race([
+        backtestPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Backtest timed out. Please try again or shorten your date range.')),
+            timeoutMs
+          )
+        ),
+      ]) as { data: any; error: any };
 
       setBacktestProgress(70);
       setBacktestPhase('Analyzing patterns & signals...');
