@@ -225,68 +225,82 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       setBacktestProgress(20);
       setBacktestPhase('Fetching historical data...');
 
-      // Call the real backtest edge function with a safety timeout
-      const backtestPromise = supabase.functions.invoke('backtest-strategy', {
-        body: { strategy }
+      // Call the real backtest edge function with appropriate timeout
+      // Professional backtests need 60-90s for intraday data with multiple patterns
+      const timeoutMs = 90000; // 90s for comprehensive backtests
+
+      console.log('Invoking backtest-strategy edge function', { 
+        timeoutMs,
+        symbol: strategy.market?.instrument,
+        timeframe: strategy.market?.timeframes?.[0],
+        patterns: strategy.patterns?.filter(p => p.enabled).length
       });
 
-      const timeoutMs = 10000; // 10s safety timeout so UI never hangs indefinitely
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error('Backtest timed out after', timeoutMs, 'ms');
+      }, timeoutMs);
 
-      console.log('Invoking backtest-strategy edge function with timeout', { timeoutMs });
+      try {
+        const { data, error } = await supabase.functions.invoke('backtest-strategy', {
+          body: { strategy }
+        });
 
-      const { data, error } = await Promise.race([
-        backtestPromise,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => {
-            console.error('Backtest timed out after', timeoutMs, 'ms');
-            reject(new Error('Backtest timed out. Please try again or shorten your date range.'));
-          }, timeoutMs)
-        ),
-      ]) as { data: any; error: any };
+        clearTimeout(timeoutId);
 
-      console.log('Backtest edge function resolved');
-      setBacktestProgress(70);
-      setBacktestPhase('Analyzing patterns & signals...');
+        console.log('Backtest edge function resolved');
+        setBacktestProgress(70);
+        setBacktestPhase('Analyzing patterns & signals...');
 
-      if (error) {
-        console.error('Backtest error:', error);
-        throw new Error(error.message || 'Failed to start backtest');
+        if (error) {
+          console.error('Backtest error:', error);
+          throw new Error(error.message || 'Failed to start backtest');
+        }
+
+        if (!data.success) {
+          const errorMsg = data.error || 'Backtest failed';
+          console.error('Backtest failed:', errorMsg, data);
+          throw new Error(errorMsg);
+        }
+
+        setBacktestProgress(90);
+        setBacktestPhase('Calculating performance metrics...');
+
+        console.log('Backtest completed successfully:', {
+          totalTrades: data.results.totalTrades,
+          winRate: data.results.winRate,
+          totalReturn: data.results.totalReturn,
+          dataPoints: data.dataPoints
+        });
+
+        const results = {
+          ...data.results,
+          trades: data.trades,
+          disciplineStats: data.disciplineStats,
+          rawSignals: data.rawSignals,
+          engineNote: `Real backtest on ${data.dataPoints} historical data points`
+        };
+        
+        setBacktestProgress(100);
+        setBacktestPhase('Complete!');
+        
+        setBacktestResults(results);
+        setIsBacktesting(false);
+        setBacktestProgress(0);
+        
+        toast.success(`Backtest complete! ${data.results.totalTrades} trades executed on real data.`);
+        
+        return results;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        // Check if it was an abort (timeout)
+        if (controller.signal.aborted) {
+          throw new Error('Backtest timed out. Try a shorter date range or daily timeframe.');
+        }
+        throw fetchError;
       }
-
-      if (!data.success) {
-        const errorMsg = data.error || 'Backtest failed';
-        console.error('Backtest failed:', errorMsg, data);
-        throw new Error(errorMsg);
-      }
-
-      setBacktestProgress(90);
-      setBacktestPhase('Calculating performance metrics...');
-
-      console.log('Backtest completed successfully:', {
-        totalTrades: data.results.totalTrades,
-        winRate: data.results.winRate,
-        totalReturn: data.results.totalReturn,
-        dataPoints: data.dataPoints
-      });
-
-      const results = {
-        ...data.results,
-        trades: data.trades,
-        disciplineStats: data.disciplineStats,
-        rawSignals: data.rawSignals,
-        engineNote: `Real backtest on ${data.dataPoints} historical data points`
-      };
-      
-      setBacktestProgress(100);
-      setBacktestPhase('Complete!');
-      
-      setBacktestResults(results);
-      setIsBacktesting(false);
-      setBacktestProgress(0);
-      
-      toast.success(`Backtest complete! ${data.results.totalTrades} trades executed on real data.`);
-      
-      return results;
     } catch (error) {
       console.error('Backtest error:', error);
       setIsBacktesting(false);
@@ -303,8 +317,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       
       toast.error(errorMessage, {
         duration: 6000,
-        description: errorMessage.includes('Yahoo Finance') ? 
-          'Try using daily (1d) timeframe for longer date ranges, or reduce your date range for hourly data.' : 
+        description: errorMessage.includes('timeout') || errorMessage.includes('Yahoo Finance') ? 
+          'Try using daily (1d) timeframe for longer date ranges, or reduce your date range for intraday data.' : 
           undefined
       });
       throw error;
