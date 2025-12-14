@@ -276,6 +276,48 @@ export type Database = {
         }
         Relationships: []
       }
+      backtest_result_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          data_points: number | null
+          expires_at: string
+          hit_count: number | null
+          id: string
+          instrument: string
+          parameters_hash: string
+          results: Json
+          timeframe: string
+          trades: Json | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          data_points?: number | null
+          expires_at?: string
+          hit_count?: number | null
+          id?: string
+          instrument: string
+          parameters_hash: string
+          results: Json
+          timeframe: string
+          trades?: Json | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          data_points?: number | null
+          expires_at?: string
+          hit_count?: number | null
+          id?: string
+          instrument?: string
+          parameters_hash?: string
+          results?: Json
+          timeframe?: string
+          trades?: Json | null
+        }
+        Relationships: []
+      }
       backtest_runs: {
         Row: {
           avg_holding_time_hours: number | null
@@ -2629,6 +2671,7 @@ export type Database = {
         }
         Returns: number
       }
+      check_backtest_limit: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
         Args: { p_ip_address: string; p_timezone: string; p_user_id: string }
         Returns: boolean
@@ -2637,6 +2680,7 @@ export type Database = {
         Args: { p_subscription_id: string; p_user_id: string }
         Returns: Json
       }
+      cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
       get_article_by_slug: {
         Args: { p_slug: string }
