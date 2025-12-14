@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { PatternDetectionDisplay } from './PatternDetectionDisplay';
-import { DisciplineValidationDisplay } from './DisciplineValidationDisplay';
+import { SignalAnalysisDashboard } from './SignalAnalysisDashboard';
 import { DEFAULT_DISCIPLINE_FILTERS, DisciplineFilters } from './TradeDisciplineFilters';
 import { toast } from 'sonner';
 import { 
@@ -21,7 +21,7 @@ import {
   PriceBar,
   DisciplineStats
 } from '@/services/tradeDisciplineService';
-import { 
+import {
   Play, 
   BarChart3,
   TrendingUp,
@@ -601,11 +601,13 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
       {/* Results Display */}
       {results && (
         <div className="space-y-6">
-          {/* Discipline Filter Results - Show first to highlight protection */}
+          {/* Signal Analysis Dashboard - Comprehensive view */}
           {disciplineStats.totalSignals > 0 && (
-            <DisciplineValidationDisplay 
+            <SignalAnalysisDashboard 
               stats={disciplineStats} 
               filters={disciplineFilters}
+              patternBreakdown={results.patternBreakdown}
+              trades={results.trades}
             />
           )}
 
