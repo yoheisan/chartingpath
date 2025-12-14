@@ -625,6 +625,10 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     const pattern = category.patterns.find(p => p.id === patternId);
     if (!pattern) return;
 
+    // Check if pattern is already added
+    const alreadyExists = patterns.some(p => p.patternType === patternId || p.id.startsWith(patternId));
+    if (alreadyExists) return;
+
     const newPattern: PatternConfig = {
       id: `${patternId}_${Date.now()}`,
       patternType: patternId,
@@ -648,7 +652,144 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       }
     };
 
-    onChange([...patterns, newPattern]);
+    return newPattern;
+  };
+
+  const addSinglePattern = (categoryKey: string, patternId: string, intendedDirection?: 'long' | 'short') => {
+    const newPattern = addPattern(categoryKey, patternId, intendedDirection);
+    if (newPattern) {
+      onChange([...patterns, newPattern]);
+    }
+  };
+
+  const selectAllLongs = () => {
+    const newPatterns: PatternConfig[] = [];
+    let priority = patterns.length;
+    
+    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      category.patterns.forEach((pattern) => {
+        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+        if (alreadyExists) return;
+        
+        if (pattern.direction === 'bullish') {
+          priority++;
+          newPatterns.push({
+            id: `${pattern.id}_${Date.now()}_${priority}`,
+            patternType: pattern.id,
+            name: pattern.name,
+            category: categoryKey,
+            enabled: true,
+            priority,
+            direction: pattern.direction,
+            parameters: Object.fromEntries(
+              Object.entries(pattern.parameters).map(([key, param]) => [
+                key, 
+                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+              ])
+            ),
+            riskSettings: {
+              riskPerTrade: 2.0,
+              stopLossMethod: 'pattern',
+              takeProfitMethod: 'pattern',
+              maxConcurrentTrades: 1
+            }
+          });
+        } else if (pattern.direction === 'neutral') {
+          priority++;
+          newPatterns.push({
+            id: `${pattern.id}_${Date.now()}_${priority}`,
+            patternType: pattern.id,
+            name: pattern.name,
+            category: categoryKey,
+            enabled: true,
+            priority,
+            direction: pattern.direction,
+            intendedDirection: 'long',
+            parameters: Object.fromEntries(
+              Object.entries(pattern.parameters).map(([key, param]) => [
+                key, 
+                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+              ])
+            ),
+            riskSettings: {
+              riskPerTrade: 2.0,
+              stopLossMethod: 'pattern',
+              takeProfitMethod: 'pattern',
+              maxConcurrentTrades: 1
+            }
+          });
+        }
+      });
+    });
+    
+    if (newPatterns.length > 0) {
+      onChange([...patterns, ...newPatterns]);
+    }
+  };
+
+  const selectAllShorts = () => {
+    const newPatterns: PatternConfig[] = [];
+    let priority = patterns.length;
+    
+    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      category.patterns.forEach((pattern) => {
+        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+        if (alreadyExists) return;
+        
+        if (pattern.direction === 'bearish') {
+          priority++;
+          newPatterns.push({
+            id: `${pattern.id}_${Date.now()}_${priority}`,
+            patternType: pattern.id,
+            name: pattern.name,
+            category: categoryKey,
+            enabled: true,
+            priority,
+            direction: pattern.direction,
+            parameters: Object.fromEntries(
+              Object.entries(pattern.parameters).map(([key, param]) => [
+                key, 
+                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+              ])
+            ),
+            riskSettings: {
+              riskPerTrade: 2.0,
+              stopLossMethod: 'pattern',
+              takeProfitMethod: 'pattern',
+              maxConcurrentTrades: 1
+            }
+          });
+        } else if (pattern.direction === 'neutral') {
+          priority++;
+          newPatterns.push({
+            id: `${pattern.id}_${Date.now()}_${priority}`,
+            patternType: pattern.id,
+            name: pattern.name,
+            category: categoryKey,
+            enabled: true,
+            priority,
+            direction: pattern.direction,
+            intendedDirection: 'short',
+            parameters: Object.fromEntries(
+              Object.entries(pattern.parameters).map(([key, param]) => [
+                key, 
+                (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+              ])
+            ),
+            riskSettings: {
+              riskPerTrade: 2.0,
+              stopLossMethod: 'pattern',
+              takeProfitMethod: 'pattern',
+              maxConcurrentTrades: 1
+            }
+          });
+        }
+      });
+    });
+    
+    if (newPatterns.length > 0) {
+      onChange([...patterns, ...newPatterns]);
+    }
   };
 
   const handlePatternClick = (categoryKey: string, patternId: string) => {
@@ -664,13 +805,13 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
         patternName: pattern.name
       });
     } else {
-      addPattern(categoryKey, patternId);
+      addSinglePattern(categoryKey, patternId);
     }
   };
 
   const confirmDirectionAndAdd = (direction: 'long' | 'short') => {
     if (directionDialog) {
-      addPattern(directionDialog.categoryKey, directionDialog.patternId, direction);
+      addSinglePattern(directionDialog.categoryKey, directionDialog.patternId, direction);
       setDirectionDialog(null);
     }
   };
@@ -796,6 +937,28 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Quick Select Buttons */}
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-green-500/50 text-green-600 hover:bg-green-500/10"
+          onClick={selectAllLongs}
+        >
+          <TrendingUp className="w-4 h-4 mr-1" />
+          Select All Longs
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-red-500/50 text-red-600 hover:bg-red-500/10"
+          onClick={selectAllShorts}
+        >
+          <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
+          Select All Shorts
+        </Button>
+      </div>
+
       {/* Compact Pattern Grid - All patterns easily discoverable */}
       <div className="space-y-4">
         {Object.entries(PATTERN_CATEGORIES).map(([categoryKey, category]) => (
