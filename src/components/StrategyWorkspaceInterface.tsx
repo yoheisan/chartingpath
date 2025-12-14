@@ -228,7 +228,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       // Start a gentle fake progress while the backtest runs so the UI doesn't feel stuck
       let progressInterval: ReturnType<typeof setInterval> | undefined;
       progressInterval = setInterval(() => {
-        setBacktestProgress(prev => {
+        setBacktestProgress((prev) => {
           // Drift up to 65% max while waiting for real updates
           if (prev >= 65) return prev;
           return prev + 3;
@@ -239,25 +239,40 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       // Professional backtests need 60-90s for intraday data with multiple patterns
       const timeoutMs = 90000; // 90s for comprehensive backtests
 
-      console.log('Invoking backtest-strategy edge function', { 
+      console.log('Invoking backtest-strategy edge function', {
         timeoutMs,
         symbol: strategy.market?.instrument,
         timeframe: strategy.market?.timeframes?.[0],
-        patterns: strategy.patterns?.filter(p => p.enabled).length
+        patterns: strategy.patterns?.filter((p) => p.enabled).length,
       });
 
       // Implement a real timeout using Promise.race so the UI never hangs
       let timeoutId: ReturnType<typeof setTimeout>;
       // Get current user for usage tracking
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const backtestPromise = supabase.functions.invoke('backtest-strategy', {
-        body: { strategy, userId: user?.id }
-      });
+      const backtestPromise = supabase.functions
+        .invoke('backtest-strategy', {
+          body: { strategy, userId: user?.id },
+        })
+        .then((response) => {
+          console.log('backtest-strategy invoke resolved', response);
+          return response;
+        })
+        .catch((invokeError) => {
+          console.error('backtest-strategy invoke error', invokeError);
+          throw invokeError;
+        });
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           console.error('Backtest timed out after', timeoutMs, 'ms');
+          // Hard safety so UI never remains stuck at 65%
+          setIsBacktesting(false);
+          setBacktestProgress(0);
+          setBacktestPhase('Backtest timed out. Try a shorter range or daily timeframe.');
           reject(new Error('Backtest timed out. Try a shorter date range or daily timeframe.'));
         }, timeoutMs);
       });
