@@ -55,13 +55,17 @@ interface EnhancedBacktestEngineProps {
   results: any;
   isRunning: boolean;
   onBacktest: (strategy: any) => void;
+  progress?: number;
+  progressPhase?: string;
 }
 
 export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   strategy,
   results,
   isRunning,
-  onBacktest
+  onBacktest,
+  progress = 0,
+  progressPhase = ''
 }) => {
   // Get discipline filters from strategy or use defaults
   const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
@@ -525,11 +529,20 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
           </div>
           
           {isRunning && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span>Running backtest...</span>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">{progressPhase || 'Running backtest...'}</span>
+                <span className="text-primary font-bold">{progress}%</span>
               </div>
-              <Progress value={undefined} className="h-2" />
+              <Progress value={progress} className="h-3" />
+              <div className="text-xs text-muted-foreground text-center">
+                {progress < 20 && 'Connecting to data provider...'}
+                {progress >= 20 && progress < 50 && 'Downloading historical price data...'}
+                {progress >= 50 && progress < 70 && 'Detecting patterns in price data...'}
+                {progress >= 70 && progress < 90 && 'Simulating trades with discipline filters...'}
+                {progress >= 90 && progress < 100 && 'Calculating performance metrics...'}
+                {progress >= 100 && 'Complete!'}
+              </div>
             </div>
           )}
         </CardContent>

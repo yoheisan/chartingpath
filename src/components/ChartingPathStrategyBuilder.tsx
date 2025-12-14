@@ -77,6 +77,9 @@ interface ChartingPathStrategyBuilderProps {
   initialStrategy?: ChartingPathStrategy | null;
   onSave?: (strategy: ChartingPathStrategy) => void;
   onBacktest?: (strategy: ChartingPathStrategy) => Promise<any>;
+  isBacktesting?: boolean;
+  backtestProgress?: number;
+  backtestPhase?: string;
 }
 
 export const STRATEGY_STEPS = [
@@ -105,7 +108,10 @@ export interface ChartingPathStrategyBuilderRef {
 export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilderRef, ChartingPathStrategyBuilderProps>(({
   initialStrategy,
   onSave,
-  onBacktest
+  onBacktest,
+  isBacktesting: isBacktestingProp = false,
+  backtestProgress = 0,
+  backtestPhase = ''
 }, ref) => {
   const [strategy, setStrategy] = useState<ChartingPathStrategy>(
     initialStrategy || {
@@ -137,7 +143,8 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   );
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [isBacktesting, setIsBacktesting] = useState(false);
+  // Use prop if provided, otherwise manage locally
+  const isBacktesting = isBacktestingProp;
   const [backtestResults, setBacktestResults] = useState(null);
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
@@ -210,7 +217,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   };
 
   const handleBacktest = async (strategyOverride?: ChartingPathStrategy) => {
-    setIsBacktesting(true);
     try {
       const strategyToTest = strategyOverride || strategy;
       const results = await onBacktest?.(strategyToTest);
@@ -219,8 +225,6 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     } catch (error) {
       console.error('Backtest failed:', error);
       toast.error('Backtest failed. Please check your pattern configuration.');
-    } finally {
-      setIsBacktesting(false);
     }
   };
 
@@ -636,6 +640,8 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
                     results={backtestResults}
                     isRunning={isBacktesting}
                     onBacktest={handleBacktest}
+                    progress={backtestProgress}
+                    progressPhase={backtestPhase}
                   />
                   {backtestResults && (
                     <Card className="border-green-500/30 bg-green-500/10">
