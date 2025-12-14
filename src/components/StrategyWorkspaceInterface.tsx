@@ -194,6 +194,21 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [backtestProgress, setBacktestProgress] = useState(0);
   const [backtestPhase, setBacktestPhase] = useState('');
 
+  // Absolute safety guard: never let the UI stay in a "running" state forever
+  useEffect(() => {
+    if (!isBacktesting) return;
+
+    const safetyTimeout = setTimeout(() => {
+      console.error('Client-side backtest safety timeout hit – resetting UI state.');
+      setIsBacktesting(false);
+      setBacktestProgress(0);
+      setBacktestPhase('Backtest reset after unexpected delay. Try a shorter range or daily timeframe.');
+      toast.error('Backtest took too long and was reset. Please try again with a shorter range or daily timeframe.');
+    }, 120000); // 2 minutes
+
+    return () => clearTimeout(safetyTimeout);
+  }, [isBacktesting]);
+
   const handleChartingPathBacktest = async (strategy: ChartingPathStrategy): Promise<any> => {
     setIsBacktesting(true);
     setBacktestProgress(0);
