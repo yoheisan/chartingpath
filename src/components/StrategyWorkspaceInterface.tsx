@@ -263,21 +263,42 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
       // Implement a real timeout using Promise.race so the UI never hangs
       let timeoutId: ReturnType<typeof setTimeout>;
-      // Get current user for usage tracking
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      const backtestPromise = supabase.functions
-        .invoke('backtest-strategy', {
-          body: { strategy, userId: user?.id },
-        })
-        .then((response) => {
-          console.log('backtest-strategy invoke resolved', response);
-          return response;
+      // Use the already-loaded profile user for usage tracking
+      const userId = user?.id;
+
+      // Call Supabase Edge Function via direct HTTP to avoid client misconfiguration issues
+      const backtestPromise = fetch(
+        'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/backtest-strategy',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey:
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8',
+          },
+          body: JSON.stringify({ strategy, userId }),
+        },
+      )
+        .then(async (response) => {
+          console.log('backtest-strategy HTTP response status', response.status);
+          const text = await response.text();
+          try {
+            const json = text ? JSON.parse(text) : {};
+            console.log('backtest-strategy parsed JSON response', json);
+            return { data: json, error: null };
+          } catch (parseError) {
+            console.error('Failed to parse backtest-strategy response JSON', parseError, text);
+            return {
+              data: null,
+              error: new Error(
+                `Invalid JSON from backtest-strategy (status ${response.status})`,
+              ),
+            };
+          }
         })
         .catch((invokeError) => {
-          console.error('backtest-strategy invoke error', invokeError);
+          console.error('backtest-strategy HTTP invoke error', invokeError);
           throw invokeError;
         });
 
@@ -293,10 +314,10 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       });
 
       try {
-        const { data, error } = await Promise.race([
+        const { data, error } = (await Promise.race([
           backtestPromise,
           timeoutPromise,
-        ]) as { data: any; error: any };
+        ])) as { data: any; error: any };
 
         clearTimeout(timeoutId);
         if (progressInterval) clearInterval(progressInterval);
@@ -311,15 +332,17 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         }
 
         // Handle rate limit exceeded
-        if (data.limitExceeded) {
-          toast.error(`Daily limit reached (${data.usage?.max_daily_runs}/day). Upgrade for more backtests.`);
+        if (data?.limitExceeded) {
+          toast.error(
+            `Daily limit reached (${data.usage?.max_daily_runs}/day). Upgrade for more backtests.`,
+          );
           setIsBacktesting(false);
           setBacktestProgress(0);
           return null;
         }
 
-        if (!data.success) {
-          const errorMsg = data.error || 'Backtest failed';
+        if (!data?.success) {
+          const errorMsg = data?.error || 'Backtest failed';
           console.error('Backtest failed:', errorMsg, data);
           throw new Error(errorMsg);
         }
@@ -336,7 +359,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           totalTrades: data.results.totalTrades,
           winRate: data.results.winRate,
           totalReturn: data.results.totalReturn,
-          dataPoints: data.dataPoints
+          dataPoints: data.dataPoints,
         });
 
         const results = {
@@ -344,18 +367,20 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           trades: data.trades,
           disciplineStats: data.disciplineStats,
           rawSignals: data.rawSignals,
-          engineNote: `Real backtest on ${data.dataPoints} historical data points`
+          engineNote: `Real backtest on ${data.dataPoints} historical data points`,
         };
-        
+
         setBacktestProgress(100);
         setBacktestPhase('Complete!');
-        
+
         setBacktestResults(results);
         setIsBacktesting(false);
         setBacktestProgress(0);
-        
-        toast.success(`Backtest complete! ${data.results.totalTrades} trades executed on real data.`);
-        
+
+        toast.success(
+          `Backtest complete! ${data.results.totalTrades} trades executed on real data.`,
+        );
+
         return results;
       } catch (fetchError) {
         clearTimeout(timeoutId);
