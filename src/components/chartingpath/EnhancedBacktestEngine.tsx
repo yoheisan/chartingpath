@@ -739,56 +739,68 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Risk Metrics</CardTitle>
+                <CardTitle className="text-lg">Trade Statistics</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span>Sharpe Ratio</span>
-                  <span className="font-medium">1.24</span>
+                  <span>Total Trades</span>
+                  <span className="font-medium">{results.totalTrades ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Sortino Ratio</span>
-                  <span className="font-medium">1.78</span>
+                  <span>Winning Trades</span>
+                  <span className="font-medium text-green-500">
+                    {results.winningTrades ?? 0} ({results.winRate?.toFixed(1) ?? 0}%)
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Calmar Ratio</span>
-                  <span className="font-medium">3.44</span>
+                  <span>Losing Trades</span>
+                  <span className="font-medium text-red-500">
+                    {results.losingTrades ?? 0} ({(100 - (results.winRate ?? 0)).toFixed(1)}%)
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Max Consecutive Losses</span>
-                  <span className="font-medium text-red-500">4</span>
+                  <span>Average Win</span>
+                  <span className="font-medium text-green-500">
+                    {results.avgWin != null ? `${results.avgWin >= 0 ? '+' : ''}${results.avgWin.toFixed(2)}%` : 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Recovery Factor</span>
-                  <span className="font-medium">3.44</span>
+                  <span>Average Loss</span>
+                  <span className="font-medium text-red-500">
+                    {results.avgLoss != null ? `${results.avgLoss.toFixed(2)}%` : 'N/A'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Trade Statistics</CardTitle>
+                <CardTitle className="text-lg">Risk Metrics</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span>Total Trades</span>
-                  <span className="font-medium">155</span>
+                  <span>Max Drawdown</span>
+                  <span className="font-medium text-red-500">
+                    {results.maxDrawdown != null ? `${results.maxDrawdown.toFixed(2)}%` : 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Winning Trades</span>
-                  <span className="font-medium text-green-500">99 (64.2%)</span>
+                  <span>Sharpe Ratio</span>
+                  <span className="font-medium">{results.sharpeRatio?.toFixed(2) ?? 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Losing Trades</span>
-                  <span className="font-medium text-red-500">56 (35.8%)</span>
+                  <span>Sortino Ratio</span>
+                  <span className="font-medium">{results.sortinoRatio?.toFixed(2) ?? 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Average Win</span>
-                  <span className="font-medium text-green-500">$124.50</span>
+                  <span>Profit Factor</span>
+                  <span className="font-medium">{results.profitFactor?.toFixed(2) ?? 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Average Loss</span>
-                  <span className="font-medium text-red-500">-$78.20</span>
+                  <span>Expectancy</span>
+                  <span className={`font-medium ${(results.expectancy ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {results.expectancy != null ? `${results.expectancy >= 0 ? '+' : ''}${results.expectancy.toFixed(2)}%` : 'N/A'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
