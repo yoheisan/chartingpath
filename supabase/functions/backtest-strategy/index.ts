@@ -508,20 +508,30 @@ async function fetchHistoricalData(
 function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[] {
   const signals: any[] = [];
   
+  console.log('Pattern detection - Strategy settings:', {
+    targetGainPercent: strategy.targetGainPercent,
+    stopLossPercent: strategy.stopLossPercent,
+    patterns: patterns.map(p => ({ id: p.id, enabled: p.enabled, customTarget: p.customTarget, customStopLoss: p.customStopLoss }))
+  });
+  
   // Build pattern settings map
   const patternSettings = new Map<string, { target: number; stopLoss: number }>();
   for (const pattern of patterns) {
     if (pattern.enabled) {
-      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 5;
-      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 2;
+      // Use pattern-specific settings, then strategy settings, then reasonable defaults
+      const target = pattern.customTarget ?? strategy.targetGainPercent ?? 2;
+      const stopLoss = pattern.customStopLoss ?? strategy.stopLossPercent ?? 1;
       patternSettings.set(pattern.id, { target, stopLoss });
       patternSettings.set(pattern.name, { target, stopLoss });
+      console.log(`Pattern ${pattern.id}: target=${target}%, stopLoss=${stopLoss}%`);
     }
   }
   
   for (const pattern of patterns) {
+    if (!pattern.enabled) continue;
+    
     const windowSize = getPatternWindowSize(pattern.id);
-    const settings = patternSettings.get(pattern.id) || { target: 5, stopLoss: 2 };
+    const settings = patternSettings.get(pattern.id) || { target: 2, stopLoss: 1 };
     
     for (let i = windowSize; i < data.length; i++) {
       const window = data.slice(i - windowSize, i);
@@ -542,6 +552,7 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     }
   }
   
+  console.log(`Generated ${signals.length} signals with TP/SL settings`);
   return signals;
 }
 
@@ -693,23 +704,41 @@ function simulateTradesWithDiscipline(
     let exitPrice = data[exitIndex].close;
     let exitReason = 'timeout';
     
-    for (let i = entryIndex + 1; i < Math.min(entryIndex + 50, data.length); i++) {
+    // Calculate max bars to hold based on timeframe (fewer bars for intraday)
+    const maxHoldingBars = Math.min(100, data.length - entryIndex - 1);
+    
+    console.log(`Trade entry at bar ${entryIndex}: price=${entryPrice}, target=${targetPercent}%, stop=${stopPercent}%`);
+    
+    for (let i = entryIndex + 1; i < entryIndex + maxHoldingBars; i++) {
+      if (i >= data.length) break;
+      
       const currentPrice = data[i].close;
       const priceChange = (currentPrice - entryPrice) / entryPrice * 100;
       
+      // Check stop loss first (negative change exceeds stop threshold)
       if (priceChange <= -stopPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
         exitReason = 'stop-loss';
+        console.log(`Stop-loss hit at bar ${i}: change=${priceChange.toFixed(3)}%`);
         break;
       }
       
+      // Check target (positive change exceeds target threshold)
       if (priceChange >= targetPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
         exitReason = 'target';
+        console.log(`Target hit at bar ${i}: change=${priceChange.toFixed(3)}%`);
         break;
       }
+    }
+    
+    if (exitReason === 'timeout') {
+      exitIndex = Math.min(entryIndex + maxHoldingBars - 1, data.length - 1);
+      exitPrice = data[exitIndex].close;
+      const finalChange = ((exitPrice - entryPrice) / entryPrice * 100).toFixed(3);
+      console.log(`Timeout exit at bar ${exitIndex}: final change=${finalChange}%`);
     }
     
     // Update tracking
