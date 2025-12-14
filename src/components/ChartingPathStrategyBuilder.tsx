@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
+import { MultiTimeframeTrendAnalysis } from './chartingpath/MultiTimeframeTrendAnalysis';
 import { TargetStopLossSettings } from './chartingpath/TargetStopLossSettings';
 import { EnhancedBacktestEngine } from './chartingpath/EnhancedBacktestEngine';
 import { ExportPanel } from './chartingpath/ExportPanel';
@@ -420,7 +421,12 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
             {renderSectionHeader(STRATEGY_STEPS[1], 1)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
-            <div className="pt-2">
+            <div className="pt-2 space-y-4">
+              {/* Multi-Timeframe Trend Analysis */}
+              <MultiTimeframeTrendAnalysis
+                instrument={strategy.market?.instrument || ''}
+              />
+              
               <PatternLibrary
                 patterns={strategy.patterns}
                 onChange={(patterns) => updateStrategy('patterns', patterns)}
