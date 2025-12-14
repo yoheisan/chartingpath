@@ -272,9 +272,13 @@ function validateTradeDiscipline(
 // MAIN HANDLER
 // ============================================
 
+// Cache version to invalidate old metric semantics when changed
+const CACHE_VERSION = 2;
+
 // Generate cache key from strategy parameters
 function generateCacheKey(strategy: any): string {
   const params = {
+    version: CACHE_VERSION,
     instrument: strategy.market?.instrument || strategy.instrument,
     startDate: strategy.backtestPeriod?.startDate || strategy.startDate,
     endDate: strategy.backtestPeriod?.endDate || strategy.endDate,
