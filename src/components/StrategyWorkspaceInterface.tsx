@@ -225,6 +225,16 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       setBacktestProgress(20);
       setBacktestPhase('Fetching historical data...');
 
+      // Start a gentle fake progress while the backtest runs so the UI doesn't feel stuck
+      let progressInterval: ReturnType<typeof setInterval> | undefined;
+      progressInterval = setInterval(() => {
+        setBacktestProgress(prev => {
+          // Drift up to 65% max while waiting for real updates
+          if (prev >= 65) return prev;
+          return prev + 3;
+        });
+      }, 1500);
+
       // Call the real backtest edge function with appropriate timeout
       // Professional backtests need 60-90s for intraday data with multiple patterns
       const timeoutMs = 90000; // 90s for comprehensive backtests
@@ -256,6 +266,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         ]) as { data: any; error: any };
 
         clearTimeout(timeoutId);
+        if (progressInterval) clearInterval(progressInterval);
 
         console.log('Backtest edge function resolved');
         setBacktestProgress(70);
@@ -301,6 +312,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         
         return results;
       } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (progressInterval) clearInterval(progressInterval);
         console.error('Backtest invocation failed:', fetchError);
         throw fetchError;
       }
