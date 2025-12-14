@@ -69,18 +69,28 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
 }) => {
   // Get discipline filters from strategy or use defaults
   const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
-  // Get valid date range based on timeframe
+
+  /**
+   * Bar limits per timeframe – capped to prevent edge function timeout.
+   * The edge function trims to 3000 bars, but fetching from Yahoo before trim can timeout.
+   * These limits ensure we stay well under 3000 bars for reliable execution.
+   */
+  const TIMEFRAME_BAR_LIMITS: Record<string, { maxBars: number; maxDays: number; label: string }> = {
+    '1m': { maxBars: 2000, maxDays: 2, label: '2 days (~2000 bars)' },
+    '5m': { maxBars: 2500, maxDays: 9, label: '9 days (~2500 bars)' },
+    '15m': { maxBars: 2500, maxDays: 26, label: '26 days (~2500 bars)' },
+    '1h': { maxBars: 2500, maxDays: 104, label: '~3 months (~2500 bars)' },
+    '4h': { maxBars: 2500, maxDays: 417, label: '~14 months (~2500 bars)' },
+    '1d': { maxBars: 2500, maxDays: 2500, label: '~7 years (~2500 bars)' },
+    '1w': { maxBars: 2500, maxDays: 17500, label: '~48 years' }
+  };
+
   const getMaxDaysForTimeframe = (timeframe: string): number => {
-    const limits: Record<string, number> = {
-      '1m': 7,
-      '5m': 60,
-      '15m': 60,
-      '1h': 730,
-      '4h': 730,
-      '1d': 36500, // ~100 years
-      '1w': 36500
-    };
-    return limits[timeframe] || 730;
+    return TIMEFRAME_BAR_LIMITS[timeframe]?.maxDays || 104;
+  };
+
+  const getBarLimitLabel = (timeframe: string): string => {
+    return TIMEFRAME_BAR_LIMITS[timeframe]?.label || 'Unknown';
   };
 
   const getDefaultDateRange = (timeframe: string) => {
@@ -88,8 +98,8 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     const endDate = new Date();
     const startDate = new Date();
     
-    // Use 80% of max range to be safe
-    const safeDays = Math.floor(maxDays * 0.8);
+    // Use 90% of max range to be safe
+    const safeDays = Math.min(Math.floor(maxDays * 0.9), maxDays);
     startDate.setDate(endDate.getDate() - safeDays);
     
     return {
@@ -136,6 +146,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
       // Auto-adjust date range when timeframe changes
       if (field === 'timeframe') {
         const maxDays = getMaxDaysForTimeframe(value);
+        const barLabel = getBarLimitLabel(value);
         const start = new Date(prev.startDate);
         const end = new Date(prev.endDate);
         const currentDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -146,8 +157,31 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
           newConfig.startDate = newDates.startDate;
           newConfig.endDate = newDates.endDate;
           
-          toast.info(`Date range adjusted for ${value} timeframe (max ${maxDays} days)`, {
-            description: `New range: ${newDates.startDate} to ${newDates.endDate}`
+          toast.info(`Date range capped for ${value} timeframe`, {
+            description: `Max: ${barLabel}. Adjusted to ${newDates.startDate} → ${newDates.endDate}`,
+            duration: 5000
+          });
+        }
+      }
+      
+      // Also validate when dates change directly
+      if (field === 'startDate' || field === 'endDate') {
+        const timeframe = newConfig.timeframe;
+        const maxDays = getMaxDaysForTimeframe(timeframe);
+        const barLabel = getBarLimitLabel(timeframe);
+        const start = new Date(field === 'startDate' ? value : prev.startDate);
+        const end = new Date(field === 'endDate' ? value : prev.endDate);
+        const requestedDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (requestedDays > maxDays) {
+          // Cap the start date to respect the limit
+          const cappedStart = new Date(end);
+          cappedStart.setDate(end.getDate() - maxDays);
+          newConfig.startDate = cappedStart.toISOString().split('T')[0];
+          
+          toast.warning(`Date range exceeds ${timeframe} limit`, {
+            description: `Capped to ${barLabel}. Use daily (1d) for longer ranges.`,
+            duration: 5000
           });
         }
       }
@@ -161,9 +195,25 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   };
 
   const runBacktest = async () => {
+    // Final validation before running
+    const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
+    const barLabel = getBarLimitLabel(backtestConfig.timeframe);
+    const start = new Date(backtestConfig.startDate);
+    const end = new Date(backtestConfig.endDate);
+    const requestedDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (requestedDays > maxDays) {
+      toast.error(`Date range too large for ${backtestConfig.timeframe}`, {
+        description: `Max: ${barLabel}. Please shorten your date range or switch to daily (1d) timeframe.`,
+        duration: 6000
+      });
+      return;
+    }
+    
     console.log('Running enhanced pattern-based backtest with config:', backtestConfig);
     console.log('Interactive parameters:', interactiveParams);
     console.log('Strategy patterns:', strategy.patterns);
+    console.log(`Estimated bars: ~${requestedDays} days × bars/day for ${backtestConfig.timeframe}`);
     
     // Pass the backtest config to the strategy
     const strategyWithConfig = {
