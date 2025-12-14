@@ -175,37 +175,16 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
 
   return (
     <div className="space-y-6">
-      {/* Warning Alert for Over Filtering with Quick Fix Button */}
+      {/* Warning Alert for Over Filtering */}
       {isOverFiltering && (
         <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
-          <div className="flex items-start justify-between w-full">
-            <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
-              <div>
-                <AlertTitle className="text-amber-600">Filters Too Aggressive</AlertTitle>
-                <AlertDescription className="text-amber-700 dark:text-amber-300">
-                  {stats.rejectionRate.toFixed(1)}% of signals rejected. 
-                  Only {stats.allowedTrades} trades from {stats.totalSignals} signals.
-                </AlertDescription>
-              </div>
-            </div>
-            {onFilterChange && (
-              <Button 
-                size="sm"
-                variant="default"
-                className="shrink-0 ml-4"
-                onClick={() => applyFilterChange({
-                  avoidLowLiquidity: false,
-                  minAtrMultiplier: 0.5,
-                  trendAlignmentEnabled: false,
-                  cooldownBars: 2
-                }, 'Applied recommended optimizations - run backtest again')}
-              >
-                <Zap className="w-4 h-4 mr-1" />
-                Quick Fix All
-              </Button>
-            )}
-          </div>
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-600">Filters Too Aggressive</AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-300">
+            {stats.rejectionRate.toFixed(1)}% of signals rejected. 
+            Only {stats.allowedTrades} trades from {stats.totalSignals} signals.
+            Review the "Optimize" tab to adjust individual filters.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -423,36 +402,6 @@ export const SignalAnalysisDashboard: React.FC<SignalAnalysisDashboardProps> = (
                   Click any button below to apply the optimization directly to your strategy.
                 </AlertDescription>
               </Alert>
-
-              {/* One-Click Apply All Button */}
-              {onFilterChange && isOverFiltering && (
-                <Card className="border-primary bg-primary/5">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="font-medium flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-primary" />
-                          Apply All Recommended Optimizations
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Relaxes aggressive filters to allow more trades while maintaining quality
-                        </p>
-                      </div>
-                      <Button 
-                        onClick={() => applyFilterChange({
-                          avoidLowLiquidity: false,
-                          minAtrMultiplier: 0.5,
-                          trendAlignmentEnabled: false,
-                          cooldownBars: 2
-                        }, 'Applied all recommended optimizations')}
-                      >
-                        <Zap className="w-4 h-4 mr-2" />
-                        Apply All
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               <div className="space-y-3">
                 {/* Individual Filter Adjustments */}
