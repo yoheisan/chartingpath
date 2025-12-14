@@ -792,6 +792,56 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     }
   };
 
+  const selectAllBidirectional = () => {
+    const newPatterns: PatternConfig[] = [];
+    let priority = patterns.length;
+    
+    Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      category.patterns.forEach((pattern) => {
+        if (pattern.direction !== 'neutral') return;
+        
+        const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+        if (alreadyExists) return;
+        
+        priority++;
+        newPatterns.push({
+          id: `${pattern.id}_${Date.now()}_${priority}`,
+          patternType: pattern.id,
+          name: pattern.name,
+          category: categoryKey,
+          enabled: true,
+          priority,
+          direction: pattern.direction,
+          intendedDirection: 'long', // Default to long, user can flip
+          parameters: Object.fromEntries(
+            Object.entries(pattern.parameters).map(([key, param]) => [
+              key, 
+              (param as any).type === 'boolean' ? (param as any).value : (param as any).value
+            ])
+          ),
+          riskSettings: {
+            riskPerTrade: 2.0,
+            stopLossMethod: 'pattern',
+            takeProfitMethod: 'pattern',
+            maxConcurrentTrades: 1
+          }
+        });
+      });
+    });
+    
+    if (newPatterns.length > 0) {
+      onChange([...patterns, ...newPatterns]);
+    }
+  };
+
+  const togglePatternDirection = (id: string) => {
+    const pattern = patterns.find(p => p.id === id);
+    if (pattern && pattern.direction === 'neutral') {
+      const newDirection = pattern.intendedDirection === 'long' ? 'short' : 'long';
+      updatePattern(id, { intendedDirection: newDirection });
+    }
+  };
+
   const handlePatternClick = (categoryKey: string, patternId: string) => {
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
     const pattern = category.patterns.find(p => p.id === patternId);
@@ -893,6 +943,33 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             className="scale-75"
           />
           <span className="text-sm font-medium">{patternInfo.name}</span>
+          
+          {/* Direction toggle for neutral patterns */}
+          {pattern.direction === 'neutral' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className={`h-6 px-2 text-xs ${
+                pattern.intendedDirection === 'long' 
+                  ? 'border-green-500/50 text-green-600 hover:bg-green-500/10' 
+                  : 'border-red-500/50 text-red-600 hover:bg-red-500/10'
+              }`}
+              onClick={() => togglePatternDirection(pattern.id)}
+            >
+              {pattern.intendedDirection === 'long' ? (
+                <>
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  Long
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-3 h-3 mr-1 rotate-180" />
+                  Short
+                </>
+              )}
+            </Button>
+          )}
+          
           <Badge variant="outline" className="text-xs">{pattern.priority}</Badge>
         </div>
         <div className="flex items-center gap-1">
@@ -956,6 +1033,15 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
         >
           <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
           Select All Shorts
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+          onClick={selectAllBidirectional}
+        >
+          <Activity className="w-4 h-4 mr-1" />
+          Select Bidirectional
         </Button>
       </div>
 
