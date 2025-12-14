@@ -272,13 +272,43 @@ function validateTradeDiscipline(
 // MAIN HANDLER
 // ============================================
 
+// Generate cache key from strategy parameters
+function generateCacheKey(strategy: any): string {
+  const params = {
+    instrument: strategy.market?.instrument || strategy.instrument,
+    startDate: strategy.backtestPeriod?.startDate || strategy.startDate,
+    endDate: strategy.backtestPeriod?.endDate || strategy.endDate,
+    timeframe: strategy.market?.timeframes?.[0] || strategy.timeframe || '1d',
+    patterns: (strategy.patterns || [])
+      .filter((p: any) => p.enabled)
+      .map((p: any) => p.id)
+      .sort()
+      .join(','),
+    stopLoss: strategy.stopLossPercent || 1,
+    takeProfit: strategy.targetGainPercent || 2
+  };
+  // Simple hash for cache key
+  const str = JSON.stringify(params);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `bt_${Math.abs(hash).toString(36)}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
-    const { strategy } = await req.json();
+    const { strategy, userId } = await req.json();
     
     const instrument = strategy.market?.instrument || strategy.instrument;
     const instrumentCategory = strategy.market?.instrumentCategory || strategy.instrumentCategory || 'stocks';
@@ -286,6 +316,65 @@ serve(async (req) => {
     const endDate = strategy.backtestPeriod?.endDate || strategy.endDate;
     const timeframe = strategy.market?.timeframes?.[0] || strategy.timeframe || '1d';
     
+    // ============================================
+    // USAGE LIMIT CHECK
+    // ============================================
+    if (userId) {
+      const { data: limitCheck } = await supabase.rpc('check_backtest_limit', { p_user_id: userId });
+      if (limitCheck && !limitCheck.allowed) {
+        console.log(`User ${userId} exceeded daily limit: ${limitCheck.current_usage}/${limitCheck.max_daily_runs}`);
+        return new Response(JSON.stringify({ 
+          error: `Daily backtest limit reached (${limitCheck.max_daily_runs}/day). Upgrade your plan for more.`,
+          limitExceeded: true,
+          usage: limitCheck
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // ============================================
+    // RESULT CACHE CHECK
+    // ============================================
+    const cacheKey = generateCacheKey(strategy);
+    console.log(`Cache key: ${cacheKey}`);
+
+    const { data: cachedResult } = await supabase
+      .from('backtest_result_cache')
+      .select('*')
+      .eq('cache_key', cacheKey)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (cachedResult) {
+      console.log(`✅ CACHE HIT for ${cacheKey} - returning cached result`);
+      
+      // Increment hit count in background
+      supabase
+        .from('backtest_result_cache')
+        .update({ hit_count: cachedResult.hit_count + 1 })
+        .eq('id', cachedResult.id)
+        .then(() => {});
+
+      // Still increment usage for the user
+      if (userId) {
+        await supabase.rpc('increment_backtester_v2_usage', { p_user_id: userId });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        cached: true,
+        results: cachedResult.results,
+        trades: cachedResult.trades,
+        dataPoints: cachedResult.data_points
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`❌ CACHE MISS for ${cacheKey} - running backtest`);
+
     // Get discipline filters from strategy or use defaults
     const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
     
@@ -359,13 +448,42 @@ serve(async (req) => {
       totalReturn: performanceMetrics.totalReturn
     });
 
+    // ============================================
+    // CACHE THE RESULT
+    // ============================================
+    const resultToCache = {
+      ...performanceMetrics,
+      rawSignals: patternSignals.length,
+      disciplineStats
+    };
+
+    // Cache in background (don't await)
+    supabase
+      .from('backtest_result_cache')
+      .upsert({
+        cache_key: cacheKey,
+        parameters_hash: cacheKey,
+        instrument,
+        timeframe,
+        results: resultToCache,
+        trades: trades.slice(0, 100), // Limit trades stored to save space
+        data_points: historicalData.length,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+      }, { onConflict: 'cache_key' })
+      .then(({ error }) => {
+        if (error) console.error('Cache insert error:', error);
+        else console.log(`✅ Cached result for ${cacheKey}`);
+      });
+
+    // Increment usage for user
+    if (userId) {
+      await supabase.rpc('increment_backtester_v2_usage', { p_user_id: userId });
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      results: {
-        ...performanceMetrics,
-        rawSignals: patternSignals.length,
-        disciplineStats
-      },
+      cached: false,
+      results: resultToCache,
       trades,
       dataPoints: historicalData.length,
       disciplineStats

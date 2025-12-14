@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.generate-regional-reports-batch]
 verify_jwt = false
+
+[functions.cache-popular-instruments]
+verify_jwt = false

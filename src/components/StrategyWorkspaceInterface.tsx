@@ -248,8 +248,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
       // Implement a real timeout using Promise.race so the UI never hangs
       let timeoutId: ReturnType<typeof setTimeout>;
+      // Get current user for usage tracking
+      const { data: { user } } = await supabase.auth.getUser();
+
       const backtestPromise = supabase.functions.invoke('backtest-strategy', {
-        body: { strategy }
+        body: { strategy, userId: user?.id }
       });
 
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -277,10 +280,23 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           throw new Error(error.message || 'Failed to start backtest');
         }
 
+        // Handle rate limit exceeded
+        if (data.limitExceeded) {
+          toast.error(`Daily limit reached (${data.usage?.max_daily_runs}/day). Upgrade for more backtests.`);
+          setIsBacktesting(false);
+          setBacktestProgress(0);
+          return null;
+        }
+
         if (!data.success) {
           const errorMsg = data.error || 'Backtest failed';
           console.error('Backtest failed:', errorMsg, data);
           throw new Error(errorMsg);
+        }
+
+        // Show cache indicator
+        if (data.cached) {
+          console.log('Result served from cache');
         }
 
         setBacktestProgress(90);
