@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,10 @@ import {
   Crosshair,
   Shield,
   Play,
-  Download
+  Download,
+  Save,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
@@ -35,6 +38,7 @@ import { DEFAULT_POSITION_MANAGEMENT, PositionManagementRules, PatternRules as P
 import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useStrategyAutoSave } from '@/hooks/useStrategyAutoSave';
 
 export interface PatternRules {
   entry: string;
@@ -149,6 +153,32 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<string[]>(['market', 'patterns']);
+
+  // Handle strategy restore from auto-save
+  const handleStrategyRestore = useCallback((restoredStrategy: ChartingPathStrategy) => {
+    setStrategy(restoredStrategy);
+    const completedSteps = new Set<number>();
+    if (restoredStrategy.market?.instrument) completedSteps.add(0);
+    if (restoredStrategy.patterns?.some(p => p.enabled)) completedSteps.add(1);
+    if (restoredStrategy.positionManagement) completedSteps.add(3);
+    setConfirmedSteps(completedSteps);
+  }, []);
+
+  // Auto-save hook
+  const { 
+    lastSaved, 
+    isSaving, 
+    restoreStrategy, 
+    forceSave, 
+    isAuthenticated: isAutoSaveAuthenticated 
+  } = useStrategyAutoSave(strategy, handleStrategyRestore);
+
+  // Restore on mount (only if no initial strategy provided)
+  useEffect(() => {
+    if (!initialStrategy) {
+      restoreStrategy();
+    }
+  }, []);
 
   // Step completion logic
   const getStepCompletion = (stepIndex: number): boolean => {
@@ -270,6 +300,15 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
     return 'incomplete';
   };
 
+  // Format last saved time
+  const formatLastSaved = (date: Date): string => {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
   const renderSectionHeader = (step: typeof STRATEGY_STEPS[0], index: number) => {
     const status = getSectionStatus(step.id);
     const IconComponent = step.icon;
@@ -313,6 +352,45 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
 
   return (
     <div className="space-y-4">
+      {/* Auto-save Status Bar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-muted/50 rounded-lg border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {isSaving ? (
+            <>
+              <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
+              <span>Saving...</span>
+            </>
+          ) : lastSaved ? (
+            <>
+              {isAutoSaveAuthenticated ? (
+                <Cloud className="w-4 h-4 text-green-500" />
+              ) : (
+                <CloudOff className="w-4 h-4 text-muted-foreground" />
+              )}
+              <span>
+                Auto-saved {formatLastSaved(lastSaved)}
+                {!isAutoSaveAuthenticated && ' (session only)'}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="w-3 h-3 rounded-full bg-muted-foreground/30" />
+              <span>Not saved yet</span>
+            </>
+          )}
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={forceSave}
+          className="h-7 text-xs"
+          disabled={isSaving}
+        >
+          <Save className="w-3 h-3 mr-1" />
+          Save Now
+        </Button>
+      </div>
+
       {/* Accordion Sections */}
       <Accordion 
         type="multiple" 
