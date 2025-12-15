@@ -59,9 +59,9 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
     setIsLoading(true);
     setError(null);
     
-    // Create a timeout promise (15 seconds max)
+    // Create a timeout promise (in case the edge function hangs)
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Analysis timed out. Please try again.')), 15000);
+      setTimeout(() => reject(new Error('Analysis timed out. Please try again.')), 45000); // 45s safeguard
     });
     
     try {
