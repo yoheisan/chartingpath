@@ -43,6 +43,18 @@ const TIMEFRAMES = [
   { id: '1M', label: 'Monthly', category: 'macro' as const },
 ];
 
+const TIMEFRAME_ORDER = TIMEFRAMES.map((tf) => tf.id);
+
+const sortByTimeframe = (a: TimeframeTrend, b: TimeframeTrend) => {
+  const ai = TIMEFRAME_ORDER.indexOf(a.timeframe);
+  const bi = TIMEFRAME_ORDER.indexOf(b.timeframe);
+  // Unknown timeframes go last but keep relative order
+  if (ai === -1 && bi === -1) return 0;
+  if (ai === -1) return 1;
+  if (bi === -1) return -1;
+  return ai - bi;
+};
+
 export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisProps> = ({
   instrument,
   onTrendAnalysisComplete
@@ -131,8 +143,8 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
     }
   };
 
-  const microTrends = trends.filter(t => t.category === 'micro');
-  const macroTrends = trends.filter(t => t.category === 'macro');
+  const microTrends = trends.filter((t) => t.category === 'micro').sort(sortByTimeframe);
+  const macroTrends = trends.filter((t) => t.category === 'macro').sort(sortByTimeframe);
 
   const getOverallBias = () => {
     if (trends.length === 0) return null;
