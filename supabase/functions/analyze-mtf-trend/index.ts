@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,21 @@ interface TimeframeTrend {
   currentPrice: number;
   category: 'micro' | 'macro';
 }
+
+interface CachedResult {
+  trends: TimeframeTrend[];
+  summary: {
+    upCount: number;
+    downCount: number;
+    flatCount: number;
+    bias: string;
+  };
+  cachedAt: string;
+}
+
+// In-memory cache with 5-minute TTL
+const cache = new Map<string, { data: CachedResult; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // Calculate EMA from price array
 function calculateEMA(prices: number[], period: number): number {
@@ -48,18 +64,33 @@ function determineTrend(currentPrice: number, ema20: number, ema50: number): 'up
   return 'flat';
 }
 
-// Map timeframe to Yahoo Finance interval and lookback days
+// Map timeframe to Yahoo Finance interval and lookback days (reduced for speed)
 function getTimeframeConfig(tf: string): { interval: string; lookbackDays: number; label: string; category: 'micro' | 'macro' } {
   switch (tf) {
-    case '5m': return { interval: '5m', lookbackDays: 3, label: '5M', category: 'micro' };
-    case '15m': return { interval: '15m', lookbackDays: 7, label: '15M', category: 'micro' };
-    case '1h': return { interval: '1h', lookbackDays: 30, label: '1H', category: 'micro' };
-    case '4h': return { interval: '1h', lookbackDays: 120, label: '4H', category: 'micro' }; // Use 1h and aggregate
-    case '8h': return { interval: '1h', lookbackDays: 200, label: '8H', category: 'micro' }; // Use 1h and aggregate
-    case '1d': return { interval: '1d', lookbackDays: 100, label: 'D', category: 'macro' };
-    case '1w': return { interval: '1wk', lookbackDays: 400, label: 'W', category: 'macro' };
-    case '1M': return { interval: '1mo', lookbackDays: 1500, label: 'M', category: 'macro' };
-    default: return { interval: '1d', lookbackDays: 100, label: tf, category: 'macro' };
+    case '5m': return { interval: '5m', lookbackDays: 2, label: '5M', category: 'micro' };
+    case '15m': return { interval: '15m', lookbackDays: 5, label: '15M', category: 'micro' };
+    case '1h': return { interval: '1h', lookbackDays: 14, label: '1H', category: 'micro' };
+    case '4h': return { interval: '1h', lookbackDays: 60, label: '4H', category: 'micro' }; // Use 1h and aggregate
+    case '8h': return { interval: '1h', lookbackDays: 100, label: '8H', category: 'micro' }; // Use 1h and aggregate
+    case '1d': return { interval: '1d', lookbackDays: 60, label: 'D', category: 'macro' };
+    case '1w': return { interval: '1wk', lookbackDays: 200, label: 'W', category: 'macro' };
+    case '1M': return { interval: '1mo', lookbackDays: 800, label: 'M', category: 'macro' };
+    default: return { interval: '1d', lookbackDays: 60, label: tf, category: 'macro' };
+  }
+}
+
+// Fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeout);
+    return response;
+  } catch (error) {
+    clearTimeout(timeout);
+    throw error;
   }
 }
 
@@ -88,13 +119,12 @@ async function fetchPricesForTimeframe(symbol: string, tf: string): Promise<numb
   
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${config.interval}&events=history`;
   
-  console.log(`Fetching ${tf} data for ${yahooSymbol}...`);
-  
-  const response = await fetch(yahooUrl, {
+  // 5 second timeout per request
+  const response = await fetchWithTimeout(yahooUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
-  });
+  }, 5000);
   
   if (!response.ok) {
     console.error(`Failed to fetch ${tf} data: ${response.statusText}`);
@@ -128,6 +158,10 @@ function aggregatePrices(prices: number[], periodBars: number): number[] {
   return aggregated;
 }
 
+function getCacheKey(symbol: string, timeframes: string[]): string {
+  return `${symbol.toUpperCase()}_${timeframes.sort().join(',')}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -140,6 +174,25 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ success: false, error: 'Symbol is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check cache first
+    const cacheKey = getCacheKey(symbol, timeframes);
+    const cached = cache.get(cacheKey);
+    
+    if (cached && cached.expiresAt > Date.now()) {
+      console.log(`Cache hit for ${symbol}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          symbol,
+          trends: cached.data.trends,
+          summary: cached.data.summary,
+          updatedAt: cached.data.cachedAt,
+          fromCache: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -209,20 +262,30 @@ serve(async (req) => {
     if (upCount > total * 0.5) bias = 'bullish';
     else if (downCount > total * 0.5) bias = 'bearish';
 
-    console.log(`Analysis complete: ${upCount} up, ${downCount} down, bias=${bias}`);
+    const summary = {
+      upCount,
+      downCount,
+      flatCount: total - upCount - downCount,
+      bias
+    };
+
+    // Cache the result
+    const cachedAt = new Date().toISOString();
+    cache.set(cacheKey, {
+      data: { trends, summary, cachedAt },
+      expiresAt: Date.now() + CACHE_TTL_MS
+    });
+
+    console.log(`Analysis complete: ${upCount} up, ${downCount} down, bias=${bias} (cached for 5 min)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         symbol,
         trends,
-        summary: {
-          upCount,
-          downCount,
-          flatCount: total - upCount - downCount,
-          bias
-        },
-        updatedAt: new Date().toISOString()
+        summary,
+        updatedAt: cachedAt,
+        fromCache: false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

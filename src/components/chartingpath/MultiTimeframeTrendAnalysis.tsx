@@ -59,13 +59,21 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
     setIsLoading(true);
     setError(null);
     
+    // Create a timeout promise (15 seconds max)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Analysis timed out. Please try again.')), 15000);
+    });
+    
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('analyze-mtf-trend', {
+      const fetchPromise = supabase.functions.invoke('analyze-mtf-trend', {
         body: { 
           symbol: instrument,
           timeframes: ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M']
         }
       });
+
+      // Race between fetch and timeout
+      const { data, error: fnError } = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (fnError) {
         throw new Error(fnError.message);
@@ -85,8 +93,9 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
       console.log('MTF Analysis:', data.summary);
     } catch (err) {
       console.error('MTF Analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch trend data');
-      toast.error('Failed to fetch real-time trend data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trend data';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
