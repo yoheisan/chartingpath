@@ -64,17 +64,14 @@ function determineTrend(currentPrice: number, ema20: number, ema50: number): 'up
   return 'flat';
 }
 
-// Map timeframe to Yahoo Finance interval and lookback days (reduced for speed)
+// Map timeframe to Yahoo Finance interval and lookback days (minimal for speed)
 function getTimeframeConfig(tf: string): { interval: string; lookbackDays: number; label: string; category: 'micro' | 'macro' } {
   switch (tf) {
-    case '5m': return { interval: '5m', lookbackDays: 2, label: '5M', category: 'micro' };
-    case '15m': return { interval: '15m', lookbackDays: 5, label: '15M', category: 'micro' };
-    case '1h': return { interval: '1h', lookbackDays: 14, label: '1H', category: 'micro' };
-    case '4h': return { interval: '1h', lookbackDays: 60, label: '4H', category: 'micro' }; // Use 1h and aggregate
-    case '8h': return { interval: '1h', lookbackDays: 100, label: '8H', category: 'micro' }; // Use 1h and aggregate
+    case '15m': return { interval: '15m', lookbackDays: 3, label: '15M', category: 'micro' };
+    case '1h': return { interval: '1h', lookbackDays: 7, label: '1H', category: 'micro' };
+    case '4h': return { interval: '1h', lookbackDays: 30, label: '4H', category: 'micro' };
     case '1d': return { interval: '1d', lookbackDays: 60, label: 'D', category: 'macro' };
-    case '1w': return { interval: '1wk', lookbackDays: 200, label: 'W', category: 'macro' };
-    case '1M': return { interval: '1mo', lookbackDays: 800, label: 'M', category: 'macro' };
+    case '1w': return { interval: '1wk', lookbackDays: 180, label: 'W', category: 'macro' };
     default: return { interval: '1d', lookbackDays: 60, label: tf, category: 'macro' };
   }
 }
@@ -119,12 +116,12 @@ async function fetchPricesForTimeframe(symbol: string, tf: string): Promise<numb
   
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${config.interval}&events=history`;
   
-  // 5 second timeout per request
+  // 10 second timeout per request
   const response = await fetchWithTimeout(yahooUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
-  }, 5000);
+  }, 10000);
   
   if (!response.ok) {
     console.error(`Failed to fetch ${tf} data: ${response.statusText}`);
@@ -140,11 +137,9 @@ async function fetchPricesForTimeframe(symbol: string, tf: string): Promise<numb
   
   const closes = data.chart.result[0].indicators.quote[0].close.filter((p: number | null) => p !== null) as number[];
   
-  // Aggregate for 4h and 8h timeframes
+  // Aggregate for 4h timeframe
   if (tf === '4h') {
     return aggregatePrices(closes, 4);
-  } else if (tf === '8h') {
-    return aggregatePrices(closes, 8);
   }
   
   return closes;
@@ -168,7 +163,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, timeframes = ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M'] }: TrendRequest = await req.json();
+    const { symbol, timeframes = ['15m', '1h', '4h', '1d', '1w'] }: TrendRequest = await req.json();
     
     if (!symbol) {
       return new Response(
