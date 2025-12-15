@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,17 +43,6 @@ const TIMEFRAMES = [
   { id: '1M', label: 'Monthly', category: 'macro' as const },
 ];
 
-const TIMEFRAME_ORDER = TIMEFRAMES.map((tf) => tf.id);
-
-const sortByTimeframe = (a: TimeframeTrend, b: TimeframeTrend) => {
-  const ai = TIMEFRAME_ORDER.indexOf(a.timeframe);
-  const bi = TIMEFRAME_ORDER.indexOf(b.timeframe);
-  // Unknown timeframes go last but keep relative order
-  if (ai === -1 && bi === -1) return 0;
-  if (ai === -1) return 1;
-  if (bi === -1) return -1;
-  return ai - bi;
-};
 
 export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisProps> = ({
   instrument,
@@ -143,8 +132,48 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
     }
   };
 
-  const microTrends = trends.filter((t) => t.category === 'micro').sort(sortByTimeframe);
-  const macroTrends = trends.filter((t) => t.category === 'macro').sort(sortByTimeframe);
+  const trendByTimeframe = useMemo(() => {
+    const map = new Map<string, TimeframeTrend>();
+    for (const t of trends) {
+      map.set(t.timeframe, t);
+    }
+    return map;
+  }, [trends]);
+
+  const microTimeframes = TIMEFRAMES.filter((t) => t.category === 'micro');
+  const macroTimeframes = TIMEFRAMES.filter((t) => t.category === 'macro');
+
+  const renderTimeframeCard = (tf: (typeof TIMEFRAMES)[number]) => {
+    const trend = trendByTimeframe.get(tf.id);
+
+    if (!trend) {
+      return (
+        <div
+          key={tf.id}
+          className="flex flex-col items-center gap-1 p-2 rounded-md border border-dashed border-border bg-muted/20 text-muted-foreground"
+        >
+          <div className="flex items-center gap-1">
+            <Minus className="w-4 h-4" />
+            <span className="text-xs font-semibold">{tf.label}</span>
+          </div>
+          <span className="text-[10px] opacity-80">No data</span>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        key={trend.timeframe}
+        className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
+      >
+        <div className="flex items-center gap-1">
+          {getTrendIcon(trend.trend)}
+          <span className="text-xs font-semibold">{trend.label}</span>
+        </div>
+        <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
+      </div>
+    );
+  };
 
   const getOverallBias = () => {
     if (trends.length === 0) return null;
@@ -238,50 +267,24 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
                 )}
 
                 {/* Macro Trends */}
-                {macroTrends.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                      Macro Trends (Higher Timeframes)
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {macroTrends.map((trend) => (
-                        <div
-                          key={trend.timeframe}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
-                        >
-                          <div className="flex items-center gap-1">
-                            {getTrendIcon(trend.trend)}
-                            <span className="text-xs font-semibold">{trend.label}</span>
-                          </div>
-                          <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Macro Trends (Higher Timeframes)
                   </div>
-                )}
+                  <div className="grid grid-cols-3 gap-2">
+                    {macroTimeframes.map(renderTimeframeCard)}
+                  </div>
+                </div>
 
                 {/* Micro Trends */}
-                {microTrends.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                      Micro Trends (Lower Timeframes)
-                    </div>
-                    <div className="grid grid-cols-5 gap-2">
-                      {microTrends.map((trend) => (
-                        <div
-                          key={trend.timeframe}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
-                        >
-                          <div className="flex items-center gap-1">
-                            {getTrendIcon(trend.trend)}
-                            <span className="text-xs font-semibold">{trend.label}</span>
-                          </div>
-                          <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Micro Trends (Lower Timeframes)
                   </div>
-                )}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                    {microTimeframes.map(renderTimeframeCard)}
+                  </div>
+                </div>
 
                 {/* No data fallback */}
                 {!error && trends.length === 0 && (
