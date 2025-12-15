@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +19,7 @@ interface TimeframeTrend {
   ema50: number;
   currentPrice: number;
   category: 'micro' | 'macro';
+  dataPoints: number;
 }
 
 interface CachedResult {
@@ -27,134 +28,78 @@ interface CachedResult {
     upCount: number;
     downCount: number;
     flatCount: number;
-    bias: string;
+    bias: 'bullish' | 'bearish' | 'mixed';
   };
   cachedAt: string;
+  dataSource: 'database' | 'live';
 }
 
-// In-memory cache with 5-minute TTL
-const cache = new Map<string, { data: CachedResult; expiresAt: number }>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+// In-memory cache for results (5 min TTL)
+const resultCache = new Map<string, { data: CachedResult; expiry: number }>();
 
-// Calculate EMA from price array
 function calculateEMA(prices: number[], period: number): number {
-  if (prices.length === 0) return 0;
-  if (prices.length < period) return prices.reduce((a, b) => a + b, 0) / prices.length;
+  if (prices.length < period) return prices[prices.length - 1] || 0;
   
-  const k = 2 / (period + 1);
+  const multiplier = 2 / (period + 1);
   let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
   
   for (let i = period; i < prices.length; i++) {
-    ema = prices[i] * k + ema * (1 - k);
+    ema = (prices[i] - ema) * multiplier + ema;
   }
   return ema;
 }
 
-// Determine trend based on price and EMAs
 function determineTrend(currentPrice: number, ema20: number, ema50: number): 'up' | 'down' | 'flat' {
-  const threshold = 0.002; // 0.2% threshold for flat
-  
-  const aboveBoth = currentPrice > ema20 && currentPrice > ema50;
-  const belowBoth = currentPrice < ema20 && currentPrice < ema50;
+  const threshold = 0.001; // 0.1% threshold for "flat"
+  const priceAboveEma20 = currentPrice > ema20 * (1 + threshold);
+  const priceBelowEma20 = currentPrice < ema20 * (1 - threshold);
   const ema20AboveEma50 = ema20 > ema50 * (1 + threshold);
   const ema20BelowEma50 = ema20 < ema50 * (1 - threshold);
   
-  if (aboveBoth && ema20AboveEma50) return 'up';
-  if (belowBoth && ema20BelowEma50) return 'down';
+  if (priceAboveEma20 && ema20AboveEma50) return 'up';
+  if (priceBelowEma20 && ema20BelowEma50) return 'down';
   return 'flat';
 }
 
-// Map timeframe to Yahoo Finance interval and lookback days (minimal for speed)
-function getTimeframeConfig(tf: string): { interval: string; lookbackDays: number; label: string; category: 'micro' | 'macro' } {
+function getTimeframeLabel(tf: string): { label: string; category: 'micro' | 'macro' } {
   switch (tf) {
-    case '15m': return { interval: '15m', lookbackDays: 3, label: '15M', category: 'micro' };
-    case '1h': return { interval: '1h', lookbackDays: 7, label: '1H', category: 'micro' };
-    case '4h': return { interval: '1h', lookbackDays: 30, label: '4H', category: 'micro' };
-    case '1d': return { interval: '1d', lookbackDays: 60, label: 'D', category: 'macro' };
-    case '1w': return { interval: '1wk', lookbackDays: 180, label: 'W', category: 'macro' };
-    default: return { interval: '1d', lookbackDays: 60, label: tf, category: 'macro' };
+    case '15m': return { label: '15M', category: 'micro' };
+    case '1h': return { label: '1H', category: 'micro' };
+    case '4h': return { label: '4H', category: 'micro' };
+    case '1d': return { label: 'D', category: 'macro' };
+    case '1w': return { label: 'W', category: 'macro' };
+    default: return { label: tf, category: 'macro' };
   }
 }
 
-// Fetch with timeout
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeout);
-    return response;
-  } catch (error) {
-    clearTimeout(timeout);
-    throw error;
-  }
-}
-
-async function fetchPricesForTimeframe(symbol: string, tf: string): Promise<number[]> {
-  const config = getTimeframeConfig(tf);
-  
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - config.lookbackDays);
-  
-  const period1 = Math.floor(startDate.getTime() / 1000);
-  const period2 = Math.floor(endDate.getTime() / 1000);
-  
-  // Format symbol for Yahoo Finance
-  let yahooSymbol = symbol.replace('/', '').replace('-', '');
-  
-  // Handle forex pairs
+// Normalize symbol for database lookup
+function normalizeSymbol(symbol: string): string {
+  // Handle forex pairs - ensure format is XXX/YYY
   if (symbol.includes('/')) {
-    yahooSymbol = symbol.replace('/', '') + '=X';
+    return symbol.toUpperCase();
   }
-  
-  // Handle crypto
-  if (['BTC', 'ETH', 'ADA', 'SOL', 'LINK', 'DOT', 'UNI', 'AVAX'].some(c => symbol.startsWith(c + '/'))) {
-    yahooSymbol = symbol.split('/')[0] + '-USD';
-  }
-  
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${config.interval}&events=history`;
-  
-  // 10 second timeout per request
-  const response = await fetchWithTimeout(yahooUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  // Handle Yahoo forex format (EURUSD=X -> EUR/USD)
+  if (symbol.endsWith('=X')) {
+    const base = symbol.replace('=X', '');
+    if (base.length === 6) {
+      return `${base.slice(0, 3)}/${base.slice(3)}`;
     }
-  }, 10000);
-  
-  if (!response.ok) {
-    console.error(`Failed to fetch ${tf} data: ${response.statusText}`);
-    return [];
   }
-  
-  const data = await response.json();
-  
-  if (!data.chart?.result?.[0]?.indicators?.quote?.[0]?.close) {
-    console.error(`No data for ${tf}`);
-    return [];
+  // Handle concatenated forex (EURUSD -> EUR/USD)
+  if (symbol.length === 6 && !symbol.includes('/')) {
+    const upperSymbol = symbol.toUpperCase();
+    const currencies = ['EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD'];
+    const first = upperSymbol.slice(0, 3);
+    const second = upperSymbol.slice(3);
+    if (currencies.includes(first) && currencies.includes(second)) {
+      return `${first}/${second}`;
+    }
   }
-  
-  const closes = data.chart.result[0].indicators.quote[0].close.filter((p: number | null) => p !== null) as number[];
-  
-  // Aggregate for 4h timeframe
-  if (tf === '4h') {
-    return aggregatePrices(closes, 4);
-  }
-  
-  return closes;
-}
-
-function aggregatePrices(prices: number[], periodBars: number): number[] {
-  const aggregated: number[] = [];
-  for (let i = periodBars - 1; i < prices.length; i += periodBars) {
-    aggregated.push(prices[i]);
-  }
-  return aggregated;
+  return symbol.toUpperCase();
 }
 
 function getCacheKey(symbol: string, timeframes: string[]): string {
-  return `${symbol.toUpperCase()}_${timeframes.sort().join(',')}`;
+  return `${symbol}:${timeframes.sort().join(',')}`;
 }
 
 serve(async (req) => {
@@ -167,128 +112,141 @@ serve(async (req) => {
     
     if (!symbol) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Symbol is required' }),
+        JSON.stringify({ error: 'Symbol is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check cache first
-    const cacheKey = getCacheKey(symbol, timeframes);
-    const cached = cache.get(cacheKey);
+    const normalizedSymbol = normalizeSymbol(symbol);
+    const cacheKey = getCacheKey(normalizedSymbol, timeframes);
     
-    if (cached && cached.expiresAt > Date.now()) {
-      console.log(`Cache hit for ${symbol}`);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          symbol,
-          trends: cached.data.trends,
-          summary: cached.data.summary,
-          updatedAt: cached.data.cachedAt,
-          fromCache: true
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Check in-memory cache first
+    const cached = resultCache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) {
+      console.log(`Cache hit for ${normalizedSymbol}`);
+      return new Response(JSON.stringify({
+        success: true,
+        symbol: normalizedSymbol,
+        trends: cached.data.trends,
+        summary: cached.data.summary,
+        updatedAt: cached.data.cachedAt,
+        dataSource: cached.data.dataSource,
+        fromCache: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    console.log(`Analyzing MTF trend for ${symbol} across ${timeframes.length} timeframes`);
+    console.log(`Analyzing MTF trend for ${normalizedSymbol} using database...`);
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const trends: TimeframeTrend[] = [];
 
-    // Process ALL timeframes in parallel for maximum speed
-    const batchResults = await Promise.all(
+    // Fetch all timeframes in parallel from database
+    const results = await Promise.all(
       timeframes.map(async (tf) => {
         try {
-          const config = getTimeframeConfig(tf);
-          const prices = await fetchPricesForTimeframe(symbol, tf);
-          
-          if (prices.length < 20) {
-            console.log(`Insufficient data for ${tf}: ${prices.length} bars`);
-            return {
-              timeframe: tf,
-              label: config.label,
-              trend: 'flat' as const,
-              ema20: 0,
-              ema50: 0,
-              currentPrice: prices[prices.length - 1] || 0,
-              category: config.category
-            };
+          const { data: priceData, error } = await supabase
+            .from('historical_prices')
+            .select('close, date')
+            .eq('symbol', normalizedSymbol)
+            .eq('timeframe', tf)
+            .order('date', { ascending: true })
+            .limit(100);
+
+          if (error) {
+            console.error(`DB error for ${tf}:`, error);
+            return null;
           }
 
-          const currentPrice = prices[prices.length - 1];
-          const ema20 = calculateEMA(prices, 20);
-          const ema50 = calculateEMA(prices, Math.min(50, prices.length));
+          if (!priceData || priceData.length < 20) {
+            console.log(`Insufficient data for ${normalizedSymbol} ${tf}: ${priceData?.length || 0} bars`);
+            return null;
+          }
+
+          const closes = priceData.map(p => p.close);
+          const currentPrice = closes[closes.length - 1];
+          const ema20 = calculateEMA(closes, 20);
+          const ema50 = calculateEMA(closes, Math.min(50, closes.length));
           const trend = determineTrend(currentPrice, ema20, ema50);
+          const { label, category } = getTimeframeLabel(tf);
 
-          console.log(`${tf}: Price=${currentPrice.toFixed(4)}, EMA20=${ema20.toFixed(4)}, EMA50=${ema50.toFixed(4)}, Trend=${trend}`);
+          console.log(`${tf}: ${trend} (${closes.length} bars, price=${currentPrice.toFixed(5)})`);
 
           return {
             timeframe: tf,
-            label: config.label,
+            label,
             trend,
-            ema20,
-            ema50,
-            currentPrice,
-            category: config.category
-          };
-        } catch (err) {
-          console.error(`Error processing ${tf}:`, err);
-          const config = getTimeframeConfig(tf);
-          return {
-            timeframe: tf,
-            label: config.label,
-            trend: 'flat' as const,
-            ema20: 0,
-            ema50: 0,
-            currentPrice: 0,
-            category: config.category
-          };
+            ema20: Math.round(ema20 * 100000) / 100000,
+            ema50: Math.round(ema50 * 100000) / 100000,
+            currentPrice: Math.round(currentPrice * 100000) / 100000,
+            category,
+            dataPoints: closes.length
+          } as TimeframeTrend;
+        } catch (error) {
+          console.error(`Error analyzing ${tf}:`, error);
+          return null;
         }
       })
     );
-    trends.push(...batchResults);
 
-    // Calculate overall bias
+    // Filter out null results
+    for (const result of results) {
+      if (result) trends.push(result);
+    }
+
+    if (trends.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'No data available',
+          message: `No cached data found for ${normalizedSymbol}. Please run the cache-popular-instruments function first or wait for the scheduled cache refresh.`,
+          symbol: normalizedSymbol
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Calculate summary
     const upCount = trends.filter(t => t.trend === 'up').length;
     const downCount = trends.filter(t => t.trend === 'down').length;
-    const total = trends.length;
+    const flatCount = trends.filter(t => t.trend === 'flat').length;
     
     let bias: 'bullish' | 'bearish' | 'mixed' = 'mixed';
-    if (upCount > total * 0.5) bias = 'bullish';
-    else if (downCount > total * 0.5) bias = 'bearish';
+    if (upCount > downCount && upCount > flatCount) bias = 'bullish';
+    else if (downCount > upCount && downCount > flatCount) bias = 'bearish';
 
-    const summary = {
-      upCount,
-      downCount,
-      flatCount: total - upCount - downCount,
-      bias
+    const result: CachedResult = {
+      trends,
+      summary: { upCount, downCount, flatCount, bias },
+      cachedAt: new Date().toISOString(),
+      dataSource: 'database'
     };
 
-    // Cache the result
-    const cachedAt = new Date().toISOString();
-    cache.set(cacheKey, {
-      data: { trends, summary, cachedAt },
-      expiresAt: Date.now() + CACHE_TTL_MS
+    // Cache for 5 minutes
+    resultCache.set(cacheKey, { data: result, expiry: Date.now() + 5 * 60 * 1000 });
+
+    console.log(`✅ MTF analysis complete for ${normalizedSymbol}: ${bias} (${upCount} up, ${downCount} down, ${flatCount} flat)`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      symbol: normalizedSymbol,
+      trends,
+      summary: result.summary,
+      updatedAt: result.cachedAt,
+      dataSource: 'database',
+      fromCache: false
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-    console.log(`Analysis complete: ${upCount} up, ${downCount} down, bias=${bias} (cached for 5 min)`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        symbol,
-        trends,
-        summary,
-        updatedAt: cachedAt,
-        fromCache: false
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
   } catch (error) {
-    console.error('MTF Analysis error:', error);
+    console.error('MTF Analysis Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Analysis failed' }),
+      JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
