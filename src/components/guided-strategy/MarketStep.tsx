@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TrendingUp, Globe, Clock, Zap, HelpCircle, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Globe, Clock, Zap, HelpCircle, Search, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 import { POPULAR_STOCKS, searchStocks, StockSymbol } from '@/data/stockSymbols';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MarketStepProps {
   answers: Partial<GuidedStrategyAnswers>;
@@ -81,6 +82,129 @@ const timeframes = [
   { id: '1w', label: '1 Week', category: 'position' },
 ];
 
+// MTF Analysis timeframes
+const MTF_TIMEFRAMES = [
+  { id: '5m', label: '5M', category: 'micro' as const },
+  { id: '15m', label: '15M', category: 'micro' as const },
+  { id: '1h', label: '1H', category: 'micro' as const },
+  { id: '4h', label: '4H', category: 'micro' as const },
+  { id: '8h', label: '8H', category: 'micro' as const },
+  { id: '1d', label: 'D', category: 'macro' as const },
+  { id: '1w', label: 'W', category: 'macro' as const },
+  { id: '1M', label: 'M', category: 'macro' as const },
+];
+
+// Horizontal Trend Analysis Component - uses real data from edge function
+const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trends, setTrends] = useState<Array<{ id: string; label: string; trend: 'up' | 'down' | 'flat'; category: 'micro' | 'macro' }>>([]);
+
+  useEffect(() => {
+    const fetchTrends = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('analyze-mtf-trend', {
+          body: { 
+            symbol: instrument,
+            timeframes: ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M']
+          }
+        });
+
+        if (fnError) throw new Error(fnError.message);
+        if (!data?.success) throw new Error(data?.error || 'Failed to analyze');
+
+        const mapped = data.trends.map((t: any) => ({
+          id: t.timeframe,
+          label: t.label,
+          trend: t.trend,
+          category: t.category
+        }));
+        setTrends(mapped);
+      } catch (err) {
+        console.error('MTF trend error:', err);
+        setError('Unable to fetch live data');
+        setTrends([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (instrument) {
+      fetchTrends();
+    }
+  }, [instrument]);
+
+  const getTrendIcon = (trend: 'up' | 'down' | 'flat') => {
+    switch (trend) {
+      case 'up': return <TrendingUp className="w-3 h-3" />;
+      case 'down': return <TrendingDown className="w-3 h-3" />;
+      default: return <Minus className="w-3 h-3" />;
+    }
+  };
+
+  const getTrendColor = (trend: 'up' | 'down' | 'flat') => {
+    switch (trend) {
+      case 'up': return 'bg-green-500/20 text-green-600 border-green-500/50';
+      case 'down': return 'bg-red-500/20 text-red-600 border-red-500/50';
+      default: return 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50';
+    }
+  };
+
+  const upCount = trends.filter(t => t.trend === 'up').length;
+  const downCount = trends.filter(t => t.trend === 'down').length;
+  const bias = upCount > trends.length * 0.5 ? 'Bullish' : downCount > trends.length * 0.5 ? 'Bearish' : 'Mixed';
+
+  return (
+    <div className="mt-4 p-3 bg-muted/30 rounded-lg border space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Clock className="w-4 h-4 text-primary" />
+          Multi-Timeframe Trend
+          <Badge variant="outline" className="text-xs">{instrument}</Badge>
+        </div>
+        {!isLoading && trends.length > 0 && (
+          <Badge className={`text-xs ${getTrendColor(bias === 'Bullish' ? 'up' : bias === 'Bearish' ? 'down' : 'flat')}`}>
+            {bias} Bias
+          </Badge>
+        )}
+      </div>
+      
+      {isLoading ? (
+        <div className="flex gap-1">
+          {MTF_TIMEFRAMES.map(tf => (
+            <Skeleton key={tf.id} className="h-8 w-10 rounded" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" />
+          {error}
+        </div>
+      ) : trends.length > 0 ? (
+        <div className="flex gap-1 flex-wrap">
+          {trends.map(tf => (
+            <div
+              key={tf.id}
+              className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium ${getTrendColor(tf.trend)}`}
+            >
+              {getTrendIcon(tf.trend)}
+              <span>{tf.label}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-xs text-muted-foreground">No trend data available</div>
+      )}
+      
+      <p className="text-[10px] text-muted-foreground">
+        EMA 20/50 trend analysis (live data) • {bias === 'Bullish' ? 'Consider Long patterns' : bias === 'Bearish' ? 'Consider Short patterns' : 'Use caution with pattern selection'}
+      </p>
+    </div>
+  );
+};
 
 export const MarketStep: React.FC<MarketStepProps> = ({
   answers,
@@ -434,6 +558,11 @@ export const MarketStep: React.FC<MarketStepProps> = ({
               Choose the time interval that matches your trading style and availability.
             </p>
           </div>
+
+          {/* Inline Multi-Timeframe Trend Analysis */}
+          {currentAnswers.instrument && currentAnswers.timeframes?.[0] && (
+            <HorizontalTrendAnalysis instrument={currentAnswers.instrument} />
+          )}
 
         </CardContent>
       </Card>
