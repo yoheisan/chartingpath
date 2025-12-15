@@ -147,61 +147,58 @@ serve(async (req) => {
 
     const trends: TimeframeTrend[] = [];
 
-    // Process timeframes in parallel (batch of 3 to avoid rate limits)
-    for (let i = 0; i < timeframes.length; i += 3) {
-      const batch = timeframes.slice(i, i + 3);
-      const batchResults = await Promise.all(
-        batch.map(async (tf) => {
-          try {
-            const config = getTimeframeConfig(tf);
-            const prices = await fetchPricesForTimeframe(symbol, tf);
-            
-            if (prices.length < 20) {
-              console.log(`Insufficient data for ${tf}: ${prices.length} bars`);
-              return {
-                timeframe: tf,
-                label: config.label,
-                trend: 'flat' as const,
-                ema20: 0,
-                ema50: 0,
-                currentPrice: prices[prices.length - 1] || 0,
-                category: config.category
-              };
-            }
-
-            const currentPrice = prices[prices.length - 1];
-            const ema20 = calculateEMA(prices, 20);
-            const ema50 = calculateEMA(prices, Math.min(50, prices.length));
-            const trend = determineTrend(currentPrice, ema20, ema50);
-
-            console.log(`${tf}: Price=${currentPrice.toFixed(4)}, EMA20=${ema20.toFixed(4)}, EMA50=${ema50.toFixed(4)}, Trend=${trend}`);
-
-            return {
-              timeframe: tf,
-              label: config.label,
-              trend,
-              ema20,
-              ema50,
-              currentPrice,
-              category: config.category
-            };
-          } catch (err) {
-            console.error(`Error processing ${tf}:`, err);
-            const config = getTimeframeConfig(tf);
+    // Process ALL timeframes in parallel for maximum speed
+    const batchResults = await Promise.all(
+      timeframes.map(async (tf) => {
+        try {
+          const config = getTimeframeConfig(tf);
+          const prices = await fetchPricesForTimeframe(symbol, tf);
+          
+          if (prices.length < 20) {
+            console.log(`Insufficient data for ${tf}: ${prices.length} bars`);
             return {
               timeframe: tf,
               label: config.label,
               trend: 'flat' as const,
               ema20: 0,
               ema50: 0,
-              currentPrice: 0,
+              currentPrice: prices[prices.length - 1] || 0,
               category: config.category
             };
           }
-        })
-      );
-      trends.push(...batchResults);
-    }
+
+          const currentPrice = prices[prices.length - 1];
+          const ema20 = calculateEMA(prices, 20);
+          const ema50 = calculateEMA(prices, Math.min(50, prices.length));
+          const trend = determineTrend(currentPrice, ema20, ema50);
+
+          console.log(`${tf}: Price=${currentPrice.toFixed(4)}, EMA20=${ema20.toFixed(4)}, EMA50=${ema50.toFixed(4)}, Trend=${trend}`);
+
+          return {
+            timeframe: tf,
+            label: config.label,
+            trend,
+            ema20,
+            ema50,
+            currentPrice,
+            category: config.category
+          };
+        } catch (err) {
+          console.error(`Error processing ${tf}:`, err);
+          const config = getTimeframeConfig(tf);
+          return {
+            timeframe: tf,
+            label: config.label,
+            trend: 'flat' as const,
+            ema20: 0,
+            ema50: 0,
+            currentPrice: 0,
+            category: config.category
+          };
+        }
+      })
+    );
+    trends.push(...batchResults);
 
     // Calculate overall bias
     const upCount = trends.filter(t => t.trend === 'up').length;
