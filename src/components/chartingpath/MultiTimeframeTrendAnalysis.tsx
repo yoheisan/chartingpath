@@ -219,54 +219,73 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
               </div>
             ) : (
               <>
-                {/* Overall suggestion */}
-                {overallBias && (
+                {/* Error state */}
+                {error && (
+                  <div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+                    <AlertCircle className="w-3 h-3 mt-[2px]" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {/* Overall suggestion (only when we actually have trends) */}
+                {overallBias && trends.length > 0 && (
                   <div className={`text-sm font-medium ${overallBias.color} bg-muted/50 rounded-md px-3 py-2`}>
                     💡 {overallBias.suggestion}
                   </div>
                 )}
 
                 {/* Macro Trends */}
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Macro Trends (Higher Timeframes)
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {macroTrends.map((trend) => (
-                      <div
-                        key={trend.timeframe}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
-                      >
-                        <div className="flex items-center gap-1">
-                          {getTrendIcon(trend.trend)}
-                          <span className="text-xs font-semibold">{trend.label}</span>
+                {macroTrends.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                      Macro Trends (Higher Timeframes)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {macroTrends.map((trend) => (
+                        <div
+                          key={trend.timeframe}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            {getTrendIcon(trend.trend)}
+                            <span className="text-xs font-semibold">{trend.label}</span>
+                          </div>
+                          <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
                         </div>
-                        <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Micro Trends */}
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Micro Trends (Lower Timeframes)
-                  </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {microTrends.map((trend) => (
-                      <div
-                        key={trend.timeframe}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
-                      >
-                        <div className="flex items-center gap-1">
-                          {getTrendIcon(trend.trend)}
-                          <span className="text-xs font-semibold">{trend.label}</span>
+                {microTrends.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                      Micro Trends (Lower Timeframes)
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {microTrends.map((trend) => (
+                        <div
+                          key={trend.timeframe}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-md border ${getTrendColor(trend.trend)}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            {getTrendIcon(trend.trend)}
+                            <span className="text-xs font-semibold">{trend.label}</span>
+                          </div>
+                          <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
                         </div>
-                        <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* No data fallback */}
+                {!error && trends.length === 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    No trend data is cached yet for this instrument and timeframes. Try a major FX pair like EUR/USD or GBP/USD, or a popular symbol such as AAPL, SPY, or BTC/USD.
+                  </div>
+                )}
 
                 {/* EMA Legend */}
                 <div className="text-[10px] text-muted-foreground pt-1 border-t">
