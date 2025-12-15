@@ -59,35 +59,27 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
     setIsLoading(true);
     setError(null);
     
-    // Create a timeout promise (in case the edge function hangs)
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Analysis timed out. Please try again.')), 45000); // 45s safeguard
-    });
-    
     try {
-      const fetchPromise = supabase.functions.invoke('analyze-mtf-trend', {
-        body: { 
+      const { data, error: fnError } = await supabase.functions.invoke('analyze-mtf-trend', {
+        body: {
           symbol: instrument,
           timeframes: ['5m', '15m', '1h', '4h', '8h', '1d', '1w', '1M']
-        }
+        },
       });
 
-      // Race between fetch and timeout
-      const { data, error: fnError } = await Promise.race([fetchPromise, timeoutPromise]);
-
       if (fnError) {
-        throw new Error(fnError.message);
+        throw new Error(fnError.message || 'Trend analysis function error');
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Failed to analyze trends');
+        throw new Error(data?.message || data?.error || 'Failed to analyze trends');
       }
 
-      setTrends(data.trends);
+      setTrends(data.trends || []);
       setLastUpdated(new Date());
       
       if (onTrendAnalysisComplete) {
-        onTrendAnalysisComplete(data.trends);
+        onTrendAnalysisComplete(data.trends || []);
       }
 
       console.log('MTF Analysis:', data.summary);
@@ -100,7 +92,6 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     if (instrument) {
       analyzeTrends();
