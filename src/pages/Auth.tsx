@@ -41,7 +41,6 @@ const Auth = () => {
       if (user) {
         navigate(redirectPath);
       }
-      }
     };
     checkUser();
 
