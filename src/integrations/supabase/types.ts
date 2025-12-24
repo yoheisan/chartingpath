@@ -340,6 +340,7 @@ export type Database = {
           id: string
           initial_capital: number
           instrument: string
+          is_shared: boolean | null
           is_starred: boolean | null
           max_drawdown: number | null
           net_pnl: number | null
@@ -350,6 +351,7 @@ export type Database = {
           position_sizing_type: string
           profit_factor: number | null
           run_duration_seconds: number | null
+          share_token: string | null
           sharpe_ratio: number | null
           slippage: number
           sortino_ratio: number | null
@@ -389,6 +391,7 @@ export type Database = {
           id?: string
           initial_capital?: number
           instrument: string
+          is_shared?: boolean | null
           is_starred?: boolean | null
           max_drawdown?: number | null
           net_pnl?: number | null
@@ -399,6 +402,7 @@ export type Database = {
           position_sizing_type?: string
           profit_factor?: number | null
           run_duration_seconds?: number | null
+          share_token?: string | null
           sharpe_ratio?: number | null
           slippage?: number
           sortino_ratio?: number | null
@@ -438,6 +442,7 @@ export type Database = {
           id?: string
           initial_capital?: number
           instrument?: string
+          is_shared?: boolean | null
           is_starred?: boolean | null
           max_drawdown?: number | null
           net_pnl?: number | null
@@ -448,6 +453,7 @@ export type Database = {
           position_sizing_type?: string
           profit_factor?: number | null
           run_duration_seconds?: number | null
+          share_token?: string | null
           sharpe_ratio?: number | null
           slippage?: number
           sortino_ratio?: number | null
@@ -1709,6 +1715,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_props: Json | null
+          id: string
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_props?: Json | null
+          id?: string
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_props?: Json | null
+          id?: string
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
