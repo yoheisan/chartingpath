@@ -3,15 +3,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackPricingClicked } from "@/services/analytics";
 
 const Pricing = () => {
+  const [searchParams] = useSearchParams();
   const [isAnnual, setIsAnnual] = useState(false);
 
+  // Track pricing page view from paywall
+  useEffect(() => {
+    const source = searchParams.get('source');
+    if (source === 'paywall') {
+      trackPricingClicked({ source: 'paywall' });
+    }
+  }, [searchParams]);
+
   const handlePlanSelect = (planName: string) => {
+    // Track pricing clicked
+    trackPricingClicked({ source: 'plan_select', current_plan: planName.toLowerCase() });
+    
     // Analytics event
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'plan_checkout_opened', {

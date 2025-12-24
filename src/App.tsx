@@ -24,6 +24,7 @@ import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminContentManagement from "./pages/AdminContentManagement";
+import AdminKPIDashboard from "./pages/admin/AdminKPIDashboard";
 import PatternGenerator from "./pages/PatternGenerator";
 import PatternLibraryPage from "./pages/PatternLibraryPage";
 import TradingStrategiesPage from "./pages/TradingStrategiesPage";
@@ -182,6 +183,7 @@ const App = () => (
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/content" element={<AdminContentManagement />} />
+          <Route path="/admin/kpi" element={<AdminKPIDashboard />} />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
           <Route path="/admin/social-cms" element={<SocialMediaCMS />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
