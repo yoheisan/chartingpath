@@ -24,7 +24,8 @@ import {
   Download,
   Save,
   Cloud,
-  CloudOff
+  CloudOff,
+  FlaskConical
 } from 'lucide-react';
 import { MarketStep } from './guided-strategy/MarketStep';
 import { PatternLibrary } from './chartingpath/PatternLibrary';
@@ -40,6 +41,8 @@ import { PATTERN_DETAILS } from '@/utils/PatternDetails';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStrategyAutoSave } from '@/hooks/useStrategyAutoSave';
+import { RegimeAnalyticsDashboard } from './analytics/RegimeAnalyticsDashboard';
+import { useRegimeAnalytics } from '@/hooks/useRegimeAnalytics';
 
 export interface PatternRules {
   entry: string;
@@ -95,6 +98,7 @@ export const STRATEGY_STEPS = [
   { id: 'position', title: 'Position Management', description: 'Max trades & overlap prevention', icon: Settings },
   { id: 'targets', title: 'Target & Stop Loss', description: 'Set profit target % and stop loss %', icon: Target },
   { id: 'backtest', title: 'Backtest', description: 'Test pattern performance', icon: Play },
+  { id: 'analytics', title: 'Analytics', description: 'Regime-conditioned pattern analysis', icon: FlaskConical },
   { id: 'export', title: 'Export', description: 'Generate trading code', icon: Download }
 ];
 
@@ -109,6 +113,54 @@ export interface ChartingPathStrategyBuilderRef {
   getTotalStepsCount: () => number;
   getBacktestResults: () => any;
 }
+
+// Inner component for Regime Analytics section
+const RegimeAnalyticsSection: React.FC<{
+  backtestResults: any;
+  strategy: ChartingPathStrategy;
+}> = ({ backtestResults, strategy }) => {
+  const { 
+    patternScores, 
+    regimeBuckets,
+    totalTrades,
+    loadFromBacktestResult,
+    getPatternStats
+  } = useRegimeAnalytics();
+
+  // Load data when backtest results change
+  React.useEffect(() => {
+    if (backtestResults) {
+      loadFromBacktestResult(backtestResults);
+    }
+  }, [backtestResults, loadFromBacktestResult]);
+
+  // Build pattern buckets for heatmap display
+  const patternBuckets = React.useMemo(() => {
+    const buckets: Record<string, Record<string, any>> = {};
+    for (const pattern of patternScores) {
+      const stats = getPatternStats(pattern.patternId);
+      buckets[pattern.patternId] = stats.byRegime;
+    }
+    return buckets;
+  }, [patternScores, getPatternStats]);
+
+  if (totalTrades === 0) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+        <AlertTriangle className="w-4 h-4" />
+        <span>No pattern data available for analysis. Ensure your backtest generated trades.</span>
+      </div>
+    );
+  }
+
+  return (
+    <RegimeAnalyticsDashboard
+      patterns={patternScores}
+      patternBuckets={patternBuckets}
+      isLoading={false}
+    />
+  );
+};
 
 export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilderRef, ChartingPathStrategyBuilderProps>(({
   initialStrategy,
@@ -200,7 +252,9 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
         return true;
       case 6: // Backtest
         return strategy.backtestResults != null;
-      case 7: // Export
+      case 7: // Analytics
+        return strategy.backtestResults != null;
+      case 8: // Export
         return getStepCompletion(0) && getStepCompletion(1) && getStepCompletion(5);
       default:
         return false;
@@ -765,14 +819,40 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 8: Export */}
+        {/* Section 8: Analytics */}
+        <AccordionItem 
+          value="analytics" 
+          className={`border rounded-lg bg-card ${getSectionStatus('analytics') === 'locked' ? 'opacity-50' : ''}`}
+          disabled={getSectionStatus('analytics') === 'locked'}
+        >
+          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+            {renderSectionHeader(STRATEGY_STEPS[7], 7)}
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="pt-2">
+              {backtestResults ? (
+                <RegimeAnalyticsSection 
+                  backtestResults={backtestResults}
+                  strategy={strategy}
+                />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Run a backtest first to see regime-conditioned analytics</span>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Section 9: Export */}
         <AccordionItem 
           value="export" 
           className={`border rounded-lg bg-card ${getSectionStatus('export') === 'locked' ? 'opacity-50' : ''}`}
           disabled={getSectionStatus('export') === 'locked'}
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[7], 7)}
+            {renderSectionHeader(STRATEGY_STEPS[8], 8)}
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2">
