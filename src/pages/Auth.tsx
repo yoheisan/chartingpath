@@ -4,12 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Lock, User } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { trackSignupCompleted } from "@/services/analytics";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/members/trading';
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -36,7 +39,8 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        navigate("/members/trading");
+        navigate(redirectPath);
+      }
       }
     };
     checkUser();
@@ -66,10 +70,13 @@ const Auth = () => {
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
+            } else {
+              // Track signup completed event
+              trackSignupCompleted();
             }
           }
 
-          navigate("/members/trading");
+          navigate(redirectPath);
         } else if (event === 'PASSWORD_RECOVERY') {
           setIsResetPassword(true);
         }

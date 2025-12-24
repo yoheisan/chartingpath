@@ -44,6 +44,7 @@ import BacktestWorkspace from "./pages/BacktestWorkspace";
 import BacktestVault from "./pages/BacktestVault";
 import StrategyWorkspace from "./pages/StrategyWorkspace";
 import EliteDashboard from "./pages/EliteDashboard";
+import SharedBacktest from "./pages/SharedBacktest";
 import { TranslationManagement } from "./pages/TranslationManagement";
 import StockMarket from "./pages/markets/StockMarket";
 import ForexMarket from "./pages/markets/ForexMarket";
@@ -170,6 +171,7 @@ const App = () => (
           <Route path="/members/trading" element={<PaperTrading />} />
           <Route path="/vault" element={<BacktestVault />} />
           <Route path="/elite" element={<EliteDashboard />} />
+          <Route path="/share/:token" element={<SharedBacktest />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
           <Route path="/members/courses" element={<MemberCourses />} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
