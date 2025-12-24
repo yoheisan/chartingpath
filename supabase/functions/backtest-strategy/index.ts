@@ -8,6 +8,190 @@ const corsHeaders = {
 };
 
 // ============================================
+// REGIME ANALYTICS (Research-Grade)
+// ============================================
+
+type TrendRegime = 'UP' | 'DOWN' | 'FLAT';
+type VolatilityRegime = 'LOW' | 'MED' | 'HIGH';
+
+interface RegimeLabel {
+  trend: TrendRegime;
+  volatility: VolatilityRegime;
+  key: string;
+}
+
+interface RegimeConfig {
+  version: 1;
+  trend: {
+    indicator: 'SMA' | 'EMA';
+    period: number;
+    thresholdPercent: number;
+  };
+  volatility: {
+    atrPeriod: number;
+    lookbackBars: number;
+  };
+}
+
+const DEFAULT_REGIME_CONFIG: RegimeConfig = {
+  version: 1,
+  trend: { indicator: 'EMA', period: 50, thresholdPercent: 0.5 },
+  volatility: { atrPeriod: 14, lookbackBars: 100 },
+};
+
+/**
+ * Compute regime label for a specific bar (bar-close semantics)
+ */
+function computeRegimeLabelAtBar(
+  bars: Array<{ open: number; high: number; low: number; close: number }>,
+  barIndex: number,
+  config: RegimeConfig = DEFAULT_REGIME_CONFIG
+): RegimeLabel {
+  // Use only data up to and including barIndex (no lookahead)
+  const barsToUse = bars.slice(0, barIndex + 1);
+  
+  if (barsToUse.length < Math.max(config.trend.period, config.volatility.lookbackBars)) {
+    // Insufficient data - return neutral
+    return { trend: 'FLAT', volatility: 'MED', key: 'FLAT_MED' };
+  }
+  
+  const closes = barsToUse.map(b => b.close);
+  const currentClose = closes[closes.length - 1];
+  
+  // Compute trend regime
+  let ma: number;
+  if (config.trend.indicator === 'EMA') {
+    ma = calculateEMAForRegime(closes, config.trend.period);
+  } else {
+    ma = calculateSMAForRegime(closes, config.trend.period);
+  }
+  
+  const priceVsMa = ((currentClose - ma) / ma) * 100;
+  let trend: TrendRegime;
+  if (priceVsMa > config.trend.thresholdPercent) {
+    trend = 'UP';
+  } else if (priceVsMa < -config.trend.thresholdPercent) {
+    trend = 'DOWN';
+  } else {
+    trend = 'FLAT';
+  }
+  
+  // Compute volatility regime using ATR percentile
+  const atrValues = computeATRSeries(barsToUse, config.volatility.atrPeriod);
+  const lookbackAtrs = atrValues.slice(-config.volatility.lookbackBars);
+  const currentAtr = lookbackAtrs[lookbackAtrs.length - 1];
+  
+  // Sort to find percentile
+  const sortedAtrs = [...lookbackAtrs].sort((a, b) => a - b);
+  const percentileIndex = sortedAtrs.findIndex(v => v >= currentAtr);
+  const percentile = (percentileIndex / sortedAtrs.length) * 100;
+  
+  let volatility: VolatilityRegime;
+  if (percentile < 33) {
+    volatility = 'LOW';
+  } else if (percentile < 67) {
+    volatility = 'MED';
+  } else {
+    volatility = 'HIGH';
+  }
+  
+  return { trend, volatility, key: `${trend}_${volatility}` };
+}
+
+function calculateSMAForRegime(prices: number[], period: number): number {
+  if (prices.length < period) return prices[prices.length - 1];
+  return prices.slice(-period).reduce((sum, p) => sum + p, 0) / period;
+}
+
+function calculateEMAForRegime(prices: number[], period: number): number {
+  if (prices.length < period) return prices[prices.length - 1];
+  const multiplier = 2 / (period + 1);
+  let ema = prices.slice(0, period).reduce((sum, p) => sum + p, 0) / period;
+  for (let i = period; i < prices.length; i++) {
+    ema = (prices[i] - ema) * multiplier + ema;
+  }
+  return ema;
+}
+
+function computeATRSeries(
+  bars: Array<{ open: number; high: number; low: number; close: number }>,
+  period: number
+): number[] {
+  if (bars.length < 2) return [0];
+  
+  const trueRanges: number[] = [];
+  for (let i = 1; i < bars.length; i++) {
+    const highLow = bars[i].high - bars[i].low;
+    const highPrevClose = Math.abs(bars[i].high - bars[i - 1].close);
+    const lowPrevClose = Math.abs(bars[i].low - bars[i - 1].close);
+    trueRanges.push(Math.max(highLow, highPrevClose, lowPrevClose));
+  }
+  
+  // Compute running ATR
+  const atrSeries: number[] = [];
+  for (let i = 0; i < trueRanges.length; i++) {
+    if (i < period - 1) {
+      atrSeries.push(trueRanges.slice(0, i + 1).reduce((s, v) => s + v, 0) / (i + 1));
+    } else {
+      atrSeries.push(trueRanges.slice(i - period + 1, i + 1).reduce((s, v) => s + v, 0) / period);
+    }
+  }
+  
+  return atrSeries;
+}
+
+// ============================================
+// TRADE LEDGER ENTRY (Canonical Research Record)
+// ============================================
+
+interface TradeLedgerEntry {
+  id: string;
+  runId: string;
+  strategyId?: string;
+  symbol: string;
+  timeframe: string;
+  patternId: string;
+  patternName: string;
+  patternDirection: 'long' | 'short';
+  entryTime: string;
+  exitTime: string;
+  entryBarIndex: number;
+  exitBarIndex: number;
+  holdingBars: number;
+  entryPrice: number;
+  exitPrice: number;
+  stopLossPrice: number;
+  takeProfitPrice: number;
+  riskAmount: number;
+  rewardPotential: number;
+  plannedRR: number;
+  actualRMultiple: number;
+  mfe: number;
+  mae: number;
+  mfeRMultiple: number;
+  maeRMultiple: number;
+  exitReason: 'target' | 'stop-loss' | 'timeout' | 'manual';
+  pnlPercent: number;
+  pnlAbsolute: number;
+  isWin: boolean;
+  regimeAtEntry: RegimeLabel;
+  disciplineValidation: {
+    passed: boolean;
+    filtersApplied: string[];
+    rejectionReasons: string[];
+  };
+  createdAt: string;
+}
+
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// ============================================
 // DISCIPLINE FILTERS (Bloomberg-Grade)
 // ============================================
 
@@ -431,12 +615,16 @@ serve(async (req) => {
 
     console.log(`Detected ${patternSignals.length} raw pattern signals`);
 
-    // Apply discipline filters and simulate trades
-    const { trades, disciplineStats } = simulateTradesWithDiscipline(
+    // Apply discipline filters and simulate trades (with regime analytics)
+    const runId = generateUUID();
+    const { trades, tradeLedger, disciplineStats } = simulateTradesWithDiscipline(
       processedData,
       patternSignals,
       strategy,
-      disciplineFilters
+      disciplineFilters,
+      runId,
+      instrument,
+      timeframe
     );
 
     console.log(`After discipline filtering: ${trades.length} trades from ${patternSignals.length} signals`);
@@ -453,12 +641,18 @@ serve(async (req) => {
     });
 
     // ============================================
+    // REGIME-CONDITIONED ANALYTICS
+    // ============================================
+    const regimeAnalytics = computeRegimeAnalytics(tradeLedger);
+
+    // ============================================
     // CACHE THE RESULT
     // ============================================
     const resultToCache = {
       ...performanceMetrics,
       rawSignals: patternSignals.length,
-      disciplineStats
+      disciplineStats,
+      regimeAnalytics: regimeAnalytics.summary
     };
 
     // Cache in background (don't await)
@@ -487,10 +681,13 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       cached: false,
+      runId,
       results: resultToCache,
       trades,
+      tradeLedger: tradeLedger.slice(0, 500), // Limit for payload size
       dataPoints: historicalData.length,
-      disciplineStats
+      disciplineStats,
+      regimeAnalytics
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -1044,16 +1241,26 @@ function calculateTrend(data: number[]): number {
 }
 
 // ============================================
-// TRADE SIMULATION WITH DISCIPLINE
+// TRADE SIMULATION WITH DISCIPLINE + LEDGER
 // ============================================
+
+interface SimulationResult {
+  trades: any[];
+  tradeLedger: TradeLedgerEntry[];
+  disciplineStats: DisciplineStats;
+}
 
 function simulateTradesWithDiscipline(
   data: any[],
   signals: any[],
   strategy: any,
-  filters: DisciplineFilters
-): { trades: any[]; disciplineStats: DisciplineStats } {
+  filters: DisciplineFilters,
+  runId: string = generateUUID(),
+  symbol: string = 'UNKNOWN',
+  timeframe: string = '1D'
+): SimulationResult {
   const trades: any[] = [];
+  const tradeLedger: TradeLedgerEntry[] = [];
   const openPositions: any[] = [];
   let balance = 10000;
   let lastTradeExitBar: number | null = null;
@@ -1092,8 +1299,28 @@ function simulateTradesWithDiscipline(
     
     const entryPrice = data[entryIndex].close;
     const positionSize = balance * (strategy.positionSizing?.riskPerTrade || 2) / 100;
-    const targetPercent = signal.targetPercent;
-    const stopPercent = signal.stopPercent;
+    const targetPercent = signal.targetPercent || 3;
+    const stopPercent = signal.stopPercent || 1.5;
+    
+    // Calculate absolute stop and target prices
+    const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag']
+      .some(p => signal.patternId?.includes(p) || signal.patternName?.toLowerCase().includes(p));
+    const patternDirection: 'long' | 'short' = isBullishPattern ? 'long' : 'short';
+    
+    const stopLossPrice = patternDirection === 'long' 
+      ? entryPrice * (1 - stopPercent / 100)
+      : entryPrice * (1 + stopPercent / 100);
+    const takeProfitPrice = patternDirection === 'long'
+      ? entryPrice * (1 + targetPercent / 100)
+      : entryPrice * (1 - targetPercent / 100);
+    
+    // Risk and reward in absolute terms
+    const riskAmount = Math.abs(entryPrice - stopLossPrice);
+    const rewardPotential = Math.abs(takeProfitPrice - entryPrice);
+    const plannedRR = riskAmount > 0 ? rewardPotential / riskAmount : 0;
+    
+    // Compute regime at entry (bar-close semantics - no lookahead)
+    const regimeAtEntry = computeRegimeLabelAtBar(data, entryIndex);
     
     // Add to tracking
     activePatternTypes.add(signal.patternId);
@@ -1101,7 +1328,11 @@ function simulateTradesWithDiscipline(
     
     let exitIndex = entryIndex + 1;
     let exitPrice = data[exitIndex].close;
-    let exitReason = 'timeout';
+    let exitReason: 'target' | 'stop-loss' | 'timeout' = 'timeout';
+    
+    // Track MFE (Max Favorable Excursion) and MAE (Max Adverse Excursion)
+    let mfe = 0; // Best unrealized profit
+    let mae = 0; // Worst unrealized loss
     
     // Calculate max bars to hold based on timeframe (fewer bars for intraday)
     const maxHoldingBars = Math.min(100, data.length - entryIndex - 1);
@@ -1111,10 +1342,25 @@ function simulateTradesWithDiscipline(
     for (let i = entryIndex + 1; i < entryIndex + maxHoldingBars; i++) {
       if (i >= data.length) break;
       
-      const currentPrice = data[i].close;
-      const priceChange = (currentPrice - entryPrice) / entryPrice * 100;
+      const bar = data[i];
       
-      // Check stop loss first (negative change exceeds stop threshold)
+      // Track excursions using high/low for intrabar movement
+      const highExcursion = patternDirection === 'long' 
+        ? (bar.high - entryPrice) / entryPrice * 100
+        : (entryPrice - bar.low) / entryPrice * 100;
+      const lowExcursion = patternDirection === 'long'
+        ? (bar.low - entryPrice) / entryPrice * 100
+        : (entryPrice - bar.high) / entryPrice * 100;
+      
+      mfe = Math.max(mfe, highExcursion);
+      mae = Math.min(mae, lowExcursion);
+      
+      const currentPrice = bar.close;
+      const priceChange = patternDirection === 'long'
+        ? (currentPrice - entryPrice) / entryPrice * 100
+        : (entryPrice - currentPrice) / entryPrice * 100;
+      
+      // Check stop loss first (adverse move exceeds stop threshold)
       if (priceChange <= -stopPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
@@ -1123,7 +1369,7 @@ function simulateTradesWithDiscipline(
         break;
       }
       
-      // Check target (positive change exceeds target threshold)
+      // Check target (favorable move exceeds target threshold)
       if (priceChange >= targetPercent) {
         exitIndex = i;
         exitPrice = currentPrice;
@@ -1145,9 +1391,18 @@ function simulateTradesWithDiscipline(
     const posIndex = openPositions.findIndex(p => p.entryIndex === entryIndex);
     if (posIndex >= 0) openPositions.splice(posIndex, 1);
     
-    const pnl = ((exitPrice - entryPrice) / entryPrice) * positionSize;
-    balance += pnl;
+    // Calculate PnL
+    const pnlPercent = patternDirection === 'long'
+      ? ((exitPrice - entryPrice) / entryPrice) * 100
+      : ((entryPrice - exitPrice) / entryPrice) * 100;
+    const pnlAbsolute = (pnlPercent / 100) * positionSize;
+    const actualRMultiple = riskAmount > 0 ? (pnlPercent / 100 * entryPrice) / riskAmount : 0;
+    const mfeRMultiple = riskAmount > 0 ? (mfe / 100 * entryPrice) / riskAmount : 0;
+    const maeRMultiple = riskAmount > 0 ? (mae / 100 * entryPrice) / riskAmount : 0;
     
+    balance += pnlAbsolute;
+    
+    // Legacy trade format (for backward compatibility)
     trades.push({
       patternName: signal.patternName,
       entryDate: data[entryIndex].date,
@@ -1155,12 +1410,56 @@ function simulateTradesWithDiscipline(
       exitDate: data[exitIndex].date,
       exitPrice,
       exitReason,
-      pnl,
-      pnlPercent: ((exitPrice - entryPrice) / entryPrice) * 100,
+      pnl: pnlAbsolute,
+      pnlPercent,
       holdingBars: exitIndex - entryIndex,
       targetPercent,
       stopPercent,
-      disciplineApproved: true
+      disciplineApproved: true,
+      regimeAtEntry: regimeAtEntry.key,
+      actualRMultiple,
+      mfe,
+      mae
+    });
+    
+    // Full TradeLedgerEntry (research-grade)
+    tradeLedger.push({
+      id: generateUUID(),
+      runId,
+      strategyId: strategy.id,
+      symbol,
+      timeframe,
+      patternId: signal.patternId || 'unknown',
+      patternName: signal.patternName,
+      patternDirection,
+      entryTime: data[entryIndex].date,
+      exitTime: data[exitIndex].date,
+      entryBarIndex: entryIndex,
+      exitBarIndex: exitIndex,
+      holdingBars: exitIndex - entryIndex,
+      entryPrice,
+      exitPrice,
+      stopLossPrice,
+      takeProfitPrice,
+      riskAmount,
+      rewardPotential,
+      plannedRR,
+      actualRMultiple,
+      mfe,
+      mae,
+      mfeRMultiple,
+      maeRMultiple,
+      exitReason,
+      pnlPercent,
+      pnlAbsolute,
+      isWin: pnlPercent > 0,
+      regimeAtEntry,
+      disciplineValidation: {
+        passed: true,
+        filtersApplied: Object.keys(filters).filter(k => (filters as any)[k] === true),
+        rejectionReasons: []
+      },
+      createdAt: new Date().toISOString()
     });
   }
   
@@ -1168,7 +1467,7 @@ function simulateTradesWithDiscipline(
     ? (disciplineStats.rejectedTrades / disciplineStats.totalSignals) * 100
     : 0;
 
-  return { trades, disciplineStats };
+  return { trades, tradeLedger, disciplineStats };
 }
 
 // ============================================
@@ -1249,4 +1548,170 @@ function getPatternBreakdown(trades: any[]): any {
     breakdown[trade.patternName].totalPnl += trade.pnl;
   }
   return breakdown;
+}
+
+// ============================================
+// REGIME-CONDITIONED ANALYTICS ENGINE
+// ============================================
+
+interface RegimeBucketStats {
+  regimeKey: string;
+  n: number;
+  winRate: number;
+  avgRMultiple: number;
+  medianRMultiple: number;
+  stdDevRMultiple: number;
+  avgMAE: number;
+  avgMFE: number;
+}
+
+interface RegimeAnalyticsResult {
+  summary: {
+    totalTrades: number;
+    regimeCoverage: Record<string, number>;
+    baselineAvgR: number;
+    baselineWinRate: number;
+  };
+  byRegime: Record<string, RegimeBucketStats>;
+  byPattern: Record<string, {
+    patternId: string;
+    baseline: RegimeBucketStats;
+    regimes: Record<string, RegimeBucketStats>;
+  }>;
+}
+
+function computeRegimeAnalytics(tradeLedger: TradeLedgerEntry[]): RegimeAnalyticsResult {
+  if (tradeLedger.length === 0) {
+    return {
+      summary: {
+        totalTrades: 0,
+        regimeCoverage: {},
+        baselineAvgR: 0,
+        baselineWinRate: 0
+      },
+      byRegime: {},
+      byPattern: {}
+    };
+  }
+
+  // Compute baseline stats
+  const allRMultiples = tradeLedger.map(t => t.actualRMultiple);
+  const baselineAvgR = allRMultiples.reduce((a, b) => a + b, 0) / allRMultiples.length;
+  const baselineWinRate = tradeLedger.filter(t => t.isWin).length / tradeLedger.length;
+
+  // Group by regime
+  const byRegime: Record<string, TradeLedgerEntry[]> = {};
+  for (const trade of tradeLedger) {
+    const key = trade.regimeAtEntry.key;
+    if (!byRegime[key]) byRegime[key] = [];
+    byRegime[key].push(trade);
+  }
+
+  // Compute regime bucket stats
+  const regimeCoverage: Record<string, number> = {};
+  const regimeStats: Record<string, RegimeBucketStats> = {};
+  
+  for (const [regimeKey, trades] of Object.entries(byRegime)) {
+    regimeCoverage[regimeKey] = trades.length;
+    regimeStats[regimeKey] = computeBucketStats(regimeKey, trades);
+  }
+
+  // Group by pattern
+  const byPatternTrades: Record<string, TradeLedgerEntry[]> = {};
+  for (const trade of tradeLedger) {
+    const pid = trade.patternId;
+    if (!byPatternTrades[pid]) byPatternTrades[pid] = [];
+    byPatternTrades[pid].push(trade);
+  }
+
+  // Compute pattern-level analytics with regime conditioning
+  const byPattern: Record<string, {
+    patternId: string;
+    baseline: RegimeBucketStats;
+    regimes: Record<string, RegimeBucketStats>;
+  }> = {};
+
+  for (const [patternId, trades] of Object.entries(byPatternTrades)) {
+    // Pattern baseline
+    const patternBaseline = computeBucketStats(`${patternId}_baseline`, trades);
+    
+    // Pattern by regime
+    const patternByRegime: Record<string, TradeLedgerEntry[]> = {};
+    for (const trade of trades) {
+      const key = trade.regimeAtEntry.key;
+      if (!patternByRegime[key]) patternByRegime[key] = [];
+      patternByRegime[key].push(trade);
+    }
+    
+    const patternRegimeStats: Record<string, RegimeBucketStats> = {};
+    for (const [regimeKey, regimeTrades] of Object.entries(patternByRegime)) {
+      patternRegimeStats[regimeKey] = computeBucketStats(`${patternId}_${regimeKey}`, regimeTrades);
+    }
+    
+    byPattern[patternId] = {
+      patternId,
+      baseline: patternBaseline,
+      regimes: patternRegimeStats
+    };
+  }
+
+  return {
+    summary: {
+      totalTrades: tradeLedger.length,
+      regimeCoverage,
+      baselineAvgR,
+      baselineWinRate
+    },
+    byRegime: regimeStats,
+    byPattern
+  };
+}
+
+function computeBucketStats(bucketKey: string, trades: TradeLedgerEntry[]): RegimeBucketStats {
+  if (trades.length === 0) {
+    return {
+      regimeKey: bucketKey,
+      n: 0,
+      winRate: 0,
+      avgRMultiple: 0,
+      medianRMultiple: 0,
+      stdDevRMultiple: 0,
+      avgMAE: 0,
+      avgMFE: 0
+    };
+  }
+
+  const rMultiples = trades.map(t => t.actualRMultiple);
+  const n = trades.length;
+  
+  // Win rate
+  const winRate = trades.filter(t => t.isWin).length / n;
+  
+  // Average R-multiple
+  const avgRMultiple = rMultiples.reduce((a, b) => a + b, 0) / n;
+  
+  // Median R-multiple
+  const sortedR = [...rMultiples].sort((a, b) => a - b);
+  const medianRMultiple = n % 2 === 0
+    ? (sortedR[n / 2 - 1] + sortedR[n / 2]) / 2
+    : sortedR[Math.floor(n / 2)];
+  
+  // Standard deviation
+  const variance = rMultiples.reduce((sum, r) => sum + Math.pow(r - avgRMultiple, 2), 0) / n;
+  const stdDevRMultiple = Math.sqrt(variance);
+  
+  // Average MAE/MFE
+  const avgMAE = trades.reduce((sum, t) => sum + t.mae, 0) / n;
+  const avgMFE = trades.reduce((sum, t) => sum + t.mfe, 0) / n;
+
+  return {
+    regimeKey: bucketKey,
+    n,
+    winRate: Number(winRate.toFixed(4)),
+    avgRMultiple: Number(avgRMultiple.toFixed(4)),
+    medianRMultiple: Number(medianRMultiple.toFixed(4)),
+    stdDevRMultiple: Number(stdDevRMultiple.toFixed(4)),
+    avgMAE: Number(avgMAE.toFixed(4)),
+    avgMFE: Number(avgMFE.toFixed(4))
+  };
 }
