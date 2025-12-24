@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.analyze-mtf-trend]
 verify_jwt = false
+
+[functions.create-alert]
+verify_jwt = true

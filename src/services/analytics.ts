@@ -45,6 +45,7 @@ export interface ShareCreatedProps {
   symbol: string;
   pattern: string;
   timeframe: string;
+  backtest_id?: string;
 }
 
 type EventProps = 
@@ -55,33 +56,64 @@ type EventProps =
   | ShareCreatedProps
   | Record<string, unknown>;
 
-// Generate or get session ID
+// Generate or get session ID - singleton pattern to prevent duplicates
+let cachedSessionId: string | null = null;
+
 const getSessionId = (): string => {
+  if (cachedSessionId) {
+    return cachedSessionId;
+  }
+  
   let sessionId = sessionStorage.getItem('analytics_session_id');
   if (!sessionId) {
     sessionId = crypto.randomUUID();
     sessionStorage.setItem('analytics_session_id', sessionId);
   }
+  cachedSessionId = sessionId;
   return sessionId;
+};
+
+// Track which events have been fired to prevent duplicates
+const firedEvents = new Set<string>();
+
+const getEventKey = (eventName: AnalyticsEvent, props: EventProps): string => {
+  // For events that should only fire once per session
+  if (eventName === 'signup_completed') {
+    return `${eventName}`;
+  }
+  // For events that should fire once per unique combination
+  const propsKey = JSON.stringify(props);
+  return `${eventName}_${propsKey}`;
 };
 
 /**
  * Track an analytics event
  * @param eventName - One of the 6 key events
  * @param props - Event-specific properties
+ * @param allowDuplicate - Whether to allow duplicate events (default false for signup)
  */
 export const track = async (
   eventName: AnalyticsEvent,
-  props: EventProps = {}
+  props: EventProps = {},
+  allowDuplicate: boolean = true
 ): Promise<void> => {
   try {
+    // Prevent duplicate signup_completed events
+    if (eventName === 'signup_completed' && !allowDuplicate) {
+      const eventKey = getEventKey(eventName, props);
+      if (firedEvents.has(eventKey)) {
+        console.log(`[Analytics] Skipping duplicate: ${eventName}`);
+        return;
+      }
+      firedEvents.add(eventKey);
+    }
+
     // Get current user (may be null for anonymous)
     const { data: { user } } = await supabase.auth.getUser();
     
     const sessionId = getSessionId();
     
-    // Use raw SQL via rpc or direct insert with type bypass
-    // Since product_events table was just created, types may not be regenerated yet
+    // Insert into product_events table
     const { error } = await supabase
       .from('product_events' as any)
       .insert({
@@ -103,8 +135,9 @@ export const track = async (
   }
 };
 
-// Convenience functions for each event type
-export const trackSignupCompleted = () => track('signup_completed', {});
+// Convenience functions for each event type with proper typing
+
+export const trackSignupCompleted = () => track('signup_completed', {}, false);
 
 export const trackPresetLoaded = (props: PresetLoadedProps) => 
   track('preset_loaded', props);
