@@ -10,7 +10,9 @@ export type AnalyticsEvent =
   | 'backtest_started'
   | 'backtest_completed'
   | 'alert_created'
-  | 'share_created';
+  | 'share_created'
+  | 'paywall_shown'
+  | 'pricing_clicked';
 
 // Event properties types
 export interface PresetLoadedProps {
@@ -48,12 +50,25 @@ export interface ShareCreatedProps {
   backtest_id?: string;
 }
 
+export interface PaywallShownProps {
+  context: string;
+  current_plan?: string;
+  limit_type?: string;
+}
+
+export interface PricingClickedProps {
+  source: string;
+  current_plan?: string;
+}
+
 type EventProps = 
   | PresetLoadedProps 
   | BacktestStartedProps 
   | BacktestCompletedProps 
   | AlertCreatedProps 
   | ShareCreatedProps
+  | PaywallShownProps
+  | PricingClickedProps
   | Record<string, unknown>;
 
 // Generate or get session ID - singleton pattern to prevent duplicates
@@ -153,3 +168,9 @@ export const trackAlertCreated = (props: AlertCreatedProps) =>
 
 export const trackShareCreated = (props: ShareCreatedProps) => 
   track('share_created', props);
+
+export const trackPaywallShown = (props: PaywallShownProps) =>
+  track('paywall_shown', props);
+
+export const trackPricingClicked = (props: PricingClickedProps) =>
+  track('pricing_clicked', props);

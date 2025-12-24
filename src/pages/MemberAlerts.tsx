@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock } from "lucide-react";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
-import { trackAlertCreated } from "@/services/analytics";
+import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 
 interface UserProfile {
   subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
@@ -197,6 +197,13 @@ const MemberAlerts = () => {
       const result = response.data;
 
       if (result.code === 'ALERT_LIMIT') {
+        // Track paywall shown
+        trackPaywallShown({
+          context: 'alerts_limit',
+          current_plan: profile?.subscription_plan || 'free',
+          limit_type: 'alert_creation'
+        });
+        
         toast({
           title: "Alert Limit Reached",
           description: `You've reached your ${result.max} alert limit. Upgrade to create more alerts.`,
@@ -264,6 +271,13 @@ const MemberAlerts = () => {
 
         const result = response.data;
         if (result.code === 'ALERT_LIMIT') {
+          // Track paywall shown
+          trackPaywallShown({
+            context: 'alerts_limit',
+            current_plan: profile?.subscription_plan || 'free',
+            limit_type: 'alert_enable'
+          });
+          
           toast({
             title: "Alert Limit Reached",
             description: `You've reached your ${result.max} alert limit. Upgrade or pause another alert first.`,
