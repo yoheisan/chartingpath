@@ -251,45 +251,63 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
               </div>
             ) : (
               <>
-                {/* Error state */}
+                {/* Error state - show helpful message for missing data */}
                 {error && (
-                  <div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
-                    <AlertCircle className="w-3 h-3 mt-[2px]" />
-                    <span>{error}</span>
+                  <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                    <AlertCircle className="w-3 h-3 mt-[2px] flex-shrink-0" />
+                    <div className="space-y-1">
+                      <span>MTF analysis unavailable: {error.includes('No cached data') || error.includes('No data available') 
+                        ? 'Historical data not yet cached for this symbol.' 
+                        : error}
+                      </span>
+                      <p className="text-muted-foreground">
+                        Try popular pairs like EUR/USD, GBP/USD, or symbols like AAPL, SPY, BTCUSD.
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Overall suggestion (only when we actually have trends) */}
-                {overallBias && trends.length > 0 && (
-                  <div className={`text-sm font-medium ${overallBias.color} bg-muted/50 rounded-md px-3 py-2`}>
-                    💡 {overallBias.suggestion}
-                  </div>
+                {/* Only show trends UI when we have data and no error */}
+                {!error && trends.length > 0 && (
+                  <>
+                    {/* Overall suggestion */}
+                    {overallBias && (
+                      <div className={`text-sm font-medium ${overallBias.color} bg-muted/50 rounded-md px-3 py-2`}>
+                        💡 {overallBias.suggestion}
+                      </div>
+                    )}
+
+                    {/* Macro Trends */}
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Macro Trends (Higher Timeframes)
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {macroTimeframes.map(renderTimeframeCard)}
+                      </div>
+                    </div>
+
+                    {/* Micro Trends */}
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Micro Trends (Lower Timeframes)
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {microTimeframes.map(renderTimeframeCard)}
+                      </div>
+                    </div>
+
+                    {/* EMA Legend */}
+                    <div className="text-[10px] text-muted-foreground pt-1 border-t">
+                      Trend calculated using EMA 20/50 crossover: Price above both EMAs = Bullish, below both = Bearish, between = Sideways
+                    </div>
+                  </>
                 )}
 
-                {/* Macro Trends */}
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Macro Trends (Higher Timeframes)
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {macroTimeframes.map(renderTimeframeCard)}
-                  </div>
-                </div>
-
-                {/* Micro Trends */}
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Micro Trends (Lower Timeframes)
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {microTimeframes.map(renderTimeframeCard)}
-                  </div>
-                </div>
-
-                {/* No data fallback */}
+                {/* No data fallback - only when no error and no trends */}
                 {!error && trends.length === 0 && (
                   <div className="text-xs text-muted-foreground">
-                    No trend data is cached yet for this instrument and timeframes. Try a major FX pair like EUR/USD or GBP/USD, or a popular symbol such as AAPL, SPY, or BTC/USD.
+                    No trend data cached for this instrument. Try EUR/USD, GBP/USD, AAPL, SPY, or BTC/USD.
                   </div>
                 )}
 
