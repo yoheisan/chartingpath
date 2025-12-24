@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Bell } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,9 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartingPathManager } from './ChartingPathManager';
+import { CryptoPresetPanel } from './CryptoPresetPanel';
+import { wedgeConfig, getFullSymbol } from '@/config/wedge';
+import { useNavigate } from 'react-router-dom';
 
 interface SavedStrategy {
   id: string;
@@ -42,15 +45,22 @@ interface SavedChartingPathStrategy {
 
 export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ initialTab = 'builder' }) => {
   const { user, subscriptionPlan } = useUserProfile();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [currentStrategy, setCurrentStrategy] = useState<SavedStrategy | null>(null);
   const [currentChartingPathStrategy, setCurrentChartingPathStrategy] = useState<ChartingPathStrategy | null>(null);
+  
+  // Default to crypto 1H in wedge mode
+  const defaultInstrumentCategory = wedgeConfig.wedgeEnabled ? wedgeConfig.defaultInstrumentCategory : 'stocks';
+  const defaultInstrument = wedgeConfig.wedgeEnabled ? getFullSymbol(wedgeConfig.featuredSymbols[0]) : 'AAPL';
+  const defaultTimeframe = wedgeConfig.wedgeEnabled ? wedgeConfig.wedgeTimeframe : '1h';
+  
   const [strategyAnswers, setStrategyAnswers] = useState<GuidedStrategyAnswers>({
     market: { 
-      instrumentCategory: 'stocks',
-      instrument: 'AAPL',
-      timeframes: ['1h'],
-      tradingHours: 'london-ny'
+      instrumentCategory: defaultInstrumentCategory,
+      instrument: defaultInstrument,
+      timeframes: [defaultTimeframe],
+      tradingHours: 'round-the-clock'
     },
     risk: { 
       maxDrawdown: 10,
@@ -434,6 +444,33 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     toast.success(`Loaded strategy: ${strategy.name}`);
   };
 
+  // Handle preset load from CryptoPresetPanel
+  const handlePresetLoad = (preset: { symbol: string; pattern: string; timeframe: string }) => {
+    const strategy = builderRef.current?.getStrategy();
+    if (strategy && builderRef.current) {
+      const updatedStrategy = {
+        ...strategy,
+        market: {
+          ...strategy.market,
+          instrumentCategory: 'crypto' as const,
+          instrument: preset.symbol,
+          timeframes: [preset.timeframe],
+        },
+      };
+      builderRef.current.setStrategy(updatedStrategy);
+      toast.success(`Loaded preset: ${preset.symbol} ${preset.timeframe} ${preset.pattern}`);
+    }
+  };
+
+  // Handle create alert after backtest
+  const handleCreateAlert = () => {
+    if (!user) {
+      navigate('/auth?redirect=/members/alerts');
+      return;
+    }
+    navigate('/members/alerts');
+  };
+
   // Strategy menu handlers
   const handleSaveFromMenu = () => {
     const strategy = builderRef.current?.getStrategy();
@@ -596,7 +633,26 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
       {/* Scrollable Content - with padding to account for fixed header */}
       <div className="pt-40">
-        <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6">
+        <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6 space-y-6">
+          {/* Crypto Preset Panel (Wedge Mode) */}
+          {wedgeConfig.wedgeEnabled && (
+            <CryptoPresetPanel onPresetLoad={handlePresetLoad} />
+          )}
+
+          {/* Create Alert CTA after backtest */}
+          {backtestResults && wedgeConfig.wedgeEnabled && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="font-medium">Backtest complete! Ready to trade this playbook?</p>
+                <p className="text-sm text-muted-foreground">Create an alert to get notified when conditions are met.</p>
+              </div>
+              <Button onClick={handleCreateAlert} className="gap-2">
+                <Bell className="h-4 w-4" />
+                Create Alert for this Playbook
+              </Button>
+            </div>
+          )}
+
           <ChartingPathStrategyBuilder
             ref={builderRef}
             initialStrategy={currentChartingPathStrategy}

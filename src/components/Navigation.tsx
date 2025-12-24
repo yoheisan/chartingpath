@@ -1,18 +1,163 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { TrendingUp, BarChart3, BookOpen, Brain, Calculator, Shield, ChevronDown, DollarSign, Globe, Zap, Fuel, Calendar } from "lucide-react";
+import { TrendingUp, Bell, Code, BookOpen, ChevronDown, MoreHorizontal, DollarSign } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
-import { prefetchMarketReport } from "@/utils/marketReportPrefetch";
+import { wedgeConfig } from "@/config/wedge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const { t } = useTranslation();
+  
+  // Wedge mode: simplified crypto-focused navigation
+  if (wedgeConfig.wedgeEnabled) {
+    return (
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-6 py-4 max-w-6xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
+                <img 
+                  src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
+                  alt="ChartingPath Logo" 
+                  className="h-6 w-6 object-contain brightness-0 invert"
+                />
+              </div>
+              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                ChartingPath
+              </Link>
+            </div>
+            
+            <nav className="hidden md:flex items-center gap-6">
+              {/* Primary: Strategy Workspace (Crypto 1H) */}
+              <Link 
+                to="/strategy-workspace" 
+                className="flex items-center gap-1.5 text-foreground font-medium hover:text-primary transition-colors"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Playbooks
+              </Link>
+              
+              {/* Alerts */}
+              <Link 
+                to="/members/alerts" 
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                Alerts
+              </Link>
+              
+              {/* Scripts */}
+              <Link 
+                to="/members/scripts" 
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Code className="h-4 w-4" />
+                Scripts
+              </Link>
+              
+              {/* Learn (collapsed) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                  <BookOpen className="h-4 w-4" />
+                  Learn
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/library" className="flex items-center gap-2">
+                      Pattern Library
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/learn" className="flex items-center gap-2">
+                      Blog & Articles
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Pricing */}
+              <Link 
+                to="/pricing" 
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <DollarSign className="h-4 w-4" />
+                {t('navigation.pricing', 'Pricing')}
+              </Link>
+              
+              {/* More (everything else) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                  <MoreHorizontal className="h-4 w-4" />
+                  More
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/forge">MultiScript Converter</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/pip-calculator">Pip Calculator</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/risk-calculator">Risk Calculator</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/market-breadth">Market Breadth Report</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools/economic-calendar">Economic Calendar</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/paper-trading">Paper Trading</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/quiz">Quizzes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/markets/stocks">Stock Market</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/markets/forex">Forex (FX)</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/markets/crypto">Cryptocurrency</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/markets/commodities">Commodities</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/faq">FAQ</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about">About</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <AuthButton />
+            </nav>
+
+            <div className="md:hidden flex items-center gap-2">
+              <AuthButton />
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+  
+  // Original full navigation (when wedge mode is disabled)
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
       <div className="container mx-auto px-6 py-4 max-w-6xl">
@@ -38,44 +183,22 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link to="/strategy-workspace" className="flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    Strategy Workspace
-                  </Link>
+                  <Link to="/strategy-workspace">Strategy Workspace</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/forge" className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    MultiScript Converter
-                  </Link>
+                  <Link to="/forge">MultiScript Converter</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/tools/pip-calculator" className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
-                    {t('navigation.pipCalculator', 'Pip Calculator')}
-                  </Link>
+                  <Link to="/tools/pip-calculator">Pip Calculator</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/tools/risk-calculator" className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    {t('navigation.riskCalculator', 'Risk Calculator')}
-                  </Link>
+                  <Link to="/tools/risk-calculator">Risk Calculator</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link 
-                    to="/tools/market-breadth" 
-                    className="flex items-center gap-2"
-                    onMouseEnter={() => prefetchMarketReport()}
-                  >
-                    <TrendingUp className="h-4 w-4" />
-                    {t('navigation.marketBreadth', 'Market Breadth Report')}
-                  </Link>
+                  <Link to="/tools/market-breadth">Market Breadth Report</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/tools/economic-calendar" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Economic Calendar
-                  </Link>
+                  <Link to="/tools/economic-calendar">Economic Calendar</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -86,34 +209,19 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link to="/learn" className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    Learning Center
-                  </Link>
+                  <Link to="/learn">Learning Center</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/generator" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    {t('navigation.patternGenerator', 'Pattern Generator')}
-                  </Link>
+                  <Link to="/chart-patterns/generator">Pattern Generator</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/library" className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    {t('navigation.patternLibrary', 'Pattern Library')}
-                  </Link>
+                  <Link to="/chart-patterns/library">Pattern Library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/strategies" className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    {t('navigation.tradingStrategies', 'Trading Strategies')}
-                  </Link>
+                  <Link to="/chart-patterns/strategies">Trading Strategies</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    {t('navigation.patternQuiz', 'Pattern Quiz')}
-                  </Link>
+                  <Link to="/chart-patterns/quiz">Pattern Quiz</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -124,28 +232,16 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-background z-50">
                 <DropdownMenuItem asChild>
-                  <Link to="/markets/stocks" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Stock Market
-                  </Link>
+                  <Link to="/markets/stocks">Stock Market</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/markets/forex" className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    Forex (FX)
-                  </Link>
+                  <Link to="/markets/forex">Forex (FX)</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/markets/crypto" className="flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Cryptocurrency
-                  </Link>
+                  <Link to="/markets/crypto">Cryptocurrency</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/markets/commodities" className="flex items-center gap-2">
-                    <Fuel className="h-4 w-4" />
-                    Commodities
-                  </Link>
+                  <Link to="/markets/commodities">Commodities</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

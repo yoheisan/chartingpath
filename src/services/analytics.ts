@@ -80,15 +80,16 @@ export const track = async (
     
     const sessionId = getSessionId();
     
-    // Insert event into product_events table
+    // Use raw SQL via rpc or direct insert with type bypass
+    // Since product_events table was just created, types may not be regenerated yet
     const { error } = await supabase
-      .from('product_events')
+      .from('product_events' as any)
       .insert({
         user_id: user?.id || null,
         session_id: sessionId,
         event_name: eventName,
         event_props: props,
-      });
+      } as any);
     
     if (error) {
       // Silent fail - don't break UX for analytics
