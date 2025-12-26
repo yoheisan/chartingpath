@@ -1,9 +1,79 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { wedgeConfig } from "@/config/wedge";
 
 const Footer = () => {
   const { t } = useTranslation();
+  const isWedgeMode = wedgeConfig.wedgeEnabled;
   
+  // Wedge mode: minimal footer with only core links
+  if (isWedgeMode) {
+    return (
+      <footer className="border-t bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+            {/* Logo and Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
+                  <img 
+                    src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
+                    alt="ChartingPath Logo" 
+                    className="h-6 w-6 object-contain brightness-0 invert"
+                  />
+                </div>
+                <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  ChartingPath
+                </Link>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Crypto chart pattern alerts for TradingView traders
+              </p>
+            </div>
+
+            {/* Core Links */}
+            <div>
+              <h3 className="font-semibold mb-4 text-foreground">Product</h3>
+              <nav className="flex flex-col gap-2">
+                <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Playbooks
+                </Link>
+                <Link to="/members/alerts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Alerts
+                </Link>
+                <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Scripts
+                </Link>
+                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {t('navigation.pricing', 'Pricing')}
+                </Link>
+              </nav>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h3 className="font-semibold mb-4 text-foreground">Company</h3>
+              <nav className="flex flex-col gap-2">
+                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  About
+                </Link>
+                <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+              </nav>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="pt-6 border-t text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} ChartingPath. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    );
+  }
+  
+  // Full footer for non-wedge mode
   return (
     <footer className="border-t bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto px-6 py-12 max-w-6xl">

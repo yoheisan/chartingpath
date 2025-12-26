@@ -23,6 +23,7 @@ import {
 import { ChartingPathStrategyBuilder, ChartingPathStrategy, ChartingPathStrategyBuilderRef } from './ChartingPathStrategyBuilder';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartingPathManager } from './ChartingPathManager';
 import { CryptoPresetPanel } from './CryptoPresetPanel';
@@ -462,8 +463,23 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     }
   };
 
-  // Handle create alert after backtest
+  // Handle create alert after backtest - save playbook context before navigating
   const handleCreateAlert = () => {
+    // Get current strategy from builder ref
+    const strategy = builderRef.current?.getStrategy();
+    
+    // Build playbook context to prefill alerts
+    const playbookContext = {
+      symbol: strategy?.market?.instrument || '',
+      pattern: strategy?.patterns?.find((p: any) => p.enabled)?.name || '',
+      timeframe: strategy?.market?.timeframes?.[0] || '1h',
+      instrumentCategory: strategy?.market?.instrumentCategory || 'crypto',
+    };
+    
+    // Save context before redirect (works for both logged-in and logged-out users)
+    savePlaybookContextStatic(playbookContext);
+    console.log('[StrategyWorkspace] Saved playbook context:', playbookContext);
+    
     if (!user) {
       navigate('/auth?redirect=/members/alerts');
       return;
