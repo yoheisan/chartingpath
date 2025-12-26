@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TrendingUp, TrendingDown, Minus, Globe, Clock, Zap, HelpCircle, Search, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Globe, Clock, Zap, HelpCircle, Search, RefreshCw, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 import { POPULAR_STOCKS, searchStocks, StockSymbol } from '@/data/stockSymbols';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { wedgeConfig, getFullSymbol } from '@/config/wedge';
 
 interface MarketStepProps {
   answers: Partial<GuidedStrategyAnswers>;
@@ -211,18 +212,43 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   onAnswersChange,
   subscriptionPlan
 }) => {
+  // Wedge-mode: force crypto and 1H
+  const isWedgeMode = wedgeConfig.wedgeEnabled;
+  const wedgeDefaultInstrument = getFullSymbol(wedgeConfig.featuredSymbols[0]);
+  const wedgeDefaultTimeframe = wedgeConfig.wedgeTimeframe;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedInstrumentType, setSelectedInstrumentType] = useState<'stocks' | 'forex' | 'crypto' | 'indices'>('stocks');
+  const [selectedInstrumentType, setSelectedInstrumentType] = useState<'stocks' | 'forex' | 'crypto' | 'indices'>(
+    isWedgeMode ? 'crypto' : 'stocks'
+  );
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   
   const currentAnswers = answers.market || {
-    instrumentCategory: 'stocks',
-    instrument: 'AAPL',
-    timeframes: ['1h'],
-    tradingHours: 'london-ny'
+    instrumentCategory: isWedgeMode ? 'crypto' : 'stocks',
+    instrument: isWedgeMode ? wedgeDefaultInstrument : 'AAPL',
+    timeframes: [isWedgeMode ? wedgeDefaultTimeframe : '1h'],
+    tradingHours: isWedgeMode ? 'round-the-clock' : 'london-ny'
   };
+
+  // Guard: in wedge mode, always enforce crypto + 1H
+  useEffect(() => {
+    if (isWedgeMode) {
+      // Force crypto category if somehow changed
+      if (selectedInstrumentType !== 'crypto') {
+        setSelectedInstrumentType('crypto');
+      }
+      // Enforce 1H timeframe if somehow changed
+      if (currentAnswers.timeframes?.[0] !== wedgeDefaultTimeframe) {
+        onAnswersChange('market', {
+          ...currentAnswers,
+          instrumentCategory: 'crypto',
+          timeframes: [wedgeDefaultTimeframe]
+        });
+      }
+    }
+  }, [isWedgeMode, selectedInstrumentType, currentAnswers.timeframes]);
 
   // Search and filter stocks
   const filteredStocks = useMemo(() => {
@@ -324,6 +350,9 @@ export const MarketStep: React.FC<MarketStepProps> = ({
   }, [searchQuery, selectedInstrumentType]);
 
   const handleTimeframeChange = (value: string) => {
+    // In wedge mode, ignore timeframe changes (locked to 1H)
+    if (isWedgeMode) return;
+    
     onAnswersChange('market', {
       ...currentAnswers,
       timeframes: [value]
@@ -394,41 +423,52 @@ export const MarketStep: React.FC<MarketStepProps> = ({
           {/* Filter Pills & Results - Only show when search is open */}
           {isSearchOpen && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-              {/* Filter Pills */}
-              <div className="flex gap-2 flex-wrap pb-2 border-b border-border/50">
-                <Button
-                  variant={selectedInstrumentType === 'stocks' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleInstrumentTypeChange('stocks')}
-                  className="rounded-full h-8 px-4 text-xs"
-                >
-                  Stocks
-                </Button>
-                <Button
-                  variant={selectedInstrumentType === 'forex' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleInstrumentTypeChange('forex')}
-                  className="rounded-full h-8 px-4 text-xs"
-                >
-                  Forex
-                </Button>
-                <Button
-                  variant={selectedInstrumentType === 'crypto' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleInstrumentTypeChange('crypto')}
-                  className="rounded-full h-8 px-4 text-xs"
-                >
-                  Crypto
-                </Button>
-                <Button
-                  variant={selectedInstrumentType === 'indices' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleInstrumentTypeChange('indices')}
-                  className="rounded-full h-8 px-4 text-xs"
-                >
-                  Indices
-                </Button>
-              </div>
+              {/* Filter Pills - Hidden in wedge mode (crypto-only) */}
+              {!isWedgeMode && (
+                <div className="flex gap-2 flex-wrap pb-2 border-b border-border/50">
+                  <Button
+                    variant={selectedInstrumentType === 'stocks' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleInstrumentTypeChange('stocks')}
+                    className="rounded-full h-8 px-4 text-xs"
+                  >
+                    Stocks
+                  </Button>
+                  <Button
+                    variant={selectedInstrumentType === 'forex' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleInstrumentTypeChange('forex')}
+                    className="rounded-full h-8 px-4 text-xs"
+                  >
+                    Forex
+                  </Button>
+                  <Button
+                    variant={selectedInstrumentType === 'crypto' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleInstrumentTypeChange('crypto')}
+                    className="rounded-full h-8 px-4 text-xs"
+                  >
+                    Crypto
+                  </Button>
+                  <Button
+                    variant={selectedInstrumentType === 'indices' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleInstrumentTypeChange('indices')}
+                    className="rounded-full h-8 px-4 text-xs"
+                  >
+                    Indices
+                  </Button>
+                </div>
+              )}
+              {isWedgeMode && (
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <Zap className="w-3 h-3" />
+                    Crypto Only
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Select from popular cryptocurrencies</span>
+                </div>
+              )}
 
               {/* Results List */}
               <div className="space-y-2">
@@ -520,42 +560,59 @@ export const MarketStep: React.FC<MarketStepProps> = ({
             <Label htmlFor="timeframe-select" className="text-base font-medium">
               Select Your Trading Timeframe
             </Label>
-            <Select 
-              value={currentAnswers.timeframes?.[0] || ""} 
-              onValueChange={handleTimeframeChange}
-            >
-              <SelectTrigger 
-                id="timeframe-select" 
-                className="w-full bg-background border-input hover:bg-accent/50 focus:ring-2 focus:ring-ring focus:border-ring"
+            {isWedgeMode ? (
+              /* Wedge mode: locked to 1H */
+              <div className="flex items-center gap-3 p-3 bg-muted/50 border-2 border-primary/30 rounded-lg">
+                <Lock className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">1 Hour</span>
+                  <Badge variant="secondary" className="text-xs">Locked</Badge>
+                </div>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  Optimized for crypto intraday trading
+                </span>
+              </div>
+            ) : (
+              <Select 
+                value={currentAnswers.timeframes?.[0] || ""} 
+                onValueChange={handleTimeframeChange}
               >
-                <SelectValue placeholder="Choose a timeframe for your strategy" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover border-border shadow-lg">
-                {['scalping', 'intraday', 'swing', 'position'].map((category) => (
-                  <div key={category}>
-                    <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {category} Trading
+                <SelectTrigger 
+                  id="timeframe-select" 
+                  className="w-full bg-background border-input hover:bg-accent/50 focus:ring-2 focus:ring-ring focus:border-ring"
+                >
+                  <SelectValue placeholder="Choose a timeframe for your strategy" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-popover border-border shadow-lg">
+                  {['scalping', 'intraday', 'swing', 'position'].map((category) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {category} Trading
+                      </div>
+                      {timeframes
+                        .filter(tf => tf.category === category)
+                        .map((timeframe) => (
+                          <SelectItem 
+                            key={timeframe.id} 
+                            value={timeframe.id}
+                            className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              {timeframe.label}
+                            </div>
+                          </SelectItem>
+                        ))}
                     </div>
-                    {timeframes
-                      .filter(tf => tf.category === category)
-                      .map((timeframe) => (
-                        <SelectItem 
-                          key={timeframe.id} 
-                          value={timeframe.id}
-                          className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            {timeframe.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <p className="text-sm text-muted-foreground">
-              Choose the time interval that matches your trading style and availability.
+              {isWedgeMode 
+                ? 'The 1H timeframe is optimized for the crypto alerts workflow.'
+                : 'Choose the time interval that matches your trading style and availability.'}
             </p>
           </div>
 

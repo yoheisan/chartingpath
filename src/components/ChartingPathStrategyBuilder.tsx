@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { wedgeConfig, getFullSymbol } from '@/config/wedge';
 import {
   TrendingUp,
   TrendingDown,
@@ -170,6 +171,11 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   backtestProgress = 0,
   backtestPhase = ''
 }, ref) => {
+  // Wedge-mode defaults
+  const defaultInstrumentCategory = wedgeConfig.wedgeEnabled ? 'crypto' : 'stocks';
+  const defaultInstrument = wedgeConfig.wedgeEnabled ? getFullSymbol(wedgeConfig.featuredSymbols[0]) : '';
+  const defaultTimeframe = wedgeConfig.wedgeEnabled ? wedgeConfig.wedgeTimeframe : '1H';
+
   const [strategy, setStrategy] = useState<ChartingPathStrategy>(
     initialStrategy || {
       name: 'New Chart Pattern Strategy',
@@ -179,10 +185,10 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
       targetGainPercent: 0,
       stopLossPercent: 0,
       market: {
-        instrumentCategory: 'stocks',
-        instrument: '',
-        timeframes: ['1H'],
-        tradingHours: 'london-ny'
+        instrumentCategory: defaultInstrumentCategory,
+        instrument: defaultInstrument,
+        timeframes: [defaultTimeframe],
+        tradingHours: wedgeConfig.wedgeEnabled ? 'round-the-clock' : 'london-ny'
       },
       positionSizing: {
         method: 'risk_based',
@@ -476,10 +482,12 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <div className="pt-2 space-y-4">
-              {/* Multi-Timeframe Trend Analysis */}
-              <MultiTimeframeTrendAnalysis
-                instrument={strategy.market?.instrument || ''}
-              />
+              {/* Multi-Timeframe Trend Analysis - Hidden in wedge mode due to data mismatch */}
+              {!wedgeConfig.wedgeEnabled && (
+                <MultiTimeframeTrendAnalysis
+                  instrument={strategy.market?.instrument || ''}
+                />
+              )}
               
               <PatternLibrary
                 patterns={strategy.patterns}
