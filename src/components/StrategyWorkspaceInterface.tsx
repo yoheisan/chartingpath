@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -878,6 +879,31 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
                 <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Load Strategy...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={async () => {
+                  try {
+                    toast.info('Capturing screenshot...');
+                    const element = document.body;
+                    const canvas = await html2canvas(element, {
+                      useCORS: true,
+                      allowTaint: true,
+                      scrollY: -window.scrollY,
+                      windowHeight: document.documentElement.scrollHeight,
+                      height: document.documentElement.scrollHeight,
+                    });
+                    const link = document.createElement('a');
+                    link.download = `strategy-workspace-${new Date().toISOString().slice(0, 10)}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    toast.success('Screenshot downloaded!');
+                  } catch (err) {
+                    console.error('Screenshot failed:', err);
+                    toast.error('Failed to capture screenshot');
+                  }
+                }}>
+                  <Camera className="w-4 h-4 mr-2" />
+                  Export as Image
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
