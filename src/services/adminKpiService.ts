@@ -1,5 +1,6 @@
 // Admin KPI Service - Queries Supabase for wedge strategy metrics
 import { supabase } from '@/integrations/supabase/client';
+import { SUPPORTED_WEDGE_PATTERN_IDS } from '@/config/wedge';
 
 export type TimeWindow = '7d' | '30d' | '90d';
 
@@ -70,6 +71,13 @@ export interface WedgePurityMetrics {
   violations: { instrumentCategory: string; timeframe: string; count: number }[];
 }
 
+export interface WedgePatternPurityMetrics {
+  totalBacktests: number;
+  pureBacktests: number;
+  purityRate: number;
+  violations: { patterns: string[]; count: number }[];
+}
+
 export interface TimeToStepMetrics {
   presetToBacktest: number | null;
   backtestToAlert: number | null;
@@ -125,6 +133,7 @@ export interface KPIData {
   monetization: MonetizationMetrics;
   dataQuality: DataQualityMetrics;
   wedgePurity: WedgePurityMetrics;
+  wedgePatternPurity: WedgePatternPurityMetrics;
   timeToStep: TimeToStepMetrics;
   northStar: NorthStarMetrics;
   revenueIntent: RevenueIntentMetrics;
@@ -557,6 +566,59 @@ async function fetchWedgePurityMetrics(days: number): Promise<WedgePurityMetrics
   };
 }
 
+// Fetch wedge pattern purity metrics - % of backtests where enabled_patterns ⊆ SUPPORTED_WEDGE_PATTERN_IDS
+async function fetchWedgePatternPurityMetrics(days: number): Promise<WedgePatternPurityMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, event_props')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['backtest_started', 'backtest_completed']);
+
+  const totalBacktests = events?.length || 0;
+  const violationCounts: Record<string, number> = {};
+  let pureBacktests = 0;
+
+  for (const event of events || []) {
+    const props = event.event_props as Record<string, unknown> | null;
+    if (props) {
+      // Get enabled patterns from event props
+      const enabledPatterns = (props.enabledPatterns as string[]) || 
+                              (props.enabled_patterns as string[]) ||
+                              (props.patterns as string[]) ||
+                              [];
+      
+      // Check if all enabled patterns are in the supported set
+      const unsupportedPatterns = enabledPatterns.filter(p => !SUPPORTED_WEDGE_PATTERN_IDS.has(p));
+      
+      if (unsupportedPatterns.length === 0 && enabledPatterns.length > 0) {
+        pureBacktests++;
+      } else if (unsupportedPatterns.length > 0) {
+        const key = unsupportedPatterns.sort().join(',');
+        violationCounts[key] = (violationCounts[key] || 0) + 1;
+      }
+    }
+  }
+
+  const violations = Object.entries(violationCounts)
+    .map(([key, count]) => ({
+      patterns: key.split(','),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  return {
+    totalBacktests,
+    pureBacktests,
+    purityRate: totalBacktests > 0 ? (pureBacktests / totalBacktests) * 100 : 100,
+    violations,
+  };
+}
+
 // Fetch time-to-step metrics (median time between funnel steps)
 async function fetchTimeToStepMetrics(days: number): Promise<TimeToStepMetrics> {
   const cutoff = new Date();
@@ -927,7 +989,7 @@ async function fetchStripeConversionMetrics(days: number): Promise<StripeConvers
 export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
   const days = getIntervalDays(window);
 
-  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion] = await Promise.all([
+  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion] = await Promise.all([
     fetchFunnelMetrics(days),
     fetchActivationMetrics(days),
     fetchRetentionMetrics(days),
@@ -936,6 +998,7 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     fetchMonetizationMetrics(days),
     checkDataQuality(),
     fetchWedgePurityMetrics(days),
+    fetchWedgePatternPurityMetrics(days),
     fetchTimeToStepMetrics(days),
     fetchNorthStarMetrics(days),
     fetchRevenueIntentMetrics(days),
@@ -954,6 +1017,7 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     monetization,
     dataQuality,
     wedgePurity,
+    wedgePatternPurity,
     timeToStep,
     northStar,
     revenueIntent,
