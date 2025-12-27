@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,14 @@ import {
   AlertCircle,
   ArrowRight,
   Share2,
-  ExternalLink
+  ExternalLink,
+  Bell,
+  Play
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { openTradingView } from "@/utils/tradingViewLinks";
+import { track } from "@/services/analytics";
+import { savePlaybookContextStatic } from "@/hooks/usePlaybookContext";
 
 interface SharedBacktestData {
   id: string;
@@ -37,10 +41,12 @@ interface SharedBacktestData {
   initial_capital?: number;
   engine_version?: string;
   created_at: string;
+  parameters?: any;
 }
 
 const SharedBacktest = () => {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const [backtest, setBacktest] = useState<SharedBacktestData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +79,8 @@ const SharedBacktest = () => {
             avg_loss,
             initial_capital,
             engine_version,
-            created_at
+            created_at,
+            parameters
           `)
           .eq('share_token', token)
           .eq('is_shared', true)
@@ -87,6 +94,13 @@ const SharedBacktest = () => {
         }
 
         setBacktest(data);
+        
+        // Track shared backtest viewed
+        track('shared_backtest_viewed', {
+          share_token: token,
+          instrument: data.instrument,
+          timeframe: data.timeframe,
+        });
       } catch (err) {
         console.error('Error fetching shared backtest:', err);
         setError("Failed to load backtest data");
@@ -107,6 +121,62 @@ const SharedBacktest = () => {
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
+  };
+
+  // Handle "Run this playbook" - navigate to workspace with preset loaded
+  const handleRunPlaybook = () => {
+    if (!backtest) return;
+    
+    track('shared_backtest_run_clicked', {
+      share_token: token,
+      instrument: backtest.instrument,
+      timeframe: backtest.timeframe,
+    });
+
+    // Save context for auto-loading
+    sessionStorage.setItem('shared_backtest_preset', JSON.stringify({
+      symbol: backtest.instrument,
+      timeframe: backtest.timeframe,
+      pattern: backtest.strategy_name,
+      fromDate: backtest.from_date,
+      toDate: backtest.to_date,
+      autoRun: true,
+    }));
+
+    navigate('/strategy-workspace');
+  };
+
+  // Handle "Create this alert" - save context and navigate
+  const handleCreateAlert = async () => {
+    if (!backtest) return;
+    
+    track('shared_backtest_alert_clicked', {
+      share_token: token,
+      instrument: backtest.instrument,
+      timeframe: backtest.timeframe,
+    });
+
+    // Save playbook context for prefilling alert form
+    const playbookContext = {
+      symbol: backtest.instrument,
+      pattern: backtest.strategy_name,
+      timeframe: backtest.timeframe,
+      instrumentCategory: 'crypto',
+      fromShare: true,
+      shareToken: token,
+    };
+    
+    savePlaybookContextStatic(playbookContext);
+    
+    // Check if user is logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate('/auth?redirect=/members/alerts&fromShare=true');
+      return;
+    }
+    
+    navigate('/members/alerts');
   };
 
   if (loading) {
@@ -206,6 +276,34 @@ const SharedBacktest = () => {
           </Card>
         </div>
 
+        {/* Primary CTAs - Conversion focused */}
+        <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Want to trade this strategy?
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={handleRunPlaybook}
+                size="lg"
+                className="gap-2 flex-1 max-w-xs"
+              >
+                <Play className="h-4 w-4" />
+                Run This Playbook
+              </Button>
+              <Button 
+                onClick={handleCreateAlert}
+                variant="outline"
+                size="lg"
+                className="gap-2 flex-1 max-w-xs"
+              >
+                <Bell className="h-4 w-4" />
+                Create This Alert
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Additional Metrics */}
         <Card className="mb-8">
           <CardHeader>
@@ -262,13 +360,10 @@ const SharedBacktest = () => {
 
         <Separator className="my-8" />
 
-        {/* CTA */}
+        {/* Secondary CTAs */}
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">
-            Want to try this strategy yourself?
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Create your own backtests and set up alerts for crypto patterns on ChartingPath.
+          <p className="text-muted-foreground mb-4">
+            Or analyze the chart yourself:
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -279,17 +374,6 @@ const SharedBacktest = () => {
             >
               <ExternalLink className="h-4 w-4" />
               Open {backtest.instrument} in TradingView
-            </Button>
-            <Button asChild size="lg">
-              <Link to="/strategy-workspace">
-                Try This Playbook
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" asChild size="lg">
-              <Link to="/members/alerts">
-                Create Alerts
-              </Link>
             </Button>
           </div>
         </div>

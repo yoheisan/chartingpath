@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Bell, Share2, ExternalLink, Copy, Check } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,7 @@ import { wedgeConfig, getFullSymbol } from '@/config/wedge';
 import { useNavigate } from 'react-router-dom';
 import { openTradingView } from '@/utils/tradingViewLinks';
 import { trackShareCreated, trackTradingViewOpened, track } from '@/services/analytics';
+import { BacktestResultSummary } from './BacktestResultSummary';
 
 interface SavedStrategy {
   id: string;
@@ -777,30 +778,30 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             />
           )}
 
-          {/* Create Alert + TradingView CTAs after backtest */}
+          {/* Result Summary with CTAs after backtest */}
           {backtestResults && wedgeConfig.wedgeEnabled && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <p className="font-medium">Backtest complete! Ready to trade this playbook?</p>
-                  <p className="text-sm text-muted-foreground">Create an alert or open in TradingView to analyze further.</p>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button onClick={handleOpenTradingView} variant="outline" className="gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Open in TradingView
-                  </Button>
-                  <Button onClick={handleShareBacktest} variant="outline" className="gap-2" disabled={isSharing}>
-                    {linkCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                    {linkCopied ? 'Link Copied!' : 'Share Backtest'}
-                  </Button>
-                  <Button onClick={handleCreateAlert} className="gap-2">
-                    <Bell className="h-4 w-4" />
-                    Create Alert
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <BacktestResultSummary
+              results={{
+                totalTrades: backtestResults.totalTrades || 0,
+                winRate: backtestResults.winRate || 0,
+                profitFactor: backtestResults.profitFactor || 0,
+                maxDrawdown: backtestResults.maxDrawdown || 0,
+                expectancy: backtestResults.expectancy,
+                avgReturn: backtestResults.avgReturnPerTrade,
+                totalReturn: backtestResults.totalReturn,
+                sharpeRatio: backtestResults.sharpeRatio,
+                regimeBest: backtestResults.regimeBest,
+                regimeWorst: backtestResults.regimeWorst,
+              }}
+              symbol={builderRef.current?.getStrategy()?.market?.instrument || 'BTCUSDT'}
+              timeframe={builderRef.current?.getStrategy()?.market?.timeframes?.[0] || '1h'}
+              pattern={builderRef.current?.getStrategy()?.patterns?.find((p: any) => p.enabled)?.name || 'Breakout'}
+              onCreateAlert={handleCreateAlert}
+              onOpenTradingView={handleOpenTradingView}
+              onShareBacktest={handleShareBacktest}
+              isSharing={isSharing}
+              linkCopied={linkCopied}
+            />
           )}
 
           <ChartingPathStrategyBuilder

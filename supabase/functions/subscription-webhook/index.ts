@@ -109,6 +109,25 @@ serve(async (req) => {
               });
 
             logStep("Billing event recorded");
+
+            // Record paid_started analytics event (server-side, webhook-truthful)
+            const sessionId = `webhook_${session.id}`;
+            await supabaseAdmin
+              .from('product_events')
+              .insert({
+                user_id: userId,
+                session_id: sessionId,
+                event_name: 'paid_started',
+                event_props: {
+                  plan: newPlan,
+                  billing_cycle: billingCycle,
+                  amount_cents: session.amount_total || 0,
+                  stripe_session_id: session.id,
+                  source: 'stripe_webhook',
+                },
+              });
+
+            logStep("paid_started analytics event recorded", { userId, plan: newPlan });
           }
         }
         break;
