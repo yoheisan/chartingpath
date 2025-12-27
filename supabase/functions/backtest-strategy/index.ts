@@ -790,8 +790,20 @@ async function fetchHistoricalData(
   if (category === 'forex') {
     yahooSymbol = symbol.replace('/', '') + '=X';
   } else if (category === 'crypto') {
-    yahooSymbol = symbol.replace('/', '-');
+    // Transform crypto symbols to Yahoo Finance format (e.g., BTCUSDT -> BTC-USD, ETHUSDT -> ETH-USD)
+    // Handle various input formats: BTCUSDT, BTC/USD, BTC, BTC-USD
+    if (symbol.endsWith('USDT')) {
+      yahooSymbol = symbol.replace('USDT', '-USD');
+    } else if (symbol.includes('/')) {
+      yahooSymbol = symbol.replace('/', '-');
+    } else if (!symbol.includes('-') && !symbol.includes('USD')) {
+      // Bare symbol like BTC -> BTC-USD
+      yahooSymbol = `${symbol}-USD`;
+    }
+    // If already in correct format (BTC-USD), leave as is
   }
+
+  console.log(`[SYMBOL TRANSFORM] Original: ${symbol}, Yahoo: ${yahooSymbol}, Category: ${category}`);
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`;
   console.log(`Fetching Yahoo Finance: ${url}`);
