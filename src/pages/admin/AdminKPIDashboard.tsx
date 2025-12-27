@@ -695,6 +695,7 @@ const AdminKPIDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
 
         {/* Data Quality Panel */}
         <Card>
