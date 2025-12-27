@@ -25,7 +25,8 @@ export type AnalyticsEvent =
   | 'shared_backtest_run_clicked'
   | 'shared_backtest_alert_clicked'
   | 'shared_backtest_converted'
-  | 'paid_started';
+  | 'paid_started'
+  | 'pattern_validation_failed';
 
 // Event properties types
 export interface PresetLoadedProps {
