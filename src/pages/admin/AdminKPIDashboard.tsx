@@ -224,52 +224,6 @@ const AdminKPIDashboard = () => {
           </Card>
         </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">D1 Retention</p>
-                  <p className="text-3xl font-bold">{retention.d1Retention.toFixed(1)}%</p>
-                  <p className="text-sm text-muted-foreground">
-                    {retention.usersActiveMultipleDays} multi-day users
-                  </p>
-                </div>
-                <Users className="h-8 w-8 text-blue-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Alerts Created</p>
-                  <p className="text-3xl font-bold">{usage.totalAlerts}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {usage.activeAlerts} active
-                  </p>
-                </div>
-                <Bell className="h-8 w-8 text-amber-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Paywall Shown</p>
-                  <p className="text-3xl font-bold">{monetization.paywallShown}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {monetization.conversions} conversions
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Funnel + Activation */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Funnel Table */}
