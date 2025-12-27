@@ -100,6 +100,20 @@ export interface CohortRow {
   d7ReturnRate: number;
 }
 
+// Validated Traders: users with alert_created AND alerts_log trigger within 7 days
+export interface ValidatedTradersMetrics {
+  validatedTraders: number;
+  validatedVsActivated: number; // percentage of activated traders who became validated
+  medianTimeToFirstTriggerHours: number | null;
+}
+
+// Stripe conversion metrics
+export interface StripeConversionMetrics {
+  checkoutStarted: number;
+  checkoutCompleted: number;
+  conversionRate: number;
+}
+
 export interface KPIData {
   funnel: FunnelMetrics;
   activation: ActivationMetrics;
@@ -114,6 +128,8 @@ export interface KPIData {
   northStar: NorthStarMetrics;
   revenueIntent: RevenueIntentMetrics;
   cohorts: CohortRow[];
+  validatedTraders: ValidatedTradersMetrics;
+  stripeConversion: StripeConversionMetrics;
   lastRefreshed: string;
 }
 
@@ -783,11 +799,129 @@ async function fetchCohortMetrics(days: number): Promise<CohortRow[]> {
     }));
 }
 
+// Fetch Validated Traders: users who created alerts AND had a trigger within 7 days
+async function fetchValidatedTradersMetrics(days: number): Promise<ValidatedTradersMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  // Get users who created alerts
+  const { data: alertCreatedEvents } = await supabase
+    .from('product_events')
+    .select('user_id, created_at')
+    .eq('event_name', 'alert_created')
+    .gte('created_at', cutoffISO)
+    .not('user_id', 'is', null);
+
+  if (!alertCreatedEvents || alertCreatedEvents.length === 0) {
+    return { validatedTraders: 0, validatedVsActivated: 0, medianTimeToFirstTriggerHours: null };
+  }
+
+  // Get alerts with their user_ids
+  const { data: alerts } = await supabase
+    .from('alerts')
+    .select('id, user_id, created_at')
+    .gte('created_at', cutoffISO);
+
+  // Get triggered alerts
+  const { data: alertsLog } = await supabase
+    .from('alerts_log')
+    .select('alert_id, triggered_at')
+    .not('triggered_at', 'is', null);
+
+  if (!alerts || !alertsLog) {
+    return { validatedTraders: 0, validatedVsActivated: 0, medianTimeToFirstTriggerHours: null };
+  }
+
+  // Map alert_id to user_id
+  const alertUserMap: Record<string, string> = {};
+  const alertCreatedMap: Record<string, Date> = {};
+  for (const alert of alerts) {
+    alertUserMap[alert.id] = alert.user_id;
+    alertCreatedMap[alert.id] = new Date(alert.created_at);
+  }
+
+  // Track users who got triggers and time to first trigger
+  const usersWithTriggers = new Set<string>();
+  const userTimeToTrigger: Record<string, number> = {};
+
+  for (const log of alertsLog) {
+    const userId = alertUserMap[log.alert_id];
+    const alertCreated = alertCreatedMap[log.alert_id];
+    if (!userId || !alertCreated || !log.triggered_at) continue;
+
+    const triggered = new Date(log.triggered_at);
+    const daysDiff = (triggered.getTime() - alertCreated.getTime()) / (1000 * 60 * 60 * 24);
+    
+    // Within 7 days
+    if (daysDiff <= 7 && daysDiff >= 0) {
+      usersWithTriggers.add(userId);
+      const hoursDiff = daysDiff * 24;
+      if (!userTimeToTrigger[userId] || hoursDiff < userTimeToTrigger[userId]) {
+        userTimeToTrigger[userId] = hoursDiff;
+      }
+    }
+  }
+
+  const validatedTraders = usersWithTriggers.size;
+  const alertCreators = new Set(alertCreatedEvents.map(e => e.user_id)).size;
+
+  // Calculate median time to first trigger
+  const times = Object.values(userTimeToTrigger);
+  const median = (arr: number[]) => {
+    if (arr.length === 0) return null;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+
+  return {
+    validatedTraders,
+    validatedVsActivated: alertCreators > 0 ? (validatedTraders / alertCreators) * 100 : 0,
+    medianTimeToFirstTriggerHours: median(times),
+  };
+}
+
+// Fetch Stripe conversion metrics
+async function fetchStripeConversionMetrics(days: number): Promise<StripeConversionMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, user_id, session_id')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['checkout_started', 'checkout_completed']);
+
+  if (!events || events.length === 0) {
+    return { checkoutStarted: 0, checkoutCompleted: 0, conversionRate: 0 };
+  }
+
+  const startedSessions = new Set<string>();
+  const completedSessions = new Set<string>();
+
+  for (const event of events) {
+    const key = event.user_id || event.session_id || 'unknown';
+    if (event.event_name === 'checkout_started') startedSessions.add(key);
+    if (event.event_name === 'checkout_completed') completedSessions.add(key);
+  }
+
+  const checkoutStarted = startedSessions.size;
+  const checkoutCompleted = completedSessions.size;
+
+  return {
+    checkoutStarted,
+    checkoutCompleted,
+    conversionRate: checkoutStarted > 0 ? (checkoutCompleted / checkoutStarted) * 100 : 0,
+  };
+}
+
 // Main fetch function
 export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
   const days = getIntervalDays(window);
 
-  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts] = await Promise.all([
+  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion] = await Promise.all([
     fetchFunnelMetrics(days),
     fetchActivationMetrics(days),
     fetchRetentionMetrics(days),
@@ -800,6 +934,8 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     fetchNorthStarMetrics(days),
     fetchRevenueIntentMetrics(days),
     fetchCohortMetrics(days),
+    fetchValidatedTradersMetrics(days),
+    fetchStripeConversionMetrics(days),
   ]);
 
   return {
@@ -816,6 +952,8 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     northStar,
     revenueIntent,
     cohorts,
+    validatedTraders,
+    stripeConversion,
     lastRefreshed: new Date().toISOString(),
   };
 }

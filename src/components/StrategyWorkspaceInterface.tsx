@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Bell } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Bell, Share2, ExternalLink, Copy, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,8 @@ import { ChartingPathManager } from './ChartingPathManager';
 import { CryptoPresetPanel } from './CryptoPresetPanel';
 import { wedgeConfig, getFullSymbol } from '@/config/wedge';
 import { useNavigate } from 'react-router-dom';
+import { openTradingView } from '@/utils/tradingViewLinks';
+import { trackShareCreated, trackTradingViewOpened, track } from '@/services/analytics';
 
 interface SavedStrategy {
   id: string;
@@ -497,8 +499,94 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     }
   };
 
+  // State for share link
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // Handle share backtest
+  const handleShareBacktest = async () => {
+    if (!user || !backtestResults) {
+      toast.error('Please run a backtest first');
+      return;
+    }
+
+    setIsSharing(true);
+    try {
+      const strategy = builderRef.current?.getStrategy();
+      const newToken = crypto.randomUUID();
+      
+      // Insert or update backtest_runs with share info
+      const { error } = await supabase
+        .from('backtest_runs')
+        .insert({
+          user_id: user.id,
+          strategy_name: strategy?.name || 'Pattern Strategy',
+          instrument: strategy?.market?.instrument || '',
+          timeframe: strategy?.market?.timeframes?.[0] || '1h',
+          from_date: strategy?.backtestPeriod?.startDate || new Date().toISOString(),
+          to_date: strategy?.backtestPeriod?.endDate || new Date().toISOString(),
+          win_rate: backtestResults.winRate,
+          profit_factor: backtestResults.profitFactor,
+          net_pnl: backtestResults.totalReturn,
+          max_drawdown: backtestResults.maxDrawdown,
+          sharpe_ratio: backtestResults.sharpeRatio,
+          total_trades: backtestResults.totalTrades,
+          avg_win: backtestResults.avgWin,
+          avg_loss: backtestResults.avgLoss,
+          is_shared: true,
+          share_token: newToken,
+        });
+
+      if (error) throw error;
+
+      setShareToken(newToken);
+      
+      // Copy to clipboard
+      const shareUrl = `${window.location.origin}/share/${newToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+      
+      // Track analytics
+      trackShareCreated({
+        symbol: strategy?.market?.instrument || '',
+        pattern: strategy?.patterns?.find((p: any) => p.enabled)?.name || '',
+        timeframe: strategy?.market?.timeframes?.[0] || '1h',
+      });
+      
+      toast.success('Share link copied to clipboard!');
+    } catch (error) {
+      console.error('Error sharing backtest:', error);
+      toast.error('Failed to create share link');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // Handle open in TradingView
+  const handleOpenTradingView = () => {
+    const strategy = builderRef.current?.getStrategy();
+    const symbol = strategy?.market?.instrument || 'BTCUSDT';
+    const instrumentCategory = (strategy?.market?.instrumentCategory || 'crypto') as 'crypto' | 'stocks' | 'forex' | 'commodities';
+    const timeframe = strategy?.market?.timeframes?.[0] || '1h';
+    
+    trackTradingViewOpened({ symbol, context: 'backtest' });
+    openTradingView(symbol, instrumentCategory, timeframe);
+  };
+    
+    trackTradingViewOpened({ symbol, context: 'backtest' });
+    openTradingView(symbol, instrumentCategory, timeframe);
+  };
+
   // Handle create alert after backtest - save playbook context before navigating
   const handleCreateAlert = () => {
+    // Track create alert clicked
+    track('create_alert_clicked', {
+      source: 'backtest_results',
+      symbol: builderRef.current?.getStrategy()?.market?.instrument,
+    });
+    
     // Get current strategy from builder ref
     const strategy = builderRef.current?.getStrategy();
     
@@ -693,17 +781,29 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             />
           )}
 
-          {/* Create Alert CTA after backtest */}
+          {/* Create Alert + TradingView CTAs after backtest */}
           {backtestResults && wedgeConfig.wedgeEnabled && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium">Backtest complete! Ready to trade this playbook?</p>
-                <p className="text-sm text-muted-foreground">Create an alert to get notified when conditions are met.</p>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <p className="font-medium">Backtest complete! Ready to trade this playbook?</p>
+                  <p className="text-sm text-muted-foreground">Create an alert or open in TradingView to analyze further.</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button onClick={handleOpenTradingView} variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Open in TradingView
+                  </Button>
+                  <Button onClick={handleShareBacktest} variant="outline" className="gap-2" disabled={isSharing}>
+                    {linkCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    {linkCopied ? 'Link Copied!' : 'Share Backtest'}
+                  </Button>
+                  <Button onClick={handleCreateAlert} className="gap-2">
+                    <Bell className="h-4 w-4" />
+                    Create Alert
+                  </Button>
+                </div>
               </div>
-              <Button onClick={handleCreateAlert} className="gap-2">
-                <Bell className="h-4 w-4" />
-                Create Alert for this Playbook
-              </Button>
             </div>
           )}
 

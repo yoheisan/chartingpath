@@ -7,7 +7,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { trackPricingClicked } from "@/services/analytics";
+import { trackPricingClicked, trackCheckoutStarted } from "@/services/analytics";
 
 const Pricing = () => {
   const [searchParams] = useSearchParams();
@@ -39,6 +39,13 @@ const Pricing = () => {
 
   const createSubscription = async (plan: string) => {
     try {
+      // Track checkout started
+      trackCheckoutStarted({
+        plan: plan.toLowerCase(),
+        billing_cycle: isAnnual ? 'annual' : 'monthly',
+        source: 'pricing_page'
+      });
+
       const { data, error } = await supabase.functions.invoke('create-subscription', {
         body: {
           plan: plan.toLowerCase(),

@@ -13,9 +13,11 @@ import {
   Clock,
   AlertCircle,
   ArrowRight,
-  Share2
+  Share2,
+  ExternalLink
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { openTradingView } from "@/utils/tradingViewLinks";
 
 interface SharedBacktestData {
   id: string;
@@ -269,6 +271,15 @@ const SharedBacktest = () => {
             Create your own backtests and set up alerts for crypto patterns on ChartingPath.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => openTradingView(backtest.instrument, 'crypto', backtest.timeframe)}
+              variant="outline" 
+              size="lg"
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open {backtest.instrument} in TradingView
+            </Button>
             <Button asChild size="lg">
               <Link to="/strategy-workspace">
                 Try This Playbook

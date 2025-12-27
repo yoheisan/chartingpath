@@ -14,7 +14,10 @@ export type AnalyticsEvent =
   | 'paywall_shown'
   | 'pricing_clicked'
   | 'one_click_backtest_used'
-  | 'create_alert_clicked';
+  | 'create_alert_clicked'
+  | 'checkout_started'
+  | 'checkout_completed'
+  | 'tradingview_opened';
 
 // Event properties types
 export interface PresetLoadedProps {
@@ -63,6 +66,23 @@ export interface PricingClickedProps {
   current_plan?: string;
 }
 
+export interface CheckoutStartedProps {
+  plan: string;
+  billing_cycle: 'monthly' | 'annual';
+  source?: string;
+}
+
+export interface CheckoutCompletedProps {
+  plan: string;
+  billing_cycle: 'monthly' | 'annual';
+  amount_cents?: number;
+}
+
+export interface TradingViewOpenedProps {
+  symbol: string;
+  context: 'backtest' | 'alert';
+}
+
 type EventProps = 
   | PresetLoadedProps 
   | BacktestStartedProps 
@@ -71,6 +91,9 @@ type EventProps =
   | ShareCreatedProps
   | PaywallShownProps
   | PricingClickedProps
+  | CheckoutStartedProps
+  | CheckoutCompletedProps
+  | TradingViewOpenedProps
   | Record<string, unknown>;
 
 // Generate or get session ID - singleton pattern to prevent duplicates
@@ -176,3 +199,12 @@ export const trackPaywallShown = (props: PaywallShownProps) =>
 
 export const trackPricingClicked = (props: PricingClickedProps) =>
   track('pricing_clicked', props);
+
+export const trackCheckoutStarted = (props: CheckoutStartedProps) =>
+  track('checkout_started', props);
+
+export const trackCheckoutCompleted = (props: CheckoutCompletedProps) =>
+  track('checkout_completed', props);
+
+export const trackTradingViewOpened = (props: TradingViewOpenedProps) =>
+  track('tradingview_opened', props);
