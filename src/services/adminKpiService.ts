@@ -85,6 +85,12 @@ export interface TimeToStepMetrics {
   signupToAlert: number | null;
 }
 
+export interface WedgeTimeToStepMetrics {
+  presetToBacktest: number | null;
+  backtestToCreateAlertClicked: number | null;
+  createAlertClickedToAlertCreated: number | null;
+}
+
 // North Star: Activated Traders = sessions with backtest_completed AND alert_created within 24h
 export interface NorthStarMetrics {
   activatedTraders: number;
@@ -135,6 +141,7 @@ export interface KPIData {
   wedgePurity: WedgePurityMetrics;
   wedgePatternPurity: WedgePatternPurityMetrics;
   timeToStep: TimeToStepMetrics;
+  wedgeTimeToStep: WedgeTimeToStepMetrics;
   northStar: NorthStarMetrics;
   revenueIntent: RevenueIntentMetrics;
   cohorts: CohortRow[];
@@ -688,6 +695,87 @@ async function fetchTimeToStepMetrics(days: number): Promise<TimeToStepMetrics> 
   };
 }
 
+// Fetch wedge-only time-to-step metrics (sessions with crypto + 1H only)
+async function fetchWedgeTimeToStepMetrics(days: number): Promise<WedgeTimeToStepMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, user_id, session_id, created_at, event_props')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['preset_loaded', 'backtest_completed', 'create_alert_clicked', 'alert_created']);
+
+  if (!events || events.length === 0) {
+    return { presetToBacktest: null, backtestToCreateAlertClicked: null, createAlertClickedToAlertCreated: null };
+  }
+
+  // Identify wedge sessions: sessions that have a preset_loaded or backtest_completed with crypto + 1h
+  const wedgeSessions = new Set<string>();
+  
+  for (const event of events) {
+    const props = event.event_props as Record<string, unknown> | null;
+    if (props && event.session_id) {
+      const category = (props.instrumentCategory as string) || '';
+      const timeframe = ((props.timeframe as string) || '').toLowerCase();
+      const isWedge = category === 'crypto' && (timeframe === '1h' || timeframe === '1hour');
+      if (isWedge) {
+        wedgeSessions.add(event.session_id);
+      }
+    }
+  }
+
+  // Group by session, only wedge sessions
+  const sessionEvents: Record<string, { event: string; time: Date }[]> = {};
+  
+  for (const event of events) {
+    const sid = event.session_id || 'unknown';
+    if (!wedgeSessions.has(sid)) continue;
+    
+    if (!sessionEvents[sid]) sessionEvents[sid] = [];
+    sessionEvents[sid].push({ event: event.event_name, time: new Date(event.created_at) });
+  }
+
+  const timeDiffs = {
+    presetToBacktest: [] as number[],
+    backtestToCreateAlertClicked: [] as number[],
+    createAlertClickedToAlertCreated: [] as number[],
+  };
+
+  for (const sessionEvts of Object.values(sessionEvents)) {
+    const sorted = sessionEvts.sort((a, b) => a.time.getTime() - b.time.getTime());
+    
+    const firstPreset = sorted.find(e => e.event === 'preset_loaded');
+    const firstBacktest = sorted.find(e => e.event === 'backtest_completed');
+    const firstCreateAlertClicked = sorted.find(e => e.event === 'create_alert_clicked');
+    const firstAlertCreated = sorted.find(e => e.event === 'alert_created');
+
+    if (firstPreset && firstBacktest && firstBacktest.time > firstPreset.time) {
+      timeDiffs.presetToBacktest.push((firstBacktest.time.getTime() - firstPreset.time.getTime()) / 60000);
+    }
+    if (firstBacktest && firstCreateAlertClicked && firstCreateAlertClicked.time > firstBacktest.time) {
+      timeDiffs.backtestToCreateAlertClicked.push((firstCreateAlertClicked.time.getTime() - firstBacktest.time.getTime()) / 60000);
+    }
+    if (firstCreateAlertClicked && firstAlertCreated && firstAlertCreated.time > firstCreateAlertClicked.time) {
+      timeDiffs.createAlertClickedToAlertCreated.push((firstAlertCreated.time.getTime() - firstCreateAlertClicked.time.getTime()) / 60000);
+    }
+  }
+
+  const median = (arr: number[]) => {
+    if (arr.length === 0) return null;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+
+  return {
+    presetToBacktest: median(timeDiffs.presetToBacktest),
+    backtestToCreateAlertClicked: median(timeDiffs.backtestToCreateAlertClicked),
+    createAlertClickedToAlertCreated: median(timeDiffs.createAlertClickedToAlertCreated),
+  };
+}
+
 // Fetch North Star metrics: Activated Traders = sessions with backtest + alert in 24h
 async function fetchNorthStarMetrics(days: number): Promise<NorthStarMetrics> {
   const cutoff = new Date();
@@ -989,7 +1077,7 @@ async function fetchStripeConversionMetrics(days: number): Promise<StripeConvers
 export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
   const days = getIntervalDays(window);
 
-  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion] = await Promise.all([
+  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, wedgeTimeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion] = await Promise.all([
     fetchFunnelMetrics(days),
     fetchActivationMetrics(days),
     fetchRetentionMetrics(days),
@@ -1000,6 +1088,7 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     fetchWedgePurityMetrics(days),
     fetchWedgePatternPurityMetrics(days),
     fetchTimeToStepMetrics(days),
+    fetchWedgeTimeToStepMetrics(days),
     fetchNorthStarMetrics(days),
     fetchRevenueIntentMetrics(days),
     fetchCohortMetrics(days),
@@ -1019,6 +1108,7 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     wedgePurity,
     wedgePatternPurity,
     timeToStep,
+    wedgeTimeToStep,
     northStar,
     revenueIntent,
     cohorts,

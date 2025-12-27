@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { wedgeConfig, isPatternIdSupportedInWedge, SUPPORTED_WEDGE_PATTERN_IDS } from '@/config/wedge';
+import { track } from '@/services/analytics';
 import { 
   Search, 
   TrendingUp, 
@@ -25,6 +26,15 @@ import {
   Activity,
   GripVertical
 } from 'lucide-react';
+
+// Session-level deduplication key for analytics
+const WEDGE_FILTERED_EVENT_KEY = 'wedge_pattern_ui_filtered_fired';
+
+// Helper: Check if a pattern ID is allowed in current mode
+const isWedgePatternAllowed = (patternId: string): boolean => {
+  if (!wedgeConfig.wedgeEnabled) return true;
+  return SUPPORTED_WEDGE_PATTERN_IDS.has(patternId);
+};
 
 const showWedgeModeBlockedToast = () => {
   toast({
@@ -630,12 +640,17 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     patternName: string;
   } | null>(null);
 
+  // Track whether we've already fired the analytics event this session
+  const hasLoggedFilteredPatterns = useRef(false);
+
   // Derive visible categories based on wedge mode
   // When wedge is enabled, filter to only show supported patterns
-  const visibleCategories = React.useMemo(() => {
+  const { visibleCategories, filteredOutPatterns } = React.useMemo(() => {
     if (!wedgeConfig.wedgeEnabled) {
-      return PATTERN_CATEGORIES;
+      return { visibleCategories: PATTERN_CATEGORIES, filteredOutPatterns: [] as string[] };
     }
+    
+    const removedIds: string[] = [];
     
     // Filter each category to only include supported patterns
     const filtered: Record<string, {
@@ -646,9 +661,13 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     }> = {};
     
     for (const [categoryKey, category] of Object.entries(PATTERN_CATEGORIES)) {
-      const supportedPatterns = category.patterns.filter(p => 
-        SUPPORTED_WEDGE_PATTERN_IDS.has(p.id)
-      );
+      const supportedPatterns = category.patterns.filter(p => {
+        const isSupported = SUPPORTED_WEDGE_PATTERN_IDS.has(p.id);
+        if (!isSupported) {
+          removedIds.push(p.id);
+        }
+        return isSupported;
+      });
       
       // Only include category if it has at least one supported pattern
       if (supportedPatterns.length > 0) {
@@ -659,8 +678,47 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       }
     }
     
-    return filtered;
+    return { visibleCategories: filtered, filteredOutPatterns: removedIds };
   }, []);
+
+  // Dev assertion: warn if unsupported patterns leak into state
+  useEffect(() => {
+    if (!wedgeConfig.wedgeEnabled) return;
+    
+    const leakedPatterns = patterns.filter(p => !isWedgePatternAllowed(p.patternType));
+    if (leakedPatterns.length > 0) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[WEDGE ASSERT] Unsupported pattern leaked into PatternLibrary state:`,
+          leakedPatterns.map(p => p.patternType)
+        );
+      }
+    }
+  }, [patterns]);
+
+  // Analytics: fire event if patterns were filtered out (once per session)
+  useEffect(() => {
+    if (!wedgeConfig.wedgeEnabled) return;
+    if (filteredOutPatterns.length === 0) return;
+    if (hasLoggedFilteredPatterns.current) return;
+    
+    // Check sessionStorage for deduplication
+    const alreadyFired = sessionStorage.getItem(WEDGE_FILTERED_EVENT_KEY);
+    if (alreadyFired) {
+      hasLoggedFilteredPatterns.current = true;
+      return;
+    }
+    
+    // Fire the analytics event
+    track('unsupported_pattern_ui_filtered', {
+      removed_count: filteredOutPatterns.length,
+      removed_ids: filteredOutPatterns.slice(0, 20),
+      source: 'pattern_library_render',
+    });
+    
+    sessionStorage.setItem(WEDGE_FILTERED_EVENT_KEY, 'true');
+    hasLoggedFilteredPatterns.current = true;
+  }, [filteredOutPatterns]);
 
   const addPattern = (categoryKey: string, patternId: string, intendedDirection?: 'long' | 'short') => {
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
@@ -710,10 +768,10 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     }
   };
 
-  // Helper to get all pattern IDs of a certain type
+  // Helper to get all pattern IDs of a certain type (respects wedge mode filtering)
   const getAllLongPatternIds = () => {
     const ids: string[] = [];
-    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
+    Object.entries(visibleCategories).forEach(([_, category]) => {
       category.patterns.forEach((pattern) => {
         if (pattern.direction === 'bullish' || pattern.direction === 'neutral') {
           ids.push(pattern.id);
@@ -725,7 +783,7 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   const getAllShortPatternIds = () => {
     const ids: string[] = [];
-    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
+    Object.entries(visibleCategories).forEach(([_, category]) => {
       category.patterns.forEach((pattern) => {
         if (pattern.direction === 'bearish' || pattern.direction === 'neutral') {
           ids.push(pattern.id);
@@ -737,7 +795,7 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   const getAllBidirectionalPatternIds = () => {
     const ids: string[] = [];
-    Object.entries(PATTERN_CATEGORIES).forEach(([_, category]) => {
+    Object.entries(visibleCategories).forEach(([_, category]) => {
       category.patterns.forEach((pattern) => {
         if (pattern.direction === 'neutral') {
           ids.push(pattern.id);
@@ -746,6 +804,11 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     });
     return ids;
   };
+
+  // Check if any visible patterns exist for each direction (for button disable state)
+  const hasVisibleLongPatterns = getAllLongPatternIds().length > 0;
+  const hasVisibleShortPatterns = getAllShortPatternIds().length > 0;
+  const hasVisibleBidirectionalPatterns = getAllBidirectionalPatternIds().length > 0;
 
   // Check if all patterns of a type are selected
   const allLongsSelected = () => {
@@ -764,20 +827,19 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
   };
 
   const toggleAllLongs = () => {
+    if (!hasVisibleLongPatterns) return;
+    
     if (allLongsSelected()) {
       // Deselect all longs (bullish + neutral with long direction)
       const longIds = getAllLongPatternIds();
       onChange(patterns.filter(p => !longIds.includes(p.patternType)));
     } else {
-      // Select all longs
+      // Select all longs - use visibleCategories to respect wedge mode
       const newPatterns: PatternConfig[] = [];
       let priority = patterns.length;
       
-      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      Object.entries(visibleCategories).forEach(([categoryKey, category]) => {
         category.patterns.forEach((pattern) => {
-          // Wedge mode guard: skip unsupported patterns
-          if (wedgeConfig.wedgeEnabled && !isPatternIdSupportedInWedge(pattern.id)) return;
-          
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
           
@@ -839,20 +901,19 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
   };
 
   const toggleAllShorts = () => {
+    if (!hasVisibleShortPatterns) return;
+    
     if (allShortsSelected()) {
       // Deselect all shorts (bearish + neutral with short direction)
       const shortIds = getAllShortPatternIds();
       onChange(patterns.filter(p => !shortIds.includes(p.patternType)));
     } else {
-      // Select all shorts
+      // Select all shorts - use visibleCategories to respect wedge mode
       const newPatterns: PatternConfig[] = [];
       let priority = patterns.length;
       
-      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      Object.entries(visibleCategories).forEach(([categoryKey, category]) => {
         category.patterns.forEach((pattern) => {
-          // Wedge mode guard: skip unsupported patterns
-          if (wedgeConfig.wedgeEnabled && !isPatternIdSupportedInWedge(pattern.id)) return;
-          
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
           
@@ -914,21 +975,20 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
   };
 
   const toggleAllBidirectional = () => {
+    if (!hasVisibleBidirectionalPatterns) return;
+    
     if (allBidirectionalSelected()) {
       // Deselect all bidirectional (neutral only)
       const biIds = getAllBidirectionalPatternIds();
       onChange(patterns.filter(p => !biIds.includes(p.patternType)));
     } else {
-      // Select all bidirectional
+      // Select all bidirectional - use visibleCategories to respect wedge mode
       const newPatterns: PatternConfig[] = [];
       let priority = patterns.length;
       
-      Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
+      Object.entries(visibleCategories).forEach(([categoryKey, category]) => {
         category.patterns.forEach((pattern) => {
           if (pattern.direction !== 'neutral') return;
-          
-          // Wedge mode guard: skip unsupported patterns
-          if (wedgeConfig.wedgeEnabled && !isPatternIdSupportedInWedge(pattern.id)) return;
           
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
@@ -1168,6 +1228,8 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             : "border-green-500/50 text-green-600 hover:bg-green-500/10"
           }
           onClick={toggleAllLongs}
+          disabled={!hasVisibleLongPatterns}
+          title={!hasVisibleLongPatterns ? "No long patterns available in wedge mode" : undefined}
         >
           <TrendingUp className="w-4 h-4 mr-1" />
           {allLongsSelected() ? "Deselect All Longs" : "Select All Longs"}
@@ -1180,6 +1242,8 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             : "border-red-500/50 text-red-600 hover:bg-red-500/10"
           }
           onClick={toggleAllShorts}
+          disabled={!hasVisibleShortPatterns}
+          title={!hasVisibleShortPatterns ? "No short patterns available in wedge mode" : undefined}
         >
           <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
           {allShortsSelected() ? "Deselect All Shorts" : "Select All Shorts"}
@@ -1192,6 +1256,8 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             : "border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
           }
           onClick={toggleAllBidirectional}
+          disabled={!hasVisibleBidirectionalPatterns}
+          title={!hasVisibleBidirectionalPatterns ? "No bidirectional patterns available in wedge mode" : undefined}
         >
           <Activity className="w-4 h-4 mr-1" />
           {allBidirectionalSelected() ? "Deselect Bidirectional" : "Select Bidirectional"}
