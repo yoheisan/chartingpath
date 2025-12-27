@@ -93,7 +93,7 @@ const AdminKPIDashboard = () => {
     return null;
   }
 
-  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion } = kpiData;
+  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, wedgeTimeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion } = kpiData;
 
   // Calculate funnel conversion rates
   const funnelSteps = [
@@ -508,7 +508,7 @@ const AdminKPIDashboard = () => {
         </div>
 
         {/* Wedge Purity + Pattern Purity + Time-to-Step Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Wedge Purity */}
           <Card>
             <CardHeader>
@@ -653,7 +653,48 @@ const AdminKPIDashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+
+          {/* Wedge-Only Time-to-Step Metrics */}
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Wedge Time-to-Step
+                <Badge variant="outline" className="text-xs">Crypto 1H Only</Badge>
+              </CardTitle>
+              <CardDescription>
+                Median minutes for wedge sessions only
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <span className="text-sm">Preset → Backtest</span>
+                  <span className="font-bold text-primary">
+                    {wedgeTimeToStep.presetToBacktest 
+                      ? `${wedgeTimeToStep.presetToBacktest.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <span className="text-sm">Backtest → Click Create Alert</span>
+                  <span className="font-bold text-primary">
+                    {wedgeTimeToStep.backtestToCreateAlertClicked 
+                      ? `${wedgeTimeToStep.backtestToCreateAlertClicked.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <span className="text-sm">Click → Alert Created</span>
+                  <span className="font-bold text-primary">
+                    {wedgeTimeToStep.createAlertClickedToAlertCreated 
+                      ? `${wedgeTimeToStep.createAlertClickedToAlertCreated.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
         {/* Data Quality Panel */}
         <Card>
