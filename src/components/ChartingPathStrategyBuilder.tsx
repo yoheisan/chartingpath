@@ -212,7 +212,7 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const [backtestResults, setBacktestResults] = useState(null);
   const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
-  const [expandedSections, setExpandedSections] = useState<string[]>(['market', 'patterns']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['market', 'patterns', 'rules', 'discipline', 'position', 'targets', 'backtest', 'analytics', 'export']);
 
   // Handle strategy restore from auto-save with wedge sanitization
   const handleStrategyRestore = useCallback((restoredStrategy: ChartingPathStrategy) => {
