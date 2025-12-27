@@ -251,12 +251,20 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       setBacktestProgress(10);
       setBacktestPhase('Connecting to data provider...');
       
-      console.log('Starting real backtest with strategy:', {
+      // DEBUG: Log enabled patterns with IDs before backtest execution
+      const enabledPatterns = strategy.patterns.filter((p: any) => p.enabled);
+      console.log('[BACKTEST PRE-FLIGHT] Enabled patterns:', {
+        count: enabledPatterns.length,
+        patterns: enabledPatterns.map((p: any) => ({ id: p.id, name: p.name, enabled: p.enabled })),
         instrument: strategy.market.instrument,
         instrumentCategory: strategy.market.instrumentCategory,
-        patterns: strategy.patterns.filter(p => p.enabled).map(p => p.name),
         dateRange: `${strategy.backtestPeriod.startDate} to ${strategy.backtestPeriod.endDate}`
       });
+      
+      // CRITICAL: This should never be empty when preset says Breakout
+      if (enabledPatterns.length === 0) {
+        console.error('[BACKTEST PRE-FLIGHT] CRITICAL: No enabled patterns despite passing guard check!');
+      }
 
       setBacktestProgress(20);
       setBacktestPhase('Fetching historical data...');
