@@ -288,7 +288,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
             apikey:
               'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8',
           },
-          body: JSON.stringify({ strategy, userId }),
+          body: JSON.stringify({ strategy, userId, wedgeEnabled: wedgeConfig.wedgeEnabled }),
         },
       )
         .then(async (response) => {

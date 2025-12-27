@@ -63,6 +63,20 @@ export interface DataQualityMetrics {
   warnings: string[];
 }
 
+export interface WedgePurityMetrics {
+  totalEvents: number;
+  nonWedgeEvents: number;
+  purityRate: number;
+  violations: { instrumentCategory: string; timeframe: string; count: number }[];
+}
+
+export interface TimeToStepMetrics {
+  presetToBacktest: number | null;
+  backtestToAlert: number | null;
+  alertToSignup: number | null;
+  signupToAlert: number | null;
+}
+
 export interface KPIData {
   funnel: FunnelMetrics;
   activation: ActivationMetrics;
@@ -72,6 +86,8 @@ export interface KPIData {
   topPatterns: TopItem[];
   monetization: MonetizationMetrics;
   dataQuality: DataQualityMetrics;
+  wedgePurity: WedgePurityMetrics;
+  timeToStep: TimeToStepMetrics;
   lastRefreshed: string;
 }
 
@@ -450,11 +466,128 @@ async function checkDataQuality(): Promise<DataQualityMetrics> {
   return { eventsPresent, eventsMissing, warnings };
 }
 
+// Fetch wedge purity metrics - should be 0 violations after hardening
+async function fetchWedgePurityMetrics(days: number): Promise<WedgePurityMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, event_props')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['preset_loaded', 'backtest_started', 'backtest_completed', 'alert_created']);
+
+  const totalEvents = events?.length || 0;
+  const violationCounts: Record<string, number> = {};
+  let nonWedgeEvents = 0;
+
+  for (const event of events || []) {
+    const props = event.event_props as Record<string, unknown> | null;
+    if (props) {
+      const category = (props.instrumentCategory as string) || 'unknown';
+      const timeframe = ((props.timeframe as string) || 'unknown').toLowerCase();
+      
+      // Check for wedge violations
+      const isWedge = category === 'crypto' && (timeframe === '1h' || timeframe === '1hour');
+      if (!isWedge) {
+        nonWedgeEvents++;
+        const key = `${category}|${timeframe}`;
+        violationCounts[key] = (violationCounts[key] || 0) + 1;
+      }
+    }
+  }
+
+  const violations = Object.entries(violationCounts)
+    .map(([key, count]) => {
+      const [instrumentCategory, timeframe] = key.split('|');
+      return { instrumentCategory, timeframe, count };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  return {
+    totalEvents,
+    nonWedgeEvents,
+    purityRate: totalEvents > 0 ? ((totalEvents - nonWedgeEvents) / totalEvents) * 100 : 100,
+    violations,
+  };
+}
+
+// Fetch time-to-step metrics (median time between funnel steps)
+async function fetchTimeToStepMetrics(days: number): Promise<TimeToStepMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, user_id, session_id, created_at')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['preset_loaded', 'backtest_started', 'backtest_completed', 'alert_created', 'signup_completed']);
+
+  if (!events || events.length === 0) {
+    return { presetToBacktest: null, backtestToAlert: null, alertToSignup: null, signupToAlert: null };
+  }
+
+  // Group by session for anonymous users, user for authenticated
+  const sessionEvents: Record<string, { event: string; time: Date }[]> = {};
+  
+  for (const event of events) {
+    const key = event.user_id || event.session_id || 'unknown';
+    if (!sessionEvents[key]) sessionEvents[key] = [];
+    sessionEvents[key].push({ event: event.event_name, time: new Date(event.created_at) });
+  }
+
+  const timeDiffs = {
+    presetToBacktest: [] as number[],
+    backtestToAlert: [] as number[],
+    alertToSignup: [] as number[],
+    signupToAlert: [] as number[],
+  };
+
+  for (const events of Object.values(sessionEvents)) {
+    const sorted = events.sort((a, b) => a.time.getTime() - b.time.getTime());
+    
+    const firstPreset = sorted.find(e => e.event === 'preset_loaded');
+    const firstBacktest = sorted.find(e => e.event === 'backtest_completed');
+    const firstAlert = sorted.find(e => e.event === 'alert_created');
+    const signup = sorted.find(e => e.event === 'signup_completed');
+
+    if (firstPreset && firstBacktest && firstBacktest.time > firstPreset.time) {
+      timeDiffs.presetToBacktest.push((firstBacktest.time.getTime() - firstPreset.time.getTime()) / 60000);
+    }
+    if (firstBacktest && firstAlert && firstAlert.time > firstBacktest.time) {
+      timeDiffs.backtestToAlert.push((firstAlert.time.getTime() - firstBacktest.time.getTime()) / 60000);
+    }
+    if (firstAlert && signup && signup.time > firstAlert.time) {
+      timeDiffs.alertToSignup.push((signup.time.getTime() - firstAlert.time.getTime()) / 60000);
+    }
+    if (signup && firstAlert && firstAlert.time > signup.time) {
+      timeDiffs.signupToAlert.push((firstAlert.time.getTime() - signup.time.getTime()) / 60000);
+    }
+  }
+
+  const median = (arr: number[]) => {
+    if (arr.length === 0) return null;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+
+  return {
+    presetToBacktest: median(timeDiffs.presetToBacktest),
+    backtestToAlert: median(timeDiffs.backtestToAlert),
+    alertToSignup: median(timeDiffs.alertToSignup),
+    signupToAlert: median(timeDiffs.signupToAlert),
+  };
+}
+
 // Main fetch function
 export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
   const days = getIntervalDays(window);
 
-  const [funnel, activation, retention, usage, topItems, monetization, dataQuality] = await Promise.all([
+  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep] = await Promise.all([
     fetchFunnelMetrics(days),
     fetchActivationMetrics(days),
     fetchRetentionMetrics(days),
@@ -462,6 +595,8 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     fetchTopItems(days),
     fetchMonetizationMetrics(days),
     checkDataQuality(),
+    fetchWedgePurityMetrics(days),
+    fetchTimeToStepMetrics(days),
   ]);
 
   return {
@@ -473,6 +608,8 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     topPatterns: topItems.patterns,
     monetization,
     dataQuality,
+    wedgePurity,
+    timeToStep,
     lastRefreshed: new Date().toISOString(),
   };
 }

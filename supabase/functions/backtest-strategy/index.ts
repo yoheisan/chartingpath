@@ -496,13 +496,36 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { strategy, userId } = await req.json();
+    const { strategy, userId, wedgeEnabled } = await req.json();
     
     const instrument = strategy.market?.instrument || strategy.instrument;
     const instrumentCategory = strategy.market?.instrumentCategory || strategy.instrumentCategory || 'stocks';
     const startDate = strategy.backtestPeriod?.startDate || strategy.startDate;
     const endDate = strategy.backtestPeriod?.endDate || strategy.endDate;
     const timeframe = strategy.market?.timeframes?.[0] || strategy.timeframe || '1d';
+    
+    // ============================================
+    // WEDGE MODE SERVER-SIDE ENFORCEMENT
+    // ============================================
+    // When wedgeEnabled=true, only crypto + 1h is allowed
+    if (wedgeEnabled === true) {
+      const normalizedTimeframe = timeframe?.toLowerCase()?.replace(/\s/g, '');
+      const isValidWedgeTimeframe = normalizedTimeframe === '1h' || normalizedTimeframe === '1hour';
+      const isValidWedgeCategory = instrumentCategory === 'crypto';
+      
+      if (!isValidWedgeCategory || !isValidWedgeTimeframe) {
+        console.log(`[WEDGE GUARD] Rejected non-wedge request: category=${instrumentCategory}, timeframe=${timeframe}`);
+        return new Response(JSON.stringify({ 
+          error: 'In crypto wedge mode, only crypto instruments with 1H timeframe are allowed.',
+          wedgeViolation: true,
+          received: { instrumentCategory, timeframe }
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      console.log(`[WEDGE GUARD] Passed: crypto + 1h`);
+    }
     
     // ============================================
     // USAGE LIMIT CHECK
