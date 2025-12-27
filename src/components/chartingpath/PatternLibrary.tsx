@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { wedgeConfig, isPatternIdSupportedInWedge } from '@/config/wedge';
+import { wedgeConfig, isPatternIdSupportedInWedge, SUPPORTED_WEDGE_PATTERN_IDS } from '@/config/wedge';
 import { 
   Search, 
   TrendingUp, 
@@ -630,6 +630,38 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     patternName: string;
   } | null>(null);
 
+  // Derive visible categories based on wedge mode
+  // When wedge is enabled, filter to only show supported patterns
+  const visibleCategories = React.useMemo(() => {
+    if (!wedgeConfig.wedgeEnabled) {
+      return PATTERN_CATEGORIES;
+    }
+    
+    // Filter each category to only include supported patterns
+    const filtered: Record<string, {
+      name: string;
+      icon: any;
+      description: string;
+      patterns: any[];
+    }> = {};
+    
+    for (const [categoryKey, category] of Object.entries(PATTERN_CATEGORIES)) {
+      const supportedPatterns = category.patterns.filter(p => 
+        SUPPORTED_WEDGE_PATTERN_IDS.has(p.id)
+      );
+      
+      // Only include category if it has at least one supported pattern
+      if (supportedPatterns.length > 0) {
+        filtered[categoryKey] = {
+          ...category,
+          patterns: supportedPatterns,
+        };
+      }
+    }
+    
+    return filtered;
+  }, []);
+
   const addPattern = (categoryKey: string, patternId: string, intendedDirection?: 'long' | 'short') => {
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
     const pattern = category.patterns.find(p => p.id === patternId);
@@ -1168,7 +1200,7 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
       {/* Compact Pattern Grid - All patterns easily discoverable */}
       <div className="space-y-4">
-        {Object.entries(PATTERN_CATEGORIES).map(([categoryKey, category]) => (
+        {Object.entries(visibleCategories).map(([categoryKey, category]) => (
           <div key={categoryKey} className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <category.icon className="w-4 h-4 text-primary" />
