@@ -77,6 +77,29 @@ export interface TimeToStepMetrics {
   signupToAlert: number | null;
 }
 
+// North Star: Activated Traders = sessions with backtest_completed AND alert_created within 24h
+export interface NorthStarMetrics {
+  activatedTraders: number;
+  dailyTrend: { date: string; count: number }[];
+}
+
+// Revenue Intent: sessions with paywall_shown AND pricing_clicked
+export interface RevenueIntentMetrics {
+  paywallToClickRate: number;
+  totalPaywallSessions: number;
+  totalPricingClicks: number;
+  sessionConversions: number;
+}
+
+// Cohort data grouped by signup date
+export interface CohortRow {
+  cohortDate: string;
+  signups: number;
+  d0BacktestRate: number;
+  d1AlertRate: number;
+  d7ReturnRate: number;
+}
+
 export interface KPIData {
   funnel: FunnelMetrics;
   activation: ActivationMetrics;
@@ -88,6 +111,9 @@ export interface KPIData {
   dataQuality: DataQualityMetrics;
   wedgePurity: WedgePurityMetrics;
   timeToStep: TimeToStepMetrics;
+  northStar: NorthStarMetrics;
+  revenueIntent: RevenueIntentMetrics;
+  cohorts: CohortRow[];
   lastRefreshed: string;
 }
 
@@ -583,11 +609,185 @@ async function fetchTimeToStepMetrics(days: number): Promise<TimeToStepMetrics> 
   };
 }
 
+// Fetch North Star metrics: Activated Traders = sessions with backtest + alert in 24h
+async function fetchNorthStarMetrics(days: number): Promise<NorthStarMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, session_id, created_at')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['backtest_completed', 'alert_created']);
+
+  if (!events || events.length === 0) {
+    return { activatedTraders: 0, dailyTrend: [] };
+  }
+
+  // Group by session
+  const sessionEvents: Record<string, { backtest?: Date; alert?: Date }> = {};
+  for (const event of events) {
+    const sid = event.session_id || 'unknown';
+    if (!sessionEvents[sid]) sessionEvents[sid] = {};
+    const time = new Date(event.created_at);
+    if (event.event_name === 'backtest_completed') {
+      if (!sessionEvents[sid].backtest || time < sessionEvents[sid].backtest!) {
+        sessionEvents[sid].backtest = time;
+      }
+    }
+    if (event.event_name === 'alert_created') {
+      if (!sessionEvents[sid].alert || time > sessionEvents[sid].alert!) {
+        sessionEvents[sid].alert = time;
+      }
+    }
+  }
+
+  // Count sessions where both happened within 24h
+  let activatedTraders = 0;
+  const dailyMap: Record<string, number> = {};
+
+  for (const [_, e] of Object.entries(sessionEvents)) {
+    if (e.backtest && e.alert) {
+      const diff = e.alert.getTime() - e.backtest.getTime();
+      if (diff > 0 && diff <= 24 * 60 * 60 * 1000) {
+        activatedTraders++;
+        const dateKey = e.alert.toISOString().split('T')[0];
+        dailyMap[dateKey] = (dailyMap[dateKey] || 0) + 1;
+      }
+    }
+  }
+
+  // Build daily trend for last 14 days
+  const dailyTrend: { date: string; count: number }[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateKey = d.toISOString().split('T')[0];
+    dailyTrend.push({ date: dateKey, count: dailyMap[dateKey] || 0 });
+  }
+
+  return { activatedTraders, dailyTrend };
+}
+
+// Fetch Revenue Intent metrics: sessions with paywall_shown AND pricing_clicked
+async function fetchRevenueIntentMetrics(days: number): Promise<RevenueIntentMetrics> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, session_id')
+    .gte('created_at', cutoffISO)
+    .in('event_name', ['paywall_shown', 'pricing_clicked']);
+
+  if (!events || events.length === 0) {
+    return { paywallToClickRate: 0, totalPaywallSessions: 0, totalPricingClicks: 0, sessionConversions: 0 };
+  }
+
+  const sessionPaywall = new Set<string>();
+  const sessionPricing = new Set<string>();
+
+  for (const event of events) {
+    const sid = event.session_id || 'unknown';
+    if (event.event_name === 'paywall_shown') sessionPaywall.add(sid);
+    if (event.event_name === 'pricing_clicked') sessionPricing.add(sid);
+  }
+
+  // Sessions that saw paywall AND clicked pricing
+  const sessionConversions = [...sessionPaywall].filter(s => sessionPricing.has(s)).length;
+
+  return {
+    paywallToClickRate: sessionPaywall.size > 0 ? (sessionConversions / sessionPaywall.size) * 100 : 0,
+    totalPaywallSessions: sessionPaywall.size,
+    totalPricingClicks: sessionPricing.size,
+    sessionConversions,
+  };
+}
+
+// Fetch Cohort data: signups grouped by date with d0/d1/d7 metrics
+async function fetchCohortMetrics(days: number): Promise<CohortRow[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffISO = cutoff.toISOString();
+
+  const { data: events } = await supabase
+    .from('product_events')
+    .select('event_name, user_id, created_at')
+    .gte('created_at', cutoffISO)
+    .not('user_id', 'is', null);
+
+  if (!events || events.length === 0) {
+    return [];
+  }
+
+  // Group by user
+  const userEvents: Record<string, { signup?: Date; events: { name: string; time: Date }[] }> = {};
+  for (const event of events) {
+    if (!event.user_id) continue;
+    if (!userEvents[event.user_id]) {
+      userEvents[event.user_id] = { events: [] };
+    }
+    const time = new Date(event.created_at);
+    userEvents[event.user_id].events.push({ name: event.event_name, time });
+    if (event.event_name === 'signup_completed') {
+      if (!userEvents[event.user_id].signup || time < userEvents[event.user_id].signup!) {
+        userEvents[event.user_id].signup = time;
+      }
+    }
+  }
+
+  // Group by cohort date (signup date)
+  const cohortData: Record<string, { signups: number; d0Backtest: number; d1Alert: number; d7Return: number }> = {};
+
+  for (const [userId, data] of Object.entries(userEvents)) {
+    if (!data.signup) continue;
+    const cohortDate = data.signup.toISOString().split('T')[0];
+    if (!cohortData[cohortDate]) {
+      cohortData[cohortDate] = { signups: 0, d0Backtest: 0, d1Alert: 0, d7Return: 0 };
+    }
+    cohortData[cohortDate].signups++;
+
+    const signupDay = data.signup.getTime();
+    const day1 = signupDay + 24 * 60 * 60 * 1000;
+    const day7 = signupDay + 7 * 24 * 60 * 60 * 1000;
+
+    // D0: backtest on same day as signup
+    const hasD0Backtest = data.events.some(e => 
+      e.name === 'backtest_completed' && e.time.getTime() < day1
+    );
+    if (hasD0Backtest) cohortData[cohortDate].d0Backtest++;
+
+    // D1: alert created within 24-48h of signup
+    const hasD1Alert = data.events.some(e => 
+      e.name === 'alert_created' && e.time.getTime() >= day1 && e.time.getTime() < day1 + 24 * 60 * 60 * 1000
+    );
+    if (hasD1Alert) cohortData[cohortDate].d1Alert++;
+
+    // D7: any event after day 7
+    const hasD7Return = data.events.some(e => e.time.getTime() >= day7);
+    if (hasD7Return) cohortData[cohortDate].d7Return++;
+  }
+
+  // Convert to array sorted by date
+  return Object.entries(cohortData)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-14) // Last 14 cohorts
+    .map(([cohortDate, data]) => ({
+      cohortDate,
+      signups: data.signups,
+      d0BacktestRate: data.signups > 0 ? (data.d0Backtest / data.signups) * 100 : 0,
+      d1AlertRate: data.signups > 0 ? (data.d1Alert / data.signups) * 100 : 0,
+      d7ReturnRate: data.signups > 0 ? (data.d7Return / data.signups) * 100 : 0,
+    }));
+}
+
 // Main fetch function
 export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
   const days = getIntervalDays(window);
 
-  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep] = await Promise.all([
+  const [funnel, activation, retention, usage, topItems, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts] = await Promise.all([
     fetchFunnelMetrics(days),
     fetchActivationMetrics(days),
     fetchRetentionMetrics(days),
@@ -597,6 +797,9 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     checkDataQuality(),
     fetchWedgePurityMetrics(days),
     fetchTimeToStepMetrics(days),
+    fetchNorthStarMetrics(days),
+    fetchRevenueIntentMetrics(days),
+    fetchCohortMetrics(days),
   ]);
 
   return {
@@ -610,6 +813,9 @@ export async function fetchKPIData(window: TimeWindow): Promise<KPIData> {
     dataQuality,
     wedgePurity,
     timeToStep,
+    northStar,
+    revenueIntent,
+    cohorts,
     lastRefreshed: new Date().toISOString(),
   };
 }

@@ -93,7 +93,7 @@ const AdminKPIDashboard = () => {
     return null;
   }
 
-  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep } = kpiData;
+  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts } = kpiData;
 
   // Calculate funnel conversion rates
   const funnelSteps = [
@@ -161,22 +161,68 @@ const AdminKPIDashboard = () => {
           </Alert>
         )}
 
-        {/* Top KPI Cards */}
+        {/* North Star + Revenue Intent Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="border-primary/50 bg-primary/5">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Activated Users</p>
-                  <p className="text-3xl font-bold">{activation.activatedUsers}</p>
-                  <p className="text-sm text-primary">
-                    {activation.activationRate.toFixed(1)}% of signups
+                  <p className="text-sm text-muted-foreground">🌟 Activated Traders</p>
+                  <p className="text-3xl font-bold text-primary">{northStar.activatedTraders}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Backtest + Alert in 24h
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Revenue Intent</p>
+                  <p className="text-3xl font-bold">{revenueIntent.paywallToClickRate.toFixed(1)}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    {revenueIntent.sessionConversions}/{revenueIntent.totalPaywallSessions} sessions
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">D1 Retention</p>
+                  <p className="text-3xl font-bold">{retention.d1Retention.toFixed(1)}%</p>
+                  <p className="text-sm text-muted-foreground">
+                    {retention.usersActiveMultipleDays} multi-day users
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-blue-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Alerts Created</p>
+                  <p className="text-3xl font-bold">{usage.totalAlerts}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {usage.activeAlerts} active
+                  </p>
+                </div>
+                <Bell className="h-8 w-8 text-amber-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
           <Card>
             <CardContent className="p-6">

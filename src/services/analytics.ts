@@ -12,7 +12,9 @@ export type AnalyticsEvent =
   | 'alert_created'
   | 'share_created'
   | 'paywall_shown'
-  | 'pricing_clicked';
+  | 'pricing_clicked'
+  | 'one_click_backtest_used'
+  | 'create_alert_clicked';
 
 // Event properties types
 export interface PresetLoadedProps {

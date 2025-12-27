@@ -3,15 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Zap, TrendingUp, Clock } from 'lucide-react';
+import { Zap, TrendingUp, Clock, Play } from 'lucide-react';
 import { wedgeConfig, featuredPresets, getFullSymbol } from '@/config/wedge';
-import { trackPresetLoaded } from '@/services/analytics';
+import { trackPresetLoaded, track } from '@/services/analytics';
 
 interface CryptoPresetPanelProps {
   onPresetLoad: (preset: { symbol: string; pattern: string; timeframe: string }) => void;
+  onOneClickBacktest?: () => void;
+  isBacktesting?: boolean;
 }
 
-export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({ onPresetLoad }) => {
+export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({ 
+  onPresetLoad, 
+  onOneClickBacktest,
+  isBacktesting = false 
+}) => {
   const [selectedSymbol, setSelectedSymbol] = React.useState<string>(wedgeConfig.featuredSymbols[0]);
   const [selectedPattern, setSelectedPattern] = React.useState<string>(wedgeConfig.featuredPatterns[0]);
 
@@ -49,17 +55,58 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({ onPresetLo
     onPresetLoad(fullPreset);
   };
 
+  const handleOneClickBacktest = () => {
+    // First load the default preset
+    const preset = {
+      symbol: getFullSymbol('BTC'),
+      pattern: 'Breakout',
+      timeframe: wedgeConfig.wedgeTimeframe,
+    };
+    
+    // Track the one-click event
+    track('one_click_backtest_used', {
+      symbol: 'BTC',
+      pattern: 'Breakout',
+      timeframe: wedgeConfig.wedgeTimeframe,
+      wedgeEnabled: true,
+    });
+    
+    onPresetLoad(preset);
+    
+    // Trigger backtest after a short delay to allow state to update
+    if (onOneClickBacktest) {
+      setTimeout(() => {
+        onOneClickBacktest();
+      }, 300);
+    }
+  };
+
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Zap className="h-5 w-5 text-primary" />
-          Crypto 1H Presets
-          <Badge variant="secondary" className="ml-2">
-            <Clock className="h-3 w-3 mr-1" />
-            1H
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Zap className="h-5 w-5 text-primary" />
+            Crypto 1H Presets
+            <Badge variant="secondary" className="ml-2">
+              <Clock className="h-3 w-3 mr-1" />
+              1H
+            </Badge>
+          </CardTitle>
+          
+          {/* One-Click Backtest CTA */}
+          {onOneClickBacktest && (
+            <Button 
+              onClick={handleOneClickBacktest}
+              disabled={isBacktesting}
+              className="bg-primary hover:bg-primary/90 gap-2"
+              size="sm"
+            >
+              <Play className="h-4 w-4" />
+              {isBacktesting ? 'Running...' : 'Run BTC 1H Backtest'}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Custom Preset Builder */}
