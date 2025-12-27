@@ -574,10 +574,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     trackTradingViewOpened({ symbol, context: 'backtest' });
     openTradingView(symbol, instrumentCategory, timeframe);
   };
-    
-    trackTradingViewOpened({ symbol, context: 'backtest' });
-    openTradingView(symbol, instrumentCategory, timeframe);
-  };
 
   // Handle create alert after backtest - save playbook context before navigating
   const handleCreateAlert = () => {
