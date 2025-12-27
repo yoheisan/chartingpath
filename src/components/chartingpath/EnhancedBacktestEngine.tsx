@@ -463,7 +463,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <Target className="w-4 h-4 text-green-500" />
-              <span>{strategy.patterns?.length || 0} Patterns Active</span>
+              <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns Active</span>
             </div>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-blue-500" />
@@ -567,12 +567,12 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             <div>
               <h3 className="font-medium">Ready to Run Backtest</h3>
               <p className="text-sm text-muted-foreground">
-                Test {strategy.patterns?.length || 0} patterns with current configuration
+                Test {strategy.patterns?.filter(p => p.enabled).length || 0} patterns with current configuration
               </p>
             </div>
             <Button
               onClick={runBacktest}
-              disabled={isRunning || !strategy.patterns?.length}
+              disabled={isRunning || !strategy.patterns?.some(p => p.enabled)}
               className="min-w-32"
             >
               {isRunning ? (

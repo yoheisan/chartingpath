@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { wedgeConfig, getFullSymbol } from '@/config/wedge';
+import { wedgeConfig, getFullSymbol, sanitizeWedgePatterns, validateWedgePatterns } from '@/config/wedge';
+import { track } from '@/services/analytics';
 import {
   TrendingUp,
   TrendingDown,
@@ -213,13 +214,39 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
   const [expandedPatternRules, setExpandedPatternRules] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<string[]>(['market', 'patterns']);
 
-  // Handle strategy restore from auto-save
+  // Handle strategy restore from auto-save with wedge sanitization
   const handleStrategyRestore = useCallback((restoredStrategy: ChartingPathStrategy) => {
-    setStrategy(restoredStrategy);
+    // In wedge mode, sanitize patterns to remove unsupported legacy patterns
+    let sanitizedStrategy = { ...restoredStrategy };
+    
+    if (wedgeConfig.wedgeEnabled && restoredStrategy.patterns) {
+      const validation = validateWedgePatterns(restoredStrategy.patterns);
+      
+      if (!validation.valid || validation.enabledCount === 0) {
+        track('pattern_validation_failed', {
+          enabledPatternsCount: validation.enabledCount,
+          enabledPatternNames: validation.enabledNames,
+          hasUnsupportedPatterns: !validation.valid,
+          unsupportedPatterns: validation.unsupportedPatterns,
+          wedgeEnabled: true,
+          restoreSource: 'autosave_restore',
+        });
+        
+        // Sanitize patterns - removes unsupported, ensures at least Breakout enabled
+        sanitizedStrategy.patterns = sanitizeWedgePatterns(restoredStrategy.patterns);
+        console.log('[handleStrategyRestore] Sanitized legacy patterns:', {
+          original: restoredStrategy.patterns.map((p: any) => p.name),
+          sanitized: sanitizedStrategy.patterns.map((p: any) => p.name),
+          enabled: sanitizedStrategy.patterns.filter((p: any) => p.enabled).map((p: any) => p.name),
+        });
+      }
+    }
+    
+    setStrategy(sanitizedStrategy);
     const completedSteps = new Set<number>();
-    if (restoredStrategy.market?.instrument) completedSteps.add(0);
-    if (restoredStrategy.patterns?.some(p => p.enabled)) completedSteps.add(1);
-    if (restoredStrategy.positionManagement) completedSteps.add(3);
+    if (sanitizedStrategy.market?.instrument) completedSteps.add(0);
+    if (sanitizedStrategy.patterns?.some(p => p.enabled)) completedSteps.add(1);
+    if (sanitizedStrategy.positionManagement) completedSteps.add(3);
     setConfirmedSteps(completedSteps);
   }, []);
 
