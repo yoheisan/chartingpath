@@ -93,7 +93,7 @@ const AdminKPIDashboard = () => {
     return null;
   }
 
-  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts } = kpiData;
+  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion } = kpiData;
 
   // Calculate funnel conversion rates
   const funnelSteps = [
@@ -161,8 +161,8 @@ const AdminKPIDashboard = () => {
           </Alert>
         )}
 
-        {/* North Star + Revenue Intent Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* North Star + Validated Traders + Stripe Conversion Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card className="border-primary/50 bg-primary/5">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -178,14 +178,44 @@ const AdminKPIDashboard = () => {
             </CardContent>
           </Card>
 
+          <Card className="border-green-500/50 bg-green-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">✅ Validated Traders</p>
+                  <p className="text-3xl font-bold text-green-600">{validatedTraders.validatedTraders}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Alert triggered in 7d
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Revenue Intent</p>
-                  <p className="text-3xl font-bold">{revenueIntent.paywallToClickRate.toFixed(1)}%</p>
+                  <p className="text-sm text-muted-foreground">Validation Rate</p>
+                  <p className="text-3xl font-bold">{validatedTraders.validatedVsActivated.toFixed(1)}%</p>
                   <p className="text-xs text-muted-foreground">
-                    {revenueIntent.sessionConversions}/{revenueIntent.totalPaywallSessions} sessions
+                    Median: {validatedTraders.medianTimeToFirstTriggerHours?.toFixed(1) || 'N/A'}h to trigger
+                  </p>
+                </div>
+                <Clock className="h-8 w-8 text-blue-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Checkout Started</p>
+                  <p className="text-3xl font-bold">{stripeConversion.checkoutStarted}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {stripeConversion.checkoutCompleted} completed
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
@@ -197,28 +227,13 @@ const AdminKPIDashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">D1 Retention</p>
-                  <p className="text-3xl font-bold">{retention.d1Retention.toFixed(1)}%</p>
-                  <p className="text-sm text-muted-foreground">
-                    {retention.usersActiveMultipleDays} multi-day users
+                  <p className="text-sm text-muted-foreground">Paid Conversion</p>
+                  <p className="text-3xl font-bold text-green-600">{stripeConversion.conversionRate.toFixed(1)}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    Checkout → Payment
                   </p>
                 </div>
-                <Users className="h-8 w-8 text-blue-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Alerts Created</p>
-                  <p className="text-3xl font-bold">{usage.totalAlerts}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {usage.activeAlerts} active
-                  </p>
-                </div>
-                <Bell className="h-8 w-8 text-amber-500 opacity-50" />
+                <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
