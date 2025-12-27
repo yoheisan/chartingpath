@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
+import { wedgeConfig, SUPPORTED_WEDGE_PATTERNS } from '@/config/wedge';
 import { 
   Search, 
   TrendingUp, 
@@ -23,6 +25,40 @@ import {
   Activity,
   GripVertical
 } from 'lucide-react';
+
+// Helper to check if a pattern is supported in wedge mode
+// Maps local pattern IDs to canonical wedge pattern names
+const isPatternSupportedInWedge = (patternId: string): boolean => {
+  if (!wedgeConfig.wedgeEnabled) return true;
+  
+  // Map local pattern IDs to canonical wedge pattern names
+  const patternIdToWedgeName: Record<string, string> = {
+    // Breakout patterns
+    'donchian_breakout': 'Breakout',
+    'volatility_squeeze': 'Breakout',
+    'channel_breakout': 'Breakout',
+    // DoubleTopBottom patterns
+    'double_top': 'DoubleTopBottom',
+    'double_bottom': 'DoubleTopBottom',
+    // Triangle patterns  
+    'ascending_triangle': 'Triangle',
+    'descending_triangle': 'Triangle',
+    'symmetrical_triangle': 'Triangle',
+  };
+  
+  const wedgeName = patternIdToWedgeName[patternId];
+  if (!wedgeName) return false;
+  
+  return SUPPORTED_WEDGE_PATTERNS.some(p => p.name === wedgeName);
+};
+
+const showWedgeModeBlockedToast = () => {
+  toast({
+    title: "Pattern Not Available",
+    description: "This pattern isn't available in Wedge Mode.",
+    variant: "destructive",
+  });
+};
 import {
   DndContext,
   closestCenter,
@@ -629,6 +665,12 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     const alreadyExists = patterns.some(p => p.patternType === patternId || p.id.startsWith(patternId));
     if (alreadyExists) return;
 
+    // Wedge mode guard: block unsupported patterns
+    if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(patternId)) {
+      showWedgeModeBlockedToast();
+      return;
+    }
+
     const newPattern: PatternConfig = {
       id: `${patternId}_${Date.now()}`,
       patternType: patternId,
@@ -727,6 +769,9 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       
       Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
         category.patterns.forEach((pattern) => {
+          // Wedge mode guard: skip unsupported patterns
+          if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(pattern.id)) return;
+          
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
           
@@ -799,6 +844,9 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       
       Object.entries(PATTERN_CATEGORIES).forEach(([categoryKey, category]) => {
         category.patterns.forEach((pattern) => {
+          // Wedge mode guard: skip unsupported patterns
+          if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(pattern.id)) return;
+          
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
           
@@ -873,6 +921,9 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
         category.patterns.forEach((pattern) => {
           if (pattern.direction !== 'neutral') return;
           
+          // Wedge mode guard: skip unsupported patterns
+          if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(pattern.id)) return;
+          
           const alreadyExists = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
           if (alreadyExists) return;
           
@@ -920,6 +971,12 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
     const category = PATTERN_CATEGORIES[categoryKey as keyof typeof PATTERN_CATEGORIES];
     const pattern = category.patterns.find(p => p.id === patternId);
     if (!pattern) return;
+
+    // Wedge mode guard: block unsupported patterns at click time
+    if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(patternId)) {
+      showWedgeModeBlockedToast();
+      return;
+    }
 
     if (pattern.direction === 'neutral') {
       setDirectionDialog({
@@ -1013,7 +1070,14 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
           </div>
           <Switch
             checked={pattern.enabled}
-            onCheckedChange={(checked) => updatePattern(pattern.id, { enabled: checked })}
+            onCheckedChange={(checked) => {
+              // Wedge mode guard: block enabling unsupported patterns
+              if (checked && wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(pattern.patternType)) {
+                showWedgeModeBlockedToast();
+                return;
+              }
+              updatePattern(pattern.id, { enabled: checked });
+            }}
             className="scale-75"
           />
           <span className="text-sm font-medium">{patternInfo.name}</span>
@@ -1466,17 +1530,29 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
               <Button 
                 className="w-full" 
                 onClick={() => {
+                  // Wedge mode guard: block unsupported patterns
+                  if (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(detailPattern.pattern.id)) {
+                    showWedgeModeBlockedToast();
+                    setDetailPattern(null);
+                    return;
+                  }
+                  
                   const isActive = patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id));
                   if (!isActive) {
-                    addPattern(detailPattern.categoryKey, detailPattern.pattern.id);
+                    addSinglePattern(detailPattern.categoryKey, detailPattern.pattern.id);
                   }
                   setDetailPattern(null);
                 }}
-                disabled={patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id))}
+                disabled={
+                  patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id)) ||
+                  (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(detailPattern.pattern.id))
+                }
               >
                 {patterns.some(p => p.patternType === detailPattern.pattern.id || p.id.startsWith(detailPattern.pattern.id)) 
                   ? 'Already Added' 
-                  : 'Add to Strategy'}
+                  : (wedgeConfig.wedgeEnabled && !isPatternSupportedInWedge(detailPattern.pattern.id))
+                    ? 'Not Available in Wedge Mode'
+                    : 'Add to Strategy'}
               </Button>
             </div>
           )}
