@@ -94,6 +94,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
+  const pendingSharedPresetRef = useRef<{ symbol: string; pattern: string; timeframe: string; autoRun?: boolean } | null>(null);
   const [summaryData, setSummaryData] = useState<{
     instrument?: string;
     timeframes?: string[];
@@ -126,38 +127,21 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     return () => clearInterval(interval);
   }, []);
 
-  // Handle shared backtest preset on mount (from SharedBacktest.tsx "Run This Playbook")
+  // Check for shared backtest preset on mount (from SharedBacktest.tsx "Run This Playbook")
+  // Store in ref so it can be processed once builder is ready
   useEffect(() => {
     const sharedPreset = sessionStorage.getItem('shared_backtest_preset');
     if (sharedPreset) {
       try {
         const preset = JSON.parse(sharedPreset);
-        console.log('[StrategyWorkspaceInterface] Found shared backtest preset:', preset);
+        console.log('[StrategyWorkspaceInterface] Found shared backtest preset (stored for processing):', preset);
         
         // Remove from storage immediately to prevent re-triggering on reload
         sessionStorage.removeItem('shared_backtest_preset');
 
-        // Load the preset into the workspace
+        // Store in ref for processing once builder is ready
         if (preset.symbol && preset.pattern && preset.timeframe) {
-          // Small delay to ensure builder is ready
-          setTimeout(() => {
-            handlePresetLoad({
-              symbol: preset.symbol,
-              pattern: preset.pattern,
-              timeframe: preset.timeframe
-            });
-
-            // If autoRun is requested, trigger the backtest after state updates
-            if (preset.autoRun) {
-              setTimeout(() => {
-                const strategy = builderRef.current?.getStrategy();
-                if (strategy) {
-                  console.log('[StrategyWorkspaceInterface] Auto-running backtest from shared preset');
-                  handleChartingPathBacktest(strategy);
-                }
-              }, 1000);
-            }
-          }, 500);
+          pendingSharedPresetRef.current = preset;
         }
       } catch (e) {
         console.error('Error parsing shared backtest preset:', e);
@@ -558,7 +542,44 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     }
   };
 
-  // Handle one-click backtest - loads BTC preset and immediately runs backtest
+  // Process pending shared preset once builder is ready
+  // This runs after autosave restore has completed (which happens on builder mount)
+  const sharedPresetProcessedRef = useRef(false);
+  useEffect(() => {
+    if (sharedPresetProcessedRef.current) return;
+    
+    const processPendingPreset = () => {
+      if (!pendingSharedPresetRef.current || !builderRef.current) return;
+      
+      const preset = pendingSharedPresetRef.current;
+      pendingSharedPresetRef.current = null; // Clear so we don't re-process
+      sharedPresetProcessedRef.current = true;
+      
+      console.log('[StrategyWorkspaceInterface] Processing shared preset (builder ready):', preset);
+      
+      // Load the preset
+      handlePresetLoad({
+        symbol: preset.symbol,
+        pattern: preset.pattern,
+        timeframe: preset.timeframe
+      });
+
+      // If autoRun is requested, trigger the backtest after state updates
+      if (preset.autoRun) {
+        setTimeout(() => {
+          const strategy = builderRef.current?.getStrategy();
+          if (strategy) {
+            console.log('[StrategyWorkspaceInterface] Auto-running backtest from shared preset');
+            handleChartingPathBacktest(strategy);
+          }
+        }, 1000);
+      }
+    };
+
+    // Wait a bit for builder to be ready and autosave to complete
+    const timer = setTimeout(processPendingPreset, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   // CRITICAL: Ensures Breakout pattern exists and is enabled before running
   const handleOneClickBacktest = () => {
     const strategy = builderRef.current?.getStrategy();
