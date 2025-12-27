@@ -147,6 +147,31 @@ export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
   },
 ];
 
+// Canonical mapping: PatternLibrary internal IDs → Wedge pattern names
+// This is the single source of truth for which local patterns are supported in wedge mode
+export const WEDGE_PATTERN_ID_MAP: Record<string, string> = {
+  // Breakout patterns
+  'donchian_breakout': 'Breakout',
+  'volatility_squeeze': 'Breakout',
+  'channel_breakout': 'Breakout',
+  // DoubleTopBottom patterns
+  'double_top': 'DoubleTopBottom',
+  'double_bottom': 'DoubleTopBottom',
+  // Triangle patterns
+  'ascending_triangle': 'Triangle',
+  'descending_triangle': 'Triangle',
+  'symmetrical_triangle': 'Triangle',
+};
+
+// Set of all supported pattern IDs for O(1) lookup
+export const SUPPORTED_WEDGE_PATTERN_IDS = new Set(Object.keys(WEDGE_PATTERN_ID_MAP));
+
+// Check if a pattern ID is supported in wedge mode
+export const isPatternIdSupportedInWedge = (patternId: string): boolean => {
+  if (!wedgeConfig.wedgeEnabled) return true;
+  return SUPPORTED_WEDGE_PATTERN_IDS.has(patternId);
+};
+
 // Map preset pattern names to internal pattern objects
 export const getPatternConfigByName = (patternName: string): WedgePatternConfig | undefined => {
   return SUPPORTED_WEDGE_PATTERNS.find(p => p.name === patternName);
