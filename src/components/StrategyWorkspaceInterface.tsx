@@ -27,7 +27,14 @@ import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartingPathManager } from './ChartingPathManager';
 import { CryptoPresetPanel } from './CryptoPresetPanel';
-import { wedgeConfig, getFullSymbol } from '@/config/wedge';
+import { 
+  wedgeConfig, 
+  getFullSymbol, 
+  createWedgePatternInstance, 
+  sanitizeWedgePatterns,
+  validateWedgePatterns,
+  SUPPORTED_WEDGE_PATTERNS 
+} from '@/config/wedge';
 import { useNavigate } from 'react-router-dom';
 import { openTradingView } from '@/utils/tradingViewLinks';
 import { trackShareCreated, trackTradingViewOpened, track } from '@/services/analytics';
@@ -448,10 +455,40 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     toast.success(`Loaded strategy: ${strategy.name}`);
   };
 
-  // Handle preset load from CryptoPresetPanel
+  // Handle preset load from CryptoPresetPanel - SYNCS BOTH market AND patterns
   const handlePresetLoad = (preset: { symbol: string; pattern: string; timeframe: string }) => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
+      // Create or update pattern to match preset selection
+      const patternInstance = createWedgePatternInstance(preset.pattern, true);
+      
+      // Disable all existing patterns, then add/enable the selected one
+      let updatedPatterns = (strategy.patterns || []).map((p: any) => ({
+        ...p,
+        enabled: p.name === preset.pattern,
+      }));
+      
+      // If the selected pattern doesn't exist in the array, add it
+      const hasPattern = updatedPatterns.some((p: any) => p.name === preset.pattern);
+      if (!hasPattern && patternInstance) {
+        updatedPatterns.push(patternInstance);
+      }
+      
+      // Track pattern validation for debugging
+      const validation = validateWedgePatterns(updatedPatterns);
+      if (!validation.valid) {
+        track('pattern_validation_failed', {
+          enabledPatternsCount: validation.enabledCount,
+          enabledPatternNames: validation.enabledNames,
+          hasUnsupportedPatterns: true,
+          unsupportedPatterns: validation.unsupportedPatterns,
+          wedgeEnabled: wedgeConfig.wedgeEnabled,
+          restoreSource: 'preset_load',
+        });
+        // Sanitize to remove unsupported patterns
+        updatedPatterns = sanitizeWedgePatterns(updatedPatterns);
+      }
+      
       const updatedStrategy = {
         ...strategy,
         market: {
@@ -460,17 +497,66 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           instrument: preset.symbol,
           timeframes: [preset.timeframe],
         },
+        patterns: updatedPatterns,
       };
       builderRef.current.setStrategy(updatedStrategy);
+      
+      console.log('[handlePresetLoad] Updated strategy with pattern:', {
+        symbol: preset.symbol,
+        pattern: preset.pattern,
+        enabledPatterns: updatedPatterns.filter((p: any) => p.enabled).map((p: any) => p.name),
+      });
+      
       toast.success(`Loaded preset: ${preset.symbol} ${preset.timeframe} ${preset.pattern}`);
     }
   };
 
   // Handle one-click backtest - loads BTC preset and immediately runs backtest
+  // CRITICAL: Ensures Breakout pattern exists and is enabled before running
   const handleOneClickBacktest = () => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
-      // Set up default BTC 1H Breakout preset
+      // Create Breakout pattern if it doesn't exist
+      const breakoutPattern = createWedgePatternInstance('Breakout', true);
+      
+      // Start with existing patterns or empty array
+      let patterns = strategy.patterns || [];
+      
+      // Disable all existing patterns first
+      patterns = patterns.map((p: any) => ({
+        ...p,
+        enabled: false,
+      }));
+      
+      // Check if Breakout exists
+      const hasBreakout = patterns.some((p: any) => p.name === 'Breakout');
+      
+      if (hasBreakout) {
+        // Enable existing Breakout
+        patterns = patterns.map((p: any) => ({
+          ...p,
+          enabled: p.name === 'Breakout',
+        }));
+      } else if (breakoutPattern) {
+        // Add new Breakout pattern
+        patterns.push(breakoutPattern);
+      }
+      
+      // Validate and track if there are issues
+      const validation = validateWedgePatterns(patterns);
+      if (!validation.valid || validation.enabledCount === 0) {
+        track('pattern_validation_failed', {
+          enabledPatternsCount: validation.enabledCount,
+          enabledPatternNames: validation.enabledNames,
+          hasUnsupportedPatterns: !validation.valid,
+          unsupportedPatterns: validation.unsupportedPatterns,
+          wedgeEnabled: wedgeConfig.wedgeEnabled,
+          restoreSource: 'one_click_backtest',
+        });
+        // Force sanitize to ensure we have at least Breakout enabled
+        patterns = sanitizeWedgePatterns([]);
+      }
+      
       const updatedStrategy = {
         ...strategy,
         market: {
@@ -483,17 +569,30 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           endDate: new Date().toISOString().split('T')[0],
         },
-        patterns: strategy.patterns?.map((p: any) => ({
-          ...p,
-          enabled: p.name === 'Breakout' || p.name === 'Channel Breakout',
-        })) || [],
+        patterns,
       };
+      
+      console.log('[handleOneClickBacktest] Setting up strategy:', {
+        enabledPatterns: patterns.filter((p: any) => p.enabled).map((p: any) => p.name),
+        totalPatterns: patterns.length,
+      });
+      
       builderRef.current.setStrategy(updatedStrategy);
       
-      // Trigger the backtest
+      // Trigger the backtest after state update
       setTimeout(() => {
         const finalStrategy = builderRef.current?.getStrategy();
         if (finalStrategy) {
+          // Final validation before backtest
+          const finalPatterns = finalStrategy.patterns || [];
+          const enabledCount = finalPatterns.filter((p: any) => p.enabled).length;
+          
+          console.log('[handleOneClickBacktest] Final strategy check:', {
+            hasPatterns: finalPatterns.length > 0,
+            enabledCount,
+            enabledNames: finalPatterns.filter((p: any) => p.enabled).map((p: any) => p.name),
+          });
+          
           handleChartingPathBacktest(finalStrategy);
         }
       }, 200);
