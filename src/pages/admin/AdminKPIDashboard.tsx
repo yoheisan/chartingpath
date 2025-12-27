@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   Shield, ArrowLeft, RefreshCw, TrendingUp, Users, Bell, 
-  DollarSign, AlertTriangle, CheckCircle, XCircle, BarChart3
+  DollarSign, AlertTriangle, CheckCircle, XCircle, BarChart3, Clock
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,7 +93,7 @@ const AdminKPIDashboard = () => {
     return null;
   }
 
-  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality } = kpiData;
+  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep } = kpiData;
 
   // Calculate funnel conversion rates
   const funnelSteps = [
@@ -492,6 +492,106 @@ const AdminKPIDashboard = () => {
           </Card>
         </div>
 
+        {/* Wedge Purity + Time-to-Step Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Wedge Purity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Wedge Purity
+              </CardTitle>
+              <CardDescription>
+                Events that match crypto + 1H (should be 100% after hardening)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-4xl font-bold text-primary">{wedgePurity.purityRate.toFixed(1)}%</p>
+                  <p className="text-sm text-muted-foreground">
+                    {wedgePurity.totalEvents - wedgePurity.nonWedgeEvents} / {wedgePurity.totalEvents} events
+                  </p>
+                </div>
+                {wedgePurity.purityRate < 100 && (
+                  <Badge variant="destructive">
+                    {wedgePurity.nonWedgeEvents} violations
+                  </Badge>
+                )}
+                {wedgePurity.purityRate === 100 && (
+                  <Badge variant="default" className="bg-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Perfect
+                  </Badge>
+                )}
+              </div>
+
+              {wedgePurity.violations.length > 0 && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm font-medium mb-2">Top Violations</p>
+                  {wedgePurity.violations.slice(0, 5).map((v, i) => (
+                    <div key={i} className="flex justify-between text-sm py-1">
+                      <span className="font-mono text-muted-foreground">
+                        {v.instrumentCategory} / {v.timeframe}
+                      </span>
+                      <span className="text-red-600">{v.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Time-to-Step Metrics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Time Between Steps
+              </CardTitle>
+              <CardDescription>
+                Median minutes between funnel steps
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Preset → Backtest</span>
+                  <span className="font-bold">
+                    {timeToStep.presetToBacktest 
+                      ? `${timeToStep.presetToBacktest.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Backtest → Create Alert</span>
+                  <span className="font-bold">
+                    {timeToStep.backtestToAlert 
+                      ? `${timeToStep.backtestToAlert.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Create Alert → Signup</span>
+                  <span className="font-bold">
+                    {timeToStep.alertToSignup 
+                      ? `${timeToStep.alertToSignup.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Signup → Alert Created</span>
+                  <span className="font-bold">
+                    {timeToStep.signupToAlert 
+                      ? `${timeToStep.signupToAlert.toFixed(1)} min`
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Data Quality Panel */}
         <Card>
           <CardHeader>
@@ -515,7 +615,7 @@ const AdminKPIDashboard = () => {
                   <div 
                     key={eventName}
                     className={`p-3 rounded-lg border flex items-center gap-2 ${
-                      isPresent ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                      isPresent ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800' : 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
                     }`}
                   >
                     {isPresent ? (
@@ -523,7 +623,7 @@ const AdminKPIDashboard = () => {
                     ) : (
                       <XCircle className="h-4 w-4 text-red-600" />
                     )}
-                    <span className={`text-sm font-mono ${isPresent ? 'text-green-800' : 'text-red-800'}`}>
+                    <span className={`text-sm font-mono ${isPresent ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
                       {eventName}
                     </span>
                   </div>
