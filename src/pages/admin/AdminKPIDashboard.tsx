@@ -93,7 +93,7 @@ const AdminKPIDashboard = () => {
     return null;
   }
 
-  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion } = kpiData;
+  const { funnel, activation, retention, usage, topSymbols, topPatterns, monetization, dataQuality, wedgePurity, wedgePatternPurity, timeToStep, northStar, revenueIntent, cohorts, validatedTraders, stripeConversion } = kpiData;
 
   // Calculate funnel conversion rates
   const funnelSteps = [
@@ -507,8 +507,8 @@ const AdminKPIDashboard = () => {
           </Card>
         </div>
 
-        {/* Wedge Purity + Time-to-Step Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Wedge Purity + Pattern Purity + Time-to-Step Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Wedge Purity */}
           <Card>
             <CardHeader>
@@ -548,6 +548,54 @@ const AdminKPIDashboard = () => {
                     <div key={i} className="flex justify-between text-sm py-1">
                       <span className="font-mono text-muted-foreground">
                         {v.instrumentCategory} / {v.timeframe}
+                      </span>
+                      <span className="text-red-600">{v.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Wedge Pattern Purity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Wedge Pattern Purity
+              </CardTitle>
+              <CardDescription>
+                % of backtests where enabled_patterns ⊆ SUPPORTED_WEDGE_PATTERN_IDS
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-4xl font-bold text-primary">{wedgePatternPurity.purityRate.toFixed(1)}%</p>
+                  <p className="text-sm text-muted-foreground">
+                    {wedgePatternPurity.pureBacktests} / {wedgePatternPurity.totalBacktests} backtests
+                  </p>
+                </div>
+                {wedgePatternPurity.purityRate < 100 && (
+                  <Badge variant="destructive">
+                    {wedgePatternPurity.totalBacktests - wedgePatternPurity.pureBacktests} violations
+                  </Badge>
+                )}
+                {wedgePatternPurity.purityRate === 100 && (
+                  <Badge variant="default" className="bg-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Perfect
+                  </Badge>
+                )}
+              </div>
+
+              {wedgePatternPurity.violations.length > 0 && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm font-medium mb-2">Top Unsupported Patterns</p>
+                  {wedgePatternPurity.violations.slice(0, 5).map((v, i) => (
+                    <div key={i} className="flex justify-between text-sm py-1">
+                      <span className="font-mono text-muted-foreground truncate max-w-[180px]" title={v.patterns.join(', ')}>
+                        {v.patterns.join(', ')}
                       </span>
                       <span className="text-red-600">{v.count}</span>
                     </div>
