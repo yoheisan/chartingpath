@@ -463,6 +463,40 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     }
   };
 
+  // Handle one-click backtest - loads BTC preset and immediately runs backtest
+  const handleOneClickBacktest = () => {
+    const strategy = builderRef.current?.getStrategy();
+    if (strategy && builderRef.current) {
+      // Set up default BTC 1H Breakout preset
+      const updatedStrategy = {
+        ...strategy,
+        market: {
+          ...strategy.market,
+          instrumentCategory: 'crypto' as const,
+          instrument: 'BTCUSDT',
+          timeframes: ['1h'],
+        },
+        backtestPeriod: {
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0],
+        },
+        patterns: strategy.patterns?.map((p: any) => ({
+          ...p,
+          enabled: p.name === 'Breakout' || p.name === 'Channel Breakout',
+        })) || [],
+      };
+      builderRef.current.setStrategy(updatedStrategy);
+      
+      // Trigger the backtest
+      setTimeout(() => {
+        const finalStrategy = builderRef.current?.getStrategy();
+        if (finalStrategy) {
+          handleChartingPathBacktest(finalStrategy);
+        }
+      }, 200);
+    }
+  };
+
   // Handle create alert after backtest - save playbook context before navigating
   const handleCreateAlert = () => {
     // Get current strategy from builder ref
@@ -652,7 +686,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6 space-y-6">
           {/* Crypto Preset Panel (Wedge Mode) */}
           {wedgeConfig.wedgeEnabled && (
-            <CryptoPresetPanel onPresetLoad={handlePresetLoad} />
+            <CryptoPresetPanel 
+              onPresetLoad={handlePresetLoad} 
+              onOneClickBacktest={handleOneClickBacktest}
+              isBacktesting={isBacktesting}
+            />
           )}
 
           {/* Create Alert CTA after backtest */}

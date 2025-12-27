@@ -186,7 +186,8 @@ const MemberAlerts = () => {
           symbol: symbol.toUpperCase(),
           pattern,
           timeframe,
-          action: 'create'
+          action: 'create',
+          wedgeEnabled: wedgeConfig.wedgeEnabled
         }
       });
 

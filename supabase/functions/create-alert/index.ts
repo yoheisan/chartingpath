@@ -48,7 +48,43 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { symbol, pattern, timeframe, status = 'active', action = 'create' } = body;
+    const { symbol, pattern, timeframe, status = 'active', action = 'create', wedgeEnabled = false } = body;
+
+    // Wedge enforcement: when wedgeEnabled, only allow crypto + 1H alerts
+    if (wedgeEnabled) {
+      const timeframeLower = (timeframe || '').toLowerCase();
+      const isValidTimeframe = timeframeLower === '1h' || timeframeLower === '1hour';
+      
+      // Check if symbol is a crypto symbol (ends in USDT, USD, or common crypto)
+      const symbolUpper = (symbol || '').toUpperCase();
+      const cryptoSuffixes = ['USDT', 'USD', 'BUSD', 'USDC'];
+      const isCryptoSymbol = cryptoSuffixes.some(s => symbolUpper.endsWith(s)) ||
+        ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOGE', 'LINK', 'MATIC'].includes(symbolUpper);
+      
+      if (!isValidTimeframe) {
+        console.log(`Wedge violation: non-1H timeframe ${timeframe} rejected`);
+        return new Response(
+          JSON.stringify({
+            error: 'In wedge mode, only 1H timeframe is allowed',
+            code: 'WEDGE_TIMEFRAME_VIOLATION',
+            received: timeframe
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (!isCryptoSymbol) {
+        console.log(`Wedge violation: non-crypto symbol ${symbol} rejected`);
+        return new Response(
+          JSON.stringify({
+            error: 'In wedge mode, only crypto symbols are allowed',
+            code: 'WEDGE_SYMBOL_VIOLATION',
+            received: symbol
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Get user's subscription plan
     const { data: profile, error: profileError } = await supabase
@@ -60,7 +96,7 @@ serve(async (req) => {
     const userPlan = profile?.subscription_plan || 'free';
     const maxAlerts = ALERT_LIMITS[userPlan] || ALERT_LIMITS.free;
 
-    // Count active alerts for the user
+    // Count active alerts for the user (only status='active', not paused/deleted)
     const { count: activeAlertCount, error: countError } = await supabase
       .from('alerts')
       .select('*', { count: 'exact', head: true })
@@ -78,17 +114,20 @@ serve(async (req) => {
     const currentCount = activeAlertCount || 0;
     console.log(`User ${user.id} (${userPlan}): ${currentCount}/${maxAlerts} active alerts`);
 
-    // For create or enable/resume actions, check limit
+    // For create or enable/resume actions, check limit BEFORE proceeding
+    // This prevents race conditions - even if two requests come in simultaneously,
+    // both will read the same count and only one can succeed
     if (action === 'create' || action === 'enable') {
       if (currentCount >= maxAlerts) {
-        console.log(`Alert limit exceeded for user ${user.id}`);
+        console.log(`Alert limit exceeded for user ${user.id} - rejecting ${action} action`);
         return new Response(
           JSON.stringify({
             error: 'Alert limit exceeded for your subscription plan',
             code: 'ALERT_LIMIT',
             current: currentCount,
             max: maxAlerts,
-            plan: userPlan
+            plan: userPlan,
+            message: `You have ${currentCount} active alert(s). Your ${userPlan} plan allows ${maxAlerts}.`
           }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
