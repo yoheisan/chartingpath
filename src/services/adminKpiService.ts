@@ -107,11 +107,12 @@ export interface ValidatedTradersMetrics {
   medianTimeToFirstTriggerHours: number | null;
 }
 
-// Stripe conversion metrics
+// Stripe conversion metrics (webhook-truthful)
 export interface StripeConversionMetrics {
   checkoutStarted: number;
-  checkoutCompleted: number;
-  conversionRate: number;
+  checkoutCompleted: number; // client-side (may be inaccurate)
+  paidStarted: number; // webhook-truthful (investor-grade)
+  conversionRate: number; // based on paid_started
 }
 
 export interface KPIData {
@@ -882,7 +883,7 @@ async function fetchValidatedTradersMetrics(days: number): Promise<ValidatedTrad
   };
 }
 
-// Fetch Stripe conversion metrics
+// Fetch Stripe conversion metrics (webhook-truthful)
 async function fetchStripeConversionMetrics(days: number): Promise<StripeConversionMetrics> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
@@ -892,28 +893,33 @@ async function fetchStripeConversionMetrics(days: number): Promise<StripeConvers
     .from('product_events')
     .select('event_name, user_id, session_id')
     .gte('created_at', cutoffISO)
-    .in('event_name', ['checkout_started', 'checkout_completed']);
+    .in('event_name', ['checkout_started', 'checkout_completed', 'paid_started']);
 
   if (!events || events.length === 0) {
-    return { checkoutStarted: 0, checkoutCompleted: 0, conversionRate: 0 };
+    return { checkoutStarted: 0, checkoutCompleted: 0, paidStarted: 0, conversionRate: 0 };
   }
 
   const startedSessions = new Set<string>();
   const completedSessions = new Set<string>();
+  const paidSessions = new Set<string>();
 
   for (const event of events) {
     const key = event.user_id || event.session_id || 'unknown';
     if (event.event_name === 'checkout_started') startedSessions.add(key);
     if (event.event_name === 'checkout_completed') completedSessions.add(key);
+    if (event.event_name === 'paid_started') paidSessions.add(key);
   }
 
   const checkoutStarted = startedSessions.size;
   const checkoutCompleted = completedSessions.size;
+  const paidStarted = paidSessions.size;
 
   return {
     checkoutStarted,
     checkoutCompleted,
-    conversionRate: checkoutStarted > 0 ? (checkoutCompleted / checkoutStarted) * 100 : 0,
+    paidStarted,
+    // Use webhook-truthful paid_started for conversion rate (investor-grade)
+    conversionRate: checkoutStarted > 0 ? (paidStarted / checkoutStarted) * 100 : 0,
   };
 }
 

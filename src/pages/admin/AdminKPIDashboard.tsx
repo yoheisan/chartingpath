@@ -215,22 +215,22 @@ const AdminKPIDashboard = () => {
                   <p className="text-sm text-muted-foreground">Checkout Started</p>
                   <p className="text-3xl font-bold">{stripeConversion.checkoutStarted}</p>
                   <p className="text-xs text-muted-foreground">
-                    {stripeConversion.checkoutCompleted} completed
+                    {stripeConversion.checkoutCompleted} client completed
                   </p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
+                <DollarSign className="h-8 w-8 text-yellow-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-green-500/50 bg-green-500/5">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Paid Conversion</p>
-                  <p className="text-3xl font-bold text-green-600">{stripeConversion.conversionRate.toFixed(1)}%</p>
+                  <p className="text-sm text-muted-foreground">💵 Paid Started (Webhook)</p>
+                  <p className="text-3xl font-bold text-green-600">{stripeConversion.paidStarted}</p>
                   <p className="text-xs text-muted-foreground">
-                    Checkout → Payment
+                    {stripeConversion.conversionRate.toFixed(1)}% of checkouts
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
@@ -614,7 +614,7 @@ const AdminKPIDashboard = () => {
             <CardDescription>Events detected in the last 7 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {[
                 'signup_completed',
                 'preset_loaded',
@@ -624,6 +624,7 @@ const AdminKPIDashboard = () => {
                 'share_created',
                 'paywall_shown',
                 'pricing_clicked',
+                'paid_started',
               ].map(eventName => {
                 const isPresent = dataQuality.eventsPresent.includes(eventName);
                 return (

@@ -17,7 +17,15 @@ export type AnalyticsEvent =
   | 'create_alert_clicked'
   | 'checkout_started'
   | 'checkout_completed'
-  | 'tradingview_opened';
+  | 'tradingview_opened'
+  | 'result_summary_viewed'
+  | 'low_sample_warning_shown'
+  | 'share_clicked'
+  | 'shared_backtest_viewed'
+  | 'shared_backtest_run_clicked'
+  | 'shared_backtest_alert_clicked'
+  | 'shared_backtest_converted'
+  | 'paid_started';
 
 // Event properties types
 export interface PresetLoadedProps {
