@@ -126,6 +126,45 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     return () => clearInterval(interval);
   }, []);
 
+  // Handle shared backtest preset on mount (from SharedBacktest.tsx "Run This Playbook")
+  useEffect(() => {
+    const sharedPreset = sessionStorage.getItem('shared_backtest_preset');
+    if (sharedPreset) {
+      try {
+        const preset = JSON.parse(sharedPreset);
+        console.log('[StrategyWorkspaceInterface] Found shared backtest preset:', preset);
+        
+        // Remove from storage immediately to prevent re-triggering on reload
+        sessionStorage.removeItem('shared_backtest_preset');
+
+        // Load the preset into the workspace
+        if (preset.symbol && preset.pattern && preset.timeframe) {
+          // Small delay to ensure builder is ready
+          setTimeout(() => {
+            handlePresetLoad({
+              symbol: preset.symbol,
+              pattern: preset.pattern,
+              timeframe: preset.timeframe
+            });
+
+            // If autoRun is requested, trigger the backtest after state updates
+            if (preset.autoRun) {
+              setTimeout(() => {
+                const strategy = builderRef.current?.getStrategy();
+                if (strategy) {
+                  console.log('[StrategyWorkspaceInterface] Auto-running backtest from shared preset');
+                  handleChartingPathBacktest(strategy);
+                }
+              }, 1000);
+            }
+          }, 500);
+        }
+      } catch (e) {
+        console.error('Error parsing shared backtest preset:', e);
+      }
+    }
+  }, []);
+
   // Handle backtest completion
   const handleBacktestComplete = (results: any) => {
     setBacktestResults(results);
