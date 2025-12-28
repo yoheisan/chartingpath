@@ -3,23 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { PatternDetectionDisplay } from './PatternDetectionDisplay';
-import { SignalAnalysisDashboard } from './SignalAnalysisDashboard';
 import { DEFAULT_DISCIPLINE_FILTERS, DisciplineFilters } from './TradeDisciplineFilters';
 import { toast } from 'sonner';
 import { wedgeConfig } from '@/config/wedge';
 import { 
-  validateTradeDiscipline,
-  DisciplineTracker,
-  TradeSignal,
-  OpenPosition,
-  PriceBar,
   DisciplineStats
 } from '@/services/tradeDisciplineService';
 import {
@@ -31,13 +23,9 @@ import {
   Shield,
   Activity,
   Settings,
-  Eye,
   Calendar,
-  Clock,
   DollarSign,
-  Percent,
-  AlertTriangle,
-  CheckCircle2
+  AlertTriangle
 } from 'lucide-react';
 
 // Wedge mode helper
@@ -641,99 +629,62 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
       {/* Results Display */}
       {results && (
         <div className="space-y-6">
-          {/* Signal Analysis Dashboard - Comprehensive view */}
-          {disciplineStats.totalSignals > 0 && (
-            <SignalAnalysisDashboard 
-              stats={disciplineStats} 
-              filters={disciplineFilters}
-              patternBreakdown={results.patternBreakdown}
-              trades={results.trades}
-              onFilterChange={handleFilterChange}
-            />
-          )}
+          {/* Signal Analysis Dashboard removed for MVP scope */}
 
-          {/* Overall Performance */}
+          {/* MVP Overall Performance - Win Rate, Max Drawdown, Sample Size only */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-green-500" />
-                Overall Performance
-                {disciplineStats.rejectedTrades > 0 && (
-                  <Badge variant="outline" className="gap-1 text-xs bg-green-500/10 border-green-500/30 text-green-600">
-                    <Shield className="w-3 h-3" />
-                    {disciplineStats.rejectedTrades} low-quality trades avoided
-                  </Badge>
-                )}
+                Performance Summary
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${results.totalReturn > 0 ? 'text-green-500' : results.totalReturn < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                    {results.totalReturn > 0 ? '+' : ''}{(results.totalReturn ?? 0).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Return</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${results.maxDrawdown > 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                    -{Math.abs(results.maxDrawdown ?? 0).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">Max Drawdown</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${results.totalTrades > 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <div className={`text-2xl font-bold ${(results.winRate ?? 0) >= 50 ? 'text-green-500' : 'text-red-500'}`}>
                     {(results.winRate ?? 0).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Win Rate</div>
                 </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${results.profitFactor > 0 ? 'text-purple-500' : 'text-muted-foreground'}`}>
-                    {(results.profitFactor ?? 0).toFixed(2)}
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <div className="text-2xl font-bold text-red-500">
+                    -{Math.abs(results.maxDrawdown ?? 0).toFixed(1)}%
                   </div>
-                  <div className="text-sm text-muted-foreground">Profit Factor</div>
+                  <div className="text-sm text-muted-foreground">Max Drawdown</div>
                 </div>
-                <div className="text-center col-span-2 md:col-span-4 border-t pt-4 mt-2">
-                  <div className={`text-xl font-semibold ${results.totalTrades > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {results.totalTrades ?? 0} trades executed
-                    {results.rawSignals > 0 && results.totalTrades === 0 && (
-                      <span className="text-sm font-normal text-amber-500 ml-2">
-                        ({results.rawSignals} signals filtered by discipline rules)
-                      </span>
-                    )}
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <div className={`text-2xl font-bold ${(results.totalTrades ?? 0) < 20 ? 'text-yellow-600' : 'text-foreground'}`}>
+                    {results.totalTrades ?? 0}
                   </div>
+                  <div className="text-sm text-muted-foreground">Sample Size</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Pattern-Specific Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                Pattern Performance Breakdown
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Individual performance metrics for each pattern type
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {patternResults.map((pattern) => (
-                  <Card key={pattern.patternId} className="border-l-4 border-l-primary">
-                    <CardContent className="pt-4">
+          {/* MVP Pattern Performance - Single Pattern Only with MVP metrics */}
+          {patternResults.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Pattern Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {patternResults.slice(0, 1).map((pattern) => (
+                    <div key={pattern.patternId} className="border-l-4 border-l-primary pl-4">
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <h4 className="font-medium">{pattern.patternName}</h4>
-                          <p className="text-sm text-muted-foreground">{pattern.trades} trades executed</p>
+                          <p className="text-sm text-muted-foreground">{pattern.trades} trades</p>
                         </div>
-                        <Badge variant={pattern.profitFactor > 1.5 ? "default" : "secondary"}>
-                          PF: {pattern.profitFactor}
-                        </Badge>
                       </div>
-                      <div className="grid grid-cols-3 md:grid-cols-5 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <div className="font-medium text-green-500">{pattern.winRate}%</div>
+                          <div className={`font-medium ${pattern.winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>{pattern.winRate}%</div>
                           <div className="text-muted-foreground">Win Rate</div>
                         </div>
                         <div>
@@ -742,112 +693,68 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                         </div>
                         <div>
                           <div className="font-medium text-red-500">{pattern.maxDrawdown}%</div>
-                          <div className="text-muted-foreground">Max DD</div>
+                          <div className="text-muted-foreground">Max Drawdown</div>
                         </div>
                         <div>
                           <div className="font-medium">{pattern.profitFactor}</div>
                           <div className="text-muted-foreground">Profit Factor</div>
                         </div>
-                        <div>
-                          <div className="font-medium">{pattern.sharpeRatio}</div>
-                          <div className="text-muted-foreground">Sharpe</div>
-                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI-Detected Patterns */}
-          {results.patternDetails && results.patternDetails.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  AI Pattern Detection Results
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Real pattern detections from AI analysis of historical price data
-                </p>
-              </CardHeader>
-              <CardContent>
-                <PatternDetectionDisplay detections={results.patternDetails} />
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Additional Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Trade Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Total Trades</span>
-                  <span className="font-medium">{results.totalTrades ?? 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Winning Trades</span>
-                  <span className="font-medium text-green-500">
-                    {results.winningTrades ?? 0} ({results.winRate?.toFixed(1) ?? 0}%)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Losing Trades</span>
-                  <span className="font-medium text-red-500">
-                    {results.losingTrades ?? 0} ({(100 - (results.winRate ?? 0)).toFixed(1)}%)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Average Win</span>
-                  <span className="font-medium text-green-500">
-                    {results.avgWin != null ? `${results.avgWin >= 0 ? '+' : ''}${results.avgWin.toFixed(2)}%` : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Average Loss</span>
-                  <span className="font-medium text-red-500">
-                    {results.avgLoss != null ? `${results.avgLoss.toFixed(2)}%` : 'N/A'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+          {/* AI Pattern Detection Results - Hidden for MVP scope */}
 
+          {/* MVP Executed Trades List - Read-only */}
+          {results.trades && results.trades.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Risk Metrics</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Executed Trades
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Max Drawdown</span>
-                  <span className="font-medium text-red-500">
-                    {results.maxDrawdown != null ? `${results.maxDrawdown.toFixed(2)}%` : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sharpe Ratio</span>
-                  <span className="font-medium">{results.sharpeRatio?.toFixed(2) ?? 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sortino Ratio</span>
-                  <span className="font-medium">{results.sortinoRatio?.toFixed(2) ?? 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Profit Factor</span>
-                  <span className="font-medium">{results.profitFactor?.toFixed(2) ?? 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Expectancy</span>
-                  <span className={`font-medium ${(results.expectancy ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {results.expectancy != null ? `${results.expectancy >= 0 ? '+' : ''}${results.expectancy.toFixed(2)}%` : 'N/A'}
-                  </span>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Pattern</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Entry</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Exit</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">P&L</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.trades.slice(0, 20).map((trade: any, idx: number) => (
+                        <tr key={idx} className="border-b border-border/50">
+                          <td className="py-2 px-2">{trade.patternName || 'Unknown'}</td>
+                          <td className="py-2 px-2">{trade.entryPrice?.toFixed(2) ?? '-'}</td>
+                          <td className="py-2 px-2">{trade.exitPrice?.toFixed(2) ?? '-'}</td>
+                          <td className={`py-2 px-2 text-right font-medium ${(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? '+' : ''}{(trade.pnlPercent ?? trade.pnl ?? 0).toFixed(2)}%
+                          </td>
+                          <td className="py-2 px-2 text-muted-foreground">
+                            {trade.entryDate ? new Date(trade.entryDate).toLocaleDateString() : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {results.trades.length > 20 && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      Showing 20 of {results.trades.length} trades
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
         </div>
       )}
     </div>
