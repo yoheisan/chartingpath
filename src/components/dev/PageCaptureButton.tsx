@@ -114,7 +114,7 @@ export const PageCaptureButton = () => {
       disabled={isCapturing}
       variant="outline"
       size="icon"
-      className="fixed bottom-4 right-4 z-[9999] bg-background/80 backdrop-blur-sm border-primary/20 hover:border-primary/50 shadow-lg"
+      className="fixed bottom-4 right-4 z-[99999] bg-background/80 backdrop-blur-sm border-primary/20 hover:border-primary/50 shadow-lg print:hidden"
       title="Capture Full Page (Admin)"
     >
       {isCapturing ? (
