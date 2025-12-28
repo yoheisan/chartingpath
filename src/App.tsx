@@ -92,6 +92,7 @@ import TradingJournal from "./pages/blog/TradingJournal";
 import EmailPreview from "./pages/EmailPreview";
 import EconomicCalendar from "./pages/EconomicCalendar";
 import SocialMediaCMS from "./pages/SocialMediaCMS";
+import { PageCaptureButton } from "./components/dev/PageCaptureButton";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <ScrollToTop />
+      <PageCaptureButton />
       <Layout>
         <Routes>
           <Route path="/" element={<Index />} />
