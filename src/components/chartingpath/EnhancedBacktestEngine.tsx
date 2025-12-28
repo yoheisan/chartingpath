@@ -13,6 +13,7 @@ import { PatternDetectionDisplay } from './PatternDetectionDisplay';
 import { SignalAnalysisDashboard } from './SignalAnalysisDashboard';
 import { DEFAULT_DISCIPLINE_FILTERS, DisciplineFilters } from './TradeDisciplineFilters';
 import { toast } from 'sonner';
+import { wedgeConfig } from '@/config/wedge';
 import { 
   validateTradeDiscipline,
   DisciplineTracker,
@@ -38,6 +39,9 @@ import {
   AlertTriangle,
   CheckCircle2
 } from 'lucide-react';
+
+// Wedge mode helper
+const isWedge = wedgeConfig.wedgeEnabled;
 
 interface PatternBacktestResult {
   patternId: string;
@@ -332,233 +336,258 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Configuration Header */}
+      {/* Configuration Header - Simplified in wedge mode */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Enhanced Pattern Backtesting Engine
-              <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10">
-                Multi-Pattern v2.0
-              </Badge>
+              {isWedge ? 'Pattern Backtest' : 'Enhanced Pattern Backtesting Engine'}
+              {!isWedge && (
+                <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10">
+                  Multi-Pattern v2.0
+                </Badge>
+              )}
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configure
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Backtest Configuration</DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Symbol</Label>
-                    <Select value={backtestConfig.symbol} onValueChange={(value) => updateConfig('symbol', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="EURUSD">EUR/USD</SelectItem>
-                        <SelectItem value="GBPUSD">GBP/USD</SelectItem>
-                        <SelectItem value="USDJPY">USD/JPY</SelectItem>
-                        <SelectItem value="BTCUSD">BTC/USD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label>Timeframe</Label>
-                    <Select value={backtestConfig.timeframe} onValueChange={(value) => updateConfig('timeframe', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1m">1 Minute (max 7 days)</SelectItem>
-                        <SelectItem value="5m">5 Minutes (max 60 days)</SelectItem>
-                        <SelectItem value="15m">15 Minutes (max 60 days)</SelectItem>
-                        <SelectItem value="1h">1 Hour (max 2 years)</SelectItem>
-                        <SelectItem value="4h">4 Hours (max 2 years)</SelectItem>
-                        <SelectItem value="1d">Daily (unlimited)</SelectItem>
-                        <SelectItem value="1wk">Weekly (unlimited)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {/* Configure button - Hidden in wedge mode */}
+            {!isWedge && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configure
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Backtest Configuration</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Symbol</Label>
+                      <Select value={backtestConfig.symbol} onValueChange={(value) => updateConfig('symbol', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EURUSD">EUR/USD</SelectItem>
+                          <SelectItem value="GBPUSD">GBP/USD</SelectItem>
+                          <SelectItem value="USDJPY">USD/JPY</SelectItem>
+                          <SelectItem value="BTCUSD">BTC/USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label>Timeframe</Label>
+                      <Select value={backtestConfig.timeframe} onValueChange={(value) => updateConfig('timeframe', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1m">1 Minute (max 7 days)</SelectItem>
+                          <SelectItem value="5m">5 Minutes (max 60 days)</SelectItem>
+                          <SelectItem value="15m">15 Minutes (max 60 days)</SelectItem>
+                          <SelectItem value="1h">1 Hour (max 2 years)</SelectItem>
+                          <SelectItem value="4h">4 Hours (max 2 years)</SelectItem>
+                          <SelectItem value="1d">Daily (unlimited)</SelectItem>
+                          <SelectItem value="1wk">Weekly (unlimited)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div>
-                    <Label>Start Date</Label>
-                    <Input
-                      type="date"
-                      value={backtestConfig.startDate}
-                      onChange={(e) => {
-                        const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
-                        const start = new Date(e.target.value);
-                        const end = new Date(backtestConfig.endDate);
-                        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                        
-                        if (days > maxDays) {
-                          toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
-                          return;
-                        }
-                        updateConfig('startDate', e.target.value);
-                      }}
-                    />
-                  </div>
+                    <div>
+                      <Label>Start Date</Label>
+                      <Input
+                        type="date"
+                        value={backtestConfig.startDate}
+                        onChange={(e) => {
+                          const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
+                          const start = new Date(e.target.value);
+                          const end = new Date(backtestConfig.endDate);
+                          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          
+                          if (days > maxDays) {
+                            toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
+                            return;
+                          }
+                          updateConfig('startDate', e.target.value);
+                        }}
+                      />
+                    </div>
 
-                  <div>
-                    <Label>End Date</Label>
-                    <Input
-                      type="date"
-                      value={backtestConfig.endDate}
-                      onChange={(e) => {
-                        const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
-                        const start = new Date(backtestConfig.startDate);
-                        const end = new Date(e.target.value);
-                        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                        
-                        if (days > maxDays) {
-                          toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
-                          return;
-                        }
-                        updateConfig('endDate', e.target.value);
-                      }}
-                    />
-                  </div>
+                    <div>
+                      <Label>End Date</Label>
+                      <Input
+                        type="date"
+                        value={backtestConfig.endDate}
+                        onChange={(e) => {
+                          const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
+                          const start = new Date(backtestConfig.startDate);
+                          const end = new Date(e.target.value);
+                          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          
+                          if (days > maxDays) {
+                            toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
+                            return;
+                          }
+                          updateConfig('endDate', e.target.value);
+                        }}
+                      />
+                    </div>
 
-                  <div>
-                    <Label>Spread (pips)</Label>
-                    <Input
-                      type="number"
-                      value={backtestConfig.spread}
-                      onChange={(e) => updateConfig('spread', parseFloat(e.target.value))}
-                      step="0.1"
-                    />
-                  </div>
+                    <div>
+                      <Label>Spread (pips)</Label>
+                      <Input
+                        type="number"
+                        value={backtestConfig.spread}
+                        onChange={(e) => updateConfig('spread', parseFloat(e.target.value))}
+                        step="0.1"
+                      />
+                    </div>
 
-                  <div>
-                    <Label>Initial Balance ($)</Label>
-                    <Input
-                      type="number"
-                      value={backtestConfig.initialBalance}
-                      onChange={(e) => updateConfig('initialBalance', parseInt(e.target.value))}
-                    />
+                    <div>
+                      <Label>Initial Balance ($)</Label>
+                      <Input
+                        type="number"
+                        value={backtestConfig.initialBalance}
+                        onChange={(e) => updateConfig('initialBalance', parseInt(e.target.value))}
+                      />
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" />
-              <span>{backtestConfig.symbol} • {backtestConfig.timeframe}</span>
+          {/* Simplified info row for wedge mode */}
+          {isWedge ? (
+            <div className="flex items-center gap-4 text-sm flex-wrap">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <span>{backtestConfig.symbol} • 1H</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-accent" />
+                <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-green-500" />
+                <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-accent" />
-              <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <span>{backtestConfig.symbol} • {backtestConfig.timeframe}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-accent" />
+                <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-green-500" />
+                <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-blue-500" />
+                <span>${backtestConfig.initialBalance.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-amber-500" />
+                <span>{[
+                  disciplineFilters.trendAlignmentEnabled,
+                  disciplineFilters.minRiskRewardEnabled,
+                  disciplineFilters.volumeConfirmationEnabled,
+                  disciplineFilters.maxPatternsEnabled,
+                  disciplineFilters.maxConcurrentTradesEnabled,
+                  disciplineFilters.timeFilterEnabled,
+                  disciplineFilters.atrStopValidationEnabled,
+                  disciplineFilters.cooldownEnabled
+                ].filter(Boolean).length}/8 Discipline Filters</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-green-500" />
-              <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns Active</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-blue-500" />
-              <span>${backtestConfig.initialBalance.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-amber-500" />
-              <span>{[
-                disciplineFilters.trendAlignmentEnabled,
-                disciplineFilters.minRiskRewardEnabled,
-                disciplineFilters.volumeConfirmationEnabled,
-                disciplineFilters.maxPatternsEnabled,
-                disciplineFilters.maxConcurrentTradesEnabled,
-                disciplineFilters.timeFilterEnabled,
-                disciplineFilters.atrStopValidationEnabled,
-                disciplineFilters.cooldownEnabled
-              ].filter(Boolean).length}/8 Discipline Filters</span>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Interactive Parameter Sliders */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Interactive Risk Parameters</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Adjust parameters and see instant impact on backtest results
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label className="flex items-center justify-between">
-                Risk Per Trade
-                <span className="text-primary font-medium">{interactiveParams.riskPerTrade}%</span>
-              </Label>
-              <Slider
-                value={[interactiveParams.riskPerTrade]}
-                onValueChange={([value]) => updateInteractiveParam('riskPerTrade', value)}
-                min={0.5}
-                max={5.0}
-                step={0.1}
-                className="mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Maximum loss per individual trade</p>
-            </div>
+      {/* Interactive Parameter Sliders - Hidden in wedge mode */}
+      {!isWedge && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Interactive Risk Parameters</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Adjust parameters and see instant impact on backtest results
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label className="flex items-center justify-between">
+                  Risk Per Trade
+                  <span className="text-primary font-medium">{interactiveParams.riskPerTrade}%</span>
+                </Label>
+                <Slider
+                  value={[interactiveParams.riskPerTrade]}
+                  onValueChange={([value]) => updateInteractiveParam('riskPerTrade', value)}
+                  min={0.5}
+                  max={5.0}
+                  step={0.1}
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Maximum loss per individual trade</p>
+              </div>
 
-            <div>
-              <Label className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  Portfolio Risk Cap
-                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                    Auto-Exit
-                  </Badge>
-                </span>
-                <span className="text-primary font-medium">{interactiveParams.portfolioRiskCap}%</span>
-              </Label>
-              <Slider
-                value={[interactiveParams.portfolioRiskCap]}
-                onValueChange={([value]) => updateInteractiveParam('portfolioRiskCap', value)}
-                min={3.0}
-                max={15.0}
-                step={0.5}
-                className="mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                When total loss reaches this %, all trades exit. New patterns still trigger entries.
-              </p>
-            </div>
+              <div>
+                <Label className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    Portfolio Risk Cap
+                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                      Auto-Exit
+                    </Badge>
+                  </span>
+                  <span className="text-primary font-medium">{interactiveParams.portfolioRiskCap}%</span>
+                </Label>
+                <Slider
+                  value={[interactiveParams.portfolioRiskCap]}
+                  onValueChange={([value]) => updateInteractiveParam('portfolioRiskCap', value)}
+                  min={3.0}
+                  max={15.0}
+                  step={0.5}
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  When total loss reaches this %, all trades exit. New patterns still trigger entries.
+                </p>
+              </div>
 
-          </div>
-          
-          {/* Note about per-pattern TP/SL */}
-          <div className="p-3 rounded-lg bg-muted/50 border">
-            <div className="flex items-start gap-2">
-              <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-muted-foreground">
-                <strong>Take Profit & Stop Loss:</strong> Each trade uses the pattern-specific TP/SL configured in Step 4 of the strategy builder.
+            </div>
+            
+            {/* Note about per-pattern TP/SL */}
+            <div className="p-3 rounded-lg bg-muted/50 border">
+              <div className="flex items-start gap-2">
+                <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-muted-foreground">
+                  <strong>Take Profit & Stop Loss:</strong> Each trade uses the pattern-specific TP/SL configured in Step 4 of the strategy builder.
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Risk Threshold Explanation */}
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-amber-800 dark:text-amber-200">
-                <strong>Auto-Exit Behavior:</strong> If combined losses across all open trades reach {interactiveParams.portfolioRiskCap}%, 
-                all positions are closed immediately. The backtest continues and new trades are opened when the next pattern confirms.
+            {/* Risk Threshold Explanation */}
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-amber-800 dark:text-amber-200">
+                  <strong>Auto-Exit Behavior:</strong> If combined losses across all open trades reach {interactiveParams.portfolioRiskCap}%, 
+                  all positions are closed immediately. The backtest continues and new trades are opened when the next pattern confirms.
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Run Backtest */}
       <Card>

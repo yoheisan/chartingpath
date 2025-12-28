@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Zap, TrendingUp, Clock, Play } from 'lucide-react';
+import { Zap, Clock, Play } from 'lucide-react';
 import { wedgeConfig, featuredPresets, getFullSymbol } from '@/config/wedge';
 import { trackPresetLoaded, track } from '@/services/analytics';
 
@@ -20,23 +20,6 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
 }) => {
   const [selectedSymbol, setSelectedSymbol] = React.useState<string>(wedgeConfig.featuredSymbols[0]);
   const [selectedPattern, setSelectedPattern] = React.useState<string>(wedgeConfig.featuredPatterns[0]);
-
-  const handleLoadPreset = () => {
-    const preset = {
-      symbol: getFullSymbol(selectedSymbol),
-      pattern: selectedPattern,
-      timeframe: wedgeConfig.wedgeTimeframe,
-    };
-    
-    // Track the event
-    trackPresetLoaded({
-      symbol: selectedSymbol,
-      pattern: selectedPattern,
-      timeframe: wedgeConfig.wedgeTimeframe,
-    });
-    
-    onPresetLoad(preset);
-  };
 
   const handleQuickPreset = (preset: typeof featuredPresets[number]) => {
     const fullPreset = {
@@ -109,7 +92,7 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Custom Preset Builder */}
+        {/* Simplified Preset Builder - Single action path for wedge MVP */}
         <div className="flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[120px]">
             <label className="text-xs text-muted-foreground mb-1 block">Symbol</label>
@@ -142,18 +125,13 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
               </SelectContent>
             </Select>
           </div>
-          
-          <Button onClick={handleLoadPreset} className="h-9">
-            <TrendingUp className="h-4 w-4 mr-1" />
-            Load Preset
-          </Button>
         </div>
 
-        {/* Quick Presets */}
+        {/* Featured Presets - Quick 1-click options */}
         <div>
-          <label className="text-xs text-muted-foreground mb-2 block">Featured Presets (1-click)</label>
+          <label className="text-xs text-muted-foreground mb-2 block">Quick Start</label>
           <div className="flex flex-wrap gap-1.5">
-            {featuredPresets.slice(0, 10).map((preset, idx) => (
+            {featuredPresets.slice(0, 6).map((preset, idx) => (
               <Button
                 key={idx}
                 variant="outline"
