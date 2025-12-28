@@ -860,61 +860,63 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               )}
             </div>
             
-            {/* Strategy Actions Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Save className="w-4 h-4" />
-                  <span className="hidden sm:inline">Strategy</span>
-                  <MoreVertical className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover">
-                <DropdownMenuItem onClick={handleSaveFromMenu}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Strategy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={openSaveAsDialog}>
-                  <SaveAll className="w-4 h-4 mr-2" />
-                  Save As...
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={openRenameDialog}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Load Strategy...
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={async () => {
-                  try {
-                    toast.info('Capturing screenshot...');
-                    const element = document.body;
-                    const canvas = await html2canvas(element, {
-                      useCORS: true,
-                      allowTaint: true,
-                      scrollY: -window.scrollY,
-                      windowHeight: document.documentElement.scrollHeight,
-                      height: document.documentElement.scrollHeight,
-                    });
-                    const link = document.createElement('a');
-                    link.download = `strategy-workspace-${new Date().toISOString().slice(0, 10)}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    toast.success('Screenshot downloaded!');
-                  } catch (err) {
-                    console.error('Screenshot failed:', err);
-                    toast.error('Failed to capture screenshot');
-                  }
-                }}>
-                  <Camera className="w-4 h-4 mr-2" />
-                  Export as Image
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Strategy Actions Menu - Hidden in wedge mode for MVP simplicity */}
+            {!wedgeConfig.wedgeEnabled && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Save className="w-4 h-4" />
+                    <span className="hidden sm:inline">Strategy</span>
+                    <MoreVertical className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover">
+                  <DropdownMenuItem onClick={handleSaveFromMenu}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Strategy
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={openSaveAsDialog}>
+                    <SaveAll className="w-4 h-4 mr-2" />
+                    Save As...
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={openRenameDialog}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Load Strategy...
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => {
+                    try {
+                      toast.info('Capturing screenshot...');
+                      const element = document.body;
+                      const canvas = await html2canvas(element, {
+                        useCORS: true,
+                        allowTaint: true,
+                        scrollY: -window.scrollY,
+                        windowHeight: document.documentElement.scrollHeight,
+                        height: document.documentElement.scrollHeight,
+                      });
+                      const link = document.createElement('a');
+                      link.download = `strategy-workspace-${new Date().toISOString().slice(0, 10)}.png`;
+                      link.href = canvas.toDataURL('image/png');
+                      link.click();
+                      toast.success('Screenshot downloaded!');
+                    } catch (err) {
+                      console.error('Screenshot failed:', err);
+                      toast.error('Failed to capture screenshot');
+                    }
+                  }}>
+                    <Camera className="w-4 h-4 mr-2" />
+                    Export as Image
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Summary Bar */}

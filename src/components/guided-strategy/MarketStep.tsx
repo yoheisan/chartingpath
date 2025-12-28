@@ -616,8 +616,8 @@ export const MarketStep: React.FC<MarketStepProps> = ({
             </p>
           </div>
 
-          {/* Inline Multi-Timeframe Trend Analysis */}
-          {currentAnswers.instrument && currentAnswers.timeframes?.[0] && (
+          {/* Inline Multi-Timeframe Trend Analysis - Hidden in wedge mode for MVP simplicity */}
+          {!isWedgeMode && currentAnswers.instrument && currentAnswers.timeframes?.[0] && (
             <HorizontalTrendAnalysis instrument={currentAnswers.instrument} />
           )}
 
