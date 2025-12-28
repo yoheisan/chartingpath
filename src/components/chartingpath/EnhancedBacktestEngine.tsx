@@ -3,11 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { DEFAULT_DISCIPLINE_FILTERS, DisciplineFilters } from './TradeDisciplineFilters';
 import { toast } from 'sonner';
 import { wedgeConfig } from '@/config/wedge';
@@ -18,15 +13,11 @@ import {
   Play, 
   BarChart3,
   TrendingUp,
-  TrendingDown,
   Target,
-  Shield,
   Activity,
-  Settings,
-  Calendar,
-  DollarSign,
-  AlertTriangle
+  Calendar
 } from 'lucide-react';
+import { BacktestResultSummary } from '@/components/BacktestResultSummary';
 
 // Wedge mode helper
 const isWedge = wedgeConfig.wedgeEnabled;
@@ -39,7 +30,6 @@ interface PatternBacktestResult {
   avgReturn: number;
   maxDrawdown: number;
   profitFactor: number;
-  sharpeRatio: number;
 }
 
 interface EnhancedBacktestEngineProps {
@@ -50,6 +40,11 @@ interface EnhancedBacktestEngineProps {
   onStrategyUpdate?: (updates: Partial<any>) => void;
   progress?: number;
   progressPhase?: string;
+  onCreateAlert?: () => void;
+  onOpenTradingView?: () => void;
+  onShareBacktest?: () => void;
+  isSharing?: boolean;
+  linkCopied?: boolean;
 }
 
 export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
@@ -59,24 +54,18 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
   onBacktest,
   onStrategyUpdate,
   progress = 0,
-  progressPhase = ''
+  progressPhase = '',
+  onCreateAlert,
+  onOpenTradingView,
+  onShareBacktest,
+  isSharing = false,
+  linkCopied = false
 }) => {
   // Get discipline filters from strategy or use defaults
   const disciplineFilters: DisciplineFilters = strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS;
 
-  // Handler to update discipline filters in the strategy
-  const handleFilterChange = (updates: Partial<DisciplineFilters>) => {
-    if (onStrategyUpdate) {
-      const newFilters = { ...disciplineFilters, ...updates };
-      onStrategyUpdate({ disciplineFilters: newFilters });
-    }
-  };
-
-
   /**
    * Bar limits per timeframe – capped to prevent edge function timeout.
-   * The edge function trims to 3000 bars, but fetching from Yahoo before trim can timeout.
-   * These limits ensure we stay well under 3000 bars for reliable execution.
    */
   const TIMEFRAME_BAR_LIMITS: Record<string, { maxBars: number; maxDays: number; label: string }> = {
     '1m': { maxBars: 2000, maxDays: 2, label: '2 days (~2000 bars)' },
@@ -137,66 +126,6 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     }
   }, [strategy?.market?.instrument, strategy?.market?.timeframes]);
 
-  const [interactiveParams, setInteractiveParams] = useState({
-    riskPerTrade: strategy.riskManagement?.riskPerTrade || 2.0,
-    portfolioRiskCap: strategy.multiPatternSettings?.portfolioRiskCap || 6.0
-  });
-
-  const updateConfig = (field: string, value: any) => {
-    setBacktestConfig(prev => {
-      const newConfig = { ...prev, [field]: value };
-      
-      // Auto-adjust date range when timeframe changes
-      if (field === 'timeframe') {
-        const maxDays = getMaxDaysForTimeframe(value);
-        const barLabel = getBarLimitLabel(value);
-        const start = new Date(prev.startDate);
-        const end = new Date(prev.endDate);
-        const currentDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // If current range exceeds the limit, adjust it
-        if (currentDays > maxDays) {
-          const newDates = getDefaultDateRange(value);
-          newConfig.startDate = newDates.startDate;
-          newConfig.endDate = newDates.endDate;
-          
-          toast.info(`Date range capped for ${value} timeframe`, {
-            description: `Max: ${barLabel}. Adjusted to ${newDates.startDate} → ${newDates.endDate}`,
-            duration: 5000
-          });
-        }
-      }
-      
-      // Also validate when dates change directly
-      if (field === 'startDate' || field === 'endDate') {
-        const timeframe = newConfig.timeframe;
-        const maxDays = getMaxDaysForTimeframe(timeframe);
-        const barLabel = getBarLimitLabel(timeframe);
-        const start = new Date(field === 'startDate' ? value : prev.startDate);
-        const end = new Date(field === 'endDate' ? value : prev.endDate);
-        const requestedDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (requestedDays > maxDays) {
-          // Cap the start date to respect the limit
-          const cappedStart = new Date(end);
-          cappedStart.setDate(end.getDate() - maxDays);
-          newConfig.startDate = cappedStart.toISOString().split('T')[0];
-          
-          toast.warning(`Date range exceeds ${timeframe} limit`, {
-            description: `Capped to ${barLabel}. Use daily (1d) for longer ranges.`,
-            duration: 5000
-          });
-        }
-      }
-      
-      return newConfig;
-    });
-  };
-
-  const updateInteractiveParam = (field: string, value: number) => {
-    setInteractiveParams(prev => ({ ...prev, [field]: value }));
-  };
-
   const runBacktest = async () => {
     // Final validation before running
     const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
@@ -214,9 +143,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     }
     
     console.log('Running enhanced pattern-based backtest with config:', backtestConfig);
-    console.log('Interactive parameters:', interactiveParams);
     console.log('Strategy patterns:', strategy.patterns);
-    console.log(`Estimated bars: ~${requestedDays} days × bars/day for ${backtestConfig.timeframe}`);
     
     // Pass the backtest config to the strategy
     const strategyWithConfig = {
@@ -252,7 +179,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
     };
   }, [results]);
 
-  // Calculate pattern-specific results from actual backtest data
+  // Calculate pattern-specific results from actual backtest data (single pattern only for MVP)
   const patternResults: PatternBacktestResult[] = useMemo(() => {
     if (!results?.trades || results.trades.length === 0) {
       return [];
@@ -302,13 +229,6 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
         .reduce((sum, t) => sum + t.pnl, 0));
       const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
 
-      // Calculate Sharpe ratio (simplified)
-      const returns = data.trades.map(t => t.pnlPercent || 0);
-      const avgRet = returns.reduce((a, b) => a + b, 0) / returns.length;
-      const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgRet, 2), 0) / returns.length;
-      const stdDev = Math.sqrt(variance);
-      const sharpeRatio = stdDev > 0 ? (avgRet / stdDev) * Math.sqrt(252) : 0;
-
       return {
         patternId: patternName.toLowerCase().replace(/\s+/g, '_'),
         patternName,
@@ -316,266 +236,63 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
         winRate: parseFloat(winRate.toFixed(1)),
         avgReturn: parseFloat(avgReturn.toFixed(2)),
         maxDrawdown: parseFloat((-maxDD).toFixed(2)),
-        profitFactor: parseFloat(profitFactor.toFixed(2)),
-        sharpeRatio: parseFloat(sharpeRatio.toFixed(2))
+        profitFactor: parseFloat(profitFactor.toFixed(2))
       };
     }).sort((a, b) => b.profitFactor - a.profitFactor);
   }, [results]);
 
+  // Generate unique run ID for analytics
+  const runId = useMemo(() => {
+    if (results) {
+      return `${Date.now()}-${backtestConfig.symbol}-${backtestConfig.timeframe}`;
+    }
+    return '';
+  }, [results, backtestConfig.symbol, backtestConfig.timeframe]);
+
+  // Get primary pattern name for result summary
+  const primaryPattern = patternResults[0]?.patternName || strategy.patterns?.find((p: any) => p.enabled)?.name || 'Strategy';
+
+  // Default CTA handlers if not provided
+  const handleCreateAlert = onCreateAlert || (() => {
+    toast.info('Create Alert functionality', { description: 'Connect to alert creation flow' });
+  });
+
+  const handleOpenTradingView = onOpenTradingView || (() => {
+    const tvUrl = `https://www.tradingview.com/chart/?symbol=${backtestConfig.symbol}`;
+    window.open(tvUrl, '_blank');
+  });
+
+  const handleShareBacktest = onShareBacktest || (() => {
+    toast.info('Share functionality', { description: 'Generate shareable link' });
+  });
+
   return (
     <div className="space-y-6">
-      {/* Configuration Header - Simplified in wedge mode */}
+      {/* Configuration Header - Read-only display */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              {isWedge ? 'Pattern Backtest' : 'Enhanced Pattern Backtesting Engine'}
-              {!isWedge && (
-                <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10">
-                  Multi-Pattern v2.0
-                </Badge>
-              )}
-            </div>
-            {/* Configure button - Hidden in wedge mode */}
-            {!isWedge && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configure
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Backtest Configuration</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Symbol</Label>
-                      <Select value={backtestConfig.symbol} onValueChange={(value) => updateConfig('symbol', value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="EURUSD">EUR/USD</SelectItem>
-                          <SelectItem value="GBPUSD">GBP/USD</SelectItem>
-                          <SelectItem value="USDJPY">USD/JPY</SelectItem>
-                          <SelectItem value="BTCUSD">BTC/USD</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label>Timeframe</Label>
-                      <Select value={backtestConfig.timeframe} onValueChange={(value) => updateConfig('timeframe', value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1m">1 Minute (max 7 days)</SelectItem>
-                          <SelectItem value="5m">5 Minutes (max 60 days)</SelectItem>
-                          <SelectItem value="15m">15 Minutes (max 60 days)</SelectItem>
-                          <SelectItem value="1h">1 Hour (max 2 years)</SelectItem>
-                          <SelectItem value="4h">4 Hours (max 2 years)</SelectItem>
-                          <SelectItem value="1d">Daily (unlimited)</SelectItem>
-                          <SelectItem value="1wk">Weekly (unlimited)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Start Date</Label>
-                      <Input
-                        type="date"
-                        value={backtestConfig.startDate}
-                        onChange={(e) => {
-                          const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
-                          const start = new Date(e.target.value);
-                          const end = new Date(backtestConfig.endDate);
-                          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                          
-                          if (days > maxDays) {
-                            toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
-                            return;
-                          }
-                          updateConfig('startDate', e.target.value);
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>End Date</Label>
-                      <Input
-                        type="date"
-                        value={backtestConfig.endDate}
-                        onChange={(e) => {
-                          const maxDays = getMaxDaysForTimeframe(backtestConfig.timeframe);
-                          const start = new Date(backtestConfig.startDate);
-                          const end = new Date(e.target.value);
-                          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                          
-                          if (days > maxDays) {
-                            toast.error(`Date range cannot exceed ${maxDays} days for ${backtestConfig.timeframe} timeframe`);
-                            return;
-                          }
-                          updateConfig('endDate', e.target.value);
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Spread (pips)</Label>
-                      <Input
-                        type="number"
-                        value={backtestConfig.spread}
-                        onChange={(e) => updateConfig('spread', parseFloat(e.target.value))}
-                        step="0.1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Initial Balance ($)</Label>
-                      <Input
-                        type="number"
-                        value={backtestConfig.initialBalance}
-                        onChange={(e) => updateConfig('initialBalance', parseInt(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            Pattern Backtest
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Simplified info row for wedge mode */}
-          {isWedge ? (
-            <div className="flex items-center gap-4 text-sm flex-wrap">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                <span>{backtestConfig.symbol} • 1H</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-accent" />
-                <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-green-500" />
-                <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns</span>
-              </div>
+          <div className="flex items-center gap-4 text-sm flex-wrap">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" />
+              <span>{backtestConfig.symbol} • {backtestConfig.timeframe}</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                <span>{backtestConfig.symbol} • {backtestConfig.timeframe}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-accent" />
-                <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-green-500" />
-                <span>{strategy.patterns?.filter(p => p.enabled).length || 0} Patterns Active</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-blue-500" />
-                <span>${backtestConfig.initialBalance.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-amber-500" />
-                <span>{[
-                  disciplineFilters.trendAlignmentEnabled,
-                  disciplineFilters.minRiskRewardEnabled,
-                  disciplineFilters.volumeConfirmationEnabled,
-                  disciplineFilters.maxPatternsEnabled,
-                  disciplineFilters.maxConcurrentTradesEnabled,
-                  disciplineFilters.timeFilterEnabled,
-                  disciplineFilters.atrStopValidationEnabled,
-                  disciplineFilters.cooldownEnabled
-                ].filter(Boolean).length}/8 Discipline Filters</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-accent" />
+              <span>{backtestConfig.startDate} to {backtestConfig.endDate}</span>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-green-500" />
+              <span>{strategy.patterns?.filter((p: any) => p.enabled).length || 0} Patterns</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Interactive Parameter Sliders - Hidden in wedge mode */}
-      {!isWedge && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Interactive Risk Parameters</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Adjust parameters and see instant impact on backtest results
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label className="flex items-center justify-between">
-                  Risk Per Trade
-                  <span className="text-primary font-medium">{interactiveParams.riskPerTrade}%</span>
-                </Label>
-                <Slider
-                  value={[interactiveParams.riskPerTrade]}
-                  onValueChange={([value]) => updateInteractiveParam('riskPerTrade', value)}
-                  min={0.5}
-                  max={5.0}
-                  step={0.1}
-                  className="mt-2"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Maximum loss per individual trade</p>
-              </div>
-
-              <div>
-                <Label className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    Portfolio Risk Cap
-                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                      Auto-Exit
-                    </Badge>
-                  </span>
-                  <span className="text-primary font-medium">{interactiveParams.portfolioRiskCap}%</span>
-                </Label>
-                <Slider
-                  value={[interactiveParams.portfolioRiskCap]}
-                  onValueChange={([value]) => updateInteractiveParam('portfolioRiskCap', value)}
-                  min={3.0}
-                  max={15.0}
-                  step={0.5}
-                  className="mt-2"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  When total loss reaches this %, all trades exit. New patterns still trigger entries.
-                </p>
-              </div>
-
-            </div>
-            
-            {/* Note about per-pattern TP/SL */}
-            <div className="p-3 rounded-lg bg-muted/50 border">
-              <div className="flex items-start gap-2">
-                <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-muted-foreground">
-                  <strong>Take Profit & Stop Loss:</strong> Each trade uses the pattern-specific TP/SL configured in Step 4 of the strategy builder.
-                </div>
-              </div>
-            </div>
-
-            {/* Risk Threshold Explanation */}
-            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-amber-800 dark:text-amber-200">
-                  <strong>Auto-Exit Behavior:</strong> If combined losses across all open trades reach {interactiveParams.portfolioRiskCap}%, 
-                  all positions are closed immediately. The backtest continues and new trades are opened when the next pattern confirms.
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Run Backtest */}
       <Card>
@@ -584,12 +301,12 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             <div>
               <h3 className="font-medium">Ready to Run Backtest</h3>
               <p className="text-sm text-muted-foreground">
-                Test {strategy.patterns?.filter(p => p.enabled).length || 0} patterns with current configuration
+                Test {strategy.patterns?.filter((p: any) => p.enabled).length || 0} patterns with current configuration
               </p>
             </div>
             <Button
               onClick={runBacktest}
-              disabled={isRunning || !strategy.patterns?.some(p => p.enabled)}
+              disabled={isRunning || !strategy.patterns?.some((p: any) => p.enabled)}
               className="min-w-32"
             >
               {isRunning ? (
@@ -626,44 +343,33 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
         </CardContent>
       </Card>
 
-      {/* Results Display */}
+      {/* Results Display - MVP Only */}
       {results && (
         <div className="space-y-6">
-          {/* Signal Analysis Dashboard removed for MVP scope */}
+          {/* BacktestResultSummary with 3 CTAs */}
+          <BacktestResultSummary
+            results={{
+              totalTrades: results.totalTrades ?? results.trades?.length ?? 0,
+              winRate: results.winRate ?? 0,
+              profitFactor: results.profitFactor ?? 0,
+              maxDrawdown: results.maxDrawdown ?? 0,
+              avgReturn: results.avgReturn,
+              totalReturn: results.totalReturn
+            }}
+            symbol={backtestConfig.symbol}
+            timeframe={backtestConfig.timeframe}
+            pattern={primaryPattern}
+            runId={runId}
+            wedgeEnabled={isWedge}
+            enabledPatternsCount={strategy.patterns?.filter((p: any) => p.enabled).length || 0}
+            onCreateAlert={handleCreateAlert}
+            onOpenTradingView={handleOpenTradingView}
+            onShareBacktest={handleShareBacktest}
+            isSharing={isSharing}
+            linkCopied={linkCopied}
+          />
 
-          {/* MVP Overall Performance - Win Rate, Max Drawdown, Sample Size only */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                Performance Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className={`text-2xl font-bold ${(results.winRate ?? 0) >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                    {(results.winRate ?? 0).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">Win Rate</div>
-                </div>
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className="text-2xl font-bold text-red-500">
-                    -{Math.abs(results.maxDrawdown ?? 0).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">Max Drawdown</div>
-                </div>
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <div className={`text-2xl font-bold ${(results.totalTrades ?? 0) < 20 ? 'text-yellow-600' : 'text-foreground'}`}>
-                    {results.totalTrades ?? 0}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Sample Size</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* MVP Pattern Performance - Single Pattern Only with MVP metrics */}
+          {/* Pattern Performance - Single Pattern Only with MVP metrics */}
           {patternResults.length > 0 && (
             <Card>
               <CardHeader>
@@ -707,9 +413,7 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             </Card>
           )}
 
-          {/* AI Pattern Detection Results - Hidden for MVP scope */}
-
-          {/* MVP Executed Trades List - Read-only */}
+          {/* Executed Trades List - Read-only */}
           {results.trades && results.trades.length > 0 && (
             <Card>
               <CardHeader>
