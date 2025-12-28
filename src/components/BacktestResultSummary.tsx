@@ -39,6 +39,9 @@ interface BacktestResultSummaryProps {
   symbol: string;
   timeframe: string;
   pattern: string;
+  runId: string; // Unique backtest run identifier
+  wedgeEnabled: boolean;
+  enabledPatternsCount: number;
   onCreateAlert: () => void;
   onOpenTradingView: () => void;
   onShareBacktest: () => void;
@@ -73,6 +76,9 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   symbol,
   timeframe,
   pattern,
+  runId,
+  wedgeEnabled,
+  enabledPatternsCount,
   onCreateAlert,
   onOpenTradingView,
   onShareBacktest,
@@ -83,36 +89,54 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
   const interpretation = useMemo(() => generateInterpretation(results), [results]);
 
-  // Track result summary viewed on mount
-  useEffect(() => {
-    track('result_summary_viewed', {
-      symbol,
-      timeframe,
-      pattern,
-      trades_count: results.totalTrades,
-      low_sample: isLowSample,
-      win_rate: results.winRate,
-      profit_factor: results.profitFactor,
-      max_drawdown: results.maxDrawdown,
-    });
-  }, [symbol, timeframe, pattern, results.totalTrades, results.winRate, results.profitFactor, results.maxDrawdown, isLowSample]);
+  // Track result summary viewed ONCE per runId (not on every prop change)
+  const trackedRunIdRef = React.useRef<string | null>(null);
+  
+  React.useEffect(() => {
+    if (runId && runId !== trackedRunIdRef.current) {
+      trackedRunIdRef.current = runId;
+      track('result_summary_viewed', {
+        symbol,
+        timeframe,
+        pattern,
+        run_id: runId,
+        wedge_enabled: wedgeEnabled,
+        enabled_patterns_count: enabledPatternsCount,
+        trades_count: results.totalTrades,
+        low_sample: isLowSample,
+        win_rate: results.winRate,
+        profit_factor: results.profitFactor,
+        max_drawdown: results.maxDrawdown,
+      });
+    }
+  }, [runId, symbol, timeframe, pattern, wedgeEnabled, enabledPatternsCount, results.totalTrades, results.winRate, results.profitFactor, results.maxDrawdown, isLowSample]);
 
-  // Track low sample warning if shown
-  useEffect(() => {
-    if (isLowSample) {
+  // Track low sample warning ONCE per runId
+  const trackedLowSampleRef = React.useRef<string | null>(null);
+  
+  React.useEffect(() => {
+    if (isLowSample && runId && runId !== trackedLowSampleRef.current) {
+      trackedLowSampleRef.current = runId;
       track('low_sample_warning_shown', {
         symbol,
         timeframe,
         pattern,
+        run_id: runId,
+        wedge_enabled: wedgeEnabled,
+        enabled_patterns_count: enabledPatternsCount,
         trades_count: results.totalTrades,
       });
     }
-  }, [isLowSample, symbol, timeframe, pattern, results.totalTrades]);
+  }, [isLowSample, runId, symbol, timeframe, pattern, wedgeEnabled, enabledPatternsCount, results.totalTrades]);
 
   const handleCreateAlert = () => {
     track('create_alert_clicked', { 
       source: 'result_summary', 
       symbol,
+      timeframe,
+      run_id: runId,
+      wedge_enabled: wedgeEnabled,
+      enabled_patterns_count: enabledPatternsCount,
       win_rate: results.winRate,
       trades_count: results.totalTrades,
     });
@@ -122,7 +146,12 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   const handleOpenTradingView = () => {
     track('tradingview_opened', { 
       source: 'result_summary',
-      symbol, 
+      symbol,
+      timeframe,
+      run_id: runId,
+      wedge_enabled: wedgeEnabled,
+      enabled_patterns_count: enabledPatternsCount,
+      trades_count: results.totalTrades,
       context: 'backtest',
       win_rate: results.winRate,
     });
@@ -135,6 +164,9 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
       symbol, 
       timeframe, 
       pattern,
+      run_id: runId,
+      wedge_enabled: wedgeEnabled,
+      enabled_patterns_count: enabledPatternsCount,
       win_rate: results.winRate,
       trades_count: results.totalTrades,
     });
