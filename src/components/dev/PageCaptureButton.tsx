@@ -1,46 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
-import { supabase } from '@/integrations/supabase/client';
 
 export const PageCaptureButton = () => {
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
-          setIsAdmin(!!adminCheck);
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAdminStatus();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Show for admin users OR in dev mode
-  const isDev = import.meta.env.DEV;
-  if (isLoading || (!isDev && !isAdmin)) return null;
 
   const captureFullPage = async () => {
     setIsCapturing(true);
