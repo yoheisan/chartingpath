@@ -1,18 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
+import { supabase } from '@/integrations/supabase/client';
 
 export const PageCaptureButton = () => {
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setIsAdmin(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: adminCheck } = await supabase
+          .rpc('is_admin', { _user_id: user.id });
+
+        setIsAdmin(!!adminCheck);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAdminStatus();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Don't render anything for non-admins (fully hidden, not disabled)
+  if (isLoading || !isAdmin) {
+    return null;
+  }
 
   const captureFullPage = async () => {
     setIsCapturing(true);
     toast.info('Capturing full page...');
 
     try {
-      // Get the full document height
       const body = document.body;
       const html = document.documentElement;
       
@@ -32,7 +71,6 @@ export const PageCaptureButton = () => {
         html.offsetWidth
       );
 
-      // Capture the entire page
       const canvas = await html2canvas(document.body, {
         height: fullHeight,
         width: fullWidth,
@@ -46,7 +84,6 @@ export const PageCaptureButton = () => {
         logging: false,
       });
 
-      // Convert to blob and download
       canvas.toBlob((blob) => {
         if (!blob) {
           toast.error('Failed to create image');
