@@ -989,6 +989,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               symbol={builderRef.current?.getStrategy()?.market?.instrument || 'BTCUSDT'}
               timeframe={builderRef.current?.getStrategy()?.market?.timeframes?.[0] || '1h'}
               pattern={builderRef.current?.getStrategy()?.patterns?.find((p: any) => p.enabled)?.name || 'Breakout'}
+              runId={backtestResults.runId || `run_${Date.now()}`}
+              wedgeEnabled={wedgeConfig.wedgeEnabled}
+              enabledPatternsCount={builderRef.current?.getStrategy()?.patterns?.filter((p: any) => p.enabled)?.length || 1}
               onCreateAlert={handleCreateAlert}
               onOpenTradingView={handleOpenTradingView}
               onShareBacktest={handleShareBacktest}

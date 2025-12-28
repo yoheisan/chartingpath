@@ -15,8 +15,7 @@ import {
   ArrowRight,
   Share2,
   ExternalLink,
-  Bell,
-  Play
+  Bell
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { openTradingView } from "@/utils/tradingViewLinks";
@@ -121,29 +120,6 @@ const SharedBacktest = () => {
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
-  };
-
-  // Handle "Run this playbook" - navigate to workspace with preset loaded
-  const handleRunPlaybook = () => {
-    if (!backtest) return;
-    
-    track('shared_backtest_run_clicked', {
-      share_token: token,
-      instrument: backtest.instrument,
-      timeframe: backtest.timeframe,
-    });
-
-    // Save context for auto-loading
-    sessionStorage.setItem('shared_backtest_preset', JSON.stringify({
-      symbol: backtest.instrument,
-      timeframe: backtest.timeframe,
-      pattern: backtest.strategy_name,
-      fromDate: backtest.from_date,
-      toDate: backtest.to_date,
-      autoRun: true,
-    }));
-
-    navigate('/strategy-workspace');
   };
 
   // Handle "Create this alert" - save context and navigate
@@ -276,7 +252,7 @@ const SharedBacktest = () => {
           </Card>
         </div>
 
-        {/* Primary CTAs - Conversion focused */}
+        {/* Primary CTAs - Conversion focused: ONLY Create Alert, Open TradingView, Share */}
         <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-center">
@@ -284,23 +260,26 @@ const SharedBacktest = () => {
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={handleRunPlaybook}
-                size="lg"
-                className="gap-2 flex-1 max-w-xs"
-              >
-                <Play className="h-4 w-4" />
-                Run This Playbook
-              </Button>
-              <Button 
                 onClick={handleCreateAlert}
-                variant="outline"
                 size="lg"
                 className="gap-2 flex-1 max-w-xs"
               >
                 <Bell className="h-4 w-4" />
-                Create This Alert
+                Create Alert
+              </Button>
+              <Button 
+                onClick={() => openTradingView(backtest.instrument, 'crypto', backtest.timeframe)}
+                variant="outline"
+                size="lg"
+                className="gap-2 flex-1 max-w-xs"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open in TradingView
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Most traders validate performance before creating alerts.
+            </p>
           </CardContent>
         </Card>
 
@@ -359,24 +338,6 @@ const SharedBacktest = () => {
         </Card>
 
         <Separator className="my-8" />
-
-        {/* Secondary CTAs */}
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">
-            Or analyze the chart yourself:
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => openTradingView(backtest.instrument, 'crypto', backtest.timeframe)}
-              variant="outline" 
-              size="lg"
-              className="gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open {backtest.instrument} in TradingView
-            </Button>
-          </div>
-        </div>
 
         {/* Footer Disclaimer */}
         <div className="mt-12 p-4 bg-muted/50 rounded-lg text-center">
