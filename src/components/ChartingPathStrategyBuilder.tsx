@@ -524,225 +524,233 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 3: Entry & Exit Rules */}
-        <AccordionItem 
-          value="rules" 
-          className={`border rounded-lg bg-card ${getSectionStatus('rules') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('rules') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[2], 2)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2 space-y-4">
-              {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
-                <>
-                  {strategy.patterns
-                    .filter(p => p.enabled)
-                    .map((pattern) => {
-                      const basePatternId = pattern.id.replace(/_\d+$/, '');
-                      let patternKey = basePatternId
-                        .replace(/_/g, '-')
-                        .replace(/^inverse-/, 'inverted-');
-                      
-                      if (patternKey === 'wedge-rising') patternKey = 'rising-wedge';
-                      if (patternKey === 'wedge-falling') patternKey = 'falling-wedge';
-                      
-                      const patternDetails = PATTERN_DETAILS[patternKey];
-                      const patternName = basePatternId
-                        .split('_')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ');
-                      
-                      const defaultRules = patternDetails ? {
-                        entry: patternDetails.entry,
-                        stopLoss: patternDetails.stopLoss,
-                        target: patternDetails.targetMethodology
-                      } : {
-                        entry: "Define your entry criteria for this pattern",
-                        stopLoss: "Set stop loss based on pattern structure",
-                        target: "Determine target based on pattern measurement"
-                      };
+        {/* Section 3: Entry & Exit Rules - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="rules" 
+            className={`border rounded-lg bg-card ${getSectionStatus('rules') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('rules') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[2], 2)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2 space-y-4">
+                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
+                  <>
+                    {strategy.patterns
+                      .filter(p => p.enabled)
+                      .map((pattern) => {
+                        const basePatternId = pattern.id.replace(/_\d+$/, '');
+                        let patternKey = basePatternId
+                          .replace(/_/g, '-')
+                          .replace(/^inverse-/, 'inverted-');
+                        
+                        if (patternKey === 'wedge-rising') patternKey = 'rising-wedge';
+                        if (patternKey === 'wedge-falling') patternKey = 'falling-wedge';
+                        
+                        const patternDetails = PATTERN_DETAILS[patternKey];
+                        const patternName = basePatternId
+                          .split('_')
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ');
+                        
+                        const defaultRules = patternDetails ? {
+                          entry: patternDetails.entry,
+                          stopLoss: patternDetails.stopLoss,
+                          target: patternDetails.targetMethodology
+                        } : {
+                          entry: "Define your entry criteria for this pattern",
+                          stopLoss: "Set stop loss based on pattern structure",
+                          target: "Determine target based on pattern measurement"
+                        };
 
-                      const customRules = strategy.patternRules?.[pattern.id];
-                      const isExpanded = expandedPatternRules.has(pattern.id);
-                      const toggleExpanded = () => {
-                        setExpandedPatternRules(prev => {
-                          const newSet = new Set(prev);
-                          if (newSet.has(pattern.id)) {
-                            newSet.delete(pattern.id);
-                          } else {
-                            newSet.add(pattern.id);
-                          }
-                          return newSet;
-                        });
-                      };
+                        const customRules = strategy.patternRules?.[pattern.id];
+                        const isExpanded = expandedPatternRules.has(pattern.id);
+                        const toggleExpanded = () => {
+                          setExpandedPatternRules(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(pattern.id)) {
+                              newSet.delete(pattern.id);
+                            } else {
+                              newSet.add(pattern.id);
+                            }
+                            return newSet;
+                          });
+                        };
 
-                      return (
-                        <Collapsible 
-                          key={pattern.id} 
-                          open={isExpanded} 
-                          onOpenChange={toggleExpanded}
-                          className="border border-border rounded-lg bg-muted/30 overflow-hidden"
-                        >
-                          <CollapsibleTrigger asChild>
-                            <button className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left">
-                              <div className="flex items-center gap-3">
-                                <TrendingUp className="h-4 w-4 text-primary" />
-                                <span className="font-medium text-sm">{patternName}</span>
-                                {customRules && (
-                                  <Badge variant="secondary" className="text-xs">Customized</Badge>
-                                )}
+                        return (
+                          <Collapsible 
+                            key={pattern.id} 
+                            open={isExpanded} 
+                            onOpenChange={toggleExpanded}
+                            className="border border-border rounded-lg bg-muted/30 overflow-hidden"
+                          >
+                            <CollapsibleTrigger asChild>
+                              <button className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors text-left">
+                                <div className="flex items-center gap-3">
+                                  <TrendingUp className="h-4 w-4 text-primary" />
+                                  <span className="font-medium text-sm">{patternName}</span>
+                                  {customRules && (
+                                    <Badge variant="secondary" className="text-xs">Customized</Badge>
+                                  )}
+                                </div>
+                                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="px-4 pb-4 pt-2 border-t border-border">
+                                <PatternRulesEditor
+                                  patternName={patternName}
+                                  patternId={pattern.id}
+                                  defaultRules={defaultRules}
+                                  customRules={customRules}
+                                  onRulesChange={(rules) => {
+                                    const updatedRules = {
+                                      ...strategy.patternRules,
+                                      [pattern.id]: rules
+                                    };
+                                    updateStrategy('patternRules', updatedRules);
+                                  }}
+                                />
                               </div>
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                            </button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <div className="px-4 pb-4 pt-2 border-t border-border">
-                              <PatternRulesEditor
-                                patternName={patternName}
-                                patternId={pattern.id}
-                                defaultRules={defaultRules}
-                                customRules={customRules}
-                                onRulesChange={(rules) => {
-                                  const updatedRules = {
-                                    ...strategy.patternRules,
-                                    [pattern.id]: rules
-                                  };
-                                  updateStrategy('patternRules', updatedRules);
-                                }}
-                              />
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      );
-                    })}
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={() => {
-                        setConfirmedSteps(prev => new Set([...prev, 2]));
-                        toast.success('Entry & Exit Rules confirmed');
-                      }}
-                      disabled={confirmedSteps.has(2)}
-                      size="sm"
-                    >
-                      {confirmedSteps.has(2) ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Confirmed
-                        </>
-                      ) : (
-                        'Confirm Rules'
-                      )}
-                    </Button>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        );
+                      })}
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={() => {
+                          setConfirmedSteps(prev => new Set([...prev, 2]));
+                          toast.success('Entry & Exit Rules confirmed');
+                        }}
+                        disabled={confirmedSteps.has(2)}
+                        size="sm"
+                      >
+                        {confirmedSteps.has(2) ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Confirmed
+                          </>
+                        ) : (
+                          'Confirm Rules'
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Select chart patterns first</span>
                   </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Select chart patterns first</span>
-                </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Section 4: Trade Discipline Filters */}
-        <AccordionItem 
-          value="discipline" 
-          className={`border rounded-lg bg-card ${getSectionStatus('discipline') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('discipline') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[3], 3)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2">
-              <TradeDisciplineFilters
-                filters={strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS}
-                onChange={(filters) => updateStrategy('disciplineFilters', filters)}
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Section 5: Position Management */}
-        <AccordionItem 
-          value="position" 
-          className={`border rounded-lg bg-card ${getSectionStatus('position') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('position') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[4], 4)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2 space-y-4">
-              <PositionManagementSettings
-                rules={strategy.positionManagement || DEFAULT_POSITION_MANAGEMENT}
-                onChange={(rules) => updateStrategy('positionManagement', rules)}
-                selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
-              />
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => {
-                    setConfirmedSteps(prev => new Set([...prev, 4]));
-                    toast.success('Position Management confirmed');
-                  }}
-                  disabled={confirmedSteps.has(4)}
-                  size="sm"
-                >
-                  {confirmedSteps.has(4) ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Confirmed
-                    </>
-                  ) : (
-                    'Confirm Settings'
-                  )}
-                </Button>
+                )}
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-        {/* Section 6: Target & Stop Loss */}
-        <AccordionItem 
-          value="targets" 
-          className={`border rounded-lg bg-card ${getSectionStatus('targets') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('targets') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[5], 5)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2">
-              {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
-                <TargetStopLossSettings
-                  targetGainPercent={strategy.targetGainPercent}
-                  stopLossPercent={strategy.stopLossPercent}
-                  positionSizing={strategy.positionSizing}
-                  selectedPatterns={strategy.patterns}
-                  onChange={(data) => {
-                    updateStrategy('targetGainPercent', data.targetGainPercent);
-                    updateStrategy('stopLossPercent', data.stopLossPercent);
-                    updateStrategy('positionSizing', data.positionSizing);
-                  }}
-                  onPatternChange={(patternId, updates) => {
-                    const updatedPatterns = strategy.patterns.map(p => 
-                      p.id === patternId ? { ...p, ...updates } : p
-                    );
-                    updateStrategy('patterns', updatedPatterns);
-                  }}
+        {/* Section 4: Trade Discipline Filters - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="discipline" 
+            className={`border rounded-lg bg-card ${getSectionStatus('discipline') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('discipline') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[3], 3)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2">
+                <TradeDisciplineFilters
+                  filters={strategy.disciplineFilters || DEFAULT_DISCIPLINE_FILTERS}
+                  onChange={(filters) => updateStrategy('disciplineFilters', filters)}
                 />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Select chart patterns first</span>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* Section 5: Position Management - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="position" 
+            className={`border rounded-lg bg-card ${getSectionStatus('position') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('position') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[4], 4)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2 space-y-4">
+                <PositionManagementSettings
+                  rules={strategy.positionManagement || DEFAULT_POSITION_MANAGEMENT}
+                  onChange={(rules) => updateStrategy('positionManagement', rules)}
+                  selectedPatterns={strategy.patterns.filter(p => p.enabled).map(p => p.id)}
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={() => {
+                      setConfirmedSteps(prev => new Set([...prev, 4]));
+                      toast.success('Position Management confirmed');
+                    }}
+                    disabled={confirmedSteps.has(4)}
+                    size="sm"
+                  >
+                    {confirmedSteps.has(4) ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Confirmed
+                      </>
+                    ) : (
+                      'Confirm Settings'
+                    )}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* Section 6: Target & Stop Loss - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="targets" 
+            className={`border rounded-lg bg-card ${getSectionStatus('targets') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('targets') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[5], 5)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2">
+                {strategy.patterns.length > 0 && strategy.patterns.some(p => p.enabled) ? (
+                  <TargetStopLossSettings
+                    targetGainPercent={strategy.targetGainPercent}
+                    stopLossPercent={strategy.stopLossPercent}
+                    positionSizing={strategy.positionSizing}
+                    selectedPatterns={strategy.patterns}
+                    onChange={(data) => {
+                      updateStrategy('targetGainPercent', data.targetGainPercent);
+                      updateStrategy('stopLossPercent', data.stopLossPercent);
+                      updateStrategy('positionSizing', data.positionSizing);
+                    }}
+                    onPatternChange={(patternId, updates) => {
+                      const updatedPatterns = strategy.patterns.map(p => 
+                        p.id === patternId ? { ...p, ...updates } : p
+                      );
+                      updateStrategy('patterns', updatedPatterns);
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Select chart patterns first</span>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         {/* Section 7: Backtest */}
         <AccordionItem 
@@ -854,54 +862,80 @@ export const ChartingPathStrategyBuilder = forwardRef<ChartingPathStrategyBuilde
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 8: Analytics */}
-        <AccordionItem 
-          value="analytics" 
-          className={`border rounded-lg bg-card ${getSectionStatus('analytics') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('analytics') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[7], 7)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2">
-              {backtestResults ? (
-                <RegimeAnalyticsSection 
-                  backtestResults={backtestResults}
-                  strategy={strategy}
-                />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Run a backtest first to see regime-conditioned analytics</span>
-                </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        {/* Section 8: Analytics - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="analytics" 
+            className={`border rounded-lg bg-card ${getSectionStatus('analytics') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('analytics') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[7], 7)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2">
+                {backtestResults ? (
+                  <RegimeAnalyticsSection 
+                    backtestResults={backtestResults}
+                    strategy={strategy}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Run a backtest first to see regime-conditioned analytics</span>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-        {/* Section 9: Export */}
-        <AccordionItem 
-          value="export" 
-          className={`border rounded-lg bg-card ${getSectionStatus('export') === 'locked' ? 'opacity-50' : ''}`}
-          disabled={getSectionStatus('export') === 'locked'}
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
-            {renderSectionHeader(STRATEGY_STEPS[8], 8)}
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="pt-2">
-              {getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(5) ? (
-                <ExportPanel strategy={strategy} />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Complete all previous steps to export</span>
+        {/* Section 9: Export - Hidden in wedge mode */}
+        {!wedgeConfig.wedgeEnabled && (
+          <AccordionItem 
+            value="export" 
+            className={`border rounded-lg bg-card ${getSectionStatus('export') === 'locked' ? 'opacity-50' : ''}`}
+            disabled={getSectionStatus('export') === 'locked'}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              {renderSectionHeader(STRATEGY_STEPS[8], 8)}
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="pt-2">
+                {getStepCompletion(2) && getStepCompletion(3) && getStepCompletion(5) ? (
+                  <ExportPanel strategy={strategy} />
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Complete all previous steps to export</span>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* Advanced (Coming Soon) - Wedge mode only */}
+        {wedgeConfig.wedgeEnabled && (
+          <AccordionItem value="advanced-coming-soon" className="border rounded-lg bg-card opacity-60">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline cursor-not-allowed" disabled>
+              <div className="flex items-center gap-3 text-left">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Settings className="w-4 h-4 text-muted-foreground" />
                 </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">Advanced Settings</span>
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Trade discipline, position management, targets, analytics & export
+                  </p>
+                </div>
+              </div>
+            </AccordionTrigger>
+          </AccordionItem>
+        )}
       </Accordion>
     </div>
   );

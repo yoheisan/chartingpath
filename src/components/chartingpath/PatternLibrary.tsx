@@ -1218,51 +1218,53 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Quick Select Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        <Button
-          size="sm"
-          variant={allLongsSelected() ? "default" : "outline"}
-          className={allLongsSelected() 
-            ? "bg-green-600 text-white hover:bg-green-700" 
-            : "border-green-500/50 text-green-600 hover:bg-green-500/10"
-          }
-          onClick={toggleAllLongs}
-          disabled={!hasVisibleLongPatterns}
-          title={!hasVisibleLongPatterns ? "No long patterns available in wedge mode" : undefined}
-        >
-          <TrendingUp className="w-4 h-4 mr-1" />
-          {allLongsSelected() ? "Deselect All Longs" : "Select All Longs"}
-        </Button>
-        <Button
-          size="sm"
-          variant={allShortsSelected() ? "default" : "outline"}
-          className={allShortsSelected() 
-            ? "bg-red-600 text-white hover:bg-red-700" 
-            : "border-red-500/50 text-red-600 hover:bg-red-500/10"
-          }
-          onClick={toggleAllShorts}
-          disabled={!hasVisibleShortPatterns}
-          title={!hasVisibleShortPatterns ? "No short patterns available in wedge mode" : undefined}
-        >
-          <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
-          {allShortsSelected() ? "Deselect All Shorts" : "Select All Shorts"}
-        </Button>
-        <Button
-          size="sm"
-          variant={allBidirectionalSelected() ? "default" : "outline"}
-          className={allBidirectionalSelected() 
-            ? "bg-yellow-600 text-white hover:bg-yellow-700" 
-            : "border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
-          }
-          onClick={toggleAllBidirectional}
-          disabled={!hasVisibleBidirectionalPatterns}
-          title={!hasVisibleBidirectionalPatterns ? "No bidirectional patterns available in wedge mode" : undefined}
-        >
-          <Activity className="w-4 h-4 mr-1" />
-          {allBidirectionalSelected() ? "Deselect Bidirectional" : "Select Bidirectional"}
-        </Button>
-      </div>
+      {/* Quick Select Buttons - Hidden in wedge mode for MVP simplicity */}
+      {!wedgeConfig.wedgeEnabled && (
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant={allLongsSelected() ? "default" : "outline"}
+            className={allLongsSelected() 
+              ? "bg-green-600 text-white hover:bg-green-700" 
+              : "border-green-500/50 text-green-600 hover:bg-green-500/10"
+            }
+            onClick={toggleAllLongs}
+            disabled={!hasVisibleLongPatterns}
+            title={!hasVisibleLongPatterns ? "No long patterns available in wedge mode" : undefined}
+          >
+            <TrendingUp className="w-4 h-4 mr-1" />
+            {allLongsSelected() ? "Deselect All Longs" : "Select All Longs"}
+          </Button>
+          <Button
+            size="sm"
+            variant={allShortsSelected() ? "default" : "outline"}
+            className={allShortsSelected() 
+              ? "bg-red-600 text-white hover:bg-red-700" 
+              : "border-red-500/50 text-red-600 hover:bg-red-500/10"
+            }
+            onClick={toggleAllShorts}
+            disabled={!hasVisibleShortPatterns}
+            title={!hasVisibleShortPatterns ? "No short patterns available in wedge mode" : undefined}
+          >
+            <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
+            {allShortsSelected() ? "Deselect All Shorts" : "Select All Shorts"}
+          </Button>
+          <Button
+            size="sm"
+            variant={allBidirectionalSelected() ? "default" : "outline"}
+            className={allBidirectionalSelected() 
+              ? "bg-yellow-600 text-white hover:bg-yellow-700" 
+              : "border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+            }
+            onClick={toggleAllBidirectional}
+            disabled={!hasVisibleBidirectionalPatterns}
+            title={!hasVisibleBidirectionalPatterns ? "No bidirectional patterns available in wedge mode" : undefined}
+          >
+            <Activity className="w-4 h-4 mr-1" />
+            {allBidirectionalSelected() ? "Deselect Bidirectional" : "Select Bidirectional"}
+          </Button>
+        </div>
+      )}
 
       {/* Compact Pattern Grid - All patterns easily discoverable */}
       <div className="space-y-4">

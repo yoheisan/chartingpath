@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import html2canvas from 'html2canvas';
 import {
   DropdownMenu,
@@ -87,6 +88,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   });
   const [backtestResults, setBacktestResults] = useState<any>(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
+  const [isBuilderCollapsed, setIsBuilderCollapsed] = useState(false);
   
   // Strategy menu state
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
@@ -95,6 +97,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [saveAsName, setSaveAsName] = useState('');
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
+  const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const pendingSharedPresetRef = useRef<{ symbol: string; pattern: string; timeframe: string; autoRun?: boolean } | null>(null);
   const [summaryData, setSummaryData] = useState<{
     instrument?: string;
@@ -455,11 +458,16 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         errorMessage = (error as any).message;
       }
       
+      // Wedge-mode specific error messaging: only suggest wedge-valid actions
+      const wedgeSuggestion = wedgeConfig.wedgeEnabled 
+        ? 'Try reducing your date range or selecting another crypto symbol.'
+        : 'Try using daily (1d) timeframe for longer date ranges, or reduce your date range for intraday data.';
+      
       toast.error(errorMessage, {
         duration: 6000,
-        description: errorMessage.includes('timeout') || errorMessage.includes('Yahoo Finance') ? 
-          'Try using daily (1d) timeframe for longer date ranges, or reduce your date range for intraday data.' : 
-          undefined
+        description: (errorMessage.includes('timeout') || errorMessage.includes('Yahoo Finance') || errorMessage.includes('data')) 
+          ? wedgeSuggestion 
+          : undefined
       });
       throw error;
     }
@@ -973,42 +981,69 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
 
           {/* Result Summary with CTAs after backtest */}
           {backtestResults && wedgeConfig.wedgeEnabled && (
-            <BacktestResultSummary
-              results={{
-                totalTrades: backtestResults.totalTrades || 0,
-                winRate: backtestResults.winRate || 0,
-                profitFactor: backtestResults.profitFactor || 0,
-                maxDrawdown: backtestResults.maxDrawdown || 0,
-                expectancy: backtestResults.expectancy,
-                avgReturn: backtestResults.avgReturnPerTrade,
-                totalReturn: backtestResults.totalReturn,
-                sharpeRatio: backtestResults.sharpeRatio,
-                regimeBest: backtestResults.regimeBest,
-                regimeWorst: backtestResults.regimeWorst,
-              }}
-              symbol={builderRef.current?.getStrategy()?.market?.instrument || 'BTCUSDT'}
-              timeframe={builderRef.current?.getStrategy()?.market?.timeframes?.[0] || '1h'}
-              pattern={builderRef.current?.getStrategy()?.patterns?.find((p: any) => p.enabled)?.name || 'Breakout'}
-              runId={backtestResults.runId || `run_${Date.now()}`}
-              wedgeEnabled={wedgeConfig.wedgeEnabled}
-              enabledPatternsCount={builderRef.current?.getStrategy()?.patterns?.filter((p: any) => p.enabled)?.length || 1}
-              onCreateAlert={handleCreateAlert}
-              onOpenTradingView={handleOpenTradingView}
-              onShareBacktest={handleShareBacktest}
-              isSharing={isSharing}
-              linkCopied={linkCopied}
-            />
+            <div ref={resultSummaryRef}>
+              <BacktestResultSummary
+                results={{
+                  totalTrades: backtestResults.totalTrades || 0,
+                  winRate: backtestResults.winRate || 0,
+                  profitFactor: backtestResults.profitFactor || 0,
+                  maxDrawdown: backtestResults.maxDrawdown || 0,
+                  expectancy: backtestResults.expectancy,
+                  avgReturn: backtestResults.avgReturnPerTrade,
+                  totalReturn: backtestResults.totalReturn,
+                  sharpeRatio: backtestResults.sharpeRatio,
+                  regimeBest: backtestResults.regimeBest,
+                  regimeWorst: backtestResults.regimeWorst,
+                }}
+                symbol={builderRef.current?.getStrategy()?.market?.instrument || 'BTCUSDT'}
+                timeframe={builderRef.current?.getStrategy()?.market?.timeframes?.[0] || '1h'}
+                pattern={builderRef.current?.getStrategy()?.patterns?.find((p: any) => p.enabled)?.name || 'Breakout'}
+                runId={backtestResults.runId || `run_${Date.now()}`}
+                wedgeEnabled={wedgeConfig.wedgeEnabled}
+                enabledPatternsCount={builderRef.current?.getStrategy()?.patterns?.filter((p: any) => p.enabled)?.length || 1}
+                onCreateAlert={handleCreateAlert}
+                onOpenTradingView={handleOpenTradingView}
+                onShareBacktest={handleShareBacktest}
+                isSharing={isSharing}
+                linkCopied={linkCopied}
+              />
+            </div>
           )}
 
-          <ChartingPathStrategyBuilder
-            ref={builderRef}
-            initialStrategy={currentChartingPathStrategy}
-            onSave={handleChartingPathStrategySave}
-            onBacktest={handleChartingPathBacktest}
-            isBacktesting={isBacktesting}
-            backtestProgress={backtestProgress}
-            backtestPhase={backtestPhase}
-          />
+          {/* Builder - collapsible in wedge mode after backtest */}
+          {wedgeConfig.wedgeEnabled && backtestResults ? (
+            <Collapsible open={!isBuilderCollapsed} onOpenChange={(open) => setIsBuilderCollapsed(!open)}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    {isBuilderCollapsed ? 'Show Strategy Builder' : 'Hide Strategy Builder'}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isBuilderCollapsed ? '' : 'rotate-180'}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ChartingPathStrategyBuilder
+                  ref={builderRef}
+                  initialStrategy={currentChartingPathStrategy}
+                  onSave={handleChartingPathStrategySave}
+                  onBacktest={handleChartingPathBacktest}
+                  isBacktesting={isBacktesting}
+                  backtestProgress={backtestProgress}
+                  backtestPhase={backtestPhase}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <ChartingPathStrategyBuilder
+              ref={builderRef}
+              initialStrategy={currentChartingPathStrategy}
+              onSave={handleChartingPathStrategySave}
+              onBacktest={handleChartingPathBacktest}
+              isBacktesting={isBacktesting}
+              backtestProgress={backtestProgress}
+              backtestPhase={backtestPhase}
+            />
+          )}
         </div>
       </div>
 
