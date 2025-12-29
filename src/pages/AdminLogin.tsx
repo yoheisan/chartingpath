@@ -21,21 +21,8 @@ const AdminLogin = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Set up auth state listener to handle password reset flows
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        // User clicked password reset link and is now authenticated
-        setIsResetPassword(true);
-        setIsForgotPassword(false);
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        // Check if this is an admin user during normal login
-        const { data: isAdminUser } = await supabase.rpc('is_admin', { _user_id: session.user.id });
-        if (isAdminUser) {
-          navigate("/admin/translation-management");
-        }
-      }
-    });
-
+    let isMounted = true;
+    
     // Check for reset password parameter and verify session
     const checkPasswordReset = async () => {
       const resetParam = searchParams.get('reset');
@@ -46,22 +33,21 @@ const AdminLogin = () => {
         // Verify that we have an active session for password reset
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session) {
+        if (session && isMounted) {
           setIsResetPassword(true);
           setIsForgotPassword(false);
-        } else {
+        } else if (isMounted) {
           // No session found - the reset link may have expired
           toast({
             title: "Reset Link Expired",
             description: "This password reset link has expired or already been used. Please request a new one.",
             variant: "destructive",
           });
-          navigate("/admin/login");
         }
       } else {
         // Check if user is already logged in as admin
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        if (user && isMounted) {
           const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
           if (adminCheck) {
             navigate("/admin/translation-management");
@@ -72,7 +58,23 @@ const AdminLogin = () => {
     
     checkPasswordReset();
 
-    return () => subscription.unsubscribe();
+    // Set up auth state listener to handle password reset flows
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        // User clicked password reset link and is now authenticated
+        setIsResetPassword(true);
+        setIsForgotPassword(false);
+      }
+      // Note: Don't auto-redirect on SIGNED_IN here - let the form handler do it
+      // to avoid race conditions with the login form submission
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, searchParams, toast]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
