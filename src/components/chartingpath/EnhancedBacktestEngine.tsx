@@ -430,32 +430,79 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground">Pattern</th>
-                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Entry</th>
-                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Exit</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Dir</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">Entry</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">SL</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">TP</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">Exit</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">Reason</th>
                         <th className="text-right py-2 px-2 font-medium text-muted-foreground">P&L</th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">RR</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground">Date</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {results.trades.slice(0, 20).map((trade: any, idx: number) => (
-                        <tr key={idx} className="border-b border-border/50">
-                          <td className="py-2 px-2">{trade.patternName || 'Unknown'}</td>
-                          <td className="py-2 px-2">{trade.entryPrice?.toFixed(2) ?? '-'}</td>
-                          <td className="py-2 px-2">{trade.exitPrice?.toFixed(2) ?? '-'}</td>
-                          <td className={`py-2 px-2 text-right font-medium ${(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? '+' : ''}{(trade.pnlPercent ?? trade.pnl ?? 0).toFixed(2)}%
-                          </td>
-                          <td className="py-2 px-2 text-muted-foreground">
-                            {trade.entryDate ? new Date(trade.entryDate).toLocaleDateString() : '-'}
-                          </td>
-                        </tr>
-                      ))}
+                      {results.trades.slice(0, 20).map((trade: any, idx: number) => {
+                        const exitReasonLabel = trade.exitReason === 'target' ? 'TP' 
+                          : trade.exitReason === 'stop-loss' ? 'SL' 
+                          : trade.exitReason === 'timeout' ? 'Time' 
+                          : trade.exitReason || '-';
+                        const exitReasonColor = trade.exitReason === 'target' ? 'text-green-500' 
+                          : trade.exitReason === 'stop-loss' ? 'text-red-500' 
+                          : 'text-muted-foreground';
+                        const dirLabel = trade.direction === 'long' ? 'L' : trade.direction === 'short' ? 'S' : '-';
+                        const dirColor = trade.direction === 'long' ? 'text-green-600' : trade.direction === 'short' ? 'text-red-600' : '';
+                        
+                        return (
+                          <tr key={idx} className="border-b border-border/50 hover:bg-muted/20">
+                            <td className="py-2 px-2 font-medium">{trade.patternName || 'Unknown'}</td>
+                            <td className={`py-2 px-2 font-bold ${dirColor}`}>{dirLabel}</td>
+                            <td className="py-2 px-2 text-right font-mono">{trade.entryPrice?.toFixed(2) ?? '-'}</td>
+                            <td className="py-2 px-2 text-right font-mono text-red-500">{trade.stopLossPrice?.toFixed(2) ?? '-'}</td>
+                            <td className="py-2 px-2 text-right font-mono text-green-500">{trade.takeProfitPrice?.toFixed(2) ?? '-'}</td>
+                            <td className="py-2 px-2 text-right font-mono">{trade.exitPrice?.toFixed(2) ?? '-'}</td>
+                            <td className={`py-2 px-2 font-medium ${exitReasonColor}`}>{exitReasonLabel}</td>
+                            <td className={`py-2 px-2 text-right font-medium ${(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              {(trade.pnlPercent ?? trade.pnl ?? 0) >= 0 ? '+' : ''}{(trade.pnlPercent ?? trade.pnl ?? 0).toFixed(2)}%
+                            </td>
+                            <td className="py-2 px-2 text-right font-mono text-muted-foreground">{trade.plannedRR?.toFixed(1) ?? '-'}</td>
+                            <td className="py-2 px-2 text-muted-foreground">
+                              {trade.entryDate ? new Date(trade.entryDate).toLocaleDateString() : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   {results.trades.length > 20 && (
                     <p className="text-xs text-muted-foreground text-center mt-3">
                       Showing 20 of {results.trades.length} trades
                     </p>
+                  )}
+                  
+                  {/* Execution Assumptions Panel */}
+                  {results.executionAssumptions && (
+                    <div className="mt-4 p-3 bg-muted/30 rounded-md border border-border/50">
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Execution Assumptions</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Entry:</span>{' '}
+                          <span className="font-medium">{results.executionAssumptions.entryType === 'bar_close' ? 'Bar Close' : results.executionAssumptions.entryType}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Time Stop:</span>{' '}
+                          <span className="font-medium">{results.executionAssumptions.maxBarsInTrade} bars</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Bracket:</span>{' '}
+                          <span className="font-medium">OCO at Entry</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Slippage:</span>{' '}
+                          <span className="font-medium">{results.executionAssumptions.slippagePercent}%</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               </CardContent>
