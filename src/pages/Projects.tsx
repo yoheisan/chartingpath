@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -219,8 +218,7 @@ const Projects = () => {
   };
   
   return (
-    <Layout>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
         {/* Hero Section */}
         <section className="relative overflow-hidden border-b border-border/50">
           {/* Background Pattern */}
@@ -328,7 +326,6 @@ const Projects = () => {
           </div>
         </section>
       </div>
-    </Layout>
   );
 };
 
