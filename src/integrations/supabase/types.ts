@@ -162,6 +162,33 @@ export type Database = {
           },
         ]
       }
+      analytics_events: {
+        Row: {
+          event_name: string
+          id: string
+          properties: Json | null
+          session_id: string | null
+          ts: string
+          user_id: string | null
+        }
+        Insert: {
+          event_name: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          ts?: string
+          user_id?: string | null
+        }
+        Update: {
+          event_name?: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          ts?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       article_likes: {
         Row: {
           article_id: string
@@ -239,6 +266,38 @@ export type Database = {
             columns: ["article_id"]
             isOneToOne: false
             referencedRelation: "learning_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artifacts: {
+        Row: {
+          artifact_json: Json
+          created_at: string
+          id: string
+          project_run_id: string
+          type: Database["public"]["Enums"]["artifact_type"]
+        }
+        Insert: {
+          artifact_json?: Json
+          created_at?: string
+          id?: string
+          project_run_id: string
+          type: Database["public"]["Enums"]["artifact_type"]
+        }
+        Update: {
+          artifact_json?: Json
+          created_at?: string
+          id?: string
+          project_run_id?: string
+          type?: Database["public"]["Enums"]["artifact_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifacts_project_run_id_fkey"
+            columns: ["project_run_id"]
+            isOneToOne: false
+            referencedRelation: "project_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -1464,6 +1523,56 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          org_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       paper_portfolios: {
         Row: {
           created_at: string
@@ -1778,6 +1887,142 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_inputs: {
+        Row: {
+          created_at: string
+          id: string
+          input_json: Json
+          project_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_json?: Json
+          project_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_json?: Json
+          project_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_inputs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_runs: {
+        Row: {
+          created_at: string
+          credits_estimated: number
+          credits_used: number
+          error_code: string | null
+          error_message: string | null
+          execution_metadata: Json | null
+          finished_at: string | null
+          id: string
+          input_id: string
+          project_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["project_run_status"]
+        }
+        Insert: {
+          created_at?: string
+          credits_estimated?: number
+          credits_used?: number
+          error_code?: string | null
+          error_message?: string | null
+          execution_metadata?: Json | null
+          finished_at?: string | null
+          id?: string
+          input_id: string
+          project_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["project_run_status"]
+        }
+        Update: {
+          created_at?: string
+          credits_estimated?: number
+          credits_used?: number
+          error_code?: string | null
+          error_message?: string | null
+          execution_metadata?: Json | null
+          finished_at?: string | null
+          id?: string
+          input_id?: string
+          project_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["project_run_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_runs_input_id_fkey"
+            columns: ["input_id"]
+            isOneToOne: false
+            referencedRelation: "project_inputs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          name: string
+          org_id: string | null
+          type: Database["public"]["Enums"]["project_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name: string
+          org_id?: string | null
+          type: Database["public"]["Enums"]["project_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name?: string
+          org_id?: string | null
+          type?: Database["public"]["Enums"]["project_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_attempts: {
         Row: {
@@ -2393,6 +2638,171 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_id: string | null
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_id?: string | null
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string | null
+          sender_type?: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          context_json: Json | null
+          created_at: string
+          description: string
+          id: string
+          last_admin_message_at: string | null
+          last_user_message_at: string | null
+          org_id: string | null
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          context_json?: Json | null
+          created_at?: string
+          description: string
+          id?: string
+          last_admin_message_at?: string | null
+          last_user_message_at?: string | null
+          org_id?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          context_json?: Json | null
+          created_at?: string
+          description?: string
+          id?: string
+          last_admin_message_at?: string | null
+          last_user_message_at?: string | null
+          org_id?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_plans: {
+        Row: {
+          created_at: string
+          direction: string
+          entry_price: number
+          entry_type: string
+          execution_assumptions: Json
+          id: string
+          instrument_symbol: string
+          pattern_name: string | null
+          pattern_quality: number | null
+          planned_rr: number
+          source_artifact_id: string | null
+          stop_loss_method: string | null
+          stop_price: number
+          take_profit_method: string | null
+          take_profit_price: number
+          time_stop_bars: number | null
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          entry_price: number
+          entry_type?: string
+          execution_assumptions?: Json
+          id?: string
+          instrument_symbol: string
+          pattern_name?: string | null
+          pattern_quality?: number | null
+          planned_rr: number
+          source_artifact_id?: string | null
+          stop_loss_method?: string | null
+          stop_price: number
+          take_profit_method?: string | null
+          take_profit_price: number
+          time_stop_bars?: number | null
+          timeframe: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          entry_price?: number
+          entry_type?: string
+          execution_assumptions?: Json
+          id?: string
+          instrument_symbol?: string
+          pattern_name?: string | null
+          pattern_quality?: number | null
+          planned_rr?: number
+          source_artifact_id?: string | null
+          stop_loss_method?: string | null
+          stop_price?: number
+          take_profit_method?: string | null
+          take_profit_price?: number
+          time_stop_bars?: number | null
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_plans_source_artifact_id_fkey"
+            columns: ["source_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trading_achievements: {
         Row: {
           achievement_name: string
@@ -2518,6 +2928,80 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "translation_keys"
             referencedColumns: ["key"]
+          },
+        ]
+      }
+      usage_credits: {
+        Row: {
+          created_at: string
+          credits_balance: number
+          credits_reset_at: string
+          daily_run_cap: number
+          max_active_alerts: number
+          max_instruments_per_run: number
+          max_lookback_years: number
+          plan_tier: Database["public"]["Enums"]["plan_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_balance?: number
+          credits_reset_at?: string
+          daily_run_cap?: number
+          max_active_alerts?: number
+          max_instruments_per_run?: number
+          max_lookback_years?: number
+          plan_tier?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_balance?: number
+          credits_reset_at?: string
+          daily_run_cap?: number
+          max_active_alerts?: number
+          max_instruments_per_run?: number
+          max_lookback_years?: number
+          plan_tier?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_ledger: {
+        Row: {
+          credits_delta: number
+          id: string
+          project_run_id: string | null
+          reason: string
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          credits_delta: number
+          id?: string
+          project_run_id?: string | null
+          reason: string
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          credits_delta?: number
+          id?: string
+          project_run_id?: string | null
+          reason?: string
+          ts?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_ledger_project_run_id_fkey"
+            columns: ["project_run_id"]
+            isOneToOne: false
+            referencedRelation: "project_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2705,6 +3189,15 @@ export type Database = {
         Returns: number
       }
       check_backtest_limit: { Args: { p_user_id: string }; Returns: Json }
+      check_project_run_allowed: {
+        Args: {
+          p_credits_needed: number
+          p_instruments_count: number
+          p_lookback_years: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: { p_ip_address: string; p_timezone: string; p_user_id: string }
         Returns: boolean
@@ -2715,6 +3208,15 @@ export type Database = {
       }
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
+      estimate_project_credits: {
+        Args: {
+          p_instruments_count: number
+          p_lookback_years: number
+          p_timeframe: string
+          p_type: Database["public"]["Enums"]["project_type"]
+        }
+        Returns: number
+      }
       get_article_by_slug: {
         Args: { p_slug: string }
         Returns: {
@@ -2815,6 +3317,12 @@ export type Database = {
     Enums: {
       alert_status: "active" | "paused" | "deleted"
       app_role: "admin" | "super_admin"
+      artifact_type:
+        | "setup_list"
+        | "backtest_report"
+        | "portfolio_report"
+        | "portfolio_sim"
+        | "filings_report"
       chart_pattern:
         | "hammer"
         | "inverted_hammer"
@@ -2835,6 +3343,20 @@ export type Database = {
         | "blog_post"
         | "pattern_analysis"
         | "strategy_guide"
+      message_sender_type: "user" | "admin" | "system"
+      plan_tier: "free" | "starter" | "pro" | "elite" | "enterprise"
+      project_run_status:
+        | "queued"
+        | "running"
+        | "succeeded"
+        | "failed"
+        | "cancelled"
+      project_type:
+        | "setup_finder"
+        | "pattern_lab"
+        | "portfolio_checkup"
+        | "portfolio_sim"
+        | "filings_watch"
       quiz_category:
         | "visual_recognition"
         | "characteristics"
@@ -2847,6 +3369,9 @@ export type Database = {
         | "commodities"
       quiz_difficulty: "beginner" | "intermediate" | "advanced" | "expert"
       subscription_plan: "starter" | "pro" | "elite" | "free" | "pro_plus"
+      ticket_category: "bug" | "feature" | "billing" | "account" | "other"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status: "open" | "in_progress" | "resolved" | "closed"
       timeframe: "15m" | "1h" | "4h" | "1d"
     }
     CompositeTypes: {
@@ -2977,6 +3502,13 @@ export const Constants = {
     Enums: {
       alert_status: ["active", "paused", "deleted"],
       app_role: ["admin", "super_admin"],
+      artifact_type: [
+        "setup_list",
+        "backtest_report",
+        "portfolio_report",
+        "portfolio_sim",
+        "filings_report",
+      ],
       chart_pattern: [
         "hammer",
         "inverted_hammer",
@@ -2999,6 +3531,22 @@ export const Constants = {
         "pattern_analysis",
         "strategy_guide",
       ],
+      message_sender_type: ["user", "admin", "system"],
+      plan_tier: ["free", "starter", "pro", "elite", "enterprise"],
+      project_run_status: [
+        "queued",
+        "running",
+        "succeeded",
+        "failed",
+        "cancelled",
+      ],
+      project_type: [
+        "setup_finder",
+        "pattern_lab",
+        "portfolio_checkup",
+        "portfolio_sim",
+        "filings_watch",
+      ],
       quiz_category: [
         "visual_recognition",
         "characteristics",
@@ -3012,6 +3560,9 @@ export const Constants = {
       ],
       quiz_difficulty: ["beginner", "intermediate", "advanced", "expert"],
       subscription_plan: ["starter", "pro", "elite", "free", "pro_plus"],
+      ticket_category: ["bug", "feature", "billing", "account", "other"],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: ["open", "in_progress", "resolved", "closed"],
       timeframe: ["15m", "1h", "4h", "1d"],
     },
   },
