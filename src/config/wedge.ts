@@ -68,8 +68,14 @@ export const getFullSymbol = (symbol: string): string => {
 // SUPPORTED WEDGE PATTERN DEFINITIONS
 // These are the canonical pattern configs that work with the backtest engine
 // Pattern names MUST match what the engine expects
+//
+// WEDGE ID CONTRACT:
+// - patternId: canonical registry key (e.g., "donchian_breakout_long") - used for server-side dispatch
+// - id: instance ID with timestamp (e.g., "donchian_breakout_long_1767...") - for uniqueness
+// - patternType: type label only (NOT used for wedge dispatch)
 export interface WedgePatternConfig {
   id: string;
+  patternId?: string; // Canonical registry key (set when instance is created)
   patternType: string;
   name: string; // Must match engine pattern names exactly
   category: string;
@@ -247,6 +253,9 @@ export const getPatternConfigByName = (patternName: string): WedgePatternConfig 
 };
 
 // Create a fresh pattern instance by ID (preferred) or name
+// WEDGE ID CONTRACT: The returned object will have:
+// - patternId: canonical registry key (e.g., "donchian_breakout_long") - for server-side dispatch
+// - id: instance ID with timestamp (e.g., "donchian_breakout_long_1767...") - for uniqueness
 export const createWedgePatternInstance = (patternIdOrName: string, enabled: boolean = true): WedgePatternConfig | null => {
   // First try by ID
   let template = getPatternConfigById(patternIdOrName);
@@ -258,6 +267,9 @@ export const createWedgePatternInstance = (patternIdOrName: string, enabled: boo
   
   return {
     ...template,
+    // patternId is the canonical registry key (unchanged from template)
+    patternId: template.id,
+    // id is the unique instance ID with timestamp
     id: `${template.id}_${Date.now()}`,
     enabled,
   };
