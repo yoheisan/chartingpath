@@ -19,6 +19,20 @@ interface WedgePatternEntry {
   displayName: string;
 }
 
+// ============================================
+// WEDGE MODE ID CONTRACT
+// ============================================
+// Canonical ID Contract for wedge mode:
+// - pattern.patternId: canonical registry key (base ID) e.g., "donchian-breakout-long"
+// - pattern.id: instance ID e.g., "donchian-breakout-long-1767075844752"
+// - pattern.patternType: type label only (NOT used for wedge dispatch)
+//
+// In wedge mode:
+// 1. Prefer patternId if valid in registry after normalization
+// 2. Fallback to id if valid in registry after getBasePatternId()
+// 3. Reject with clear warning if neither is valid
+// 4. Never use patternType for wedge dispatch
+
 // Normalize pattern ID to kebab-case
 function normalizePatternId(patternId: string): string {
   return patternId.toLowerCase().replace(/_/g, '-').trim();
@@ -30,6 +44,15 @@ function getBasePatternId(patternIdOrInstanceId: string): string {
   // Remove trailing numeric timestamp suffix (e.g., "_1234567890" or "-1234567890")
   const withoutTimestamp = normalized.replace(/-\d{10,}$/, '');
   return withoutTimestamp;
+}
+
+// Wedge rejection reason interface
+interface WedgeRejection {
+  rawPatternId: string;
+  basePatternId: string;
+  reason: string;
+  patternName: string;
+  sourceField: 'patternId' | 'id' | 'patternType' | 'none';
 }
 
 // Forward declarations for detectors (defined later in file)
@@ -148,7 +171,8 @@ function calculateTrendInternal(data: number[]): number {
 function validateWedgePattern(patternId: string): string | null {
   const baseId = getBasePatternId(patternId);
   if (!VALID_WEDGE_PATTERN_IDS.has(baseId)) {
-    return `Pattern "${patternId}" (base: "${baseId}") is not a supported wedge pattern`;
+    const validKeys = Array.from(VALID_WEDGE_PATTERN_IDS).join(', ');
+    return `Pattern "${patternId}" (base: "${baseId}") is not a supported wedge pattern. Valid keys: ${validKeys}`;
   }
   return null;
 }
@@ -171,6 +195,71 @@ function checkPatternWedge(patternId: string, window: any[]): boolean {
   }
   
   return entry.detector(window);
+}
+
+// ============================================
+// WEDGE MODE ID RESOLUTION (Contract Enforcer)
+// ============================================
+// Resolves the canonical base pattern ID from a pattern object following the wedge ID contract.
+// Returns the resolved baseId and the source field used, or null with rejection reason.
+interface WedgeIdResolution {
+  baseId: string | null;
+  sourceField: 'patternId' | 'id' | null;
+  rejection: WedgeRejection | null;
+}
+
+function resolveWedgePatternId(pattern: any): WedgeIdResolution {
+  const patternName = pattern.name || pattern.patternType || 'unknown';
+  const validKeys = Array.from(VALID_WEDGE_PATTERN_IDS);
+  
+  // Step 1: Try patternId first (canonical source)
+  if (pattern.patternId) {
+    const baseFromPatternId = getBasePatternId(pattern.patternId);
+    if (VALID_WEDGE_PATTERN_IDS.has(baseFromPatternId)) {
+      // If both patternId and id exist, verify they resolve to the same base
+      if (pattern.id) {
+        const baseFromId = getBasePatternId(pattern.id);
+        if (baseFromPatternId !== baseFromId && VALID_WEDGE_PATTERN_IDS.has(baseFromId)) {
+          // Mismatch between patternId and id - this is a bug
+          return {
+            baseId: null,
+            sourceField: null,
+            rejection: {
+              rawPatternId: pattern.patternId,
+              basePatternId: baseFromPatternId,
+              reason: `ID mismatch: patternId resolves to "${baseFromPatternId}" but id resolves to "${baseFromId}". This indicates a bug in pattern creation.`,
+              patternName,
+              sourceField: 'patternId'
+            }
+          };
+        }
+      }
+      return { baseId: baseFromPatternId, sourceField: 'patternId', rejection: null };
+    }
+  }
+  
+  // Step 2: Fallback to id (instance ID with timestamp)
+  if (pattern.id) {
+    const baseFromId = getBasePatternId(pattern.id);
+    if (VALID_WEDGE_PATTERN_IDS.has(baseFromId)) {
+      return { baseId: baseFromId, sourceField: 'id', rejection: null };
+    }
+  }
+  
+  // Step 3: Reject - neither patternId nor id is valid
+  const attemptedRaw = pattern.patternId || pattern.id || pattern.patternType || 'none';
+  const attemptedBase = getBasePatternId(attemptedRaw);
+  return {
+    baseId: null,
+    sourceField: null,
+    rejection: {
+      rawPatternId: attemptedRaw,
+      basePatternId: attemptedBase,
+      reason: `No valid registry key found. patternId="${pattern.patternId || 'undefined'}", id="${pattern.id || 'undefined'}". Valid keys: ${validKeys.join(', ')}`,
+      patternName,
+      sourceField: pattern.patternId ? 'patternId' : (pattern.id ? 'id' : 'none')
+    }
+  };
 }
 
 // ============================================
@@ -815,6 +904,28 @@ serve(async (req) => {
     
     const patternSignals = patternDetectionResult.signals;
     const rejectedPatternIds = patternDetectionResult.rejectedPatternIds;
+    const acceptedBaseIds = patternDetectionResult.acceptedBaseIds;
+    const rejectedBaseIds = patternDetectionResult.rejectedBaseIds;
+    const rejectionReasons = patternDetectionResult.rejectionReasons;
+    
+    // ============================================
+    // WEDGE MODE TELEMETRY (Structured Log)
+    // ============================================
+    if (wedgeEnabled) {
+      const telemetry = {
+        route: 'backtest-strategy',
+        wedgeEnabled: true,
+        userId: userId ? userId.substring(0, 8) + '...' : 'anonymous', // Truncate for privacy
+        patternCount: strategy.patterns?.filter((p: any) => p.enabled)?.length || 0,
+        acceptedCount: acceptedBaseIds.length,
+        rejectedCount: rejectedPatternIds.length,
+        acceptedBaseIds: acceptedBaseIds.slice(0, 20), // Truncate to max 20
+        rejectedBaseIds: rejectedBaseIds.slice(0, 20), // Truncate to max 20
+        instrument,
+        timeframe
+      };
+      console.log(`[WEDGE TELEMETRY]`, JSON.stringify(telemetry));
+    }
     
     // Log wedge validation results
     if (wedgeEnabled && rejectedPatternIds.length > 0) {
@@ -901,12 +1012,19 @@ serve(async (req) => {
       regimeAnalytics
     };
     
-    // Include wedge pattern validation warnings in response
-    if (wedgeEnabled && rejectedPatternIds.length > 0) {
+    // Include wedge pattern validation warnings in response (always include in wedge mode for debugging)
+    if (wedgeEnabled) {
       response.wedgeWarnings = {
         rejectedPatternIds,
+        rejectedBaseIds,
+        acceptedBaseIds,
         rejectedCount: rejectedPatternIds.length,
-        message: `${rejectedPatternIds.length} pattern(s) were rejected because they are not supported in wedge mode`
+        acceptedCount: acceptedBaseIds.length,
+        reasons: rejectionReasons.slice(0, 20), // Limit to 20 for payload size
+        validRegistryKeys: Array.from(VALID_WEDGE_PATTERN_IDS),
+        message: rejectedPatternIds.length > 0 
+          ? `${rejectedPatternIds.length} pattern(s) were rejected because they are not supported in wedge mode. Check 'reasons' array for details.`
+          : 'All patterns validated successfully.'
       };
     }
 
@@ -1069,6 +1187,9 @@ async function fetchHistoricalData(
 interface PatternDetectionResult {
   signals: any[];
   rejectedPatternIds: string[];
+  acceptedBaseIds: string[];
+  rejectedBaseIds: string[];
+  rejectionReasons: WedgeRejection[];
   validatedPatternCount: number;
 }
 
@@ -1080,6 +1201,9 @@ function detectPatternsInData(
 ): PatternDetectionResult {
   const signals: any[] = [];
   const rejectedPatternIds: string[] = [];
+  const acceptedBaseIds: string[] = [];
+  const rejectedBaseIds: string[] = [];
+  const rejectionReasons: WedgeRejection[] = [];
   let validatedPatternCount = 0;
   
   // Use sensible defaults if strategy values are 0 or missing
@@ -1118,21 +1242,34 @@ function detectPatternsInData(
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
     
-    // Get the pattern ID - prefer patternId, fall back to id or patternType
-    const rawPatternId = pattern.patternId || pattern.id || pattern.patternType;
-    const basePatternId = getBasePatternId(rawPatternId);
+    // ============================================
+    // WEDGE MODE ID CONTRACT ENFORCEMENT
+    // ============================================
+    let rawPatternId: string;
+    let basePatternId: string;
     
-    // ============================================
-    // WEDGE MODE PATTERN VALIDATION
-    // ============================================
     if (wedgeEnabled) {
-      const validationError = validateWedgePattern(rawPatternId);
-      if (validationError) {
-        console.log(`[WEDGE GUARD] Rejecting pattern: ${validationError}`);
-        rejectedPatternIds.push(rawPatternId);
+      // Use the new ID resolution contract
+      const resolution = resolveWedgePatternId(pattern);
+      
+      if (resolution.rejection) {
+        // Pattern rejected - add to rejection lists with detailed reason
+        console.log(`[WEDGE GUARD] Rejecting pattern: ${resolution.rejection.reason}`);
+        rejectedPatternIds.push(resolution.rejection.rawPatternId);
+        rejectedBaseIds.push(resolution.rejection.basePatternId);
+        rejectionReasons.push(resolution.rejection);
         continue; // Skip this pattern entirely
       }
-      console.log(`[WEDGE GUARD] Pattern validated: ${rawPatternId} -> base: ${basePatternId}`);
+      
+      // Pattern accepted
+      basePatternId = resolution.baseId!;
+      rawPatternId = pattern.patternId || pattern.id;
+      acceptedBaseIds.push(basePatternId);
+      console.log(`[WEDGE GUARD] Pattern validated: ${rawPatternId} -> base: ${basePatternId} (via ${resolution.sourceField})`);
+    } else {
+      // Legacy mode: use old precedence
+      rawPatternId = pattern.patternId || pattern.id || pattern.patternType;
+      basePatternId = getBasePatternId(rawPatternId);
     }
     
     validatedPatternCount++;
@@ -1144,8 +1281,8 @@ function detectPatternsInData(
     // Get deterministic direction from registry if in wedge mode
     let patternDirection: 'long' | 'short' | null = null;
     if (wedgeEnabled) {
-      patternDirection = getWedgePatternDirection(rawPatternId);
-      console.log(`[WEDGE] Pattern ${pattern.name}: direction=${patternDirection} (from registry)`);
+      patternDirection = getWedgePatternDirection(basePatternId);
+      console.log(`[WEDGE] Pattern ${pattern.name}: direction=${patternDirection} (from registry, base=${basePatternId})`);
     }
     
     let patternSignalCount = 0;
@@ -1154,7 +1291,7 @@ function detectPatternsInData(
       
       // Use wedge-specific detector if in wedge mode, otherwise use legacy
       const isPattern = wedgeEnabled 
-        ? checkPatternWedge(rawPatternId, window)
+        ? checkPatternWedge(basePatternId, window)
         : checkPattern(patternType, window);
       
       if (isPattern) {
@@ -1180,10 +1317,11 @@ function detectPatternsInData(
   
   if (rejectedPatternIds.length > 0) {
     console.log(`[WEDGE GUARD] Total rejected patterns: ${rejectedPatternIds.length}`, rejectedPatternIds);
+    console.log(`[WEDGE GUARD] Rejection reasons:`, rejectionReasons);
   }
   
   console.log(`Generated ${signals.length} total signals with TP/SL: target=${globalTarget}%, stop=${globalStopLoss}%`);
-  return { signals, rejectedPatternIds, validatedPatternCount };
+  return { signals, rejectedPatternIds, acceptedBaseIds, rejectedBaseIds, rejectionReasons, validatedPatternCount };
 }
 
 function getPatternWindowSize(patternId: string): number {
