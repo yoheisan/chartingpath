@@ -1,33 +1,40 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { computeBracketLevels, BRACKET_LEVELS_VERSION, ROUNDING_CONFIG } from "../_shared/bracketLevels.ts";
+import { 
+  estimateCredits as calculateCredits, 
+  getTierCaps, 
+  validateProjectInputs,
+  PLANS_CONFIG,
+  type PlanTier,
+  type EstimateCreditsInput
+} from "../_shared/plans.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ============= CONSTANTS =============
-const CREDIT_COSTS = {
-  base: 5,
-  perInstrument: 0.5,
-  perPattern: 1,
-  barCostMultiplier: { '4h': 1.0, '1d': 0.5 },
-};
-
+// ============= PREDEFINED UNIVERSES =============
 const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   crypto: {
     top10: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT', 'LINKUSDT', 'MATICUSDT'],
+    top20: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT', 'LINKUSDT', 'MATICUSDT',
+            'DOTUSDT', 'LTCUSDT', 'UNIUSDT', 'ATOMUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT', 'FILUSDT', 'VETUSDT'],
   },
   fx: {
-    majors: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD'],
+    majors: ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X'],
+    crosses: ['EURGBP=X', 'EURJPY=X', 'GBPJPY=X', 'AUDJPY=X', 'NZDUSD=X', 'EURCHF=X'],
   },
   stocks: {
     sp500_leaders: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK-B', 'UNH', 'JNJ'],
+    tech_30: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AMD', 'INTC', 'CRM',
+              'ORCL', 'ADBE', 'CSCO', 'IBM', 'QCOM', 'TXN', 'AVGO', 'MU', 'NOW', 'SNOW',
+              'PANW', 'CRWD', 'ZS', 'NET', 'DDOG', 'TEAM', 'OKTA', 'ZM', 'SHOP', 'SQ'],
   },
 };
 
-// Pattern registry (matches backtest-strategy)
+// Pattern registry
 const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean }> = {
   'donchian-breakout-long': {
     direction: 'long',
@@ -150,17 +157,45 @@ function calculateATR(data: any[], period = 14): number {
   return atrSum / period;
 }
 
-function estimateCredits(inputs: { assetClass: string; universe: string; patterns: string[]; timeframe: string }): number {
-  const instruments = PREDEFINED_UNIVERSES[inputs.assetClass]?.[inputs.universe] || [];
-  const instrumentCount = instruments.length || 10;
-  const patternCount = inputs.patterns.length || 1;
-  const barMultiplier = CREDIT_COSTS.barCostMultiplier[inputs.timeframe as keyof typeof CREDIT_COSTS.barCostMultiplier] || 1;
-  
-  return Math.ceil(
-    CREDIT_COSTS.base + 
-    (instrumentCount * CREDIT_COSTS.perInstrument * barMultiplier) + 
-    (patternCount * CREDIT_COSTS.perPattern)
-  );
+// Map tier from DB to plan tier
+function mapDbTierToPlanTier(dbTier: string | null): PlanTier {
+  if (!dbTier) return 'FREE';
+  const tierMap: Record<string, PlanTier> = {
+    'free': 'FREE',
+    'plus': 'PLUS', 
+    'pro': 'PRO',
+    'team': 'TEAM',
+    'starter': 'FREE', // Map legacy starter to FREE
+  };
+  return tierMap[dbTier.toLowerCase()] || 'FREE';
+}
+
+// Estimate cache hit ratio by checking existing data coverage
+async function estimateCacheHitRatio(
+  supabase: any,
+  instruments: string[],
+  timeframe: string,
+  lookbackYears: number
+): Promise<number> {
+  try {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setFullYear(startDate.getFullYear() - lookbackYears);
+    
+    // Check how many instruments have cached data
+    const { count } = await supabase
+      .from('historical_prices')
+      .select('symbol', { count: 'exact', head: true })
+      .in('symbol', instruments)
+      .eq('timeframe', timeframe)
+      .gte('date', startDate.toISOString())
+      .lte('date', endDate.toISOString());
+    
+    const cachedCount = count || 0;
+    return Math.min(cachedCount / instruments.length, 1.0);
+  } catch {
+    return 0; // Assume no cache on error
+  }
 }
 
 async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
@@ -234,17 +269,38 @@ serve(async (req) => {
     // ============= ESTIMATE ENDPOINT =============
     if (path === 'estimate' && req.method === 'POST') {
       const body = await req.json();
-      const { assetClass, universe, patterns, timeframe } = body;
+      const { assetClass, universe, patterns, timeframe, lookbackYears = 1 } = body;
       
       const instruments = PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
-      const creditsEstimated = estimateCredits({ assetClass, universe, patterns, timeframe });
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // Estimate cache hit ratio
+      const cacheHitRatio = await estimateCacheHitRatio(supabase, instruments, timeframe, lookbackYears);
+      
+      // Calculate credits using deterministic formula
+      const estimateInput: EstimateCreditsInput = {
+        projectType: 'setup_finder',
+        instrumentCount: instruments.length,
+        patternCount: patterns.length,
+        lookbackYears,
+        timeframe,
+        cacheHitRatio
+      };
+      const creditResult = calculateCredits(estimateInput);
       
       // Get user for cap check (optional - can estimate without auth)
       const authHeader = req.headers.get('Authorization');
-      let capInfo = { allowed: true, reason: null as string | null, creditsBalance: 100, dailyRuns: 0 };
+      let capInfo = { 
+        allowed: true, 
+        reason: null as string | null, 
+        errors: [] as string[],
+        creditsBalance: 25, 
+        dailyRuns: 0,
+        dailyRunCap: 1,
+        tier: 'FREE' as PlanTier
+      };
       
       if (authHeader) {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const token = authHeader.replace('Bearer ', '');
         const { data: { user } } = await supabase.auth.getUser(token);
         
@@ -256,21 +312,56 @@ serve(async (req) => {
             .single();
           
           if (credits) {
+            const tier = mapDbTierToPlanTier(credits.plan_tier);
+            const tierCaps = getTierCaps(tier);
+            capInfo.tier = tier;
             capInfo.creditsBalance = credits.credits_balance;
-            if (credits.credits_balance < creditsEstimated) {
+            capInfo.dailyRunCap = tierCaps.dailyRunCap;
+            
+            // Check credits
+            if (credits.credits_balance < creditResult.creditsEstimated) {
               capInfo.allowed = false;
               capInfo.reason = 'insufficient_credits';
+              capInfo.errors.push(`Need ${creditResult.creditsEstimated} credits, have ${credits.credits_balance}`);
             }
-            if (instruments.length > credits.max_instruments_per_run) {
+            
+            // Validate against tier caps
+            const validation = validateProjectInputs(tier, 'setup_finder', {
+              instrumentCount: instruments.length,
+              lookbackYears,
+              patternCount: patterns.length,
+              timeframe
+            });
+            
+            if (!validation.valid) {
               capInfo.allowed = false;
-              capInfo.reason = 'too_many_instruments';
+              capInfo.reason = 'tier_cap_exceeded';
+              capInfo.errors.push(...validation.errors);
+            }
+            
+            // Check daily run count
+            const today = new Date().toISOString().split('T')[0];
+            const { count: dailyRunCount } = await supabase
+              .from('project_runs')
+              .select('id', { count: 'exact', head: true })
+              .eq('status', 'succeeded')
+              .gte('created_at', `${today}T00:00:00Z`)
+              .lte('created_at', `${today}T23:59:59Z`);
+            
+            capInfo.dailyRuns = dailyRunCount || 0;
+            if ((dailyRunCount || 0) >= tierCaps.dailyRunCap) {
+              capInfo.allowed = false;
+              capInfo.reason = 'daily_cap_reached';
+              capInfo.errors.push(`Daily run limit (${tierCaps.dailyRunCap}) reached`);
             }
           }
         }
       }
       
       return new Response(JSON.stringify({
-        creditsEstimated,
+        creditsEstimated: creditResult.creditsEstimated,
+        breakdown: creditResult.breakdown,
+        cacheHitRatio: creditResult.cacheHitRatio,
         instrumentCount: instruments.length,
         patternCount: patterns.length,
         instruments,
