@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { TrendingUp, Bell, Code, BookOpen, ChevronDown, MoreHorizontal, DollarSign } from "lucide-react";
+import { TrendingUp, Bell, Code, BookOpen, ChevronDown, MoreHorizontal, DollarSign, FolderKanban } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import { wedgeConfig } from "@/config/wedge";
@@ -42,6 +42,15 @@ const Navigation = () => {
               >
                 <TrendingUp className="h-4 w-4" />
                 Playbooks
+              </Link>
+
+              {/* Projects */}
+              <Link 
+                to="/projects" 
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FolderKanban className="h-4 w-4" />
+                Projects
               </Link>
               
               {/* Alerts */}
@@ -182,6 +191,12 @@ const Navigation = () => {
                 <ChevronDown className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link to="/projects" className="flex items-center gap-2">
+                    <FolderKanban className="h-4 w-4" />
+                    Projects
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/strategy-workspace">Strategy Workspace</Link>
                 </DropdownMenuItem>

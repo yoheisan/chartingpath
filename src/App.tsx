@@ -47,6 +47,7 @@ import StrategyWorkspace from "./pages/StrategyWorkspace";
 import EliteDashboard from "./pages/EliteDashboard";
 import SharedBacktest from "./pages/SharedBacktest";
 import { TranslationManagement } from "./pages/TranslationManagement";
+import Projects from "./pages/Projects";
 import StockMarket from "./pages/markets/StockMarket";
 import ForexMarket from "./pages/markets/ForexMarket";
 import CryptoMarket from "./pages/markets/CryptoMarket";
@@ -168,6 +169,8 @@ const App = () => (
           <Route path="/strategy-workspace" element={<StrategyWorkspace />} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:projectType" element={<Projects />} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/members/dashboard" element={<MemberDashboard />} />

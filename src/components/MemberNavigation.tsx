@@ -7,7 +7,8 @@ import {
   Bell,
   Home,
   TrendingUp,
-  Database
+  Database,
+  FolderKanban
 } from "lucide-react";
 
 const MemberNavigation = () => {
@@ -19,6 +20,12 @@ const MemberNavigation = () => {
       icon: Home,
       label: "Member Dashboard",
       primary: true
+    },
+    {
+      to: "/projects",
+      icon: FolderKanban,
+      label: "Projects",
+      badge: "New"
     },
     {
       to: "/vault",
