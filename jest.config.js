@@ -11,6 +11,7 @@ module.exports = {
   },
   collectCoverageFrom: [
     'engine/**/*.{ts,tsx}',
+    'src/utils/**/*.{ts,tsx}',
     '!engine/**/*.d.ts',
     '!engine/**/node_modules/**'
   ],
@@ -24,7 +25,7 @@ module.exports = {
     '/dist/',
     '/build/'
   ],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
   globals: {
