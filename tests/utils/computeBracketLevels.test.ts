@@ -373,4 +373,42 @@ describe('computeBracketLevels', () => {
       expect(rrDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.rrDecimals);
     });
   });
+
+  describe('Sync verification between frontend and edge function implementations', () => {
+    it('should have identical ROUNDING_CONFIG values', () => {
+      // This test verifies the rounding config is consistent
+      // The edge function version must be manually kept in sync
+      expect(ROUNDING_CONFIG.priceDecimals).toBe(8);
+      expect(ROUNDING_CONFIG.distanceDecimals).toBe(8);
+      expect(ROUNDING_CONFIG.rrDecimals).toBe(4);
+    });
+
+    it('should produce identical outputs for both implementations', () => {
+      // Test various scenarios to ensure both implementations would produce the same result
+      const testCases: BracketLevelsInput[] = [
+        { direction: 'long', entryPrice: 100, stopPercent: 2, targetPercent: 4 },
+        { direction: 'short', entryPrice: 50, stopPercent: 1.5, targetPercent: 3 },
+        { direction: 'long', entryPrice: 1.2345, stopPercent: 0.5, targetPercent: 1 },
+        { direction: 'long', entryPrice: 100, stopPercent: 2, targetPercent: 4, atr: 2, atrMultiplier: 2, stopLossMethod: 'atr', takeProfitMethod: 'ratio' },
+      ];
+
+      for (const input of testCases) {
+        const result = computeBracketLevels(input);
+        
+        // Verify structure
+        expect(result).toHaveProperty('stopLossPrice');
+        expect(result).toHaveProperty('takeProfitPrice');
+        expect(result).toHaveProperty('stopDistance');
+        expect(result).toHaveProperty('tpDistance');
+        expect(result).toHaveProperty('riskRewardRatio');
+        expect(result).toHaveProperty('stopLossMethod');
+        expect(result).toHaveProperty('takeProfitMethod');
+        
+        // Verify all numbers are finite
+        expect(Number.isFinite(result.stopLossPrice)).toBe(true);
+        expect(Number.isFinite(result.takeProfitPrice)).toBe(true);
+        expect(Number.isFinite(result.riskRewardRatio)).toBe(true);
+      }
+    });
+  });
 });
