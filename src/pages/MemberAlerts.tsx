@@ -45,9 +45,12 @@ const MemberAlerts = () => {
 
   // Pattern options aligned with wedge config
   const patternOptions = [
-    { value: 'breakout', label: 'Breakout' },
-    { value: 'double_top_bottom', label: 'Double Top/Bottom' },
-    { value: 'triangle', label: 'Triangle' },
+    { value: 'donchian_breakout_long', label: 'Donchian Breakout (Long)' },
+    { value: 'donchian_breakout_short', label: 'Donchian Breakout (Short)' },
+    { value: 'double_top', label: 'Double Top (Short)' },
+    { value: 'double_bottom', label: 'Double Bottom (Long)' },
+    { value: 'ascending_triangle', label: 'Ascending Triangle (Long)' },
+    { value: 'descending_triangle', label: 'Descending Triangle (Short)' },
     { value: 'hammer', label: 'Hammer' },
     { value: 'inverted_hammer', label: 'Inverted Hammer' },
     { value: 'bullish_engulfing', label: 'Bullish Engulfing' },
@@ -93,11 +96,18 @@ const MemberAlerts = () => {
         setSymbol(playbookContext.symbol);
       }
       if (playbookContext.pattern) {
-        // Map pattern names to form values
+        // Map pattern names to form values - support both old and new names
         const patternMap: Record<string, string> = {
-          'Breakout': 'breakout',
-          'DoubleTopBottom': 'double_top_bottom',
-          'Triangle': 'triangle',
+          'Donchian Breakout (Long)': 'donchian_breakout_long',
+          'Donchian Breakout (Short)': 'donchian_breakout_short',
+          'Double Top (Short)': 'double_top',
+          'Double Bottom (Long)': 'double_bottom',
+          'Ascending Triangle (Long)': 'ascending_triangle',
+          'Descending Triangle (Short)': 'descending_triangle',
+          // Legacy mappings for backward compatibility
+          'Breakout': 'donchian_breakout_long',
+          'DoubleTopBottom': 'double_top',
+          'Triangle': 'ascending_triangle',
         };
         setPattern(patternMap[playbookContext.pattern] || playbookContext.pattern.toLowerCase());
       }
