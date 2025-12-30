@@ -8,6 +8,172 @@ const corsHeaders = {
 };
 
 // ============================================
+// WEDGE MODE PATTERN REGISTRY (Canonical Source of Truth)
+// ============================================
+
+type WedgeDirection = 'long' | 'short';
+
+interface WedgePatternEntry {
+  direction: WedgeDirection;
+  detector: (window: any[]) => boolean;
+  displayName: string;
+}
+
+// Normalize pattern ID to kebab-case
+function normalizePatternId(patternId: string): string {
+  return patternId.toLowerCase().replace(/_/g, '-').trim();
+}
+
+// Extract base pattern ID from timestamped/suffixed IDs like "donchian_breakout_long_1234567890"
+function getBasePatternId(patternIdOrInstanceId: string): string {
+  const normalized = normalizePatternId(patternIdOrInstanceId);
+  // Remove trailing numeric timestamp suffix (e.g., "_1234567890" or "-1234567890")
+  const withoutTimestamp = normalized.replace(/-\d{10,}$/, '');
+  return withoutTimestamp;
+}
+
+// Forward declarations for detectors (defined later in file)
+declare function detectDonchianBreakoutLong(window: any[]): boolean;
+declare function detectDonchianBreakoutShort(window: any[]): boolean;
+declare function detectDoubleTop(highs: number[]): boolean;
+declare function detectDoubleBottom(lows: number[]): boolean;
+declare function detectAscendingTriangle(highs: number[], lows: number[]): boolean;
+declare function detectDescendingTriangle(highs: number[], lows: number[]): boolean;
+
+// Canonical wedge pattern registry - these are the ONLY patterns allowed in wedge mode
+const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
+  'donchian-breakout-long': {
+    direction: 'long',
+    detector: (window: any[]) => {
+      if (window.length < 10) return false;
+      const highs = window.map(d => d.high);
+      const closes = window.map(d => d.close);
+      const recentHigh = Math.max(...highs.slice(-10, -1));
+      const currentClose = closes[closes.length - 1];
+      return currentClose > recentHigh * 1.005; // Breakout above recent high
+    },
+    displayName: 'Donchian Breakout (Long)'
+  },
+  'donchian-breakout-short': {
+    direction: 'short',
+    detector: (window: any[]) => {
+      if (window.length < 10) return false;
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      const recentLow = Math.min(...lows.slice(-10, -1));
+      const currentClose = closes[closes.length - 1];
+      return currentClose < recentLow * 0.995; // Breakout below recent low
+    },
+    displayName: 'Donchian Breakout (Short)'
+  },
+  'double-top': {
+    direction: 'short',
+    detector: (window: any[]) => {
+      if (window.length < 10) return false;
+      const highs = window.map(d => d.high);
+      const peaks = findPeaksInternal(highs);
+      if (peaks.length < 2) return false;
+      const lastTwoPeaks = peaks.slice(-2).map(i => highs[i]);
+      return Math.abs(lastTwoPeaks[0] - lastTwoPeaks[1]) / lastTwoPeaks[0] < 0.02;
+    },
+    displayName: 'Double Top (Short)'
+  },
+  'double-bottom': {
+    direction: 'long',
+    detector: (window: any[]) => {
+      if (window.length < 10) return false;
+      const lows = window.map(d => d.low);
+      const troughs = findTroughsInternal(lows);
+      if (troughs.length < 2) return false;
+      const lastTwoTroughs = troughs.slice(-2).map(i => lows[i]);
+      return Math.abs(lastTwoTroughs[0] - lastTwoTroughs[1]) / lastTwoTroughs[0] < 0.02;
+    },
+    displayName: 'Double Bottom (Long)'
+  },
+  'ascending-triangle': {
+    direction: 'long',
+    detector: (window: any[]) => {
+      if (window.length < 15) return false;
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const recentLows = lows.slice(-15);
+      const trend = calculateTrendInternal(recentLows);
+      const highVolatility = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
+      return trend > 0 && highVolatility < 1.05;
+    },
+    displayName: 'Ascending Triangle (Long)'
+  },
+  'descending-triangle': {
+    direction: 'short',
+    detector: (window: any[]) => {
+      if (window.length < 15) return false;
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const recentHighs = highs.slice(-15);
+      const recentLows = lows.slice(-15);
+      const highTrend = calculateTrendInternal(recentHighs);
+      const lowFlatness = Math.max(...recentLows) / Math.min(...recentLows);
+      return highTrend < -0.01 && lowFlatness < 1.03;
+    },
+    displayName: 'Descending Triangle (Short)'
+  }
+};
+
+// Set of valid wedge pattern IDs for fast lookup
+const VALID_WEDGE_PATTERN_IDS = new Set(Object.keys(WEDGE_PATTERN_REGISTRY));
+
+// Internal helper functions for registry detectors (avoid circular dependency)
+function findPeaksInternal(data: number[]): number[] {
+  const peaks: number[] = [];
+  for (let i = 1; i < data.length - 1; i++) {
+    if (data[i] > data[i - 1] && data[i] > data[i + 1]) peaks.push(i);
+  }
+  return peaks;
+}
+
+function findTroughsInternal(data: number[]): number[] {
+  const troughs: number[] = [];
+  for (let i = 1; i < data.length - 1; i++) {
+    if (data[i] < data[i - 1] && data[i] < data[i + 1]) troughs.push(i);
+  }
+  return troughs;
+}
+
+function calculateTrendInternal(data: number[]): number {
+  if (data.length < 2) return 0;
+  return (data[data.length - 1] - data[0]) / data[0];
+}
+
+// Validate pattern for wedge mode - returns null if valid, or error message if invalid
+function validateWedgePattern(patternId: string): string | null {
+  const baseId = getBasePatternId(patternId);
+  if (!VALID_WEDGE_PATTERN_IDS.has(baseId)) {
+    return `Pattern "${patternId}" (base: "${baseId}") is not a supported wedge pattern`;
+  }
+  return null;
+}
+
+// Get direction from registry for wedge patterns
+function getWedgePatternDirection(patternId: string): WedgeDirection | null {
+  const baseId = getBasePatternId(patternId);
+  const entry = WEDGE_PATTERN_REGISTRY[baseId];
+  return entry?.direction ?? null;
+}
+
+// Check pattern using wedge registry (strict mode)
+function checkPatternWedge(patternId: string, window: any[]): boolean {
+  const baseId = getBasePatternId(patternId);
+  const entry = WEDGE_PATTERN_REGISTRY[baseId];
+  
+  if (!entry) {
+    console.log(`[WEDGE GUARD] Pattern "${patternId}" (base: "${baseId}") rejected - not in registry`);
+    return false;
+  }
+  
+  return entry.detector(window);
+}
+
+// ============================================
 // REGIME ANALYTICS (Research-Grade)
 // ============================================
 
@@ -354,15 +520,22 @@ function validateTradeDiscipline(
   filters: DisciplineFilters,
   lastTradeExitBar: number | null,
   activePatternTypes: Set<string>,
-  stats: DisciplineStats
+  stats: DisciplineStats,
+  wedgeEnabled: boolean = false
 ): DisciplineValidation {
   const rejectionReasons: string[] = [];
   const currentBar = historicalBars[signal.index];
   
-  // Determine if pattern is bullish or bearish
-  const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag']
-    .some(p => signal.patternId.includes(p));
-  const signalDirection = isBullishPattern ? 'long' : 'short';
+  // Determine signal direction
+  // In wedge mode, use registry direction; otherwise use heuristic
+  let signalDirection: 'long' | 'short';
+  if (wedgeEnabled && signal.registryDirection) {
+    signalDirection = signal.registryDirection;
+  } else {
+    const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag', '-long']
+      .some(p => signal.patternId?.includes(p));
+    signalDirection = isBullishPattern ? 'long' : 'short';
+  }
 
   // 1. TREND ALIGNMENT
   if (filters.trendAlignmentEnabled) {
@@ -630,13 +803,25 @@ serve(async (req) => {
       processedData = historicalData.slice(-MAX_DATA_POINTS);
     }
 
-    const patternSignals = detectPatternsInData(
+    // ============================================
+    // WEDGE MODE PATTERN VALIDATION
+    // ============================================
+    const patternDetectionResult = detectPatternsInData(
       processedData,
       strategy.patterns?.filter((p: any) => p.enabled) || [],
-      strategy
+      strategy,
+      wedgeEnabled === true
     );
-
-    console.log(`Detected ${patternSignals.length} raw pattern signals`);
+    
+    const patternSignals = patternDetectionResult.signals;
+    const rejectedPatternIds = patternDetectionResult.rejectedPatternIds;
+    
+    // Log wedge validation results
+    if (wedgeEnabled && rejectedPatternIds.length > 0) {
+      console.log(`[WEDGE GUARD] WARNING: ${rejectedPatternIds.length} patterns were rejected:`, rejectedPatternIds);
+    }
+    
+    console.log(`Detected ${patternSignals.length} raw pattern signals (${patternDetectionResult.validatedPatternCount} patterns validated)`);
 
     // Apply discipline filters and simulate trades (with regime analytics)
     const runId = generateUUID();
@@ -647,7 +832,8 @@ serve(async (req) => {
       disciplineFilters,
       runId,
       instrument,
-      timeframe
+      timeframe,
+      wedgeEnabled === true
     );
 
     console.log(`After discipline filtering: ${trades.length} trades from ${patternSignals.length} signals`);
@@ -659,6 +845,7 @@ serve(async (req) => {
       totalTrades: trades.length,
       rawSignals: patternSignals.length,
       rejectedTrades: disciplineStats.rejectedTrades,
+      rejectedPatterns: rejectedPatternIds.length,
       winRate: performanceMetrics.winRate,
       totalReturn: performanceMetrics.totalReturn
     });
@@ -701,7 +888,8 @@ serve(async (req) => {
       await supabase.rpc('increment_backtester_v2_usage', { p_user_id: userId });
     }
 
-    return new Response(JSON.stringify({
+    // Build response with wedge warnings if applicable
+    const response: any = {
       success: true,
       cached: false,
       runId,
@@ -711,7 +899,18 @@ serve(async (req) => {
       dataPoints: historicalData.length,
       disciplineStats,
       regimeAnalytics
-    }), {
+    };
+    
+    // Include wedge pattern validation warnings in response
+    if (wedgeEnabled && rejectedPatternIds.length > 0) {
+      response.wedgeWarnings = {
+        rejectedPatternIds,
+        rejectedCount: rejectedPatternIds.length,
+        message: `${rejectedPatternIds.length} pattern(s) were rejected because they are not supported in wedge mode`
+      };
+    }
+
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
@@ -867,8 +1066,21 @@ async function fetchHistoricalData(
 // PATTERN DETECTION
 // ============================================
 
-function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[] {
+interface PatternDetectionResult {
+  signals: any[];
+  rejectedPatternIds: string[];
+  validatedPatternCount: number;
+}
+
+function detectPatternsInData(
+  data: any[], 
+  patterns: any[], 
+  strategy: any,
+  wedgeEnabled: boolean = false
+): PatternDetectionResult {
   const signals: any[] = [];
+  const rejectedPatternIds: string[] = [];
+  let validatedPatternCount = 0;
   
   // Use sensible defaults if strategy values are 0 or missing
   const globalTarget = (strategy.targetGainPercent && strategy.targetGainPercent > 0) 
@@ -883,44 +1095,73 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
     stopLossPercent: strategy.stopLossPercent,
     effectiveTarget: globalTarget,
     effectiveStopLoss: globalStopLoss,
-    patterns: patterns.map(p => ({ id: p.id, enabled: p.enabled, customTarget: p.customTarget, customStopLoss: p.customStopLoss }))
+    wedgeEnabled,
+    patterns: patterns.map(p => ({ id: p.id, patternId: p.patternId, enabled: p.enabled }))
   });
   
   // Build pattern settings map
   const patternSettings = new Map<string, { target: number; stopLoss: number }>();
   for (const pattern of patterns) {
     if (pattern.enabled) {
-      // Use pattern-specific settings if defined and > 0, otherwise use global defaults
       const target = (pattern.customTarget && pattern.customTarget > 0) ? pattern.customTarget : globalTarget;
       const stopLoss = (pattern.customStopLoss && pattern.customStopLoss > 0) ? pattern.customStopLoss : globalStopLoss;
       patternSettings.set(pattern.id, { target, stopLoss });
+      if (pattern.patternId) patternSettings.set(pattern.patternId, { target, stopLoss });
       patternSettings.set(pattern.name, { target, stopLoss });
       patternSettings.set(pattern.patternType, { target, stopLoss });
-      console.log(`Pattern ${pattern.name} (${pattern.id}): target=${target}%, stopLoss=${stopLoss}%`);
     }
   }
   
-  // Check patterns every bar for daily timeframe (252 bars/year is manageable)
-  // Only optimize for intraday timeframes with lots of bars
   const STEP_SIZE = data.length > 1000 ? Math.max(1, Math.floor(data.length / 1000)) : 1;
   console.log(`Pattern detection step size: ${STEP_SIZE} (${Math.ceil(data.length / STEP_SIZE)} iterations for ${data.length} bars)`);
 
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
     
+    // Get the pattern ID - prefer patternId, fall back to id or patternType
+    const rawPatternId = pattern.patternId || pattern.id || pattern.patternType;
+    const basePatternId = getBasePatternId(rawPatternId);
+    
+    // ============================================
+    // WEDGE MODE PATTERN VALIDATION
+    // ============================================
+    if (wedgeEnabled) {
+      const validationError = validateWedgePattern(rawPatternId);
+      if (validationError) {
+        console.log(`[WEDGE GUARD] Rejecting pattern: ${validationError}`);
+        rejectedPatternIds.push(rawPatternId);
+        continue; // Skip this pattern entirely
+      }
+      console.log(`[WEDGE GUARD] Pattern validated: ${rawPatternId} -> base: ${basePatternId}`);
+    }
+    
+    validatedPatternCount++;
+    
     const patternType = pattern.patternType || pattern.id;
     const windowSize = getPatternWindowSize(patternType);
     const settings = patternSettings.get(pattern.id) || patternSettings.get(patternType) || { target: globalTarget, stopLoss: globalStopLoss };
     
+    // Get deterministic direction from registry if in wedge mode
+    let patternDirection: 'long' | 'short' | null = null;
+    if (wedgeEnabled) {
+      patternDirection = getWedgePatternDirection(rawPatternId);
+      console.log(`[WEDGE] Pattern ${pattern.name}: direction=${patternDirection} (from registry)`);
+    }
+    
     let patternSignalCount = 0;
     for (let i = windowSize; i < data.length; i += STEP_SIZE) {
-      const window = data.slice(i - windowSize, i + 1); // Include current bar
-      const isPattern = checkPattern(patternType, window);
+      const window = data.slice(i - windowSize, i + 1);
+      
+      // Use wedge-specific detector if in wedge mode, otherwise use legacy
+      const isPattern = wedgeEnabled 
+        ? checkPatternWedge(rawPatternId, window)
+        : checkPattern(patternType, window);
       
       if (isPattern) {
         patternSignalCount++;
         signals.push({
-          patternId: pattern.id,
+          patternId: rawPatternId,
+          basePatternId: basePatternId,
           patternName: pattern.name,
           patternType: patternType,
           index: i,
@@ -928,30 +1169,45 @@ function detectPatternsInData(data: any[], patterns: any[], strategy: any): any[
           entryPrice: data[i].close,
           targetPercent: settings.target,
           stopPercent: settings.stopLoss,
-          confidence: 0.75
+          confidence: 0.75,
+          // Include deterministic direction from registry
+          registryDirection: patternDirection
         });
       }
     }
     console.log(`Pattern ${pattern.name}: ${patternSignalCount} signals detected`);
   }
   
+  if (rejectedPatternIds.length > 0) {
+    console.log(`[WEDGE GUARD] Total rejected patterns: ${rejectedPatternIds.length}`, rejectedPatternIds);
+  }
+  
   console.log(`Generated ${signals.length} total signals with TP/SL: target=${globalTarget}%, stop=${globalStopLoss}%`);
-  return signals;
+  return { signals, rejectedPatternIds, validatedPatternCount };
 }
 
 function getPatternWindowSize(patternId: string): number {
+  const normalizedId = normalizePatternId(patternId);
+  const baseId = getBasePatternId(patternId);
+  
   const sizeMap: Record<string, number> = {
-    'head-shoulders': 30, 'inverted-head-shoulders': 30,
+    // Wedge mode patterns
+    'donchian-breakout-long': 20, 'donchian-breakout-short': 20,
     'double-top': 20, 'double-bottom': 20,
+    'ascending-triangle': 25, 'descending-triangle': 25,
+    // Legacy patterns
+    'head-shoulders': 30, 'inverted-head-shoulders': 30,
     'triple-top': 25, 'triple-bottom': 25,
     'cup-handle': 40, 
-    'ascending-triangle': 25, 'descending-triangle': 25, 'symmetrical-triangle': 25,
+    'symmetrical-triangle': 25,
     'bull-flag': 15, 'bear-flag': 15,
     'rising-wedge': 20, 'falling-wedge': 20,
     'bullish-rectangle': 15, 'bearish-rectangle': 15,
     'rounding-bottom': 30, 'rounding-top': 30,
   };
-  return sizeMap[patternId] || 20;
+  
+  // Try base ID first, then normalized, then default
+  return sizeMap[baseId] || sizeMap[normalizedId] || 20;
 }
 
 function checkPattern(patternId: string, window: any[]): boolean {
@@ -1292,7 +1548,8 @@ function simulateTradesWithDiscipline(
   filters: DisciplineFilters,
   runId: string = generateUUID(),
   symbol: string = 'UNKNOWN',
-  timeframe: string = '1D'
+  timeframe: string = '1D',
+  wedgeEnabled: boolean = false
 ): SimulationResult {
   const trades: any[] = [];
   const tradeLedger: TradeLedgerEntry[] = [];
@@ -1337,11 +1594,22 @@ function simulateTradesWithDiscipline(
     const targetPercent = signal.targetPercent || 3;
     const stopPercent = signal.stopPercent || 1.5;
     
-    // Calculate absolute stop and target prices
-    const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag']
-      .some(p => signal.patternId?.includes(p) || signal.patternName?.toLowerCase().includes(p));
-    const patternDirection: 'long' | 'short' = isBullishPattern ? 'long' : 'short';
+    // ============================================
+    // DIRECTION DETERMINATION (Wedge = Deterministic from Registry)
+    // ============================================
+    let patternDirection: 'long' | 'short';
     
+    if (wedgeEnabled && signal.registryDirection) {
+      // In wedge mode, use deterministic direction from registry (no heuristics)
+      patternDirection = signal.registryDirection;
+    } else {
+      // Legacy heuristic-based direction (non-wedge mode only)
+      const isBullishPattern = ['double-bottom', 'ascending-triangle', 'cup-handle', 'bull-flag', '-long']
+        .some(p => signal.patternId?.includes(p) || signal.patternName?.toLowerCase().includes(p));
+      patternDirection = isBullishPattern ? 'long' : 'short';
+    }
+    
+    // Calculate absolute stop and target prices
     const stopLossPrice = patternDirection === 'long' 
       ? entryPrice * (1 - stopPercent / 100)
       : entryPrice * (1 + stopPercent / 100);
