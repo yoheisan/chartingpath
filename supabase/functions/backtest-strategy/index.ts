@@ -1039,8 +1039,22 @@ serve(async (req) => {
       regimeAnalytics
     };
     
-    // Include wedge pattern validation warnings in response (always include in wedge mode for debugging)
+    // Include wedge summary and warnings in response (always include in wedge mode)
     if (wedgeEnabled) {
+      const patternCount = strategy.patterns?.filter((p: any) => p.enabled)?.length || 0;
+      
+      // wedgeSummary: compact UX-visible summary
+      response.wedgeSummary = {
+        patternCount,
+        acceptedCount: acceptedBaseIds.length,
+        rejectedCount: rejectedPatternIds.length,
+        resolvedFromPatternIdCount,
+        resolvedFromIdCount,
+        acceptedBaseIds: acceptedBaseIds.slice(0, 20),
+        rejectedBaseIds: rejectedBaseIds.slice(0, 20)
+      };
+      
+      // wedgeWarnings: detailed debugging info
       response.wedgeWarnings = {
         rejectedPatternIds,
         rejectedBaseIds,

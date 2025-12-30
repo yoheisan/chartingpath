@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Bell, 
   ExternalLink, 
@@ -14,9 +15,41 @@ import {
   BarChart3,
   Target,
   Percent,
-  Activity
+  Activity,
+  ChevronDown,
+  Shield,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { track } from '@/services/analytics';
+
+// Wedge Summary type for UX display
+export interface WedgeSummary {
+  patternCount: number;
+  acceptedCount: number;
+  rejectedCount: number;
+  resolvedFromPatternIdCount: number;
+  resolvedFromIdCount: number;
+  acceptedBaseIds: string[];
+  rejectedBaseIds: string[];
+}
+
+// Wedge Warnings type for detailed debugging
+export interface WedgeWarnings {
+  rejectedPatternIds: string[];
+  rejectedBaseIds: string[];
+  acceptedBaseIds: string[];
+  rejectedCount: number;
+  acceptedCount: number;
+  reasons: Array<{
+    rawPatternId: string;
+    basePatternId: string;
+    reason: string;
+    patternName: string;
+    sourceField: string;
+  }>;
+  message: string;
+}
 
 // Minimum trades for statistical significance
 export const MIN_TRADES_THRESHOLD = 20;
@@ -42,6 +75,8 @@ interface BacktestResultSummaryProps {
   runId: string; // Unique backtest run identifier
   wedgeEnabled: boolean;
   enabledPatternsCount: number;
+  wedgeSummary?: WedgeSummary;
+  wedgeWarnings?: WedgeWarnings;
   onCreateAlert: () => void;
   onOpenTradingView: () => void;
   onShareBacktest: () => void;
@@ -79,6 +114,8 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   runId,
   wedgeEnabled,
   enabledPatternsCount,
+  wedgeSummary,
+  wedgeWarnings,
   onCreateAlert,
   onOpenTradingView,
   onShareBacktest,
@@ -88,6 +125,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   const isLowSample = results.totalTrades < MIN_TRADES_THRESHOLD;
   const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
   const interpretation = useMemo(() => generateInterpretation(results), [results]);
+  const [wedgeDetailsOpen, setWedgeDetailsOpen] = useState(false);
 
   // Track result summary viewed ONCE per runId (not on every prop change)
   const trackedRunIdRef = React.useRef<string | null>(null);
@@ -189,6 +227,97 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Wedge Mode Banner */}
+        {wedgeEnabled && wedgeSummary && (
+          <div className={`rounded-lg border p-3 ${
+            wedgeSummary.rejectedCount > 0 
+              ? 'border-yellow-500/50 bg-yellow-500/10' 
+              : wedgeSummary.acceptedCount === 0
+                ? 'border-red-500/50 bg-red-500/10'
+                : 'border-primary/30 bg-primary/5'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Wedge Mode</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="flex items-center gap-1 text-green-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {wedgeSummary.acceptedCount}/{wedgeSummary.patternCount} accepted
+                </span>
+                {wedgeSummary.rejectedCount > 0 && (
+                  <span className="flex items-center gap-1 text-yellow-600">
+                    <XCircle className="h-3.5 w-3.5" />
+                    {wedgeSummary.rejectedCount} rejected
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* No patterns accepted warning */}
+            {wedgeSummary.acceptedCount === 0 && (
+              <Alert variant="destructive" className="mt-3 border-red-500/50 bg-red-500/10">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-red-600">No patterns accepted</AlertTitle>
+                <AlertDescription className="text-red-500">
+                  No wedge patterns were accepted — strategy may generate no signals.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Expandable details */}
+            {(wedgeSummary.rejectedCount > 0 || wedgeWarnings) && (
+              <Collapsible open={wedgeDetailsOpen} onOpenChange={setWedgeDetailsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="mt-2 h-7 text-xs gap-1 w-full justify-center">
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${wedgeDetailsOpen ? 'rotate-180' : ''}`} />
+                    {wedgeDetailsOpen ? 'Hide details' : 'View details'}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 text-xs">
+                  {/* Resolution stats */}
+                  <div className="flex gap-4 text-muted-foreground">
+                    <span>Resolved via patternId: {wedgeSummary.resolvedFromPatternIdCount}</span>
+                    <span>Resolved via id fallback: {wedgeSummary.resolvedFromIdCount}</span>
+                  </div>
+
+                  {/* Accepted patterns */}
+                  {wedgeSummary.acceptedBaseIds.length > 0 && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Accepted:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {wedgeSummary.acceptedBaseIds.map((id) => (
+                          <Badge key={id} variant="secondary" className="text-xs bg-green-500/10 text-green-700">
+                            {id}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rejected patterns with reasons */}
+                  {wedgeWarnings && wedgeWarnings.reasons.length > 0 && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Rejected:</p>
+                      <div className="space-y-1">
+                        {wedgeWarnings.reasons.slice(0, 10).map((r, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-yellow-600">
+                            <Badge variant="outline" className="text-xs border-yellow-500/50">
+                              {r.patternName || r.basePatternId}
+                            </Badge>
+                            <span className="text-muted-foreground">{r.reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
+        )}
+
         {/* Low Sample Warning */}
         {isLowSample && (
           <Alert variant="destructive" className="border-yellow-500/50 bg-yellow-500/10">

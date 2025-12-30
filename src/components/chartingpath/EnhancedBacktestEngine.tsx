@@ -362,6 +362,8 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             runId={runId}
             wedgeEnabled={isWedge}
             enabledPatternsCount={strategy.patterns?.filter((p: any) => p.enabled).length || 0}
+            wedgeSummary={results.wedgeSummary}
+            wedgeWarnings={results.wedgeWarnings}
             onCreateAlert={handleCreateAlert}
             onOpenTradingView={handleOpenTradingView}
             onShareBacktest={handleShareBacktest}
