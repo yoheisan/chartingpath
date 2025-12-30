@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.create-alert]
 verify_jwt = true
+
+[functions.projects-run]
+verify_jwt = false

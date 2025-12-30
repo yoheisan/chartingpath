@@ -213,8 +213,12 @@ const Projects = () => {
   const [planTier] = useState('free'); // TODO: Fetch from usage_credits
   
   const handleStartProject = (templateId: string) => {
-    // TODO: Navigate to project wizard with template
-    navigate(`/projects/${templateId}`);
+    if (templateId === 'setup_finder') {
+      navigate('/projects/setup-finder/new');
+    } else {
+      // Other projects coming soon
+      navigate(`/projects/${templateId}`);
+    }
   };
   
   return (
