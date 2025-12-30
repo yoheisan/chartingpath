@@ -202,6 +202,23 @@ function checkPatternWedge(patternId: string, window: any[]): boolean {
 // ============================================
 // Resolves the canonical base pattern ID from a pattern object following the wedge ID contract.
 // Returns the resolved baseId and the source field used, or null with rejection reason.
+//
+// ID RESOLUTION MATRIX (all 4 cases must work correctly):
+// ┌─────────────────────────────────────────────────────────────────────────────┐
+// │ Case │ patternId          │ id                    │ Expected Outcome       │
+// ├──────┼────────────────────┼───────────────────────┼────────────────────────┤
+// │  1   │ valid              │ valid, same base      │ ACCEPT via patternId   │
+// │  2   │ valid              │ valid, DIFFERENT base │ REJECT (mismatch bug)  │
+// │  3   │ INVALID            │ valid                 │ ACCEPT via id fallback │
+// │  4   │ valid              │ INVALID               │ ACCEPT via patternId   │
+// └─────────────────────────────────────────────────────────────────────────────┘
+//
+// CRITICAL: Case 3 is the legacy fallback case. Old patterns may have invalid/missing
+// patternId but a valid timestamped id (e.g., "donchian_breakout_long_1767...").
+// The resolver MUST accept these via id fallback, NOT reject due to invalid patternId.
+//
+// See tests/backtester-v2/14_wedge_id_resolution.test.ts for regression tests.
+
 interface WedgeIdResolution {
   baseId: string | null;
   sourceField: 'patternId' | 'id' | null;
