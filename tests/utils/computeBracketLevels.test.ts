@@ -1,4 +1,5 @@
-import { computeBracketLevels, BracketLevelsInput, ROUNDING_CONFIG } from '../../src/utils/bracketLevels';
+import { computeBracketLevels, BracketLevelsInput, ROUNDING_CONFIG, BRACKET_LEVELS_VERSION } from '../../src/utils/bracketLevels';
+import * as fs from 'fs';
 
 describe('computeBracketLevels', () => {
   
@@ -375,40 +376,218 @@ describe('computeBracketLevels', () => {
   });
 
   describe('Sync verification between frontend and edge function implementations', () => {
+    const FRONTEND_PATH = 'src/utils/bracketLevels.ts';
+    const EDGE_FN_PATH = 'supabase/functions/_shared/bracketLevels.ts';
+
     it('should have identical ROUNDING_CONFIG values', () => {
-      // This test verifies the rounding config is consistent
-      // The edge function version must be manually kept in sync
       expect(ROUNDING_CONFIG.priceDecimals).toBe(8);
       expect(ROUNDING_CONFIG.distanceDecimals).toBe(8);
       expect(ROUNDING_CONFIG.rrDecimals).toBe(4);
     });
 
-    it('should produce identical outputs for both implementations', () => {
-      // Test various scenarios to ensure both implementations would produce the same result
-      const testCases: BracketLevelsInput[] = [
-        { direction: 'long', entryPrice: 100, stopPercent: 2, targetPercent: 4 },
-        { direction: 'short', entryPrice: 50, stopPercent: 1.5, targetPercent: 3 },
-        { direction: 'long', entryPrice: 1.2345, stopPercent: 0.5, targetPercent: 1 },
-        { direction: 'long', entryPrice: 100, stopPercent: 2, targetPercent: 4, atr: 2, atrMultiplier: 2, stopLossMethod: 'atr', takeProfitMethod: 'ratio' },
-      ];
+    it('should have a valid version constant', () => {
+      expect(BRACKET_LEVELS_VERSION).toBeDefined();
+      expect(typeof BRACKET_LEVELS_VERSION).toBe('string');
+      expect(BRACKET_LEVELS_VERSION).toMatch(/^\d+\.\d+\.\d+$/); // semver format
+    });
 
-      for (const input of testCases) {
-        const result = computeBracketLevels(input);
+    it('should have matching BRACKET_LEVELS_VERSION in both files', () => {
+      // Read the edge function file and extract version
+      const edgeFnContent = fs.readFileSync(EDGE_FN_PATH, 'utf-8');
+      const versionMatch = edgeFnContent.match(/BRACKET_LEVELS_VERSION\s*=\s*['"]([^'"]+)['"]/);
+      
+      expect(versionMatch).not.toBeNull();
+      const edgeFnVersion = versionMatch![1];
+      expect(edgeFnVersion).toBe(BRACKET_LEVELS_VERSION);
+    });
+
+    it('should have matching ROUNDING_CONFIG values in both files', () => {
+      const edgeFnContent = fs.readFileSync(EDGE_FN_PATH, 'utf-8');
+      
+      // Extract ROUNDING_CONFIG from edge function file
+      const priceDecimalsMatch = edgeFnContent.match(/priceDecimals:\s*(\d+)/);
+      const distanceDecimalsMatch = edgeFnContent.match(/distanceDecimals:\s*(\d+)/);
+      const rrDecimalsMatch = edgeFnContent.match(/rrDecimals:\s*(\d+)/);
+      
+      expect(priceDecimalsMatch).not.toBeNull();
+      expect(distanceDecimalsMatch).not.toBeNull();
+      expect(rrDecimalsMatch).not.toBeNull();
+      
+      expect(Number(priceDecimalsMatch![1])).toBe(ROUNDING_CONFIG.priceDecimals);
+      expect(Number(distanceDecimalsMatch![1])).toBe(ROUNDING_CONFIG.distanceDecimals);
+      expect(Number(rrDecimalsMatch![1])).toBe(ROUNDING_CONFIG.rrDecimals);
+    });
+
+    it('should have identical function implementation (byte comparison after stripping headers)', () => {
+      const frontendContent = fs.readFileSync(FRONTEND_PATH, 'utf-8');
+      const edgeFnContent = fs.readFileSync(EDGE_FN_PATH, 'utf-8');
+      
+      // Strip header comments and normalize whitespace for comparison
+      const stripHeader = (content: string): string => {
+        // Remove leading comment block (everything until first 'export')
+        const firstExportIndex = content.indexOf('export interface');
+        if (firstExportIndex === -1) return content;
+        return content.slice(firstExportIndex).trim();
+      };
+      
+      const frontendBody = stripHeader(frontendContent);
+      const edgeFnBody = stripHeader(edgeFnContent);
+      
+      // Compare the actual implementation
+      expect(frontendBody).toBe(edgeFnBody);
+    });
+
+    describe('Deterministic sweep test (comprehensive combinations)', () => {
+      // Define test parameter ranges
+      const directions: ('long' | 'short')[] = ['long', 'short'];
+      const entryPrices = [10, 100, 1234.56789, 100000];
+      const atrValues = [0.5, 1, 2.25, 10];
+      const atrMultipliers = [0.5, 1, 2, 3];
+      const ratios = [1, 1.5, 2, 3];
+      const stopPercents = [0.5, 1, 2];
+      const targetPercents = [1, 2, 3];
+
+      it('should produce consistent results for percent-based calculations (~72 cases)', () => {
+        let caseCount = 0;
         
-        // Verify structure
-        expect(result).toHaveProperty('stopLossPrice');
-        expect(result).toHaveProperty('takeProfitPrice');
-        expect(result).toHaveProperty('stopDistance');
-        expect(result).toHaveProperty('tpDistance');
-        expect(result).toHaveProperty('riskRewardRatio');
-        expect(result).toHaveProperty('stopLossMethod');
-        expect(result).toHaveProperty('takeProfitMethod');
+        for (const direction of directions) {
+          for (const entryPrice of entryPrices) {
+            for (const stopPercent of stopPercents) {
+              for (const targetPercent of targetPercents) {
+                const input: BracketLevelsInput = {
+                  direction,
+                  entryPrice,
+                  stopPercent,
+                  targetPercent,
+                  stopLossMethod: 'percent',
+                  takeProfitMethod: 'percent'
+                };
+
+                const result = computeBracketLevels(input);
+                
+                // Verify output consistency
+                expect(Number.isFinite(result.stopLossPrice)).toBe(true);
+                expect(Number.isFinite(result.takeProfitPrice)).toBe(true);
+                expect(Number.isFinite(result.riskRewardRatio)).toBe(true);
+                expect(result.stopLossMethod).toBe('percent');
+                expect(result.takeProfitMethod).toBe('percent');
+                
+                // Verify direction logic
+                if (direction === 'long') {
+                  expect(result.stopLossPrice).toBeLessThan(entryPrice);
+                  expect(result.takeProfitPrice).toBeGreaterThan(entryPrice);
+                } else {
+                  expect(result.stopLossPrice).toBeGreaterThan(entryPrice);
+                  expect(result.takeProfitPrice).toBeLessThan(entryPrice);
+                }
+                
+                // Verify rounding precision
+                const slDecimals = (result.stopLossPrice.toString().split('.')[1] || '').length;
+                const tpDecimals = (result.takeProfitPrice.toString().split('.')[1] || '').length;
+                expect(slDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.priceDecimals);
+                expect(tpDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.priceDecimals);
+                
+                caseCount++;
+              }
+            }
+          }
+        }
         
-        // Verify all numbers are finite
-        expect(Number.isFinite(result.stopLossPrice)).toBe(true);
-        expect(Number.isFinite(result.takeProfitPrice)).toBe(true);
-        expect(Number.isFinite(result.riskRewardRatio)).toBe(true);
-      }
+        expect(caseCount).toBe(72); // 2 * 4 * 3 * 3
+      });
+
+      it('should produce consistent results for ATR-based calculations (~128 cases)', () => {
+        let caseCount = 0;
+        
+        for (const direction of directions) {
+          for (const entryPrice of entryPrices) {
+            for (const atr of atrValues) {
+              for (const atrMultiplier of atrMultipliers) {
+                const input: BracketLevelsInput = {
+                  direction,
+                  entryPrice,
+                  stopPercent: 2, // fallback
+                  targetPercent: 4, // for ratio calculation
+                  atr,
+                  atrMultiplier,
+                  stopLossMethod: 'atr',
+                  takeProfitMethod: 'ratio'
+                };
+
+                const result = computeBracketLevels(input);
+                
+                // Verify output consistency
+                expect(Number.isFinite(result.stopLossPrice)).toBe(true);
+                expect(Number.isFinite(result.takeProfitPrice)).toBe(true);
+                expect(Number.isFinite(result.riskRewardRatio)).toBe(true);
+                expect(result.stopLossMethod).toBe('atr');
+                expect(result.takeProfitMethod).toBe('ratio');
+                
+                // Verify ATR-based stop distance
+                const expectedStopDistance = atr * atrMultiplier;
+                expect(result.stopDistance).toBeCloseTo(expectedStopDistance, 6);
+                
+                // Verify direction logic
+                if (direction === 'long') {
+                  expect(result.stopLossPrice).toBeCloseTo(entryPrice - expectedStopDistance, 6);
+                  expect(result.takeProfitPrice).toBeGreaterThan(entryPrice);
+                } else {
+                  expect(result.stopLossPrice).toBeCloseTo(entryPrice + expectedStopDistance, 6);
+                  expect(result.takeProfitPrice).toBeLessThan(entryPrice);
+                }
+                
+                caseCount++;
+              }
+            }
+          }
+        }
+        
+        expect(caseCount).toBe(128); // 2 * 4 * 4 * 4
+      });
+
+      it('should produce consistent results for mixed ATR/ratio combinations (~256 cases)', () => {
+        let caseCount = 0;
+        
+        for (const direction of directions) {
+          for (const entryPrice of entryPrices) {
+            for (const atr of atrValues) {
+              for (const atrMultiplier of atrMultipliers) {
+                for (const ratio of ratios) {
+                  // Only run subset to keep runtime reasonable
+                  if (caseCount >= 256) break;
+                  
+                  const stopPercent = 2;
+                  const targetPercent = stopPercent * ratio;
+                  
+                  const input: BracketLevelsInput = {
+                    direction,
+                    entryPrice,
+                    stopPercent,
+                    targetPercent,
+                    atr,
+                    atrMultiplier,
+                    stopLossMethod: 'atr',
+                    takeProfitMethod: 'ratio'
+                  };
+
+                  const result = computeBracketLevels(input);
+                  
+                  // Verify RR ratio calculation
+                  const expectedRR = targetPercent / stopPercent;
+                  expect(result.riskRewardRatio).toBeCloseTo(expectedRR, ROUNDING_CONFIG.rrDecimals);
+                  
+                  // Verify TP distance is RR * stop distance
+                  expect(result.tpDistance).toBeCloseTo(result.stopDistance * expectedRR, 6);
+                  
+                  caseCount++;
+                }
+              }
+            }
+          }
+        }
+        
+        expect(caseCount).toBeGreaterThanOrEqual(256);
+      });
     });
   });
 });
