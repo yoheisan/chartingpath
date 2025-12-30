@@ -362,6 +362,9 @@ export const EnhancedBacktestEngine: React.FC<EnhancedBacktestEngineProps> = ({
             runId={runId}
             wedgeEnabled={isWedge}
             enabledPatternsCount={strategy.patterns?.filter((p: any) => p.enabled).length || 0}
+            startDate={backtestConfig.startDate}
+            endDate={backtestConfig.endDate}
+            dataPoints={results.dataPoints}
             wedgeSummary={results.wedgeSummary}
             wedgeWarnings={results.wedgeWarnings}
             onCreateAlert={handleCreateAlert}
