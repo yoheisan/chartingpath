@@ -28,11 +28,14 @@ export const wedgeConfig = {
     'MATIC'
   ] as const,
   
-  // Featured patterns for crypto (display names)
+  // Featured patterns for crypto - directional patterns with explicit sides
   featuredPatterns: [
-    'Breakout',
-    'DoubleTopBottom', 
-    'Triangle'
+    'donchian_breakout_long',
+    'donchian_breakout_short',
+    'double_top',
+    'double_bottom', 
+    'ascending_triangle',
+    'descending_triangle'
   ] as const,
   
   // Symbol suffix for data providers (USDT pairs)
@@ -82,21 +85,22 @@ export interface WedgePatternConfig {
   };
 }
 
-// Canonical supported patterns for wedge mode
-// Pattern names match the backtest engine expectations
+// Canonical supported patterns for wedge mode - WITH EXPLICIT DIRECTIONS
+// Each pattern has a clear direction (long/short) for trade clarity
 export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
   {
-    id: 'breakout_wedge',
+    id: 'donchian_breakout_long',
     patternType: 'donchian_breakout',
-    name: 'Breakout', // Engine uses this name
+    name: 'Donchian Breakout (Long)',
     category: 'breakout',
     enabled: false,
     priority: 1,
-    direction: 'neutral',
+    direction: 'bullish',
     parameters: {
       channelPeriod: 20,
       exitPeriod: 10,
       atrMultiplier: 2.0,
+      side: 'long',
     },
     riskSettings: {
       riskPerTrade: 2,
@@ -106,17 +110,39 @@ export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
     },
   },
   {
-    id: 'double_top_bottom_wedge',
-    patternType: 'double_top',
-    name: 'DoubleTopBottom', // Engine uses this name
-    category: 'classical',
+    id: 'donchian_breakout_short',
+    patternType: 'donchian_breakout',
+    name: 'Donchian Breakout (Short)',
+    category: 'breakout',
     enabled: false,
     priority: 2,
-    direction: 'neutral',
+    direction: 'bearish',
+    parameters: {
+      channelPeriod: 20,
+      exitPeriod: 10,
+      atrMultiplier: 2.0,
+      side: 'short',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'atr',
+      takeProfitMethod: 'ratio',
+      maxConcurrentTrades: 1,
+    },
+  },
+  {
+    id: 'double_top',
+    patternType: 'double_top',
+    name: 'Double Top (Short)',
+    category: 'classical',
+    enabled: false,
+    priority: 3,
+    direction: 'bearish',
     parameters: {
       peakSimilarityTolerance: 2,
       minBarsBetweenPeaks: 10,
       necklineBreakConfirmation: 2,
+      side: 'short',
     },
     riskSettings: {
       riskPerTrade: 2,
@@ -126,17 +152,60 @@ export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
     },
   },
   {
-    id: 'triangle_wedge',
-    patternType: 'ascending_triangle',
-    name: 'Triangle', // Engine uses this name
+    id: 'double_bottom',
+    patternType: 'double_bottom',
+    name: 'Double Bottom (Long)',
     category: 'classical',
     enabled: false,
-    priority: 3,
-    direction: 'neutral',
+    priority: 4,
+    direction: 'bullish',
+    parameters: {
+      peakSimilarityTolerance: 2,
+      minBarsBetweenPeaks: 10,
+      necklineBreakConfirmation: 2,
+      side: 'long',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern',
+      takeProfitMethod: 'pattern',
+      maxConcurrentTrades: 1,
+    },
+  },
+  {
+    id: 'ascending_triangle',
+    patternType: 'ascending_triangle',
+    name: 'Ascending Triangle (Long)',
+    category: 'classical',
+    enabled: false,
+    priority: 5,
+    direction: 'bullish',
     parameters: {
       minTouchPoints: 3,
       trendlineDeviation: 1.5,
       breakoutConfirmation: 2,
+      side: 'long',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern',
+      takeProfitMethod: 'pattern',
+      maxConcurrentTrades: 1,
+    },
+  },
+  {
+    id: 'descending_triangle',
+    patternType: 'descending_triangle',
+    name: 'Descending Triangle (Short)',
+    category: 'classical',
+    enabled: false,
+    priority: 6,
+    direction: 'bearish',
+    parameters: {
+      minTouchPoints: 3,
+      trendlineDeviation: 1.5,
+      breakoutConfirmation: 2,
+      side: 'short',
     },
     riskSettings: {
       riskPerTrade: 2,
@@ -147,24 +216,24 @@ export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
   },
 ];
 
-// Canonical mapping: PatternLibrary internal IDs → Wedge pattern names
-// This is the single source of truth for which local patterns are supported in wedge mode
+// Canonical mapping: Pattern IDs → Display names with direction
+// This is the single source of truth for which patterns are supported in wedge mode
 export const WEDGE_PATTERN_ID_MAP: Record<string, string> = {
-  // Breakout patterns
-  'donchian_breakout': 'Breakout',
-  'volatility_squeeze': 'Breakout',
-  'channel_breakout': 'Breakout',
-  // DoubleTopBottom patterns
-  'double_top': 'DoubleTopBottom',
-  'double_bottom': 'DoubleTopBottom',
-  // Triangle patterns
-  'ascending_triangle': 'Triangle',
-  'descending_triangle': 'Triangle',
-  'symmetrical_triangle': 'Triangle',
+  'donchian_breakout_long': 'Donchian Breakout (Long)',
+  'donchian_breakout_short': 'Donchian Breakout (Short)',
+  'double_top': 'Double Top (Short)',
+  'double_bottom': 'Double Bottom (Long)',
+  'ascending_triangle': 'Ascending Triangle (Long)',
+  'descending_triangle': 'Descending Triangle (Short)',
 };
 
 // Set of all supported pattern IDs for O(1) lookup
 export const SUPPORTED_WEDGE_PATTERN_IDS = new Set(Object.keys(WEDGE_PATTERN_ID_MAP));
+
+// Get pattern config by ID (not name)
+export const getPatternConfigById = (patternId: string): WedgePatternConfig | undefined => {
+  return SUPPORTED_WEDGE_PATTERNS.find(p => p.id === patternId);
+};
 
 // Check if a pattern ID is supported in wedge mode
 export const isPatternIdSupportedInWedge = (patternId: string): boolean => {
@@ -177,14 +246,19 @@ export const getPatternConfigByName = (patternName: string): WedgePatternConfig 
   return SUPPORTED_WEDGE_PATTERNS.find(p => p.name === patternName);
 };
 
-// Create a fresh pattern instance with unique ID
-export const createWedgePatternInstance = (patternName: string, enabled: boolean = true): WedgePatternConfig | null => {
-  const template = getPatternConfigByName(patternName);
+// Create a fresh pattern instance by ID (preferred) or name
+export const createWedgePatternInstance = (patternIdOrName: string, enabled: boolean = true): WedgePatternConfig | null => {
+  // First try by ID
+  let template = getPatternConfigById(patternIdOrName);
+  // Fallback to name lookup
+  if (!template) {
+    template = getPatternConfigByName(patternIdOrName);
+  }
   if (!template) return null;
   
   return {
     ...template,
-    id: `${template.patternType}_${Date.now()}`,
+    id: `${template.id}_${Date.now()}`,
     enabled,
   };
 };
@@ -196,16 +270,18 @@ export const validateWedgePatterns = (patterns: any[]): {
   enabledCount: number;
   enabledNames: string[];
 } => {
-  const supportedNames = SUPPORTED_WEDGE_PATTERNS.map(p => p.name);
+  const supportedIds = Array.from(SUPPORTED_WEDGE_PATTERN_IDS);
   const unsupportedPatterns: string[] = [];
   const enabledNames: string[] = [];
   
   patterns.forEach(p => {
-    if (!supportedNames.includes(p.name)) {
-      unsupportedPatterns.push(p.name);
+    // Check if pattern ID starts with any supported ID (handles timestamped IDs)
+    const isSupported = supportedIds.some(id => p.id === id || p.id?.startsWith(`${id}_`));
+    if (!isSupported) {
+      unsupportedPatterns.push(p.name || p.id);
     }
     if (p.enabled) {
-      enabledNames.push(p.name);
+      enabledNames.push(p.name || p.id);
     }
   });
   
@@ -220,17 +296,20 @@ export const validateWedgePatterns = (patterns: any[]): {
 // Sanitize patterns for wedge mode - keep only supported patterns
 export const sanitizeWedgePatterns = (patterns: any[]): WedgePatternConfig[] => {
   if (!patterns || patterns.length === 0) {
-    // Return default Breakout pattern enabled
-    const breakout = createWedgePatternInstance('Breakout', true);
+    // Return default Donchian Breakout Long pattern enabled
+    const breakout = createWedgePatternInstance('donchian_breakout_long', true);
     return breakout ? [breakout] : [];
   }
   
-  const supportedNames = SUPPORTED_WEDGE_PATTERNS.map(p => p.name);
-  const sanitized = patterns.filter(p => supportedNames.includes(p.name));
+  const supportedIds = Array.from(SUPPORTED_WEDGE_PATTERN_IDS);
+  const sanitized = patterns.filter(p => {
+    // Check if pattern ID starts with any supported ID (handles timestamped IDs)
+    return supportedIds.some(id => p.id === id || p.id?.startsWith(`${id}_`));
+  });
   
-  // If no valid patterns remain, add default Breakout
+  // If no valid patterns remain, add default Donchian Breakout Long
   if (sanitized.length === 0) {
-    const breakout = createWedgePatternInstance('Breakout', true);
+    const breakout = createWedgePatternInstance('donchian_breakout_long', true);
     return breakout ? [breakout] : [];
   }
   
@@ -243,24 +322,29 @@ export const sanitizeWedgePatterns = (patterns: any[]): WedgePatternConfig[] => 
   return sanitized;
 };
 
-// Featured presets for quick loading
+// Featured presets for quick loading - WITH EXPLICIT DIRECTIONS
+// patternId must match SUPPORTED_WEDGE_PATTERN_IDS exactly
 export const featuredPresets = [
-  { symbol: 'BTC', pattern: 'Breakout', label: 'BTC 1H Breakout' },
-  { symbol: 'ETH', pattern: 'Breakout', label: 'ETH 1H Breakout' },
-  { symbol: 'SOL', pattern: 'Breakout', label: 'SOL 1H Breakout' },
-  { symbol: 'BTC', pattern: 'DoubleTopBottom', label: 'BTC 1H Double Top/Bottom' },
-  { symbol: 'ETH', pattern: 'DoubleTopBottom', label: 'ETH 1H Double Top/Bottom' },
-  { symbol: 'BTC', pattern: 'Triangle', label: 'BTC 1H Triangle' },
-  { symbol: 'ETH', pattern: 'Triangle', label: 'ETH 1H Triangle' },
-  { symbol: 'SOL', pattern: 'Triangle', label: 'SOL 1H Triangle' },
-  { symbol: 'BNB', pattern: 'Breakout', label: 'BNB 1H Breakout' },
-  { symbol: 'XRP', pattern: 'Breakout', label: 'XRP 1H Breakout' },
-  { symbol: 'ADA', pattern: 'Triangle', label: 'ADA 1H Triangle' },
-  { symbol: 'AVAX', pattern: 'Breakout', label: 'AVAX 1H Breakout' },
-  { symbol: 'DOGE', pattern: 'DoubleTopBottom', label: 'DOGE 1H Double Top/Bottom' },
-  { symbol: 'LINK', pattern: 'Breakout', label: 'LINK 1H Breakout' },
-  { symbol: 'MATIC', pattern: 'Triangle', label: 'MATIC 1H Triangle' },
+  { symbol: 'BTC', patternId: 'donchian_breakout_long', label: 'BTC 1H Donchian Breakout (Long)' },
+  { symbol: 'BTC', patternId: 'donchian_breakout_short', label: 'BTC 1H Donchian Breakout (Short)' },
+  { symbol: 'ETH', patternId: 'donchian_breakout_long', label: 'ETH 1H Donchian Breakout (Long)' },
+  { symbol: 'ETH', patternId: 'donchian_breakout_short', label: 'ETH 1H Donchian Breakout (Short)' },
+  { symbol: 'BTC', patternId: 'double_top', label: 'BTC 1H Double Top (Short)' },
+  { symbol: 'BTC', patternId: 'double_bottom', label: 'BTC 1H Double Bottom (Long)' },
+  { symbol: 'ETH', patternId: 'double_top', label: 'ETH 1H Double Top (Short)' },
+  { symbol: 'ETH', patternId: 'double_bottom', label: 'ETH 1H Double Bottom (Long)' },
+  { symbol: 'BTC', patternId: 'ascending_triangle', label: 'BTC 1H Ascending Triangle (Long)' },
+  { symbol: 'BTC', patternId: 'descending_triangle', label: 'BTC 1H Descending Triangle (Short)' },
 ] as const;
 
 export type WedgeSymbol = typeof wedgeConfig.featuredSymbols[number];
-export type WedgePattern = typeof wedgeConfig.featuredPatterns[number];
+export type WedgePatternId = typeof wedgeConfig.featuredPatterns[number];
+
+// Get dropdown options for Quick Start pattern selector
+export const getQuickStartPatternOptions = () => {
+  return SUPPORTED_WEDGE_PATTERNS.map(p => ({
+    id: p.id,
+    label: p.name,
+    direction: p.direction,
+  }));
+};

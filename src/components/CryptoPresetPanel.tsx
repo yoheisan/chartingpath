@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Clock, Play } from 'lucide-react';
-import { wedgeConfig, featuredPresets, getFullSymbol } from '@/config/wedge';
+import { wedgeConfig, featuredPresets, getFullSymbol, getQuickStartPatternOptions, WEDGE_PATTERN_ID_MAP } from '@/config/wedge';
 import { trackPresetLoaded, track } from '@/services/analytics';
 
 interface CryptoPresetPanelProps {
-  onPresetLoad: (preset: { symbol: string; pattern: string; timeframe: string }) => void;
+  onPresetLoad: (preset: { symbol: string; patternId: string; timeframe: string }) => void;
   onOneClickBacktest?: () => void;
   isBacktesting?: boolean;
 }
@@ -19,19 +19,37 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
   isBacktesting = false 
 }) => {
   const [selectedSymbol, setSelectedSymbol] = React.useState<string>(wedgeConfig.featuredSymbols[0]);
-  const [selectedPattern, setSelectedPattern] = React.useState<string>(wedgeConfig.featuredPatterns[0]);
+  const [selectedPatternId, setSelectedPatternId] = React.useState<string>(wedgeConfig.featuredPatterns[0]);
+
+  const patternOptions = getQuickStartPatternOptions();
 
   const handleQuickPreset = (preset: typeof featuredPresets[number]) => {
     const fullPreset = {
       symbol: getFullSymbol(preset.symbol),
-      pattern: preset.pattern,
+      patternId: preset.patternId,
       timeframe: wedgeConfig.wedgeTimeframe,
     };
     
     // Track the event
     trackPresetLoaded({
       symbol: preset.symbol,
-      pattern: preset.pattern,
+      pattern: preset.patternId,
+      timeframe: wedgeConfig.wedgeTimeframe,
+    });
+    
+    onPresetLoad(fullPreset);
+  };
+
+  const handleCustomPresetLoad = () => {
+    const fullPreset = {
+      symbol: getFullSymbol(selectedSymbol),
+      patternId: selectedPatternId,
+      timeframe: wedgeConfig.wedgeTimeframe,
+    };
+    
+    trackPresetLoaded({
+      symbol: selectedSymbol,
+      pattern: selectedPatternId,
       timeframe: wedgeConfig.wedgeTimeframe,
     });
     
@@ -39,17 +57,17 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
   };
 
   const handleOneClickBacktest = () => {
-    // First load the default preset
+    // First load the default preset (Donchian Breakout Long on BTC)
     const preset = {
       symbol: getFullSymbol('BTC'),
-      pattern: 'Breakout',
+      patternId: 'donchian_breakout_long',
       timeframe: wedgeConfig.wedgeTimeframe,
     };
     
     // Track the one-click event
     track('one_click_backtest_used', {
       symbol: 'BTC',
-      pattern: 'Breakout',
+      pattern: 'donchian_breakout_long',
       timeframe: wedgeConfig.wedgeTimeframe,
       wedgeEnabled: true,
     });
@@ -92,7 +110,7 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Simplified Preset Builder - Single action path for wedge MVP */}
+        {/* Pattern Selector with explicit directions */}
         <div className="flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[120px]">
             <label className="text-xs text-muted-foreground mb-1 block">Symbol</label>
@@ -110,24 +128,45 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
             </Select>
           </div>
           
-          <div className="flex-1 min-w-[140px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Pattern</label>
-            <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-xs text-muted-foreground mb-1 block">Pattern (with direction)</label>
+            <Select value={selectedPatternId} onValueChange={setSelectedPatternId}>
               <SelectTrigger className="h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {wedgeConfig.featuredPatterns.map((pattern) => (
-                  <SelectItem key={pattern} value={pattern}>
-                    {pattern === 'DoubleTopBottom' ? 'Double Top/Bottom' : pattern}
+                {patternOptions.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    <span className="flex items-center gap-2">
+                      {option.label}
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] px-1 py-0 ${
+                          option.direction === 'bullish' 
+                            ? 'text-green-600 border-green-600' 
+                            : 'text-red-600 border-red-600'
+                        }`}
+                      >
+                        {option.direction === 'bullish' ? 'Long' : 'Short'}
+                      </Badge>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          <Button 
+            onClick={handleCustomPresetLoad}
+            variant="secondary"
+            size="sm"
+            className="h-9"
+          >
+            Load
+          </Button>
         </div>
 
-        {/* Featured Presets - Quick 1-click options */}
+        {/* Featured Presets - Quick 1-click options with directions */}
         <div>
           <label className="text-xs text-muted-foreground mb-2 block">Quick Start</label>
           <div className="flex flex-wrap gap-1.5">

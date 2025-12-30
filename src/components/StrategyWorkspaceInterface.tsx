@@ -98,7 +98,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
-  const pendingSharedPresetRef = useRef<{ symbol: string; pattern: string; timeframe: string; autoRun?: boolean } | null>(null);
+  const pendingSharedPresetRef = useRef<{ symbol: string; pattern?: string; patternId?: string; timeframe: string; autoRun?: boolean } | null>(null);
   const [summaryData, setSummaryData] = useState<{
     instrument?: string;
     timeframes?: string[];
@@ -144,7 +144,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         sessionStorage.removeItem('shared_backtest_preset');
 
         // Store in ref for processing once builder is ready
-        if (preset.symbol && preset.pattern && preset.timeframe) {
+        // Support both legacy pattern and new patternId
+        if (preset.symbol && (preset.pattern || preset.patternId) && preset.timeframe) {
           pendingSharedPresetRef.current = preset;
         }
       } catch (e) {
@@ -496,20 +497,28 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   };
 
   // Handle preset load from CryptoPresetPanel - SYNCS BOTH market AND patterns
-  const handlePresetLoad = (preset: { symbol: string; pattern: string; timeframe: string }) => {
+  const handlePresetLoad = (preset: { symbol: string; patternId: string; timeframe: string }) => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
-      // Create or update pattern to match preset selection
-      const patternInstance = createWedgePatternInstance(preset.pattern, true);
+      // Create pattern instance from the patternId
+      const patternInstance = createWedgePatternInstance(preset.patternId, true);
+      
+      if (!patternInstance) {
+        console.error('[handlePresetLoad] Failed to create pattern instance for:', preset.patternId);
+        toast.error(`Unsupported pattern: ${preset.patternId}`);
+        return;
+      }
       
       // Disable all existing patterns, then add/enable the selected one
       let updatedPatterns = (strategy.patterns || []).map((p: any) => ({
         ...p,
-        enabled: p.name === preset.pattern,
+        enabled: p.id === preset.patternId || p.id.startsWith(preset.patternId),
       }));
       
       // If the selected pattern doesn't exist in the array, add it
-      const hasPattern = updatedPatterns.some((p: any) => p.name === preset.pattern);
+      const hasPattern = updatedPatterns.some((p: any) => 
+        p.id === preset.patternId || p.id.startsWith(preset.patternId)
+      );
       if (!hasPattern && patternInstance) {
         updatedPatterns.push(patternInstance);
       }
@@ -543,11 +552,12 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       
       console.log('[handlePresetLoad] Updated strategy with pattern:', {
         symbol: preset.symbol,
-        pattern: preset.pattern,
+        patternId: preset.patternId,
+        patternName: patternInstance.name,
         enabledPatterns: updatedPatterns.filter((p: any) => p.enabled).map((p: any) => p.name),
       });
       
-      toast.success(`Loaded preset: ${preset.symbol} ${preset.timeframe} ${preset.pattern}`);
+      toast.success(`Loaded preset: ${preset.symbol} ${preset.timeframe} ${patternInstance.name}`);
     }
   };
 
@@ -566,10 +576,10 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
       
       console.log('[StrategyWorkspaceInterface] Processing shared preset (builder ready):', preset);
       
-      // Load the preset
+      // Load the preset - convert legacy pattern to patternId if needed
       handlePresetLoad({
         symbol: preset.symbol,
-        pattern: preset.pattern,
+        patternId: preset.patternId || preset.pattern || 'donchian_breakout_long',
         timeframe: preset.timeframe
       });
 
@@ -589,12 +599,12 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
     const timer = setTimeout(processPendingPreset, 1000);
     return () => clearTimeout(timer);
   }, []);
-  // CRITICAL: Ensures Breakout pattern exists and is enabled before running
+  // CRITICAL: Ensures Donchian Breakout (Long) pattern exists and is enabled before running
   const handleOneClickBacktest = () => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
-      // Create Breakout pattern if it doesn't exist
-      const breakoutPattern = createWedgePatternInstance('Breakout', true);
+      // Create Donchian Breakout Long pattern if it doesn't exist
+      const breakoutPattern = createWedgePatternInstance('donchian_breakout_long', true);
       
       // Start with existing patterns or empty array
       let patterns = strategy.patterns || [];
@@ -605,17 +615,19 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
         enabled: false,
       }));
       
-      // Check if Breakout exists
-      const hasBreakout = patterns.some((p: any) => p.name === 'Breakout');
+      // Check if Donchian Breakout Long exists (by ID prefix)
+      const hasBreakout = patterns.some((p: any) => 
+        p.id === 'donchian_breakout_long' || p.id?.startsWith('donchian_breakout_long_')
+      );
       
       if (hasBreakout) {
-        // Enable existing Breakout
+        // Enable existing Donchian Breakout Long
         patterns = patterns.map((p: any) => ({
           ...p,
-          enabled: p.name === 'Breakout',
+          enabled: p.id === 'donchian_breakout_long' || p.id?.startsWith('donchian_breakout_long_'),
         }));
       } else if (breakoutPattern) {
-        // Add new Breakout pattern
+        // Add new Donchian Breakout Long pattern
         patterns.push(breakoutPattern);
       }
       

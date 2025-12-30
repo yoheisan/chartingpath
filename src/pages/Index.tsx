@@ -5,7 +5,7 @@ import { CheckCircle, ArrowRight, Zap, Clock, TrendingUp, Bell, Shield } from "l
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
-import { wedgeConfig, featuredPresets } from '@/config/wedge';
+import { wedgeConfig, featuredPresets, WEDGE_PATTERN_ID_MAP } from '@/config/wedge';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -148,7 +148,7 @@ const Index = () => {
                       {preset.symbol}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      1H {preset.pattern === 'DoubleTopBottom' ? 'Double T/B' : preset.pattern}
+                      1H {WEDGE_PATTERN_ID_MAP[preset.patternId] || preset.patternId}
                     </div>
                   </CardContent>
                 </Card>
