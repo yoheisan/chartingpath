@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { wedgeConfig, isPatternIdSupportedInWedge, SUPPORTED_WEDGE_PATTERN_IDS } from '@/config/wedge';
+import { wedgeConfig, isPatternIdSupportedInWedge, SUPPORTED_WEDGE_PATTERN_IDS, WEDGE_PATTERN_ID_MAP } from '@/config/wedge';
 import { track } from '@/services/analytics';
 import { 
   Search, 
@@ -1120,6 +1120,43 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
       opacity: isDragging ? 0.5 : 1,
     };
 
+    // In wedge mode, get directional display name from WEDGE_PATTERN_ID_MAP
+    const getDirectionalPatternName = () => {
+      if (wedgeConfig.wedgeEnabled) {
+        // Check if pattern.id matches a wedge pattern ID directly
+        if (WEDGE_PATTERN_ID_MAP[pattern.id]) {
+          return WEDGE_PATTERN_ID_MAP[pattern.id];
+        }
+        // Check if patternType matches
+        if (WEDGE_PATTERN_ID_MAP[pattern.patternType]) {
+          return WEDGE_PATTERN_ID_MAP[pattern.patternType];
+        }
+        // Try to construct from patternType + side
+        const side = pattern.parameters?.side;
+        if (pattern.patternType === 'donchian_breakout' && side) {
+          return WEDGE_PATTERN_ID_MAP[`donchian_breakout_${side}`] || patternInfo.name;
+        }
+      }
+      return patternInfo.name;
+    };
+
+    // Get direction from pattern config for badge display
+    const getPatternDirection = (): 'long' | 'short' | null => {
+      // Check explicit side parameter
+      if (pattern.parameters?.side === 'long' || pattern.parameters?.side === 'short') {
+        return pattern.parameters.side;
+      }
+      // Check direction field
+      if (pattern.direction === 'bullish') return 'long';
+      if (pattern.direction === 'bearish') return 'short';
+      // Check intendedDirection for neutral patterns
+      if (pattern.intendedDirection) return pattern.intendedDirection;
+      return null;
+    };
+
+    const displayName = getDirectionalPatternName();
+    const direction = getPatternDirection();
+
     return (
       <div 
         ref={setNodeRef} 
@@ -1146,10 +1183,31 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
             }}
             className="scale-75"
           />
-          <span className="text-sm font-medium">{patternInfo.name}</span>
+          <span className="text-sm font-medium">{displayName}</span>
           
-          {/* Direction toggle for neutral patterns */}
-          {pattern.direction === 'neutral' && (
+          {/* Direction badge - always show in wedge mode, or for neutral patterns with toggle */}
+          {wedgeConfig.wedgeEnabled && direction ? (
+            <Badge 
+              variant="outline" 
+              className={`text-xs ${
+                direction === 'long' 
+                  ? 'border-green-500/50 text-green-600 bg-green-500/10' 
+                  : 'border-red-500/50 text-red-600 bg-red-500/10'
+              }`}
+            >
+              {direction === 'long' ? (
+                <>
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  Long
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-3 h-3 mr-1 rotate-180" />
+                  Short
+                </>
+              )}
+            </Badge>
+          ) : pattern.direction === 'neutral' && (
             <Button
               size="sm"
               variant="outline"
@@ -1266,93 +1324,95 @@ export const PatternLibrary: React.FC<PatternLibraryProps> = ({
         </div>
       )}
 
-      {/* Compact Pattern Grid - All patterns easily discoverable */}
-      <div className="space-y-4">
-        {Object.entries(visibleCategories).map(([categoryKey, category]) => (
-          <div key={categoryKey} className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <category.icon className="w-4 h-4 text-primary" />
-              {category.name}
-              <Badge variant="outline" className="ml-auto text-xs">
-                {patterns.filter(p => p.category === categoryKey && p.enabled).length} active
-              </Badge>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {category.patterns.map((pattern) => {
-                const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
-                const directionIcon = pattern.direction === 'bullish' ? '↑' : pattern.direction === 'bearish' ? '↓' : '↕';
-                const directionColor = pattern.direction === 'bullish' ? 'text-green-500' : pattern.direction === 'bearish' ? 'text-red-500' : 'text-yellow-500';
-                
-                return (
-                  <div key={pattern.id} className="flex items-center gap-1">
-                    <Badge
-                      variant={isActive ? "default" : "outline"}
-                      className={`cursor-pointer transition-all hover:scale-105 ${
-                        isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                      }`}
-                      onClick={() => {
-                        if (!isActive) {
-                          handlePatternClick(categoryKey, pattern.id);
-                        }
-                      }}
-                    >
-                      <span className={`mr-1 ${isActive ? '' : directionColor}`}>{directionIcon}</span>
-                      {pattern.name}
-                      {isActive && <span className="ml-1">✓</span>}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0"
-                      onClick={() => setDetailPattern({ categoryKey, pattern })}
-                    >
-                      <Eye className="w-3 h-3" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* Direction Confirmation Dialog for Neutral Patterns */}
-        <Dialog open={directionDialog?.open || false} onOpenChange={(open) => !open && setDirectionDialog(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                Confirm Trading Direction
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                <strong>{directionDialog?.patternName}</strong> can be used for both long and short positions. 
-                Please confirm your intended direction:
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex flex-col items-center gap-2 h-auto py-4 border-green-500/50 hover:bg-green-500/10 hover:border-green-500"
-                  onClick={() => confirmDirectionAndAdd('long')}
-                >
-                  <TrendingUp className="w-6 h-6 text-green-500" />
-                  <span className="font-semibold">Long Position</span>
-                  <span className="text-xs text-muted-foreground">Buy / Bullish</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex flex-col items-center gap-2 h-auto py-4 border-red-500/50 hover:bg-red-500/10 hover:border-red-500"
-                  onClick={() => confirmDirectionAndAdd('short')}
-                >
-                  <TrendingUp className="w-6 h-6 text-red-500 rotate-180" />
-                  <span className="font-semibold">Short Position</span>
-                  <span className="text-xs text-muted-foreground">Sell / Bearish</span>
-                </Button>
+      {/* Compact Pattern Grid - Hidden in wedge mode (use Quick Start presets instead) */}
+      {!wedgeConfig.wedgeEnabled && (
+        <div className="space-y-4">
+          {Object.entries(visibleCategories).map(([categoryKey, category]) => (
+            <div key={categoryKey} className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <category.icon className="w-4 h-4 text-primary" />
+                {category.name}
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {patterns.filter(p => p.category === categoryKey && p.enabled).length} active
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {category.patterns.map((pattern) => {
+                  const isActive = patterns.some(p => p.patternType === pattern.id || p.id.startsWith(pattern.id));
+                  const directionIcon = pattern.direction === 'bullish' ? '↑' : pattern.direction === 'bearish' ? '↓' : '↕';
+                  const directionColor = pattern.direction === 'bullish' ? 'text-green-500' : pattern.direction === 'bearish' ? 'text-red-500' : 'text-yellow-500';
+                  
+                  return (
+                    <div key={pattern.id} className="flex items-center gap-1">
+                      <Badge
+                        variant={isActive ? "default" : "outline"}
+                        className={`cursor-pointer transition-all hover:scale-105 ${
+                          isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                        }`}
+                        onClick={() => {
+                          if (!isActive) {
+                            handlePatternClick(categoryKey, pattern.id);
+                          }
+                        }}
+                      >
+                        <span className={`mr-1 ${isActive ? '' : directionColor}`}>{directionIcon}</span>
+                        {pattern.name}
+                        {isActive && <span className="ml-1">✓</span>}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setDetailPattern({ categoryKey, pattern })}
+                      >
+                        <Eye className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          ))}
+
+          {/* Direction Confirmation Dialog for Neutral Patterns */}
+          <Dialog open={directionDialog?.open || false} onOpenChange={(open) => !open && setDirectionDialog(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  Confirm Trading Direction
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong>{directionDialog?.patternName}</strong> can be used for both long and short positions. 
+                  Please confirm your intended direction:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex flex-col items-center gap-2 h-auto py-4 border-green-500/50 hover:bg-green-500/10 hover:border-green-500"
+                    onClick={() => confirmDirectionAndAdd('long')}
+                  >
+                    <TrendingUp className="w-6 h-6 text-green-500" />
+                    <span className="font-semibold">Long Position</span>
+                    <span className="text-xs text-muted-foreground">Buy / Bullish</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex flex-col items-center gap-2 h-auto py-4 border-red-500/50 hover:bg-red-500/10 hover:border-red-500"
+                    onClick={() => confirmDirectionAndAdd('short')}
+                  >
+                    <TrendingUp className="w-6 h-6 text-red-500 rotate-180" />
+                    <span className="font-semibold">Short Position</span>
+                    <span className="text-xs text-muted-foreground">Sell / Bearish</span>
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
 
       {/* Active Patterns - Compact List */}
       {patterns.length > 0 && (
