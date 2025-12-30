@@ -1,11 +1,11 @@
 /**
- * Bracket Levels Calculator
+ * Bracket Levels Calculator (Deno/Edge Function Version)
  * 
- * Single source of truth for computing Stop Loss and Take Profit levels at entry time.
- * Used by both backtesting and live alerts to ensure consistent execution contract.
+ * CANONICAL implementation for computing Stop Loss and Take Profit levels at entry time.
+ * Used by backtest-strategy and send-pattern-alert edge functions.
  * 
- * NOTE: This implementation must stay in sync with supabase/functions/_shared/bracketLevels.ts
- * The edge function version is used in Deno; this version is used in the frontend and tests.
+ * IMPORTANT: This file must stay in sync with src/utils/bracketLevels.ts
+ * The frontend version is tested via Jest; this version is used in edge functions.
  * 
  * Rounding contract:
  * - Prices: 8 decimal places
@@ -36,7 +36,6 @@ export interface BracketLevelsOutput {
 
 /**
  * Rounding configuration - single source of truth for precision
- * Must match supabase/functions/_shared/bracketLevels.ts
  */
 export const ROUNDING_CONFIG = {
   priceDecimals: 8,
