@@ -40,53 +40,55 @@
     "plans": {
       "starter": {
         "name": "Starter",
-        "description": "For beginners getting started with automated trading",
-        "features": [
-          "Script Library (20+ ready-to-use strategies)",
-          "Basic Pip & Risk Calculators",
-          "Monthly tutorials",
-          "Email support",
-          "Basic pattern recognition guides",
-          "1–2 basic chart-pattern alerts (email only)",
-          "Starter Discord access (read-only)"
-        ]
+        "description": "For beginners getting started with automated trading"
       },
       "pro": {
         "name": "Pro",
-        "description": "Everything in Starter, plus:",
-        "features": [
-          "Advanced Script Library (50+ strategies)",
-          "10 multi-condition chart-pattern alerts (email)",
-          "Video Course: Automated Trading from Zero to First Bot",
-          "Pro Calculators (save profiles, CSV export)",
-          "Monthly AI-generated \"Script of the Month\"",
-          "Members-only Q&A sessions",
-          "Priority support",
-          "Basic Backtesting (equity curve, win-rate, drawdown)"
-        ]
+        "description": "Everything in Starter, plus:"
       },
       "proPlusNew": {
         "name": "Pro+",
-        "description": "Everything in Pro, plus:",
-        "features": [
-          "AI Strategy Builder (plain English → code for Pine v5, MQL4, MQL5)",
-          "25 AI-driven pattern alerts (email + Telegram/Discord)",
-          "Advanced Backtesting (equity stats + risk metrics + CSV export)",
-          "Monthly AI Strategy Packs",
-          "Pro+ Discord role (exclusive channels)"
-        ]
+        "description": "Everything in Pro, plus:"
       },
       "elite": {
         "name": "Elite",
-        "description": "Everything in Pro+, plus:",
-        "features": [
-          "AI Script Generator (advanced) — multi-platform + risk baked-in presets",
-          "Unlimited AI-driven pattern alerts (email + Telegram/Discord)",
-          "AI Risk Coach (portfolio-level insights)",
-          "Early access to AI features & strategy packs",
-          "Premium Discord role & private channels",
-          "Priority feature requests"
-        ]
+        "description": "Everything in Pro+, plus:"
+      }
+    }
+  },
+  "projects": {
+    "pricing": {
+      "headline": "Prompt-free trading projects powered by chart pattern intelligence",
+      "subheadline": "Scan markets. Detect setups. Get repeatable trade plans with exact Entry, Stop Loss, Take Profit.",
+      "creditsExplained": "Credits scale with symbols × history × patterns × timeframe",
+      "estimatedBefore": "Credits are estimated before you run.",
+      "examples": {
+        "setupFinder50": "Setup Finder (50 symbols, 4H, 2y, 6 patterns) ≈ 17 credits",
+        "patternLab10": "Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits"
+      },
+      "bestFor": {
+        "free": "Exploring the platform",
+        "plus": "Active traders testing ideas",
+        "pro": "Serious traders scanning daily",
+        "team": "Teams & portfolio managers"
+      },
+      "features": {
+        "monthlyCredits": "Monthly Credits",
+        "dailyRuns": "Daily Runs",
+        "maxInstruments": "Max Instruments",
+        "maxLookback": "Max Lookback",
+        "activeAlerts": "Active Alerts"
+      },
+      "cta": {
+        "free": "Start Free",
+        "plus": "Get Plus",
+        "pro": "Go Pro",
+        "team": "Contact Sales"
+      },
+      "trust": {
+        "execution": "Execution Assumptions Transparency",
+        "bracket": "Deterministic bracket engine (v1.0.0)",
+        "alerts": "Alerts include SL/TP & target reached"
       }
     }
   },
