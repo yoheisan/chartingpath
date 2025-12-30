@@ -48,6 +48,13 @@ export const ROUNDING_CONFIG = {
 } as const;
 
 /**
+ * Version constant for sync verification between frontend and edge function implementations.
+ * MUST match supabase/functions/_shared/bracketLevels.ts
+ * Increment when making any changes to the computation logic.
+ */
+export const BRACKET_LEVELS_VERSION = '1.0.0';
+
+/**
  * Computes bracket levels (SL/TP) at entry time.
  * This is the single source of truth for both backtesting and alerts.
  * 
