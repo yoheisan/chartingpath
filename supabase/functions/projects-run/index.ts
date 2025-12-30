@@ -402,9 +402,19 @@ serve(async (req) => {
         });
       }
       
-      const { assetClass, universe, patterns, timeframe, riskPerTrade = 1 } = inputs;
+      const { assetClass, universe, patterns, timeframe, riskPerTrade = 1, lookbackYears = 1 } = inputs;
       const instruments = PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
-      const creditsEstimated = estimateCredits({ assetClass, universe, patterns, timeframe });
+      
+      // Calculate credits using deterministic formula
+      const creditResult = calculateCredits({
+        projectType: 'setup_finder',
+        instrumentCount: instruments.length,
+        patternCount: patterns.length,
+        lookbackYears,
+        timeframe,
+        cacheHitRatio: 0 // Conservative estimate for run
+      });
+      const creditsEstimated = creditResult.creditsEstimated;
       
       // Validate caps
       const { data: credits } = await supabase
@@ -449,7 +459,7 @@ serve(async (req) => {
         .insert({
           project_id: project.id,
           version: 1,
-          input_json: { assetClass, universe, patterns, timeframe, riskPerTrade },
+          input_json: { assetClass, universe, patterns, timeframe, riskPerTrade, lookbackYears },
         });
       
       // Create project run (queued)

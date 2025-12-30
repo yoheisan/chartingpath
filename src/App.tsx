@@ -48,6 +48,7 @@ import EliteDashboard from "./pages/EliteDashboard";
 import SharedBacktest from "./pages/SharedBacktest";
 import { TranslationManagement } from "./pages/TranslationManagement";
 import Projects from "./pages/Projects";
+import ProjectsPricing from "./pages/ProjectsPricing";
 import SetupFinderWizard from "./pages/projects/SetupFinderWizard";
 import ProjectRun from "./pages/projects/ProjectRun";
 import StockMarket from "./pages/markets/StockMarket";
@@ -172,6 +173,7 @@ const App = () => (
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/pricing" element={<ProjectsPricing />} />
           <Route path="/projects/setup-finder/new" element={<SetupFinderWizard />} />
           <Route path="/projects/runs/:runId" element={<ProjectRun />} />
           <Route path="/forge" element={<Forge />} />

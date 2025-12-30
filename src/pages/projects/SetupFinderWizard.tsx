@@ -9,10 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins } from 'lucide-react';
+import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { PLANS_CONFIG } from '@/config/plans';
 
 // Pattern options matching server registry
 const PATTERNS = [
@@ -24,15 +25,31 @@ const PATTERNS = [
   { id: 'descending-triangle', name: 'Descending Triangle (Short)', direction: 'bearish' },
 ];
 
-const UNIVERSES: Record<string, { value: string; label: string }[]> = {
-  crypto: [{ value: 'top10', label: 'Top 10 Crypto' }],
-  fx: [{ value: 'majors', label: 'Major Pairs' }],
-  stocks: [{ value: 'sp500_leaders', label: 'S&P 500 Leaders' }],
+const UNIVERSES: Record<string, { value: string; label: string; count: number }[]> = {
+  crypto: [
+    { value: 'top10', label: 'Top 10 Crypto', count: 10 },
+    { value: 'top25', label: 'Top 25 Crypto', count: 25 },
+  ],
+  fx: [
+    { value: 'majors', label: 'Major Pairs', count: 8 },
+    { value: 'majors_crosses', label: 'Majors + Crosses', count: 20 },
+  ],
+  stocks: [
+    { value: 'sp500_leaders', label: 'S&P 500 Leaders', count: 25 },
+    { value: 'sp500_50', label: 'S&P 500 Top 50', count: 50 },
+  ],
 };
 
 const TIMEFRAMES = [
-  { value: '4h', label: '4 Hour' },
   { value: '1d', label: 'Daily' },
+  { value: '4h', label: '4 Hour' },
+];
+
+const LOOKBACK_OPTIONS = [
+  { value: 1, label: '1 Year' },
+  { value: 2, label: '2 Years' },
+  { value: 3, label: '3 Years' },
+  { value: 5, label: '5 Years' },
 ];
 
 const SetupFinderWizard = () => {
@@ -42,7 +59,8 @@ const SetupFinderWizard = () => {
   // Form state
   const [assetClass, setAssetClass] = useState('crypto');
   const [universe, setUniverse] = useState('top10');
-  const [timeframe, setTimeframe] = useState('4h');
+  const [timeframe, setTimeframe] = useState('1d');
+  const [lookbackYears, setLookbackYears] = useState(1);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   const [riskPerTrade, setRiskPerTrade] = useState(1);
   
@@ -56,6 +74,13 @@ const SetupFinderWizard = () => {
     allowed: boolean;
     reason: string | null;
     creditsBalance: number;
+    cacheHitRatio: number;
+    tierCaps: {
+      maxInstruments: number;
+      maxLookbackYears: number;
+      maxPatterns: number;
+      allowedTimeframes: string[];
+    };
   } | null>(null);
   
   // Update universe when asset class changes
@@ -89,6 +114,7 @@ const SetupFinderWizard = () => {
               universe,
               patterns: selectedPatterns,
               timeframe,
+              lookbackYears,
             }),
           }
         );
@@ -104,7 +130,7 @@ const SetupFinderWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [assetClass, universe, selectedPatterns, timeframe]);
+  }, [assetClass, universe, selectedPatterns, timeframe, lookbackYears]);
   
   const handlePatternToggle = (patternId: string) => {
     setSelectedPatterns(prev => 
@@ -145,6 +171,7 @@ const SetupFinderWizard = () => {
               universe,
               patterns: selectedPatterns,
               timeframe,
+              lookbackYears,
               riskPerTrade,
             },
           }),
@@ -166,6 +193,8 @@ const SetupFinderWizard = () => {
       setIsRunning(false);
     }
   };
+
+  const universeCount = UNIVERSES[assetClass]?.find(u => u.value === universe)?.count || 0;
   
   return (
     <div className="min-h-screen bg-background">
@@ -236,20 +265,46 @@ const SetupFinderWizard = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>Timeframe</Label>
-                  <Select value={timeframe} onValueChange={setTimeframe}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIMEFRAMES.map(tf => (
-                        <SelectItem key={tf.value} value={tf.value}>
-                          {tf.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Timeframe</Label>
+                    <Select value={timeframe} onValueChange={setTimeframe}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEFRAMES.map(tf => (
+                          <SelectItem 
+                            key={tf.value} 
+                            value={tf.value}
+                            disabled={estimate?.tierCaps && !estimate.tierCaps.allowedTimeframes.includes(tf.value)}
+                          >
+                            {tf.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Lookback Period</Label>
+                    <Select value={String(lookbackYears)} onValueChange={(v) => setLookbackYears(Number(v))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LOOKBACK_OPTIONS.map(lb => (
+                          <SelectItem 
+                            key={lb.value} 
+                            value={String(lb.value)}
+                            disabled={estimate?.tierCaps && lb.value > estimate.tierCaps.maxLookbackYears}
+                          >
+                            {lb.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -353,17 +408,35 @@ const SetupFinderWizard = () => {
                         <span className="font-medium text-foreground">{estimate.patternCount}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span>Lookback</span>
+                        <span className="font-medium text-foreground">{lookbackYears} year{lookbackYears > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-border/50 pt-2 mt-2">
                         <span>Your Balance</span>
                         <span className="font-medium text-foreground">{estimate.creditsBalance}</span>
                       </div>
                     </div>
+                    
+                    {/* Cache indicator */}
+                    {estimate.cacheHitRatio > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2 mt-3">
+                        <Database className="h-3 w-3" />
+                        <span>{Math.round(estimate.cacheHitRatio * 100)}% data cached</span>
+                      </div>
+                    )}
                     
                     {!estimate.allowed && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
                           {estimate.reason === 'insufficient_credits'
-                            ? 'Not enough credits. Please upgrade your plan.'
+                            ? 'Not enough credits. Upgrade your plan.'
+                            : estimate.reason === 'exceeds_instrument_cap'
+                            ? `Max ${estimate.tierCaps?.maxInstruments} instruments on your plan.`
+                            : estimate.reason === 'exceeds_lookback_cap'
+                            ? `Max ${estimate.tierCaps?.maxLookbackYears} year lookback on your plan.`
+                            : estimate.reason === 'exceeds_pattern_cap'
+                            ? `Max ${estimate.tierCaps?.maxPatterns} patterns on your plan.`
                             : 'This configuration exceeds your plan limits.'}
                         </AlertDescription>
                       </Alert>
