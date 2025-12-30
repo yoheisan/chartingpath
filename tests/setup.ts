@@ -8,6 +8,12 @@ if (!process.env.BACKTESTER_V2_ENABLED) {
   process.env.BACKTESTER_V2_ENABLED = 'true';
 }
 
+// Import jest-dom matchers for React component tests (when using jsdom environment)
+// This is conditionally loaded to avoid issues with node environment tests
+if (typeof document !== 'undefined') {
+  require('@testing-library/jest-dom');
+}
+
 // Mock console methods to avoid noise in tests (optional)
 const originalConsole = { ...console };
 
