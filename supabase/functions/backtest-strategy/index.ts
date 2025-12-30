@@ -417,6 +417,128 @@ function computeATRSeries(
 }
 
 // ============================================
+// BRACKET LEVELS COMPUTATION (Single Source of Truth)
+// ============================================
+// This function computes SL/TP levels at entry time.
+// Used by BOTH backtest simulation AND alert payload generation.
+// Ensures repeatability: backtest results can be replicated by placing OCO at entry.
+
+interface BracketLevelsInput {
+  direction: 'long' | 'short';
+  entryPrice: number;
+  stopPercent: number;      // e.g., 1.5 for 1.5%
+  targetPercent: number;    // e.g., 3.0 for 3.0%
+  atr?: number;             // Optional: ATR value at entry
+  atrMultiplier?: number;   // Optional: multiplier for ATR-based stops
+  stopLossMethod?: 'percent' | 'atr' | 'fixed';
+  takeProfitMethod?: 'percent' | 'ratio' | 'fixed';
+}
+
+interface BracketLevelsOutput {
+  stopLossPrice: number;
+  takeProfitPrice: number;
+  stopDistance: number;     // Absolute distance from entry to SL
+  tpDistance: number;       // Absolute distance from entry to TP
+  riskRewardRatio: number;  // TP distance / SL distance
+  stopLossMethod: string;
+  takeProfitMethod: string;
+}
+
+function computeBracketLevels(input: BracketLevelsInput): BracketLevelsOutput {
+  const { 
+    direction, 
+    entryPrice, 
+    stopPercent, 
+    targetPercent,
+    atr,
+    atrMultiplier = 2.0,
+    stopLossMethod = 'percent',
+    takeProfitMethod = 'percent'
+  } = input;
+
+  let stopLossPrice: number;
+  let takeProfitPrice: number;
+  let actualStopMethod = stopLossMethod;
+  let actualTpMethod = takeProfitMethod;
+
+  // Compute stop loss price
+  if (stopLossMethod === 'atr' && atr && atr > 0) {
+    const stopDistance = atr * atrMultiplier;
+    stopLossPrice = direction === 'long' 
+      ? entryPrice - stopDistance 
+      : entryPrice + stopDistance;
+    actualStopMethod = 'atr';
+  } else {
+    // Default to percent-based
+    stopLossPrice = direction === 'long'
+      ? entryPrice * (1 - stopPercent / 100)
+      : entryPrice * (1 + stopPercent / 100);
+    actualStopMethod = 'percent';
+  }
+
+  // Compute take profit price
+  if (takeProfitMethod === 'ratio' && atr && atr > 0) {
+    // Ratio-based TP: use RR ratio from targetPercent/stopPercent
+    const stopDistance = Math.abs(entryPrice - stopLossPrice);
+    const rrRatio = targetPercent / stopPercent;
+    const tpDistance = stopDistance * rrRatio;
+    takeProfitPrice = direction === 'long'
+      ? entryPrice + tpDistance
+      : entryPrice - tpDistance;
+    actualTpMethod = 'ratio';
+  } else {
+    // Default to percent-based
+    takeProfitPrice = direction === 'long'
+      ? entryPrice * (1 + targetPercent / 100)
+      : entryPrice * (1 - targetPercent / 100);
+    actualTpMethod = 'percent';
+  }
+
+  const stopDistance = Math.abs(entryPrice - stopLossPrice);
+  const tpDistance = Math.abs(takeProfitPrice - entryPrice);
+  const riskRewardRatio = stopDistance > 0 ? tpDistance / stopDistance : 0;
+
+  return {
+    stopLossPrice: Number(stopLossPrice.toFixed(8)),
+    takeProfitPrice: Number(takeProfitPrice.toFixed(8)),
+    stopDistance: Number(stopDistance.toFixed(8)),
+    tpDistance: Number(tpDistance.toFixed(8)),
+    riskRewardRatio: Number(riskRewardRatio.toFixed(4)),
+    stopLossMethod: actualStopMethod,
+    takeProfitMethod: actualTpMethod
+  };
+}
+
+// ============================================
+// EXECUTION ASSUMPTIONS (Transparency Contract)
+// ============================================
+// Explicit documentation of simulation assumptions for reproducibility
+
+interface ExecutionAssumptions {
+  entryType: 'bar_close';           // Signal on bar close, fill at close
+  fillModel: 'immediate';           // No slippage model (fill at signal price)
+  exitType: 'intrabar_check';       // Check SL/TP on each bar's close
+  maxBarsInTrade: number;           // Time stop in bars
+  timeStopReason: 'timeout';        // Exit reason when time stop triggers
+  slippagePercent: number;          // Slippage assumption (0 = no slippage)
+  commissionPercent: number;        // Commission assumption (0 = no commission)
+  bracketExecution: 'oco_at_entry'; // User should place OCO bracket at entry
+}
+
+function getExecutionAssumptions(maxHoldingBars: number): ExecutionAssumptions {
+  return {
+    entryType: 'bar_close',
+    fillModel: 'immediate',
+    exitType: 'intrabar_check',
+    maxBarsInTrade: maxHoldingBars,
+    timeStopReason: 'timeout',
+    slippagePercent: 0,
+    commissionPercent: 0,
+    bracketExecution: 'oco_at_entry'
+  };
+}
+
+// ============================================
 // TRADE LEDGER ENTRY (Canonical Research Record)
 // ============================================
 
@@ -438,6 +560,11 @@ interface TradeLedgerEntry {
   exitPrice: number;
   stopLossPrice: number;
   takeProfitPrice: number;
+  // Bracket contract fields (new)
+  stopLossMethod: string;
+  takeProfitMethod: string;
+  stopDistance: number;
+  tpDistance: number;
   riskAmount: number;
   rewardPotential: number;
   plannedRR: number;
@@ -1027,6 +1154,7 @@ serve(async (req) => {
     }
 
     // Build response with wedge warnings if applicable
+    const maxHoldingBars = 100; // Default time stop
     const response: any = {
       success: true,
       cached: false,
@@ -1036,7 +1164,9 @@ serve(async (req) => {
       tradeLedger: tradeLedger.slice(0, 500), // Limit for payload size
       dataPoints: historicalData.length,
       disciplineStats,
-      regimeAnalytics
+      regimeAnalytics,
+      // Execution assumptions for reproducibility
+      executionAssumptions: getExecutionAssumptions(maxHoldingBars)
     };
     
     // Include wedge summary and warnings in response (always include in wedge mode)
@@ -1836,18 +1966,27 @@ function simulateTradesWithDiscipline(
       patternDirection = isBullishPattern ? 'long' : 'short';
     }
     
-    // Calculate absolute stop and target prices
-    const stopLossPrice = patternDirection === 'long' 
-      ? entryPrice * (1 - stopPercent / 100)
-      : entryPrice * (1 + stopPercent / 100);
-    const takeProfitPrice = patternDirection === 'long'
-      ? entryPrice * (1 + targetPercent / 100)
-      : entryPrice * (1 - targetPercent / 100);
+    // ============================================
+    // BRACKET COMPUTATION (Single Source of Truth)
+    // ============================================
+    // Use computeBracketLevels() for deterministic SL/TP calculation
+    // This same function is used for alert payloads, ensuring repeatability
+    const bracketLevels = computeBracketLevels({
+      direction: patternDirection,
+      entryPrice,
+      stopPercent,
+      targetPercent,
+      // Future: could pass ATR and use atrMultiplier for ATR-based stops
+      stopLossMethod: 'percent',
+      takeProfitMethod: 'percent'
+    });
     
-    // Risk and reward in absolute terms
-    const riskAmount = Math.abs(entryPrice - stopLossPrice);
-    const rewardPotential = Math.abs(takeProfitPrice - entryPrice);
-    const plannedRR = riskAmount > 0 ? rewardPotential / riskAmount : 0;
+    const { stopLossPrice, takeProfitPrice, stopDistance, tpDistance, riskRewardRatio, stopLossMethod, takeProfitMethod } = bracketLevels;
+    
+    // Risk and reward in absolute terms (from bracket computation)
+    const riskAmount = stopDistance;
+    const rewardPotential = tpDistance;
+    const plannedRR = riskRewardRatio;
     
     // Compute regime at entry (bar-close semantics - no lookahead)
     const regimeAtEntry = computeRegimeLabelAtBar(data, entryIndex);
@@ -1945,6 +2084,13 @@ function simulateTradesWithDiscipline(
       holdingBars: exitIndex - entryIndex,
       targetPercent,
       stopPercent,
+      // Bracket contract fields (new - for UI display)
+      stopLossPrice,
+      takeProfitPrice,
+      stopLossMethod,
+      takeProfitMethod,
+      plannedRR,
+      direction: patternDirection,
       disciplineApproved: true,
       regimeAtEntry: regimeAtEntry.key,
       actualRMultiple,
@@ -1971,6 +2117,11 @@ function simulateTradesWithDiscipline(
       exitPrice,
       stopLossPrice,
       takeProfitPrice,
+      // Bracket contract fields (new)
+      stopLossMethod,
+      takeProfitMethod,
+      stopDistance,
+      tpDistance,
       riskAmount,
       rewardPotential,
       plannedRR,

@@ -29,6 +29,16 @@ interface AlertEmailRequest {
     c: number;
     t: number;
   }>;
+  // Bracket contract fields (new - for repeatable execution)
+  bracketLevels?: {
+    direction: 'long' | 'short';
+    entryPrice: number;
+    stopLossPrice: number;
+    takeProfitPrice: number;
+    riskRewardRatio: number;
+    stopLossMethod: string;
+    takeProfitMethod: string;
+  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -37,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { alert, patternResult, marketData }: AlertEmailRequest = await req.json();
+    const { alert, patternResult, marketData, bracketLevels }: AlertEmailRequest = await req.json();
 
     console.log(`Sending pattern alert email for ${alert.symbol} to ${alert.profiles.email}`);
 
@@ -108,6 +118,15 @@ const handler = async (req: Request): Promise<Response> => {
               <h3 style="margin-top: 0; color: #065f46;">Market Information</h3>
               <p><strong>Current Price:</strong> $${currentPrice.toFixed(4)}</p>
               <p><strong>Alert Time:</strong> ${new Date().toLocaleString()}</p>
+              ${bracketLevels ? `
+              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #10b981;">
+                <p style="margin: 5px 0;"><strong>Direction:</strong> ${bracketLevels.direction.toUpperCase()}</p>
+                <p style="margin: 5px 0;"><strong>Entry:</strong> $${bracketLevels.entryPrice.toFixed(4)}</p>
+                <p style="margin: 5px 0; color: #dc2626;"><strong>Stop Loss:</strong> $${bracketLevels.stopLossPrice.toFixed(4)}</p>
+                <p style="margin: 5px 0; color: #16a34a;"><strong>Take Profit:</strong> $${bracketLevels.takeProfitPrice.toFixed(4)}</p>
+                <p style="margin: 5px 0;"><strong>R:R Ratio:</strong> ${bracketLevels.riskRewardRatio.toFixed(2)}</p>
+              </div>
+              ` : ''}
             </div>
 
             <div style="text-align: center;">
