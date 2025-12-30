@@ -1,6 +1,12 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { 
+  computeBracketLevels, 
+  ROUNDING_CONFIG,
+  type BracketLevelsInput, 
+  type BracketLevelsOutput 
+} from '../_shared/bracketLevels.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -417,97 +423,11 @@ function computeATRSeries(
 }
 
 // ============================================
-// BRACKET LEVELS COMPUTATION (Single Source of Truth)
+// BRACKET LEVELS COMPUTATION
 // ============================================
-// This function computes SL/TP levels at entry time.
-// Used by BOTH backtest simulation AND alert payload generation.
-// Ensures repeatability: backtest results can be replicated by placing OCO at entry.
-
-interface BracketLevelsInput {
-  direction: 'long' | 'short';
-  entryPrice: number;
-  stopPercent: number;      // e.g., 1.5 for 1.5%
-  targetPercent: number;    // e.g., 3.0 for 3.0%
-  atr?: number;             // Optional: ATR value at entry
-  atrMultiplier?: number;   // Optional: multiplier for ATR-based stops
-  stopLossMethod?: 'percent' | 'atr' | 'fixed';
-  takeProfitMethod?: 'percent' | 'ratio' | 'fixed';
-}
-
-interface BracketLevelsOutput {
-  stopLossPrice: number;
-  takeProfitPrice: number;
-  stopDistance: number;     // Absolute distance from entry to SL
-  tpDistance: number;       // Absolute distance from entry to TP
-  riskRewardRatio: number;  // TP distance / SL distance
-  stopLossMethod: string;
-  takeProfitMethod: string;
-}
-
-function computeBracketLevels(input: BracketLevelsInput): BracketLevelsOutput {
-  const { 
-    direction, 
-    entryPrice, 
-    stopPercent, 
-    targetPercent,
-    atr,
-    atrMultiplier = 2.0,
-    stopLossMethod = 'percent',
-    takeProfitMethod = 'percent'
-  } = input;
-
-  let stopLossPrice: number;
-  let takeProfitPrice: number;
-  let actualStopMethod = stopLossMethod;
-  let actualTpMethod = takeProfitMethod;
-
-  // Compute stop loss price
-  if (stopLossMethod === 'atr' && atr && atr > 0) {
-    const stopDistance = atr * atrMultiplier;
-    stopLossPrice = direction === 'long' 
-      ? entryPrice - stopDistance 
-      : entryPrice + stopDistance;
-    actualStopMethod = 'atr';
-  } else {
-    // Default to percent-based
-    stopLossPrice = direction === 'long'
-      ? entryPrice * (1 - stopPercent / 100)
-      : entryPrice * (1 + stopPercent / 100);
-    actualStopMethod = 'percent';
-  }
-
-  // Compute take profit price
-  if (takeProfitMethod === 'ratio' && atr && atr > 0) {
-    // Ratio-based TP: use RR ratio from targetPercent/stopPercent
-    const stopDistance = Math.abs(entryPrice - stopLossPrice);
-    const rrRatio = targetPercent / stopPercent;
-    const tpDistance = stopDistance * rrRatio;
-    takeProfitPrice = direction === 'long'
-      ? entryPrice + tpDistance
-      : entryPrice - tpDistance;
-    actualTpMethod = 'ratio';
-  } else {
-    // Default to percent-based
-    takeProfitPrice = direction === 'long'
-      ? entryPrice * (1 + targetPercent / 100)
-      : entryPrice * (1 - targetPercent / 100);
-    actualTpMethod = 'percent';
-  }
-
-  const stopDistance = Math.abs(entryPrice - stopLossPrice);
-  const tpDistance = Math.abs(takeProfitPrice - entryPrice);
-  const riskRewardRatio = stopDistance > 0 ? tpDistance / stopDistance : 0;
-
-  return {
-    stopLossPrice: Number(stopLossPrice.toFixed(8)),
-    takeProfitPrice: Number(takeProfitPrice.toFixed(8)),
-    stopDistance: Number(stopDistance.toFixed(8)),
-    tpDistance: Number(tpDistance.toFixed(8)),
-    riskRewardRatio: Number(riskRewardRatio.toFixed(4)),
-    stopLossMethod: actualStopMethod,
-    takeProfitMethod: actualTpMethod
-  };
-}
+// Imported from _shared/bracketLevels.ts - Single Source of Truth
+// See: supabase/functions/_shared/bracketLevels.ts for implementation
+// Rounding: prices/distances to 8 decimals, RR to 4 decimals
 
 // ============================================
 // EXECUTION ASSUMPTIONS (Transparency Contract)
@@ -523,6 +443,11 @@ interface ExecutionAssumptions {
   slippagePercent: number;          // Slippage assumption (0 = no slippage)
   commissionPercent: number;        // Commission assumption (0 = no commission)
   bracketExecution: 'oco_at_entry'; // User should place OCO bracket at entry
+  priceRounding: {                  // Rounding precision (from ROUNDING_CONFIG)
+    priceDecimals: number;
+    distanceDecimals: number;
+    rrDecimals: number;
+  };
 }
 
 function getExecutionAssumptions(maxHoldingBars: number): ExecutionAssumptions {
@@ -534,7 +459,12 @@ function getExecutionAssumptions(maxHoldingBars: number): ExecutionAssumptions {
     timeStopReason: 'timeout',
     slippagePercent: 0,
     commissionPercent: 0,
-    bracketExecution: 'oco_at_entry'
+    bracketExecution: 'oco_at_entry',
+    priceRounding: {
+      priceDecimals: ROUNDING_CONFIG.priceDecimals,
+      distanceDecimals: ROUNDING_CONFIG.distanceDecimals,
+      rrDecimals: ROUNDING_CONFIG.rrDecimals
+    }
   };
 }
 

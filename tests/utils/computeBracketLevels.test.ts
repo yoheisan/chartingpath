@@ -1,4 +1,4 @@
-import { computeBracketLevels, BracketLevelsInput } from '../../src/utils/bracketLevels';
+import { computeBracketLevels, BracketLevelsInput, ROUNDING_CONFIG } from '../../src/utils/bracketLevels';
 
 describe('computeBracketLevels', () => {
   
@@ -340,6 +340,37 @@ describe('computeBracketLevels', () => {
       // For short: takeProfitPrice = 42500 - 5100 = 37400
       expect(result.takeProfitPrice).toBeCloseTo(37400, 2);
       expect(result.riskRewardRatio).toBeCloseTo(3, 4);
+    });
+  });
+
+  describe('ROUNDING_CONFIG consistency', () => {
+    it('should export ROUNDING_CONFIG with correct values', () => {
+      expect(ROUNDING_CONFIG).toBeDefined();
+      expect(ROUNDING_CONFIG.priceDecimals).toBe(8);
+      expect(ROUNDING_CONFIG.distanceDecimals).toBe(8);
+      expect(ROUNDING_CONFIG.rrDecimals).toBe(4);
+    });
+
+    it('should use ROUNDING_CONFIG values in output', () => {
+      const input: BracketLevelsInput = {
+        direction: 'long',
+        entryPrice: 123.456789012345,
+        stopPercent: 1.234567,
+        targetPercent: 2.345678,
+        stopLossMethod: 'percent',
+        takeProfitMethod: 'percent'
+      };
+
+      const result = computeBracketLevels(input);
+
+      // Verify precision matches ROUNDING_CONFIG
+      const stopPriceDecimals = (result.stopLossPrice.toString().split('.')[1] || '').length;
+      const tpPriceDecimals = (result.takeProfitPrice.toString().split('.')[1] || '').length;
+      const rrDecimals = (result.riskRewardRatio.toString().split('.')[1] || '').length;
+
+      expect(stopPriceDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.priceDecimals);
+      expect(tpPriceDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.priceDecimals);
+      expect(rrDecimals).toBeLessThanOrEqual(ROUNDING_CONFIG.rrDecimals);
     });
   });
 });
