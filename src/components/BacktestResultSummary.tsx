@@ -19,7 +19,9 @@ import {
   ChevronDown,
   Shield,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { track } from '@/services/analytics';
 
@@ -77,6 +79,10 @@ interface BacktestResultSummaryProps {
   enabledPatternsCount: number;
   wedgeSummary?: WedgeSummary;
   wedgeWarnings?: WedgeWarnings;
+  // Test context for transparency
+  startDate?: string;
+  endDate?: string;
+  dataPoints?: number;
   onCreateAlert: () => void;
   onOpenTradingView: () => void;
   onShareBacktest: () => void;
@@ -116,6 +122,9 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   enabledPatternsCount,
   wedgeSummary,
   wedgeWarnings,
+  startDate,
+  endDate,
+  dataPoints,
   onCreateAlert,
   onOpenTradingView,
   onShareBacktest,
@@ -227,6 +236,33 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Test Context Banner - What was actually tested */}
+        {(startDate || endDate || dataPoints) && (
+          <div className="rounded-lg border border-muted bg-muted/30 p-3">
+            <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>
+                  {startDate && endDate 
+                    ? `${new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                    : 'Date range not specified'
+                  }
+                </span>
+              </div>
+              {dataPoints && (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{dataPoints.toLocaleString()} bars</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                <span>{pattern}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Wedge Mode Banner */}
         {wedgeEnabled && wedgeSummary && (
           <div className={`rounded-lg border p-3 ${

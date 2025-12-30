@@ -424,6 +424,9 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           trades: data.trades,
           disciplineStats: data.disciplineStats,
           rawSignals: data.rawSignals,
+          dataPoints: data.dataPoints,
+          wedgeSummary: data.wedgeSummary,
+          wedgeWarnings: data.wedgeWarnings,
           engineNote: `Real backtest on ${data.dataPoints} historical data points`,
         };
 
@@ -1015,6 +1018,11 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
                 runId={backtestResults.runId || `run_${Date.now()}`}
                 wedgeEnabled={wedgeConfig.wedgeEnabled}
                 enabledPatternsCount={builderRef.current?.getStrategy()?.patterns?.filter((p: any) => p.enabled)?.length || 1}
+                startDate={builderRef.current?.getStrategy()?.backtestPeriod?.startDate}
+                endDate={builderRef.current?.getStrategy()?.backtestPeriod?.endDate}
+                dataPoints={backtestResults.dataPoints}
+                wedgeSummary={backtestResults.wedgeSummary}
+                wedgeWarnings={backtestResults.wedgeWarnings}
                 onCreateAlert={handleCreateAlert}
                 onOpenTradingView={handleOpenTradingView}
                 onShareBacktest={handleShareBacktest}
