@@ -254,8 +254,8 @@ export const getPatternConfigByName = (patternName: string): WedgePatternConfig 
 
 // Create a fresh pattern instance by ID (preferred) or name
 // WEDGE ID CONTRACT: The returned object will have:
-// - patternId: canonical registry key (e.g., "donchian_breakout_long") - for server-side dispatch
-// - id: instance ID with timestamp (e.g., "donchian_breakout_long_1767...") - for uniqueness
+// - patternId: canonical registry key in HYPHEN form (e.g., "donchian-breakout-long") - matches server registry
+// - id: instance ID with timestamp in underscore form (e.g., "donchian_breakout_long_1767...") - for uniqueness
 export const createWedgePatternInstance = (patternIdOrName: string, enabled: boolean = true): WedgePatternConfig | null => {
   // First try by ID
   let template = getPatternConfigById(patternIdOrName);
@@ -265,11 +265,15 @@ export const createWedgePatternInstance = (patternIdOrName: string, enabled: boo
   }
   if (!template) return null;
   
+  // Convert template.id (underscore) to hyphen format to match server registry exactly
+  // e.g., "donchian_breakout_long" -> "donchian-breakout-long"
+  const canonicalRegistryKey = template.id.toLowerCase().replace(/_/g, '-');
+  
   return {
     ...template,
-    // patternId is the canonical registry key (unchanged from template)
-    patternId: template.id,
-    // id is the unique instance ID with timestamp
+    // patternId is the canonical registry key in HYPHEN format (matches WEDGE_PATTERN_REGISTRY keys)
+    patternId: canonicalRegistryKey,
+    // id is the unique instance ID with timestamp (keeps underscore for backwards compat)
     id: `${template.id}_${Date.now()}`,
     enabled,
   };
