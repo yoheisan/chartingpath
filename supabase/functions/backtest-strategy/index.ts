@@ -1043,7 +1043,8 @@ serve(async (req) => {
     if (wedgeEnabled) {
       const patternCount = strategy.patterns?.filter((p: any) => p.enabled)?.length || 0;
       
-      // wedgeSummary: compact UX-visible summary
+      // wedgeSummary: ALWAYS present in wedge mode (unconditional)
+      // Caps arrays to 20 entries for payload safety
       response.wedgeSummary = {
         patternCount,
         acceptedCount: acceptedBaseIds.length,
@@ -1054,26 +1055,26 @@ serve(async (req) => {
         rejectedBaseIds: rejectedBaseIds.slice(0, 20)
       };
       
-      // wedgeWarnings: detailed debugging info
-      response.wedgeWarnings = {
-        rejectedPatternIds,
-        rejectedBaseIds,
-        acceptedBaseIds,
-        rejectedCount: rejectedPatternIds.length,
-        acceptedCount: acceptedBaseIds.length,
-        // Resolution source breakdown
-        resolvedFromPatternIdCount,
-        resolvedFromIdCount,
-        // Accepted patterns with source field (capped to 20)
-        acceptedPatterns: acceptedPatterns.slice(0, 20),
-        // Rejection reasons (capped to 20)
-        reasons: rejectionReasons.slice(0, 20),
-        // Valid registry keys for reference
-        validRegistryKeys: Array.from(VALID_WEDGE_PATTERN_IDS),
-        message: rejectedPatternIds.length > 0 
-          ? `${rejectedPatternIds.length} pattern(s) were rejected because they are not supported in wedge mode. Check 'reasons' array for details.`
-          : 'All patterns validated successfully.'
-      };
+      // wedgeWarnings: CONDITIONAL - only include when there are rejections
+      if (rejectedPatternIds.length > 0) {
+        response.wedgeWarnings = {
+          rejectedPatternIds: rejectedPatternIds.slice(0, 20),
+          rejectedBaseIds: rejectedBaseIds.slice(0, 20),
+          acceptedBaseIds: acceptedBaseIds.slice(0, 20),
+          rejectedCount: rejectedPatternIds.length,
+          acceptedCount: acceptedBaseIds.length,
+          // Resolution source breakdown
+          resolvedFromPatternIdCount,
+          resolvedFromIdCount,
+          // Accepted patterns with source field (capped to 20)
+          acceptedPatterns: acceptedPatterns.slice(0, 20),
+          // Rejection reasons (capped to 20)
+          reasons: rejectionReasons.slice(0, 20),
+          // Valid registry keys for reference
+          validRegistryKeys: Array.from(VALID_WEDGE_PATTERN_IDS),
+          message: `${rejectedPatternIds.length} pattern(s) were rejected because they are not supported in wedge mode. Check 'reasons' array for details.`
+        };
+      }
     }
 
     return new Response(JSON.stringify(response), {

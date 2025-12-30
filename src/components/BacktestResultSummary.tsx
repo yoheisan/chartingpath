@@ -230,19 +230,19 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
         {/* Wedge Mode Banner */}
         {wedgeEnabled && wedgeSummary && (
           <div className={`rounded-lg border p-3 ${
-            wedgeSummary.rejectedCount > 0 
-              ? 'border-yellow-500/50 bg-yellow-500/10' 
-              : wedgeSummary.acceptedCount === 0
-                ? 'border-red-500/50 bg-red-500/10'
+            wedgeSummary.acceptedCount === 0
+              ? 'border-destructive/50 bg-destructive/10' 
+              : wedgeSummary.rejectedCount > 0 
+                ? 'border-yellow-500/50 bg-yellow-500/10' 
                 : 'border-primary/30 bg-primary/5'
           }`}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Wedge Mode</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="flex items-center gap-1 text-green-600">
+                <span className={`flex items-center gap-1 ${wedgeSummary.acceptedCount === 0 ? 'text-destructive' : 'text-green-600'}`}>
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   {wedgeSummary.acceptedCount}/{wedgeSummary.patternCount} accepted
                 </span>
@@ -255,19 +255,23 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
               </div>
             </div>
 
-            {/* No patterns accepted warning */}
+            {/* Resolved from stats line */}
+            <div className="mt-2 text-xs text-muted-foreground">
+              Resolved from patternId: {wedgeSummary.resolvedFromPatternIdCount}, id: {wedgeSummary.resolvedFromIdCount}
+            </div>
+
+            {/* No patterns accepted warning - HARD WARNING */}
             {wedgeSummary.acceptedCount === 0 && (
-              <Alert variant="destructive" className="mt-3 border-red-500/50 bg-red-500/10">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle className="text-red-600">No patterns accepted</AlertTitle>
-                <AlertDescription className="text-red-500">
+              <div className="mt-3 flex items-center gap-2 p-2 rounded bg-destructive/20 border border-destructive/40">
+                <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <p className="text-sm font-semibold text-destructive">
                   No wedge patterns were accepted — strategy may generate no signals.
-                </AlertDescription>
-              </Alert>
+                </p>
+              </div>
             )}
 
-            {/* Expandable details */}
-            {(wedgeSummary.rejectedCount > 0 || wedgeWarnings) && (
+            {/* Expandable details - show when there are rejections or patterns to display */}
+            {(wedgeSummary.rejectedCount > 0 || wedgeSummary.acceptedCount > 0) && (
               <Collapsible open={wedgeDetailsOpen} onOpenChange={setWedgeDetailsOpen}>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" size="sm" className="mt-2 h-7 text-xs gap-1 w-full justify-center">
@@ -276,39 +280,62 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 space-y-2 text-xs">
-                  {/* Resolution stats */}
-                  <div className="flex gap-4 text-muted-foreground">
-                    <span>Resolved via patternId: {wedgeSummary.resolvedFromPatternIdCount}</span>
-                    <span>Resolved via id fallback: {wedgeSummary.resolvedFromIdCount}</span>
-                  </div>
-
-                  {/* Accepted patterns */}
+                  {/* Accepted patterns - capped to 20 with "+N more" */}
                   {wedgeSummary.acceptedBaseIds.length > 0 && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Accepted:</p>
+                      <p className="text-muted-foreground mb-1">Accepted patterns:</p>
                       <div className="flex flex-wrap gap-1">
-                        {wedgeSummary.acceptedBaseIds.map((id) => (
+                        {wedgeSummary.acceptedBaseIds.slice(0, 20).map((id) => (
                           <Badge key={id} variant="secondary" className="text-xs bg-green-500/10 text-green-700">
                             {id}
                           </Badge>
                         ))}
+                        {wedgeSummary.acceptedCount > 20 && (
+                          <span className="text-muted-foreground text-xs self-center">
+                            +{wedgeSummary.acceptedCount - 20} more
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  {/* Rejected patterns with reasons */}
+                  {/* Rejected patterns - capped to 20 with "+N more" */}
+                  {wedgeSummary.rejectedBaseIds.length > 0 && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Rejected patterns:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {wedgeSummary.rejectedBaseIds.slice(0, 20).map((id) => (
+                          <Badge key={id} variant="outline" className="text-xs border-yellow-500/50 text-yellow-700">
+                            {id}
+                          </Badge>
+                        ))}
+                        {wedgeSummary.rejectedCount > 20 && (
+                          <span className="text-muted-foreground text-xs self-center">
+                            +{wedgeSummary.rejectedCount - 20} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rejection reasons from wedgeWarnings */}
                   {wedgeWarnings && wedgeWarnings.reasons.length > 0 && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Rejected:</p>
-                      <div className="space-y-1">
-                        {wedgeWarnings.reasons.slice(0, 10).map((r, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-yellow-600">
-                            <Badge variant="outline" className="text-xs border-yellow-500/50">
+                      <p className="text-muted-foreground mb-1">Rejection reasons:</p>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {wedgeWarnings.reasons.slice(0, 20).map((r, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-yellow-600">
+                            <Badge variant="outline" className="text-xs border-yellow-500/50 flex-shrink-0">
                               {r.patternName || r.basePatternId}
                             </Badge>
-                            <span className="text-muted-foreground">{r.reason}</span>
+                            <span className="text-muted-foreground text-xs">{r.reason}</span>
                           </div>
                         ))}
+                        {wedgeWarnings.reasons.length > 20 && (
+                          <p className="text-muted-foreground text-xs">
+                            +{wedgeWarnings.reasons.length - 20} more reasons
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
