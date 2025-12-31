@@ -4,16 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Layout from "@/components/Layout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw } from "lucide-react";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface UserProfile {
   subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
@@ -29,25 +30,21 @@ interface Alert {
   created_at: string;
 }
 
-const LOADING_TIMEOUT_MS = 8000;
-
 const MemberAlerts = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useRequireAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();
 
-  // Form state - prefilled from playbook context if available
+  // Form state
   const [symbol, setSymbol] = useState("");
   const [timeframe, setTimeframe] = useState(wedgeConfig.wedgeEnabled ? "1h" : "");
   const [pattern, setPattern] = useState("");
 
-  // Pattern options aligned with wedge config
   const patternOptions = [
     { value: 'donchian_breakout_long', label: 'Donchian Breakout (Long)' },
     { value: 'donchian_breakout_short', label: 'Donchian Breakout (Short)' },
@@ -66,7 +63,6 @@ const MemberAlerts = () => {
     { value: 'ema_cross_bearish', label: 'EMA Cross (Bearish)' },
   ];
 
-  // Timeframe options - 1h is default for wedge mode
   const timeframeOptions = wedgeConfig.wedgeEnabled ? [
     { value: '1h', label: '1 Hour (Recommended)' },
     { value: '15m', label: '15 Minutes' },
@@ -79,7 +75,6 @@ const MemberAlerts = () => {
     { value: '1d', label: '1 Day' },
   ];
 
-  // Get alert limits from wedgeConfig (single source of truth)
   const getAlertLimits = (plan: string) => {
     const limits = wedgeConfig.alertLimits;
     switch (plan) {
@@ -95,12 +90,8 @@ const MemberAlerts = () => {
   // Prefill form from playbook context
   useEffect(() => {
     if (playbookContext) {
-      console.log('[MemberAlerts] Prefilling from playbook context:', playbookContext);
-      if (playbookContext.symbol) {
-        setSymbol(playbookContext.symbol);
-      }
+      if (playbookContext.symbol) setSymbol(playbookContext.symbol);
       if (playbookContext.pattern) {
-        // Map pattern names to form values - support both old and new names
         const patternMap: Record<string, string> = {
           'Donchian Breakout (Long)': 'donchian_breakout_long',
           'Donchian Breakout (Short)': 'donchian_breakout_short',
@@ -108,101 +99,74 @@ const MemberAlerts = () => {
           'Double Bottom (Long)': 'double_bottom',
           'Ascending Triangle (Long)': 'ascending_triangle',
           'Descending Triangle (Short)': 'descending_triangle',
-          // Legacy mappings for backward compatibility
           'Breakout': 'donchian_breakout_long',
           'DoubleTopBottom': 'double_top',
           'Triangle': 'ascending_triangle',
         };
         setPattern(patternMap[playbookContext.pattern] || playbookContext.pattern.toLowerCase());
       }
-      if (playbookContext.timeframe) {
-        setTimeframe(playbookContext.timeframe);
-      }
+      if (playbookContext.timeframe) setTimeframe(playbookContext.timeframe);
     }
   }, [playbookContext]);
 
   useEffect(() => {
-    checkAuth();
-    
-    // Timeout fallback - if loading takes too long, show error UI
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setLoadingTimedOut(true);
-        setLoading(false);
-        setFetchError('Request timed out. Please check your connection and try again.');
-      }
-    }, LOADING_TIMEOUT_MS);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
+    if (user) {
+      fetchData(user.id);
+    }
+  }, [user]);
 
-  const checkAuth = async () => {
+  const fetchData = async (userId: string) => {
+    setDataLoading(true);
     setFetchError(null);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      
-      setUser(user);
-
-      if (user) {
-        await fetchProfile(user.id);
-        await fetchAlerts(user.id);
-      }
+      await Promise.all([
+        fetchProfile(userId),
+        fetchAlerts(userId)
+      ]);
     } catch (error: any) {
-      console.error('Auth check error:', error);
-      setFetchError(error.message || 'Failed to load alerts. Please try again.');
+      console.error('Data fetch error:', error);
+      setFetchError(error.message || 'Failed to load alerts.');
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
-  
+
   const handleRetry = () => {
-    setLoading(true);
-    setLoadingTimedOut(false);
-    setFetchError(null);
-    checkAuth();
+    if (user) {
+      fetchData(user.id);
+    }
   };
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('subscription_plan, subscription_status')
-        .eq('user_id', userId)
-        .single();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('subscription_plan, subscription_status')
+      .eq('user_id', userId)
+      .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Profile fetch error:', error);
-        return;
-      }
-
-      setProfile(data || { subscription_plan: 'free', subscription_status: 'active' });
-    } catch (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Profile fetch error:', error);
+      return;
     }
+    setProfile(data || { subscription_plan: 'free', subscription_status: 'active' });
   };
 
   const fetchAlerts = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('alerts')
-        .select('*')
-        .eq('user_id', userId)
-        .neq('status', 'deleted')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .neq('status', 'deleted')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-      if (error) {
-        console.error('Alerts fetch error:', error);
-        return;
-      }
-
-      setAlerts(data || []);
-    } catch (error) {
+    if (error) {
       console.error('Alerts fetch error:', error);
+      return;
     }
+    setAlerts(data || []);
   };
 
-  // Create alert via edge function (server-side enforcement)
   const createAlert = async () => {
     if (!user || !symbol || !timeframe || !pattern) {
       toast({
@@ -215,8 +179,6 @@ const MemberAlerts = () => {
 
     setCreating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke('create-alert', {
         body: {
           symbol: symbol.toUpperCase(),
@@ -227,14 +189,11 @@ const MemberAlerts = () => {
         }
       });
 
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
+      if (response.error) throw new Error(response.error.message);
 
       const result = response.data;
 
       if (result.code === 'ALERT_LIMIT') {
-        // Track paywall shown
         trackPaywallShown({
           context: 'alerts_limit',
           current_plan: profile?.subscription_plan || 'free',
@@ -249,11 +208,8 @@ const MemberAlerts = () => {
         return;
       }
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create alert');
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to create alert');
 
-      // Track analytics event
       trackAlertCreated({
         symbol: symbol.toUpperCase(),
         pattern,
@@ -266,15 +222,11 @@ const MemberAlerts = () => {
         description: `Alert for ${symbol.toUpperCase()} ${pattern} pattern created successfully`,
       });
 
-      // Clear playbook context after successful creation
       clearPlaybookContext();
-
-      // Reset form
       setSymbol("");
       setTimeframe(wedgeConfig.wedgeEnabled ? "1h" : "");
       setPattern("");
 
-      // Refresh alerts
       await fetchAlerts(user.id);
     } catch (error: any) {
       console.error('Create alert error:', error);
@@ -288,27 +240,19 @@ const MemberAlerts = () => {
     }
   };
 
-  // Toggle alert via edge function (to enforce limits on enable)
   const toggleAlert = async (alertId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
     
     try {
       if (newStatus === 'active') {
-        // Use edge function to check limits when enabling
         const response = await supabase.functions.invoke('create-alert', {
-          body: {
-            alertId,
-            action: 'enable'
-          }
+          body: { alertId, action: 'enable' }
         });
 
-        if (response.error) {
-          throw new Error(response.error.message);
-        }
+        if (response.error) throw new Error(response.error.message);
 
         const result = response.data;
         if (result.code === 'ALERT_LIMIT') {
-          // Track paywall shown
           trackPaywallShown({
             context: 'alerts_limit',
             current_plan: profile?.subscription_plan || 'free',
@@ -323,11 +267,8 @@ const MemberAlerts = () => {
           return;
         }
 
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to enable alert');
-        }
+        if (!result.success) throw new Error(result.error || 'Failed to enable alert');
       } else {
-        // Pausing doesn't need limit check
         const { error } = await supabase
           .from('alerts')
           .update({ status: newStatus })
@@ -341,7 +282,7 @@ const MemberAlerts = () => {
         description: `Alert ${newStatus === 'active' ? 'activated' : 'paused'}`,
       });
 
-      await fetchAlerts(user.id);
+      if (user) await fetchAlerts(user.id);
     } catch (error: any) {
       console.error('Toggle alert error:', error);
       toast({
@@ -373,7 +314,7 @@ const MemberAlerts = () => {
         description: "Alert deleted successfully",
       });
 
-      await fetchAlerts(user.id);
+      if (user) await fetchAlerts(user.id);
     } catch (error) {
       console.error('Delete alert error:', error);
     }
@@ -388,69 +329,74 @@ const MemberAlerts = () => {
     }
   };
 
-  if (loading) {
+  // Loading skeleton
+  if (authLoading || (user && dataLoading && alerts.length === 0 && !profile)) {
     return (
-      <Layout>
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">Loading alerts...</p>
-              <div className="space-y-3 max-w-md mx-auto">
-                <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto"></div>
-                <div className="h-4 bg-muted rounded animate-pulse w-1/2 mx-auto"></div>
-              </div>
-            </div>
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-32" />
+          <div className="text-center mb-8">
+            <Skeleton className="h-10 w-64 mx-auto mb-4" />
+            <Skeleton className="h-5 w-96 mx-auto" />
           </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Error state (including timeout)
-  if (fetchError) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Card className="max-w-md w-full">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                    <AlertTriangle className="h-6 w-6 text-destructive" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
-                  </div>
-                  <Button onClick={handleRetry} className="mt-4">
-                    <Bell className="h-4 w-4 mr-2" />
-                    Retry
-                  </Button>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Skeleton className="h-12 w-12 rounded-full mx-auto mb-4" />
+                  <Skeleton className="h-4 w-40 mx-auto" />
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
+  // If no user after auth check, hook redirects
   if (!user) {
+    return null;
+  }
+
+  // Error state
+  if (fetchError) {
     return (
-      <Layout>
-        <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <div className="text-center mt-8">
-            <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
-            <p className="text-muted-foreground mb-8">
-              Please log in to access chart pattern alerts.
-            </p>
-            <Button asChild>
-              <Link to="/auth?redirect=/members/alerts">Log In</Link>
-            </Button>
-          </div>
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                </div>
+                <Button onClick={handleRetry} className="mt-4">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -459,9 +405,8 @@ const MemberAlerts = () => {
   const canCreateMore = planLimits.max === 999999 || activeAlerts.length < planLimits.max;
 
   return (
-    <Layout>
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
+      
       {/* Back Navigation */}
       <div className="mb-6">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -571,7 +516,7 @@ const MemberAlerts = () => {
                   You're using {activeAlerts.length}/{planLimits.max} alerts on your {planLimits.name} plan.
                 </p>
                 <Button asChild size="sm">
-                  <Link to="/pricing">
+                  <Link to="/projects/pricing">
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Upgrade for More Alerts
                   </Link>
@@ -725,8 +670,7 @@ const MemberAlerts = () => {
           <strong>Disclaimer:</strong> Alerts are for educational use only and do not constitute financial advice. Trading involves risk of loss. Past pattern performance does not guarantee future results.
         </p>
       </div>
-      </div>
-    </Layout>
+    </div>
   );
 };
 
