@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Layout from "@/components/Layout";
+// Layout is now provided by App.tsx - no need to import here
 
 const EmailPreview = () => {
   const [selectedEmail, setSelectedEmail] = useState("market-report");
@@ -161,9 +161,8 @@ const EmailPreview = () => {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto py-8">
-        <Card>
+    <div className="container mx-auto py-8">
+      <Card>
           <CardHeader>
             <CardTitle>Email Template Previews</CardTitle>
             <CardDescription>
@@ -207,11 +206,10 @@ const EmailPreview = () => {
                   />
                 </div>
               </TabsContent>
-            </Tabs>
+          </Tabs>
           </CardContent>
         </Card>
-      </div>
-    </Layout>
+    </div>
   );
 };
 

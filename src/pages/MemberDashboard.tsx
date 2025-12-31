@@ -47,7 +47,7 @@ interface RecentRun {
 }
 
 const MemberDashboard = () => {
-  const { user, loading: authLoading } = useRequireAuth();
+  const { user, loading: authLoading, error: authError, retry: retryAuth } = useRequireAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [usage, setUsage] = useState<UsageStats>({
     backtestRuns: 0,
@@ -59,6 +59,9 @@ const MemberDashboard = () => {
   const [dataLoading, setDataLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // Data fetch timeout (8 seconds)
+  const DATA_TIMEOUT_MS = 8000;
+
   useEffect(() => {
     if (user) {
       fetchData(user.id);
@@ -69,6 +72,10 @@ const MemberDashboard = () => {
     setDataLoading(true);
     setFetchError(null);
     
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DATA_TIMEOUT_MS);
+    
     try {
       await Promise.all([
         fetchProfile(userId),
@@ -77,8 +84,13 @@ const MemberDashboard = () => {
       ]);
     } catch (error: any) {
       console.error('Data fetch error:', error);
-      setFetchError(error.message || 'Failed to load dashboard data.');
+      if (error.name === 'AbortError') {
+        setFetchError('Request timed out. Please check your connection and try again.');
+      } else {
+        setFetchError(error.message || 'Failed to load dashboard data.');
+      }
     } finally {
+      clearTimeout(timeoutId);
       setDataLoading(false);
     }
   };
@@ -168,6 +180,38 @@ const MemberDashboard = () => {
     };
     return colors[plan] || colors.free;
   };
+
+  // Auth error state
+  if (authError) {
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Authentication Error</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{authError}</p>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={retryAuth} variant="outline">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                  <Button asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state - auth check or data loading
   if (authLoading || (user && dataLoading && !profile)) {

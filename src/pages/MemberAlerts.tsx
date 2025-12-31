@@ -31,7 +31,7 @@ interface Alert {
 }
 
 const MemberAlerts = () => {
-  const { user, loading: authLoading } = useRequireAuth();
+  const { user, loading: authLoading, error: authError, retry: retryAuth } = useRequireAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
@@ -39,6 +39,9 @@ const MemberAlerts = () => {
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();
+
+  // Data fetch timeout (8 seconds)
+  const DATA_TIMEOUT_MS = 8000;
 
   // Form state
   const [symbol, setSymbol] = useState("");
@@ -118,6 +121,13 @@ const MemberAlerts = () => {
   const fetchData = async (userId: string) => {
     setDataLoading(true);
     setFetchError(null);
+    
+    // Create timeout for request
+    const timeoutId = setTimeout(() => {
+      setDataLoading(false);
+      setFetchError('Request timed out. Please check your connection and try again.');
+    }, DATA_TIMEOUT_MS);
+    
     try {
       await Promise.all([
         fetchProfile(userId),
@@ -127,6 +137,7 @@ const MemberAlerts = () => {
       console.error('Data fetch error:', error);
       setFetchError(error.message || 'Failed to load alerts.');
     } finally {
+      clearTimeout(timeoutId);
       setDataLoading(false);
     }
   };
@@ -328,6 +339,38 @@ const MemberAlerts = () => {
       default: return <Zap className="h-4 w-4" />;
     }
   };
+
+  // Auth error state
+  if (authError) {
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Authentication Error</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{authError}</p>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={retryAuth} variant="outline">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                  <Button asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Loading skeleton
   if (authLoading || (user && dataLoading && alerts.length === 0 && !profile)) {
