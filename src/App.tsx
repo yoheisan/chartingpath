@@ -51,6 +51,8 @@ import Projects from "./pages/Projects";
 import ProjectsPricing from "./pages/ProjectsPricing";
 import SetupFinderWizard from "./pages/projects/SetupFinderWizard";
 import PatternLabWizard from "./pages/projects/PatternLabWizard";
+import PortfolioCheckupWizard from "./pages/projects/PortfolioCheckupWizard";
+import PortfolioSimulatorWizard from "./pages/projects/PortfolioSimulatorWizard";
 import ProjectRun from "./pages/projects/ProjectRun";
 import StockMarket from "./pages/markets/StockMarket";
 import ForexMarket from "./pages/markets/ForexMarket";
@@ -177,6 +179,8 @@ const App = () => (
           <Route path="/projects/pricing" element={<ProjectsPricing />} />
           <Route path="/projects/setup-finder/new" element={<SetupFinderWizard />} />
           <Route path="/projects/pattern-lab/new" element={<PatternLabWizard />} />
+          <Route path="/projects/portfolio-checkup/new" element={<PortfolioCheckupWizard />} />
+          <Route path="/projects/portfolio-sim/new" element={<PortfolioSimulatorWizard />} />
           <Route path="/projects/runs/:runId" element={<ProjectRun />} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
