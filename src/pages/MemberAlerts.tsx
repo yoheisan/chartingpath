@@ -29,11 +29,15 @@ interface Alert {
   created_at: string;
 }
 
+const LOADING_TIMEOUT_MS = 8000;
+
 const MemberAlerts = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();
@@ -119,22 +123,44 @@ const MemberAlerts = () => {
 
   useEffect(() => {
     checkAuth();
+    
+    // Timeout fallback - if loading takes too long, show error UI
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setLoadingTimedOut(true);
+        setLoading(false);
+        setFetchError('Request timed out. Please check your connection and try again.');
+      }
+    }, LOADING_TIMEOUT_MS);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const checkAuth = async () => {
+    setFetchError(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      
       setUser(user);
 
       if (user) {
         await fetchProfile(user.id);
         await fetchAlerts(user.id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth check error:', error);
+      setFetchError(error.message || 'Failed to load alerts. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleRetry = () => {
+    setLoading(true);
+    setLoadingTimedOut(false);
+    setFetchError(null);
+    checkAuth();
   };
 
   const fetchProfile = async (userId: string) => {
@@ -367,10 +393,43 @@ const MemberAlerts = () => {
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         <MemberNavigation />
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-center space-y-4">
+            {/* Loading skeleton */}
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="text-muted-foreground">Loading alerts...</p>
+            <div className="space-y-3 max-w-md mx-auto">
+              <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto"></div>
+              <div className="h-4 bg-muted rounded animate-pulse w-1/2 mx-auto"></div>
+            </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state (including timeout)
+  if (fetchError) {
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <MemberNavigation />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                </div>
+                <Button onClick={handleRetry} className="mt-4">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
