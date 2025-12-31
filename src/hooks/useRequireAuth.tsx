@@ -1,90 +1,76 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-// Timeout for auth check (8 seconds)
-const AUTH_TIMEOUT_MS = 8000;
+// Timeout for auth check (5 seconds - faster for better UX)
+const AUTH_TIMEOUT_MS = 5000;
 
 interface UseRequireAuthResult {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  error: string | null;
-  retry: () => void;
 }
 
 /**
  * Hook that requires authentication for a page.
  * Redirects to /auth with redirect param if not authenticated.
- * Returns user, loading state, authentication status, and error.
- * Includes timeout handling to prevent infinite loading.
+ * NEVER shows an error state - always redirects unauthenticated users.
  */
 export function useRequireAuth(): UseRequireAuthResult {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
+  const hasRedirectedRef = useRef(false);
 
-  const checkAuth = async () => {
-    setLoading(true);
-    setError(null);
-
-    // Set timeout to prevent infinite loading
-    timeoutRef.current = setTimeout(() => {
-      if (mountedRef.current && loading) {
-        setLoading(false);
-        setError("Authentication check timed out. Please refresh and try again.");
-      }
-    }, AUTH_TIMEOUT_MS);
-
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (!mountedRef.current) return;
-      
-      // Clear timeout since we got a response
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      
-      if (authError || !user) {
-        // Redirect to auth with the current path as redirect param
-        const redirectPath = encodeURIComponent(location.pathname + location.search);
-        navigate(`/auth?redirect=${redirectPath}`, { replace: true });
-        return;
-      }
-      
-      setUser(user);
-      setLoading(false);
-    } catch (err: any) {
-      console.error("[useRequireAuth] Auth check error:", err);
-      
-      if (!mountedRef.current) return;
-      
-      // Clear timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      
-      // Redirect on auth error
-      const redirectPath = encodeURIComponent(location.pathname);
-      navigate(`/auth?redirect=${redirectPath}`, { replace: true });
-    }
-  };
-
-  const retry = () => {
-    checkAuth();
-  };
+  const redirectToAuth = useCallback(() => {
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+    const redirectPath = encodeURIComponent(location.pathname + location.search);
+    navigate(`/auth?redirect=${redirectPath}`, { replace: true });
+  }, [navigate, location.pathname, location.search]);
 
   useEffect(() => {
     mountedRef.current = true;
-    
+    hasRedirectedRef.current = false;
+
+    const checkAuth = async () => {
+      // Set up timeout - if auth check takes too long, redirect to login
+      const timeoutId = setTimeout(() => {
+        if (mountedRef.current && loading) {
+          console.log("[useRequireAuth] Auth check timed out, redirecting to login");
+          redirectToAuth();
+        }
+      }, AUTH_TIMEOUT_MS);
+
+      try {
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        clearTimeout(timeoutId);
+        
+        if (!mountedRef.current) return;
+        
+        if (authError || !authUser) {
+          // No user - redirect to auth (not an error, just unauthenticated)
+          redirectToAuth();
+          return;
+        }
+        
+        setUser(authUser);
+        setLoading(false);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error("[useRequireAuth] Auth check failed:", err);
+        
+        if (!mountedRef.current) return;
+        
+        // On any error, redirect to auth
+        redirectToAuth();
+      }
+    };
+
     checkAuth();
 
     // Listen for auth state changes
@@ -92,29 +78,22 @@ export function useRequireAuth(): UseRequireAuthResult {
       if (!mountedRef.current) return;
       
       if (event === 'SIGNED_OUT' || !session?.user) {
-        const redirectPath = encodeURIComponent(location.pathname);
-        navigate(`/auth?redirect=${redirectPath}`, { replace: true });
+        redirectToAuth();
       } else if (session?.user) {
         setUser(session.user);
         setLoading(false);
-        setError(null);
       }
     });
 
     return () => {
       mountedRef.current = false;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname, location.search]);
+  }, [redirectToAuth]);
 
   return {
     user,
     loading,
     isAuthenticated: !!user,
-    error,
-    retry,
   };
 }
