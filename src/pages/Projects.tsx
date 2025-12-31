@@ -75,8 +75,6 @@ const projectTemplates: ProjectTemplate[] = [
     estimatedCredits: '3-10',
     estimatedTime: '20-40s',
     features: ['Pattern state per holding', 'Risk analysis', 'Alert suggestions'],
-    badge: 'Coming Next',
-    badgeVariant: 'outline'
   },
   {
     id: 'portfolio_sim',
@@ -159,19 +157,7 @@ const ProjectCard = ({
         </div>
         
         {/* Action Button */}
-        {template.badge === 'Coming Next' ? (
-          <Button 
-            disabled
-            className="w-full cursor-not-allowed opacity-50"
-            variant="outline"
-            title="Coming soon - this feature is under development"
-          >
-            <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Coming Soon
-            </span>
-          </Button>
-        ) : (
+        {(
           <Button 
             onClick={onStart}
             disabled={disabled}
@@ -229,12 +215,13 @@ const Projects = () => {
   const [planTier] = useState('free'); // TODO: Fetch from usage_credits
   
   const handleStartProject = (templateId: string) => {
-    if (templateId === 'setup_finder') {
-      navigate('/projects/setup-finder/new');
-    } else {
-      // Other projects coming soon
-      navigate(`/projects/${templateId}`);
-    }
+    const routes: Record<string, string> = {
+      setup_finder: '/projects/setup-finder/new',
+      pattern_lab: '/projects/pattern-lab/new',
+      portfolio_checkup: '/projects/portfolio-checkup/new',
+      portfolio_sim: '/projects/portfolio-sim/new',
+    };
+    navigate(routes[templateId] || '/projects');
   };
   
   return (

@@ -7,7 +7,8 @@ import {
   validateProjectInputs,
   PLANS_CONFIG,
   type PlanTier,
-  type EstimateCreditsInput
+  type EstimateCreditsInput,
+  type ProjectType
 } from "../_shared/plans.ts";
 
 const corsHeaders = {
@@ -18,9 +19,9 @@ const corsHeaders = {
 // ============= PREDEFINED UNIVERSES =============
 const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   crypto: {
-    top10: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT', 'LINKUSDT', 'MATICUSDT'],
-    top20: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT', 'LINKUSDT', 'MATICUSDT',
-            'DOTUSDT', 'LTCUSDT', 'UNIUSDT', 'ATOMUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT', 'FILUSDT', 'VETUSDT'],
+    top10: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD'],
+    top20: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
+            'DOT-USD', 'LTC-USD', 'UNI-USD', 'ATOM-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD', 'FIL-USD', 'VET-USD'],
   },
   fx: {
     majors: ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X'],
@@ -34,7 +35,7 @@ const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   },
 };
 
-// Pattern registry
+// Pattern registry with detection logic
 const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean }> = {
   'donchian-breakout-long': {
     direction: 'long',
@@ -157,7 +158,37 @@ function calculateATR(data: any[], period = 14): number {
   return atrSum / period;
 }
 
-// Map tier from DB to plan tier
+function calculateVolatility(data: any[], period = 20): number {
+  if (data.length < period) return 0;
+  const returns: number[] = [];
+  for (let i = data.length - period; i < data.length; i++) {
+    const prevClose = data[i - 1]?.close || data[i].open;
+    returns.push((data[i].close - prevClose) / prevClose);
+  }
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+  return Math.sqrt(variance) * Math.sqrt(252); // Annualized
+}
+
+function classifyRegime(data: any[]): { trend: 'UP' | 'DOWN' | 'SIDEWAYS'; volatility: 'HIGH' | 'LOW' | 'MED' } {
+  const sma20 = data.slice(-20).reduce((sum, d) => sum + d.close, 0) / 20;
+  const sma50 = data.slice(-50).reduce((sum, d) => sum + d.close, 0) / Math.min(50, data.length);
+  const currentPrice = data[data.length - 1].close;
+  
+  let trend: 'UP' | 'DOWN' | 'SIDEWAYS';
+  if (currentPrice > sma20 * 1.02 && sma20 > sma50) trend = 'UP';
+  else if (currentPrice < sma20 * 0.98 && sma20 < sma50) trend = 'DOWN';
+  else trend = 'SIDEWAYS';
+  
+  const vol = calculateVolatility(data);
+  let volatility: 'HIGH' | 'LOW' | 'MED';
+  if (vol > 0.30) volatility = 'HIGH';
+  else if (vol < 0.15) volatility = 'LOW';
+  else volatility = 'MED';
+  
+  return { trend, volatility };
+}
+
 function mapDbTierToPlanTier(dbTier: string | null): PlanTier {
   if (!dbTier) return 'FREE';
   const tierMap: Record<string, PlanTier> = {
@@ -165,12 +196,11 @@ function mapDbTierToPlanTier(dbTier: string | null): PlanTier {
     'plus': 'PLUS', 
     'pro': 'PRO',
     'team': 'TEAM',
-    'starter': 'FREE', // Map legacy starter to FREE
+    'starter': 'FREE',
   };
   return tierMap[dbTier.toLowerCase()] || 'FREE';
 }
 
-// Estimate cache hit ratio by checking existing data coverage
 async function estimateCacheHitRatio(
   supabase: any,
   instruments: string[],
@@ -182,7 +212,6 @@ async function estimateCacheHitRatio(
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - lookbackYears);
     
-    // Check how many instruments have cached data
     const { count } = await supabase
       .from('historical_prices')
       .select('symbol', { count: 'exact', head: true })
@@ -194,15 +223,13 @@ async function estimateCacheHitRatio(
     const cachedCount = count || 0;
     return Math.min(cachedCount / instruments.length, 1.0);
   } catch {
-    return 0; // Assume no cache on error
+    return 0;
   }
 }
 
 async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
   const period1 = Math.floor(new Date(startDate).getTime() / 1000);
   const period2 = Math.floor(new Date(endDate).getTime() / 1000);
-  
-  // Map interval format
   const yahooInterval = interval === '4h' ? '1h' : interval === '1d' ? '1d' : '1h';
   
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
@@ -230,7 +257,6 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
     volume: quotes.volume?.[idx] || 0,
   })).filter((b: any) => b.close > 0);
   
-  // Aggregate to 4h if needed
   if (interval === '4h' && bars.length > 0) {
     const aggregated: any[] = [];
     for (let i = 0; i < bars.length; i += 4) {
@@ -252,6 +278,279 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
   return bars;
 }
 
+// ============= BACKTEST ENGINE =============
+interface BacktestTrade {
+  entryDate: string;
+  exitDate: string;
+  instrument: string;
+  patternId: string;
+  direction: 'long' | 'short';
+  entryPrice: number;
+  exitPrice: number;
+  rMultiple: number;
+  isWin: boolean;
+  regime: string;
+  exitReason: 'tp' | 'sl' | 'time_stop';
+}
+
+function runPatternBacktest(
+  bars: any[],
+  patternId: string,
+  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean },
+  instrument: string
+): BacktestTrade[] {
+  const trades: BacktestTrade[] = [];
+  const lookback = 20;
+  const maxBarsInTrade = 50;
+  
+  for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
+    const window = bars.slice(i - lookback, i + 1);
+    const detected = pattern.detector(window);
+    
+    if (!detected) continue;
+    
+    const entryBar = bars[i];
+    const entryPrice = entryBar.close;
+    const atr = calculateATR(bars.slice(0, i + 1), 14);
+    
+    const stopDistance = atr * 2;
+    const tpDistance = atr * 4; // 2:1 R
+    
+    const isLong = pattern.direction === 'long';
+    const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+    const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
+    
+    // Simulate trade
+    let exitDate = entryBar.date;
+    let exitPrice = entryPrice;
+    let exitReason: 'tp' | 'sl' | 'time_stop' = 'time_stop';
+    
+    for (let j = i + 1; j < Math.min(i + maxBarsInTrade, bars.length); j++) {
+      const bar = bars[j];
+      
+      if (isLong) {
+        if (bar.low <= stopLoss) {
+          exitPrice = stopLoss;
+          exitDate = bar.date;
+          exitReason = 'sl';
+          break;
+        }
+        if (bar.high >= takeProfit) {
+          exitPrice = takeProfit;
+          exitDate = bar.date;
+          exitReason = 'tp';
+          break;
+        }
+      } else {
+        if (bar.high >= stopLoss) {
+          exitPrice = stopLoss;
+          exitDate = bar.date;
+          exitReason = 'sl';
+          break;
+        }
+        if (bar.low <= takeProfit) {
+          exitPrice = takeProfit;
+          exitDate = bar.date;
+          exitReason = 'tp';
+          break;
+        }
+      }
+      
+      if (j === Math.min(i + maxBarsInTrade, bars.length) - 1) {
+        exitPrice = bar.close;
+        exitDate = bar.date;
+        exitReason = 'time_stop';
+      }
+    }
+    
+    const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+    const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+    
+    const regime = classifyRegime(bars.slice(0, i + 1));
+    
+    trades.push({
+      entryDate: entryBar.date,
+      exitDate,
+      instrument,
+      patternId,
+      direction: pattern.direction,
+      entryPrice,
+      exitPrice,
+      rMultiple,
+      isWin: pnl > 0,
+      regime: `${regime.trend}_${regime.volatility}`,
+      exitReason
+    });
+    
+    // Skip ahead to avoid overlapping trades
+    i += 5;
+  }
+  
+  return trades;
+}
+
+// ============= PORTFOLIO SIMULATION ENGINE =============
+interface PortfolioBar {
+  date: string;
+  value: number;
+  drawdown: number;
+  weights: Record<string, number>;
+}
+
+function runPortfolioSimulation(
+  holdings: { symbol: string; bars: any[]; weight: number }[],
+  config: { 
+    initialValue: number; 
+    rebalanceFrequency: 'monthly' | 'quarterly' | 'yearly' | 'never';
+    dcaAmount?: number;
+    dcaFrequency?: 'monthly' | 'weekly';
+  }
+): { equity: PortfolioBar[]; metrics: any } {
+  const { initialValue, rebalanceFrequency, dcaAmount = 0, dcaFrequency } = config;
+  const equity: PortfolioBar[] = [];
+  
+  // Get aligned dates
+  const allDates = new Set<string>();
+  holdings.forEach(h => h.bars.forEach(b => allDates.add(b.date.split('T')[0])));
+  const dates = Array.from(allDates).sort();
+  
+  if (dates.length === 0) return { equity: [], metrics: {} };
+  
+  // Initialize positions
+  let cash = initialValue;
+  const positions: Record<string, { shares: number; avgCost: number }> = {};
+  let totalContributions = initialValue;
+  let peakValue = initialValue;
+  
+  // Initial allocation
+  holdings.forEach(h => {
+    const firstBar = h.bars.find(b => b.date.split('T')[0] === dates[0]);
+    if (firstBar && h.weight > 0) {
+      const allocation = initialValue * h.weight;
+      const shares = allocation / firstBar.close;
+      positions[h.symbol] = { shares, avgCost: firstBar.close };
+      cash -= allocation;
+    }
+  });
+  
+  let lastRebalanceMonth = -1;
+  let lastDCAWeek = -1;
+  
+  for (const date of dates) {
+    const d = new Date(date);
+    const month = d.getMonth();
+    const week = Math.floor(d.getTime() / (7 * 24 * 60 * 60 * 1000));
+    
+    // DCA
+    if (dcaAmount > 0 && dcaFrequency) {
+      const shouldDCA = dcaFrequency === 'monthly' ? month !== lastRebalanceMonth : week !== lastDCAWeek;
+      if (shouldDCA) {
+        cash += dcaAmount;
+        totalContributions += dcaAmount;
+        
+        // Allocate DCA
+        holdings.forEach(h => {
+          const bar = h.bars.find(b => b.date.split('T')[0] === date);
+          if (bar && h.weight > 0) {
+            const allocation = dcaAmount * h.weight;
+            const shares = allocation / bar.close;
+            if (!positions[h.symbol]) {
+              positions[h.symbol] = { shares: 0, avgCost: bar.close };
+            }
+            const pos = positions[h.symbol];
+            const totalShares = pos.shares + shares;
+            pos.avgCost = (pos.avgCost * pos.shares + bar.close * shares) / totalShares;
+            pos.shares = totalShares;
+            cash -= allocation;
+          }
+        });
+        
+        if (dcaFrequency === 'monthly') lastRebalanceMonth = month;
+        if (dcaFrequency === 'weekly') lastDCAWeek = week;
+      }
+    }
+    
+    // Rebalance check
+    const shouldRebalance = 
+      rebalanceFrequency === 'monthly' && month !== lastRebalanceMonth ||
+      rebalanceFrequency === 'quarterly' && month % 3 === 0 && month !== lastRebalanceMonth ||
+      rebalanceFrequency === 'yearly' && month === 0 && month !== lastRebalanceMonth;
+    
+    if (shouldRebalance && rebalanceFrequency !== 'never') {
+      // Calculate current value
+      let currentValue = cash;
+      holdings.forEach(h => {
+        const bar = h.bars.find(b => b.date.split('T')[0] === date);
+        if (bar && positions[h.symbol]) {
+          currentValue += positions[h.symbol].shares * bar.close;
+        }
+      });
+      
+      // Rebalance
+      holdings.forEach(h => {
+        const bar = h.bars.find(b => b.date.split('T')[0] === date);
+        if (bar) {
+          const targetValue = currentValue * h.weight;
+          const currentShares = positions[h.symbol]?.shares || 0;
+          const currentVal = currentShares * bar.close;
+          const diff = targetValue - currentVal;
+          const shareDiff = diff / bar.close;
+          
+          if (!positions[h.symbol]) {
+            positions[h.symbol] = { shares: 0, avgCost: bar.close };
+          }
+          positions[h.symbol].shares += shareDiff;
+        }
+      });
+      
+      lastRebalanceMonth = month;
+    }
+    
+    // Calculate portfolio value
+    let portfolioValue = cash;
+    const weights: Record<string, number> = {};
+    
+    holdings.forEach(h => {
+      const bar = h.bars.find(b => b.date.split('T')[0] === date);
+      if (bar && positions[h.symbol]) {
+        const value = positions[h.symbol].shares * bar.close;
+        portfolioValue += value;
+      }
+    });
+    
+    holdings.forEach(h => {
+      const bar = h.bars.find(b => b.date.split('T')[0] === date);
+      if (bar && positions[h.symbol]) {
+        weights[h.symbol] = (positions[h.symbol].shares * bar.close) / portfolioValue;
+      }
+    });
+    
+    peakValue = Math.max(peakValue, portfolioValue);
+    const drawdown = (peakValue - portfolioValue) / peakValue;
+    
+    equity.push({ date, value: portfolioValue, drawdown, weights });
+  }
+  
+  // Calculate metrics
+  const finalValue = equity[equity.length - 1]?.value || initialValue;
+  const totalReturn = (finalValue - totalContributions) / totalContributions;
+  const years = dates.length / 252;
+  const cagr = Math.pow(finalValue / initialValue, 1 / years) - 1;
+  const maxDD = Math.max(...equity.map(e => e.drawdown));
+  
+  return {
+    equity,
+    metrics: {
+      totalReturn,
+      cagr,
+      maxDrawdown: maxDD,
+      totalContributions,
+      finalValue,
+      sharpeRatio: cagr / (calculateVolatility(holdings[0]?.bars || []) || 0.15)
+    }
+  };
+}
+
 // ============= MAIN HANDLER =============
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -269,27 +568,36 @@ serve(async (req) => {
     // ============= ESTIMATE ENDPOINT =============
     if (path === 'estimate' && req.method === 'POST') {
       const body = await req.json();
-      const { projectType = 'setup_finder', assetClass, universe, patterns, timeframe, lookbackYears = 1, instruments: directInstruments } = body;
+      const { 
+        projectType = 'setup_finder', 
+        assetClass, 
+        universe, 
+        patterns = [], 
+        timeframe = '1d', 
+        lookbackYears = 1, 
+        instruments: directInstruments,
+        holdings = [],
+        rebalancePerYear = 4
+      } = body;
       
-      // Resolve instruments either from universe or direct list
-      const instruments = directInstruments || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      // Resolve instruments
+      const instruments = directInstruments || holdings.map((h: any) => h.symbol) || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
-      // Estimate cache hit ratio
       const cacheHitRatio = await estimateCacheHitRatio(supabase, instruments, timeframe, lookbackYears);
       
-      // Calculate credits using deterministic formula
       const estimateInput: EstimateCreditsInput = {
-        projectType: projectType as 'setup_finder' | 'pattern_lab',
+        projectType: projectType as ProjectType,
         instrumentCount: instruments.length,
-        patternCount: patterns.length,
+        patternCount: patterns.length || 1,
         lookbackYears,
         timeframe,
-        cacheHitRatio
+        cacheHitRatio,
+        rebalancePerYear
       };
       const creditResult = calculateCredits(estimateInput);
       
-      // Get user for cap check (optional - can estimate without auth)
+      // Auth check
       const authHeader = req.headers.get('Authorization');
       let capInfo = { 
         allowed: true, 
@@ -319,15 +627,13 @@ serve(async (req) => {
             capInfo.creditsBalance = credits.credits_balance;
             capInfo.dailyRunCap = tierCaps.dailyRunCap;
             
-            // Check credits
             if (credits.credits_balance < creditResult.creditsEstimated) {
               capInfo.allowed = false;
               capInfo.reason = 'insufficient_credits';
               capInfo.errors.push(`Need ${creditResult.creditsEstimated} credits, have ${credits.credits_balance}`);
             }
             
-            // Validate against tier caps
-            const validation = validateProjectInputs(tier, projectType as 'setup_finder' | 'pattern_lab', {
+            const validation = validateProjectInputs(tier, projectType as ProjectType, {
               instrumentCount: instruments.length,
               lookbackYears,
               patternCount: patterns.length,
@@ -340,7 +646,6 @@ serve(async (req) => {
               capInfo.errors.push(...validation.errors);
             }
             
-            // Check daily run count
             const today = new Date().toISOString().split('T')[0];
             const { count: dailyRunCount } = await supabase
               .from('project_runs')
@@ -396,29 +701,48 @@ serve(async (req) => {
       const body = await req.json();
       const { projectType, inputs } = body;
       
-      if (projectType !== 'setup_finder' && projectType !== 'pattern_lab') {
+      console.log(`Starting ${projectType} run for user ${user.id}`);
+      
+      // Validate project type
+      const validTypes: ProjectType[] = ['setup_finder', 'pattern_lab', 'portfolio_checkup', 'portfolio_sim'];
+      if (!validTypes.includes(projectType)) {
         return new Response(JSON.stringify({ error: 'Unsupported project type' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      // Handle both setup_finder and pattern_lab inputs
-      // Resolve instruments from universe or direct list
-      const instruments = directInstruments || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      // Extract inputs
+      const { 
+        assetClass, 
+        universe, 
+        patterns = [], 
+        timeframe = '1d', 
+        lookbackYears = 1,
+        riskPerTrade = 1,
+        instruments: directInstruments,
+        holdings = [],
+        rebalanceFrequency = 'quarterly',
+        dcaAmount = 0,
+        dcaFrequency = 'monthly',
+        initialValue = 10000
+      } = inputs || {};
       
-      // Calculate credits using deterministic formula
+      const instruments = directInstruments || holdings.map((h: any) => h.symbol) || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      
+      // Calculate credits
       const creditResult = calculateCredits({
-        projectType: 'setup_finder',
+        projectType,
         instrumentCount: instruments.length,
-        patternCount: patterns.length,
+        patternCount: patterns.length || 1,
         lookbackYears,
         timeframe,
-        cacheHitRatio: 0 // Conservative estimate for run
+        cacheHitRatio: 0,
+        rebalancePerYear: rebalanceFrequency === 'monthly' ? 12 : rebalanceFrequency === 'quarterly' ? 4 : 1
       });
       const creditsEstimated = creditResult.creditsEstimated;
       
-      // Validate caps
+      // Validate credits
       const { data: credits } = await supabase
         .from('usage_credits')
         .select('*')
@@ -437,12 +761,17 @@ serve(async (req) => {
       }
       
       // Create project
+      const projectName = projectType === 'setup_finder' ? `Setup Finder - ${assetClass || 'Custom'} ${universe || ''}` :
+                          projectType === 'pattern_lab' ? `Pattern Lab - ${patterns.join(', ').slice(0, 30)}` :
+                          projectType === 'portfolio_checkup' ? `Portfolio Checkup - ${instruments.length} holdings` :
+                          `Portfolio Simulator - ${instruments.length} holdings`;
+      
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           user_id: user.id,
-          type: 'setup_finder',
-          name: `Setup Finder - ${assetClass} ${universe}`,
+          type: projectType,
+          name: projectName,
         })
         .select()
         .single();
@@ -461,10 +790,10 @@ serve(async (req) => {
         .insert({
           project_id: project.id,
           version: 1,
-          input_json: { assetClass, universe, patterns, timeframe, riskPerTrade, lookbackYears },
+          input_json: inputs,
         });
       
-      // Create project run (queued)
+      // Create project run
       const { data: run, error: runError } = await supabase
         .from('project_runs')
         .insert({
@@ -483,285 +812,507 @@ serve(async (req) => {
         });
       }
       
-      // Emit analytics event
-      await supabase.from('analytics_events').insert({
-        user_id: user.id,
-        event_name: 'project_run_started',
-        properties: {
-          projectType: 'setup_finder',
-          timeframe,
-          instrumentCount: instruments.length,
-          patternCount: patterns.length,
-          creditsEstimated,
-        },
-      });
-      
-      // ============= SYNCHRONOUS EXECUTION (MVP) =============
-      // For small universes (<= 50), execute synchronously
-      console.log(`Starting Setup Finder execution for ${instruments.length} instruments`);
-      
-      // Update status to running
+      // Update to running
       await supabase
         .from('project_runs')
         .update({ status: 'running', started_at: new Date().toISOString() })
         .eq('id', run.id);
       
       try {
-        const setups: any[] = [];
-        const lookbackDays = timeframe === '4h' ? 60 : 180;
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() - lookbackDays);
+        startDate.setFullYear(startDate.getFullYear() - lookbackYears);
         
-        for (const instrument of instruments) {
-          console.log(`Processing ${instrument}...`);
+        let artifactJson: any = null;
+        let artifactType = 'setup_list';
+        
+        // ============= SETUP FINDER EXECUTION =============
+        if (projectType === 'setup_finder') {
+          const setups: any[] = [];
+          const lookbackDays = timeframe === '4h' ? 60 : 180;
+          const sfEndDate = new Date();
+          const sfStartDate = new Date();
+          sfStartDate.setDate(sfStartDate.getDate() - lookbackDays);
           
-          // Fetch data
-          const bars = await fetchYahooData(
-            instrument,
-            startDate.toISOString().split('T')[0],
-            endDate.toISOString().split('T')[0],
-            timeframe
-          );
-          
-          if (bars.length < 20) {
-            console.log(`Insufficient data for ${instrument}: ${bars.length} bars`);
-            continue;
+          for (const instrument of instruments) {
+            console.log(`[SetupFinder] Processing ${instrument}...`);
+            
+            const bars = await fetchYahooData(
+              instrument,
+              sfStartDate.toISOString().split('T')[0],
+              sfEndDate.toISOString().split('T')[0],
+              timeframe
+            );
+            
+            if (bars.length < 20) continue;
+            
+            for (const patternId of patterns) {
+              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+              if (!pattern) continue;
+              
+              const window = bars.slice(-20);
+              const detected = pattern.detector(window);
+              
+              if (detected) {
+                const lastBar = bars[bars.length - 1];
+                const signalTs = lastBar.date;
+                const atr = calculateATR(bars, 14);
+                
+                const bracketLevels = computeBracketLevels({
+                  direction: pattern.direction,
+                  entryPrice: lastBar.close,
+                  stopPercent: (atr / lastBar.close) * 100 * 2,
+                  targetPercent: (atr / lastBar.close) * 100 * 4,
+                  atr,
+                  atrMultiplier: 2.0,
+                  stopLossMethod: 'atr',
+                  takeProfitMethod: 'ratio',
+                });
+                
+                const entryPrice = lastBar.close;
+                
+                // Visual spec
+                const lookbackBarsForVisual = 120;
+                const forwardBarsForVisual = 30;
+                const signalBarIndex = bars.length - 1;
+                const visualStartIdx = Math.max(0, signalBarIndex - lookbackBarsForVisual);
+                const visualEndIdx = Math.min(bars.length - 1, signalBarIndex + forwardBarsForVisual);
+                
+                let visualBars = bars.slice(visualStartIdx, visualEndIdx + 1);
+                if (visualBars.length > 200) visualBars = visualBars.slice(-200);
+                
+                const compressedBars = visualBars.map(b => ({
+                  t: b.date,
+                  o: Number(b.open.toFixed(6)),
+                  h: Number(b.high.toFixed(6)),
+                  l: Number(b.low.toFixed(6)),
+                  c: Number(b.close.toFixed(6)),
+                  v: b.volume || 0,
+                }));
+                
+                const allLows = visualBars.map(b => b.low);
+                const allHighs = visualBars.map(b => b.high);
+                const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
+                const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
+                
+                const visualSpec = {
+                  version: '1.0.0',
+                  symbol: instrument,
+                  timeframe,
+                  patternId,
+                  signalTs,
+                  window: { startTs: visualBars[0]?.date || signalTs, endTs: visualBars[visualBars.length - 1]?.date || signalTs },
+                  yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 },
+                  overlays: [
+                    { type: 'hline', id: 'entry', price: entryPrice, label: 'Entry', style: 'primary' },
+                    { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' },
+                    { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' },
+                  ],
+                };
+                
+                setups.push({
+                  instrument,
+                  patternId,
+                  patternName: pattern.displayName,
+                  direction: pattern.direction,
+                  signalTs,
+                  quality: { score: atr > 0 ? 'B' : 'C', reasons: ['Pattern detected on latest bar'] },
+                  tradePlan: {
+                    entryType: 'bar_close',
+                    entry: entryPrice,
+                    stopLoss: bracketLevels.stopLossPrice,
+                    takeProfit: bracketLevels.takeProfitPrice,
+                    rr: bracketLevels.riskRewardRatio,
+                    stopDistance: bracketLevels.stopDistance,
+                    tpDistance: bracketLevels.tpDistance,
+                    timeStopBars: 100,
+                    bracketLevelsVersion: BRACKET_LEVELS_VERSION,
+                    priceRounding: ROUNDING_CONFIG,
+                  },
+                  bars: compressedBars,
+                  visualSpec,
+                });
+              }
+            }
           }
           
-          // Check each pattern
-          for (const patternId of patterns) {
-            const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-            if (!pattern) {
-              console.log(`Unknown pattern: ${patternId}`);
+          setups.sort((a, b) => {
+            const scoreOrder = { A: 0, B: 1, C: 2 };
+            return (scoreOrder[a.quality.score as keyof typeof scoreOrder] || 3) - 
+                   (scoreOrder[b.quality.score as keyof typeof scoreOrder] || 3);
+          });
+          
+          artifactJson = {
+            projectType: 'setup_finder',
+            timeframe,
+            generatedAt: new Date().toISOString(),
+            executionAssumptions: { bracketLevelsVersion: BRACKET_LEVELS_VERSION, priceRounding: ROUNDING_CONFIG },
+            setups,
+          };
+          artifactType = 'setup_list';
+        }
+        
+        // ============= PATTERN LAB EXECUTION =============
+        else if (projectType === 'pattern_lab') {
+          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${patterns.length} patterns, ${lookbackYears} years`);
+          
+          const allTrades: BacktestTrade[] = [];
+          const patternResults: any[] = [];
+          const equity: { date: string; value: number; drawdown: number }[] = [];
+          
+          // Fetch data and run backtests
+          for (const instrument of instruments) {
+            console.log(`[PatternLab] Processing ${instrument}...`);
+            
+            const bars = await fetchYahooData(
+              instrument,
+              startDate.toISOString().split('T')[0],
+              endDate.toISOString().split('T')[0],
+              timeframe
+            );
+            
+            if (bars.length < 50) {
+              console.log(`[PatternLab] Insufficient data for ${instrument}: ${bars.length} bars`);
               continue;
             }
             
-            // Check if pattern detected on recent window
-            const window = bars.slice(-20);
-            const detected = pattern.detector(window);
-            
-            if (detected) {
-              const lastBar = bars[bars.length - 1];
-              const signalTs = lastBar.date;
-              const atr = calculateATR(bars, 14);
+            for (const patternId of patterns) {
+              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+              if (!pattern) continue;
               
-              // Compute bracket levels
-              const bracketLevels = computeBracketLevels({
-                direction: pattern.direction,
-                entryPrice: lastBar.close,
-                stopPercent: (atr / lastBar.close) * 100 * 2, // 2x ATR
-                targetPercent: (atr / lastBar.close) * 100 * 4, // 4x ATR (2:1 RR)
-                atr,
-                atrMultiplier: 2.0,
-                stopLossMethod: 'atr',
-                takeProfitMethod: 'ratio',
-              });
-              
-              const entryPrice = bracketLevels.stopLossPrice < lastBar.close 
-                ? lastBar.close 
-                : bracketLevels.takeProfitPrice;
-              
-              // ============= VISUAL SPEC GENERATION =============
-              // Visual window parameters
-              const lookbackBarsForVisual = 120;
-              const forwardBarsForVisual = 30;
-              
-              // Find signal bar index in the bars array
-              const signalBarIndex = bars.findIndex(b => b.date === signalTs);
-              const actualSignalIdx = signalBarIndex >= 0 ? signalBarIndex : bars.length - 1;
-              
-              // Calculate visual window indices
-              const visualStartIdx = Math.max(0, actualSignalIdx - lookbackBarsForVisual);
-              const visualEndIdx = Math.min(bars.length - 1, actualSignalIdx + forwardBarsForVisual);
-              
-              // Extract visual window bars (capped at 200)
-              let visualBars = bars.slice(visualStartIdx, visualEndIdx + 1);
-              if (visualBars.length > 200) {
-                // Keep last 200 bars if too many
-                visualBars = visualBars.slice(-200);
-              }
-              
-              // Compress bars for artifact (minimize keys for size)
-              const compressedBars = visualBars.map(b => ({
-                t: b.date,
-                o: Number(b.open.toFixed(6)),
-                h: Number(b.high.toFixed(6)),
-                l: Number(b.low.toFixed(6)),
-                c: Number(b.close.toFixed(6)),
-                v: b.volume || 0,
-              }));
-              
-              // Calculate yDomain with 3% padding
-              const allLows = visualBars.map(b => b.low);
-              const allHighs = visualBars.map(b => b.high);
-              // Also include entry/sl/tp in domain
-              const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
-              const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
-              const yMin = minPrice * 0.97;
-              const yMax = maxPrice * 1.03;
-              
-              // Build visualSpec
-              const visualSpec = {
-                version: '1.0.0',
-                symbol: instrument,
-                timeframe,
-                patternId,
-                signalTs,
-                window: {
-                  startTs: visualBars[0]?.date || signalTs,
-                  endTs: visualBars[visualBars.length - 1]?.date || signalTs,
-                },
-                yDomain: {
-                  min: Number(yMin.toFixed(6)),
-                  max: Number(yMax.toFixed(6)),
-                },
-                overlays: [
-                  { type: 'hline', id: 'entry', price: Number(entryPrice.toFixed(6)), label: 'Entry', style: 'primary' },
-                  { type: 'hline', id: 'sl', price: Number(bracketLevels.stopLossPrice.toFixed(6)), label: 'Stop', style: 'destructive' },
-                  { type: 'hline', id: 'tp', price: Number(bracketLevels.takeProfitPrice.toFixed(6)), label: 'Target', style: 'positive' },
-                  { 
-                    type: 'box', 
-                    id: 'patternWindow', 
-                    startTs: bars[Math.max(0, actualSignalIdx - 20)]?.date || signalTs,
-                    endTs: signalTs,
-                    label: 'Pattern Window',
-                    style: 'muted'
-                  }
-                ],
-              };
-              
-              setups.push({
-                instrument,
-                patternId,
-                patternName: pattern.displayName,
-                direction: pattern.direction,
-                signalTs,
-                quality: {
-                  score: atr > 0 ? 'B' : 'C',
-                  reasons: ['Pattern detected on latest bar'],
-                },
-                tradePlan: {
-                  entryType: 'bar_close',
-                  entry: entryPrice,
-                  stopLoss: bracketLevels.stopLossPrice,
-                  takeProfit: bracketLevels.takeProfitPrice,
-                  rr: bracketLevels.riskRewardRatio,
-                  stopDistance: bracketLevels.stopDistance,
-                  tpDistance: bracketLevels.tpDistance,
-                  timeStopBars: 100,
-                  bracketLevelsVersion: BRACKET_LEVELS_VERSION,
-                  priceRounding: ROUNDING_CONFIG,
-                },
-                bars: compressedBars,
-                visualSpec,
-              });
-              
-              console.log(`Found ${patternId} on ${instrument} with ${compressedBars.length} visual bars`);
+              const trades = runPatternBacktest(bars, patternId, pattern, instrument);
+              allTrades.push(...trades);
             }
+          }
+          
+          console.log(`[PatternLab] Total trades: ${allTrades.length}`);
+          
+          // Calculate pattern-level stats
+          for (const patternId of patterns) {
+            const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+            if (!pattern) continue;
+            
+            const patternTrades = allTrades.filter(t => t.patternId === patternId);
+            const wins = patternTrades.filter(t => t.isWin);
+            const losses = patternTrades.filter(t => !t.isWin);
+            
+            const winRate = patternTrades.length > 0 ? wins.length / patternTrades.length : 0;
+            const avgR = patternTrades.length > 0 ? patternTrades.reduce((s, t) => s + t.rMultiple, 0) / patternTrades.length : 0;
+            const expectancy = winRate * (wins.length > 0 ? wins.reduce((s, t) => s + t.rMultiple, 0) / wins.length : 0) - 
+                              (1 - winRate) * (losses.length > 0 ? Math.abs(losses.reduce((s, t) => s + t.rMultiple, 0) / losses.length) : 1);
+            
+            const grossProfit = wins.reduce((s, t) => s + t.rMultiple, 0);
+            const grossLoss = Math.abs(losses.reduce((s, t) => s + t.rMultiple, 0));
+            const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
+            
+            // Regime breakdown
+            const regimes = ['UP_HIGH', 'UP_MED', 'UP_LOW', 'DOWN_HIGH', 'DOWN_MED', 'DOWN_LOW', 'SIDEWAYS_HIGH', 'SIDEWAYS_MED', 'SIDEWAYS_LOW'];
+            const regimeBreakdown = regimes.map(regimeKey => {
+              const regimeTrades = patternTrades.filter(t => t.regime === regimeKey);
+              const regimeWins = regimeTrades.filter(t => t.isWin);
+              const regimeAvgR = regimeTrades.length > 0 ? regimeTrades.reduce((s, t) => s + t.rMultiple, 0) / regimeTrades.length : 0;
+              
+              return {
+                regimeKey,
+                n: regimeTrades.length,
+                winRate: regimeTrades.length > 0 ? regimeWins.length / regimeTrades.length : 0,
+                avgR: regimeAvgR,
+                isReliable: regimeTrades.length >= 10,
+                recommendation: regimeAvgR >= 0.3 ? 'trade' : regimeAvgR >= 0 ? 'caution' : 'avoid'
+              };
+            }).filter(r => r.n > 0);
+            
+            // Do-not-trade rules
+            const doNotTradeRules: string[] = [];
+            regimeBreakdown.forEach(r => {
+              if (r.avgR < -0.5 && r.n >= 5) {
+                const [trend, vol] = r.regimeKey.split('_');
+                doNotTradeRules.push(`Avoid in ${trend.toLowerCase()} trend with ${vol.toLowerCase()} volatility (${r.n} trades, ${(r.avgR).toFixed(2)}R avg)`);
+              }
+            });
+            
+            // Drawdown calculation
+            let runningR = 0;
+            let peakR = 0;
+            let maxDD = 0;
+            for (const trade of patternTrades.sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
+              runningR += trade.rMultiple;
+              peakR = Math.max(peakR, runningR);
+              maxDD = Math.max(maxDD, (peakR - runningR));
+            }
+            
+            patternResults.push({
+              patternId,
+              patternName: pattern.displayName,
+              direction: pattern.direction,
+              totalTrades: patternTrades.length,
+              winRate,
+              avgRMultiple: avgR,
+              expectancy,
+              profitFactor,
+              maxDrawdown: maxDD,
+              sharpeRatio: avgR / (Math.sqrt(patternTrades.map(t => t.rMultiple).reduce((s, r) => s + r * r, 0) / patternTrades.length - avgR * avgR) || 1),
+              regimeBreakdown,
+              doNotTradeRules
+            });
+          }
+          
+          // Build equity curve
+          let cumulativeR = 0;
+          let peakValue = 10000;
+          const sortedTrades = [...allTrades].sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime());
+          
+          for (const trade of sortedTrades) {
+            cumulativeR += trade.rMultiple;
+            const value = 10000 * (1 + cumulativeR * 0.01);
+            peakValue = Math.max(peakValue, value);
+            equity.push({
+              date: trade.exitDate,
+              value,
+              drawdown: (peakValue - value) / peakValue
+            });
+          }
+          
+          // Summary
+          const overallWinRate = allTrades.length > 0 ? allTrades.filter(t => t.isWin).length / allTrades.length : 0;
+          const overallExpectancy = allTrades.length > 0 ? allTrades.reduce((s, t) => s + t.rMultiple, 0) / allTrades.length : 0;
+          const bestPattern = patternResults.reduce((best, p) => p.expectancy > best.expectancy ? p : best, patternResults[0] || { id: '', name: '', expectancy: 0 });
+          const worstPattern = patternResults.reduce((worst, p) => p.expectancy < worst.expectancy ? p : worst, patternResults[0] || { id: '', name: '', expectancy: 0 });
+          
+          artifactJson = {
+            projectType: 'pattern_lab',
+            timeframe,
+            lookbackYears,
+            generatedAt: new Date().toISOString(),
+            executionAssumptions: {
+              bracketLevelsVersion: BRACKET_LEVELS_VERSION,
+              priceRounding: ROUNDING_CONFIG,
+            },
+            summary: {
+              totalPatterns: patternResults.length,
+              totalTrades: allTrades.length,
+              overallWinRate,
+              overallExpectancy,
+              bestPattern: { id: bestPattern?.patternId || '', name: bestPattern?.patternName || '', expectancy: bestPattern?.expectancy || 0 },
+              worstPattern: { id: worstPattern?.patternId || '', name: worstPattern?.patternName || '', expectancy: worstPattern?.expectancy || 0 },
+            },
+            patterns: patternResults,
+            trades: allTrades.slice(0, 500), // Cap for size
+            equity,
+          };
+          artifactType = 'backtest_report';
+        }
+        
+        // ============= PORTFOLIO CHECKUP EXECUTION =============
+        else if (projectType === 'portfolio_checkup') {
+          console.log(`[PortfolioCheckup] Analyzing ${instruments.length} holdings`);
+          
+          const holdingsAnalysis: any[] = [];
+          const overallRiskMetrics: any = { totalCorrelation: 0, concentrationRisk: 0, sectorExposure: {} };
+          const alertSuggestions: any[] = [];
+          
+          for (const symbol of instruments) {
+            console.log(`[PortfolioCheckup] Processing ${symbol}...`);
+            
+            const bars = await fetchYahooData(
+              symbol,
+              startDate.toISOString().split('T')[0],
+              endDate.toISOString().split('T')[0],
+              timeframe
+            );
+            
+            if (bars.length < 20) continue;
+            
+            const regime = classifyRegime(bars);
+            const atr = calculateATR(bars, 14);
+            const volatility = calculateVolatility(bars);
+            const lastPrice = bars[bars.length - 1].close;
+            
+            // Pattern detection for current state
+            let currentPattern = 'None Detected';
+            let patternSignal: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+            
+            for (const [patternId, pattern] of Object.entries(WEDGE_PATTERN_REGISTRY)) {
+              const window = bars.slice(-20);
+              if (pattern.detector(window)) {
+                currentPattern = pattern.displayName;
+                patternSignal = pattern.direction === 'long' ? 'bullish' : 'bearish';
+                
+                // Suggest alert if pattern detected
+                alertSuggestions.push({
+                  symbol,
+                  patternId,
+                  patternName: pattern.displayName,
+                  direction: pattern.direction,
+                  reason: `${pattern.displayName} detected on ${symbol}`,
+                  priority: volatility > 0.25 ? 'high' : 'medium'
+                });
+                break;
+              }
+            }
+            
+            // Risk level
+            let riskLevel: 'low' | 'medium' | 'high' = 'medium';
+            if (volatility > 0.35 || regime.trend === 'DOWN') riskLevel = 'high';
+            else if (volatility < 0.15 && regime.trend === 'UP') riskLevel = 'low';
+            
+            holdingsAnalysis.push({
+              symbol,
+              lastPrice,
+              regime: `${regime.trend} trend, ${regime.volatility} volatility`,
+              regimeKey: `${regime.trend}_${regime.volatility}`,
+              currentPattern,
+              patternSignal,
+              volatility,
+              atr,
+              riskLevel,
+              recommendation: patternSignal === 'bearish' ? 'watch' : patternSignal === 'bullish' ? 'hold' : 'neutral'
+            });
+          }
+          
+          // Calculate concentration risk
+          const highRiskCount = holdingsAnalysis.filter(h => h.riskLevel === 'high').length;
+          overallRiskMetrics.concentrationRisk = highRiskCount / instruments.length;
+          overallRiskMetrics.highRiskHoldings = highRiskCount;
+          overallRiskMetrics.averageVolatility = holdingsAnalysis.reduce((s, h) => s + h.volatility, 0) / holdingsAnalysis.length;
+          
+          artifactJson = {
+            projectType: 'portfolio_checkup',
+            timeframe,
+            lookbackYears,
+            generatedAt: new Date().toISOString(),
+            summary: {
+              totalHoldings: holdingsAnalysis.length,
+              highRiskCount,
+              averageVolatility: overallRiskMetrics.averageVolatility,
+              alertSuggestionsCount: alertSuggestions.length
+            },
+            holdings: holdingsAnalysis,
+            riskMetrics: overallRiskMetrics,
+            alertSuggestions: alertSuggestions.slice(0, 10)
+          };
+          artifactType = 'portfolio_checkup';
+        }
+        
+        // ============= PORTFOLIO SIMULATOR EXECUTION =============
+        else if (projectType === 'portfolio_sim') {
+          console.log(`[PortfolioSim] Simulating ${instruments.length} holdings over ${lookbackYears} years`);
+          
+          // Fetch data for all holdings
+          const holdingsData: { symbol: string; bars: any[]; weight: number }[] = [];
+          const targetWeight = 1 / instruments.length;
+          
+          for (const symbol of instruments) {
+            console.log(`[PortfolioSim] Fetching ${symbol}...`);
+            
+            const bars = await fetchYahooData(
+              symbol,
+              startDate.toISOString().split('T')[0],
+              endDate.toISOString().split('T')[0],
+              timeframe
+            );
+            
+            if (bars.length > 20) {
+              holdingsData.push({
+                symbol,
+                bars,
+                weight: holdings.find((h: any) => h.symbol === symbol)?.weight || targetWeight
+              });
+            }
+          }
+          
+          // Run simulation
+          const simResult = runPortfolioSimulation(holdingsData, {
+            initialValue,
+            rebalanceFrequency: rebalanceFrequency as 'monthly' | 'quarterly' | 'yearly' | 'never',
+            dcaAmount,
+            dcaFrequency: dcaFrequency as 'monthly' | 'weekly'
+          });
+          
+          // Also run a "no rebalance" comparison
+          const buyHoldResult = runPortfolioSimulation(holdingsData, {
+            initialValue,
+            rebalanceFrequency: 'never',
+            dcaAmount: 0
+          });
+          
+          artifactJson = {
+            projectType: 'portfolio_sim',
+            timeframe,
+            lookbackYears,
+            generatedAt: new Date().toISOString(),
+            config: {
+              initialValue,
+              rebalanceFrequency,
+              dcaAmount,
+              dcaFrequency,
+              holdings: holdingsData.map(h => ({ symbol: h.symbol, weight: h.weight }))
+            },
+            summary: {
+              finalValue: simResult.metrics.finalValue,
+              totalReturn: simResult.metrics.totalReturn,
+              cagr: simResult.metrics.cagr,
+              maxDrawdown: simResult.metrics.maxDrawdown,
+              totalContributions: simResult.metrics.totalContributions,
+              sharpeRatio: simResult.metrics.sharpeRatio
+            },
+            comparison: {
+              withRebalancing: simResult.metrics,
+              buyAndHold: buyHoldResult.metrics,
+              rebalancingBenefit: simResult.metrics.totalReturn - buyHoldResult.metrics.totalReturn
+            },
+            equity: simResult.equity.filter((_, i) => i % Math.max(1, Math.floor(simResult.equity.length / 200)) === 0), // Downsample
+          };
+          artifactType = 'portfolio_sim';
+        }
+        
+        // Save artifact
+        if (artifactJson) {
+          const { error: artifactError } = await supabase
+            .from('artifacts')
+            .insert({
+              project_run_id: run.id,
+              type: artifactType,
+              artifact_json: artifactJson,
+            });
+          
+          if (artifactError) {
+            console.error('Artifact creation error:', artifactError);
           }
         }
         
-        // Sort by quality
-        setups.sort((a, b) => {
-          const scoreOrder = { A: 0, B: 1, C: 2 };
-          return (scoreOrder[a.quality.score as keyof typeof scoreOrder] || 3) - 
-                 (scoreOrder[b.quality.score as keyof typeof scoreOrder] || 3);
-        });
-        
-        // Create artifact
-        const artifactJson = {
-          projectType: 'setup_finder',
-          timeframe,
-          generatedAt: new Date().toISOString(),
-          executionAssumptions: {
-            bracketLevelsVersion: BRACKET_LEVELS_VERSION,
-            priceRounding: ROUNDING_CONFIG,
-            patternRegistry: Object.keys(WEDGE_PATTERN_REGISTRY),
-          },
-          setups,
-        };
-        
-        const { error: artifactError } = await supabase
-          .from('artifacts')
-          .insert({
-            project_run_id: run.id,
-            type: 'setup_list',
-            artifact_json: artifactJson,
-          });
-        
-        if (artifactError) {
-          console.error('Artifact creation error:', artifactError);
-        }
-        
-        // Also create trade_plans rows
-        for (const setup of setups) {
-          await supabase.from('trade_plans').insert({
-            project_run_id: run.id,
-            instrument: setup.instrument,
-            direction: setup.direction,
-            entry_price: setup.tradePlan.entry,
-            stop_loss: setup.tradePlan.stopLoss,
-            take_profit: setup.tradePlan.takeProfit,
-            rr_ratio: setup.tradePlan.rr,
-            time_stop_bars: setup.tradePlan.timeStopBars,
-            bracket_levels_version: BRACKET_LEVELS_VERSION,
-            metadata: {
-              patternId: setup.patternId,
-              patternName: setup.patternName,
-              quality: setup.quality,
-            },
-          });
-        }
-        
         // Deduct credits
-        const creditsUsed = creditsEstimated;
         if (credits) {
           await supabase
             .from('usage_credits')
-            .update({ credits_balance: credits.credits_balance - creditsUsed })
+            .update({ credits_balance: credits.credits_balance - creditsEstimated })
             .eq('user_id', user.id);
         }
         
-        // Update run status to succeeded
+        // Update run status
         await supabase
           .from('project_runs')
           .update({
             status: 'succeeded',
             finished_at: new Date().toISOString(),
-            credits_used: creditsUsed,
+            credits_used: creditsEstimated,
           })
           .eq('id', run.id);
         
-        // Emit success analytics
-        await supabase.from('analytics_events').insert({
-          user_id: user.id,
-          event_name: 'project_run_succeeded',
-          properties: {
-            projectType: 'setup_finder',
-            timeframe,
-            instrumentCount: instruments.length,
-            patternCount: patterns.length,
-            setupsFound: setups.length,
-            creditsUsed,
-          },
-        });
-        
-        console.log(`Setup Finder completed: ${setups.length} setups found`);
+        console.log(`[${projectType}] Completed successfully`);
         
         return new Response(JSON.stringify({
           runId: run.id,
           projectId: project.id,
           status: 'succeeded',
-          setupsFound: setups.length,
+          setupsFound: artifactJson?.setups?.length || artifactJson?.trades?.length || artifactJson?.holdings?.length || 0,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
         
-      } catch (execError) {
+      } catch (execError: any) {
         console.error('Execution error:', execError);
         
-        // Update run status to failed
         await supabase
           .from('project_runs')
           .update({
@@ -770,16 +1321,6 @@ serve(async (req) => {
             error_message: execError.message,
           })
           .eq('id', run.id);
-        
-        // Emit failure analytics
-        await supabase.from('analytics_events').insert({
-          user_id: user.id,
-          event_name: 'project_run_failed',
-          properties: {
-            projectType: 'setup_finder',
-            error: execError.message,
-          },
-        });
         
         return new Response(JSON.stringify({
           runId: run.id,
@@ -810,7 +1351,6 @@ serve(async (req) => {
         await supabase.auth.setSession({ access_token: token, refresh_token: '' });
       }
       
-      // Get run
       const { data: run, error: runError } = await supabase
         .from('project_runs')
         .select('*, projects(*)')
@@ -824,14 +1364,12 @@ serve(async (req) => {
         });
       }
       
-      // Get artifact if exists
       let artifact = null;
       if (run.status === 'succeeded') {
         const { data: artifactData } = await supabase
           .from('artifacts')
           .select('*')
           .eq('project_run_id', runId)
-          .eq('type', 'setup_list')
           .single();
         artifact = artifactData;
       }
@@ -858,7 +1396,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Edge function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
