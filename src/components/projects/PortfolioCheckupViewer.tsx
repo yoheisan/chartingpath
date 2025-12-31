@@ -72,6 +72,12 @@ interface PortfolioCheckupViewerProps {
 const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps) => {
   const navigate = useNavigate();
   
+  // Safely handle missing data with fallbacks
+  const summary = artifact.summary || { totalHoldings: 0, highRiskCount: 0, averageVolatility: 0, alertSuggestionsCount: 0 };
+  const holdings = artifact.holdings || [];
+  const alertSuggestions = artifact.alertSuggestions || [];
+  const riskMetrics = artifact.riskMetrics || { concentrationRisk: 0, highRiskHoldings: 0, averageVolatility: 0 };
+  
   const getRiskBadge = (level: 'low' | 'medium' | 'high') => {
     switch (level) {
       case 'low':
@@ -80,6 +86,8 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
         return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Medium</Badge>;
       case 'high':
         return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">High Risk</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
   
@@ -102,17 +110,17 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <PieChart className="h-5 w-5 text-primary" />
-              <div className="text-2xl font-bold">{artifact.summary.totalHoldings}</div>
+              <div className="text-2xl font-bold">{summary.totalHoldings}</div>
             </div>
             <p className="text-sm text-muted-foreground">Holdings Analyzed</p>
           </CardContent>
         </Card>
         
-        <Card className={`border-border/50 ${artifact.summary.highRiskCount > 0 ? 'bg-red-500/5 border-red-500/20' : 'bg-card/50'}`}>
+        <Card className={`border-border/50 ${summary.highRiskCount > 0 ? 'bg-red-500/5 border-red-500/20' : 'bg-card/50'}`}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Shield className={`h-5 w-5 ${artifact.summary.highRiskCount > 0 ? 'text-red-500' : 'text-green-500'}`} />
-              <div className="text-2xl font-bold">{artifact.summary.highRiskCount}</div>
+              <Shield className={`h-5 w-5 ${summary.highRiskCount > 0 ? 'text-red-500' : 'text-green-500'}`} />
+              <div className="text-2xl font-bold">{summary.highRiskCount}</div>
             </div>
             <p className="text-sm text-muted-foreground">High Risk Holdings</p>
           </CardContent>
@@ -122,7 +130,7 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-violet-500" />
-              <div className="text-2xl font-bold">{(artifact.summary.averageVolatility * 100).toFixed(1)}%</div>
+              <div className="text-2xl font-bold">{((summary.averageVolatility || 0) * 100).toFixed(1)}%</div>
             </div>
             <p className="text-sm text-muted-foreground">Avg Volatility</p>
           </CardContent>
@@ -132,7 +140,7 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-amber-500" />
-              <div className="text-2xl font-bold">{artifact.summary.alertSuggestionsCount}</div>
+              <div className="text-2xl font-bold">{summary.alertSuggestionsCount}</div>
             </div>
             <p className="text-sm text-muted-foreground">Alert Suggestions</p>
           </CardContent>
@@ -140,7 +148,7 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
       </div>
       
       {/* Alert Suggestions */}
-      {artifact.alertSuggestions.length > 0 && (
+      {alertSuggestions.length > 0 && (
         <Card className="border-amber-500/20 bg-amber-500/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -151,7 +159,7 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {artifact.alertSuggestions.map((alert, idx) => (
+              {alertSuggestions.map((alert, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-background/50">
                   <div className="flex items-center gap-3">
                     {alert.direction === 'long' ? (
@@ -203,27 +211,27 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
               </TableRow>
             </TableHeader>
             <TableBody>
-              {artifact.holdings.map(holding => (
+              {holdings.map(holding => (
                 <TableRow key={holding.symbol}>
                   <TableCell className="font-medium">{holding.symbol}</TableCell>
-                  <TableCell className="font-mono">${holding.lastPrice.toFixed(2)}</TableCell>
+                  <TableCell className="font-mono">${(holding.lastPrice || 0).toFixed(2)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getSignalIcon(holding.patternSignal)}
-                      <span className="text-sm">{holding.currentPattern}</span>
+                      {getSignalIcon(holding.patternSignal || 'neutral')}
+                      <span className="text-sm">{holding.currentPattern || 'None'}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{holding.regime}</TableCell>
+                  <TableCell className="text-sm">{holding.regime || 'Unknown'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {(holding.volatility * 100).toFixed(1)}%
+                    {((holding.volatility || 0) * 100).toFixed(1)}%
                   </TableCell>
-                  <TableCell>{getRiskBadge(holding.riskLevel)}</TableCell>
+                  <TableCell>{getRiskBadge(holding.riskLevel || 'medium')}</TableCell>
                   <TableCell>
                     <Badge variant={
                       holding.recommendation === 'watch' ? 'destructive' : 
                       holding.recommendation === 'hold' ? 'default' : 'secondary'
                     }>
-                      {holding.recommendation}
+                      {holding.recommendation || 'neutral'}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -234,11 +242,11 @@ const PortfolioCheckupViewer = ({ artifact, runId }: PortfolioCheckupViewerProps
       </Card>
       
       {/* Risk Concentration Warning */}
-      {artifact.riskMetrics.concentrationRisk > 0.3 && (
+      {riskMetrics.concentrationRisk > 0.3 && (
         <Alert className="border-red-500/30 bg-red-500/5">
           <AlertTriangle className="h-4 w-4 text-red-500" />
           <AlertDescription>
-            <strong>High Risk Concentration:</strong> {(artifact.riskMetrics.concentrationRisk * 100).toFixed(0)}% of your holdings are in high-risk assets. Consider diversifying.
+            <strong>High Risk Concentration:</strong> {(riskMetrics.concentrationRisk * 100).toFixed(0)}% of your holdings are in high-risk assets. Consider diversifying.
           </AlertDescription>
         </Alert>
       )}

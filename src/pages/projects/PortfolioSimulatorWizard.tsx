@@ -75,7 +75,13 @@ const PortfolioSimulatorWizard = () => {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
   
-  const caps = PLANS_CONFIG.tiers[userTier].projects.portfolio_sim;
+  // Safely access caps with fallback
+  const tierConfig = PLANS_CONFIG.tiers[userTier];
+  const caps = tierConfig?.projects?.portfolio_sim ?? {
+    maxHoldings: 5,
+    maxLookbackYears: 5,
+    rebalanceOptions: ['never', 'yearly', 'quarterly'],
+  };
   const totalWeight = holdings.reduce((sum, h) => sum + h.weight, 0);
   
   useEffect(() => {

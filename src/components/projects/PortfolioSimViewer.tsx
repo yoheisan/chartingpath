@@ -69,14 +69,19 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
   
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   
-  const equityData = artifact.equity.map(e => ({
+  // Safely handle missing or empty data
+  const equityData = (artifact.equity || []).map(e => ({
     ...e,
     date: new Date(e.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-    drawdownPct: e.drawdown * -100,
+    drawdownPct: (e.drawdown || 0) * -100,
   }));
   
-  const isPositiveReturn = artifact.summary.totalReturn >= 0;
-  const rebalancingHelped = artifact.comparison.rebalancingBenefit > 0;
+  const summary = artifact.summary || { totalReturn: 0, cagr: 0, maxDrawdown: 0, finalValue: 0, totalContributions: 0, sharpeRatio: 0 };
+  const comparison = artifact.comparison || { withRebalancing: { totalReturn: 0 }, buyAndHold: { totalReturn: 0 }, rebalancingBenefit: 0 };
+  const config = artifact.config || { initialValue: 0, rebalanceFrequency: 'never', dcaAmount: 0, dcaFrequency: 'monthly', holdings: [] };
+  
+  const isPositiveReturn = summary.totalReturn >= 0;
+  const rebalancingHelped = comparison.rebalancingBenefit > 0;
   
   return (
     <div className="space-y-6">
@@ -86,7 +91,7 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-primary" />
-              <div className="text-2xl font-bold">{formatCurrency(artifact.summary.finalValue)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(summary.finalValue)}</div>
             </div>
             <p className="text-sm text-muted-foreground">Final Value</p>
           </CardContent>
@@ -101,7 +106,7 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
                 <ArrowDownRight className="h-5 w-5 text-red-500" />
               )}
               <div className={`text-2xl font-bold ${isPositiveReturn ? 'text-green-500' : 'text-red-500'}`}>
-                {formatPercent(artifact.summary.totalReturn)}
+                {formatPercent(summary.totalReturn)}
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Total Return</p>
@@ -112,7 +117,7 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-violet-500" />
-              <div className="text-2xl font-bold">{formatPercent(artifact.summary.cagr)}</div>
+              <div className="text-2xl font-bold">{formatPercent(summary.cagr)}</div>
             </div>
             <p className="text-sm text-muted-foreground">CAGR</p>
           </CardContent>
@@ -122,7 +127,7 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-red-500" />
-              <div className="text-2xl font-bold text-red-500">{formatPercent(artifact.summary.maxDrawdown)}</div>
+              <div className="text-2xl font-bold text-red-500">{formatPercent(summary.maxDrawdown)}</div>
             </div>
             <p className="text-sm text-muted-foreground">Max Drawdown</p>
           </CardContent>
@@ -140,35 +145,35 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
               <PiggyBank className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-muted-foreground">Initial</div>
-                <div className="font-medium">{formatCurrency(artifact.config.initialValue)}</div>
+                <div className="font-medium">{formatCurrency(config.initialValue)}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-muted-foreground">Rebalance</div>
-                <div className="font-medium capitalize">{artifact.config.rebalanceFrequency}</div>
+                <div className="font-medium capitalize">{config.rebalanceFrequency}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-muted-foreground">DCA/Month</div>
-                <div className="font-medium">{artifact.config.dcaAmount > 0 ? formatCurrency(artifact.config.dcaAmount) : 'None'}</div>
+                <div className="font-medium">{config.dcaAmount > 0 ? formatCurrency(config.dcaAmount) : 'None'}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Percent className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-muted-foreground">Sharpe</div>
-                <div className="font-medium">{artifact.summary.sharpeRatio.toFixed(2)}</div>
+                <div className="font-medium">{summary.sharpeRatio.toFixed(2)}</div>
               </div>
             </div>
           </div>
           
           <div className="mt-4 pt-4 border-t border-border/50">
             <div className="flex flex-wrap gap-2">
-              {artifact.config.holdings.map(h => (
+              {(config.holdings || []).map(h => (
                 <Badge key={h.symbol} variant="secondary">
                   {h.symbol}: {(h.weight * 100).toFixed(0)}%
                 </Badge>
@@ -190,16 +195,16 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
               <div className="text-sm text-muted-foreground">With Rebalancing</div>
-              <div className="text-xl font-bold">{formatPercent(artifact.comparison.withRebalancing.totalReturn)}</div>
+              <div className="text-xl font-bold">{formatPercent(comparison.withRebalancing?.totalReturn || 0)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Buy & Hold</div>
-              <div className="text-xl font-bold">{formatPercent(artifact.comparison.buyAndHold.totalReturn)}</div>
+              <div className="text-xl font-bold">{formatPercent(comparison.buyAndHold?.totalReturn || 0)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Rebalancing Benefit</div>
               <div className={`text-xl font-bold ${rebalancingHelped ? 'text-green-500' : 'text-red-500'}`}>
-                {rebalancingHelped ? '+' : ''}{formatPercent(artifact.comparison.rebalancingBenefit)}
+                {rebalancingHelped ? '+' : ''}{formatPercent(comparison.rebalancingBenefit)}
               </div>
             </div>
           </div>
@@ -211,7 +216,7 @@ const PortfolioSimViewer = ({ artifact, runId }: PortfolioSimViewerProps) => {
         <CardHeader>
           <CardTitle className="text-lg">Portfolio Value Over Time</CardTitle>
           <CardDescription>
-            {artifact.lookbackYears} year simulation • Total contributed: {formatCurrency(artifact.summary.totalContributions)}
+            {artifact.lookbackYears} year simulation • Total contributed: {formatCurrency(summary.totalContributions)}
           </CardDescription>
         </CardHeader>
         <CardContent>

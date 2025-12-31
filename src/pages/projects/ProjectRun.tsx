@@ -298,8 +298,8 @@ const ProjectRun = () => {
           </>
         )}
         
-        {/* Empty State */}
-        {run?.status === 'succeeded' && (!artifact || artifact.setups.length === 0) && (
+        {/* Empty State - only show for setup_finder with no setups */}
+        {run?.status === 'succeeded' && artifact?.projectType === 'setup_finder' && (!artifact.setups || artifact.setups.length === 0) && (
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardContent className="py-12">
               <div className="text-center">
