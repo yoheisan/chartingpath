@@ -37,7 +37,13 @@ export type AnalyticsEvent =
   | 'pine_copied'
   | 'pine_downloaded'
   | 'pricing_viewed'
-  | 'upgrade_clicked';
+  | 'upgrade_clicked'
+  // Landing page events
+  | 'landing_cta_setup_finder'
+  | 'landing_cta_create_alert'
+  | 'landing_actioncard_clicked'
+  | 'landing_presets_view_all'
+  | 'landing_pricing_view';
 
 // Event properties types
 export interface PresetLoadedProps {
