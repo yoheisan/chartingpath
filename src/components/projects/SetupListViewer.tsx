@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,19 @@ import {
   ShieldAlert,
   Clock,
   CheckCircle2,
-  Loader2
+  Loader2,
+  BarChart3,
+  Expand
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
+import ThumbnailChart from '@/components/charts/ThumbnailChart';
+import FullChartViewer from '@/components/charts/FullChartViewer';
+import { SetupWithVisuals, CompressedBar, VisualSpec } from '@/types/VisualSpec';
 
-interface Setup {
+// Legacy interface support for backward compatibility
+interface LegacySetup {
   instrument: string;
   patternId: string;
   patternName: string;
@@ -37,8 +43,11 @@ interface Setup {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
   };
-  visualSpec: null;
+  visualSpec?: VisualSpec | null;
+  bars?: CompressedBar[];
 }
+
+type Setup = LegacySetup | SetupWithVisuals;
 
 interface SetupArtifact {
   projectType: string;
@@ -56,19 +65,27 @@ interface SetupListViewerProps {
   runId: string;
 }
 
-const TradePlanCard = ({ 
+// Type guard to check if setup has visual data
+function hasVisualData(setup: Setup): setup is SetupWithVisuals {
+  return !!(setup.bars && setup.bars.length > 0 && setup.visualSpec);
+}
+
+const SetupCard = ({ 
   setup, 
   onCopy, 
   onCreateAlert,
+  onViewFull,
   isCreatingAlert 
 }: { 
   setup: Setup; 
   onCopy: () => void;
   onCreateAlert: () => void;
+  onViewFull: () => void;
   isCreatingAlert: boolean;
 }) => {
-  const { tradePlan, direction, patternName, instrument } = setup;
+  const { tradePlan, direction, patternName, instrument, quality } = setup;
   const isLong = direction === 'long';
+  const hasChart = hasVisualData(setup);
   
   const formatPrice = (price: number) => {
     const decimals = tradePlan.priceRounding?.priceDecimals || 2;
@@ -76,105 +93,126 @@ const TradePlanCard = ({
   };
   
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors">
-      <CardHeader className="pb-3">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all group">
+      {/* Thumbnail Chart */}
+      {hasChart && (
+        <div className="relative">
+          <ThumbnailChart 
+            bars={setup.bars!} 
+            visualSpec={setup.visualSpec!} 
+            height={100}
+            onClick={onViewFull}
+          />
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button 
+              size="icon" 
+              variant="secondary" 
+              className="h-6 w-6"
+              onClick={(e) => { e.stopPropagation(); onViewFull(); }}
+            >
+              <Expand className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* No chart fallback */}
+      {!hasChart && (
+        <div className="h-[100px] bg-muted/30 flex items-center justify-center text-muted-foreground">
+          <BarChart3 className="h-8 w-8 opacity-50" />
+        </div>
+      )}
+      
+      <CardHeader className="pb-2 pt-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isLong ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-md ${isLong ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
               {isLong ? (
-                <TrendingUp className="h-5 w-5 text-green-500" />
+                <TrendingUp className="h-4 w-4 text-green-500" />
               ) : (
-                <TrendingDown className="h-5 w-5 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-red-500" />
               )}
             </div>
             <div>
-              <CardTitle className="text-lg">{instrument}</CardTitle>
-              <p className="text-sm text-muted-foreground">{patternName}</p>
+              <CardTitle className="text-base">{instrument}</CardTitle>
+              <p className="text-xs text-muted-foreground">{patternName}</p>
             </div>
           </div>
           <Badge 
             variant="outline"
-            className={`font-semibold ${
-              setup.quality.score === 'A' 
+            className={`text-xs font-semibold ${
+              quality.score === 'A' 
                 ? 'border-green-500/50 text-green-500' 
-                : setup.quality.score === 'B'
+                : quality.score === 'B'
                   ? 'border-yellow-500/50 text-yellow-500'
                   : 'border-muted-foreground/50'
             }`}
           >
-            Grade {setup.quality.score}
+            {quality.score}
           </Badge>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        {/* Trade Levels */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Target className="h-3 w-3" />
+      <CardContent className="space-y-3 pt-0">
+        {/* Compact Trade Levels */}
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Target className="h-2.5 w-2.5" />
               Entry
             </div>
             <p className="font-mono font-semibold">{formatPrice(tradePlan.entry)}</p>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ShieldAlert className="h-3 w-3 text-red-500" />
-              Stop Loss
+          <div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <ShieldAlert className="h-2.5 w-2.5 text-red-500" />
+              SL
             </div>
             <p className="font-mono font-semibold text-red-500">{formatPrice(tradePlan.stopLoss)}</p>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <CheckCircle2 className="h-3 w-3 text-green-500" />
-              Take Profit
+          <div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <CheckCircle2 className="h-2.5 w-2.5 text-green-500" />
+              TP
             </div>
             <p className="font-mono font-semibold text-green-500">{formatPrice(tradePlan.takeProfit)}</p>
           </div>
         </div>
         
-        <Separator />
-        
         {/* Stats Row */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-muted-foreground">R:R</span>
-              <span className="ml-1 font-semibold text-primary">{tradePlan.rr.toFixed(2)}</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{tradePlan.timeStopBars} bars</span>
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            v{tradePlan.bracketLevelsVersion}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">R:R {tradePlan.rr.toFixed(2)}</span>
+          <div className="flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            {tradePlan.timeStopBars} bars
           </div>
         </div>
         
+        <Separator />
+        
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={onCopy}
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
           >
-            <Copy className="h-4 w-4 mr-2" />
-            Copy Plan
+            <Copy className="h-3 w-3 mr-1" />
+            Copy
           </Button>
           <Button 
             size="sm" 
             onClick={onCreateAlert}
             disabled={isCreatingAlert}
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
           >
             {isCreatingAlert ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
             ) : (
-              <Bell className="h-4 w-4 mr-2" />
+              <Bell className="h-3 w-3 mr-1" />
             )}
-            Create Alert
+            Alert
           </Button>
         </div>
       </CardContent>
@@ -184,8 +222,13 @@ const TradePlanCard = ({
 
 const SetupListViewer = ({ artifact, runId }: SetupListViewerProps) => {
   const [creatingAlertFor, setCreatingAlertFor] = useState<string | null>(null);
+  const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   
-  const handleCopyTradePlan = async (setup: Setup) => {
+  const longSetups = useMemo(() => artifact.setups.filter(s => s.direction === 'long'), [artifact.setups]);
+  const shortSetups = useMemo(() => artifact.setups.filter(s => s.direction === 'short'), [artifact.setups]);
+  
+  const handleCopyTradePlan = useCallback(async (setup: Setup) => {
     const { tradePlan, instrument, patternName, direction } = setup;
     
     const text = `
@@ -205,16 +248,15 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
     await navigator.clipboard.writeText(text);
     toast.success('Trade plan copied to clipboard');
     
-    // Track analytics
     track('trade_plan_copied', {
       projectType: 'setup_finder',
       instrument,
       pattern: setup.patternId,
       timeframe: artifact.timeframe,
     });
-  };
+  }, [artifact.generatedAt, artifact.timeframe]);
   
-  const handleCreateAlert = async (setup: Setup) => {
+  const handleCreateAlert = useCallback(async (setup: Setup) => {
     setCreatingAlertFor(setup.instrument);
     
     try {
@@ -225,7 +267,6 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         return;
       }
       
-      // Get user profile for plan info
       const { data: profile } = await supabase
         .from('profiles')
         .select('subscription_plan')
@@ -239,7 +280,6 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
           pattern: setup.patternId,
           timeframe: artifact.timeframe === '4h' ? '4H' : '1D',
           wedgeEnabled: true,
-          // Include bracket levels in metadata (stored in pattern_data when alert triggers)
           bracketLevels: {
             entry: setup.tradePlan.entry,
             stopLoss: setup.tradePlan.stopLoss,
@@ -258,7 +298,6 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
       
       toast.success(`Alert created for ${setup.instrument}`);
       
-      // Track analytics
       track('alert_created', {
         symbol: setup.instrument,
         pattern: setup.patternId,
@@ -266,7 +305,6 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         plan_tier: profile?.subscription_plan || 'free',
       });
       
-      // Also emit project-specific event
       await supabase.from('analytics_events').insert({
         user_id: session.user.id,
         event_name: 'alert_created_from_project',
@@ -285,10 +323,19 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
     } finally {
       setCreatingAlertFor(null);
     }
-  };
+  }, [artifact.timeframe, runId]);
   
-  const longSetups = artifact.setups.filter(s => s.direction === 'long');
-  const shortSetups = artifact.setups.filter(s => s.direction === 'short');
+  const handleViewFull = useCallback((setup: Setup) => {
+    if (hasVisualData(setup)) {
+      setSelectedSetup(setup);
+      setIsViewerOpen(true);
+      track('thumbnail_opened', {
+        projectType: 'setup_finder',
+        instrument: setup.instrument,
+        pattern: setup.patternId,
+      });
+    }
+  }, []);
   
   return (
     <div className="space-y-6">
@@ -322,18 +369,40 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         </CardContent>
       </Card>
       
-      {/* Setup Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Setup Grid - 2/3 columns responsive */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {artifact.setups.map((setup, index) => (
-          <TradePlanCard
+          <SetupCard
             key={`${setup.instrument}-${setup.patternId}-${index}`}
             setup={setup}
             onCopy={() => handleCopyTradePlan(setup)}
             onCreateAlert={() => handleCreateAlert(setup)}
+            onViewFull={() => handleViewFull(setup)}
             isCreatingAlert={creatingAlertFor === setup.instrument}
           />
         ))}
       </div>
+      
+      {/* Empty state */}
+      {artifact.setups.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">No setups found for the selected criteria</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your patterns or universe selection</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Full Chart Viewer Modal */}
+      <FullChartViewer
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        setup={selectedSetup}
+        onCopyPlan={() => selectedSetup && handleCopyTradePlan(selectedSetup)}
+        onCreateAlert={() => selectedSetup && handleCreateAlert(selectedSetup)}
+        isCreatingAlert={!!creatingAlertFor}
+      />
     </div>
   );
 };

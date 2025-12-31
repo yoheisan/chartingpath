@@ -541,6 +541,7 @@ serve(async (req) => {
             
             if (detected) {
               const lastBar = bars[bars.length - 1];
+              const signalTs = lastBar.date;
               const atr = calculateATR(bars, 14);
               
               // Compute bracket levels
@@ -555,21 +556,92 @@ serve(async (req) => {
                 takeProfitMethod: 'ratio',
               });
               
+              const entryPrice = bracketLevels.stopLossPrice < lastBar.close 
+                ? lastBar.close 
+                : bracketLevels.takeProfitPrice;
+              
+              // ============= VISUAL SPEC GENERATION =============
+              // Visual window parameters
+              const lookbackBarsForVisual = 120;
+              const forwardBarsForVisual = 30;
+              
+              // Find signal bar index in the bars array
+              const signalBarIndex = bars.findIndex(b => b.date === signalTs);
+              const actualSignalIdx = signalBarIndex >= 0 ? signalBarIndex : bars.length - 1;
+              
+              // Calculate visual window indices
+              const visualStartIdx = Math.max(0, actualSignalIdx - lookbackBarsForVisual);
+              const visualEndIdx = Math.min(bars.length - 1, actualSignalIdx + forwardBarsForVisual);
+              
+              // Extract visual window bars (capped at 200)
+              let visualBars = bars.slice(visualStartIdx, visualEndIdx + 1);
+              if (visualBars.length > 200) {
+                // Keep last 200 bars if too many
+                visualBars = visualBars.slice(-200);
+              }
+              
+              // Compress bars for artifact (minimize keys for size)
+              const compressedBars = visualBars.map(b => ({
+                t: b.date,
+                o: Number(b.open.toFixed(6)),
+                h: Number(b.high.toFixed(6)),
+                l: Number(b.low.toFixed(6)),
+                c: Number(b.close.toFixed(6)),
+                v: b.volume || 0,
+              }));
+              
+              // Calculate yDomain with 3% padding
+              const allLows = visualBars.map(b => b.low);
+              const allHighs = visualBars.map(b => b.high);
+              // Also include entry/sl/tp in domain
+              const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
+              const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
+              const yMin = minPrice * 0.97;
+              const yMax = maxPrice * 1.03;
+              
+              // Build visualSpec
+              const visualSpec = {
+                version: '1.0.0',
+                symbol: instrument,
+                timeframe,
+                patternId,
+                signalTs,
+                window: {
+                  startTs: visualBars[0]?.date || signalTs,
+                  endTs: visualBars[visualBars.length - 1]?.date || signalTs,
+                },
+                yDomain: {
+                  min: Number(yMin.toFixed(6)),
+                  max: Number(yMax.toFixed(6)),
+                },
+                overlays: [
+                  { type: 'hline', id: 'entry', price: Number(entryPrice.toFixed(6)), label: 'Entry', style: 'primary' },
+                  { type: 'hline', id: 'sl', price: Number(bracketLevels.stopLossPrice.toFixed(6)), label: 'Stop', style: 'destructive' },
+                  { type: 'hline', id: 'tp', price: Number(bracketLevels.takeProfitPrice.toFixed(6)), label: 'Target', style: 'positive' },
+                  { 
+                    type: 'box', 
+                    id: 'patternWindow', 
+                    startTs: bars[Math.max(0, actualSignalIdx - 20)]?.date || signalTs,
+                    endTs: signalTs,
+                    label: 'Pattern Window',
+                    style: 'muted'
+                  }
+                ],
+              };
+              
               setups.push({
                 instrument,
                 patternId,
                 patternName: pattern.displayName,
                 direction: pattern.direction,
-                signalTs: lastBar.date,
+                signalTs,
                 quality: {
                   score: atr > 0 ? 'B' : 'C',
                   reasons: ['Pattern detected on latest bar'],
                 },
                 tradePlan: {
                   entryType: 'bar_close',
-                  entry: bracketLevels.stopLossPrice < lastBar.close 
-                    ? lastBar.close 
-                    : bracketLevels.takeProfitPrice,
+                  entry: entryPrice,
                   stopLoss: bracketLevels.stopLossPrice,
                   takeProfit: bracketLevels.takeProfitPrice,
                   rr: bracketLevels.riskRewardRatio,
@@ -579,10 +651,11 @@ serve(async (req) => {
                   bracketLevelsVersion: BRACKET_LEVELS_VERSION,
                   priceRounding: ROUNDING_CONFIG,
                 },
-                visualSpec: null,
+                bars: compressedBars,
+                visualSpec,
               });
               
-              console.log(`Found ${patternId} on ${instrument}`);
+              console.log(`Found ${patternId} on ${instrument} with ${compressedBars.length} visual bars`);
             }
           }
         }
