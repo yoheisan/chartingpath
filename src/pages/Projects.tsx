@@ -159,18 +159,32 @@ const ProjectCard = ({
         </div>
         
         {/* Action Button */}
-        <Button 
-          onClick={onStart}
-          disabled={disabled}
-          className="w-full group/btn relative overflow-hidden"
-          variant="outline"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Start Project
-            <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
-          </span>
-        </Button>
+        {template.badge === 'Coming Next' ? (
+          <Button 
+            disabled
+            className="w-full cursor-not-allowed opacity-50"
+            variant="outline"
+            title="Coming soon - this feature is under development"
+          >
+            <span className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Coming Soon
+            </span>
+          </Button>
+        ) : (
+          <Button 
+            onClick={onStart}
+            disabled={disabled}
+            className="w-full group/btn relative overflow-hidden"
+            variant="outline"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Start Project
+              <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
+            </span>
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

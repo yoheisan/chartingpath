@@ -68,8 +68,8 @@ const Navigation = () => {
           <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
           <Link to="/tools/market-breadth" className="text-sm text-muted-foreground py-1">Market Breadth Report</Link>
           <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
-          <Link to="/paper-trading" className="text-sm text-muted-foreground py-1">Paper Trading</Link>
-          <Link to="/quiz" className="text-sm text-muted-foreground py-1">Quizzes</Link>
+          <Link to="/members/trading" className="text-sm text-muted-foreground py-1">Paper Trading</Link>
+          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Quizzes</Link>
         </div>
       </div>
       
@@ -178,10 +178,10 @@ const Navigation = () => {
                       <Link to="/tools/economic-calendar">Economic Calendar</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/paper-trading">Paper Trading</Link>
+                      <Link to="/members/trading">Paper Trading</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/quiz">Quizzes</Link>
+                      <Link to="/chart-patterns/quiz">Quizzes</Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   
