@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createChart, IChartApi, CandlestickData, Time } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,8 +83,8 @@ export default function FullChartViewer({
 
     chartRef.current = chart;
 
-    // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
+    // Create candlestick series (v5 API)
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
       borderUpColor: '#22c55e',

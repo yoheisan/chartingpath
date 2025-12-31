@@ -31,7 +31,13 @@ export type AnalyticsEvent =
   | 'project_run_started'
   | 'project_run_succeeded'
   | 'project_run_failed'
-  | 'trade_plan_copied';
+  | 'trade_plan_copied'
+  | 'thumbnail_opened'
+  | 'pine_generated'
+  | 'pine_copied'
+  | 'pine_downloaded'
+  | 'pricing_viewed'
+  | 'upgrade_clicked';
 
 // Event properties types
 export interface PresetLoadedProps {

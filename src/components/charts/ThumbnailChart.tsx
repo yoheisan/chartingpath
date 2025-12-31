@@ -1,5 +1,5 @@
 import { useEffect, useRef, memo } from 'react';
-import { createChart, IChartApi, CandlestickData, Time } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
 import { CompressedBar, VisualSpec } from '@/types/VisualSpec';
 
 interface ThumbnailChartProps {
@@ -49,8 +49,8 @@ const ThumbnailChart = memo(({ bars, visualSpec, height = 120, onClick }: Thumbn
 
     chartRef.current = chart;
 
-    // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
+    // Create candlestick series (v5 API)
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
       borderUpColor: '#22c55e',
