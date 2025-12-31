@@ -61,7 +61,12 @@ const PortfolioCheckupWizard = () => {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
   
-  const caps = PLANS_CONFIG.tiers[userTier].projects.portfolio_checkup;
+  // Safely access caps with fallback
+  const tierConfig = PLANS_CONFIG.tiers[userTier];
+  const caps = tierConfig?.projects?.portfolio_checkup ?? {
+    maxHoldings: 10,
+    maxLookbackYears: 1,
+  };
   
   useEffect(() => {
     const fetchEstimate = async () => {
