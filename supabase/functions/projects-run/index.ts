@@ -269,9 +269,10 @@ serve(async (req) => {
     // ============= ESTIMATE ENDPOINT =============
     if (path === 'estimate' && req.method === 'POST') {
       const body = await req.json();
-      const { assetClass, universe, patterns, timeframe, lookbackYears = 1 } = body;
+      const { projectType = 'setup_finder', assetClass, universe, patterns, timeframe, lookbackYears = 1, instruments: directInstruments } = body;
       
-      const instruments = PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      // Resolve instruments either from universe or direct list
+      const instruments = directInstruments || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
       // Estimate cache hit ratio
@@ -279,7 +280,7 @@ serve(async (req) => {
       
       // Calculate credits using deterministic formula
       const estimateInput: EstimateCreditsInput = {
-        projectType: 'setup_finder',
+        projectType: projectType as 'setup_finder' | 'pattern_lab',
         instrumentCount: instruments.length,
         patternCount: patterns.length,
         lookbackYears,
@@ -326,7 +327,7 @@ serve(async (req) => {
             }
             
             // Validate against tier caps
-            const validation = validateProjectInputs(tier, 'setup_finder', {
+            const validation = validateProjectInputs(tier, projectType as 'setup_finder' | 'pattern_lab', {
               instrumentCount: instruments.length,
               lookbackYears,
               patternCount: patterns.length,
@@ -395,15 +396,16 @@ serve(async (req) => {
       const body = await req.json();
       const { projectType, inputs } = body;
       
-      if (projectType !== 'setup_finder') {
+      if (projectType !== 'setup_finder' && projectType !== 'pattern_lab') {
         return new Response(JSON.stringify({ error: 'Unsupported project type' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      const { assetClass, universe, patterns, timeframe, riskPerTrade = 1, lookbackYears = 1 } = inputs;
-      const instruments = PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      // Handle both setup_finder and pattern_lab inputs
+      // Resolve instruments from universe or direct list
+      const instruments = directInstruments || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
       
       // Calculate credits using deterministic formula
       const creditResult = calculateCredits({
