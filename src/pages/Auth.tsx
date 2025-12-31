@@ -92,7 +92,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/members/trading`
+          redirectTo: `${window.location.origin}${redirectPath}`
         }
       });
 
@@ -234,7 +234,7 @@ const Auth = () => {
           description: "You have been logged in successfully",
         });
 
-        navigate("/members/trading");
+        navigate(redirectPath);
       }
     } catch (error: any) {
       toast({
