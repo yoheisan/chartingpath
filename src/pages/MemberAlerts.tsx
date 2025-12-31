@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import MemberNavigation from "@/components/MemberNavigation";
+import Layout from "@/components/Layout";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -390,65 +390,67 @@ const MemberAlerts = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <MemberNavigation />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-4">
-            {/* Loading skeleton */}
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Loading alerts...</p>
-            <div className="space-y-3 max-w-md mx-auto">
-              <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto"></div>
-              <div className="h-4 bg-muted rounded animate-pulse w-1/2 mx-auto"></div>
+      <Layout>
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Loading alerts...</p>
+              <div className="space-y-3 max-w-md mx-auto">
+                <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto"></div>
+                <div className="h-4 bg-muted rounded animate-pulse w-1/2 mx-auto"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Error state (including timeout)
   if (fetchError) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <MemberNavigation />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
+      <Layout>
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Card className="max-w-md w-full">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                  </div>
+                  <Button onClick={handleRetry} className="mt-4">
+                    <Bell className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
-                </div>
-                <Button onClick={handleRetry} className="mt-4">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!user) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <MemberNavigation />
-        <div className="text-center mt-8">
-          <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
-          <p className="text-muted-foreground mb-8">
-            Please log in to access chart pattern alerts.
-          </p>
-          <Button asChild>
-            <Link to="/auth?redirect=/members/alerts">Log In</Link>
-          </Button>
+      <Layout>
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <div className="text-center mt-8">
+            <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
+            <p className="text-muted-foreground mb-8">
+              Please log in to access chart pattern alerts.
+            </p>
+            <Button asChild>
+              <Link to="/auth?redirect=/members/alerts">Log In</Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -457,8 +459,8 @@ const MemberAlerts = () => {
   const canCreateMore = planLimits.max === 999999 || activeAlerts.length < planLimits.max;
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl">
-      <MemberNavigation />
+    <Layout>
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
         
       {/* Back Navigation */}
       <div className="mb-6">
@@ -723,7 +725,8 @@ const MemberAlerts = () => {
           <strong>Disclaimer:</strong> Alerts are for educational use only and do not constitute financial advice. Trading involves risk of loss. Past pattern performance does not guarantee future results.
         </p>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

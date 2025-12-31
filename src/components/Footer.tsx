@@ -27,14 +27,16 @@ const Footer = () => {
                 </Link>
               </div>
               <p className="text-sm text-muted-foreground">
-                Crypto chart pattern alerts for TradingView traders
+                Multi-asset chart pattern detection for stocks, forex, crypto, and commodities.
               </p>
             </div>
 
-            {/* Core Links */}
             <div>
               <h3 className="font-semibold mb-4 text-foreground">Product</h3>
               <nav className="flex flex-col gap-2">
+                <Link to="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Projects
+                </Link>
                 <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Playbooks
                 </Link>
@@ -44,7 +46,7 @@ const Footer = () => {
                 <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Scripts
                 </Link>
-                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/projects/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pricing', 'Pricing')}
                 </Link>
               </nav>
