@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import MemberNavigation from "@/components/MemberNavigation";
+import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
 
 const LOADING_TIMEOUT_MS = 8000;
@@ -194,9 +194,8 @@ const MemberDashboard = () => {
   // Loading state with skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <Layout>
         <div className="container mx-auto px-6 py-8 max-w-7xl">
-          <MemberNavigation />
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <div className="space-y-2">
@@ -220,16 +219,15 @@ const MemberDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Error state
   if (fetchError) {
     return (
-      <div className="min-h-screen bg-background">
+      <Layout>
         <div className="container mx-auto px-6 py-8 max-w-7xl">
-          <MemberNavigation />
           <div className="flex items-center justify-center min-h-[400px]">
             <Card className="max-w-md w-full">
               <CardContent className="pt-6">
@@ -250,13 +248,13 @@ const MemberDashboard = () => {
             </Card>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <Layout>
         <div className="container mx-auto px-6 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-4">Please log in to access your member dashboard.</p>
@@ -264,7 +262,7 @@ const MemberDashboard = () => {
             <Link to="/auth?redirect=/members/dashboard">Login</Link>
           </Button>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -273,9 +271,8 @@ const MemberDashboard = () => {
   const planName = profile?.subscription_plan || 'free';
 
   return (
-    <div className="min-h-screen bg-background">
+    <Layout>
       <div className="container mx-auto px-6 py-8 max-w-7xl">
-        <MemberNavigation />
 
         {/* Welcome Header */}
         <div className="mb-8">
@@ -479,7 +476,7 @@ const MemberDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
