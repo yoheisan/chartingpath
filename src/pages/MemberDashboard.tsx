@@ -1,26 +1,30 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
   Database, 
   Code, 
   BookOpen, 
-  Download, 
   Bell, 
   BarChart3,
   Crown,
   ArrowRight,
-  Calendar,
   Trophy,
-  Activity
+  Activity,
+  AlertTriangle,
+  RefreshCw,
+  FolderKanban,
+  Coins
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import MemberNavigation from "@/components/MemberNavigation";
 import { useToast } from "@/hooks/use-toast";
+
+const LOADING_TIMEOUT_MS = 8000;
 
 interface UserProfile {
   id: string;
@@ -34,7 +38,15 @@ interface UsageStats {
   backtestRuns: number;
   paperTrades: number;
   alerts: number;
-  achievements: number;
+  projectRuns: number;
+}
+
+interface RecentRun {
+  id: string;
+  project_id: string;
+  status: string;
+  created_at: string;
+  credits_used: number;
 }
 
 const MemberDashboard = () => {
@@ -44,35 +56,56 @@ const MemberDashboard = () => {
     backtestRuns: 0,
     paperTrades: 0,
     alerts: 0,
-    achievements: 0
+    projectRuns: 0
   });
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
+    
+    // Timeout fallback
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setLoadingTimedOut(true);
+        setLoading(false);
+        setFetchError('Request timed out. Please check your connection and try again.');
+      }
+    }, LOADING_TIMEOUT_MS);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const checkAuth = async () => {
+    setFetchError(null);
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
       
       if (user) {
         setUser(user);
-        await fetchProfile(user.id);
-        await fetchUsageStats(user.id);
+        await Promise.all([
+          fetchProfile(user.id),
+          fetchUsageStats(user.id),
+          fetchRecentRuns(user.id)
+        ]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth check error:', error);
-      toast({
-        title: "Authentication Error",
-        description: "Please log in to access your dashboard.",
-        variant: "destructive",
-      });
+      setFetchError(error.message || 'Failed to load dashboard. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleRetry = () => {
+    setLoading(true);
+    setLoadingTimedOut(false);
+    setFetchError(null);
+    checkAuth();
   };
 
   const fetchProfile = async (userId: string) => {
@@ -92,38 +125,47 @@ const MemberDashboard = () => {
 
   const fetchUsageStats = async (userId: string) => {
     try {
-      // Fetch backtest runs count
-      const { count: backtestCount } = await supabase
-        .from('backtest_runs')
-        .select('id', { count: 'exact' })
-        .eq('user_id', userId);
-
-      // Fetch paper trades count
-      const { count: tradesCount } = await supabase
-        .from('paper_trades')
-        .select('id', { count: 'exact' })
-        .eq('user_id', userId);
-
-      // Fetch alerts count
-      const { count: alertsCount } = await supabase
-        .from('alerts')
-        .select('id', { count: 'exact' })
-        .eq('user_id', userId);
-
-      // Fetch achievements count
-      const { count: achievementsCount } = await supabase
-        .from('trading_achievements')
-        .select('id', { count: 'exact' })
-        .eq('user_id', userId);
+      // Fetch all counts in parallel
+      const [backtestResult, tradesResult, alertsResult, projectRunsResult] = await Promise.all([
+        supabase.from('backtest_runs').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('paper_trades').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'deleted'),
+        supabase.from('project_runs').select('id', { count: 'exact', head: true })
+          .eq('project_id', userId) // Note: project_runs doesn't have user_id, using workaround
+      ]);
 
       setUsage({
-        backtestRuns: backtestCount || 0,
-        paperTrades: tradesCount || 0,
-        alerts: alertsCount || 0,
-        achievements: achievementsCount || 0
+        backtestRuns: backtestResult.count || 0,
+        paperTrades: tradesResult.count || 0,
+        alerts: alertsResult.count || 0,
+        projectRuns: projectRunsResult.count || 0
       });
     } catch (error) {
       console.error('Usage stats fetch error:', error);
+    }
+  };
+  
+  const fetchRecentRuns = async (userId: string) => {
+    try {
+      // Fetch last 5 project runs via projects owned by user
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('user_id', userId);
+      
+      if (projects && projects.length > 0) {
+        const projectIds = projects.map(p => p.id);
+        const { data: runs } = await supabase
+          .from('project_runs')
+          .select('id, project_id, status, created_at, credits_used')
+          .in('project_id', projectIds)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        setRecentRuns(runs || []);
+      }
+    } catch (error) {
+      console.error('Recent runs fetch error:', error);
     }
   };
 
@@ -131,50 +173,104 @@ const MemberDashboard = () => {
     const features = {
       free: ['Paper Trading', 'Basic Scripts', 'Community'],
       starter: ['Paper Trading', 'Scripts Library', 'Basic Backtesting', 'Community', 'Courses'],
-      pro: ['Paper Trading', 'Full Scripts', 'Advanced Backtesting', 'Results Vault', 'Alerts', 'Priority Support', 'Community', 'Courses', 'Downloads'],
-      elite: ['All Pro Features', 'Premium Scripts', 'Advanced Analytics', 'Custom Indicators', 'VIP Support', 'Early Access']
+      pro: ['Paper Trading', 'Full Scripts', 'Advanced Backtesting', 'Results Vault', 'Alerts', 'Priority Support'],
+      pro_plus: ['All Pro Features', 'Setup Finder', 'Pine Export', 'Advanced Analytics'],
+      elite: ['All Pro+ Features', 'Unlimited Runs', 'VIP Support', 'Early Access']
     };
     return features[plan as keyof typeof features] || features.free;
   };
 
   const getPlanColor = (plan: string) => {
-    const colors = {
-      free: 'bg-gray-100 text-gray-800',
-      starter: 'bg-blue-100 text-blue-800',
-      pro: 'bg-purple-100 text-purple-800',
+    const colors: Record<string, string> = {
+      free: 'bg-muted text-muted-foreground',
+      starter: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      pro: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+      pro_plus: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       elite: 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
     };
-    return colors[plan as keyof typeof colors] || colors.free;
+    return colors[plan] || colors.free;
   };
 
+  // Loading state with skeleton
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          <MemberNavigation />
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-8 w-24" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i}>
+                  <CardHeader className="pb-2">
+                    <Skeleton className="h-4 w-24" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-12 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!user || !profile) {
+  // Error state
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          <MemberNavigation />
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Card className="max-w-md w-full">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Failed to Load Dashboard</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                  </div>
+                  <Button onClick={handleRetry} className="mt-4">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-4">Please log in to access your member dashboard.</p>
           <Button asChild>
-            <Link to="/auth">Login</Link>
+            <Link to="/auth?redirect=/members/dashboard">Login</Link>
           </Button>
         </div>
       </div>
     );
   }
 
-  const features = getFeatureAccess(profile.subscription_plan);
-  const memberSince = new Date(profile.created_at).toLocaleDateString();
+  const features = getFeatureAccess(profile?.subscription_plan || 'free');
+  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A';
+  const planName = profile?.subscription_plan || 'free';
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,14 +283,14 @@ const MemberDashboard = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
               <p className="text-muted-foreground">
-                Member since {memberSince} • {profile.email}
+                Member since {memberSince} • {user.email}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge className={`px-3 py-1 font-semibold ${getPlanColor(profile.subscription_plan)}`}>
-                {profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1)} Plan
+              <Badge className={`px-3 py-1 font-semibold ${getPlanColor(planName)}`}>
+                {planName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Plan
               </Badge>
-              {profile.subscription_plan === 'elite' && (
+              {planName === 'elite' && (
                 <Crown className="h-5 w-5 text-yellow-500" />
               )}
             </div>
@@ -238,12 +334,12 @@ const MemberDashboard = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Achievements</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Project Runs</CardTitle>
+              <FolderKanban className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{usage.achievements}</div>
-              <p className="text-xs text-muted-foreground">Trading milestones</p>
+              <div className="text-2xl font-bold">{usage.projectRuns}</div>
+              <p className="text-xs text-muted-foreground">Setup Finder scans</p>
             </CardContent>
           </Card>
         </div>
@@ -251,7 +347,7 @@ const MemberDashboard = () => {
         {/* Quick Access Features */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Features */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -262,16 +358,16 @@ const MemberDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                    <Link to="/members/trading">
-                      <TrendingUp className="h-6 w-6" />
-                      <span>Paper Trading</span>
+                    <Link to="/projects">
+                      <FolderKanban className="h-6 w-6" />
+                      <span>Projects Hub</span>
                     </Link>
                   </Button>
 
                   <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                    <Link to="/backtest">
-                      <BarChart3 className="h-6 w-6" />
-                      <span>Backtesting</span>
+                    <Link to="/projects/setup-finder/new">
+                      <TrendingUp className="h-6 w-6" />
+                      <span>New Setup Finder</span>
                     </Link>
                   </Button>
 
@@ -282,14 +378,12 @@ const MemberDashboard = () => {
                     </Link>
                   </Button>
 
-                  {(profile.subscription_plan === 'pro' || profile.subscription_plan === 'elite') && (
-                    <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                      <Link to="/vault">
-                        <Database className="h-6 w-6" />
-                        <span>Results Vault</span>
-                      </Link>
-                    </Button>
-                  )}
+                  <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                    <Link to="/vault">
+                      <Database className="h-6 w-6" />
+                      <span>Results Vault</span>
+                    </Link>
+                  </Button>
 
                   <Button asChild variant="outline" className="h-20 flex-col gap-2">
                     <Link to="/members/courses">
@@ -298,15 +392,58 @@ const MemberDashboard = () => {
                     </Link>
                   </Button>
 
-                  {(profile.subscription_plan === 'pro' || profile.subscription_plan === 'elite') && (
-                    <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                      <Link to="/members/alerts">
-                        <Bell className="h-6 w-6" />
-                        <span>Alerts</span>
-                      </Link>
-                    </Button>
-                  )}
+                  <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                    <Link to="/members/alerts">
+                      <Bell className="h-6 w-6" />
+                      <span>Alerts</span>
+                    </Link>
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
+            
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Recent Runs
+                </CardTitle>
+                <CardDescription>Your last 5 project runs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentRuns.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <FolderKanban className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No project runs yet</p>
+                    <Button asChild variant="link" size="sm" className="mt-2">
+                      <Link to="/projects/setup-finder/new">Start your first scan</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentRuns.map((run) => (
+                      <Link 
+                        key={run.id} 
+                        to={`/projects/runs/${run.id}`}
+                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Badge variant={run.status === 'succeeded' ? 'default' : run.status === 'failed' ? 'destructive' : 'secondary'}>
+                            {run.status}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(run.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Coins className="h-3 w-3" />
+                          {run.credits_used}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -327,31 +464,16 @@ const MemberDashboard = () => {
                   ))}
                 </div>
                 
-                {profile.subscription_plan !== 'elite' && (
+                {planName !== 'elite' && (
                   <div className="mt-4 pt-4 border-t">
                     <Button asChild variant="outline" className="w-full">
-                      <Link to="/pricing">
+                      <Link to="/projects/pricing">
                         Upgrade Plan
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Link>
                     </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity placeholder */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground text-center py-4">
-                  No recent activity to display
-                </div>
               </CardContent>
             </Card>
           </div>
