@@ -14,14 +14,19 @@ import {
   CheckCircle2,
   Loader2,
   BarChart3,
-  Expand
+  Expand,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
+import SetupFilters, { SortOption, DirectionFilter } from './SetupFilters';
+import { SetupGridSkeleton } from './SetupCardSkeleton';
 import { SetupWithVisuals, CompressedBar, VisualSpec } from '@/types/VisualSpec';
+import { DISCLAIMERS } from '@/constants/disclaimers';
+import DisclaimerBanner from '@/components/DisclaimerBanner';
 
 // Legacy interface support for backward compatibility
 interface LegacySetup {
@@ -63,6 +68,7 @@ interface SetupArtifact {
 interface SetupListViewerProps {
   artifact: SetupArtifact;
   runId: string;
+  isLoading?: boolean;
 }
 
 // Type guard to check if setup has visual data
@@ -220,13 +226,81 @@ const SetupCard = ({
   );
 };
 
-const SetupListViewer = ({ artifact, runId }: SetupListViewerProps) => {
+const SetupListViewer = ({ artifact, runId, isLoading = false }: SetupListViewerProps) => {
   const [creatingAlertFor, setCreatingAlertFor] = useState<string | null>(null);
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   
-  const longSetups = useMemo(() => artifact.setups.filter(s => s.direction === 'long'), [artifact.setups]);
-  const shortSetups = useMemo(() => artifact.setups.filter(s => s.direction === 'short'), [artifact.setups]);
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPattern, setSelectedPattern] = useState('all');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('all');
+  const [selectedDirection, setSelectedDirection] = useState<DirectionFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  
+  // Extract unique patterns and timeframes
+  const uniquePatterns = useMemo(() => 
+    [...new Set(artifact.setups.map(s => s.patternId))],
+    [artifact.setups]
+  );
+  
+  const uniqueTimeframes = useMemo(() => 
+    [...new Set([artifact.timeframe])],
+    [artifact.timeframe]
+  );
+  
+  // Apply filters and sorting
+  const filteredAndSortedSetups = useMemo(() => {
+    let result = [...artifact.setups];
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.instrument.toLowerCase().includes(query) ||
+        s.patternName.toLowerCase().includes(query)
+      );
+    }
+    
+    // Pattern filter
+    if (selectedPattern !== 'all') {
+      result = result.filter(s => s.patternId === selectedPattern);
+    }
+    
+    // Direction filter
+    if (selectedDirection !== 'all') {
+      result = result.filter(s => s.direction === selectedDirection);
+    }
+    
+    // Sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
+        case 'rr_high':
+          return b.tradePlan.rr - a.tradePlan.rr;
+        case 'rr_low':
+          return a.tradePlan.rr - b.tradePlan.rr;
+        case 'quality':
+          const scoreOrder: Record<string, number> = { 'A': 3, 'B': 2, 'C': 1 };
+          return (scoreOrder[b.quality.score] || 0) - (scoreOrder[a.quality.score] || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    return result;
+  }, [artifact.setups, searchQuery, selectedPattern, selectedDirection, sortBy]);
+  
+  const longSetups = useMemo(() => filteredAndSortedSetups.filter(s => s.direction === 'long'), [filteredAndSortedSetups]);
+  const shortSetups = useMemo(() => filteredAndSortedSetups.filter(s => s.direction === 'short'), [filteredAndSortedSetups]);
+  
+  const clearFilters = useCallback(() => {
+    setSearchQuery('');
+    setSelectedPattern('all');
+    setSelectedTimeframe('all');
+    setSelectedDirection('all');
+  }, []);
   
   const handleCopyTradePlan = useCallback(async (setup: Setup) => {
     const { tradePlan, instrument, patternName, direction } = setup;
@@ -243,6 +317,8 @@ Time Stop: ${tradePlan.timeStopBars} bars
 
 Bracket Engine: v${tradePlan.bracketLevelsVersion}
 Generated: ${new Date(artifact.generatedAt).toLocaleString()}
+
+⚠️ For educational purposes only. Not financial advice.
 `.trim();
     
     await navigator.clipboard.writeText(text);
@@ -337,6 +413,22 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
     }
   }, []);
   
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Loading Results...</CardTitle>
+            </div>
+          </CardHeader>
+        </Card>
+        <SetupGridSkeleton count={6} />
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       {/* Summary */}
@@ -369,9 +461,30 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         </CardContent>
       </Card>
       
+      {/* Filters */}
+      {artifact.setups.length > 0 && (
+        <SetupFilters
+          patterns={uniquePatterns}
+          timeframes={uniqueTimeframes}
+          searchQuery={searchQuery}
+          selectedPattern={selectedPattern}
+          selectedTimeframe={selectedTimeframe}
+          selectedDirection={selectedDirection}
+          sortBy={sortBy}
+          onSearchChange={setSearchQuery}
+          onPatternChange={setSelectedPattern}
+          onTimeframeChange={setSelectedTimeframe}
+          onDirectionChange={setSelectedDirection}
+          onSortChange={setSortBy}
+          onClearFilters={clearFilters}
+          filteredCount={filteredAndSortedSetups.length}
+          totalCount={artifact.setups.length}
+        />
+      )}
+      
       {/* Setup Grid - 2/3 columns responsive */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {artifact.setups.map((setup, index) => (
+        {filteredAndSortedSetups.map((setup, index) => (
           <SetupCard
             key={`${setup.instrument}-${setup.patternId}-${index}`}
             setup={setup}
@@ -383,7 +496,20 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         ))}
       </div>
       
-      {/* Empty state */}
+      {/* No results after filtering */}
+      {artifact.setups.length > 0 && filteredAndSortedSetups.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">No setups match your filters</p>
+            <Button variant="link" onClick={clearFilters} className="mt-2">
+              Clear filters
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Empty state - no setups at all */}
       {artifact.setups.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
@@ -392,6 +518,11 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
             <p className="text-sm text-muted-foreground mt-1">Try adjusting your patterns or universe selection</p>
           </CardContent>
         </Card>
+      )}
+      
+      {/* Disclaimer */}
+      {artifact.setups.length > 0 && (
+        <DisclaimerBanner variant="compact" />
       )}
       
       {/* Full Chart Viewer Modal */}
