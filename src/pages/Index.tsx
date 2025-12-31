@@ -27,7 +27,8 @@ const Index = () => {
   }, []);
 
   const handlePrimaryClick = () => {
-    navigate('/strategy-workspace');
+    // Primary CTA now routes to Setup Finder (Manus-style Projects-first)
+    navigate('/projects/setup-finder/new');
   };
 
   const handleAlertClick = () => {
@@ -71,20 +72,20 @@ const Index = () => {
               </Badge>
             </div>
             
-            {/* Headline */}
+            {/* Headline - Compliant copy: avoids predictive claims */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <span className="text-foreground">TradingView shows patterns.</span>
               <br />
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                ChartingPath tells you when they work.
+                ChartingPath shows when they've held up.
               </span>
             </h1>
             
-            {/* Subheadline */}
+            {/* Subheadline - Educational framing */}
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              1H crypto playbooks with regime-conditioned evidence + alerts.
+              Scan markets for pattern setups. Get repeatable trade plans with Entry, SL, TP.
               <br />
-              <span className="text-sm">Built for discretionary traders who live in TradingView.</span>
+              <span className="text-sm">Historical backtests + alerts. Built for crypto swing traders.</span>
             </p>
             
             {/* CTAs */}
@@ -95,7 +96,7 @@ const Index = () => {
                 className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
               >
                 <TrendingUp className="h-5 w-5 mr-2" />
-                Start with 1H Crypto Playbooks
+                Run Setup Finder
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               

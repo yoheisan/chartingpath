@@ -75,6 +75,8 @@ const projectTemplates: ProjectTemplate[] = [
     estimatedCredits: '3-10',
     estimatedTime: '20-40s',
     features: ['Pattern state per holding', 'Risk analysis', 'Alert suggestions'],
+    badge: 'Coming Next',
+    badgeVariant: 'outline'
   },
   {
     id: 'portfolio_sim',

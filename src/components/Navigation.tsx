@@ -35,22 +35,22 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              {/* Primary: Strategy Workspace (Crypto 1H) */}
-              <Link 
-                to="/strategy-workspace" 
-                className="flex items-center gap-1.5 text-foreground font-medium hover:text-primary transition-colors"
-              >
-                <TrendingUp className="h-4 w-4" />
-                Playbooks
-              </Link>
-
-              {/* Projects */}
+              {/* Primary: Projects (Manus-style) */}
               <Link 
                 to="/projects" 
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-foreground font-medium hover:text-primary transition-colors"
               >
                 <FolderKanban className="h-4 w-4" />
                 Projects
+              </Link>
+
+              {/* Secondary: Playbooks (Strategy Workspace) */}
+              <Link 
+                to="/strategy-workspace" 
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Playbooks
               </Link>
               
               {/* Alerts */}
@@ -92,9 +92,9 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* Pricing */}
+              {/* Pricing - now routes to Projects pricing */}
               <Link 
-                to="/pricing" 
+                to="/projects/pricing" 
                 className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <DollarSign className="h-4 w-4" />
