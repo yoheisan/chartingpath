@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SetupListViewer from '@/components/projects/SetupListViewer';
+import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
 interface ProjectRun {
   id: string;
@@ -275,7 +276,12 @@ const ProjectRun = () => {
         
         {/* Artifact Viewer */}
         {run?.status === 'succeeded' && artifact && (
-          <SetupListViewer artifact={artifact} runId={runId!} />
+          <>
+            <SetupListViewer artifact={artifact} runId={runId!} />
+            
+            {/* Compliance: Disclaimer Banner */}
+            <DisclaimerBanner className="mt-8" />
+          </>
         )}
         
         {/* Empty State */}

@@ -177,7 +177,7 @@ const App = () => (
           <Route path="/projects/setup-finder/new" element={<SetupFinderWizard />} />
           <Route path="/projects/runs/:runId" element={<ProjectRun />} />
           <Route path="/forge" element={<Forge />} />
-          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
           <Route path="/members/dashboard" element={<MemberDashboard />} />
           <Route path="/members/trading" element={<PaperTrading />} />
           <Route path="/vault" element={<BacktestVault />} />

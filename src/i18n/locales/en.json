@@ -1,8 +1,13 @@
 {
   "hero": {
-    "subtitle": "The best trades require research, then commitment.",
-    "cta": "Get started for free",
-    "free_text": "$0 forever, no credit card needed"
+    "headline1": "TradingView shows patterns.",
+    "headline2": "ChartingPath shows when they've held up.",
+    "subtitle": "Scan markets for pattern setups. Get repeatable trade plans with Entry, SL, TP.",
+    "subtext": "Historical backtests + alerts. Built for crypto swing traders.",
+    "cta": "Run Setup Finder",
+    "ctaSecondary": "Create Free Alert",
+    "free_text": "$0 forever, no credit card needed",
+    "disclaimer": "Past performance does not guarantee future results. Educational use only."
   },
   "features": {
     "no_coding": "No coding required",
