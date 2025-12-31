@@ -9,6 +9,8 @@ import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle } from 'l
 import { supabase } from '@/integrations/supabase/client';
 import SetupListViewer from '@/components/projects/SetupListViewer';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
+import PortfolioCheckupViewer from '@/components/projects/PortfolioCheckupViewer';
+import PortfolioSimViewer from '@/components/projects/PortfolioSimViewer';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
 interface ProjectRun {
@@ -278,9 +280,16 @@ const ProjectRun = () => {
         {/* Artifact Viewer */}
         {run?.status === 'succeeded' && artifact && (
           <>
-            {artifact.projectType === 'pattern_lab' ? (
+            {artifact.projectType === 'pattern_lab' && (
               <PatternLabViewer artifact={artifact as any} runId={runId!} />
-            ) : (
+            )}
+            {artifact.projectType === 'portfolio_checkup' && (
+              <PortfolioCheckupViewer artifact={artifact as any} runId={runId!} />
+            )}
+            {artifact.projectType === 'portfolio_sim' && (
+              <PortfolioSimViewer artifact={artifact as any} runId={runId!} />
+            )}
+            {(artifact.projectType === 'setup_finder' || !artifact.projectType) && (
               <SetupListViewer artifact={artifact} runId={runId!} />
             )}
             
