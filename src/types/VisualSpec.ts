@@ -1,5 +1,5 @@
 // VisualSpec schema for Setup Finder chart rendering
-// Version 1.0.0
+// Version 2.0.0 - Enhanced with Pattern Quality Score
 
 export interface CompressedBar {
   t: string;  // timestamp ISO
@@ -27,7 +27,39 @@ export interface BoxOverlay {
   style: 'primary' | 'destructive' | 'positive' | 'muted';
 }
 
-export type Overlay = HLineOverlay | BoxOverlay;
+export interface ZigZagPivot {
+  index: number;
+  price: number;
+  type: 'high' | 'low';
+  timestamp: string;
+}
+
+export interface PivotOverlay {
+  type: 'pivot';
+  id: string;
+  pivots: ZigZagPivot[];
+  style: 'primary' | 'muted';
+}
+
+export type Overlay = HLineOverlay | BoxOverlay | PivotOverlay;
+
+export interface QualityFactor {
+  name: string;
+  score: number; // 0-10
+  weight: number;
+  description: string;
+  passed: boolean;
+}
+
+export interface PatternQuality {
+  score: number; // 0-10 numeric score (primary)
+  grade: 'A' | 'B' | 'C' | 'D' | 'F'; // Letter grade for display
+  confidence: number; // 0-100%
+  reasons: string[];
+  warnings: string[];
+  factors?: QualityFactor[];
+  tradeable: boolean;
+}
 
 export interface VisualSpec {
   version: string;
@@ -44,6 +76,7 @@ export interface VisualSpec {
     max: number;
   };
   overlays: Overlay[];
+  pivots?: ZigZagPivot[]; // ZigZag pivots for pattern explainability
 }
 
 export interface SetupWithVisuals {
@@ -52,7 +85,7 @@ export interface SetupWithVisuals {
   patternName: string;
   direction: 'long' | 'short';
   signalTs: string;
-  quality: { score: string; reasons: string[] };
+  quality: PatternQuality; // Enhanced quality object
   tradePlan: {
     entryType: string;
     entry: number;
@@ -67,4 +100,11 @@ export interface SetupWithVisuals {
   };
   bars: CompressedBar[];
   visualSpec: VisualSpec;
+  // Historical hit rate (populated from pattern_hit_rates table)
+  historicalPerformance?: {
+    winRate: number;
+    avgRMultiple: number;
+    sampleSize: number;
+    reliabilityScore: number;
+  };
 }

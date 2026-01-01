@@ -238,14 +238,14 @@ export default function FullChartViewer({
               <Badge 
                 variant="outline"
                 className={`${
-                  quality.score === 'A' 
+                  quality.grade === 'A' 
                     ? 'border-green-500/50 text-green-500' 
-                    : quality.score === 'B'
+                    : quality.grade === 'B'
                       ? 'border-yellow-500/50 text-yellow-500'
                       : 'border-muted-foreground/50'
                 }`}
               >
-                Grade {quality.score}
+                {typeof quality.score === 'number' ? `${quality.score.toFixed(1)}/10` : `Grade ${quality.grade || quality.score}`}
               </Badge>
               <Badge variant={isLong ? 'default' : 'destructive'}>
                 {isLong ? 'LONG' : 'SHORT'}

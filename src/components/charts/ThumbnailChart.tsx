@@ -1,15 +1,17 @@
 import { useEffect, useRef, memo } from 'react';
 import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
-import { CompressedBar, VisualSpec } from '@/types/VisualSpec';
+import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
+import { CompactQualityScore } from './PatternQualityBadge';
 
 interface ThumbnailChartProps {
   bars: CompressedBar[];
   visualSpec: VisualSpec;
+  quality?: PatternQuality;
   height?: number;
   onClick?: () => void;
 }
 
-const ThumbnailChart = memo(({ bars, visualSpec, height = 120, onClick }: ThumbnailChartProps) => {
+const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick }: ThumbnailChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -127,12 +129,19 @@ const ThumbnailChart = memo(({ bars, visualSpec, height = 120, onClick }: Thumbn
   }
 
   return (
-    <div 
-      ref={containerRef} 
-      className="w-full rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
-      style={{ height }}
-      onClick={onClick}
-    />
+    <div className="relative">
+      <div 
+        ref={containerRef} 
+        className="w-full rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+        style={{ height }}
+        onClick={onClick}
+      />
+      {quality && typeof quality.score === 'number' && (
+        <div className="absolute top-2 right-2">
+          <CompactQualityScore score={quality.score} />
+        </div>
+      )}
+    </div>
   );
 });
 
