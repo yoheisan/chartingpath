@@ -105,7 +105,7 @@ const ProjectCard = ({
   return (
     <Card className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg transition-all duration-300">
       {/* Gradient Background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
       
       {/* Badge */}
       {template.badge && (
@@ -292,7 +292,16 @@ const Projects = () => {
       portfolio_checkup: '/projects/portfolio-checkup/new',
       portfolio_sim: '/projects/portfolio-sim/new',
     };
-    navigate(routes[templateId] || '/projects');
+
+    const target = routes[templateId] || '/projects';
+
+    // Keep CTAs clickable; if not signed in, route to auth with a redirect back here.
+    if (!user) {
+      navigate(`/auth?redirect=${encodeURIComponent(target)}`);
+      return;
+    }
+
+    navigate(target);
   };
   
   return (
@@ -336,7 +345,7 @@ const Projects = () => {
                 key={template.id}
                 template={template}
                 onStart={() => handleStartProject(template.id)}
-                disabled={!profileLoading && !user}
+                disabled={profileLoading}
               />
             ))}
           </div>
@@ -353,7 +362,7 @@ const Projects = () => {
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate(`/auth?redirect=${encodeURIComponent('/projects')}`)}
                   className="ml-auto shrink-0"
                 >
                   Sign In
