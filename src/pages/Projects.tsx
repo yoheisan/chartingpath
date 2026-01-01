@@ -220,39 +220,6 @@ const Projects = () => {
   
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Debug: detect if something is overlaying the Start Project buttons.
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      const buttons = Array.from(
-        document.querySelectorAll<HTMLButtonElement>("button[data-project-start]")
-      );
-
-      const probe = buttons.map((btn) => {
-        const rect = btn.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const topEl = document.elementFromPoint(cx, cy) as HTMLElement | null;
-        const topStyle = topEl ? window.getComputedStyle(topEl) : null;
-
-        return {
-          id: btn.getAttribute('data-project-start'),
-          disabled: btn.disabled,
-          btnPointerEvents: window.getComputedStyle(btn).pointerEvents,
-          topTag: topEl?.tagName?.toLowerCase() ?? null,
-          topId: topEl?.id || null,
-          topClass: topEl?.className ? String(topEl.className).split(' ').filter(Boolean).slice(0, 6).join(' ') : null,
-          topPointerEvents: topStyle?.pointerEvents ?? null,
-          topPosition: topStyle?.position ?? null,
-          topZ: topStyle?.zIndex ?? null,
-        };
-      });
-
-      console.log('[Projects] Start buttons probe JSON:', JSON.stringify(probe, null, 2));
-      console.table(probe);
-    }, 600);
-
-    return () => window.clearTimeout(t);
-  }, [profileLoading, user]);
   
   // Fetch user credits from usage_credits table + check admin status
   useEffect(() => {
