@@ -1430,57 +1430,94 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      const authHeader = req.headers.get('Authorization');
-      const supabaseKey = authHeader ? supabaseAnonKey : supabaseServiceKey;
 
-      // IMPORTANT: In edge functions, `auth.setSession()` is not reliable because there is no browser storage.
-      // Instead, pass the JWT via the Authorization header so PostgREST applies RLS correctly.
-      const supabase = createClient(supabaseUrl, supabaseKey, {
-        global: {
-          headers: authHeader ? { Authorization: authHeader } : {},
-        },
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Use Service Role for DB reads, but enforce ownership explicitly.
+      // This prevents "Run not found" due to missing/strict RLS on project tables,
+      // while still keeping results private.
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false,
         },
       });
-      
-      const { data: run, error: runError } = await supabase
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: isAdmin } = await supabaseAdmin.rpc('is_admin', { _user_id: user.id });
+
+      const { data: runRow, error: runError } = await supabaseAdmin
         .from('project_runs')
-        .select('*, projects(*)')
+        .select('id,status,credits_estimated,credits_used,error_message,started_at,finished_at,project_id, projects(id,name,type,user_id)')
         .eq('id', runId)
         .single();
-      
-      if (runError || !run) {
+
+      if (runError || !runRow) {
         return new Response(JSON.stringify({ error: 'Run not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
+
+      const projectRow = Array.isArray((runRow as any).projects)
+        ? (runRow as any).projects[0]
+        : (runRow as any).projects;
+
+      if (!projectRow) {
+        return new Response(JSON.stringify({ error: 'Project not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (isAdmin !== true && projectRow.user_id !== user.id) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       let artifact = null;
-      if (run.status === 'succeeded') {
-        const { data: artifactData } = await supabase
+      if (runRow.status === 'succeeded') {
+        const { data: artifactData } = await supabaseAdmin
           .from('artifacts')
           .select('*')
           .eq('project_run_id', runId)
           .single();
         artifact = artifactData;
       }
-      
+
       return new Response(JSON.stringify({
         run: {
-          id: run.id,
-          status: run.status,
-          creditsEstimated: run.credits_estimated,
-          creditsUsed: run.credits_used,
-          errorMessage: run.error_message,
-          startedAt: run.started_at,
-          finishedAt: run.finished_at,
+          id: runRow.id,
+          status: runRow.status,
+          creditsEstimated: runRow.credits_estimated,
+          creditsUsed: runRow.credits_used,
+          errorMessage: runRow.error_message,
+          startedAt: runRow.started_at,
+          finishedAt: runRow.finished_at,
         },
-        project: run.projects,
+        project: {
+          id: projectRow.id,
+          name: projectRow.name,
+          type: projectRow.type,
+        },
         artifact: artifact?.artifact_json || null,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
