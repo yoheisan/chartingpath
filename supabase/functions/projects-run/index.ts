@@ -1432,12 +1432,20 @@ serve(async (req) => {
       }
       
       const authHeader = req.headers.get('Authorization');
-      const supabase = createClient(supabaseUrl, authHeader ? supabaseAnonKey : supabaseServiceKey);
-      
-      if (authHeader) {
-        const token = authHeader.replace('Bearer ', '');
-        await supabase.auth.setSession({ access_token: token, refresh_token: '' });
-      }
+      const supabaseKey = authHeader ? supabaseAnonKey : supabaseServiceKey;
+
+      // IMPORTANT: In edge functions, `auth.setSession()` is not reliable because there is no browser storage.
+      // Instead, pass the JWT via the Authorization header so PostgREST applies RLS correctly.
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      });
       
       const { data: run, error: runError } = await supabase
         .from('project_runs')
