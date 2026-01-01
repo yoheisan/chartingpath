@@ -1657,6 +1657,84 @@ export type Database = {
         }
         Relationships: []
       }
+      pattern_hit_rates: {
+        Row: {
+          avg_holding_bars: number | null
+          avg_holding_hours: number | null
+          avg_r_multiple: number
+          created_at: string
+          direction: string
+          expectancy: number
+          first_signal_date: string | null
+          id: string
+          instrument_category: string | null
+          last_signal_date: string | null
+          losses: number
+          max_drawdown_r: number | null
+          pattern_id: string
+          pattern_name: string
+          profit_factor: number
+          regime_breakdown: Json | null
+          reliability_score: number
+          sample_confidence: string | null
+          timeframe: string
+          total_signals: number
+          updated_at: string
+          win_rate: number
+          wins: number
+        }
+        Insert: {
+          avg_holding_bars?: number | null
+          avg_holding_hours?: number | null
+          avg_r_multiple?: number
+          created_at?: string
+          direction: string
+          expectancy?: number
+          first_signal_date?: string | null
+          id?: string
+          instrument_category?: string | null
+          last_signal_date?: string | null
+          losses?: number
+          max_drawdown_r?: number | null
+          pattern_id: string
+          pattern_name: string
+          profit_factor?: number
+          regime_breakdown?: Json | null
+          reliability_score?: number
+          sample_confidence?: string | null
+          timeframe: string
+          total_signals?: number
+          updated_at?: string
+          win_rate?: number
+          wins?: number
+        }
+        Update: {
+          avg_holding_bars?: number | null
+          avg_holding_hours?: number | null
+          avg_r_multiple?: number
+          created_at?: string
+          direction?: string
+          expectancy?: number
+          first_signal_date?: string | null
+          id?: string
+          instrument_category?: string | null
+          last_signal_date?: string | null
+          losses?: number
+          max_drawdown_r?: number | null
+          pattern_id?: string
+          pattern_name?: string
+          profit_factor?: number
+          regime_breakdown?: Json | null
+          reliability_score?: number
+          sample_confidence?: string | null
+          timeframe?: string
+          total_signals?: number
+          updated_at?: string
+          win_rate?: number
+          wins?: number
+        }
+        Relationships: []
+      }
       pattern_images: {
         Row: {
           alt_text: string
@@ -1719,6 +1797,80 @@ export type Database = {
           width?: number | null
         }
         Relationships: []
+      }
+      pattern_outcomes: {
+        Row: {
+          created_at: string
+          direction: string
+          entry_price: number
+          exit_price: number | null
+          exit_reason: string | null
+          exit_timestamp: string | null
+          holding_bars: number | null
+          id: string
+          instrument: string
+          is_win: boolean | null
+          pattern_hit_rate_id: string | null
+          quality_score: number | null
+          r_multiple: number | null
+          regime_key: string | null
+          signal_timestamp: string
+          stop_loss: number
+          take_profit: number
+          trend_aligned: boolean | null
+          volume_confirmed: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          entry_price: number
+          exit_price?: number | null
+          exit_reason?: string | null
+          exit_timestamp?: string | null
+          holding_bars?: number | null
+          id?: string
+          instrument: string
+          is_win?: boolean | null
+          pattern_hit_rate_id?: string | null
+          quality_score?: number | null
+          r_multiple?: number | null
+          regime_key?: string | null
+          signal_timestamp: string
+          stop_loss: number
+          take_profit: number
+          trend_aligned?: boolean | null
+          volume_confirmed?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          entry_price?: number
+          exit_price?: number | null
+          exit_reason?: string | null
+          exit_timestamp?: string | null
+          holding_bars?: number | null
+          id?: string
+          instrument?: string
+          is_win?: boolean | null
+          pattern_hit_rate_id?: string | null
+          quality_score?: number | null
+          r_multiple?: number | null
+          regime_key?: string | null
+          signal_timestamp?: string
+          stop_loss?: number
+          take_profit?: number
+          trend_aligned?: boolean | null
+          volume_confirmed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pattern_outcomes_pattern_hit_rate_id_fkey"
+            columns: ["pattern_hit_rate_id"]
+            isOneToOne: false
+            referencedRelation: "pattern_hit_rates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_pricing: {
         Row: {
@@ -3296,6 +3448,10 @@ export type Database = {
         Returns: Json
       }
       publish_scheduled_articles: { Args: never; Returns: number }
+      recalculate_pattern_stats: {
+        Args: { p_hit_rate_id: string }
+        Returns: undefined
+      }
       set_user_language: {
         Args: {
           p_detected_country?: string

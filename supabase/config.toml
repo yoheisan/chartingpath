@@ -119,3 +119,6 @@ verify_jwt = true
 
 [functions.projects-run]
 verify_jwt = false
+
+[functions.generate-chart-png]
+verify_jwt = false
