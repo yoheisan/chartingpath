@@ -116,7 +116,7 @@ const ProjectCard = ({
         </div>
       )}
       
-      <CardHeader className="relative pb-2">
+      <CardHeader className="relative z-10 pb-2">
         <div className="flex items-start gap-4">
           <div className={`p-3 rounded-xl bg-background/80 border border-border/50 ${template.color} group-hover:scale-110 transition-transform duration-300`}>
             <Icon className="h-6 w-6" />
@@ -132,7 +132,7 @@ const ProjectCard = ({
         </div>
       </CardHeader>
       
-      <CardContent className="relative pt-0 space-y-4">
+      <CardContent className="relative z-10 pt-0 space-y-4">
         {/* Features */}
         <div className="flex flex-wrap gap-1.5">
           {template.features.map((feature, idx) => (
@@ -158,11 +158,12 @@ const ProjectCard = ({
         </div>
         
         {/* Action Button */}
-        {(
-          <Button 
+        {
+          <Button
             onClick={onStart}
             disabled={disabled}
-            className="w-full group/btn relative overflow-hidden"
+            data-project-start={template.id}
+            className="relative z-20 w-full group/btn overflow-hidden pointer-events-auto"
             variant="outline"
           >
             <span className="relative z-10 flex items-center gap-2">
@@ -171,7 +172,7 @@ const ProjectCard = ({
               <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
             </span>
           </Button>
-        )}
+        }
       </CardContent>
     </Card>
   );
@@ -217,6 +218,32 @@ const Projects = () => {
   const [creditsLoading, setCreditsLoading] = useState(false);
   
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Debug: detect if something is overlaying the Start Project buttons.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const buttons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("button[data-project-start]")
+      );
+
+      const probe = buttons.map((btn) => {
+        const rect = btn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const topEl = document.elementFromPoint(cx, cy);
+
+        return {
+          disabled: btn.disabled,
+          pointerEvents: window.getComputedStyle(btn).pointerEvents,
+          topElement: topEl ? `${topEl.tagName.toLowerCase()}${(topEl as HTMLElement).id ? `#${(topEl as HTMLElement).id}` : ''}${(topEl as HTMLElement).className ? `.${String((topEl as HTMLElement).className).split(' ').filter(Boolean).slice(0, 3).join('.')}` : ''}` : null,
+        };
+      });
+
+      console.log("[Projects] Start buttons probe", probe);
+    }, 600);
+
+    return () => window.clearTimeout(t);
+  }, [profileLoading, user]);
   
   // Fetch user credits from usage_credits table + check admin status
   useEffect(() => {
@@ -345,7 +372,7 @@ const Projects = () => {
                 key={template.id}
                 template={template}
                 onStart={() => handleStartProject(template.id)}
-                disabled={profileLoading}
+                disabled={false}
               />
             ))}
           </div>
