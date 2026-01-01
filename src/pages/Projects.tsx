@@ -216,17 +216,33 @@ const Projects = () => {
   const [planTier, setPlanTier] = useState('free');
   const [creditsLoading, setCreditsLoading] = useState(false);
   
-  // Fetch user credits from usage_credits table
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Fetch user credits from usage_credits table + check admin status
   useEffect(() => {
-    const fetchCredits = async () => {
+    const fetchCreditsAndAdminStatus = async () => {
       if (!user) {
         setCreditsBalance(25);
         setPlanTier('free');
+        setIsAdmin(false);
         return;
       }
       
       setCreditsLoading(true);
       try {
+        // Check admin status first
+        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
+        const userIsAdmin = adminCheck === true;
+        setIsAdmin(userIsAdmin);
+        
+        // Admins get unlimited credits display
+        if (userIsAdmin) {
+          setCreditsBalance(999999);
+          setPlanTier('admin');
+          setCreditsLoading(false);
+          return;
+        }
+        
         const { data: credits, error } = await supabase
           .from('usage_credits')
           .select('credits_balance, plan_tier')
@@ -252,7 +268,7 @@ const Projects = () => {
       }
     };
     
-    fetchCredits();
+    fetchCreditsAndAdminStatus();
   }, [user]);
   
   const handleStartProject = (templateId: string) => {
