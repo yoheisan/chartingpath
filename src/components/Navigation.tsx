@@ -1,6 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-import { TrendingUp, Bell, Code, BookOpen, ChevronDown, MoreHorizontal, DollarSign, FolderKanban, User, Menu } from "lucide-react";
+import { 
+  TrendingUp, 
+  BookOpen, 
+  ChevronDown, 
+  MoreHorizontal, 
+  DollarSign, 
+  FolderKanban, 
+  User, 
+  Menu,
+  Search,
+  FlaskConical,
+  Database,
+  Wrench,
+  Calculator,
+  BarChart3,
+  Calendar,
+  GraduationCap,
+  Globe,
+  HelpCircle,
+  Info
+} from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import { wedgeConfig } from "@/config/wedge";
@@ -28,64 +48,60 @@ const Navigation = () => {
         : 'text-muted-foreground hover:text-foreground'
     }`;
 
-  // Mobile nav content (shared between wedge and non-wedge)
+  // Mobile nav content - outcome-centric structure
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
+      {/* Primary: Projects */}
       <Link to="/projects" className="flex items-center gap-2 text-foreground font-medium py-2">
         <FolderKanban className="h-5 w-5" />
         Projects
       </Link>
-      <Link to="/strategy-workspace" className="flex items-center gap-2 text-muted-foreground py-2">
-        <TrendingUp className="h-5 w-5" />
-        Playbooks
+      
+      {/* My Results (merged Vault + Scripts) */}
+      <Link to="/vault" className="flex items-center gap-2 text-muted-foreground py-2">
+        <Database className="h-5 w-5" />
+        My Results
       </Link>
-      <Link to="/members/alerts" className="flex items-center gap-2 text-muted-foreground py-2">
-        <Bell className="h-5 w-5" />
-        Alerts
-      </Link>
-      <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2">
-        <Code className="h-5 w-5" />
-        Scripts
-      </Link>
+      
+      {/* Learn */}
       <Link to="/learn" className="flex items-center gap-2 text-muted-foreground py-2">
         <BookOpen className="h-5 w-5" />
         Learn
       </Link>
+      
+      {/* Pricing */}
       <Link to="/projects/pricing" className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
         Pricing
       </Link>
+      
+      {/* Account */}
       <Link to="/members/dashboard" className="flex items-center gap-2 text-muted-foreground py-2">
         <User className="h-5 w-5" />
         Account
       </Link>
       
       <div className="border-t pt-4 mt-2">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Tools</p>
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Advanced</p>
         <div className="flex flex-col gap-2 pl-2">
+          <Link to="/strategy-workspace" className="text-sm text-muted-foreground py-1">Playbook Builder</Link>
           <Link to="/forge" className="text-sm text-muted-foreground py-1">MultiScript Converter</Link>
-          <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground py-1">Pip Calculator</Link>
-          <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
-          <Link to="/tools/market-breadth" className="text-sm text-muted-foreground py-1">Market Breadth Report</Link>
-          <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
-          <Link to="/members/trading" className="text-sm text-muted-foreground py-1">Paper Trading</Link>
-          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Quizzes</Link>
         </div>
       </div>
       
       <div className="border-t pt-4">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Markets</p>
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Tools</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/markets/stocks" className="text-sm text-muted-foreground py-1">Stock Market</Link>
-          <Link to="/markets/forex" className="text-sm text-muted-foreground py-1">Forex (FX)</Link>
-          <Link to="/markets/crypto" className="text-sm text-muted-foreground py-1">Cryptocurrency</Link>
-          <Link to="/markets/commodities" className="text-sm text-muted-foreground py-1">Commodities</Link>
+          <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground py-1">Pip Calculator</Link>
+          <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
+          <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
+          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
         </div>
       </div>
     </div>
   );
   
-  // Wedge mode: simplified crypto-focused navigation
+  // Wedge mode: outcome-centric navigation
   if (wedgeConfig.wedgeEnabled) {
     return (
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
@@ -105,29 +121,70 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              {/* Primary: Projects */}
-              <Link to="/projects" className={navLinkClass('/projects')}>
-                <FolderKanban className="h-4 w-4" />
-                Projects
-              </Link>
-
-              {/* Playbooks */}
-              <Link to="/strategy-workspace" className={navLinkClass('/strategy-workspace')}>
-                <TrendingUp className="h-4 w-4" />
-                Playbooks
-              </Link>
+              {/* Primary: Projects with submenu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/projects') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+                  <FolderKanban className="h-4 w-4" />
+                  Projects
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-popover z-50">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Run Analysis</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-emerald-500" />
+                        Weekly Setup Finder
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
+                        <FlaskConical className="h-4 w-4 text-violet-500" />
+                        Pattern Lab
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem asChild>
+                    <Link to="/projects" className="flex items-center gap-2">
+                      <FolderKanban className="h-4 w-4" />
+                      All Projects
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Advanced</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to="/strategy-workspace" className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Playbook Builder
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
-              {/* Alerts */}
-              <Link to="/members/alerts" className={navLinkClass('/members/alerts')}>
-                <Bell className="h-4 w-4" />
-                Alerts
-              </Link>
-              
-              {/* Scripts */}
-              <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
-                <Code className="h-4 w-4" />
-                Scripts
-              </Link>
+              {/* My Results (merged Vault + Scripts) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/vault') || isActive('/members/scripts') || isActive('/members/alerts') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+                  <Database className="h-4 w-4" />
+                  My Results
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-popover z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/vault">Results Vault</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/members/scripts">Saved Scripts</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/members/alerts">Active Alerts</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               {/* Learn */}
               <DropdownMenu>
@@ -141,6 +198,10 @@ const Navigation = () => {
                     <Link to="/chart-patterns/library">Pattern Library</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
                     <Link to="/learn">Blog & Articles</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -152,55 +213,39 @@ const Navigation = () => {
                 {t('navigation.pricing', 'Pricing')}
               </Link>
               
-              {/* More - Sectioned dropdown */}
+              {/* More - Simplified */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                   More
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                <DropdownMenuContent align="end" className="w-52 bg-popover z-50">
                   {/* Tools Section */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Tools</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
-                      <Link to="/forge">MultiScript Converter</Link>
+                      <Link to="/forge" className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4" />
+                        MultiScript Converter
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/tools/pip-calculator">Pip Calculator</Link>
+                      <Link to="/tools/pip-calculator" className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Pip Calculator
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/tools/risk-calculator">Risk Calculator</Link>
+                      <Link to="/tools/risk-calculator" className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Risk Calculator
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/tools/market-breadth">Market Breadth Report</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/tools/economic-calendar">Economic Calendar</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/members/trading">Paper Trading</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/chart-patterns/quiz">Quizzes</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* Markets Section */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Markets</DropdownMenuLabel>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/markets/stocks">Stock Market</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/markets/forex">Forex (FX)</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/markets/crypto">Cryptocurrency</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/markets/commodities">Commodities</Link>
+                      <Link to="/tools/economic-calendar" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Economic Calendar
+                      </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   
@@ -210,10 +255,16 @@ const Navigation = () => {
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Company</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
-                      <Link to="/faq">FAQ</Link>
+                      <Link to="/faq" className="flex items-center gap-2">
+                        <HelpCircle className="h-4 w-4" />
+                        FAQ
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/about">About</Link>
+                      <Link to="/about" className="flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        About
+                      </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -229,9 +280,6 @@ const Navigation = () => {
                 <DropdownMenuContent align="end" className="bg-popover z-50">
                   <DropdownMenuItem asChild>
                     <Link to="/members/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/vault">Results Vault</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/members/courses">Courses</Link>

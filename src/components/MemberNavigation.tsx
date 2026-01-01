@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { 
-  Code, 
-  BookOpen, 
-  Download, 
-  Bell,
   Home,
-  TrendingUp,
+  FolderKanban,
   Database,
-  FolderKanban
+  BookOpen,
+  Download,
+  Settings
 } from "lucide-react";
 
 const MemberNavigation = () => {
@@ -18,25 +16,18 @@ const MemberNavigation = () => {
     {
       to: "/members/dashboard",
       icon: Home,
-      label: "Member Dashboard",
+      label: "Dashboard",
       primary: true
     },
     {
       to: "/projects",
       icon: FolderKanban,
       label: "Projects",
-      badge: "New"
     },
     {
       to: "/vault",
       icon: Database,
-      label: "Results Vault",
-      badge: "Pro"
-    },
-    {
-      to: "/members/scripts",
-      icon: Code,
-      label: "Scripts",
+      label: "My Results",
     },
     {
       to: "/members/courses",
@@ -49,10 +40,9 @@ const MemberNavigation = () => {
       label: "Downloads",
     },
     {
-      to: "/members/alerts",
-      icon: Bell,
-      label: "Alerts",
-      badge: "Pro"
+      to: "/members/account",
+      icon: Settings,
+      label: "Settings",
     },
   ];
 
@@ -75,11 +65,6 @@ const MemberNavigation = () => {
               <Link to={item.to}>
                 <Icon className="h-4 w-4" />
                 {item.label}
-                {item.badge && (
-                  <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             </Button>
           );
