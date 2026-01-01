@@ -45,6 +45,7 @@ export const SubscriptionManager = () => {
   const [processingRefund, setProcessingRefund] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadSubscriptionData();
@@ -53,6 +54,13 @@ export const SubscriptionManager = () => {
   const loadSubscriptionData = async () => {
     try {
       setLoading(true);
+      
+      // Check if user is admin
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
+        setIsAdmin(adminCheck === true);
+      }
       
       // Get current subscription
       const { data: subData, error: subError } = await supabase
@@ -246,6 +254,42 @@ export const SubscriptionManager = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Admin Override Display */}
+          {isAdmin && (
+            <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 to-orange-500/10">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-yellow-600">
+                      <CheckCircle className="h-5 w-5" />
+                      Administrator Access
+                    </CardTitle>
+                    <CardDescription>
+                      Full platform access with no restrictions
+                    </CardDescription>
+                  </div>
+                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                    Unlimited
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    As an administrator, you have access to all features across all tiers:
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                    <li>Unlimited project runs (no daily cap)</li>
+                    <li>Unlimited credits</li>
+                    <li>All patterns and instruments</li>
+                    <li>Maximum lookback periods</li>
+                    <li>Admin dashboard access</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {subscription ? (
             <Card>
               <CardHeader>
@@ -289,7 +333,7 @@ export const SubscriptionManager = () => {
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : !isAdmin ? (
             <Card>
               <CardHeader>
                 <CardTitle>No Active Subscription</CardTitle>
@@ -303,7 +347,7 @@ export const SubscriptionManager = () => {
                 </Button>
               </CardContent>
             </Card>
-          )}
+          ) : null}
         </TabsContent>
 
         <TabsContent value="plans" className="space-y-4">
