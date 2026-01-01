@@ -161,6 +161,7 @@ const ProjectCard = ({
         {
           <Button
             onClick={onStart}
+            onPointerDown={() => console.log(`[Projects] pointerdown Start Project: ${template.id}`)}
             disabled={disabled}
             data-project-start={template.id}
             className="relative z-20 w-full group/btn overflow-hidden pointer-events-auto"
@@ -230,16 +231,24 @@ const Projects = () => {
         const rect = btn.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
-        const topEl = document.elementFromPoint(cx, cy);
+        const topEl = document.elementFromPoint(cx, cy) as HTMLElement | null;
+        const topStyle = topEl ? window.getComputedStyle(topEl) : null;
 
         return {
+          id: btn.getAttribute('data-project-start'),
           disabled: btn.disabled,
-          pointerEvents: window.getComputedStyle(btn).pointerEvents,
-          topElement: topEl ? `${topEl.tagName.toLowerCase()}${(topEl as HTMLElement).id ? `#${(topEl as HTMLElement).id}` : ''}${(topEl as HTMLElement).className ? `.${String((topEl as HTMLElement).className).split(' ').filter(Boolean).slice(0, 3).join('.')}` : ''}` : null,
+          btnPointerEvents: window.getComputedStyle(btn).pointerEvents,
+          topTag: topEl?.tagName?.toLowerCase() ?? null,
+          topId: topEl?.id || null,
+          topClass: topEl?.className ? String(topEl.className).split(' ').filter(Boolean).slice(0, 6).join(' ') : null,
+          topPointerEvents: topStyle?.pointerEvents ?? null,
+          topPosition: topStyle?.position ?? null,
+          topZ: topStyle?.zIndex ?? null,
         };
       });
 
-      console.log("[Projects] Start buttons probe", probe);
+      console.log('[Projects] Start buttons probe JSON:', JSON.stringify(probe, null, 2));
+      console.table(probe);
     }, 600);
 
     return () => window.clearTimeout(t);
