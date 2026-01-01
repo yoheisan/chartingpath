@@ -20,18 +20,24 @@ const corsHeaders = {
 const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   crypto: {
     top10: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD'],
-    top20: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
-            'DOT-USD', 'LTC-USD', 'UNI-USD', 'ATOM-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD', 'FIL-USD', 'VET-USD'],
+    top25: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
+            'DOT-USD', 'LTC-USD', 'UNI-USD', 'ATOM-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD', 'FIL-USD', 'VET-USD',
+            'INJ-USD', 'IMX-USD', 'SUI-USD', 'SEI-USD', 'TIA-USD'],
   },
   fx: {
-    majors: ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X'],
-    crosses: ['EURGBP=X', 'EURJPY=X', 'GBPJPY=X', 'AUDJPY=X', 'NZDUSD=X', 'EURCHF=X'],
+    majors: ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X', 'EURJPY=X'],
+    majors_crosses: ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X',
+                     'EURGBP=X', 'EURJPY=X', 'GBPJPY=X', 'AUDJPY=X', 'EURCHF=X', 'GBPCHF=X', 'EURAUD=X',
+                     'AUDCAD=X', 'NZDJPY=X', 'CADJPY=X', 'AUDNZD=X', 'EURNZD=X', 'GBPAUD=X'],
   },
   stocks: {
-    sp500_leaders: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK-B', 'UNH', 'JNJ'],
-    tech_30: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AMD', 'INTC', 'CRM',
-              'ORCL', 'ADBE', 'CSCO', 'IBM', 'QCOM', 'TXN', 'AVGO', 'MU', 'NOW', 'SNOW',
-              'PANW', 'CRWD', 'ZS', 'NET', 'DDOG', 'TEAM', 'OKTA', 'ZM', 'SHOP', 'SQ'],
+    sp500_leaders: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK-B', 'UNH', 'JNJ',
+                    'V', 'PG', 'JPM', 'HD', 'MA', 'CVX', 'MRK', 'ABBV', 'LLY', 'PEP', 'KO', 'AVGO', 'COST', 'WMT', 'MCD'],
+    sp500_50: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK-B', 'UNH', 'JNJ',
+               'V', 'PG', 'JPM', 'HD', 'MA', 'CVX', 'MRK', 'ABBV', 'LLY', 'PEP', 
+               'KO', 'AVGO', 'COST', 'WMT', 'MCD', 'CSCO', 'TMO', 'ACN', 'ABT', 'DHR',
+               'ADBE', 'CRM', 'AMD', 'TXN', 'NKE', 'ORCL', 'PFE', 'COP', 'QCOM', 'NFLX',
+               'INTC', 'INTU', 'HON', 'IBM', 'AMGN', 'UPS', 'LOW', 'GE', 'BA', 'CAT'],
   },
 };
 
@@ -580,8 +586,15 @@ serve(async (req) => {
         rebalancePerYear = 4
       } = body;
       
-      // Resolve instruments
-      const instruments = directInstruments || holdings.map((h: any) => h.symbol) || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+      // Resolve instruments - check for direct instruments first, then holdings, then predefined universes
+      let instruments: string[] = [];
+      if (directInstruments && directInstruments.length > 0) {
+        instruments = directInstruments;
+      } else if (holdings && holdings.length > 0) {
+        instruments = holdings.map((h: any) => h.symbol).filter(Boolean);
+      } else if (assetClass && universe && PREDEFINED_UNIVERSES[assetClass]?.[universe]) {
+        instruments = PREDEFINED_UNIVERSES[assetClass][universe];
+      }
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
       const cacheHitRatio = await estimateCacheHitRatio(supabase, instruments, timeframe, lookbackYears);
@@ -614,11 +627,32 @@ serve(async (req) => {
         const { data: { user } } = await supabase.auth.getUser(token);
         
         if (user) {
-          const { data: credits } = await supabase
+          // Get or create usage_credits for user
+          let { data: credits } = await supabase
             .from('usage_credits')
             .select('*')
             .eq('user_id', user.id)
             .single();
+          
+          // If no credits record exists, create one with FREE tier defaults
+          if (!credits) {
+            console.log(`Creating usage_credits for user ${user.id}`);
+            const { data: newCredits, error: createError } = await supabase
+              .from('usage_credits')
+              .insert({
+                user_id: user.id,
+                plan_tier: 'free',
+                credits_balance: 25, // FREE tier monthly credits
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error('Failed to create usage_credits:', createError);
+            } else {
+              credits = newCredits;
+            }
+          }
           
           if (credits) {
             const tier = mapDbTierToPlanTier(credits.plan_tier);
@@ -742,12 +776,30 @@ serve(async (req) => {
       });
       const creditsEstimated = creditResult.creditsEstimated;
       
-      // Validate credits
-      const { data: credits } = await supabase
+      // Get or create usage_credits
+      let { data: credits } = await supabase
         .from('usage_credits')
         .select('*')
         .eq('user_id', user.id)
         .single();
+      
+      // If no credits record exists, create one with FREE tier defaults
+      if (!credits) {
+        console.log(`Creating usage_credits for user ${user.id} during run`);
+        const { data: newCredits, error: createError } = await supabase
+          .from('usage_credits')
+          .insert({
+            user_id: user.id,
+            plan_tier: 'free',
+            credits_balance: 25,
+          })
+          .select()
+          .single();
+        
+        if (!createError && newCredits) {
+          credits = newCredits;
+        }
+      }
       
       if (credits && credits.credits_balance < creditsEstimated) {
         return new Response(JSON.stringify({ 
