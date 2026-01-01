@@ -141,7 +141,10 @@ const SetupFinderWizard = () => {
   };
   
   const handleRun = async () => {
+    console.log('[SetupFinder] handleRun clicked');
+    
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('[SetupFinder] Session:', session ? 'authenticated' : 'not authenticated');
     
     if (!session) {
       toast.error('Please sign in to run projects');
@@ -155,6 +158,8 @@ const SetupFinderWizard = () => {
     }
     
     setIsRunning(true);
+    console.log('[SetupFinder] Starting run with:', { assetClass, universe, patterns: selectedPatterns, timeframe, lookbackYears });
+    
     try {
       const response = await fetch(
         'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
@@ -178,16 +183,18 @@ const SetupFinderWizard = () => {
         }
       );
       
+      console.log('[SetupFinder] Response status:', response.status);
       const data = await response.json();
+      console.log('[SetupFinder] Response data:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to start run');
       }
       
-      toast.success(`Found ${data.setupsFound} setups!`);
+      toast.success(`Found ${data.setupsFound || 0} setups!`);
       navigate(`/projects/runs/${data.runId}`);
     } catch (error) {
-      console.error('Run error:', error);
+      console.error('[SetupFinder] Run error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start run');
     } finally {
       setIsRunning(false);
