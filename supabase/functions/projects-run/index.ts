@@ -41,7 +41,7 @@ const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   },
 };
 
-// Pattern registry with detection logic
+// Pattern registry with detection logic - relaxed thresholds for better sensitivity
 const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean }> = {
   'donchian-breakout-long': {
     direction: 'long',
@@ -49,9 +49,13 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       if (window.length < 10) return false;
       const highs = window.map(d => d.high);
       const closes = window.map(d => d.close);
-      const recentHigh = Math.max(...highs.slice(-10, -1));
+      // Relaxed: Look at 10-day high (excluding last 2 bars) and check if current close OR recent close breaks above
+      const lookbackHighs = highs.slice(0, -2);
+      const recentHigh = Math.max(...lookbackHighs);
       const currentClose = closes[closes.length - 1];
-      return currentClose > recentHigh * 1.005;
+      const prevClose = closes[closes.length - 2];
+      // Breakout if current close OR previous close exceeds prior high by at least 0.1%
+      return currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
     },
     displayName: 'Donchian Breakout (Long)'
   },
@@ -61,9 +65,13 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       if (window.length < 10) return false;
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
-      const recentLow = Math.min(...lows.slice(-10, -1));
+      // Relaxed: Look at 10-day low (excluding last 2 bars) and check if current close OR recent close breaks below
+      const lookbackLows = lows.slice(0, -2);
+      const recentLow = Math.min(...lookbackLows);
       const currentClose = closes[closes.length - 1];
-      return currentClose < recentLow * 0.995;
+      const prevClose = closes[closes.length - 2];
+      // Breakdown if current close OR previous close falls below prior low by at least 0.1%
+      return currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
     },
     displayName: 'Donchian Breakout (Short)'
   },
@@ -75,7 +83,9 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const peaks = findPeaks(highs);
       if (peaks.length < 2) return false;
       const lastTwo = peaks.slice(-2).map(i => highs[i]);
-      return Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0] < 0.02;
+      // Relaxed: Allow 5% tolerance between peaks (was 2%)
+      const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
+      return diff < 0.05;
     },
     displayName: 'Double Top (Short)'
   },
@@ -87,7 +97,9 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const troughs = findTroughs(lows);
       if (troughs.length < 2) return false;
       const lastTwo = troughs.slice(-2).map(i => lows[i]);
-      return Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0] < 0.02;
+      // Relaxed: Allow 5% tolerance between troughs (was 2%)
+      const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
+      return diff < 0.05;
     },
     displayName: 'Double Bottom (Long)'
   },
@@ -98,8 +110,9 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lows = window.map(d => d.low);
       const highs = window.map(d => d.high);
       const trend = calculateTrend(lows.slice(-15));
-      const highVol = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
-      return trend > 0 && highVol < 1.05;
+      const highRange = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
+      // Relaxed: Allow more variance in resistance (8% instead of 5%) and require positive low trend
+      return trend > 0 && highRange < 1.08;
     },
     displayName: 'Ascending Triangle (Long)'
   },
@@ -110,8 +123,9 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const highTrend = calculateTrend(highs.slice(-15));
-      const lowFlat = Math.max(...lows.slice(-15)) / Math.min(...lows.slice(-15));
-      return highTrend < -0.01 && lowFlat < 1.03;
+      const lowRange = Math.max(...lows.slice(-15)) / Math.min(...lows.slice(-15));
+      // Relaxed: Allow more variance in support (6% instead of 3%) and require negative high trend
+      return highTrend < -0.005 && lowRange < 1.06;
     },
     displayName: 'Descending Triangle (Short)'
   }
@@ -923,8 +937,6 @@ serve(async (req) => {
           sfStartDate.setDate(sfStartDate.getDate() - lookbackDays);
           
           for (const instrument of instruments) {
-            console.log(`[SetupFinder] Processing ${instrument}...`);
-            
             const bars = await fetchYahooData(
               instrument,
               sfStartDate.toISOString().split('T')[0],
@@ -932,14 +944,24 @@ serve(async (req) => {
               timeframe
             );
             
-            if (bars.length < 20) continue;
+            console.log(`[SetupFinder] ${instrument}: fetched ${bars.length} bars`);
+            
+            if (bars.length < 20) {
+              console.log(`[SetupFinder] ${instrument}: skipped - insufficient bars (${bars.length} < 20)`);
+              continue;
+            }
             
             for (const patternId of patterns) {
               const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-              if (!pattern) continue;
+              if (!pattern) {
+                console.log(`[SetupFinder] Unknown pattern: ${patternId}`);
+                continue;
+              }
               
               const window = bars.slice(-20);
               const detected = pattern.detector(window);
+              
+              console.log(`[SetupFinder] ${instrument} | ${patternId}: detected=${detected}`);
               
               if (detected) {
                 const lastBar = bars[bars.length - 1];
