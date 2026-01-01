@@ -26,9 +26,12 @@ interface UserProfile {
   updated_at: string;
 }
 
+type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
+
 const MemberAccount = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
@@ -43,12 +46,31 @@ const MemberAccount = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
-        await fetchProfile(user.id);
+        await Promise.all([
+          fetchProfile(user.id),
+          fetchUserRole(user.id)
+        ]);
       }
     } catch (error) {
       console.error('Auth check error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (data?.role) {
+        setUserRole(data.role as UserRole);
+      }
+    } catch (error) {
+      console.error('Role fetch error:', error);
     }
   };
 
@@ -115,13 +137,65 @@ const MemberAccount = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3">
-                    {user?.email?.charAt(0).toUpperCase()}
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3 ${
+                    userRole === 'super_admin' || userRole === 'admin' 
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500' 
+                      : 'bg-gradient-to-r from-primary to-accent'
+                  }`}>
+                    {userRole === 'super_admin' || userRole === 'admin' ? (
+                      <Crown className="h-8 w-8" />
+                    ) : (
+                      user?.email?.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <h3 className="font-semibold">{user?.email}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  
+                  {/* Role Badge */}
+                  <div className="flex justify-center gap-2 mt-2">
+                    {userRole === 'super_admin' && (
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Super Admin
+                      </Badge>
+                    )}
+                    {userRole === 'admin' && (
+                      <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Admin
+                      </Badge>
+                    )}
+                    {userRole === 'moderator' && (
+                      <Badge variant="secondary">
+                        <Star className="h-3 w-3 mr-1" />
+                        Moderator
+                      </Badge>
+                    )}
+                    {!userRole && (
+                      <Badge variant="outline">Member</Badge>
+                    )}
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mt-2">
                     Member since {profile && new Date(profile.created_at).toLocaleDateString()}
                   </p>
+                  
+                  {/* Admin Access Links */}
+                  {(userRole === 'super_admin' || userRole === 'admin') && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2">Admin Access</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/admin/kpi">KPI Dashboard</Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/admin/credits">Credits Tool</Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/admin">Admin Panel</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

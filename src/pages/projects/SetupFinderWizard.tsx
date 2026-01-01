@@ -64,6 +64,10 @@ const SetupFinderWizard = () => {
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   const [riskPerTrade, setRiskPerTrade] = useState(1);
   
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -75,13 +79,28 @@ const SetupFinderWizard = () => {
     reason: string | null;
     creditsBalance: number;
     cacheHitRatio: number;
-    tierCaps: {
+    tier?: string;
+    tierCaps?: {
       maxInstruments: number;
       maxLookbackYears: number;
       maxPatterns: number;
       allowedTimeframes: string[];
     };
   } | null>(null);
+  
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      
+      if (session?.user) {
+        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: session.user.id });
+        setIsAdmin(adminCheck === true);
+      }
+    };
+    checkAuth();
+  }, []);
   
   // Update universe when asset class changes
   useEffect(() => {
@@ -217,15 +236,31 @@ const SetupFinderWizard = () => {
             Back to Projects
           </Button>
           
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-xl bg-primary/10">
-              <TrendingUp className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Setup Finder</h1>
+                <p className="text-muted-foreground">
+                  Scan markets for pattern-based trade setups
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Setup Finder</h1>
-              <p className="text-muted-foreground">
-                Scan markets for pattern-based trade setups
-              </p>
+            
+            {/* Auth/Admin Status */}
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                  Admin
+                </Badge>
+              )}
+              {!isAuthenticated && (
+                <Badge variant="outline" className="text-orange-500 border-orange-500">
+                  Not signed in
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -398,9 +433,17 @@ const SetupFinderWizard = () => {
                   </div>
                 ) : estimate ? (
                   <>
+                    {/* Admin indicator */}
+                    {(estimate.tier === 'TEAM' || isAdmin) && (
+                      <div className="flex items-center gap-2 text-xs bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-md px-3 py-2 mb-3 border border-yellow-500/30">
+                        <Zap className="h-3 w-3 text-yellow-500" />
+                        <span className="text-yellow-600 font-medium">Admin: Unlimited access</span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold text-primary">
-                        {estimate.creditsEstimated}
+                        {isAdmin ? '∞' : estimate.creditsEstimated}
                       </span>
                       <span className="text-muted-foreground">credits</span>
                     </div>
@@ -420,7 +463,9 @@ const SetupFinderWizard = () => {
                       </div>
                       <div className="flex justify-between border-t border-border/50 pt-2 mt-2">
                         <span>Your Balance</span>
-                        <span className="font-medium text-foreground">{estimate.creditsBalance}</span>
+                        <span className="font-medium text-foreground">
+                          {isAdmin ? '∞' : estimate.creditsBalance}
+                        </span>
                       </div>
                     </div>
                     
@@ -455,9 +500,26 @@ const SetupFinderWizard = () => {
                   </p>
                 )}
                 
+                {/* Sign in prompt for unauthenticated users */}
+                {!isAuthenticated && (
+                  <Alert className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto" 
+                        onClick={() => navigate('/auth')}
+                      >
+                        Sign in
+                      </Button>
+                      {' '}to run projects
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
                 <Button
                   onClick={handleRun}
-                  disabled={isRunning || selectedPatterns.length === 0 || (estimate && !estimate.allowed)}
+                  disabled={isRunning || selectedPatterns.length === 0 || (!isAdmin && estimate && !estimate.allowed)}
                   className="w-full mt-4"
                   size="lg"
                 >
@@ -465,6 +527,11 @@ const SetupFinderWizard = () => {
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Running...
+                    </>
+                  ) : !isAuthenticated ? (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Sign in to Run
                     </>
                   ) : (
                     <>
