@@ -627,72 +627,84 @@ serve(async (req) => {
         const { data: { user } } = await supabase.auth.getUser(token);
         
         if (user) {
-          // Get or create usage_credits for user
-          let { data: credits } = await supabase
-            .from('usage_credits')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
+          // Check if user is admin - admins bypass all caps
+          const { data: isAdmin } = await supabase.rpc('is_admin', { _user_id: user.id });
           
-          // If no credits record exists, create one with FREE tier defaults
-          if (!credits) {
-            console.log(`Creating usage_credits for user ${user.id}`);
-            const { data: newCredits, error: createError } = await supabase
+          if (isAdmin === true) {
+            console.log(`Admin user ${user.id} - bypassing all caps`);
+            capInfo.allowed = true;
+            capInfo.tier = 'TEAM';
+            capInfo.creditsBalance = 999999;
+            capInfo.dailyRunCap = 999999;
+            capInfo.dailyRuns = 0;
+          } else {
+            // Non-admin: Get or create usage_credits for user
+            let { data: credits } = await supabase
               .from('usage_credits')
-              .insert({
-                user_id: user.id,
-                plan_tier: 'free',
-                credits_balance: 25, // FREE tier monthly credits
-              })
-              .select()
+              .select('*')
+              .eq('user_id', user.id)
               .single();
             
-            if (createError) {
-              console.error('Failed to create usage_credits:', createError);
-            } else {
-              credits = newCredits;
-            }
-          }
-          
-          if (credits) {
-            const tier = mapDbTierToPlanTier(credits.plan_tier);
-            const tierCaps = getTierCaps(tier);
-            capInfo.tier = tier;
-            capInfo.creditsBalance = credits.credits_balance;
-            capInfo.dailyRunCap = tierCaps.dailyRunCap;
-            
-            if (credits.credits_balance < creditResult.creditsEstimated) {
-              capInfo.allowed = false;
-              capInfo.reason = 'insufficient_credits';
-              capInfo.errors.push(`Need ${creditResult.creditsEstimated} credits, have ${credits.credits_balance}`);
-            }
-            
-            const validation = validateProjectInputs(tier, projectType as ProjectType, {
-              instrumentCount: instruments.length,
-              lookbackYears,
-              patternCount: patterns.length,
-              timeframe
-            });
-            
-            if (!validation.valid) {
-              capInfo.allowed = false;
-              capInfo.reason = 'tier_cap_exceeded';
-              capInfo.errors.push(...validation.errors);
+            // If no credits record exists, create one with FREE tier defaults
+            if (!credits) {
+              console.log(`Creating usage_credits for user ${user.id}`);
+              const { data: newCredits, error: createError } = await supabase
+                .from('usage_credits')
+                .insert({
+                  user_id: user.id,
+                  plan_tier: 'free',
+                  credits_balance: 25, // FREE tier monthly credits
+                })
+                .select()
+                .single();
+              
+              if (createError) {
+                console.error('Failed to create usage_credits:', createError);
+              } else {
+                credits = newCredits;
+              }
             }
             
-            const today = new Date().toISOString().split('T')[0];
-            const { count: dailyRunCount } = await supabase
-              .from('project_runs')
-              .select('id', { count: 'exact', head: true })
-              .eq('status', 'succeeded')
-              .gte('created_at', `${today}T00:00:00Z`)
-              .lte('created_at', `${today}T23:59:59Z`);
-            
-            capInfo.dailyRuns = dailyRunCount || 0;
-            if ((dailyRunCount || 0) >= tierCaps.dailyRunCap) {
-              capInfo.allowed = false;
-              capInfo.reason = 'daily_cap_reached';
-              capInfo.errors.push(`Daily run limit (${tierCaps.dailyRunCap}) reached`);
+            if (credits) {
+              const tier = mapDbTierToPlanTier(credits.plan_tier);
+              const tierCaps = getTierCaps(tier);
+              capInfo.tier = tier;
+              capInfo.creditsBalance = credits.credits_balance;
+              capInfo.dailyRunCap = tierCaps.dailyRunCap;
+              
+              if (credits.credits_balance < creditResult.creditsEstimated) {
+                capInfo.allowed = false;
+                capInfo.reason = 'insufficient_credits';
+                capInfo.errors.push(`Need ${creditResult.creditsEstimated} credits, have ${credits.credits_balance}`);
+              }
+              
+              const validation = validateProjectInputs(tier, projectType as ProjectType, {
+                instrumentCount: instruments.length,
+                lookbackYears,
+                patternCount: patterns.length,
+                timeframe
+              });
+              
+              if (!validation.valid) {
+                capInfo.allowed = false;
+                capInfo.reason = 'tier_cap_exceeded';
+                capInfo.errors.push(...validation.errors);
+              }
+              
+              const today = new Date().toISOString().split('T')[0];
+              const { count: dailyRunCount } = await supabase
+                .from('project_runs')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'succeeded')
+                .gte('created_at', `${today}T00:00:00Z`)
+                .lte('created_at', `${today}T23:59:59Z`);
+              
+              capInfo.dailyRuns = dailyRunCount || 0;
+              if ((dailyRunCount || 0) >= tierCaps.dailyRunCap) {
+                capInfo.allowed = false;
+                capInfo.reason = 'daily_cap_reached';
+                capInfo.errors.push(`Daily run limit (${tierCaps.dailyRunCap}) reached`);
+              }
             }
           }
         }
@@ -776,40 +788,53 @@ serve(async (req) => {
       });
       const creditsEstimated = creditResult.creditsEstimated;
       
-      // Get or create usage_credits
-      let { data: credits } = await supabase
-        .from('usage_credits')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      // Check if user is admin - admins bypass credit checks
+      const { data: isAdmin } = await supabase.rpc('is_admin', { _user_id: user.id });
+      const skipCreditCheck = isAdmin === true;
       
-      // If no credits record exists, create one with FREE tier defaults
-      if (!credits) {
-        console.log(`Creating usage_credits for user ${user.id} during run`);
-        const { data: newCredits, error: createError } = await supabase
-          .from('usage_credits')
-          .insert({
-            user_id: user.id,
-            plan_tier: 'free',
-            credits_balance: 25,
-          })
-          .select()
-          .single();
-        
-        if (!createError && newCredits) {
-          credits = newCredits;
-        }
+      if (skipCreditCheck) {
+        console.log(`Admin user ${user.id} - bypassing credit checks`);
       }
       
-      if (credits && credits.credits_balance < creditsEstimated) {
-        return new Response(JSON.stringify({ 
-          error: 'Insufficient credits',
-          creditsBalance: credits.credits_balance,
-          creditsNeeded: creditsEstimated,
-        }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      // Get or create usage_credits (only needed for non-admins)
+      let credits: any = null;
+      if (!skipCreditCheck) {
+        const { data: existingCredits } = await supabase
+          .from('usage_credits')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        // If no credits record exists, create one with FREE tier defaults
+        if (!existingCredits) {
+          console.log(`Creating usage_credits for user ${user.id} during run`);
+          const { data: newCredits, error: createError } = await supabase
+            .from('usage_credits')
+            .insert({
+              user_id: user.id,
+              plan_tier: 'free',
+              credits_balance: 25,
+            })
+            .select()
+            .single();
+          
+          if (!createError && newCredits) {
+            credits = newCredits;
+          }
+        } else {
+          credits = existingCredits;
+        }
+        
+        if (credits && credits.credits_balance < creditsEstimated) {
+          return new Response(JSON.stringify({ 
+            error: 'Insufficient credits',
+            creditsBalance: credits.credits_balance,
+            creditsNeeded: creditsEstimated,
+          }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
       
       // Create project
@@ -1333,8 +1358,8 @@ serve(async (req) => {
           }
         }
         
-        // Deduct credits
-        if (credits) {
+        // Deduct credits (skip for admins)
+        if (credits && !skipCreditCheck) {
           await supabase
             .from('usage_credits')
             .update({ credits_balance: credits.credits_balance - creditsEstimated })
