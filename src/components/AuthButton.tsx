@@ -7,21 +7,36 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, LogIn, Globe, Palette } from "lucide-react";
+import { User, Settings, LogOut, LogIn, Globe, Palette, Crown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
+type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
+
 const AuthButton = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<UserRole>(null);
   const navigate = useNavigate();
+
+  const fetchUserRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setUserRole(data?.role as UserRole || null);
+  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserRole(session.user.id);
+      }
       setLoading(false);
     });
 
@@ -29,6 +44,11 @@ const AuthButton = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
         setLoading(false);
       }
     );
@@ -81,7 +101,14 @@ const AuthButton = () => {
             <span className="text-sm font-medium text-foreground">
               {user.email}
             </span>
-            <span className="text-xs text-muted-foreground">Member</span>
+            {(userRole === 'super_admin' || userRole === 'admin') ? (
+              <span className="text-xs text-amber-500 font-semibold flex items-center gap-1">
+                <Crown className="h-3 w-3" />
+                {userRole === 'super_admin' ? 'Super Admin' : 'Admin'}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">Member</span>
+            )}
           </div>
         </div>
         <DropdownMenuSeparator />
