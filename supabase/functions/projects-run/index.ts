@@ -788,8 +788,13 @@ serve(async (req) => {
         initialValue = 10000
       } = inputs || {};
       
-      const instruments = directInstruments || holdings.map((h: any) => h.symbol) || PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
-      
+      const instruments =
+        (Array.isArray(directInstruments) && directInstruments.length > 0)
+          ? directInstruments
+          : (Array.isArray(holdings) && holdings.length > 0)
+            ? holdings.map((h: any) => h.symbol)
+            : PREDEFINED_UNIVERSES[assetClass]?.[universe] || [];
+
       // Calculate credits
       const creditResult = calculateCredits({
         projectType,
