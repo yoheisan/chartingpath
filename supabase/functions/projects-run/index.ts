@@ -862,19 +862,30 @@ serve(async (req) => {
       }
       
       // Create project inputs
-      await supabase
+      const { data: projectInput, error: inputError } = await supabase
         .from('project_inputs')
         .insert({
           project_id: project.id,
           version: 1,
           input_json: inputs,
-        });
+        })
+        .select()
+        .single();
       
-      // Create project run
+      if (inputError) {
+        console.error('Project input creation error:', inputError);
+        return new Response(JSON.stringify({ error: 'Failed to create project input' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Create project run with input_id
       const { data: run, error: runError } = await supabase
         .from('project_runs')
         .insert({
           project_id: project.id,
+          input_id: projectInput.id,
           status: 'queued',
           credits_estimated: creditsEstimated,
         })
