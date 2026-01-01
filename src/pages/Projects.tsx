@@ -167,7 +167,7 @@ const ProjectCard = ({
             className="relative z-20 w-full group/btn overflow-hidden pointer-events-auto"
             variant="outline"
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <span className="pointer-events-none relative z-10 flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               Start Project
               <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
