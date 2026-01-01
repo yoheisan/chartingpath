@@ -225,14 +225,23 @@ const Projects = () => {
         setCreditsBalance(25);
         setPlanTier('free');
         setIsAdmin(false);
+        setCreditsLoading(false);
         return;
       }
       
       setCreditsLoading(true);
       try {
-        // Check admin status first
-        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
-        const userIsAdmin = adminCheck === true;
+        // Check admin status first (with error handling)
+        let userIsAdmin = false;
+        try {
+          const { data: adminCheck, error: adminError } = await supabase.rpc('is_admin', { _user_id: user.id });
+          if (!adminError) {
+            userIsAdmin = adminCheck === true;
+          }
+        } catch {
+          // Admin check failed, treat as non-admin
+          console.warn('Admin check failed, treating as non-admin');
+        }
         setIsAdmin(userIsAdmin);
         
         // Admins get unlimited credits display
@@ -243,18 +252,20 @@ const Projects = () => {
           return;
         }
         
+        // Fetch credits for regular users
         const { data: credits, error } = await supabase
           .from('usage_credits')
           .select('credits_balance, plan_tier')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle to avoid error when no record exists
         
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error fetching credits:', error);
-        }
-        
-        if (credits) {
-          setCreditsBalance(credits.credits_balance);
+          // Fall back to defaults on error
+          setCreditsBalance(25);
+          setPlanTier('free');
+        } else if (credits) {
+          setCreditsBalance(credits.credits_balance ?? 25);
           setPlanTier(credits.plan_tier || 'free');
         } else {
           // No credits record - user gets FREE tier defaults
@@ -263,6 +274,9 @@ const Projects = () => {
         }
       } catch (err) {
         console.error('Failed to fetch credits:', err);
+        // Always set defaults on any failure
+        setCreditsBalance(25);
+        setPlanTier('free');
       } finally {
         setCreditsLoading(false);
       }
