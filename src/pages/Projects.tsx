@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectTemplate {
   id: string;
@@ -211,8 +212,48 @@ const CreditsDisplay = ({
 const Projects = () => {
   const navigate = useNavigate();
   const { user, loading: profileLoading } = useUserProfile();
-  const [creditsBalance] = useState(100); // TODO: Fetch from usage_credits
-  const [planTier] = useState('free'); // TODO: Fetch from usage_credits
+  const [creditsBalance, setCreditsBalance] = useState(25);
+  const [planTier, setPlanTier] = useState('free');
+  const [creditsLoading, setCreditsLoading] = useState(false);
+  
+  // Fetch user credits from usage_credits table
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (!user) {
+        setCreditsBalance(25);
+        setPlanTier('free');
+        return;
+      }
+      
+      setCreditsLoading(true);
+      try {
+        const { data: credits, error } = await supabase
+          .from('usage_credits')
+          .select('credits_balance, plan_tier')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching credits:', error);
+        }
+        
+        if (credits) {
+          setCreditsBalance(credits.credits_balance);
+          setPlanTier(credits.plan_tier || 'free');
+        } else {
+          // No credits record - user gets FREE tier defaults
+          setCreditsBalance(25);
+          setPlanTier('free');
+        }
+      } catch (err) {
+        console.error('Failed to fetch credits:', err);
+      } finally {
+        setCreditsLoading(false);
+      }
+    };
+    
+    fetchCredits();
+  }, [user]);
   
   const handleStartProject = (templateId: string) => {
     const routes: Record<string, string> = {
@@ -251,7 +292,7 @@ const Projects = () => {
               <CreditsDisplay 
                 balance={creditsBalance}
                 planTier={planTier}
-                loading={profileLoading}
+                loading={profileLoading || creditsLoading}
               />
             </div>
           </div>
