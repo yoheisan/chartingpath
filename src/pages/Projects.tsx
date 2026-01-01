@@ -336,7 +336,7 @@ const Projects = () => {
                 key={template.id}
                 template={template}
                 onStart={() => handleStartProject(template.id)}
-                disabled={!user}
+                disabled={!profileLoading && !user}
               />
             ))}
           </div>
