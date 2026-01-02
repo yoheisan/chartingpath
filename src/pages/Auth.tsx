@@ -140,37 +140,41 @@ const Auth = () => {
     };
     checkUser();
 
-    // Listen for auth changes to handle social login profile creation
+    // Listen for auth changes (keep callback synchronous to avoid auth deadlocks)
+    const ensureProfileForUser = async (user: any) => {
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabase.from("profiles").insert({
+          user_id: user.id,
+          email: user.email,
+          subscription_plan: "starter",
+        });
+
+        if (profileError) {
+          // eslint-disable-next-line no-console
+          console.error("Profile creation error:", profileError);
+        } else {
+          trackSignupCompleted();
+        }
+      }
+    };
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        const { user } = session;
-
-        // Check if profile exists, if not create one
-        const { data: existingProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (!existingProfile) {
-          // Create profile for social login users
-          const { error: profileError } = await supabase.from("profiles").insert({
-            user_id: user.id,
-            email: user.email,
-            subscription_plan: "starter",
+        const user = session.user;
+        // Defer Supabase calls outside the callback.
+        setTimeout(() => {
+          void ensureProfileForUser(user).finally(() => {
+            navigate(redirectPath);
           });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          } else {
-            // Track signup completed event
-            trackSignupCompleted();
-          }
-        }
-
-        navigate(redirectPath);
+        }, 0);
       } else if (event === "PASSWORD_RECOVERY") {
         setIsResetPassword(true);
       }
@@ -207,7 +211,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getCanonicalAppOrigin()}/auth?reset=true`
+        redirectTo: `${getCanonicalAppOrigin()}/auth/?reset=true`
       });
 
       if (error) throw error;
