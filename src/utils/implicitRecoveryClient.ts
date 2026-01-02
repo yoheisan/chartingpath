@@ -22,9 +22,12 @@ export function getImplicitRecoveryClient() {
   implicitRecoveryClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       flowType: "implicit",
+      // Avoid collisions with the main app auth client (prevents undefined behavior).
+      storageKey: "cp-implicit-recovery",
+      // No need to persist/refresh a session for this one-off email request.
+      persistSession: false,
+      autoRefreshToken: false,
       storage: getSupabaseStorage() as any,
-      persistSession: true,
-      autoRefreshToken: true,
     },
   });
 
