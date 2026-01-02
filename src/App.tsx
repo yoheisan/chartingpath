@@ -52,7 +52,7 @@ import SetupFinderWizard from "./pages/projects/SetupFinderWizard";
 import PatternLabWizard from "./pages/projects/PatternLabWizard";
 import PortfolioCheckupWizard from "./pages/projects/PortfolioCheckupWizard";
 import PortfolioSimulatorWizard from "./pages/projects/PortfolioSimulatorWizard";
-import ProjectRun from "./pages/projects/ProjectRun";
+
 import StockMarket from "./pages/markets/StockMarket";
 import ForexMarket from "./pages/markets/ForexMarket";
 import CryptoMarket from "./pages/markets/CryptoMarket";
@@ -102,6 +102,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const MemberCourses = lazy(() => import("./pages/MemberCourses"));
 const IndustrialMetals = lazy(() => import("./pages/markets/commodities/IndustrialMetals"));
 const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
+const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 
 const queryClient = new QueryClient();
 
@@ -183,7 +184,7 @@ const App = () => (
           <Route path="/projects/pattern-lab/new" element={<PatternLabWizard />} />
           <Route path="/projects/portfolio-checkup/new" element={<PortfolioCheckupWizard />} />
           <Route path="/projects/portfolio-sim/new" element={<PortfolioSimulatorWizard />} />
-          <Route path="/projects/runs/:runId" element={<ProjectRun />} />
+          <Route path="/projects/runs/:runId" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><ProjectRun /></Suspense>} />
           <Route path="/forge" element={<Forge />} />
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
           <Route path="/members/dashboard" element={<MemberDashboard />} />
