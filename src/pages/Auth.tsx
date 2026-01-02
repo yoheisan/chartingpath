@@ -57,35 +57,27 @@ const Auth = () => {
         });
 
         try {
-          // PKCE recovery links arrive as ?code=... (query param)
-          const code = urlParams.get("code");
-          if (code) {
-            // eslint-disable-next-line no-console
-            console.info("[Auth recovery] exchanging code for session");
+          // Let Supabase parse the URL and persist the session (handles PKCE + implicit flows).
+          const { data, error } = await supabase.auth.getSessionFromUrl({
+            storeSession: true,
+          });
+          if (error) throw error;
 
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
+          // Clean one-time params to avoid re-processing on refresh.
+          const next = new URL(window.location.href);
+          next.searchParams.delete("code");
+          next.searchParams.delete("state");
+          next.searchParams.delete("type");
+          next.hash = "";
+          const qs = next.searchParams.toString();
+          const nextUrl = qs ? `${next.pathname}?${qs}` : next.pathname;
+          window.history.replaceState({}, document.title, nextUrl);
 
-            const next = new URL(window.location.href);
-            next.searchParams.delete("code");
-            next.searchParams.delete("state");
-            const qs = next.searchParams.toString();
-            const nextUrl = qs ? `${next.pathname}?${qs}` : next.pathname;
-            window.history.replaceState({}, document.title, nextUrl);
-          }
-
-          // In implicit flow, Supabase may set the session from the URL hash; wait briefly.
-          let session = null as any;
-          for (let i = 0; i < 6; i++) {
-            const {
-              data: { session: s },
-            } = await supabase.auth.getSession();
-            if (s) {
-              session = s;
-              break;
-            }
-            await new Promise((r) => setTimeout(r, 250));
-          }
+          const session =
+            data?.session ??
+            (
+              await supabase.auth.getSession()
+            ).data.session;
 
           // eslint-disable-next-line no-console
           console.info("[Auth recovery] session present?", !!session);
@@ -107,7 +99,7 @@ const Auth = () => {
               : "Unable to verify the reset link. Please request a new one.";
 
           const isPkceVerifierIssue =
-            /code verifier|code_verifier|bad_code_verifier|code challenge does not match/i.test(
+            /code verifier|code_verifier|bad_code_verifier|code challenge does not match|flow state/i.test(
               message
             );
 
