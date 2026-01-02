@@ -160,7 +160,7 @@ const AdminLogin = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getCanonicalAppOrigin()}/admin/login?reset=true`
+        redirectTo: `${getCanonicalAppOrigin()}/admin/login/?reset=true`
       });
 
       if (error) throw error;
