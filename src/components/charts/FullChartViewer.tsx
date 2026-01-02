@@ -211,8 +211,13 @@ export default function FullChartViewer({
   
   // Determine instrument category for TradingView link
   const getInstrumentCategory = (symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' => {
-    if (symbol.includes('USD') && symbol.length === 6) return 'forex';
-    if (symbol.endsWith('USDT') || symbol.endsWith('BTC')) return 'crypto';
+    const upper = symbol.toUpperCase();
+    // Yahoo-format crypto (e.g., BTC-USD, ETH-USD)
+    const cryptoBases = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'LINK', 'MATIC', 'LTC', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 'INJ', 'SUI', 'SEI', 'BNB', 'SHIB', 'TRX', 'TON'];
+    if (cryptoBases.some(base => upper.startsWith(base + '-') || upper.startsWith(base + 'USD'))) return 'crypto';
+    if (upper.endsWith('USDT') || upper.endsWith('BTC')) return 'crypto';
+    // Forex pairs (6 chars like EURUSD)
+    if (upper.length === 6 && upper.includes('USD')) return 'forex';
     return 'stocks';
   };
 
