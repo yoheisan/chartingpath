@@ -277,7 +277,7 @@ export default function FullChartViewer({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Chart (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <div ref={containerRef} className="w-full rounded-lg overflow-hidden border border-border/50" />
+            <div ref={containerRef} className="w-full rounded-lg overflow-hidden border border-border/50" style={{ minHeight: '350px' }} />
             
             {/* Trade Levels */}
             <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
