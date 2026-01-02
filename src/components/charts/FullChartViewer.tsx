@@ -106,109 +106,130 @@ export default function FullChartViewer({
     const { bars, visualSpec } = setup;
     if (!bars || bars.length === 0) return;
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#0f0f0f' : '#ffffff';
-    const textColor = isDark ? '#a1a1a1' : '#666666';
-    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    let cleanedUp = false;
+    let resizeObserver: ResizeObserver | null = null;
 
-    if (chartRef.current) {
-      chartRef.current.remove();
-      chartRef.current = null;
-    }
-
-    const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
-      height: 350,
-      layout: {
-        background: { color: bgColor },
-        textColor,
-      },
-      grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
-      },
-      rightPriceScale: {
-        borderColor: gridColor,
-      },
-      timeScale: {
-        borderColor: gridColor,
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        mode: 1,
-      },
-    });
-
-    chartRef.current = chart;
-
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      borderDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-    });
-
-    const chartData: CandlestickData[] = bars.map(bar => ({
-      time: (new Date(bar.t).getTime() / 1000) as Time,
-      open: bar.o,
-      high: bar.h,
-      low: bar.l,
-      close: bar.c,
-    }));
-
-    candleSeries.setData(chartData);
-
-    visualSpec.overlays.forEach(overlay => {
-      if (overlay.type === 'hline') {
-        const color = 
-          overlay.style === 'primary' ? '#3b82f6' :
-          overlay.style === 'destructive' ? '#ef4444' :
-          overlay.style === 'positive' ? '#22c55e' :
-          '#888888';
-        
-        candleSeries.createPriceLine({
-          price: overlay.price,
-          color,
-          lineWidth: 2,
-          lineStyle: overlay.id === 'entry' ? 0 : 2,
-          axisLabelVisible: true,
-          title: overlay.label,
-        });
+    // Small delay to ensure container is properly sized in DOM
+    const initChart = () => {
+      if (cleanedUp || !containerRef.current) return;
+      
+      const containerWidth = containerRef.current.clientWidth;
+      if (containerWidth === 0) {
+        // Container not ready, retry shortly
+        setTimeout(initChart, 50);
+        return;
       }
-    });
 
-    // Add pattern pivot markers as labeled price lines
-    if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-      visualSpec.pivots.forEach(pivot => {
-        const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
-        candleSeries.createPriceLine({
-          price: pivot.price,
-          color,
-          lineWidth: 1,
-          lineStyle: 1, // dotted
-          axisLabelVisible: true,
-          title: pivot.label || (pivot.type === 'high' ? 'High' : 'Low'),
-        });
+      const isDark = document.documentElement.classList.contains('dark');
+      const bgColor = isDark ? '#0f0f0f' : '#ffffff';
+      const textColor = isDark ? '#a1a1a1' : '#666666';
+      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
+
+      const chart = createChart(containerRef.current, {
+        width: containerWidth,
+        height: 350,
+        layout: {
+          background: { color: bgColor },
+          textColor,
+        },
+        grid: {
+          vertLines: { color: gridColor },
+          horzLines: { color: gridColor },
+        },
+        rightPriceScale: {
+          borderColor: gridColor,
+        },
+        timeScale: {
+          borderColor: gridColor,
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        crosshair: {
+          mode: 1,
+        },
       });
-    }
 
-    chart.timeScale().fitContent();
+      chartRef.current = chart;
 
-    const resizeObserver = new ResizeObserver(entries => {
-      if (entries[0] && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: entries[0].contentRect.width,
+      const candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: '#22c55e',
+        downColor: '#ef4444',
+        borderUpColor: '#22c55e',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#22c55e',
+        wickDownColor: '#ef4444',
+      });
+
+      const chartData: CandlestickData[] = bars.map(bar => ({
+        time: (new Date(bar.t).getTime() / 1000) as Time,
+        open: bar.o,
+        high: bar.h,
+        low: bar.l,
+        close: bar.c,
+      }));
+
+      candleSeries.setData(chartData);
+
+      visualSpec.overlays.forEach(overlay => {
+        if (overlay.type === 'hline') {
+          const color = 
+            overlay.style === 'primary' ? '#3b82f6' :
+            overlay.style === 'destructive' ? '#ef4444' :
+            overlay.style === 'positive' ? '#22c55e' :
+            '#888888';
+          
+          candleSeries.createPriceLine({
+            price: overlay.price,
+            color,
+            lineWidth: 2,
+            lineStyle: overlay.id === 'entry' ? 0 : 2,
+            axisLabelVisible: true,
+            title: overlay.label,
+          });
+        }
+      });
+
+      // Add pattern pivot markers as labeled price lines
+      if (visualSpec.pivots && visualSpec.pivots.length > 0) {
+        visualSpec.pivots.forEach(pivot => {
+          const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
+          candleSeries.createPriceLine({
+            price: pivot.price,
+            color,
+            lineWidth: 1,
+            lineStyle: 1, // dotted
+            axisLabelVisible: true,
+            title: pivot.label || (pivot.type === 'high' ? 'High' : 'Low'),
+          });
         });
       }
-    });
 
-    resizeObserver.observe(containerRef.current);
+      chart.timeScale().fitContent();
+
+      resizeObserver = new ResizeObserver(entries => {
+        if (entries[0] && chartRef.current) {
+          chartRef.current.applyOptions({
+            width: entries[0].contentRect.width,
+          });
+        }
+      });
+
+      resizeObserver.observe(containerRef.current);
+    };
+
+    // Start initialization
+    initChart();
 
     return () => {
-      resizeObserver.disconnect();
+      cleanedUp = true;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
