@@ -165,13 +165,22 @@ export default function FullChartViewer({
         wickDownColor: '#ef4444',
       });
 
-      const chartData: CandlestickData[] = bars.map(bar => ({
-        time: (new Date(bar.t).getTime() / 1000) as Time,
-        open: bar.o,
-        high: bar.h,
-        low: bar.l,
-        close: bar.c,
-      }));
+      const chartData: CandlestickData[] = bars
+        .map((bar) => {
+          const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+          return {
+            time: ts as Time,
+            open: bar.o,
+            high: bar.h,
+            low: bar.l,
+            close: bar.c,
+          };
+        })
+        .filter((d) => Number.isFinite(d.time as number))
+        // lightweight-charts expects data sorted ASC by time
+        .sort((a, b) => (a.time as number) - (b.time as number));
+
+      if (chartData.length === 0) return;
 
       candleSeries.setData(chartData);
 
