@@ -19,7 +19,6 @@ import MemberScripts from "./pages/MemberScripts";
 import MemberDownloads from "./pages/MemberDownloads";
 import MemberAlerts from "./pages/MemberAlerts";
 import MemberAccount from "./pages/MemberAccount";
-import MemberAccount from "./pages/MemberAccount";
 import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
@@ -64,7 +63,6 @@ import AgriculturalCommodities from "./pages/markets/commodities/AgriculturalCom
 import MajorCurrencyPairs from "./pages/markets/forex/MajorCurrencyPairs";
 import CrossCurrencyPairs from "./pages/markets/forex/CrossCurrencyPairs";
 import MajorIndices from "./pages/markets/stocks/MajorIndices";
-import MajorIndices from "./pages/markets/stocks/MajorIndices";
 import StockSectors from "./pages/markets/stocks/StockSectors";
 import Bitcoin from "./pages/markets/crypto/Bitcoin";
 import Ethereum from "./pages/markets/crypto/Ethereum";
@@ -95,7 +93,6 @@ import PositionSizing from "./pages/blog/PositionSizing";
 import MoneyManagement from "./pages/blog/MoneyManagement";
 import TradingJournal from "./pages/blog/TradingJournal";
 import RectanglePattern from "./pages/blog/RectanglePattern";
-import EmailPreview from "./pages/EmailPreview";
 import EmailPreview from "./pages/EmailPreview";
 import EconomicCalendar from "./pages/EconomicCalendar";
 import SocialMediaCMS from "./pages/SocialMediaCMS";
@@ -157,7 +154,10 @@ const App = () => (
           <Route path="/learn/pin-bar-strategy" element={<PinBarStrategy />} />
           <Route path="/learn/risk-management" element={<RiskManagement />} />
           <Route path="/learn/position-sizing" element={<PositionSizing />} />
-          <Route path="/learn/money-management ⬅️" element={<MoneyManagement />} />
+          <Route path="/learn/money-management" element={<MoneyManagement />} />
+          <Route path="/learn/trading-psychology" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><TradingPsychology /></Suspense>} />
+          <Route path="/learn/trading-discipline" element={<TradingDiscipline />} />
+          <Route path="/learn/fear-and-greed" element={<FearAndGreed />} />
           <Route path="/learn/trading-journal" element={<TradingJournal />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
@@ -173,7 +173,7 @@ const App = () => (
           <Route path="/markets/commodities/energy" element={<EnergyCommodities />} />
           <Route path="/markets/commodities/precious-metals" element={<PreciousMetals />} />
           <Route path="/markets/commodities/agricultural" element={<AgriculturalCommodities />} />
-          <Route path="/markets/commodities/industrial-metals" element={<IndustrialMetals />} />
+          <Route path="/markets/commodities/industrial-metals" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><IndustrialMetals /></Suspense>} />
           <Route path="/strategy-workspace" element={<StrategyWorkspace />} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
@@ -192,7 +192,7 @@ const App = () => (
           <Route path="/elite" element={<EliteDashboard />} />
           <Route path="/share/:token" element={<SharedBacktest />} />
           <Route path="/members/scripts" element={<MemberScripts />} />
-          <Route path="/members/courses" element={<MemberCourses />} />
+          <Route path="/members/courses" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><MemberCourses /></Suspense>} />
           <Route path="/members/downloads" element={<MemberDownloads />} />
           <Route path="/members/alerts" element={<MemberAlerts />} />
           <Route path="/members/account" element={<MemberAccount />} />
