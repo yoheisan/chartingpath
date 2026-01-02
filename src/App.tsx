@@ -22,7 +22,6 @@ import MemberAccount from "./pages/MemberAccount";
 import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
 import AdminContentManagement from "./pages/AdminContentManagement";
 import AdminKPIDashboard from "./pages/admin/AdminKPIDashboard";
 import PatternGenerator from "./pages/PatternGenerator";
@@ -105,6 +104,7 @@ const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -204,7 +204,16 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/login/*" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <Suspense
+                fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}
+              >
+                <AdminDashboard />
+              </Suspense>
+            }
+          />
           <Route path="/admin/content" element={<AdminContentManagement />} />
           <Route path="/admin/kpi" element={<AdminKPIDashboard />} />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
