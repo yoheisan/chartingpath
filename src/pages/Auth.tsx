@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { trackSignupCompleted } from "@/services/analytics";
 import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
-
+import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -71,8 +71,19 @@ const Auth = () => {
         setLoading(true);
 
         try {
+          const url = new URL(window.location.href);
+          const hash = url.hash.startsWith("#") ? url.hash.substring(1) : "";
+          const hashParams = new URLSearchParams(hash);
+          const hasImplicitSessionTokens = Boolean(
+            hashParams.get("access_token") && hashParams.get("refresh_token")
+          );
+
           const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
-          if (!hasPersistentBrowserStorage()) {
+
+          // If we landed here with a PKCE `code`, we need persistent storage for the `code_verifier`.
+          // If we landed here with implicit tokens in the URL hash, we can proceed even if storage
+          // is blocked (we can still set the session in memory for this page load).
+          if (!hasPersistentBrowserStorage() && !hasImplicitSessionTokens) {
             setIsSignUp(false);
             setIsResetPassword(false);
             setIsForgotPassword(true);
@@ -231,8 +242,10 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getCanonicalAppOrigin()}/auth/?reset=true`
+      const implicitClient = getImplicitRecoveryClient();
+
+      const { error } = await implicitClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getCanonicalAppOrigin()}/auth/?reset=true`,
       });
 
       if (error) throw error;
