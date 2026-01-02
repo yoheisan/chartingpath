@@ -14,11 +14,12 @@ import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/util
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/members/trading';
+  const redirectPath = searchParams.get("redirect") || "/members/trading";
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [recoveryHint, setRecoveryHint] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,11 +42,28 @@ const Auth = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-    const isRecovery =
-      urlParams.get("reset") === "true" ||
-      urlParams.get("type") === "recovery" ||
+    const hasCallbackParams =
       urlParams.get("code") !== null ||
-      hashParams.get("type") === "recovery";
+      hashParams.get("type") === "recovery" ||
+      hashParams.get("access_token") !== null ||
+      hashParams.get("refresh_token") !== null;
+
+    const resetFlag = urlParams.get("reset") === "true" || urlParams.get("type") === "recovery";
+
+    // If we arrived here with reset=true but WITHOUT callback params, it means the recovery link
+    // was not successfully verified (common causes: opened in a different browser/device,
+    // or an in-app email webview that blocks storage).
+    if (resetFlag && !hasCallbackParams) {
+      setIsSignUp(false);
+      setIsResetPassword(false);
+      setIsForgotPassword(true);
+      setRecoveryHint(
+        "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+      );
+      return;
+    }
+
+    const isRecovery = resetFlag || hasCallbackParams;
 
     if (isRecovery) {
       // Run the recovery exchange exactly once (StrictMode-safe), then show reset UI.
@@ -55,6 +73,12 @@ const Auth = () => {
         try {
           const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
           if (!hasPersistentBrowserStorage()) {
+            setIsSignUp(false);
+            setIsResetPassword(false);
+            setIsForgotPassword(true);
+            setRecoveryHint(
+              "Your email app/browser is blocking local storage (common in in-app browsers/private mode). Open the reset link in Safari/Chrome, then try again."
+            );
             toast({
               title: "Browser storage blocked",
               description:
@@ -73,12 +97,21 @@ const Auth = () => {
           const session = await waitForSupabaseSession(supabase);
 
           if (session) {
+            setRecoveryHint(null);
+            setIsForgotPassword(false);
             setIsResetPassword(true);
           } else {
+            // Link was invalid/expired/used (or consumed by a mail security scanner).
+            setIsSignUp(false);
+            setIsResetPassword(false);
+            setIsForgotPassword(true);
+            setRecoveryHint(
+              "That reset link is invalid/expired. Request ONE new reset email and open ONLY the newest email link once."
+            );
             toast({
               title: "Reset Link Expired",
               description:
-                "This password reset link has expired or already been used. Please request a new one.",
+                "This password reset link has expired or already been used. Please request a new one, then open ONLY the newest email link once.",
               variant: "destructive",
             });
           }
@@ -93,18 +126,22 @@ const Auth = () => {
               message
             );
 
+          if (isPkceVerifierIssue) {
+            setIsSignUp(false);
+            setIsResetPassword(false);
+            setIsForgotPassword(true);
+            setRecoveryHint(
+              "This link doesn’t match a reset request from this browser/device. Please request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+            );
+          }
+
           toast({
             title: "Reset Link Error",
             description: isPkceVerifierIssue
-              ? "This reset link doesn't match the most recent reset request in this browser (common if multiple reset emails were requested, or an older email link was opened). Please request ONE new reset email, then open the MOST RECENT link once."
+              ? "This reset link doesn't match the most recent reset request in this browser/device. Request ONE new reset email from the SAME browser/device you will open it on, then open ONLY the newest email link once."
               : message,
             variant: "destructive",
           });
-
-          if (isPkceVerifierIssue) {
-            setIsResetPassword(false);
-            setIsForgotPassword(true);
-          }
         } finally {
           setLoading(false);
         }
@@ -365,8 +402,14 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
-            {isResetPassword ? (
+           <CardContent>
+             {recoveryHint ? (
+               <div className="mb-4 rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                 {recoveryHint}
+               </div>
+             ) : null}
+
+             {isResetPassword ? (
               // Password Reset Form
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
