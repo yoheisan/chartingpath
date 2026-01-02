@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,7 +38,6 @@ import CryptoQuiz from "./pages/CryptoQuiz";
 import CommoditiesQuiz from "./pages/CommoditiesQuiz";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import FAQ from "./pages/FAQ";
 import AIBuilder from "./pages/AIBuilder";
 import Forge from "./pages/Forge";
 import PaperTrading from "./pages/PaperTrading";
@@ -100,6 +100,9 @@ import EmailPreview from "./pages/EmailPreview";
 import EconomicCalendar from "./pages/EconomicCalendar";
 import SocialMediaCMS from "./pages/SocialMediaCMS";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
+
+// Lazy-load very large pages so a transform error can't blank-screen unrelated routes.
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 const queryClient = new QueryClient();
 
@@ -207,7 +210,18 @@ const App = () => (
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/faq" element={<FAQ />} />
+          <Route
+            path="/faq"
+            element={
+              <Suspense
+                fallback={
+                  <div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>
+                }
+              >
+                <FAQ />
+              </Suspense>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
