@@ -50,16 +50,20 @@ const Auth = () => {
     if (isRecovery) {
       // Run the recovery exchange exactly once (StrictMode-safe), then show reset UI.
       (async () => {
-        // eslint-disable-next-line no-console
-        console.info("[Auth recovery] landing", {
-          pathname: window.location.pathname,
-          search: window.location.search,
-          hash: window.location.hash,
-        });
-
         setLoading(true);
 
         try {
+          const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
+          if (!hasPersistentBrowserStorage()) {
+            toast({
+              title: "Browser storage blocked",
+              description:
+                "This environment blocks local storage (common in in-app browsers/private mode), so password reset links can’t be verified here. Please open the link in a standard browser (Safari/Chrome) and try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           const { exchangeRecoverySessionFromUrlOnce, waitForSupabaseSession, cleanRecoveryUrl } =
             await import("@/utils/supabaseRecovery");
 
@@ -67,9 +71,6 @@ const Auth = () => {
           cleanRecoveryUrl();
 
           const session = await waitForSupabaseSession(supabase);
-
-          // eslint-disable-next-line no-console
-          console.info("[Auth recovery] session present?", !!session);
 
           if (session) {
             setIsResetPassword(true);
