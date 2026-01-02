@@ -5,11 +5,21 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // Some environments can incorrectly include query params in `pathname`
+    // (e.g. "/auth?reset=true"), which would bypass our router match.
+    // Auto-correct by redirecting to the proper path+query.
+    if (location.pathname.includes("?")) {
+      const [path, query = ""] = location.pathname.split("?");
+      const target = query ? `${path}?${query}${location.hash ?? ""}` : `${path}${location.hash ?? ""}`;
+      window.location.replace(target);
+      return;
+    }
+
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

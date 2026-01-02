@@ -195,7 +195,9 @@ const App = () => (
           <Route path="/members/alerts" element={<MemberAlerts />} />
           <Route path="/members/account" element={<MemberAccount />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/*" element={<Auth />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login/*" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/content" element={<AdminContentManagement />} />
