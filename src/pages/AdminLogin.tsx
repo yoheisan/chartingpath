@@ -60,11 +60,40 @@ const AdminLogin = () => {
 
       if (isRecovery) {
         try {
-          // Let Supabase parse the URL and persist the session (handles PKCE + implicit flows).
-          const { data, error } = await supabase.auth.getSessionFromUrl({
-            storeSession: true,
-          });
-          if (error) throw error;
+          const waitForSession = async () => {
+            for (let i = 0; i < 8; i++) {
+              const {
+                data: { session },
+              } = await supabase.auth.getSession();
+              if (session) return session;
+              await new Promise((r) => setTimeout(r, 200));
+            }
+            return null;
+          };
+
+          const url = new URL(window.location.href);
+          const urlParams = url.searchParams;
+          const hash = url.hash.startsWith("#") ? url.hash.substring(1) : "";
+          const hashParams = new URLSearchParams(hash);
+
+          // 1) PKCE flow: ?code=...
+          const code = urlParams.get("code");
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+          } else {
+            // 2) Implicit flow: #access_token=...&refresh_token=...
+            const access_token = hashParams.get("access_token");
+            const refresh_token = hashParams.get("refresh_token");
+
+            if (access_token && refresh_token) {
+              const { error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              });
+              if (error) throw error;
+            }
+          }
 
           // Remove one-time params to avoid re-processing on refresh
           const next = new URL(window.location.href);
@@ -76,11 +105,7 @@ const AdminLogin = () => {
           const nextUrl = qs ? `${next.pathname}?${qs}` : next.pathname;
           window.history.replaceState({}, document.title, nextUrl);
 
-          const session =
-            data?.session ??
-            (
-              await supabase.auth.getSession()
-            ).data.session;
+          const session = await waitForSession();
 
           if (session && isMounted) {
             setIsResetPassword(true);
