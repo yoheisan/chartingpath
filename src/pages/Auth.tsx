@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { trackSignupCompleted } from "@/services/analytics";
+import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
+
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +26,8 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    redirectToCanonicalOriginIfNeeded();
+
     // Check URL for recovery token
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -181,7 +185,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?reset=true`
+        redirectTo: `${getCanonicalAppOrigin()}/auth?reset=true`
       });
 
       if (error) throw error;
@@ -265,7 +269,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/members/trading`
+            emailRedirectTo: `${getCanonicalAppOrigin()}/members/trading`
           }
         });
 
