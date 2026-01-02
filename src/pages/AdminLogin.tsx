@@ -7,6 +7,7 @@ import { Shield, Mail, Lock, ArrowLeft, Key } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
 
 const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,8 @@ const AdminLogin = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    redirectToCanonicalOriginIfNeeded();
+
     let isMounted = true;
 
     const waitForSession = async () => {
@@ -33,6 +36,7 @@ const AdminLogin = () => {
       }
       return null;
     };
+
 
     // Check for reset password parameter and verify session
     const checkPasswordReset = async () => {
@@ -145,7 +149,7 @@ const AdminLogin = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin/login?reset=true`
+        redirectTo: `${getCanonicalAppOrigin()}/admin/login?reset=true`
       });
 
       if (error) throw error;
