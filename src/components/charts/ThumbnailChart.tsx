@@ -91,6 +91,21 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
       }
     });
 
+    // Add pattern pivot markers as additional price lines with labels
+    if (visualSpec.pivots && visualSpec.pivots.length > 0) {
+      visualSpec.pivots.forEach(pivot => {
+        const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
+        candleSeries.createPriceLine({
+          price: pivot.price,
+          color,
+          lineWidth: 1,
+          lineStyle: 1, // dotted
+          axisLabelVisible: false,
+          title: pivot.label || '',
+        });
+      });
+    }
+
     // Set visible range based on yDomain
     chart.priceScale('right').applyOptions({
       autoScale: false,

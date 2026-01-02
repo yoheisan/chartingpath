@@ -41,91 +41,149 @@ const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   },
 };
 
-// Pattern registry with detection logic - relaxed thresholds for better sensitivity
-const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean }> = {
+// ============= PATTERN PIVOT DATA =============
+interface PatternPivot {
+  index: number;
+  price: number;
+  type: 'high' | 'low';
+  label: string;
+  timestamp?: string;
+}
+
+interface PatternDetectionResult {
+  detected: boolean;
+  pivots: PatternPivot[];
+}
+
+// Pattern registry with detection logic - now returns pivots for chart annotation
+const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult }> = {
   'donchian-breakout-long': {
     direction: 'long',
     detector: (window) => {
-      if (window.length < 10) return false;
+      if (window.length < 10) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const closes = window.map(d => d.close);
-      // Relaxed: Look at 10-day high (excluding last 2 bars) and check if current close OR recent close breaks above
       const lookbackHighs = highs.slice(0, -2);
       const recentHigh = Math.max(...lookbackHighs);
+      const recentHighIdx = lookbackHighs.indexOf(recentHigh);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      // Breakout if current close OR previous close exceeds prior high by at least 0.1%
-      return currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      const detected = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      const pivots: PatternPivot[] = detected ? [
+        { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
+        { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
+      ] : [];
+      return { detected, pivots };
     },
     displayName: 'Donchian Breakout (Long)'
   },
   'donchian-breakout-short': {
     direction: 'short',
     detector: (window) => {
-      if (window.length < 10) return false;
+      if (window.length < 10) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
-      // Relaxed: Look at 10-day low (excluding last 2 bars) and check if current close OR recent close breaks below
       const lookbackLows = lows.slice(0, -2);
       const recentLow = Math.min(...lookbackLows);
+      const recentLowIdx = lookbackLows.indexOf(recentLow);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      // Breakdown if current close OR previous close falls below prior low by at least 0.1%
-      return currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      const detected = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      const pivots: PatternPivot[] = detected ? [
+        { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
+        { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
+      ] : [];
+      return { detected, pivots };
     },
     displayName: 'Donchian Breakout (Short)'
   },
   'double-top': {
     direction: 'short',
     detector: (window) => {
-      if (window.length < 15) return false;
+      if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const peaks = findPeaks(highs);
-      if (peaks.length < 2) return false;
-      const lastTwo = peaks.slice(-2).map(i => highs[i]);
-      // Relaxed: Allow 5% tolerance between peaks (was 2%)
+      if (peaks.length < 2) return { detected: false, pivots: [] };
+      const lastTwoIdx = peaks.slice(-2);
+      const lastTwo = lastTwoIdx.map(i => highs[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      return diff < 0.05;
+      const detected = diff < 0.05;
+      const pivots: PatternPivot[] = detected ? [
+        { index: lastTwoIdx[0], price: lastTwo[0], type: 'high', label: 'Top 1' },
+        { index: lastTwoIdx[1], price: lastTwo[1], type: 'high', label: 'Top 2' }
+      ] : [];
+      return { detected, pivots };
     },
     displayName: 'Double Top (Short)'
   },
   'double-bottom': {
     direction: 'long',
     detector: (window) => {
-      if (window.length < 15) return false;
+      if (window.length < 15) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const troughs = findTroughs(lows);
-      if (troughs.length < 2) return false;
-      const lastTwo = troughs.slice(-2).map(i => lows[i]);
-      // Relaxed: Allow 5% tolerance between troughs (was 2%)
+      if (troughs.length < 2) return { detected: false, pivots: [] };
+      const lastTwoIdx = troughs.slice(-2);
+      const lastTwo = lastTwoIdx.map(i => lows[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      return diff < 0.05;
+      const detected = diff < 0.05;
+      const pivots: PatternPivot[] = detected ? [
+        { index: lastTwoIdx[0], price: lastTwo[0], type: 'low', label: 'Bottom 1' },
+        { index: lastTwoIdx[1], price: lastTwo[1], type: 'low', label: 'Bottom 2' }
+      ] : [];
+      return { detected, pivots };
     },
     displayName: 'Double Bottom (Long)'
   },
   'ascending-triangle': {
     direction: 'long',
     detector: (window) => {
-      if (window.length < 15) return false;
+      if (window.length < 15) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const highs = window.map(d => d.high);
       const trend = calculateTrend(lows.slice(-15));
       const highRange = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
-      // Relaxed: Allow more variance in resistance (8% instead of 5%) and require positive low trend
-      return trend > 0 && highRange < 1.08;
+      const detected = trend > 0 && highRange < 1.08;
+      const pivots: PatternPivot[] = [];
+      if (detected) {
+        const maxHigh = Math.max(...highs.slice(-15));
+        const peaks = findPeaks(highs);
+        const resistancePeaks = peaks.filter(i => highs[i] >= maxHigh * 0.98);
+        resistancePeaks.slice(-3).forEach((idx, i) => {
+          pivots.push({ index: idx, price: highs[idx], type: 'high', label: `R${i + 1}` });
+        });
+        const troughs = findTroughs(lows);
+        troughs.slice(-2).forEach((idx, i) => {
+          pivots.push({ index: idx, price: lows[idx], type: 'low', label: `S${i + 1}` });
+        });
+      }
+      return { detected, pivots };
     },
     displayName: 'Ascending Triangle (Long)'
   },
   'descending-triangle': {
     direction: 'short',
     detector: (window) => {
-      if (window.length < 15) return false;
+      if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const highTrend = calculateTrend(highs.slice(-15));
       const lowRange = Math.max(...lows.slice(-15)) / Math.min(...lows.slice(-15));
-      // Relaxed: Allow more variance in support (6% instead of 3%) and require negative high trend
-      return highTrend < -0.005 && lowRange < 1.06;
+      const detected = highTrend < -0.005 && lowRange < 1.06;
+      const pivots: PatternPivot[] = [];
+      if (detected) {
+        const minLow = Math.min(...lows.slice(-15));
+        const troughs = findTroughs(lows);
+        const supportTroughs = troughs.filter(i => lows[i] <= minLow * 1.02);
+        supportTroughs.slice(-3).forEach((idx, i) => {
+          pivots.push({ index: idx, price: lows[idx], type: 'low', label: `S${i + 1}` });
+        });
+        const peaks = findPeaks(highs);
+        peaks.slice(-2).forEach((idx, i) => {
+          pivots.push({ index: idx, price: highs[idx], type: 'high', label: `R${i + 1}` });
+        });
+      }
+      return { detected, pivots };
     },
     displayName: 'Descending Triangle (Short)'
   }
@@ -316,7 +374,7 @@ interface BacktestTrade {
 function runPatternBacktest(
   bars: any[],
   patternId: string,
-  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => boolean },
+  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult },
   instrument: string
 ): BacktestTrade[] {
   const trades: BacktestTrade[] = [];
@@ -325,9 +383,9 @@ function runPatternBacktest(
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
-    const detected = pattern.detector(window);
+    const detectionResult = pattern.detector(window);
     
-    if (!detected) continue;
+    if (!detectionResult.detected) continue;
     
     const entryBar = bars[i];
     const entryPrice = entryBar.close;
@@ -964,11 +1022,11 @@ serve(async (req) => {
               }
               
               const window = bars.slice(-20);
-              const detected = pattern.detector(window);
+              const detectionResult = pattern.detector(window);
               
-              console.log(`[SetupFinder] ${instrument} | ${patternId}: detected=${detected}`);
+              console.log(`[SetupFinder] ${instrument} | ${patternId}: detected=${detectionResult.detected}`);
               
-              if (detected) {
+              if (detectionResult.detected) {
                 const lastBar = bars[bars.length - 1];
                 const signalTs = lastBar.date;
                 const atr = calculateATR(bars, 14);
@@ -1010,8 +1068,25 @@ serve(async (req) => {
                 const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
                 const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
                 
+                // Convert pivot indices from detection window (last 20 bars) to visual window indices
+                // Detection window is bars.slice(-20), so pivot indices are 0-19
+                // Visual window starts at visualStartIdx and goes to visualEndIdx
+                const windowOffset = bars.length - 20; // Start index of detection window in full bars
+                const visualOffset = visualStartIdx; // Start index of visual window in full bars
+                
+                const pivotsWithTimestamps = detectionResult.pivots.map(pivot => {
+                  const absoluteIndex = windowOffset + pivot.index; // Position in full bars array
+                  const visualIndex = absoluteIndex - visualOffset; // Position in visual window
+                  const bar = bars[absoluteIndex];
+                  return {
+                    ...pivot,
+                    index: visualIndex,
+                    timestamp: bar?.date || signalTs
+                  };
+                }).filter(p => p.index >= 0 && p.index < visualBars.length);
+                
                 const visualSpec = {
-                  version: '1.0.0',
+                  version: '2.0.0',
                   symbol: instrument,
                   timeframe,
                   patternId,
@@ -1023,6 +1098,7 @@ serve(async (req) => {
                     { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' },
                     { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' },
                   ],
+                  pivots: pivotsWithTimestamps,
                 };
                 
                 setups.push({

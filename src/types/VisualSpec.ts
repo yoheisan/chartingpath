@@ -32,6 +32,7 @@ export interface ZigZagPivot {
   price: number;
   type: 'high' | 'low';
   timestamp: string;
+  label?: string;
 }
 
 export interface PivotOverlay {

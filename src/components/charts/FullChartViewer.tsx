@@ -180,6 +180,21 @@ export default function FullChartViewer({
       }
     });
 
+    // Add pattern pivot markers as labeled price lines
+    if (visualSpec.pivots && visualSpec.pivots.length > 0) {
+      visualSpec.pivots.forEach(pivot => {
+        const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
+        candleSeries.createPriceLine({
+          price: pivot.price,
+          color,
+          lineWidth: 1,
+          lineStyle: 1, // dotted
+          axisLabelVisible: true,
+          title: pivot.label || (pivot.type === 'high' ? 'High' : 'Low'),
+        });
+      });
+    }
+
     chart.timeScale().fitContent();
 
     const resizeObserver = new ResizeObserver(entries => {
