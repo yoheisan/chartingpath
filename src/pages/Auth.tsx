@@ -50,16 +50,30 @@ const Auth = () => {
 
     const resetFlag = urlParams.get("reset") === "true" || urlParams.get("type") === "recovery";
 
-    // If we arrived here with reset=true but WITHOUT callback params, it means the recovery link
-    // was not successfully verified (common causes: opened in a different browser/device,
-    // or an in-app email webview that blocks storage).
+    // If we arrived here with reset=true but WITHOUT callback params, it usually means the recovery link
+    // was not successfully verified (different browser/device, in-app email webview, etc.).
+    // HOWEVER: in React StrictMode (dev), effects run twice and we may have already exchanged
+    // the session and cleaned the URL in the first pass.
     if (resetFlag && !hasCallbackParams) {
-      setIsSignUp(false);
-      setIsResetPassword(false);
-      setIsForgotPassword(true);
-      setRecoveryHint(
-        "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
-      );
+      setLoading(true);
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          if (data.session) {
+            setRecoveryHint(null);
+            setIsForgotPassword(false);
+            setIsResetPassword(true);
+            return;
+          }
+
+          setIsSignUp(false);
+          setIsResetPassword(false);
+          setIsForgotPassword(true);
+          setRecoveryHint(
+            "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+          );
+        })
+        .finally(() => setLoading(false));
       return;
     }
 

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { MarketReportProvider } from "@/contexts/MarketReportContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import App from "./App.tsx";
+import Bootstrap from "./Bootstrap";
 import "./index.css";
 import "./i18n/config";
 
