@@ -17,9 +17,18 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetCooldown, setResetCooldown] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setResetCooldown((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [resetCooldown]);
 
   useEffect(() => {
     redirectToCanonicalOriginIfNeeded();
@@ -89,19 +98,21 @@ const AdminLogin = () => {
               ? error.message
               : "Unable to verify the reset link. Please request a new one.";
 
-          const isPkceVerifierMissing =
-            /code verifier|code_verifier|code verifier should be non-empty/i.test(message);
+          const isPkceVerifierIssue =
+            /code verifier|code_verifier|bad_code_verifier|code challenge does not match/i.test(
+              message
+            );
 
           toast({
             title: "Reset Link Error",
-            description: isPkceVerifierMissing
-              ? "This reset link was opened in a different browser/device than where it was requested. For security (PKCE), please request a new reset link and open it in the SAME browser where you clicked ‘Forgot Password’."
+            description: isPkceVerifierIssue
+              ? "This reset link doesn't match the most recent reset request in this browser (common if multiple reset emails were requested, or an older email link was opened). Please request ONE new reset email, then open the MOST RECENT link once."
               : message,
             variant: "destructive",
           });
 
-          // If PKCE verifier is missing, the user cannot reset from this session.
-          if (isPkceVerifierMissing) {
+          // If PKCE verifier is missing/mismatched, the user cannot reset from this session.
+          if (isPkceVerifierIssue) {
             setIsResetPassword(false);
             setIsForgotPassword(true);
           }
@@ -157,10 +168,11 @@ const AdminLogin = () => {
       toast({
         title: "Reset Email Sent",
         description:
-          "Please check your email for the reset link. Important: open the link in the SAME browser where you clicked ‘Forgot Password’.",
+          "Please check your email for the reset link. Open the MOST RECENT email link once (older links will fail).",
       });
-      
-      setIsForgotPassword(false);
+
+      setResetCooldown(60);
+      setIsForgotPassword(true);
     } catch (error: any) {
       toast({
         title: "Reset Error",
@@ -396,12 +408,14 @@ const AdminLogin = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || resetCooldown > 0}>
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Sending Reset Link...
                     </>
+                  ) : resetCooldown > 0 ? (
+                    `Resend in ${resetCooldown}s`
                   ) : (
                     "Send Reset Link"
                   )}
