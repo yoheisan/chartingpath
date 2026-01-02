@@ -10,6 +10,8 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
+    // Use PKCE so recovery/magic links can't be “consumed” by email security scanners.
+    flowType: "pkce",
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
