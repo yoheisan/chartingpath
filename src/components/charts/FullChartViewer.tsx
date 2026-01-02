@@ -422,6 +422,29 @@ export default function FullChartViewer({
               </CardContent>
             </Card>
 
+            {/* TradingView Affiliate CTA */}
+            <a 
+              href="https://www.tradingview.com/?aff_id=3433"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Card className="border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group">
+                <CardContent className="pt-4 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Analyze on TradingView</p>
+                      <p className="text-xs text-muted-foreground">Professional charts & tools</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
+
             {/* Metadata */}
             <Card className="border-border/50">
               <CardContent className="pt-4 space-y-2 text-xs">
