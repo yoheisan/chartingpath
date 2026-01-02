@@ -42,7 +42,7 @@ createRoot(document.getElementById("root")!).render(
         >
           <MarketReportProvider>
             <ErrorBoundary>
-              <App />
+              <Bootstrap />
             </ErrorBoundary>
           </MarketReportProvider>
         </ThemeProvider>
