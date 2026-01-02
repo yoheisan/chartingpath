@@ -60,24 +60,27 @@ const AdminLogin = () => {
 
       if (isRecovery) {
         try {
-          // PKCE recovery links arrive as ?code=...
-          const code = urlParams.get("code");
-          if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
+          // Let Supabase parse the URL and persist the session (handles PKCE + implicit flows).
+          const { data, error } = await supabase.auth.getSessionFromUrl({
+            storeSession: true,
+          });
+          if (error) throw error;
 
-            // Remove one-time params to avoid re-processing on refresh
-            const next = new URL(window.location.href);
-            next.searchParams.delete("code");
-            next.searchParams.delete("state");
-            window.history.replaceState(
-              {},
-              document.title,
-              `${next.pathname}?${next.searchParams.toString()}`
-            );
-          }
+          // Remove one-time params to avoid re-processing on refresh
+          const next = new URL(window.location.href);
+          next.searchParams.delete("code");
+          next.searchParams.delete("state");
+          next.searchParams.delete("type");
+          next.hash = "";
+          const qs = next.searchParams.toString();
+          const nextUrl = qs ? `${next.pathname}?${qs}` : next.pathname;
+          window.history.replaceState({}, document.title, nextUrl);
 
-          const session = await waitForSession();
+          const session =
+            data?.session ??
+            (
+              await supabase.auth.getSession()
+            ).data.session;
 
           if (session && isMounted) {
             setIsResetPassword(true);
@@ -99,7 +102,7 @@ const AdminLogin = () => {
               : "Unable to verify the reset link. Please request a new one.";
 
           const isPkceVerifierIssue =
-            /code verifier|code_verifier|bad_code_verifier|code challenge does not match/i.test(
+            /code verifier|code_verifier|bad_code_verifier|code challenge does not match|flow state/i.test(
               message
             );
 
