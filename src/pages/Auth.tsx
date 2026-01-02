@@ -27,17 +27,72 @@ const Auth = () => {
     // Check URL for recovery token
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    
-    const isRecovery = urlParams.get('reset') === 'true' || hashParams.get('type') === 'recovery';
-    
+
+    const isRecovery =
+      urlParams.get("reset") === "true" ||
+      urlParams.get("type") === "recovery" ||
+      urlParams.get("code") !== null ||
+      hashParams.get("type") === "recovery";
+
     if (isRecovery) {
-      setIsResetPassword(true);
+      (async () => {
+        try {
+          // PKCE recovery links arrive as ?code=... (query param)
+          const code = urlParams.get("code");
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (error) throw error;
+
+            const next = new URL(window.location.href);
+            next.searchParams.delete("code");
+            next.searchParams.delete("state");
+            window.history.replaceState(
+              {},
+              document.title,
+              `${next.pathname}?${next.searchParams.toString()}`
+            );
+          }
+
+          // In implicit flow, Supabase may set the session from the URL hash; wait briefly.
+          let session = null as any;
+          for (let i = 0; i < 6; i++) {
+            const {
+              data: { session: s },
+            } = await supabase.auth.getSession();
+            if (s) {
+              session = s;
+              break;
+            }
+            await new Promise((r) => setTimeout(r, 250));
+          }
+
+          if (session) {
+            setIsResetPassword(true);
+          } else {
+            toast({
+              title: "Reset Link Expired",
+              description:
+                "This password reset link has expired or already been used. Please request a new one.",
+              variant: "destructive",
+            });
+          }
+        } catch (error: any) {
+          toast({
+            title: "Reset Link Error",
+            description: error?.message || "Unable to verify the reset link. Please request a new one.",
+            variant: "destructive",
+          });
+        }
+      })();
+
       return;
     }
 
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         navigate(redirectPath);
       }
@@ -45,45 +100,43 @@ const Auth = () => {
     checkUser();
 
     // Listen for auth changes to handle social login profile creation
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const { user } = session;
-          
-          // Check if profile exists, if not create one
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const { user } = session;
 
-          if (!existingProfile) {
-            // Create profile for social login users
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                user_id: user.id,
-                email: user.email,
-                subscription_plan: 'starter'
-              });
+        // Check if profile exists, if not create one
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
-            if (profileError) {
-              console.error('Profile creation error:', profileError);
-            } else {
-              // Track signup completed event
-              trackSignupCompleted();
-            }
+        if (!existingProfile) {
+          // Create profile for social login users
+          const { error: profileError } = await supabase.from("profiles").insert({
+            user_id: user.id,
+            email: user.email,
+            subscription_plan: "starter",
+          });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          } else {
+            // Track signup completed event
+            trackSignupCompleted();
           }
-
-          navigate(redirectPath);
-        } else if (event === 'PASSWORD_RECOVERY') {
-          setIsResetPassword(true);
         }
+
+        navigate(redirectPath);
+      } else if (event === "PASSWORD_RECOVERY") {
+        setIsResetPassword(true);
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, redirectPath, toast]);
 
   const handleSocialAuth = async (provider: 'google' | 'linkedin_oidc' | 'facebook' | 'apple' | 'twitter') => {
     setLoading(true);

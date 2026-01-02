@@ -22,40 +22,79 @@ const AdminLogin = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
+    const waitForSession = async () => {
+      for (let i = 0; i < 6; i++) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) return session;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      return null;
+    };
+
     // Check for reset password parameter and verify session
     const checkPasswordReset = async () => {
-      const resetParam = searchParams.get('reset');
-      if (resetParam === 'true') {
-        // Wait a moment for Supabase to process the auth tokens from URL
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Verify that we have an active session for password reset
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session && isMounted) {
-          setIsResetPassword(true);
-          setIsForgotPassword(false);
-        } else if (isMounted) {
-          // No session found - the reset link may have expired
+      const resetParam = searchParams.get("reset");
+
+      if (resetParam === "true") {
+        try {
+          // PKCE recovery links arrive as ?reset=true&code=...
+          const code = searchParams.get("code");
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (error) throw error;
+
+            // Remove one-time params to avoid re-processing on refresh
+            const next = new URL(window.location.href);
+            next.searchParams.delete("code");
+            next.searchParams.delete("state");
+            window.history.replaceState(
+              {},
+              document.title,
+              `${next.pathname}?${next.searchParams.toString()}`
+            );
+          }
+
+          const session = await waitForSession();
+
+          if (session && isMounted) {
+            setIsResetPassword(true);
+            setIsForgotPassword(false);
+          } else if (isMounted) {
+            // No session found - the reset link may have expired
+            toast({
+              title: "Reset Link Expired",
+              description:
+                "This password reset link has expired or already been used. Please request a new one.",
+              variant: "destructive",
+            });
+          }
+        } catch (error: any) {
+          if (!isMounted) return;
           toast({
-            title: "Reset Link Expired",
-            description: "This password reset link has expired or already been used. Please request a new one.",
+            title: "Reset Link Error",
+            description: error?.message || "Unable to verify the reset link. Please request a new one.",
             variant: "destructive",
           });
         }
-      } else {
-        // Check if user is already logged in as admin
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && isMounted) {
-          const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
-          if (adminCheck) {
-            navigate("/admin/translation-management");
-          }
+
+        return;
+      }
+
+      // Check if user is already logged in as admin
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && isMounted) {
+        const { data: adminCheck } = await supabase.rpc("is_admin", { _user_id: user.id });
+        if (adminCheck) {
+          navigate("/admin/translation-management");
         }
       }
     };
-    
+
     checkPasswordReset();
 
     // Set up auth state listener to handle password reset flows
