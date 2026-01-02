@@ -37,7 +37,8 @@ export function toTradingViewSymbol(
   symbol: string,
   instrumentCategory: 'crypto' | 'stocks' | 'forex' | 'commodities' = 'crypto'
 ): string {
-  const cleanSymbol = symbol.toUpperCase().trim();
+  // Normalize: remove dashes (Yahoo format like ETH-USD -> ETHUSD)
+  const cleanSymbol = symbol.toUpperCase().trim().replace(/-/g, '');
 
   if (instrumentCategory === 'crypto') {
     // Extract base currency
@@ -52,11 +53,8 @@ export function toTradingViewSymbol(
 
     const exchange = CRYPTO_EXCHANGES[base] || 'BINANCE';
     
-    // Ensure we have a quote currency
-    let pair = cleanSymbol;
-    if (!pair.includes('USDT') && !pair.includes('USD') && !pair.includes('BUSD')) {
-      pair = `${cleanSymbol}USDT`;
-    }
+    // Convert to USDT pair for TradingView (more liquidity)
+    const pair = `${base}USDT`;
 
     return `${exchange}:${pair}`;
   }
