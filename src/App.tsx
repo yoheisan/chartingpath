@@ -23,7 +23,6 @@ import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminContentManagement from "./pages/AdminContentManagement";
-import AdminKPIDashboard from "./pages/admin/AdminKPIDashboard";
 import PatternGenerator from "./pages/PatternGenerator";
 import PatternLibraryPage from "./pages/PatternLibraryPage";
 import TradingStrategiesPage from "./pages/TradingStrategiesPage";
@@ -105,7 +104,7 @@ const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-
+const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -215,7 +214,16 @@ const App = () => (
             }
           />
           <Route path="/admin/content" element={<AdminContentManagement />} />
-          <Route path="/admin/kpi" element={<AdminKPIDashboard />} />
+          <Route
+            path="/admin/kpi"
+            element={
+              <Suspense
+                fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}
+              >
+                <AdminKPIDashboard />
+              </Suspense>
+            }
+          />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
           <Route path="/admin/social-cms" element={<SocialMediaCMS />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
