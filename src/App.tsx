@@ -16,9 +16,9 @@ import MarketBreadthReport from "./pages/MarketBreadthReport";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import Pricing from "./pages/Pricing";
 import MemberScripts from "./pages/MemberScripts";
-import MemberCourses from "./pages/MemberCourses";
 import MemberDownloads from "./pages/MemberDownloads";
 import MemberAlerts from "./pages/MemberAlerts";
+import MemberAccount from "./pages/MemberAccount";
 import MemberAccount from "./pages/MemberAccount";
 import MemberDashboard from "./pages/MemberDashboard";
 import Auth from "./pages/Auth";
@@ -61,9 +61,9 @@ import CommodityMarket from "./pages/markets/CommodityMarket";
 import EnergyCommodities from "./pages/markets/commodities/EnergyCommodities";
 import PreciousMetals from "./pages/markets/commodities/PreciousMetals";
 import AgriculturalCommodities from "./pages/markets/commodities/AgriculturalCommodities";
-import IndustrialMetals from "./pages/markets/commodities/IndustrialMetals";
 import MajorCurrencyPairs from "./pages/markets/forex/MajorCurrencyPairs";
 import CrossCurrencyPairs from "./pages/markets/forex/CrossCurrencyPairs";
+import MajorIndices from "./pages/markets/stocks/MajorIndices";
 import MajorIndices from "./pages/markets/stocks/MajorIndices";
 import StockSectors from "./pages/markets/stocks/StockSectors";
 import Bitcoin from "./pages/markets/crypto/Bitcoin";
@@ -82,8 +82,8 @@ import TrendAnalysis from "./pages/blog/TrendAnalysis";
 import VolumeAnalysis from "./pages/blog/VolumeAnalysis";
 import CandlestickPatterns from "./pages/blog/CandlestickPatterns";
 import RiskManagement from "./pages/blog/RiskManagement";
-import TradingPsychology from "./pages/blog/TradingPsychology";
-import RectanglePattern from "./pages/blog/RectanglePattern";
+import TradingDiscipline from "./pages/blog/TradingDiscipline";
+import FearAndGreed from "./pages/blog/FearAndGreed";
 import MovingAverages from "./pages/blog/MovingAverages";
 import RSIIndicator from "./pages/blog/RSIIndicator";
 import MACDIndicator from "./pages/blog/MACDIndicator";
@@ -93,16 +93,18 @@ import BreakoutTrading from "./pages/blog/BreakoutTrading";
 import PinBarStrategy from "./pages/blog/PinBarStrategy";
 import PositionSizing from "./pages/blog/PositionSizing";
 import MoneyManagement from "./pages/blog/MoneyManagement";
-import TradingDiscipline from "./pages/blog/TradingDiscipline";
-import FearAndGreed from "./pages/blog/FearAndGreed";
 import TradingJournal from "./pages/blog/TradingJournal";
+import RectanglePattern from "./pages/blog/RectanglePattern";
+import EmailPreview from "./pages/EmailPreview";
 import EmailPreview from "./pages/EmailPreview";
 import EconomicCalendar from "./pages/EconomicCalendar";
 import SocialMediaCMS from "./pages/SocialMediaCMS";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
-
-// Lazy-load very large pages so a transform error can't blank-screen unrelated routes.
+// Lazy-load a few pages so a single transform error can't blank-screen unrelated routes.
 const FAQ = lazy(() => import("./pages/FAQ"));
+const MemberCourses = lazy(() => import("./pages/MemberCourses"));
+const IndustrialMetals = lazy(() => import("./pages/markets/commodities/IndustrialMetals"));
+const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 
 const queryClient = new QueryClient();
 
@@ -155,10 +157,7 @@ const App = () => (
           <Route path="/learn/pin-bar-strategy" element={<PinBarStrategy />} />
           <Route path="/learn/risk-management" element={<RiskManagement />} />
           <Route path="/learn/position-sizing" element={<PositionSizing />} />
-          <Route path="/learn/money-management" element={<MoneyManagement />} />
-          <Route path="/learn/trading-psychology" element={<TradingPsychology />} />
-          <Route path="/learn/trading-discipline" element={<TradingDiscipline />} />
-          <Route path="/learn/fear-and-greed" element={<FearAndGreed />} />
+          <Route path="/learn/money-management ⬅️" element={<MoneyManagement />} />
           <Route path="/learn/trading-journal" element={<TradingJournal />} />
           <Route path="/markets/stocks" element={<StockMarket />} />
           <Route path="/markets/stocks/indices" element={<MajorIndices />} />
