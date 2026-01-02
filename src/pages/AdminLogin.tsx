@@ -36,14 +36,21 @@ const AdminLogin = () => {
 
     // Check for reset password parameter and verify session
     const checkPasswordReset = async () => {
-      const resetParam = searchParams.get("reset");
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-      if (resetParam === "true") {
+      const isRecovery =
+        urlParams.get("reset") === "true" ||
+        urlParams.get("type") === "recovery" ||
+        urlParams.get("code") !== null ||
+        hashParams.get("type") === "recovery";
+
+      if (isRecovery) {
         try {
-          // PKCE recovery links arrive as ?reset=true&code=...
-          const code = searchParams.get("code");
+          // PKCE recovery links arrive as ?code=...
+          const code = urlParams.get("code");
           if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
             if (error) throw error;
 
             // Remove one-time params to avoid re-processing on refresh
@@ -63,7 +70,6 @@ const AdminLogin = () => {
             setIsResetPassword(true);
             setIsForgotPassword(false);
           } else if (isMounted) {
-            // No session found - the reset link may have expired
             toast({
               title: "Reset Link Expired",
               description:
@@ -75,7 +81,9 @@ const AdminLogin = () => {
           if (!isMounted) return;
           toast({
             title: "Reset Link Error",
-            description: error?.message || "Unable to verify the reset link. Please request a new one.",
+            description:
+              error?.message ||
+              "Unable to verify the reset link. Please request a new one.",
             variant: "destructive",
           });
         }

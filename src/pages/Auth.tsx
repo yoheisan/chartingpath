@@ -40,7 +40,7 @@ const Auth = () => {
           // PKCE recovery links arrive as ?code=... (query param)
           const code = urlParams.get("code");
           if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
             if (error) throw error;
 
             const next = new URL(window.location.href);
