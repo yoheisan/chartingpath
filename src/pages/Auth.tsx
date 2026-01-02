@@ -56,24 +56,26 @@ const Auth = () => {
     // the session and cleaned the URL in the first pass.
     if (resetFlag && !hasCallbackParams) {
       setLoading(true);
-      supabase.auth
-        .getSession()
-        .then(({ data }) => {
-          if (data.session) {
-            setRecoveryHint(null);
-            setIsForgotPassword(false);
-            setIsResetPassword(true);
-            return;
-          }
+      (async () => {
+        // In StrictMode, the first effect pass may have already exchanged tokens and cleaned the URL.
+        // Wait briefly for Supabase to hydrate the session before declaring the link "unverified".
+        const { waitForSupabaseSession } = await import("@/utils/supabaseRecovery");
+        const session = await waitForSupabaseSession(supabase, { attempts: 15, delayMs: 200 });
 
-          setIsSignUp(false);
-          setIsResetPassword(false);
-          setIsForgotPassword(true);
-          setRecoveryHint(
-            "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
-          );
-        })
-        .finally(() => setLoading(false));
+        if (session) {
+          setRecoveryHint(null);
+          setIsForgotPassword(false);
+          setIsResetPassword(true);
+          return;
+        }
+
+        setIsSignUp(false);
+        setIsResetPassword(false);
+        setIsForgotPassword(true);
+        setRecoveryHint(
+          "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+        );
+      })().finally(() => setLoading(false));
       return;
     }
 
