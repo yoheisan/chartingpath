@@ -77,11 +77,26 @@ const Auth = () => {
             });
           }
         } catch (error: any) {
+          const message =
+            typeof error?.message === "string"
+              ? error.message
+              : "Unable to verify the reset link. Please request a new one.";
+
+          const isPkceVerifierMissing =
+            /code verifier|code_verifier|code verifier should be non-empty/i.test(message);
+
           toast({
             title: "Reset Link Error",
-            description: error?.message || "Unable to verify the reset link. Please request a new one.",
+            description: isPkceVerifierMissing
+              ? "This reset link was opened in a different browser/device than where it was requested. For security (PKCE), please request a new reset link and open it in the SAME browser where you clicked ‘Forgot Password’."
+              : message,
             variant: "destructive",
           });
+
+          if (isPkceVerifierMissing) {
+            setIsResetPassword(false);
+            setIsForgotPassword(true);
+          }
         }
       })();
 
@@ -173,7 +188,8 @@ const Auth = () => {
 
       toast({
         title: "Reset Email Sent",
-        description: "Please check your email for password reset instructions",
+        description:
+          "Please check your email for the reset link. Important: open the link in the SAME browser where you clicked ‘Forgot Password’.",
       });
       
       setIsForgotPassword(false);
