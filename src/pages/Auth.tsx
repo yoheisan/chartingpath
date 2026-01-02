@@ -49,21 +49,29 @@ const Auth = () => {
 
     if (isRecovery) {
       (async () => {
+        // eslint-disable-next-line no-console
+        console.info("[Auth recovery] landing", {
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+        });
+
         try {
           // PKCE recovery links arrive as ?code=... (query param)
           const code = urlParams.get("code");
           if (code) {
+            // eslint-disable-next-line no-console
+            console.info("[Auth recovery] exchanging code for session");
+
             const { error } = await supabase.auth.exchangeCodeForSession(code);
             if (error) throw error;
 
             const next = new URL(window.location.href);
             next.searchParams.delete("code");
             next.searchParams.delete("state");
-            window.history.replaceState(
-              {},
-              document.title,
-              `${next.pathname}?${next.searchParams.toString()}`
-            );
+            const qs = next.searchParams.toString();
+            const nextUrl = qs ? `${next.pathname}?${qs}` : next.pathname;
+            window.history.replaceState({}, document.title, nextUrl);
           }
 
           // In implicit flow, Supabase may set the session from the URL hash; wait briefly.
@@ -78,6 +86,9 @@ const Auth = () => {
             }
             await new Promise((r) => setTimeout(r, 250));
           }
+
+          // eslint-disable-next-line no-console
+          console.info("[Auth recovery] session present?", !!session);
 
           if (session) {
             setIsResetPassword(true);
