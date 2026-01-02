@@ -56,7 +56,7 @@ import PortfolioSimulatorWizard from "./pages/projects/PortfolioSimulatorWizard"
 import StockMarket from "./pages/markets/StockMarket";
 import ForexMarket from "./pages/markets/ForexMarket";
 import CryptoMarket from "./pages/markets/CryptoMarket";
-import CommodityMarket from "./pages/markets/CommodityMarket";
+
 import EnergyCommodities from "./pages/markets/commodities/EnergyCommodities";
 import PreciousMetals from "./pages/markets/commodities/PreciousMetals";
 import AgriculturalCommodities from "./pages/markets/commodities/AgriculturalCommodities";
@@ -79,7 +79,7 @@ import SupportResistance from "./pages/blog/SupportResistance";
 import TrendAnalysis from "./pages/blog/TrendAnalysis";
 import VolumeAnalysis from "./pages/blog/VolumeAnalysis";
 import CandlestickPatterns from "./pages/blog/CandlestickPatterns";
-import RiskManagement from "./pages/blog/RiskManagement";
+
 import TradingDiscipline from "./pages/blog/TradingDiscipline";
 import FearAndGreed from "./pages/blog/FearAndGreed";
 import MovingAverages from "./pages/blog/MovingAverages";
@@ -103,6 +103,8 @@ const MemberCourses = lazy(() => import("./pages/MemberCourses"));
 const IndustrialMetals = lazy(() => import("./pages/markets/commodities/IndustrialMetals"));
 const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
+const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
+const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 
 const queryClient = new QueryClient();
 
@@ -153,7 +155,7 @@ const App = () => (
           <Route path="/learn/price-action-basics" element={<PriceActionBasics />} />
           <Route path="/learn/breakout-trading" element={<BreakoutTrading />} />
           <Route path="/learn/pin-bar-strategy" element={<PinBarStrategy />} />
-          <Route path="/learn/risk-management" element={<RiskManagement />} />
+          <Route path="/learn/risk-management" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><RiskManagement /></Suspense>} />
           <Route path="/learn/position-sizing" element={<PositionSizing />} />
           <Route path="/learn/money-management" element={<MoneyManagement />} />
           <Route path="/learn/trading-psychology" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><TradingPsychology /></Suspense>} />
@@ -170,7 +172,7 @@ const App = () => (
           <Route path="/markets/crypto/bitcoin" element={<Bitcoin />} />
           <Route path="/markets/crypto/ethereum" element={<Ethereum />} />
           <Route path="/markets/crypto/altcoins" element={<Altcoins />} />
-          <Route path="/markets/commodities" element={<CommodityMarket />} />
+          <Route path="/markets/commodities" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><CommodityMarket /></Suspense>} />
           <Route path="/markets/commodities/energy" element={<EnergyCommodities />} />
           <Route path="/markets/commodities/precious-metals" element={<PreciousMetals />} />
           <Route path="/markets/commodities/agricultural" element={<AgriculturalCommodities />} />
