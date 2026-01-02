@@ -8,6 +8,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
+import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 
 const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
@@ -152,8 +153,10 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getCanonicalAppOrigin()}/admin/login/?reset=true`
+      const implicitClient = getImplicitRecoveryClient();
+
+      const { error } = await implicitClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getCanonicalAppOrigin()}/admin/login/?reset=true`,
       });
 
       if (error) throw error;

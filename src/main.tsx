@@ -14,7 +14,9 @@ import "./i18n/config";
 // Normalize early before the router mounts.
 const normalizeAuthCallbackPath = () => {
   const { pathname, search, hash } = window.location;
-  if (!search.includes("code=")) return;
+
+  // Only normalize when a query string exists (callbacks + redirects).
+  if (!search) return;
 
   if (pathname === "/auth") {
     window.location.replace(`/auth/${search}${hash}`);

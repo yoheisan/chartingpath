@@ -18,8 +18,10 @@ export default function AuthShell() {
       <Layout>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/" element={<Auth />} />
           <Route path="/auth/*" element={<Auth />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login/" element={<AdminLogin />} />
           <Route path="/admin/login/*" element={<AdminLogin />} />
         </Routes>
       </Layout>
