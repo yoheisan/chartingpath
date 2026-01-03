@@ -1,5 +1,5 @@
 import { useEffect, useRef, memo } from 'react';
-import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { CompactQualityScore } from './PatternQualityBadge';
 
@@ -91,19 +91,23 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
       }
     });
 
-    // Add pattern pivot markers as additional price lines with labels
+    // Add pattern pivot markers as candle-level visual markers
     if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-      visualSpec.pivots.forEach(pivot => {
-        const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
-        candleSeries.createPriceLine({
-          price: pivot.price,
-          color,
-          lineWidth: 1,
-          lineStyle: 1, // dotted
-          axisLabelVisible: false,
-          title: pivot.label || '',
-        });
+      const markers = visualSpec.pivots.map(pivot => {
+        const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+        const isHigh = pivot.type === 'high';
+        return {
+          time: pivotTs as Time,
+          position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
+          color: isHigh ? '#f97316' : '#8b5cf6',
+          shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+          text: pivot.label || '',
+        };
       });
+      
+      // Sort markers by time (required by lightweight-charts)
+      markers.sort((a, b) => (a.time as number) - (b.time as number));
+      createSeriesMarkers(candleSeries, markers);
     }
 
     // Set visible range based on yDomain

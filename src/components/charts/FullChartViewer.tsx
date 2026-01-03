@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -204,19 +204,23 @@ export default function FullChartViewer({
         }
       });
 
-      // Add pattern pivot markers as labeled price lines
+      // Add pattern pivot markers as candle-level visual markers (not horizontal lines)
       if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-        visualSpec.pivots.forEach(pivot => {
-          const color = pivot.type === 'high' ? '#f97316' : '#8b5cf6';
-          candleSeries.createPriceLine({
-            price: pivot.price,
-            color,
-            lineWidth: 1,
-            lineStyle: 1, // dotted
-            axisLabelVisible: true,
-            title: pivot.label || (pivot.type === 'high' ? 'High' : 'Low'),
-          });
+        const markers = visualSpec.pivots.map(pivot => {
+          const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+          const isHigh = pivot.type === 'high';
+          return {
+            time: pivotTs as Time,
+            position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
+            color: isHigh ? '#f97316' : '#8b5cf6',
+            shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+            text: pivot.label || (isHigh ? 'H' : 'L'),
+          };
         });
+        
+        // Sort markers by time (required by lightweight-charts)
+        markers.sort((a, b) => (a.time as number) - (b.time as number));
+        createSeriesMarkers(candleSeries, markers);
       }
 
       chart.timeScale().fitContent();
