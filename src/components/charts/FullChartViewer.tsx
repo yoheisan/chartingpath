@@ -108,16 +108,18 @@ export default function FullChartViewer({
 
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;
+    let rafId: number | null = null;
 
-    // Small delay to ensure container is properly sized in DOM
     const initChart = () => {
       if (cleanedUp || !containerRef.current) return;
-      
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-      if (containerWidth === 0 || containerHeight === 0) {
-        // Container not ready, retry shortly
-        setTimeout(initChart, 100);
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const containerWidth = Math.floor(rect.width);
+      const containerHeight = Math.floor(rect.height);
+
+      // Dialog open animation can briefly yield 0px width; retry next frame.
+      if (containerWidth <= 0) {
+        rafId = window.requestAnimationFrame(initChart);
         return;
       }
 
@@ -126,6 +128,7 @@ export default function FullChartViewer({
       const textColor = isDark ? '#a1a1a1' : '#666666';
       const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
+      // Recreate chart each time we open/change setup to avoid stale/blank canvas.
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -133,7 +136,7 @@ export default function FullChartViewer({
 
       const chart = createChart(containerRef.current, {
         width: containerWidth,
-        height: Math.max(containerHeight, 350),
+        height: Math.max(containerHeight || 0, 350),
         layout: {
           background: { color: bgColor },
           textColor,
@@ -177,22 +180,29 @@ export default function FullChartViewer({
             close: bar.c,
           };
         })
-        .filter((d) => Number.isFinite(d.time as number))
-        // lightweight-charts expects data sorted ASC by time
+        .filter(
+          (d) =>
+            Number.isFinite(d.time as number) &&
+            Number.isFinite(d.open) &&
+            Number.isFinite(d.high) &&
+            Number.isFinite(d.low) &&
+            Number.isFinite(d.close)
+        )
         .sort((a, b) => (a.time as number) - (b.time as number));
-
-      if (chartData.length === 0) return;
 
       candleSeries.setData(chartData);
 
-      visualSpec.overlays.forEach(overlay => {
+      visualSpec.overlays.forEach((overlay) => {
         if (overlay.type === 'hline') {
-          const color = 
-            overlay.style === 'primary' ? '#3b82f6' :
-            overlay.style === 'destructive' ? '#ef4444' :
-            overlay.style === 'positive' ? '#22c55e' :
-            '#888888';
-          
+          const color =
+            overlay.style === 'primary'
+              ? '#3b82f6'
+              : overlay.style === 'destructive'
+                ? '#ef4444'
+                : overlay.style === 'positive'
+                  ? '#22c55e'
+                  : '#888888';
+
           candleSeries.createPriceLine({
             price: overlay.price,
             color,
@@ -204,46 +214,47 @@ export default function FullChartViewer({
         }
       });
 
-      // Add pattern pivot markers as candle-level visual markers (not horizontal lines)
+      // Candle-level pivot confirmation markers
       if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-        const markers = visualSpec.pivots.map(pivot => {
-          const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-          const isHigh = pivot.type === 'high';
-          return {
-            time: pivotTs as Time,
-            position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-            color: isHigh ? '#f97316' : '#8b5cf6',
-            shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-            text: pivot.label || (isHigh ? 'H' : 'L'),
-          };
-        });
-        
-        // Sort markers by time (required by lightweight-charts)
+        const markers = visualSpec.pivots
+          .map((pivot) => {
+            const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+            const isHigh = pivot.type === 'high';
+            return {
+              time: pivotTs as Time,
+              position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
+              color: isHigh ? '#f97316' : '#8b5cf6',
+              shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+              text: pivot.label || (isHigh ? 'H' : 'L'),
+            };
+          })
+          .filter((m) => Number.isFinite(m.time as number));
+
         markers.sort((a, b) => (a.time as number) - (b.time as number));
         createSeriesMarkers(candleSeries, markers);
       }
 
       chart.timeScale().fitContent();
 
-      resizeObserver = new ResizeObserver(entries => {
-        if (entries[0] && chartRef.current) {
-          chartRef.current.applyOptions({
-            width: entries[0].contentRect.width,
-          });
-        }
+      resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry || !chartRef.current) return;
+        chartRef.current.applyOptions({
+          width: Math.floor(entry.contentRect.width),
+          height: Math.max(Math.floor(entry.contentRect.height || 0), 350),
+        });
       });
 
       resizeObserver.observe(containerRef.current);
     };
 
-    // Start initialization
-    initChart();
+    // Start initialization on next frame to avoid 0px measurements
+    rafId = window.requestAnimationFrame(initChart);
 
     return () => {
       cleanedUp = true;
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      if (rafId) window.cancelAnimationFrame(rafId);
+      if (resizeObserver) resizeObserver.disconnect();
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -309,10 +320,13 @@ export default function FullChartViewer({
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left: Chart (2 cols) */}
-          <div className="lg:col-span-2 space-y-4">
-            <div ref={containerRef} className="w-full rounded-lg overflow-hidden border border-border/50" style={{ minHeight: '350px' }} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left: Chart (2 cols) */}
+            <div className="lg:col-span-2 space-y-4">
+              <div
+                ref={containerRef}
+                className="w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50"
+              />
             
             {/* Trade Levels */}
             <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
