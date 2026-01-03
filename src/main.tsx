@@ -18,13 +18,16 @@ const normalizeAuthCallbackPath = () => {
   // Only normalize when a query string exists (callbacks + redirects).
   if (!search) return;
 
+  // IMPORTANT: do not trigger a network navigation here.
+  // Some hosts won't serve SPA deep-links like "/auth/" and could return a raw 404.
+  // We only adjust the URL using the History API before React Router mounts.
   if (pathname === "/auth") {
-    window.location.replace(`/auth/${search}${hash}`);
+    window.history.replaceState(null, "", `/auth/${search}${hash}`);
     return;
   }
 
   if (pathname === "/admin/login") {
-    window.location.replace(`/admin/login/${search}${hash}`);
+    window.history.replaceState(null, "", `/admin/login/${search}${hash}`);
   }
 };
 
