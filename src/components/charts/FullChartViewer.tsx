@@ -114,9 +114,10 @@ export default function FullChartViewer({
       if (cleanedUp || !containerRef.current) return;
       
       const containerWidth = containerRef.current.clientWidth;
-      if (containerWidth === 0) {
+      const containerHeight = containerRef.current.clientHeight;
+      if (containerWidth === 0 || containerHeight === 0) {
         // Container not ready, retry shortly
-        setTimeout(initChart, 50);
+        setTimeout(initChart, 100);
         return;
       }
 
@@ -132,7 +133,7 @@ export default function FullChartViewer({
 
       const chart = createChart(containerRef.current, {
         width: containerWidth,
-        height: 350,
+        height: Math.max(containerHeight, 350),
         layout: {
           background: { color: bgColor },
           textColor,
