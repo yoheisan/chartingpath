@@ -3,7 +3,7 @@
  * Generates correct TradingView symbol format for different asset classes
  */
 
-// Exchange mapping for crypto pairs
+// Exchange mapping for crypto pairs - comprehensive list
 const CRYPTO_EXCHANGES: Record<string, string> = {
   'BTC': 'BINANCE',
   'ETH': 'BINANCE',
@@ -25,6 +25,48 @@ const CRYPTO_EXCHANGES: Record<string, string> = {
   'INJ': 'BINANCE',
   'SUI': 'BINANCE',
   'SEI': 'BINANCE',
+  'BNB': 'BINANCE',
+  'SHIB': 'BINANCE',
+  'TRX': 'BINANCE',
+  'TON': 'BINANCE',
+  'PEPE': 'BINANCE',
+  'FET': 'BINANCE',
+  'RENDER': 'BINANCE',
+  'FIL': 'BINANCE',
+  'TAO': 'BINANCE',
+  'HBAR': 'BINANCE',
+  'IMX': 'BINANCE',
+  'AAVE': 'BINANCE',
+  'GRT': 'BINANCE',
+  'ICP': 'BINANCE',
+  'THETA': 'BINANCE',
+  'VET': 'BINANCE',
+  'RUNE': 'BINANCE',
+  'MKR': 'BINANCE',
+  'LDO': 'BINANCE',
+  'STX': 'BINANCE',
+  'ALGO': 'BINANCE',
+  'XLM': 'BINANCE',
+  'EOS': 'BINANCE',
+  'SAND': 'BINANCE',
+  'MANA': 'BINANCE',
+  'CRV': 'BINANCE',
+  'EGLD': 'BINANCE',
+  'FTM': 'BINANCE',
+  'XTZ': 'BINANCE',
+  'FLOW': 'BINANCE',
+  'AXS': 'BINANCE',
+  'GALA': 'BINANCE',
+  'KAVA': 'BINANCE',
+  'ROSE': 'BINANCE',
+  'CHZ': 'BINANCE',
+  'COMP': 'BINANCE',
+  'SNX': 'BINANCE',
+  'ZEC': 'BINANCE',
+  'DASH': 'BINANCE',
+  'ETC': 'BINANCE',
+  'XMR': 'KRAKEN',
+  'BCH': 'BINANCE',
 };
 
 /**
