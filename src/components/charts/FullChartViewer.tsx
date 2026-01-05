@@ -311,10 +311,29 @@ export default function FullChartViewer({
   const tradingViewAffiliateUrl = `${tradingViewUrl}&aff_id=3433`;
 
   const openExternal = async (url: string) => {
-    // In the Lovable preview, external sites often refuse to load inside the iframe.
-    // Try opening a new tab; if blocked, copy the URL.
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (win) return;
+    // TradingView blocks iframe embedding. In the Lovable preview, some link opens can be
+    // intercepted by the iframe and attempt to load inside it.
+    // Prefer opening from the top-level window, then fall back to a normal popup.
+
+    let opened = false;
+
+    try {
+      const win = window.top?.open?.(url, "_blank", "noopener,noreferrer");
+      opened = Boolean(win);
+    } catch {
+      // ignore
+    }
+
+    if (!opened) {
+      try {
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        opened = Boolean(win);
+      } catch {
+        // ignore
+      }
+    }
+
+    if (opened) return;
 
     try {
       await navigator.clipboard.writeText(url);
