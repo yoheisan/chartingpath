@@ -61,26 +61,42 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
       wickDownColor: '#ef4444',
     });
 
-    // Transform bars to lightweight-charts format
-    const chartData: CandlestickData[] = bars.map(bar => ({
-      time: (new Date(bar.t).getTime() / 1000) as Time,
-      open: bar.o,
-      high: bar.h,
-      low: bar.l,
-      close: bar.c,
-    }));
+    // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs, sort)
+    const chartData: CandlestickData[] = bars
+      .map((bar) => {
+        const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+        return {
+          time: ts as Time,
+          open: bar.o,
+          high: bar.h,
+          low: bar.l,
+          close: bar.c,
+        };
+      })
+      .filter(
+        (d) =>
+          Number.isFinite(d.time as number) &&
+          Number.isFinite(d.open) &&
+          Number.isFinite(d.high) &&
+          Number.isFinite(d.low) &&
+          Number.isFinite(d.close)
+      )
+      .sort((a, b) => (a.time as number) - (b.time as number));
 
     candleSeries.setData(chartData);
 
     // Add price lines for overlays
-    visualSpec.overlays.forEach(overlay => {
+    visualSpec.overlays.forEach((overlay) => {
       if (overlay.type === 'hline') {
-        const color = 
-          overlay.style === 'primary' ? '#3b82f6' :
-          overlay.style === 'destructive' ? '#ef4444' :
-          overlay.style === 'positive' ? '#22c55e' :
-          '#888888';
-        
+        const color =
+          overlay.style === 'primary'
+            ? '#3b82f6'
+            : overlay.style === 'destructive'
+              ? '#ef4444'
+              : overlay.style === 'positive'
+                ? '#22c55e'
+                : '#888888';
+
         candleSeries.createPriceLine({
           price: overlay.price,
           color,
@@ -92,22 +108,41 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
     });
 
     // Add pattern pivot markers as candle-level visual markers
+    // Pivots can carry intraday timestamps while bars are daily; markers must snap to an existing bar time.
+    const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+
     if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-      const markers = visualSpec.pivots.map(pivot => {
-        const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-        const isHigh = pivot.type === 'high';
-        return {
-          time: pivotTs as Time,
-          position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-          color: isHigh ? '#f97316' : '#8b5cf6',
-          shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-          text: pivot.label || '',
-        };
-      });
-      
+      const markers = visualSpec.pivots
+        .map((pivot) => {
+          const isHigh = pivot.type === 'high';
+
+          let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+
+          if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
+            t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+          }
+
+          if (!timeSet.has(t)) return null;
+
+          return {
+            time: t as Time,
+            position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
+            color: isHigh ? '#f97316' : '#8b5cf6',
+            shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+            text: pivot.label || '',
+          };
+        })
+        .filter((m): m is any => Boolean(m));
+
       // Sort markers by time (required by lightweight-charts)
       markers.sort((a, b) => (a.time as number) - (b.time as number));
-      createSeriesMarkers(candleSeries, markers);
+
+      try {
+        createSeriesMarkers(candleSeries, markers);
+      } catch (e) {
+        // Never break thumbnails if markers fail.
+        console.warn('Failed to render thumbnail markers:', e);
+      }
     }
 
     // Set visible range based on yDomain
