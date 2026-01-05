@@ -24,7 +24,7 @@ import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import SetupFilters, { SortOption, DirectionFilter } from './SetupFilters';
 import { SetupGridSkeleton } from './SetupCardSkeleton';
-import { SetupWithVisuals, CompressedBar, VisualSpec } from '@/types/VisualSpec';
+import { SetupWithVisuals, CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 
@@ -71,10 +71,49 @@ interface SetupListViewerProps {
   isLoading?: boolean;
 }
 
-// Type guard to check if setup has visual data
-function hasVisualData(setup: Setup): setup is SetupWithVisuals {
+// Visual data presence check (note: legacy setups may also include bars/visualSpec)
+function hasVisualData(setup: Setup): boolean {
   return !!(setup.bars && setup.bars.length > 0 && setup.visualSpec);
 }
+
+const normalizeQuality = (quality: any): PatternQuality => {
+  // Already in the new format
+  if (quality && typeof quality.score === 'number' && typeof quality.grade === 'string') {
+    return quality as PatternQuality;
+  }
+
+  // Legacy format: quality.score is letter grade (A/B/C) + reasons[]
+  const legacyGrade = typeof quality?.score === 'string' ? quality.score : 'C';
+  const grade = (['A', 'B', 'C', 'D', 'F'].includes(legacyGrade) ? legacyGrade : 'C') as PatternQuality['grade'];
+
+  const score =
+    grade === 'A' ? 9.0 :
+    grade === 'B' ? 7.5 :
+    grade === 'C' ? 6.0 :
+    grade === 'D' ? 4.5 :
+    3.0;
+
+  return {
+    score,
+    grade,
+    confidence: 60,
+    reasons: Array.isArray(quality?.reasons) ? quality.reasons : [],
+    warnings: [],
+    tradeable: true,
+  };
+};
+
+const toViewerSetup = (setup: Setup): SetupWithVisuals | null => {
+  if (!hasVisualData(setup)) return null;
+
+  // If it's already a SetupWithVisuals, just ensure the quality object is compatible
+  return {
+    ...(setup as any),
+    bars: (setup as any).bars,
+    visualSpec: (setup as any).visualSpec,
+    quality: normalizeQuality((setup as any).quality),
+  } as SetupWithVisuals;
+};
 
 const SetupCard = ({ 
   setup, 
@@ -109,7 +148,7 @@ const SetupCard = ({
             height={100}
             onClick={onViewFull}
           />
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button 
               size="icon" 
               variant="secondary" 
@@ -402,8 +441,9 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
   }, [artifact.timeframe, runId]);
   
   const handleViewFull = useCallback((setup: Setup) => {
-    if (hasVisualData(setup)) {
-      setSelectedSetup(setup);
+    const viewerSetup = toViewerSetup(setup);
+    if (viewerSetup) {
+      setSelectedSetup(viewerSetup);
       setIsViewerOpen(true);
       track('thumbnail_opened', {
         projectType: 'setup_finder',
