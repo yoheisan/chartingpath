@@ -311,35 +311,49 @@ export default function FullChartViewer({
   const tradingViewAffiliateUrl = `${tradingViewUrl}&aff_id=3433`;
 
   const openExternal = async (url: string) => {
-    // TradingView blocks iframe embedding. In the Lovable preview, some link opens can be
-    // intercepted by the iframe and attempt to load inside it.
-    // Prefer opening from the top-level window, then fall back to a normal popup.
+    // TradingView blocks iframe embedding. The Lovable preview is iframe-based,
+    // so trying to navigate to TradingView often results in ERR_BLOCKED_BY_RESPONSE.
+    // Reliable behavior:
+    // - In embedded preview: copy (or show a manual copy prompt)
+    // - In real browsing: open a new tab (or show a manual copy prompt)
 
-    let opened = false;
+    const manualCopyPrompt = () => {
+      // Fallback that works even when clipboard permissions are blocked.
+      window.prompt('Copy this TradingView link:', url);
+    };
+
+    const isEmbeddedPreview = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+
+    if (isEmbeddedPreview) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.message("TradingView can’t open inside the embedded preview — link copied.");
+      } catch {
+        manualCopyPrompt();
+        toast.message('TradingView link ready to copy.');
+      }
+      return;
+    }
 
     try {
-      const win = window.top?.open?.(url, "_blank", "noopener,noreferrer");
-      opened = Boolean(win);
+      const win = window.open(url, '_blank', 'noopener,noreferrer');
+      if (win) return;
     } catch {
       // ignore
     }
 
-    if (!opened) {
-      try {
-        const win = window.open(url, "_blank", "noopener,noreferrer");
-        opened = Boolean(win);
-      } catch {
-        // ignore
-      }
-    }
-
-    if (opened) return;
-
     try {
       await navigator.clipboard.writeText(url);
-      toast.message("TradingView can’t open inside the embedded preview — link copied.");
+      toast.message('Popup blocked — TradingView link copied.');
     } catch {
-      toast.message("TradingView can’t open inside the embedded preview.");
+      manualCopyPrompt();
+      toast.message('Popup blocked — TradingView link ready to copy.');
     }
   };
 
