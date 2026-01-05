@@ -269,7 +269,11 @@ export default function FullChartViewer({
   const decimals = tradePlan.priceRounding?.priceDecimals || 2;
   const formatPrice = (price: number) => price.toFixed(Math.min(decimals, 6));
   const doNotTradeConditions = getDoNotTradeConditions(setup.patternId, direction);
-  
+
+  // Defensive: older artifacts may not include the full PatternQuality shape
+  const qualityReasons: string[] = Array.isArray((quality as any)?.reasons) ? (quality as any).reasons : [];
+  const qualityGrade: string | undefined =
+    (quality as any)?.grade ?? (typeof (quality as any)?.score === 'string' ? (quality as any).score : undefined);
   // Determine instrument category for TradingView link
   const getInstrumentCategory = (symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' => {
     const upper = symbol.toUpperCase();
@@ -304,14 +308,16 @@ export default function FullChartViewer({
               <Badge 
                 variant="outline"
                 className={`${
-                  quality.grade === 'A' 
+                  qualityGrade === 'A' 
                     ? 'border-green-500/50 text-green-500' 
-                    : quality.grade === 'B'
+                    : qualityGrade === 'B'
                       ? 'border-yellow-500/50 text-yellow-500'
                       : 'border-muted-foreground/50'
                 }`}
               >
-                {typeof quality.score === 'number' ? `${quality.score.toFixed(1)}/10` : `Grade ${quality.grade || quality.score}`}
+                {typeof (quality as any)?.score === 'number'
+                  ? `${(quality as any).score.toFixed(1)}/10`
+                  : `Grade ${qualityGrade || (quality as any)?.score || '-'}`}
               </Badge>
               <Badge variant={isLong ? 'default' : 'destructive'}>
                 {isLong ? 'LONG' : 'SHORT'}
@@ -420,12 +426,16 @@ export default function FullChartViewer({
               </CardHeader>
               <CardContent>
                 <ul className="text-xs space-y-1.5">
-                  {quality.reasons.map((reason, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
-                      <span className="text-muted-foreground">{reason}</span>
-                    </li>
-                  ))}
+                  {qualityReasons.length > 0 ? (
+                    qualityReasons.map((reason, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-green-500 mt-0.5">✓</span>
+                        <span className="text-muted-foreground">{reason}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-muted-foreground">No quality factors available for this setup.</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>

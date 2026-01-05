@@ -149,14 +149,23 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
 
   return (
     <div className="relative">
-      <div 
-        ref={containerRef} 
-        className="w-full rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+      <div
+        ref={containerRef}
+        className="w-full rounded overflow-hidden"
         style={{ height }}
-        onClick={onClick}
       />
+
+      {onClick && (
+        <button
+          type="button"
+          aria-label="Open full chart"
+          className="absolute inset-0 z-10 rounded cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          onClick={onClick}
+        />
+      )}
+
       {quality && typeof quality.score === 'number' && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 z-20 pointer-events-none">
           <CompactQualityScore score={quality.score} />
         </div>
       )}
