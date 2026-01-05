@@ -23,6 +23,7 @@ import {
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
+import { toast } from 'sonner';
 
 interface FullChartViewerProps {
   open: boolean;
@@ -292,6 +293,7 @@ export default function FullChartViewer({
   const qualityReasons: string[] = Array.isArray((quality as any)?.reasons) ? (quality as any).reasons : [];
   const qualityGrade: string | undefined =
     (quality as any)?.grade ?? (typeof (quality as any)?.score === 'string' ? (quality as any).score : undefined);
+
   // Determine instrument category for TradingView link
   const getInstrumentCategory = (symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' => {
     const upper = symbol.toUpperCase();
@@ -302,6 +304,24 @@ export default function FullChartViewer({
     // Forex pairs (6 chars like EURUSD)
     if (upper.length === 6 && upper.includes('USD')) return 'forex';
     return 'stocks';
+  };
+
+  const instrumentCategory = getInstrumentCategory(instrument);
+  const tradingViewUrl = getTradingViewUrl(instrument, instrumentCategory, visualSpec.timeframe);
+  const tradingViewAffiliateUrl = `${tradingViewUrl}&aff_id=3433`;
+
+  const openExternal = async (url: string) => {
+    // In the Lovable preview, external sites often refuse to load inside the iframe.
+    // Try opening a new tab; if blocked, copy the URL.
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (win) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.message("TradingView can’t open inside the embedded preview — link copied.");
+    } catch {
+      toast.message("TradingView can’t open inside the embedded preview.");
+    }
   };
 
   return (
@@ -419,15 +439,11 @@ export default function FullChartViewer({
               <Button
                 variant="ghost"
                 size="icon"
-                asChild
+                type="button"
+                aria-label="Open in TradingView"
+                onClick={() => openExternal(tradingViewUrl)}
               >
-                <a 
-                  href={getTradingViewUrl(instrument, getInstrumentCategory(instrument), visualSpec.timeframe)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -479,11 +495,11 @@ export default function FullChartViewer({
             </Card>
 
             {/* TradingView Affiliate CTA */}
-            <a 
-              href={`${getTradingViewUrl(instrument, getInstrumentCategory(instrument), visualSpec.timeframe)}&aff_id=3433`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
+            <button
+              type="button"
+              onClick={() => openExternal(tradingViewAffiliateUrl)}
+              className="block w-full text-left"
+              aria-label="Analyze on TradingView"
             >
               <Card className="border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group">
                 <CardContent className="pt-4 pb-3">
@@ -499,7 +515,7 @@ export default function FullChartViewer({
                   </div>
                 </CardContent>
               </Card>
-            </a>
+            </button>
 
             {/* Metadata */}
             <Card className="border-border/50">
