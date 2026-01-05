@@ -215,23 +215,41 @@ export default function FullChartViewer({
       });
 
       // Candle-level pivot confirmation markers
+      // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
+      // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
+      const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+
       if (visualSpec.pivots && visualSpec.pivots.length > 0) {
         const markers = visualSpec.pivots
           .map((pivot) => {
-            const pivotTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
             const isHigh = pivot.type === 'high';
+
+            let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+
+            if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
+              t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+            }
+
+            if (!timeSet.has(t)) return null;
+
             return {
-              time: pivotTs as Time,
+              time: t as Time,
               position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
               color: isHigh ? '#f97316' : '#8b5cf6',
               shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
               text: pivot.label || (isHigh ? 'H' : 'L'),
             };
           })
-          .filter((m) => Number.isFinite(m.time as number));
+          .filter((m): m is any => Boolean(m));
 
         markers.sort((a, b) => (a.time as number) - (b.time as number));
-        createSeriesMarkers(candleSeries, markers);
+
+        try {
+          createSeriesMarkers(candleSeries, markers);
+        } catch (e) {
+          // Never break the chart if markers fail; candles are the priority.
+          console.warn('Failed to render pivot markers:', e);
+        }
       }
 
       chart.timeScale().fitContent();
