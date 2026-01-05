@@ -77,12 +77,18 @@ const ProjectRun = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Redirect to auth if no session - this endpoint requires authentication
+      if (!session?.access_token) {
+        navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
+        return;
+      }
+      
       const response = await fetch(
         `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/result?runId=${runId}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+            Authorization: `Bearer ${session.access_token}`,
           },
         }
       );
@@ -90,6 +96,11 @@ const ProjectRun = () => {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle 401 specifically - session might have expired
+        if (response.status === 401) {
+          navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
+          return;
+        }
         throw new Error(data.error || 'Failed to fetch run');
       }
       
