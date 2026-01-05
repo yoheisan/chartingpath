@@ -480,7 +480,7 @@ export default function FullChartViewer({
 
             {/* TradingView Affiliate CTA */}
             <a 
-              href="https://www.tradingview.com/?aff_id=3433"
+              href={`${getTradingViewUrl(instrument, getInstrumentCategory(instrument), visualSpec.timeframe)}&aff_id=3433`}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
