@@ -115,6 +115,27 @@ const toViewerSetup = (setup: Setup): SetupWithVisuals | null => {
   } as SetupWithVisuals;
 };
 
+// Format signal age for display
+const formatSignalAge = (signalTs: string): { label: string; isFresh: boolean } => {
+  const signalDate = new Date(signalTs);
+  const now = new Date();
+  const diffMs = now.getTime() - signalDate.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffHours < 1) {
+    const mins = Math.floor(diffMs / (1000 * 60));
+    return { label: `${mins}m ago`, isFresh: true };
+  }
+  if (diffHours < 24) {
+    return { label: `${Math.floor(diffHours)}h ago`, isFresh: true };
+  }
+  if (diffDays < 7) {
+    return { label: `${Math.floor(diffDays)}d ago`, isFresh: diffDays < 3 };
+  }
+  return { label: `${Math.floor(diffDays / 7)}w ago`, isFresh: false };
+};
+
 const SetupCard = ({ 
   setup, 
   onCopy, 
@@ -128,9 +149,10 @@ const SetupCard = ({
   onViewFull: () => void;
   isCreatingAlert: boolean;
 }) => {
-  const { tradePlan, direction, patternName, instrument, quality } = setup;
+  const { tradePlan, direction, patternName, instrument, quality, signalTs } = setup;
   const isLong = direction === 'long';
   const hasChart = hasVisualData(setup);
+  const signalAge = formatSignalAge(signalTs);
   
   const formatPrice = (price: number) => {
     const decimals = tradePlan.priceRounding?.priceDecimals || 2;
@@ -183,18 +205,30 @@ const SetupCard = ({
               <p className="text-xs text-muted-foreground">{patternName}</p>
             </div>
           </div>
-          <Badge 
-            variant="outline"
-            className={`text-xs font-semibold ${
-              quality.score === 'A' 
-                ? 'border-green-500/50 text-green-500' 
-                : quality.score === 'B'
-                  ? 'border-yellow-500/50 text-yellow-500'
-                  : 'border-muted-foreground/50'
-            }`}
-          >
-            {quality.score}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge 
+              variant="outline"
+              className={`text-xs font-semibold ${
+                quality.score === 'A' 
+                  ? 'border-green-500/50 text-green-500' 
+                  : quality.score === 'B'
+                    ? 'border-yellow-500/50 text-yellow-500'
+                    : 'border-muted-foreground/50'
+              }`}
+            >
+              {quality.score}
+            </Badge>
+            <span 
+              className={`text-[10px] ${
+                signalAge.isFresh 
+                  ? 'text-green-500' 
+                  : 'text-muted-foreground'
+              }`}
+              title={`Signal triggered: ${new Date(signalTs).toLocaleString()}`}
+            >
+              {signalAge.label}
+            </span>
+          </div>
         </div>
       </CardHeader>
       
