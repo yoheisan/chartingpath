@@ -1,16 +1,25 @@
-import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
+import { useEffect, useRef, useState } from 'react';
+import {
+  createChart,
+  IChartApi,
+  CandlestickData,
+  Time,
+  CandlestickSeries,
+  createSeriesMarkers,
+  SeriesMarkerShape,
+} from 'lightweight-charts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Copy, 
-  Bell, 
+import { Input } from '@/components/ui/input';
+import {
+  Copy,
+  Bell,
   FileCode,
-  TrendingUp, 
-  TrendingDown, 
+  TrendingUp,
+  TrendingDown,
   Target,
   ShieldAlert,
   CheckCircle2,
@@ -18,7 +27,8 @@ import {
   AlertTriangle,
   Clock,
   Bookmark,
-  ExternalLink
+  ExternalLink,
+  X,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
@@ -100,9 +110,13 @@ export default function FullChartViewer({
 }: FullChartViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const [chartError, setChartError] = useState<string | null>(null);
+  const [externalLink, setExternalLink] = useState<string | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || !setup || !open) return;
+
+    setChartError(null);
 
     const { bars, visualSpec } = setup;
     if (!bars || bars.length === 0) return;
@@ -124,147 +138,157 @@ export default function FullChartViewer({
         return;
       }
 
-      const isDark = document.documentElement.classList.contains('dark');
-      const bgColor = isDark ? '#0f0f0f' : '#ffffff';
-      const textColor = isDark ? '#a1a1a1' : '#666666';
-      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+      try {
+        const isDark = document.documentElement.classList.contains('dark');
+        const bgColor = isDark ? '#0f0f0f' : '#ffffff';
+        const textColor = isDark ? '#a1a1a1' : '#666666';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
-      // Recreate chart each time we open/change setup to avoid stale/blank canvas.
-      if (chartRef.current) {
-        chartRef.current.remove();
-        chartRef.current = null;
-      }
-
-      const chart = createChart(containerRef.current, {
-        width: containerWidth,
-        height: Math.max(containerHeight || 0, 350),
-        layout: {
-          background: { color: bgColor },
-          textColor,
-        },
-        grid: {
-          vertLines: { color: gridColor },
-          horzLines: { color: gridColor },
-        },
-        rightPriceScale: {
-          borderColor: gridColor,
-        },
-        timeScale: {
-          borderColor: gridColor,
-          timeVisible: true,
-          secondsVisible: false,
-        },
-        crosshair: {
-          mode: 1,
-        },
-      });
-
-      chartRef.current = chart;
-
-      const candleSeries = chart.addSeries(CandlestickSeries, {
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
-      });
-
-      const chartData: CandlestickData[] = bars
-        .map((bar) => {
-          const ts = Math.floor(new Date(bar.t).getTime() / 1000);
-          return {
-            time: ts as Time,
-            open: bar.o,
-            high: bar.h,
-            low: bar.l,
-            close: bar.c,
-          };
-        })
-        .filter(
-          (d) =>
-            Number.isFinite(d.time as number) &&
-            Number.isFinite(d.open) &&
-            Number.isFinite(d.high) &&
-            Number.isFinite(d.low) &&
-            Number.isFinite(d.close)
-        )
-        .sort((a, b) => (a.time as number) - (b.time as number));
-
-      candleSeries.setData(chartData);
-
-      visualSpec.overlays.forEach((overlay) => {
-        if (overlay.type === 'hline') {
-          const color =
-            overlay.style === 'primary'
-              ? '#3b82f6'
-              : overlay.style === 'destructive'
-                ? '#ef4444'
-                : overlay.style === 'positive'
-                  ? '#22c55e'
-                  : '#888888';
-
-          candleSeries.createPriceLine({
-            price: overlay.price,
-            color,
-            lineWidth: 2,
-            lineStyle: overlay.id === 'entry' ? 0 : 2,
-            axisLabelVisible: true,
-            title: overlay.label,
-          });
+        // Recreate chart each time we open/change setup to avoid stale/blank canvas.
+        if (chartRef.current) {
+          chartRef.current.remove();
+          chartRef.current = null;
         }
-      });
 
-      // Candle-level pivot confirmation markers
-      // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
-      // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
-      const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+        const chart = createChart(containerRef.current, {
+          width: containerWidth,
+          height: Math.max(containerHeight || 0, 350),
+          layout: {
+            background: { color: bgColor },
+            textColor,
+          },
+          grid: {
+            vertLines: { color: gridColor },
+            horzLines: { color: gridColor },
+          },
+          rightPriceScale: {
+            borderColor: gridColor,
+          },
+          timeScale: {
+            borderColor: gridColor,
+            timeVisible: true,
+            secondsVisible: false,
+          },
+          crosshair: {
+            mode: 1,
+          },
+        });
 
-      if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-        const markers = visualSpec.pivots
-          .map((pivot) => {
-            const isHigh = pivot.type === 'high';
+        chartRef.current = chart;
 
-            let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+        const candleSeries = chart.addSeries(CandlestickSeries, {
+          upColor: '#22c55e',
+          downColor: '#ef4444',
+          borderUpColor: '#22c55e',
+          borderDownColor: '#ef4444',
+          wickUpColor: '#22c55e',
+          wickDownColor: '#ef4444',
+        });
 
-            if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
-              t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
-            }
-
-            if (!timeSet.has(t)) return null;
-
+        const chartData: CandlestickData[] = bars
+          .map((bar) => {
+            const ts = Math.floor(new Date(bar.t).getTime() / 1000);
             return {
-              time: t as Time,
-              position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-              color: isHigh ? '#f97316' : '#8b5cf6',
-              shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-              text: pivot.label || (isHigh ? 'H' : 'L'),
+              time: ts as Time,
+              open: bar.o,
+              high: bar.h,
+              low: bar.l,
+              close: bar.c,
             };
           })
-          .filter((m): m is any => Boolean(m));
+          .filter(
+            (d) =>
+              Number.isFinite(d.time as number) &&
+              Number.isFinite(d.open) &&
+              Number.isFinite(d.high) &&
+              Number.isFinite(d.low) &&
+              Number.isFinite(d.close)
+          )
+          .sort((a, b) => (a.time as number) - (b.time as number));
 
-        markers.sort((a, b) => (a.time as number) - (b.time as number));
+        candleSeries.setData(chartData);
 
-        try {
-          createSeriesMarkers(candleSeries, markers);
-        } catch (e) {
-          // Never break the chart if markers fail; candles are the priority.
-          console.warn('Failed to render pivot markers:', e);
-        }
-      }
+        visualSpec.overlays.forEach((overlay) => {
+          if (overlay.type === 'hline') {
+            const color =
+              overlay.style === 'primary'
+                ? '#3b82f6'
+                : overlay.style === 'destructive'
+                  ? '#ef4444'
+                  : overlay.style === 'positive'
+                    ? '#22c55e'
+                    : '#888888';
 
-      chart.timeScale().fitContent();
-
-      resizeObserver = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (!entry || !chartRef.current) return;
-        chartRef.current.applyOptions({
-          width: Math.floor(entry.contentRect.width),
-          height: Math.max(Math.floor(entry.contentRect.height || 0), 350),
+            candleSeries.createPriceLine({
+              price: overlay.price,
+              color,
+              lineWidth: 2,
+              lineStyle: overlay.id === 'entry' ? 0 : 2,
+              axisLabelVisible: true,
+              title: overlay.label,
+            });
+          }
         });
-      });
 
-      resizeObserver.observe(containerRef.current);
+        // Candle-level pivot confirmation markers
+        // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
+        // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
+        const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+
+        if (visualSpec.pivots && visualSpec.pivots.length > 0) {
+          const markers = visualSpec.pivots
+            .map((pivot) => {
+              const isHigh = pivot.type === 'high';
+
+              let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+
+              if (
+                !timeSet.has(t) &&
+                Number.isInteger(pivot.index) &&
+                pivot.index >= 0 &&
+                pivot.index < bars.length
+              ) {
+                t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+              }
+
+              if (!timeSet.has(t)) return null;
+
+              return {
+                time: t as Time,
+                position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
+                color: isHigh ? '#f97316' : '#8b5cf6',
+                shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+                text: pivot.label || (isHigh ? 'H' : 'L'),
+              };
+            })
+            .filter((m): m is any => Boolean(m));
+
+          markers.sort((a, b) => (a.time as number) - (b.time as number));
+
+          try {
+            createSeriesMarkers(candleSeries, markers);
+          } catch (e) {
+            // Never break the chart if markers fail; candles are the priority.
+            console.warn('Failed to render pivot markers:', e);
+          }
+        }
+
+        chart.timeScale().fitContent();
+
+        resizeObserver = new ResizeObserver((entries) => {
+          const entry = entries[0];
+          if (!entry || !chartRef.current) return;
+          chartRef.current.applyOptions({
+            width: Math.floor(entry.contentRect.width),
+            height: Math.max(Math.floor(entry.contentRect.height || 0), 350),
+          });
+        });
+
+        resizeObserver.observe(containerRef.current);
+      } catch (e) {
+        console.error('FullChartViewer chart init failed:', e);
+        setChartError('Chart failed to render.');
+      }
     };
 
     // Start initialization on next frame to avoid 0px measurements
@@ -312,15 +336,7 @@ export default function FullChartViewer({
 
   const openExternal = async (url: string) => {
     // TradingView blocks iframe embedding. The Lovable preview is iframe-based,
-    // so trying to navigate to TradingView often results in ERR_BLOCKED_BY_RESPONSE.
-    // Reliable behavior:
-    // - In embedded preview: copy (or show a manual copy prompt)
-    // - In real browsing: open a new tab (or show a manual copy prompt)
-
-    const manualCopyPrompt = () => {
-      // Fallback that works even when clipboard permissions are blocked.
-      window.prompt('Copy this TradingView link:', url);
-    };
+    // so opening directly is often blocked; we instead show the link inline for copy.
 
     const isEmbeddedPreview = (() => {
       try {
@@ -330,14 +346,19 @@ export default function FullChartViewer({
       }
     })();
 
-    if (isEmbeddedPreview) {
+    const showLinkForCopy = async (reason: string) => {
+      setExternalLink(url);
+
       try {
         await navigator.clipboard.writeText(url);
-        toast.message("TradingView can’t open inside the embedded preview — link copied.");
+        toast.message(`${reason} Link copied.`);
       } catch {
-        manualCopyPrompt();
-        toast.message('TradingView link ready to copy.');
+        toast.message(`${reason} Link shown below to copy.`);
       }
+    };
+
+    if (isEmbeddedPreview) {
+      await showLinkForCopy("TradingView can’t open inside the preview.");
       return;
     }
 
@@ -348,13 +369,7 @@ export default function FullChartViewer({
       // ignore
     }
 
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.message('Popup blocked — TradingView link copied.');
-    } catch {
-      manualCopyPrompt();
-      toast.message('Popup blocked — TradingView link ready to copy.');
-    }
+    await showLinkForCopy('Popup blocked.');
   };
 
   return (
@@ -397,13 +412,20 @@ export default function FullChartViewer({
           </div>
         </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left: Chart (2 cols) */}
             <div className="lg:col-span-2 space-y-4">
-              <div
-                ref={containerRef}
-                className="w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50"
-              />
+              <div className="relative">
+                <div
+                  ref={containerRef}
+                  className="w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50"
+                />
+                {chartError && (
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/30">
+                    {chartError}
+                  </div>
+                )}
+              </div>
             
             {/* Trade Levels */}
             <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
@@ -449,8 +471,8 @@ export default function FullChartViewer({
                 Create Alert
               </Button>
               {onSaveToVault && (
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   onClick={onSaveToVault}
                   disabled={isSavingToVault}
                   className="flex-1"
@@ -479,6 +501,59 @@ export default function FullChartViewer({
                 <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
+
+            {externalLink && (
+              <Card className="border-border/50">
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                      TradingView link (copy & open in a new tab)
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      aria-label="Dismiss link"
+                      onClick={() => setExternalLink(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      value={externalLink}
+                      readOnly
+                      onFocus={(e) => e.currentTarget.select()}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(externalLink);
+                          toast.message('Link copied.');
+                        } catch {
+                          toast.message('Select the link and copy it.');
+                        }
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="sr-only">Copy link</span>
+                    </Button>
+                  </div>
+
+                  <a
+                    className="text-xs text-muted-foreground underline"
+                    href={externalLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open in new tab (may be blocked in preview)
+                  </a>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right: Info Panel (1 col) */}
