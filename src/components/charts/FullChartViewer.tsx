@@ -108,13 +108,15 @@ export default function FullChartViewer({
   isCreatingAlert,
   isSavingToVault = false,
 }: FullChartViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || !setup || !open) return;
+    // Radix DialogContent is portaled and can mount a tick after `open` flips true.
+    // Using a callback ref (containerEl state) ensures we initialize the chart once the DOM node exists.
+    if (!containerEl || !setup || !open) return;
 
     setChartError(null);
 
@@ -124,16 +126,22 @@ export default function FullChartViewer({
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;
     let rafId: number | null = null;
+    let attempts = 0;
 
     const initChart = () => {
-      if (cleanedUp || !containerRef.current) return;
+      if (cleanedUp || !containerEl) return;
 
-      const rect = containerRef.current.getBoundingClientRect();
+      const rect = containerEl.getBoundingClientRect();
       const containerWidth = Math.floor(rect.width);
       const containerHeight = Math.floor(rect.height);
 
-      // Dialog open animation can briefly yield 0px width; retry next frame.
-      if (containerWidth <= 0) {
+      // Dialog open animation can briefly yield 0px size; retry next frame.
+      if (containerWidth <= 0 || containerHeight <= 0) {
+        attempts += 1;
+        if (attempts > 120) {
+          setChartError('Chart failed to render.');
+          return;
+        }
         rafId = window.requestAnimationFrame(initChart);
         return;
       }
@@ -150,9 +158,9 @@ export default function FullChartViewer({
           chartRef.current = null;
         }
 
-        const chart = createChart(containerRef.current, {
+        const chart = createChart(containerEl, {
           width: containerWidth,
-          height: Math.max(containerHeight || 0, 350),
+          height: Math.max(containerHeight, 350),
           layout: {
             background: { color: bgColor },
             textColor,
@@ -284,7 +292,7 @@ export default function FullChartViewer({
           });
         });
 
-        resizeObserver.observe(containerRef.current);
+        resizeObserver.observe(containerEl);
       } catch (e) {
         console.error('FullChartViewer chart init failed:', e);
         setChartError('Chart failed to render.');
@@ -303,7 +311,7 @@ export default function FullChartViewer({
         chartRef.current = null;
       }
     };
-  }, [setup, open]);
+  }, [setup, open, containerEl]);
 
   if (!setup) return null;
 
@@ -417,7 +425,7 @@ export default function FullChartViewer({
             <div className="lg:col-span-2 space-y-4">
               <div className="relative">
                 <div
-                  ref={containerRef}
+                  ref={setContainerEl}
                   className="w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50"
                 />
                 {chartError && (
