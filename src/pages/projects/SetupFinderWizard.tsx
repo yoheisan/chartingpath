@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock } from 'lucide-react';
+import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -329,7 +329,15 @@ const SetupFinderWizard = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Lookback Period</Label>
+                    <div className="flex items-center gap-2">
+                      <Label>Lookback Period</Label>
+                      <span 
+                        className="text-muted-foreground cursor-help" 
+                        title="How much historical data to analyze. More data = better pattern detection accuracy, but slower processing."
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
                     <Select value={String(lookbackYears)} onValueChange={(v) => setLookbackYears(Number(v))}>
                       <SelectTrigger>
                         <SelectValue />
@@ -346,6 +354,9 @@ const SetupFinderWizard = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      The scanner uses this historical data to detect patterns. <strong>Only recent signals</strong> (within the last few days) are shown as actionable setups.
+                    </p>
                   </div>
                 </div>
               </CardContent>
