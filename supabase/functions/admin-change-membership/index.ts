@@ -45,8 +45,21 @@ serve(async (req) => {
     if (!adminUser) throw new Error("User not authenticated");
     logStep("Admin authenticated", { adminId: adminUser.id });
 
-    // TODO: Add admin role check here - for now, any authenticated user can use this
-    // In production, add: if (!await isAdmin(adminUser.id)) throw new Error("Unauthorized");
+    // Check if user has admin role - CRITICAL security check
+    const { data: isAdminUser, error: roleError } = await supabaseAdmin
+      .rpc('is_admin', { _user_id: adminUser.id });
+    
+    if (roleError) {
+      logStep("Admin role check failed", { error: roleError.message });
+      throw new Error("Failed to verify admin privileges");
+    }
+    
+    if (!isAdminUser) {
+      logStep("Unauthorized access attempt", { userId: adminUser.id });
+      throw new Error("Unauthorized: Admin privileges required");
+    }
+    
+    logStep("Admin authorization verified", { adminId: adminUser.id });
 
     const { user_id, new_plan, reason, is_free_assignment = false }: ChangeMembershipRequest = await req.json();
 
