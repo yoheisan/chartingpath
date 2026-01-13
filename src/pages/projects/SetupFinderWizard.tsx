@@ -88,18 +88,35 @@ const SetupFinderWizard = () => {
     };
   } | null>(null);
   
-  // Check auth status on mount
+  // Check auth status on mount and listen for changes
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      // Use getUser() which is more reliable than getSession()
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
       
-      if (session?.user) {
-        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: session.user.id });
+      if (user) {
+        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
         setIsAdmin(adminCheck === true);
       }
     };
     checkAuth();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        setTimeout(() => {
+          supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
+            setIsAdmin(data === true);
+          });
+        }, 0);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, []);
   
   // Update universe when asset class changes
