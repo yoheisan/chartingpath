@@ -15,6 +15,27 @@ import "./i18n/config";
 const normalizeAuthCallbackPath = () => {
   const { pathname, search, hash } = window.location;
 
+  // Support static hosts that don't rewrite deep links to index.html.
+  // Our fallback HTML pages (e.g. /auth/index.html) redirect to "/?__lovable_path=<encoded>".
+  // We translate that back into the intended SPA route without triggering a network navigation.
+  if (search) {
+    const params = new URLSearchParams(search);
+    const forwarded = params.get("__lovable_path");
+    if (forwarded) {
+      try {
+        const decoded = decodeURIComponent(forwarded);
+        if (decoded.startsWith("/") && !decoded.startsWith("//")) {
+          window.history.replaceState(null, "", decoded);
+          // Re-run normalization on the new URL (e.g. /auth?code=... -> /auth/?code=...)
+          normalizeAuthCallbackPath();
+          return;
+        }
+      } catch {
+        // Ignore invalid encoding
+      }
+    }
+  }
+
   // Only normalize when a query string exists (callbacks + redirects).
   if (!search) return;
 
