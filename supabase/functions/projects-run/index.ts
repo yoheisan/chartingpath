@@ -107,8 +107,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastTwoIdx = peaks.slice(-2);
       const lastTwo = lastTwoIdx.map(i => highs[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      // Strict 2% tolerance for true "double" pattern - peaks must be at similar levels
-      const detected = diff < 0.02;
+      // Bulkowski standard: peaks within 3% tolerance (highs, not closes)
+      const detected = diff < 0.03;
       const pivots: PatternPivot[] = detected ? [
         { index: lastTwoIdx[0], price: lastTwo[0], type: 'high', label: 'Top 1' },
         { index: lastTwoIdx[1], price: lastTwo[1], type: 'high', label: 'Top 2' }
@@ -127,8 +127,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastTwoIdx = troughs.slice(-2);
       const lastTwo = lastTwoIdx.map(i => lows[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      // Strict 2% tolerance for true "double" pattern - troughs must be at similar levels
-      const detected = diff < 0.02;
+      // Bulkowski standard: troughs within 3% tolerance (lows, not closes)
+      const detected = diff < 0.03;
       const pivots: PatternPivot[] = detected ? [
         { index: lastTwoIdx[0], price: lastTwo[0], type: 'low', label: 'Bottom 1' },
         { index: lastTwoIdx[1], price: lastTwo[1], type: 'low', label: 'Bottom 2' }
