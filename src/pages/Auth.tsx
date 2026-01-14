@@ -14,7 +14,18 @@ import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const redirectPath = searchParams.get("redirect") || "/members/trading";
+
+  const rawRedirect = searchParams.get("redirect");
+  const redirectPath = (() => {
+    if (!rawRedirect) return "/members/trading";
+    try {
+      const decoded = decodeURIComponent(rawRedirect);
+      return decoded.startsWith("/") ? decoded : "/members/trading";
+    } catch {
+      return "/members/trading";
+    }
+  })();
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
