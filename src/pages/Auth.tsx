@@ -246,10 +246,15 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // IMPORTANT: Always return OAuth flows to /auth (a routing-resilient path with static fallbacks),
+      // then let the app client-side navigate to the intended destination.
+      // Redirecting OAuth directly to deep member routes can hit a host-level 404 on some static hosts.
+      const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}${redirectPath}`
+          redirectTo: oauthRedirectTo,
         }
       });
 
@@ -358,7 +363,11 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${getCanonicalAppOrigin()}/members/trading`
+            // Route-confirmation links back through /auth (resilient deep-link path),
+            // then redirect inside the app.
+            emailRedirectTo: `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(
+              "/members/trading"
+            )}`,
           }
         });
 
