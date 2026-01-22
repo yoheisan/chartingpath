@@ -90,20 +90,9 @@ const SetupFinderWizard = () => {
   
   // Check auth status on mount and listen for changes
   useEffect(() => {
-    const checkAuth = async () => {
-      // Use getUser() which is more reliable than getSession()
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      
-      if (user) {
-        const { data: adminCheck } = await supabase.rpc('is_admin', { _user_id: user.id });
-        setIsAdmin(adminCheck === true);
-      }
-    };
-    checkAuth();
-    
-    // Listen for auth state changes
+    // Set up auth state listener FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[SetupFinder] Auth state changed:', event, !!session?.user);
       setIsAuthenticated(!!session?.user);
       if (session?.user) {
         setTimeout(() => {
@@ -113,6 +102,17 @@ const SetupFinderWizard = () => {
         }, 0);
       } else {
         setIsAdmin(false);
+      }
+    });
+    
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[SetupFinder] Initial session check:', !!session?.user);
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
+          setIsAdmin(data === true);
+        });
       }
     });
     
