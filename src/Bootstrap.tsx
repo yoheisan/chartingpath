@@ -13,13 +13,31 @@ export default function Bootstrap() {
   // Ensure the entire app runs on a single, canonical preview origin.
   // This prevents "logged in here, logged out there" when users open different preview domains.
   useEffect(() => {
-    // Check if we need to redirect BEFORE attempting it
     const canonical = getCanonicalAppOrigin();
-    if (canonical !== window.location.origin) {
-      // Show loading state to prevent "Not found" flash
-      setIsRedirecting(true);
-      redirectToCanonicalOriginIfNeeded();
+    const needsRedirect = canonical !== window.location.origin;
+    
+    if (!needsRedirect) {
+      setIsRedirecting(false);
+      return;
     }
+    
+    // Check if we should skip redirect (auth callbacks)
+    const url = new URL(window.location.href);
+    const hasAuthCallbackParams =
+      url.searchParams.has("code") ||
+      url.searchParams.get("type") === "recovery" ||
+      url.hash.includes("access_token=") ||
+      url.hash.includes("type=recovery");
+    
+    if (hasAuthCallbackParams) {
+      // Don't redirect during auth callbacks, proceed with app
+      setIsRedirecting(false);
+      return;
+    }
+    
+    // Actually redirecting - set state and redirect
+    setIsRedirecting(true);
+    redirectToCanonicalOriginIfNeeded();
   }, [location.pathname, location.search, location.hash]);
 
   // Show loading state while redirecting to canonical origin
