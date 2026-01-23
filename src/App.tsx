@@ -104,6 +104,7 @@ const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
           <Route path="/email-preview" element={<EmailPreview />} />
           <Route path="/chart-patterns/generator" element={<PatternGenerator />} />
           <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
+          <Route path="/patterns/live" element={<Suspense fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}><LivePatternsPage /></Suspense>} />
           <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
           <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
           <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
