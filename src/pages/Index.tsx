@@ -13,6 +13,7 @@ import { track } from '@/services/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
+import LivePatternPreview from '@/components/landing/LivePatternPreview';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -186,6 +187,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Live Pattern Preview - Instant Gratification */}
+      <LivePatternPreview />
 
       {/* Choose Your Action Section */}
       <section className="py-16 px-6 bg-muted/30">
