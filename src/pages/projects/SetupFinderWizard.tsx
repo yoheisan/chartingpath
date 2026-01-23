@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock, Info } from 'lucide-react';
@@ -62,7 +62,7 @@ const SetupFinderWizard = () => {
   const [timeframe, setTimeframe] = useState('1d');
   const [lookbackYears, setLookbackYears] = useState(1);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
-  const [riskPerTrade, setRiskPerTrade] = useState(1);
+  
   
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -213,7 +213,6 @@ const SetupFinderWizard = () => {
               patterns: selectedPatterns,
               timeframe,
               lookbackYears,
-              riskPerTrade,
             },
           }),
         }
@@ -413,34 +412,6 @@ const SetupFinderWizard = () => {
               </CardContent>
             </Card>
             
-            {/* Risk Settings */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Risk Settings</CardTitle>
-                <CardDescription>Configure position sizing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label>Risk per Trade</Label>
-                      <span className="text-sm font-medium text-primary">{riskPerTrade}%</span>
-                    </div>
-                    <Slider
-                      value={[riskPerTrade]}
-                      onValueChange={([v]) => setRiskPerTrade(v)}
-                      min={0.5}
-                      max={5}
-                      step={0.5}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Recommended: 1-2% per trade for conservative risk management
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
           
           {/* Sidebar - Credits & Run */}
