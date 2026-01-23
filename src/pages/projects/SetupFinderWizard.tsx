@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock, Info } from 'lucide-react';
+import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -45,12 +45,6 @@ const TIMEFRAMES = [
   { value: '4h', label: '4 Hour' },
 ];
 
-const LOOKBACK_OPTIONS = [
-  { value: 1, label: '1 Year' },
-  { value: 2, label: '2 Years' },
-  { value: 3, label: '3 Years' },
-  { value: 5, label: '5 Years' },
-];
 
 const SetupFinderWizard = () => {
   const navigate = useNavigate();
@@ -60,7 +54,7 @@ const SetupFinderWizard = () => {
   const [assetClass, setAssetClass] = useState('crypto');
   const [universe, setUniverse] = useState('top10');
   const [timeframe, setTimeframe] = useState('1d');
-  const [lookbackYears, setLookbackYears] = useState(1);
+  
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   
   
@@ -150,7 +144,6 @@ const SetupFinderWizard = () => {
               universe,
               patterns: selectedPatterns,
               timeframe,
-              lookbackYears,
             }),
           }
         );
@@ -166,7 +159,7 @@ const SetupFinderWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [assetClass, universe, selectedPatterns, timeframe, lookbackYears]);
+  }, [assetClass, universe, selectedPatterns, timeframe]);
   
   const handlePatternToggle = (patternId: string) => {
     setSelectedPatterns(prev => 
@@ -194,7 +187,7 @@ const SetupFinderWizard = () => {
     }
     
     setIsRunning(true);
-    console.log('[SetupFinder] Starting run with:', { assetClass, universe, patterns: selectedPatterns, timeframe, lookbackYears });
+    console.log('[SetupFinder] Starting run with:', { assetClass, universe, patterns: selectedPatterns, timeframe });
     
     try {
       const response = await fetch(
@@ -212,7 +205,6 @@ const SetupFinderWizard = () => {
               universe,
               patterns: selectedPatterns,
               timeframe,
-              lookbackYears,
             },
           }),
         }
@@ -344,36 +336,6 @@ const SetupFinderWizard = () => {
                     </Select>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label>Lookback Period</Label>
-                      <span 
-                        className="text-muted-foreground cursor-help" 
-                        title="How much historical data to analyze. More data = better pattern detection accuracy, but slower processing."
-                      >
-                        <Info className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                    <Select value={String(lookbackYears)} onValueChange={(v) => setLookbackYears(Number(v))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LOOKBACK_OPTIONS.map(lb => (
-                          <SelectItem 
-                            key={lb.value} 
-                            value={String(lb.value)}
-                            disabled={estimate?.tierCaps && lb.value > estimate.tierCaps.maxLookbackYears}
-                          >
-                            {lb.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      The scanner uses this historical data to detect patterns. <strong>Only recent signals</strong> (within the last few days) are shown as actionable setups.
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -455,10 +417,6 @@ const SetupFinderWizard = () => {
                       <div className="flex justify-between">
                         <span>Patterns</span>
                         <span className="font-medium text-foreground">{estimate.patternCount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Lookback</span>
-                        <span className="font-medium text-foreground">{lookbackYears} year{lookbackYears > 1 ? 's' : ''}</span>
                       </div>
                       <div className="flex justify-between border-t border-border/50 pt-2 mt-2">
                         <span>Your Balance</span>
