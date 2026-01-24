@@ -229,7 +229,7 @@ export default function LivePatternsPage() {
             </span>
           )}
         </div>
-        <h1 className="text-3xl font-bold mb-2">Active Pattern Feed</h1>
+        <h1 className="text-3xl font-bold mb-2">Active Pattern Screener</h1>
         <p className="text-muted-foreground">
           Real-time pattern detection across {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments
         </p>

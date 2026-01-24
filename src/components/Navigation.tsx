@@ -52,10 +52,10 @@ const Navigation = () => {
   // Mobile nav content - outcome-centric structure
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
-      {/* Active Pattern Feed */}
+      {/* Active Pattern Screener */}
       <Link to="/patterns/live" className="flex items-center gap-2 text-foreground font-medium py-2">
         <Activity className="h-5 w-5" />
-        Active Patterns
+        Active Pattern Screener
       </Link>
       
       {/* Primary: Projects */}
@@ -141,7 +141,7 @@ const Navigation = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/patterns/live" className="flex items-center gap-2">
                         <Activity className="h-4 w-4 text-amber-500" />
-                        Active Pattern Feed
+                        Active Pattern Screener
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
