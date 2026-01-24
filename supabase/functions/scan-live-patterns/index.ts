@@ -46,6 +46,76 @@ const ALL_PATTERNS = [
   'ascending-triangle', 'descending-triangle'
 ];
 
+/**
+ * Check if a signal timestamp is stale based on asset type and market hours.
+ * - Crypto: 24/7, signal should be within last 24 hours
+ * - FX: Closes Friday 5pm EST, reopens Sunday 5pm EST
+ * - Stocks/Commodities: Weekdays only, closed on weekends
+ */
+function isSignalStale(signalTs: string, assetType: string): boolean {
+  const signalDate = new Date(signalTs);
+  const now = new Date();
+  const diffHours = (now.getTime() - signalDate.getTime()) / (1000 * 60 * 60);
+  
+  // Crypto trades 24/7 - just check if signal is within 48 hours (daily timeframe)
+  if (assetType === 'crypto') {
+    return diffHours > 48;
+  }
+  
+  // For FX, stocks, commodities - check if markets are open
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const hourUTC = now.getUTCHours();
+  
+  // Weekend check (FX closes Friday ~22:00 UTC, reopens Sunday ~22:00 UTC)
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  
+  if (assetType === 'fx') {
+    // FX is closed on weekends
+    if (isWeekend) {
+      // On weekends, last valid signal would be from Friday
+      // Allow signals from the last trading session (Friday's close)
+      const fridayClose = new Date(now);
+      // Go back to Friday
+      const daysBack = dayOfWeek === 0 ? 2 : 1; // Sunday: 2 days back, Saturday: 1 day back
+      fridayClose.setUTCDate(fridayClose.getUTCDate() - daysBack);
+      fridayClose.setUTCHours(22, 0, 0, 0); // FX closes ~22:00 UTC Friday
+      
+      // Signal is stale if it's older than Friday's close (more than expected for daily candle)
+      const hoursSinceFridayClose = (now.getTime() - fridayClose.getTime()) / (1000 * 60 * 60);
+      // Mark as stale if we're on weekend - patterns from closed markets shouldn't show as "fresh"
+      return true; // Return true to indicate market is closed
+    }
+    return diffHours > 48; // Normal weekday check
+  }
+  
+  // Stocks and commodities - closed on weekends
+  if (assetType === 'stocks' || assetType === 'commodities') {
+    if (isWeekend) {
+      return true; // Market closed
+    }
+    return diffHours > 48;
+  }
+  
+  return diffHours > 48;
+}
+
+/**
+ * Check if the market for a given asset type is currently open
+ */
+function isMarketOpen(assetType: string): boolean {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  
+  // Crypto is 24/7
+  if (assetType === 'crypto') {
+    return true;
+  }
+  
+  // FX, stocks, commodities are closed on weekends
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  return !isWeekend;
+}
+
 interface PatternPivot {
   index: number;
   price: number;
@@ -390,6 +460,12 @@ serve(async (req) => {
         if (detectionResult.detected) {
           const lastBar = bars[bars.length - 1];
           const signalTs = lastBar.date;
+          
+          // Skip stale signals (markets closed, old data)
+          if (isSignalStale(signalTs, assetType)) {
+            continue;
+          }
+          
           const atr = calculateATR(bars, 14);
           
           const bracketLevels = computeBracketLevels({
@@ -475,7 +551,8 @@ serve(async (req) => {
       }
     }
     
-    console.log(`[scan-live-patterns] Scan complete. Found ${setups.length} patterns.`);
+    const marketOpen = isMarketOpen(assetType);
+    console.log(`[scan-live-patterns] Scan complete. Found ${setups.length} patterns. Market open: ${marketOpen}`);
     
     return new Response(JSON.stringify({
       success: true,
@@ -483,6 +560,8 @@ serve(async (req) => {
       scannedAt: new Date().toISOString(),
       instrumentsScanned: instruments.length,
       assetType,
+      marketOpen,
+      marketStatus: marketOpen ? 'open' : 'closed',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
