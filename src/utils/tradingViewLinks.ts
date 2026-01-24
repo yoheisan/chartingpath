@@ -115,7 +115,41 @@ export function toTradingViewSymbol(
   }
 
   if (instrumentCategory === 'commodities') {
-    // Common commodities
+    // Yahoo Finance commodity symbols (ending with =F) to TradingView format
+    const yahooToTradingView: Record<string, string> = {
+      // Precious Metals
+      'GC=F': 'COMEX:GC1!',      // Gold
+      'SI=F': 'COMEX:SI1!',      // Silver
+      'PL=F': 'NYMEX:PL1!',      // Platinum
+      'PA=F': 'NYMEX:PA1!',      // Palladium
+      'HG=F': 'COMEX:HG1!',      // Copper
+      // Energy
+      'CL=F': 'NYMEX:CL1!',      // Crude Oil WTI
+      'BZ=F': 'NYMEX:BB1!',      // Brent Crude
+      'NG=F': 'NYMEX:NG1!',      // Natural Gas
+      'RB=F': 'NYMEX:RB1!',      // Gasoline
+      'HO=F': 'NYMEX:HO1!',      // Heating Oil
+      // Agriculture
+      'ZC=F': 'CBOT:ZC1!',       // Corn
+      'ZW=F': 'CBOT:ZW1!',       // Wheat
+      'ZS=F': 'CBOT:ZS1!',       // Soybeans
+      'KC=F': 'ICEUS:KC1!',      // Coffee
+      'SB=F': 'ICEUS:SB1!',      // Sugar
+      'CC=F': 'ICEUS:CC1!',      // Cocoa
+      'CT=F': 'ICEUS:CT1!',      // Cotton
+      'OJ=F': 'ICEUS:OJ1!',      // Orange Juice
+      // Livestock
+      'LE=F': 'CME:LE1!',        // Live Cattle
+      'HE=F': 'CME:HE1!',        // Lean Hogs
+      'GF=F': 'CME:GF1!',        // Feeder Cattle
+    };
+    
+    // Check if it's a Yahoo Finance futures symbol
+    if (yahooToTradingView[cleanSymbol]) {
+      return yahooToTradingView[cleanSymbol];
+    }
+    
+    // Common name mappings
     const commodityMap: Record<string, string> = {
       'GOLD': 'TVC:GOLD',
       'XAUUSD': 'TVC:GOLD',
