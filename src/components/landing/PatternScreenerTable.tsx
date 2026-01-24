@@ -374,6 +374,9 @@ export default function PatternScreenerTable() {
                         <SortIcon columnKey="rr" />
                       </div>
                     </TableHead>
+                    <TableHead className="text-center whitespace-nowrap">
+                      TF
+                    </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
                       onClick={() => handleSort('signal')}
@@ -390,7 +393,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={5} className="py-2">
+                        <TableCell colSpan={6} className="py-2">
                           <span className="font-semibold text-sm">{patternName}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -401,7 +404,8 @@ export default function PatternScreenerTable() {
                       {setups.map((setup, idx) => {
                         const isLong = setup.direction === 'long';
                         const signalAge = formatSignalAgeSimple(setup.signalTs);
-                        const isFresh = signalAge === '1 bar' || signalAge === '2 bars';
+                        // Fresh if less than 2 days old
+                        const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
                         
                         return (
                           <TableRow 
@@ -452,6 +456,11 @@ export default function PatternScreenerTable() {
                               }`}>
                                 {setup.tradePlan.rr.toFixed(1)}
                               </span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="text-xs font-mono">
+                                D
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`text-xs ${
