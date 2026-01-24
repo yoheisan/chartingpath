@@ -329,6 +329,10 @@ export default function FullChartViewer({
   // Determine instrument category for TradingView link
   const getInstrumentCategory = (symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' => {
     const upper = symbol.toUpperCase();
+    // Yahoo-format commodities (e.g., GC=F, CL=F, SI=F)
+    if (upper.endsWith('=F')) return 'commodities';
+    // Yahoo-format forex (e.g., EURUSD=X)
+    if (upper.endsWith('=X')) return 'forex';
     // Yahoo-format crypto (e.g., BTC-USD, ETH-USD)
     const cryptoBases = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'LINK', 'MATIC', 'LTC', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 'INJ', 'SUI', 'SEI', 'BNB', 'SHIB', 'TRX', 'TON'];
     if (cryptoBases.some(base => upper.startsWith(base + '-') || upper.startsWith(base + 'USD'))) return 'crypto';
