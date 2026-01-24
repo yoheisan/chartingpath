@@ -99,65 +99,154 @@ function cleanInstrumentName(instrument: string): string {
   return instrument.replace('-USD', '').replace('=X', '').replace('/USD', '').replace('=F', '');
 }
 
-// Full names for commodities and other assets
-const INSTRUMENT_FULL_NAMES: Record<string, string> = {
+// Full instrument metadata: name, category, and logo
+interface InstrumentMeta {
+  name: string;
+  category?: 'crypto' | 'commodity' | 'stock' | 'fx';
+}
+
+const INSTRUMENT_METADATA: Record<string, InstrumentMeta> = {
   // Commodities - Metals
-  'GC': 'Gold',
-  'SI': 'Silver',
-  'HG': 'Copper',
-  'PL': 'Platinum',
-  'PA': 'Palladium',
+  'GC': { name: 'Gold', category: 'commodity' },
+  'SI': { name: 'Silver', category: 'commodity' },
+  'HG': { name: 'Copper', category: 'commodity' },
+  'PL': { name: 'Platinum', category: 'commodity' },
+  'PA': { name: 'Palladium', category: 'commodity' },
   // Commodities - Energy
-  'CL': 'Crude Oil (WTI)',
-  'NG': 'Natural Gas',
-  'RB': 'Gasoline',
-  'HO': 'Heating Oil',
+  'CL': { name: 'Crude Oil (WTI)', category: 'commodity' },
+  'NG': { name: 'Natural Gas', category: 'commodity' },
+  'RB': { name: 'Gasoline', category: 'commodity' },
+  'HO': { name: 'Heating Oil', category: 'commodity' },
   // Commodities - Agriculture
-  'ZC': 'Corn',
-  'ZW': 'Wheat',
-  'ZS': 'Soybeans',
-  'KC': 'Coffee',
-  'SB': 'Sugar',
-  'CC': 'Cocoa',
-  'CT': 'Cotton',
-  'ZO': 'Oats',
-  'ZR': 'Rice',
-  'ZL': 'Soybean Oil',
+  'ZC': { name: 'Corn', category: 'commodity' },
+  'ZW': { name: 'Wheat', category: 'commodity' },
+  'ZS': { name: 'Soybeans', category: 'commodity' },
+  'KC': { name: 'Coffee', category: 'commodity' },
+  'SB': { name: 'Sugar', category: 'commodity' },
+  'CC': { name: 'Cocoa', category: 'commodity' },
+  'CT': { name: 'Cotton', category: 'commodity' },
+  'ZO': { name: 'Oats', category: 'commodity' },
+  'ZR': { name: 'Rice', category: 'commodity' },
+  'ZL': { name: 'Soybean Oil', category: 'commodity' },
   // Commodities - Livestock
-  'LE': 'Live Cattle',
-  'HE': 'Lean Hogs',
-  'GF': 'Feeder Cattle',
-  // Crypto (popular ones)
-  'BTC': 'Bitcoin',
-  'ETH': 'Ethereum',
-  'SOL': 'Solana',
-  'BNB': 'Binance Coin',
-  'XRP': 'Ripple',
-  'ADA': 'Cardano',
-  'AVAX': 'Avalanche',
-  'DOGE': 'Dogecoin',
-  'LINK': 'Chainlink',
-  'MATIC': 'Polygon',
-  'DOT': 'Polkadot',
-  'SHIB': 'Shiba Inu',
-  'LTC': 'Litecoin',
-  'UNI': 'Uniswap',
-  'ATOM': 'Cosmos',
-  'XLM': 'Stellar',
-  'NEAR': 'NEAR Protocol',
-  'APT': 'Aptos',
-  'ARB': 'Arbitrum',
-  'OP': 'Optimism',
-  'FIL': 'Filecoin',
-  'INJ': 'Injective',
-  'AAVE': 'Aave',
-  'MKR': 'Maker',
-  'SAND': 'The Sandbox',
+  'LE': { name: 'Live Cattle', category: 'commodity' },
+  'HE': { name: 'Lean Hogs', category: 'commodity' },
+  'GF': { name: 'Feeder Cattle', category: 'commodity' },
+  // Crypto
+  'BTC': { name: 'Bitcoin', category: 'crypto' },
+  'ETH': { name: 'Ethereum', category: 'crypto' },
+  'SOL': { name: 'Solana', category: 'crypto' },
+  'BNB': { name: 'Binance Coin', category: 'crypto' },
+  'XRP': { name: 'Ripple', category: 'crypto' },
+  'ADA': { name: 'Cardano', category: 'crypto' },
+  'AVAX': { name: 'Avalanche', category: 'crypto' },
+  'DOGE': { name: 'Dogecoin', category: 'crypto' },
+  'LINK': { name: 'Chainlink', category: 'crypto' },
+  'MATIC': { name: 'Polygon', category: 'crypto' },
+  'DOT': { name: 'Polkadot', category: 'crypto' },
+  'SHIB': { name: 'Shiba Inu', category: 'crypto' },
+  'LTC': { name: 'Litecoin', category: 'crypto' },
+  'UNI': { name: 'Uniswap', category: 'crypto' },
+  'ATOM': { name: 'Cosmos', category: 'crypto' },
+  'XLM': { name: 'Stellar', category: 'crypto' },
+  'NEAR': { name: 'NEAR Protocol', category: 'crypto' },
+  'APT': { name: 'Aptos', category: 'crypto' },
+  'ARB': { name: 'Arbitrum', category: 'crypto' },
+  'OP': { name: 'Optimism', category: 'crypto' },
+  'FIL': { name: 'Filecoin', category: 'crypto' },
+  'INJ': { name: 'Injective', category: 'crypto' },
+  'AAVE': { name: 'Aave', category: 'crypto' },
+  'MKR': { name: 'Maker', category: 'crypto' },
+  'SAND': { name: 'The Sandbox', category: 'crypto' },
+  // US Stocks - Top 25
+  'AAPL': { name: 'Apple Inc.', category: 'stock' },
+  'MSFT': { name: 'Microsoft Corporation', category: 'stock' },
+  'GOOGL': { name: 'Alphabet Inc.', category: 'stock' },
+  'AMZN': { name: 'Amazon.com Inc.', category: 'stock' },
+  'META': { name: 'Meta Platforms Inc.', category: 'stock' },
+  'TSLA': { name: 'Tesla Inc.', category: 'stock' },
+  'NVDA': { name: 'NVIDIA Corporation', category: 'stock' },
+  'JPM': { name: 'JPMorgan Chase & Co.', category: 'stock' },
+  'V': { name: 'Visa Inc.', category: 'stock' },
+  'JNJ': { name: 'Johnson & Johnson', category: 'stock' },
+  'WMT': { name: 'Walmart Inc.', category: 'stock' },
+  'PG': { name: 'Procter & Gamble Co.', category: 'stock' },
+  'MA': { name: 'Mastercard Inc.', category: 'stock' },
+  'UNH': { name: 'UnitedHealth Group', category: 'stock' },
+  'HD': { name: 'The Home Depot Inc.', category: 'stock' },
+  'DIS': { name: 'The Walt Disney Co.', category: 'stock' },
+  'BAC': { name: 'Bank of America Corp.', category: 'stock' },
+  'XOM': { name: 'Exxon Mobil Corp.', category: 'stock' },
+  'PFE': { name: 'Pfizer Inc.', category: 'stock' },
+  'KO': { name: 'Coca-Cola Company', category: 'stock' },
+  'PEP': { name: 'PepsiCo Inc.', category: 'stock' },
+  'CSCO': { name: 'Cisco Systems Inc.', category: 'stock' },
+  'NFLX': { name: 'Netflix Inc.', category: 'stock' },
+  'INTC': { name: 'Intel Corporation', category: 'stock' },
+  'AMD': { name: 'Advanced Micro Devices', category: 'stock' },
+  // Forex pairs
+  'EURUSD': { name: 'Euro / US Dollar', category: 'fx' },
+  'GBPUSD': { name: 'British Pound / US Dollar', category: 'fx' },
+  'USDJPY': { name: 'US Dollar / Japanese Yen', category: 'fx' },
+  'AUDUSD': { name: 'Australian Dollar / US Dollar', category: 'fx' },
+  'USDCAD': { name: 'US Dollar / Canadian Dollar', category: 'fx' },
+  'USDCHF': { name: 'US Dollar / Swiss Franc', category: 'fx' },
+  'NZDUSD': { name: 'New Zealand Dollar / US Dollar', category: 'fx' },
+  'EURGBP': { name: 'Euro / British Pound', category: 'fx' },
+  'EURJPY': { name: 'Euro / Japanese Yen', category: 'fx' },
+  'GBPJPY': { name: 'British Pound / Japanese Yen', category: 'fx' },
+  'AUDJPY': { name: 'Australian Dollar / Japanese Yen', category: 'fx' },
+  'EURAUD': { name: 'Euro / Australian Dollar', category: 'fx' },
+  'EURCHF': { name: 'Euro / Swiss Franc', category: 'fx' },
+  'GBPCHF': { name: 'British Pound / Swiss Franc', category: 'fx' },
+  'CADJPY': { name: 'Canadian Dollar / Japanese Yen', category: 'fx' },
+  'CHFJPY': { name: 'Swiss Franc / Japanese Yen', category: 'fx' },
+  'AUDNZD': { name: 'Australian Dollar / New Zealand Dollar', category: 'fx' },
+  'AUDCAD': { name: 'Australian Dollar / Canadian Dollar', category: 'fx' },
+  'NZDJPY': { name: 'New Zealand Dollar / Japanese Yen', category: 'fx' },
+  'GBPAUD': { name: 'British Pound / Australian Dollar', category: 'fx' },
+  'EURCAD': { name: 'Euro / Canadian Dollar', category: 'fx' },
+  'AUDCHF': { name: 'Australian Dollar / Swiss Franc', category: 'fx' },
+  'EURNZD': { name: 'Euro / New Zealand Dollar', category: 'fx' },
+  'GBPNZD': { name: 'British Pound / New Zealand Dollar', category: 'fx' },
+  'GBPCAD': { name: 'British Pound / Canadian Dollar', category: 'fx' },
 };
 
-function getInstrumentFullName(instrument: string): string | null {
+function getInstrumentMeta(instrument: string): InstrumentMeta | null {
   const ticker = cleanInstrumentName(instrument);
-  return INSTRUMENT_FULL_NAMES[ticker] || null;
+  return INSTRUMENT_METADATA[ticker] || null;
+}
+
+// Generate logo URL based on asset type
+function getLogoUrl(ticker: string, category?: 'crypto' | 'commodity' | 'stock' | 'fx'): string | null {
+  if (category === 'crypto') {
+    // Use CoinGecko or similar for crypto logos
+    const cryptoIds: Record<string, string> = {
+      'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
+      'XRP': 'ripple', 'ADA': 'cardano', 'AVAX': 'avalanche-2', 'DOGE': 'dogecoin',
+      'LINK': 'chainlink', 'MATIC': 'matic-network', 'DOT': 'polkadot', 'SHIB': 'shiba-inu',
+      'LTC': 'litecoin', 'UNI': 'uniswap', 'ATOM': 'cosmos', 'XLM': 'stellar',
+      'NEAR': 'near', 'APT': 'aptos', 'ARB': 'arbitrum', 'OP': 'optimism',
+      'FIL': 'filecoin', 'INJ': 'injective-protocol', 'AAVE': 'aave', 'MKR': 'maker', 'SAND': 'the-sandbox',
+    };
+    const id = cryptoIds[ticker];
+    return id ? `https://assets.coingecko.com/coins/images/${id}/thumb/${id}.png` : null;
+  }
+  if (category === 'stock') {
+    // Use logo.clearbit.com for stock logos
+    const domains: Record<string, string> = {
+      'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com',
+      'META': 'meta.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'JPM': 'jpmorganchase.com',
+      'V': 'visa.com', 'JNJ': 'jnj.com', 'WMT': 'walmart.com', 'PG': 'pg.com',
+      'MA': 'mastercard.com', 'UNH': 'unitedhealthgroup.com', 'HD': 'homedepot.com',
+      'DIS': 'disney.com', 'BAC': 'bankofamerica.com', 'XOM': 'exxonmobil.com',
+      'PFE': 'pfizer.com', 'KO': 'coca-cola.com', 'PEP': 'pepsico.com',
+      'CSCO': 'cisco.com', 'NFLX': 'netflix.com', 'INTC': 'intel.com', 'AMD': 'amd.com',
+    };
+    const domain = domains[ticker];
+    return domain ? `https://logo.clearbit.com/${domain}` : null;
+  }
+  return null; // No logo for FX/commodities - use fallback initials
 }
 
 
@@ -486,21 +575,46 @@ export default function PatternScreenerTable() {
                             onClick={() => handleRowClick(setup)}
                           >
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                  {cleanInstrumentName(setup.instrument).slice(0, 2)}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="font-semibold text-foreground">
-                                    {cleanInstrumentName(setup.instrument)}
-                                  </span>
-                                  {getInstrumentFullName(setup.instrument) && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {getInstrumentFullName(setup.instrument)}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                              {(() => {
+                                const ticker = cleanInstrumentName(setup.instrument);
+                                const meta = getInstrumentMeta(setup.instrument);
+                                const logoUrl = meta ? getLogoUrl(ticker, meta.category) : null;
+                                
+                                return (
+                                  <div className="flex items-center gap-3">
+                                    {/* Logo / Avatar */}
+                                    <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                                      {logoUrl ? (
+                                        <img 
+                                          src={logoUrl} 
+                                          alt={ticker}
+                                          className="w-6 h-6 object-contain"
+                                          onError={(e) => {
+                                            // Fallback to initials on error
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                          }}
+                                        />
+                                      ) : null}
+                                      <span className={`text-xs font-bold text-primary ${logoUrl ? 'hidden' : ''}`}>
+                                        {ticker.slice(0, 2)}
+                                      </span>
+                                    </div>
+                                    
+                                    {/* Ticker Badge + Full Name */}
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Badge variant="secondary" className="font-mono font-semibold text-xs px-1.5 py-0.5 shrink-0">
+                                        {ticker}
+                                      </Badge>
+                                      {meta?.name && (
+                                        <span className="text-sm text-muted-foreground truncate">
+                                          {meta.name}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {setup.patternName}
