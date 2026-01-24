@@ -281,13 +281,21 @@ export default function PatternScreenerTable() {
                 <Zap className="h-3 w-3 mr-1" />
                 Live
               </Badge>
+              {!marketOpen && assetType !== 'crypto' && (
+                <Badge variant="secondary" className="text-muted-foreground">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Market Closed
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground">
                 {lastScanned ? `Updated ${new Date(lastScanned).toLocaleTimeString()}` : 'Just now'}
               </span>
             </div>
             <h2 className="text-2xl font-bold">Pattern Screener</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Click any row to view the full chart
+              {!marketOpen && assetType !== 'crypto' 
+                ? 'Showing patterns from last trading session (Friday close)'
+                : 'Click any row to view the full chart'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -332,22 +340,10 @@ export default function PatternScreenerTable() {
 
         {!error && groupedPatterns.length === 0 && (
           <div className="rounded-lg border bg-card p-8 text-center">
-            {!marketOpen && assetType !== 'crypto' ? (
-              <>
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-lg font-medium">Market Closed</span>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  {ASSET_TYPE_LABELS[assetType]} markets are currently closed (weekend). 
-                  Switch to Crypto for 24/7 markets or check back when markets reopen.
-                </p>
-              </>
-            ) : (
-              <p className="text-muted-foreground mb-4">
-                No patterns detected for {ASSET_TYPE_LABELS[assetType]}. Try another asset type or refresh.
-              </p>
-            )}
+            <p className="text-muted-foreground mb-4">
+              No patterns detected for {ASSET_TYPE_LABELS[assetType]} at this time.
+              {!marketOpen && assetType !== 'crypto' && ' (Market currently closed)'}
+            </p>
             <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
