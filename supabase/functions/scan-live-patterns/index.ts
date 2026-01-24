@@ -338,10 +338,23 @@ serve(async (req) => {
   }
   
   try {
+    // Support both query params and body
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '30');
-    const timeframe = url.searchParams.get('timeframe') || '1d';
-    const assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
+    let limit = parseInt(url.searchParams.get('limit') || '30');
+    let timeframe = url.searchParams.get('timeframe') || '1d';
+    let assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
+    
+    // Override with body params if provided
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        if (body.limit) limit = parseInt(body.limit);
+        if (body.timeframe) timeframe = body.timeframe;
+        if (body.assetType) assetType = body.assetType;
+      } catch {
+        // Body parsing failed, use query params
+      }
+    }
     
     const instruments = INSTRUMENTS_BY_TYPE[assetType] || INSTRUMENTS_BY_TYPE[DEFAULT_ASSET_TYPE];
     

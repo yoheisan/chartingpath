@@ -37,9 +37,19 @@ interface LiveSetup {
   visualSpec: VisualSpec;
 }
 
+type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
+
+const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  fx: 'Forex',
+  crypto: 'Crypto',
+  stocks: 'Stocks',
+  commodities: 'Commodities',
+};
+
 interface ScanResult {
   success: boolean;
   patterns: LiveSetup[];
+  assetType?: AssetType;
   scannedAt: string;
   instrumentsScanned: number;
 }
@@ -56,6 +66,7 @@ export default function LivePatternsPage() {
   const [instrumentsScanned, setInstrumentsScanned] = useState(0);
   
   // Filters
+  const [assetType, setAssetType] = useState<AssetType>('fx');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [patternFilter, setPatternFilter] = useState<string>('all');
   
@@ -63,14 +74,16 @@ export default function LivePatternsPage() {
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
 
-  const fetchLivePatterns = async (isRefresh = false) => {
+  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     
+    const typeToFetch = selectedAssetType || assetType;
+    
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: {},
+        body: { assetType: typeToFetch, limit: 30 },
       });
       
       if (fnError) throw fnError;
@@ -87,6 +100,11 @@ export default function LivePatternsPage() {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const handleAssetTypeChange = (newType: AssetType) => {
+    setAssetType(newType);
+    fetchLivePatterns(false, newType);
   };
 
   useEffect(() => {
@@ -193,7 +211,7 @@ export default function LivePatternsPage() {
         </div>
         <h1 className="text-3xl font-bold mb-2">Live Pattern Feed</h1>
         <p className="text-muted-foreground">
-          Real-time pattern detection across {instrumentsScanned} crypto & forex instruments
+          Real-time pattern detection across {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments
         </p>
       </div>
 
@@ -207,7 +225,19 @@ export default function LivePatternsPage() {
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={assetType} onValueChange={(v) => handleAssetTypeChange(v as AssetType)}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Asset Class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="fx">🌍 Forex</SelectItem>
+              <SelectItem value="crypto">₿ Crypto</SelectItem>
+              <SelectItem value="stocks">📈 Stocks</SelectItem>
+              <SelectItem value="commodities">🛢️ Commodities</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as any)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Direction" />
