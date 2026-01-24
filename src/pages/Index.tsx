@@ -13,7 +13,7 @@ import { track } from '@/services/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
-import LivePatternPreview from '@/components/landing/LivePatternPreview';
+import PatternScreenerTable from '@/components/landing/PatternScreenerTable';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -188,8 +188,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Live Pattern Preview - Instant Gratification */}
-      <LivePatternPreview />
+      {/* Pattern Screener Table - TradingView-style */}
+      <PatternScreenerTable />
 
       {/* Choose Your Action Section */}
       <section className="py-16 px-6 bg-muted/30">
