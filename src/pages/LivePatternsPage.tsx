@@ -93,6 +93,18 @@ export default function LivePatternsPage() {
     fetchLivePatterns();
   }, []);
 
+  // Auto-open chart when highlight param is present and matching pattern is found
+  useEffect(() => {
+    if (highlightSymbol && patterns.length > 0 && !chartOpen) {
+      const matchingSetup = patterns.find(p => 
+        p.instrument === highlightSymbol || p.instrument.includes(highlightSymbol)
+      );
+      if (matchingSetup) {
+        handleOpenChart(matchingSetup);
+      }
+    }
+  }, [highlightSymbol, patterns]);
+
   // Get unique pattern types for filter
   const uniquePatterns = [...new Set(patterns.map(p => p.patternId))];
 
