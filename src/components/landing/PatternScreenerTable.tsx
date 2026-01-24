@@ -77,6 +77,67 @@ function cleanInstrumentName(instrument: string): string {
   return instrument.replace('-USD', '').replace('=X', '').replace('/USD', '').replace('=F', '');
 }
 
+// Full names for commodities and other assets
+const INSTRUMENT_FULL_NAMES: Record<string, string> = {
+  // Commodities - Metals
+  'GC': 'Gold',
+  'SI': 'Silver',
+  'HG': 'Copper',
+  'PL': 'Platinum',
+  'PA': 'Palladium',
+  // Commodities - Energy
+  'CL': 'Crude Oil (WTI)',
+  'NG': 'Natural Gas',
+  'RB': 'Gasoline',
+  'HO': 'Heating Oil',
+  // Commodities - Agriculture
+  'ZC': 'Corn',
+  'ZW': 'Wheat',
+  'ZS': 'Soybeans',
+  'KC': 'Coffee',
+  'SB': 'Sugar',
+  'CC': 'Cocoa',
+  'CT': 'Cotton',
+  'ZO': 'Oats',
+  'ZR': 'Rice',
+  'ZL': 'Soybean Oil',
+  // Commodities - Livestock
+  'LE': 'Live Cattle',
+  'HE': 'Lean Hogs',
+  'GF': 'Feeder Cattle',
+  // Crypto (popular ones)
+  'BTC': 'Bitcoin',
+  'ETH': 'Ethereum',
+  'SOL': 'Solana',
+  'BNB': 'Binance Coin',
+  'XRP': 'Ripple',
+  'ADA': 'Cardano',
+  'AVAX': 'Avalanche',
+  'DOGE': 'Dogecoin',
+  'LINK': 'Chainlink',
+  'MATIC': 'Polygon',
+  'DOT': 'Polkadot',
+  'SHIB': 'Shiba Inu',
+  'LTC': 'Litecoin',
+  'UNI': 'Uniswap',
+  'ATOM': 'Cosmos',
+  'XLM': 'Stellar',
+  'NEAR': 'NEAR Protocol',
+  'APT': 'Aptos',
+  'ARB': 'Arbitrum',
+  'OP': 'Optimism',
+  'FIL': 'Filecoin',
+  'INJ': 'Injective',
+  'AAVE': 'Aave',
+  'MKR': 'Maker',
+  'SAND': 'The Sandbox',
+};
+
+function getInstrumentFullName(instrument: string): string | null {
+  const ticker = cleanInstrumentName(instrument);
+  return INSTRUMENT_FULL_NAMES[ticker] || null;
+}
+
 
 export default function PatternScreenerTable() {
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
@@ -350,9 +411,16 @@ export default function PatternScreenerTable() {
                                 <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                                   {cleanInstrumentName(setup.instrument).slice(0, 2)}
                                 </div>
-                                <span className="font-semibold text-foreground">
-                                  {cleanInstrumentName(setup.instrument)}
-                                </span>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-foreground">
+                                    {cleanInstrumentName(setup.instrument)}
+                                  </span>
+                                  {getInstrumentFullName(setup.instrument) && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {getInstrumentFullName(setup.instrument)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
