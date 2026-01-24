@@ -4,8 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown, Clock
+  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -62,6 +68,30 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   crypto: 'Crypto',
   stocks: 'Stocks',
   commodities: 'Commodities',
+};
+
+// Universe coverage - what instruments are scanned per asset type
+const UNIVERSE_INFO: Record<AssetType, { count: number; description: string; examples: string }> = {
+  fx: {
+    count: 25,
+    description: '25 major & cross currency pairs',
+    examples: 'EUR/USD, GBP/USD, USD/JPY, EUR/GBP, AUD/JPY, and 20 more',
+  },
+  crypto: {
+    count: 25,
+    description: '25 top cryptocurrencies by market cap',
+    examples: 'BTC, ETH, SOL, BNB, XRP, ADA, DOGE, AVAX, LINK, and 16 more',
+  },
+  stocks: {
+    count: 25,
+    description: '25 major US equities',
+    examples: 'AAPL, MSFT, GOOGL, AMZN, META, TSLA, NVDA, JPM, and 17 more',
+  },
+  commodities: {
+    count: 20,
+    description: '20 futures contracts (metals, energy, agriculture)',
+    examples: 'Gold, Silver, Crude Oil, Natural Gas, Corn, Wheat, and 14 more',
+  },
 };
 
 
@@ -287,10 +317,25 @@ export default function PatternScreenerTable() {
                 {lastScanned ? `Updated ${new Date(lastScanned).toLocaleTimeString()}` : 'Just now'}
               </span>
             </div>
-            <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p className="font-medium mb-1">{UNIVERSE_INFO[assetType].description}</p>
+                    <p className="text-xs text-muted-foreground">{UNIVERSE_INFO[assetType].examples}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {!marketOpen && assetType !== 'crypto' 
-                ? 'Showing patterns from last trading session (Friday close)'
+              Scanning {UNIVERSE_INFO[assetType].count} instruments • {!marketOpen && assetType !== 'crypto' 
+                ? 'Patterns from last trading session'
                 : 'Click any row to view the full chart'}
             </p>
           </div>
