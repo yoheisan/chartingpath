@@ -54,9 +54,28 @@ interface ScanResult {
   instrumentsScanned: number;
 }
 
+// Helper to detect asset type from instrument symbol
+function detectAssetTypeFromSymbol(symbol: string): AssetType | null {
+  // Commodities end with =F
+  if (symbol.endsWith('=F')) return 'commodities';
+  // Forex ends with =X
+  if (symbol.endsWith('=X')) return 'fx';
+  // Crypto contains -USD
+  if (symbol.includes('-USD')) return 'crypto';
+  // Stocks are plain symbols (AAPL, MSFT, etc.) - harder to detect definitively
+  // We'll check against known stock tickers
+  const knownStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
+    'WMT', 'PG', 'UNH', 'HD', 'BAC', 'MA', 'DIS', 'NFLX', 'ADBE', 'CRM', 'PFE', 'KO', 'PEP', 'MRK', 'CSCO'];
+  if (knownStocks.includes(symbol)) return 'stocks';
+  return null;
+}
+
 export default function LivePatternsPage() {
   const [searchParams] = useSearchParams();
   const highlightSymbol = searchParams.get('highlight');
+  
+  // Detect initial asset type from highlight symbol if present
+  const initialAssetType = highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx';
   
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,8 +84,8 @@ export default function LivePatternsPage() {
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [instrumentsScanned, setInstrumentsScanned] = useState(0);
   
-  // Filters
-  const [assetType, setAssetType] = useState<AssetType>('fx');
+  // Filters - use detected type from highlight or default to 'fx'
+  const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [patternFilter, setPatternFilter] = useState<string>('all');
   
