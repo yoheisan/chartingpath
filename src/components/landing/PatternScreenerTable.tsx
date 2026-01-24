@@ -581,37 +581,32 @@ export default function PatternScreenerTable() {
                                 const logoUrl = meta ? getLogoUrl(ticker, meta.category) : null;
                                 
                                 return (
-                                  <div className="flex items-center gap-3">
-                                    {/* Logo / Avatar */}
-                                    <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                                      {logoUrl ? (
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {/* Logo (small, next to ticker) */}
+                                    {logoUrl && (
+                                      <div className="w-5 h-5 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                                         <img 
                                           src={logoUrl} 
                                           alt={ticker}
-                                          className="w-6 h-6 object-contain"
+                                          className="w-4 h-4 object-contain"
                                           onError={(e) => {
-                                            // Fallback to initials on error
-                                            e.currentTarget.style.display = 'none';
-                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                            (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
                                           }}
                                         />
-                                      ) : null}
-                                      <span className={`text-xs font-bold text-primary ${logoUrl ? 'hidden' : ''}`}>
-                                        {ticker.slice(0, 2)}
-                                      </span>
-                                    </div>
+                                      </div>
+                                    )}
                                     
-                                    {/* Ticker Badge + Full Name */}
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <Badge variant="secondary" className="font-mono font-semibold text-xs px-1.5 py-0.5 shrink-0">
-                                        {ticker}
-                                      </Badge>
-                                      {meta?.name && (
-                                        <span className="text-sm text-muted-foreground truncate">
-                                          {meta.name}
-                                        </span>
-                                      )}
-                                    </div>
+                                    {/* Ticker Badge */}
+                                    <Badge variant="secondary" className="font-mono font-semibold text-xs px-1.5 py-0.5 shrink-0">
+                                      {ticker}
+                                    </Badge>
+                                    
+                                    {/* Full Name */}
+                                    {meta?.name && (
+                                      <span className="text-sm text-muted-foreground truncate">
+                                        {meta.name}
+                                      </span>
+                                    )}
                                   </div>
                                 );
                               })()}
