@@ -13,6 +13,7 @@ import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 
 interface LiveSetup {
   instrument: string;
@@ -386,7 +387,7 @@ export default function LivePatternsPage() {
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
                       <div className="text-muted-foreground mb-0.5">Signal</div>
-                      <div className="font-medium">{new Date(setup.signalTs).toLocaleDateString()}</div>
+                      <div className="font-medium">{formatSignalAgeSimple(setup.signalTs)}</div>
                     </div>
                   </div>
                   
