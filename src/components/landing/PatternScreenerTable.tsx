@@ -401,7 +401,7 @@ export default function PatternScreenerTable() {
                       {setups.map((setup, idx) => {
                         const isLong = setup.direction === 'long';
                         const signalAge = formatSignalAgeSimple(setup.signalTs);
-                        const isFresh = signalAge === 'Current bar' || signalAge === '1 bar ago';
+                        const isFresh = signalAge === '1 bar' || signalAge === '2 bars';
                         
                         return (
                           <TableRow 
