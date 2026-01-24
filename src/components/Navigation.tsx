@@ -19,7 +19,8 @@ import {
   GraduationCap,
   Globe,
   HelpCircle,
-  Info
+  Info,
+  Activity
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
@@ -51,8 +52,14 @@ const Navigation = () => {
   // Mobile nav content - outcome-centric structure
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
+      {/* Active Pattern Feed */}
+      <Link to="/patterns/live" className="flex items-center gap-2 text-foreground font-medium py-2">
+        <Activity className="h-5 w-5" />
+        Active Patterns
+      </Link>
+      
       {/* Primary: Projects */}
-      <Link to="/projects" className="flex items-center gap-2 text-foreground font-medium py-2">
+      <Link to="/projects" className="flex items-center gap-2 text-muted-foreground py-2">
         <FolderKanban className="h-5 w-5" />
         Projects
       </Link>
@@ -131,6 +138,12 @@ const Navigation = () => {
                 <DropdownMenuContent className="w-56 bg-popover z-50">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Run Analysis</DropdownMenuLabel>
                   <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/patterns/live" className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-amber-500" />
+                        Active Pattern Feed
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
                         <Search className="h-4 w-4 text-emerald-500" />
