@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown, ExternalLink
+  ChevronUp, ChevronDown, ArrowUpDown
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -23,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getTradingViewUrl } from '@/utils/tradingViewLinks';
 
 interface LiveSetup {
   instrument: string;
@@ -77,13 +77,6 @@ function cleanInstrumentName(instrument: string): string {
   return instrument.replace('-USD', '').replace('=X', '').replace('/USD', '').replace('=F', '');
 }
 
-// Map asset type to TradingView category
-const ASSET_TYPE_TO_TV_CATEGORY: Record<AssetType, 'forex' | 'crypto' | 'stocks' | 'commodities'> = {
-  fx: 'forex',
-  crypto: 'crypto',
-  stocks: 'stocks',
-  commodities: 'commodities',
-};
 
 export default function PatternScreenerTable() {
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
@@ -94,6 +87,7 @@ export default function PatternScreenerTable() {
   const [assetType, setAssetType] = useState<AssetType>('fx');
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
+  const navigate = useNavigate();
 
   const fetchLivePatterns = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -172,14 +166,7 @@ export default function PatternScreenerTable() {
   }, [patterns, sortKey, sortAsc]);
 
   const handleRowClick = (setup: LiveSetup) => {
-    const tvCategory = ASSET_TYPE_TO_TV_CATEGORY[assetType];
-    const url = getTradingViewUrl(setup.instrument, tvCategory, '1d');
-    // Try window.top for iframe, fallback to window
-    try {
-      (window.top || window).open(url, '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`);
   };
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
@@ -330,7 +317,6 @@ export default function PatternScreenerTable() {
                         <SortIcon columnKey="signal" />
                       </div>
                     </TableHead>
-                    <TableHead className="w-8"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -338,7 +324,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={6} className="py-2">
+                        <TableCell colSpan={5} className="py-2">
                           <span className="font-semibold text-sm">{patternName}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -398,11 +384,8 @@ export default function PatternScreenerTable() {
                               <span className={`text-xs ${
                                 isFresh ? 'text-green-500' : 'text-muted-foreground'
                               }`}>
-                                {signalAge}
+                              {signalAge}
                               </span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <ExternalLink className="h-4 w-4 text-muted-foreground" />
                             </TableCell>
                           </TableRow>
                         );
