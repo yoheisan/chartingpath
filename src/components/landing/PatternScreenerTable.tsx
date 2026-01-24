@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown
+  ChevronUp, ChevronDown, ArrowUpDown, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -48,6 +48,8 @@ interface ScanResult {
   scannedAt: string;
   instrumentsScanned: number;
   assetType: string;
+  marketOpen?: boolean;
+  marketStatus?: 'open' | 'closed';
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
@@ -148,6 +150,7 @@ export default function PatternScreenerTable() {
   const [assetType, setAssetType] = useState<AssetType>('fx');
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
+  const [marketOpen, setMarketOpen] = useState<boolean>(true);
   const navigate = useNavigate();
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
@@ -167,8 +170,10 @@ export default function PatternScreenerTable() {
       if (data?.success && data.patterns) {
         setPatterns(data.patterns);
         setLastScanned(data.scannedAt);
+        setMarketOpen(data.marketOpen ?? true);
       } else {
         setPatterns([]);
+        setMarketOpen(data?.marketOpen ?? true);
       }
     } catch (err: any) {
       console.error('[PatternScreenerTable] Error:', err);
@@ -327,9 +332,22 @@ export default function PatternScreenerTable() {
 
         {!error && groupedPatterns.length === 0 && (
           <div className="rounded-lg border bg-card p-8 text-center">
-            <p className="text-muted-foreground mb-4">
-              No patterns detected for {ASSET_TYPE_LABELS[assetType]}. Try another asset type or refresh.
-            </p>
+            {!marketOpen && assetType !== 'crypto' ? (
+              <>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-lg font-medium">Market Closed</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  {ASSET_TYPE_LABELS[assetType]} markets are currently closed (weekend). 
+                  Switch to Crypto for 24/7 markets or check back when markets reopen.
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground mb-4">
+                No patterns detected for {ASSET_TYPE_LABELS[assetType]}. Try another asset type or refresh.
+              </p>
+            )}
             <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
