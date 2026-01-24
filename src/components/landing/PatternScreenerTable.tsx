@@ -54,6 +54,7 @@ interface ScanResult {
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
+type DirectionFilter = 'all' | 'long' | 'short';
 type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
@@ -137,6 +138,7 @@ export default function PatternScreenerTable() {
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<AssetType>('fx');
+  const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
@@ -186,9 +188,14 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Group by pattern, then sort within groups
+  // Filter by direction, then group by pattern, then sort within groups
   const groupedPatterns = useMemo(() => {
-    const grouped = patterns.reduce((acc, setup) => {
+    // Apply direction filter
+    const filtered = directionFilter === 'all' 
+      ? patterns 
+      : patterns.filter(p => p.direction === directionFilter);
+
+    const grouped = filtered.reduce((acc, setup) => {
       const key = setup.patternName;
       if (!acc[key]) acc[key] = [];
       acc[key].push(setup);
@@ -220,7 +227,7 @@ export default function PatternScreenerTable() {
     });
 
     return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [patterns, sortKey, sortAsc]);
+  }, [patterns, directionFilter, sortKey, sortAsc]);
 
   const handleRowClick = (setup: LiveSetup) => {
     navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`);
@@ -288,6 +295,26 @@ export default function PatternScreenerTable() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as DirectionFilter)}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="long">
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                    Long
+                  </span>
+                </SelectItem>
+                <SelectItem value="short">
+                  <span className="flex items-center gap-1">
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                    Short
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={assetType} onValueChange={(v) => setAssetType(v as AssetType)}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue />
