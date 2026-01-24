@@ -582,13 +582,13 @@ export default function PatternScreenerTable() {
                                 
                                 return (
                                   <div className="flex items-center gap-2 min-w-0">
-                                    {/* Logo (small, next to ticker) */}
+                                    {/* Logo with dark background container */}
                                     {logoUrl && (
-                                      <div className="w-5 h-5 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                                      <div className="w-7 h-7 rounded bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50">
                                         <img 
                                           src={logoUrl} 
                                           alt={ticker}
-                                          className="w-4 h-4 object-contain"
+                                          className="w-5 h-5 object-contain"
                                           onError={(e) => {
                                             (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
                                           }}
@@ -597,13 +597,13 @@ export default function PatternScreenerTable() {
                                     )}
                                     
                                     {/* Ticker Badge */}
-                                    <Badge variant="secondary" className="font-mono font-semibold text-xs px-1.5 py-0.5 shrink-0">
+                                    <Badge variant="outline" className="font-mono font-semibold text-xs px-2 py-0.5 shrink-0 bg-muted/50">
                                       {ticker}
                                     </Badge>
                                     
                                     {/* Full Name */}
                                     {meta?.name && (
-                                      <span className="text-sm text-muted-foreground truncate">
+                                      <span className="text-sm text-muted-foreground truncate hidden sm:inline">
                                         {meta.name}
                                       </span>
                                     )}
