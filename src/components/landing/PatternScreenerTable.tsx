@@ -220,27 +220,18 @@ function getInstrumentMeta(instrument: string): InstrumentMeta | null {
 // Generate logo URL based on asset type
 function getLogoUrl(ticker: string, category?: 'crypto' | 'commodity' | 'stock' | 'fx'): string | null {
   if (category === 'crypto') {
-    // Use CoinGecko or similar for crypto logos
-    const cryptoIds: Record<string, string> = {
-      'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
-      'XRP': 'ripple', 'ADA': 'cardano', 'AVAX': 'avalanche-2', 'DOGE': 'dogecoin',
-      'LINK': 'chainlink', 'MATIC': 'matic-network', 'DOT': 'polkadot', 'SHIB': 'shiba-inu',
-      'LTC': 'litecoin', 'UNI': 'uniswap', 'ATOM': 'cosmos', 'XLM': 'stellar',
-      'NEAR': 'near', 'APT': 'aptos', 'ARB': 'arbitrum', 'OP': 'optimism',
-      'FIL': 'filecoin', 'INJ': 'injective-protocol', 'AAVE': 'aave', 'MKR': 'maker', 'SAND': 'the-sandbox',
-    };
-    const id = cryptoIds[ticker];
-    return id ? `https://assets.coingecko.com/coins/images/${id}/thumb/${id}.png` : null;
+    // Use CoinCap for reliable crypto logos
+    return `https://assets.coincap.io/assets/icons/${ticker.toLowerCase()}@2x.png`;
   }
   if (category === 'stock') {
-    // Use logo.clearbit.com for stock logos
+    // Use logo.clearbit.com for stock logos - reliable CDN
     const domains: Record<string, string> = {
       'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com',
       'META': 'meta.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'JPM': 'jpmorganchase.com',
       'V': 'visa.com', 'JNJ': 'jnj.com', 'WMT': 'walmart.com', 'PG': 'pg.com',
       'MA': 'mastercard.com', 'UNH': 'unitedhealthgroup.com', 'HD': 'homedepot.com',
       'DIS': 'disney.com', 'BAC': 'bankofamerica.com', 'XOM': 'exxonmobil.com',
-      'PFE': 'pfizer.com', 'KO': 'coca-cola.com', 'PEP': 'pepsico.com',
+      'PFE': 'pfizer.com', 'KO': 'coca-colacompany.com', 'PEP': 'pepsico.com',
       'CSCO': 'cisco.com', 'NFLX': 'netflix.com', 'INTC': 'intel.com', 'AMD': 'amd.com',
     };
     const domain = domains[ticker];
