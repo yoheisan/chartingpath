@@ -27,6 +27,7 @@ import { SetupGridSkeleton } from './SetupCardSkeleton';
 import { SetupWithVisuals, CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
+import { formatSignalAge } from '@/utils/formatSignalAge';
 
 // Legacy interface support for backward compatibility
 interface LegacySetup {
@@ -115,26 +116,6 @@ const toViewerSetup = (setup: Setup): SetupWithVisuals | null => {
   } as SetupWithVisuals;
 };
 
-// Format signal age for display
-const formatSignalAge = (signalTs: string): { label: string; isFresh: boolean } => {
-  const signalDate = new Date(signalTs);
-  const now = new Date();
-  const diffMs = now.getTime() - signalDate.getTime();
-  const diffHours = diffMs / (1000 * 60 * 60);
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-  if (diffHours < 1) {
-    const mins = Math.floor(diffMs / (1000 * 60));
-    return { label: `${mins}m ago`, isFresh: true };
-  }
-  if (diffHours < 24) {
-    return { label: `${Math.floor(diffHours)}h ago`, isFresh: true };
-  }
-  if (diffDays < 7) {
-    return { label: `${Math.floor(diffDays)}d ago`, isFresh: diffDays < 3 };
-  }
-  return { label: `${Math.floor(diffDays / 7)}w ago`, isFresh: false };
-};
 
 const SetupCard = ({ 
   setup, 

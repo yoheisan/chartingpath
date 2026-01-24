@@ -6,6 +6,7 @@ import {
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
   ChevronUp, ChevronDown, ArrowUpDown, Clock
 } from 'lucide-react';
+import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,18 +63,6 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   commodities: 'Commodities',
 };
 
-function formatSignalAge(signalTs: string): string {
-  const signalDate = new Date(signalTs);
-  const now = new Date();
-  const diffMs = now.getTime() - signalDate.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-  
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return '1d ago';
-  return `${diffDays}d ago`;
-}
 
 function cleanInstrumentName(instrument: string): string {
   return instrument.replace('-USD', '').replace('=X', '').replace('/USD', '').replace('=F', '');
@@ -411,8 +400,8 @@ export default function PatternScreenerTable() {
                       {/* Pattern Rows */}
                       {setups.map((setup, idx) => {
                         const isLong = setup.direction === 'long';
-                        const signalAge = formatSignalAge(setup.signalTs);
-                        const isFresh = signalAge.includes('h') || signalAge === 'Just now';
+                        const signalAge = formatSignalAgeSimple(setup.signalTs);
+                        const isFresh = signalAge === 'Current bar' || signalAge === '1 bar ago';
                         
                         return (
                           <TableRow 
