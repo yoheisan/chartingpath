@@ -240,7 +240,7 @@ export default function PatternScreenerTable() {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-primary border-primary/50">
                   <Zap className="h-3 w-3 mr-1" />
-                  Pattern Screener
+                  Active Pattern Screener
                 </Badge>
               </div>
               <h2 className="text-2xl font-bold">Live Pattern Signals</h2>
@@ -280,7 +280,7 @@ export default function PatternScreenerTable() {
                 {lastScanned ? `Updated ${new Date(lastScanned).toLocaleTimeString()}` : 'Just now'}
               </span>
             </div>
-            <h2 className="text-2xl font-bold">Pattern Screener</h2>
+            <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {!marketOpen && assetType !== 'crypto' 
                 ? 'Showing patterns from last trading session (Friday close)'
