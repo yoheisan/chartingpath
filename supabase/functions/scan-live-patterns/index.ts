@@ -6,12 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Default instruments to scan (Top 10 Crypto + some forex majors)
-const DEFAULT_INSTRUMENTS = [
-  'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD', 
-  'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
-  'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'AUDUSD=X'
-];
+// Instruments by asset type
+const INSTRUMENTS_BY_TYPE: Record<string, string[]> = {
+  fx: [
+    'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'AUDUSD=X', 'USDCAD=X',
+    'NZDUSD=X', 'USDCHF=X', 'EURGBP=X', 'EURJPY=X', 'GBPJPY=X',
+    'AUDJPY=X', 'EURAUD=X', 'EURCHF=X', 'AUDNZD=X', 'CADJPY=X',
+    'NZDJPY=X', 'GBPAUD=X', 'GBPCAD=X', 'AUDCAD=X', 'EURCAD=X',
+    'CHFJPY=X', 'GBPCHF=X', 'EURNZD=X', 'CADCHF=X', 'AUDCHF=X'
+  ],
+  crypto: [
+    'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
+    'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
+    'DOT-USD', 'SHIB-USD', 'LTC-USD', 'UNI-USD', 'ATOM-USD',
+    'XLM-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD',
+    'FIL-USD', 'INJ-USD', 'AAVE-USD', 'MKR-USD', 'SAND-USD'
+  ],
+  stocks: [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
+    'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
+    'WMT', 'PG', 'UNH', 'HD', 'BAC',
+    'MA', 'DIS', 'NFLX', 'ADBE', 'CRM',
+    'PFE', 'KO', 'PEP', 'MRK', 'CSCO'
+  ],
+  commodities: [
+    'GC=F', 'SI=F', 'CL=F', 'NG=F', 'HG=F',
+    'PL=F', 'PA=F', 'ZC=F', 'ZW=F', 'ZS=F',
+    'KC=F', 'SB=F', 'CC=F', 'CT=F', 'LE=F',
+    'HE=F', 'GF=F', 'ZO=F', 'ZR=F', 'ZL=F'
+  ]
+};
+
+const DEFAULT_ASSET_TYPE = 'fx';
 
 // All patterns to scan
 const ALL_PATTERNS = [
@@ -313,10 +339,13 @@ serve(async (req) => {
   
   try {
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const limit = parseInt(url.searchParams.get('limit') || '30');
     const timeframe = url.searchParams.get('timeframe') || '1d';
+    const assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
     
-    console.log('[scan-live-patterns] Starting scan, limit:', limit, 'timeframe:', timeframe);
+    const instruments = INSTRUMENTS_BY_TYPE[assetType] || INSTRUMENTS_BY_TYPE[DEFAULT_ASSET_TYPE];
+    
+    console.log('[scan-live-patterns] Starting scan, limit:', limit, 'timeframe:', timeframe, 'assetType:', assetType);
     
     const endDate = new Date();
     const startDate = new Date();
@@ -324,7 +353,7 @@ serve(async (req) => {
     
     const setups: any[] = [];
     
-    for (const instrument of DEFAULT_INSTRUMENTS) {
+    for (const instrument of instruments) {
       if (setups.length >= limit) break;
       
       const bars = await fetchYahooData(
@@ -439,7 +468,8 @@ serve(async (req) => {
       success: true,
       patterns: setups,
       scannedAt: new Date().toISOString(),
-      instrumentsScanned: DEFAULT_INSTRUMENTS.length,
+      instrumentsScanned: instruments.length,
+      assetType,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
