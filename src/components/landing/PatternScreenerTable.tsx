@@ -89,14 +89,16 @@ export default function PatternScreenerTable() {
   const [sortAsc, setSortAsc] = useState(false);
   const navigate = useNavigate();
 
-  const fetchLivePatterns = async (isRefresh = false) => {
+  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     
+    const typeToFetch = selectedAssetType ?? assetType;
+    
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { assetType, limit: 30 },
+        body: { assetType: typeToFetch, limit: 30 },
       });
       
       if (fnError) throw fnError;
@@ -117,7 +119,7 @@ export default function PatternScreenerTable() {
   };
 
   useEffect(() => {
-    fetchLivePatterns();
+    fetchLivePatterns(false, assetType);
   }, [assetType]);
 
   const handleSort = (key: SortKey) => {
