@@ -2,20 +2,9 @@
 // (PKCE stores a code_verifier in localStorage, which is origin-scoped).
 
 export function getCanonicalAppOrigin(): string {
-  const host = window.location.hostname;
-
-  // Already on the canonical preview domain.
-  if (host.endsWith(".lovableproject.com")) return window.location.origin;
-
-  // Lovable editor preview iframe domain.
-  // Example: id-preview--<project_uuid>.lovable.app
-  const match = host.match(/^id-preview--([0-9a-f-]{36})\.lovable\.app$/i);
-  if (match) {
-    const projectId = match[1];
-    return `https://${projectId}.lovableproject.com`;
-  }
-
-  // Custom domains / production.
+  // In development/preview, just use the current origin.
+  // This prevents redirect loops when .lovableproject.com is not available.
+  // The canonical redirect feature should only be used in production with a verified custom domain.
   return window.location.origin;
 }
 
