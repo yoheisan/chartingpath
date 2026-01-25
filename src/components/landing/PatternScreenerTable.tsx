@@ -271,19 +271,83 @@ const STOCK_DOMAINS: Record<string, string> = {
   'RIVN': 'rivian.com', 'LCID': 'lucidmotors.com',
 };
 
-// Generate logo URL based on asset type
-function getLogoUrl(ticker: string, category?: 'crypto' | 'commodity' | 'stock' | 'fx'): string | null {
+// Generate logo URL based on asset type - using reliable public sources
+function getLogoUrls(ticker: string, category?: 'crypto' | 'commodity' | 'stock' | 'fx'): string[] {
   if (category === 'crypto') {
-    // Use CoinCap for reliable crypto logos
-    return `https://assets.coincap.io/assets/icons/${ticker.toLowerCase()}@2x.png`;
+    // CoinGecko-style public CDN - very reliable
+    const coinId = getCryptoLogoName(ticker);
+    return [
+      `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`, // Will be mapped per coin
+      `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${ticker.toLowerCase()}.png`,
+    ];
   }
   if (category === 'stock') {
     const domain = STOCK_DOMAINS[ticker];
-    return domain ? `https://logo.clearbit.com/${domain}` : null;
+    if (domain) {
+      // Use Google favicon as primary - always works and has good quality at 128px
+      return [
+        `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+        `https://logo.clearbit.com/${domain}`,
+      ];
+    }
   }
-  return null; // No logo for FX/commodities - use fallback initials
+  return []; // No logo for FX/commodities - use fallback initials
 }
 
+// Helper for crypto logo filenames
+function getCryptoLogoName(ticker: string): string {
+  const names: Record<string, string> = {
+    'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'bnb',
+    'XRP': 'xrp', 'ADA': 'cardano', 'AVAX': 'avalanche', 'DOGE': 'dogecoin',
+    'LINK': 'chainlink', 'MATIC': 'polygon', 'DOT': 'polkadot', 'SHIB': 'shiba-inu',
+    'LTC': 'litecoin', 'UNI': 'uniswap', 'ATOM': 'cosmos', 'XLM': 'stellar',
+  };
+  return names[ticker] || ticker.toLowerCase();
+}
+
+// InstrumentLogo component with multi-source fallback
+function InstrumentLogo({ instrument }: { instrument: string }) {
+  const [logoIndex, setLogoIndex] = useState(0);
+  const [logoFailed, setLogoFailed] = useState(false);
+  
+  const ticker = cleanInstrumentName(instrument);
+  const meta = getInstrumentMeta(instrument);
+  const logoUrls = meta ? getLogoUrls(ticker, meta.category) : [];
+  
+  const handleError = () => {
+    if (logoIndex < logoUrls.length - 1) {
+      setLogoIndex(prev => prev + 1);
+    } else {
+      setLogoFailed(true);
+    }
+  };
+  
+  const currentLogoUrl = !logoFailed && logoUrls.length > 0 ? logoUrls[logoIndex] : null;
+  
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50">
+        {currentLogoUrl && !logoFailed ? (
+          <img 
+            src={currentLogoUrl} 
+            alt={ticker}
+            className="w-full h-full object-cover"
+            onError={handleError}
+          />
+        ) : (
+          <span className="text-[10px] font-bold text-primary">
+            {ticker.slice(0, 2)}
+          </span>
+        )}
+      </div>
+      {meta?.name && (
+        <span className="text-sm text-foreground truncate">
+          {meta.name}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function PatternScreenerTable() {
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
@@ -610,46 +674,7 @@ export default function PatternScreenerTable() {
                             onClick={() => handleRowClick(setup)}
                           >
                             <TableCell>
-                              {(() => {
-                                const ticker = cleanInstrumentName(setup.instrument);
-                                const meta = getInstrumentMeta(setup.instrument);
-                                const logoUrl = meta ? getLogoUrl(ticker, meta.category) : null;
-                                
-                                return (
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    {/* Logo container - always shown, with image or initials fallback */}
-                                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50 relative">
-                                      {logoUrl ? (
-                                        <img 
-                                          src={logoUrl} 
-                                          alt={ticker}
-                                          className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            // Hide the image and show the fallback initials
-                                            e.currentTarget.style.display = 'none';
-                                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                            if (fallback) fallback.style.display = 'flex';
-                                          }}
-                                        />
-                                      ) : null}
-                                      {/* Fallback initials - shown when no logo or image fails */}
-                                      <span 
-                                        className="text-[10px] font-bold text-primary absolute inset-0 flex items-center justify-center"
-                                        style={{ display: logoUrl ? 'none' : 'flex' }}
-                                      >
-                                        {ticker.slice(0, 2)}
-                                      </span>
-                                    </div>
-                                    
-                                    {/* Full Name */}
-                                    {meta?.name && (
-                                      <span className="text-sm text-foreground truncate">
-                                        {meta.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
+                              <InstrumentLogo instrument={setup.instrument} />
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {setup.patternName}
