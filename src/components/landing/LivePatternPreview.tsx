@@ -165,6 +165,7 @@ export default function LivePatternPreview() {
                     bars={setup.bars}
                     visualSpec={setup.visualSpec}
                     height={112}
+                    instrument={setup.instrument}
                   />
                 </div>
                 <CardContent className="p-3">

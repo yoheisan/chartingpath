@@ -2,6 +2,7 @@ import { useEffect, useRef, memo } from 'react';
 import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { CompactQualityScore } from './PatternQualityBadge';
+import { InstrumentLogo } from './InstrumentLogo';
 
 interface ThumbnailChartProps {
   bars: CompressedBar[];
@@ -9,9 +10,10 @@ interface ThumbnailChartProps {
   quality?: PatternQuality;
   height?: number;
   onClick?: () => void;
+  instrument?: string;
 }
 
-const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick }: ThumbnailChartProps) => {
+const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick, instrument }: ThumbnailChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -202,6 +204,12 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick 
       {quality && typeof quality.score === 'number' && (
         <div className="absolute top-2 right-2 z-20 pointer-events-none">
           <CompactQualityScore score={quality.score} />
+        </div>
+      )}
+
+      {instrument && (
+        <div className="absolute top-2 left-2 z-20 pointer-events-none">
+          <InstrumentLogo instrument={instrument} size="sm" />
         </div>
       )}
     </div>
