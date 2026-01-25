@@ -217,6 +217,60 @@ function getInstrumentMeta(instrument: string): InstrumentMeta | null {
   return INSTRUMENT_METADATA[ticker] || null;
 }
 
+// Comprehensive stock domain mapping for Clearbit logos
+const STOCK_DOMAINS: Record<string, string> = {
+  // Tech Giants
+  'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'GOOG': 'google.com',
+  'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com',
+  'NFLX': 'netflix.com', 'AMD': 'amd.com', 'INTC': 'intel.com', 'CSCO': 'cisco.com',
+  'ORCL': 'oracle.com', 'IBM': 'ibm.com', 'ADBE': 'adobe.com', 'CRM': 'salesforce.com',
+  'AVGO': 'broadcom.com', 'QCOM': 'qualcomm.com', 'TXN': 'ti.com', 'NOW': 'servicenow.com',
+  'INTU': 'intuit.com', 'PYPL': 'paypal.com', 'SQ': 'squareup.com', 'SHOP': 'shopify.com',
+  'UBER': 'uber.com', 'LYFT': 'lyft.com', 'ABNB': 'airbnb.com', 'SPOT': 'spotify.com',
+  'SNAP': 'snap.com', 'PINS': 'pinterest.com', 'TWTR': 'twitter.com', 'ZM': 'zoom.us',
+  'DOCU': 'docusign.com', 'OKTA': 'okta.com', 'CRWD': 'crowdstrike.com', 'NET': 'cloudflare.com',
+  'SNOW': 'snowflake.com', 'PLTR': 'palantir.com', 'COIN': 'coinbase.com', 'RBLX': 'roblox.com',
+  'MU': 'micron.com', 'AMAT': 'appliedmaterials.com', 'LRCX': 'lamresearch.com', 'KLAC': 'kla.com',
+  'MRVL': 'marvell.com', 'TEAM': 'atlassian.com', 'WDAY': 'workday.com', 'SPLK': 'splunk.com',
+  'DDOG': 'datadoghq.com', 'MDB': 'mongodb.com', 'ZS': 'zscaler.com', 'PANW': 'paloaltonetworks.com',
+  // Financial
+  'JPM': 'jpmorganchase.com', 'BAC': 'bankofamerica.com', 'WFC': 'wellsfargo.com',
+  'GS': 'goldmansachs.com', 'MS': 'morganstanley.com', 'C': 'citigroup.com',
+  'V': 'visa.com', 'MA': 'mastercard.com', 'AXP': 'americanexpress.com',
+  'BLK': 'blackrock.com', 'SCHW': 'schwab.com', 'USB': 'usbank.com',
+  'PNC': 'pnc.com', 'TFC': 'truist.com', 'COF': 'capitalone.com',
+  // Healthcare
+  'JNJ': 'jnj.com', 'UNH': 'unitedhealthgroup.com', 'PFE': 'pfizer.com',
+  'ABBV': 'abbvie.com', 'MRK': 'merck.com', 'LLY': 'lilly.com',
+  'BMY': 'bms.com', 'AMGN': 'amgen.com', 'GILD': 'gilead.com',
+  'TMO': 'thermofisher.com', 'ABT': 'abbott.com', 'DHR': 'danaher.com',
+  'CVS': 'cvs.com', 'CI': 'cigna.com', 'HUM': 'humana.com',
+  'ISRG': 'intuitive.com', 'REGN': 'regeneron.com', 'VRTX': 'vrtx.com',
+  'MRNA': 'modernatx.com', 'BIIB': 'biogen.com',
+  // Consumer
+  'WMT': 'walmart.com', 'HD': 'homedepot.com', 'COST': 'costco.com',
+  'TGT': 'target.com', 'LOW': 'lowes.com', 'DIS': 'disney.com',
+  'NKE': 'nike.com', 'SBUX': 'starbucks.com', 'MCD': 'mcdonalds.com',
+  'KO': 'coca-colacompany.com', 'PEP': 'pepsico.com', 'PG': 'pg.com',
+  'PM': 'pmi.com', 'MO': 'altria.com', 'KHC': 'kraftheinzcompany.com',
+  'MDLZ': 'mondelezinternational.com', 'CL': 'colgatepalmolive.com', 'EL': 'esteelauder.com',
+  // Energy
+  'XOM': 'exxonmobil.com', 'CVX': 'chevron.com', 'COP': 'conocophillips.com',
+  'SLB': 'slb.com', 'EOG': 'eogresources.com', 'PXD': 'pxd.com',
+  'OXY': 'oxy.com', 'VLO': 'valero.com', 'PSX': 'phillips66.com',
+  // Industrial
+  'BA': 'boeing.com', 'CAT': 'cat.com', 'HON': 'honeywell.com',
+  'UPS': 'ups.com', 'FDX': 'fedex.com', 'UNP': 'up.com',
+  'RTX': 'rtx.com', 'LMT': 'lockheedmartin.com', 'GE': 'ge.com',
+  'MMM': '3m.com', 'DE': 'deere.com', 'EMR': 'emerson.com',
+  // Telecom & Media
+  'T': 'att.com', 'VZ': 'verizon.com', 'TMUS': 't-mobile.com',
+  'CMCSA': 'comcast.com', 'CHTR': 'charter.com', 'WBD': 'wbd.com',
+  // Auto
+  'F': 'ford.com', 'GM': 'gm.com', 'TM': 'toyota.com', 'HMC': 'honda.com',
+  'RIVN': 'rivian.com', 'LCID': 'lucidmotors.com',
+};
+
 // Generate logo URL based on asset type
 function getLogoUrl(ticker: string, category?: 'crypto' | 'commodity' | 'stock' | 'fx'): string | null {
   if (category === 'crypto') {
@@ -224,17 +278,7 @@ function getLogoUrl(ticker: string, category?: 'crypto' | 'commodity' | 'stock' 
     return `https://assets.coincap.io/assets/icons/${ticker.toLowerCase()}@2x.png`;
   }
   if (category === 'stock') {
-    // Use logo.clearbit.com for stock logos - reliable CDN
-    const domains: Record<string, string> = {
-      'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com',
-      'META': 'meta.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'JPM': 'jpmorganchase.com',
-      'V': 'visa.com', 'JNJ': 'jnj.com', 'WMT': 'walmart.com', 'PG': 'pg.com',
-      'MA': 'mastercard.com', 'UNH': 'unitedhealthgroup.com', 'HD': 'homedepot.com',
-      'DIS': 'disney.com', 'BAC': 'bankofamerica.com', 'XOM': 'exxonmobil.com',
-      'PFE': 'pfizer.com', 'KO': 'coca-colacompany.com', 'PEP': 'pepsico.com',
-      'CSCO': 'cisco.com', 'NFLX': 'netflix.com', 'INTC': 'intel.com', 'AMD': 'amd.com',
-    };
-    const domain = domains[ticker];
+    const domain = STOCK_DOMAINS[ticker];
     return domain ? `https://logo.clearbit.com/${domain}` : null;
   }
   return null; // No logo for FX/commodities - use fallback initials
