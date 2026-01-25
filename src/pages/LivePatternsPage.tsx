@@ -343,6 +343,7 @@ export default function LivePatternsPage() {
                     bars={setup.bars}
                     visualSpec={setup.visualSpec}
                     height={160}
+                    instrument={setup.instrument}
                   />
                   {isHighlighted && (
                     <Badge className="absolute top-2 right-2 bg-primary">

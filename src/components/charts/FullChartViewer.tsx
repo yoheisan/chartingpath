@@ -34,6 +34,7 @@ import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
 import { toast } from 'sonner';
+import { InstrumentLogo } from './InstrumentLogo';
 
 interface FullChartViewerProps {
   open: boolean;
@@ -390,6 +391,7 @@ export default function FullChartViewer({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <InstrumentLogo instrument={instrument} size="lg" />
               <div className={`p-2 rounded-lg ${isLong ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                 {isLong ? (
                   <TrendingUp className="h-5 w-5 text-green-500" />
