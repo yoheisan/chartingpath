@@ -617,28 +617,33 @@ export default function PatternScreenerTable() {
                                 
                                 return (
                                   <div className="flex items-center gap-2 min-w-0">
-                                    {/* Logo with dark background container */}
-                                    {logoUrl && (
-                                      <div className="w-7 h-7 rounded bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50">
+                                    {/* Logo container - always shown, with image or initials fallback */}
+                                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50 relative">
+                                      {logoUrl ? (
                                         <img 
                                           src={logoUrl} 
                                           alt={ticker}
-                                          className="w-5 h-5 object-contain"
+                                          className="w-full h-full object-cover"
                                           onError={(e) => {
-                                            (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
+                                            // Hide the image and show the fallback initials
+                                            e.currentTarget.style.display = 'none';
+                                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'flex';
                                           }}
                                         />
-                                      </div>
-                                    )}
-                                    
-                                    {/* Ticker Badge */}
-                                    <Badge variant="outline" className="font-mono font-semibold text-xs px-2 py-0.5 shrink-0 bg-muted/50">
-                                      {ticker}
-                                    </Badge>
+                                      ) : null}
+                                      {/* Fallback initials - shown when no logo or image fails */}
+                                      <span 
+                                        className="text-[10px] font-bold text-primary absolute inset-0 flex items-center justify-center"
+                                        style={{ display: logoUrl ? 'none' : 'flex' }}
+                                      >
+                                        {ticker.slice(0, 2)}
+                                      </span>
+                                    </div>
                                     
                                     {/* Full Name */}
                                     {meta?.name && (
-                                      <span className="text-sm text-muted-foreground truncate hidden sm:inline">
+                                      <span className="text-sm text-foreground truncate">
                                         {meta.name}
                                       </span>
                                     )}
