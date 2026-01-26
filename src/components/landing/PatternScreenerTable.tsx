@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { withTimeout } from '@/utils/withTimeout';
 
 interface LiveSetup {
   instrument: string;
@@ -445,14 +446,25 @@ export default function PatternScreenerTable() {
     setError(null);
     
     try {
-      const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { 
-          assetType: typeToFetch, 
-          limit: 50,
-          maxTickers: caps.maxTickersPerClass,
-          allowedPatterns: caps.allowedPatterns
-        },
+      console.info('[PatternScreenerTable] Fetching patterns', {
+        assetType: typeToFetch,
+        maxTickers: caps.maxTickersPerClass,
+        allowedPatterns: caps.allowedPatterns?.length,
+        isRefresh,
       });
+
+      const { data, error: fnError } = await withTimeout(
+        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+          body: {
+            assetType: typeToFetch,
+            limit: 50,
+            maxTickers: caps.maxTickersPerClass,
+            allowedPatterns: caps.allowedPatterns,
+          },
+        }),
+        12_000,
+        'scan-live-patterns',
+      );
       
       if (fnError) throw fnError;
       
@@ -477,7 +489,10 @@ export default function PatternScreenerTable() {
       console.error('[PatternScreenerTable] Error:', err);
       // Only show error if no cached data
       if (!cachedResult) {
-        setError('Failed to load patterns');
+        const msg = err?.message?.includes('timed out')
+          ? 'Request timed out. Please check your connection and try again.'
+          : 'Failed to load patterns';
+        setError(msg);
       }
     } finally {
       setLoading(false);
