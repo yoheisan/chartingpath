@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
-  Filter, Clock, BarChart3, Target, Shield
+  Filter, Clock, BarChart3, Target, Shield, Lock, Crown
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
+import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 
 interface LiveSetup {
   instrument: string;
@@ -97,6 +98,9 @@ export default function LivePatternsPage() {
   // Full chart viewer state
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
+  
+  // Get tier-based screener caps
+  const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
@@ -107,7 +111,12 @@ export default function LivePatternsPage() {
     
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { assetType: typeToFetch, limit: 30 },
+        body: { 
+          assetType: typeToFetch, 
+          limit: 50,
+          maxTickers: caps.maxTickersPerClass,
+          allowedPatterns: caps.allowedPatterns
+        },
       });
       
       if (fnError) throw fnError;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info
+  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info, Lock, Crown
 } from 'lucide-react';
 import {
   Tooltip,
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 
 interface LiveSetup {
   instrument: string;
@@ -412,6 +413,9 @@ export default function PatternScreenerTable() {
   const [sortAsc, setSortAsc] = useState(false);
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
   const navigate = useNavigate();
+  
+  // Get tier-based screener caps
+  const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
@@ -422,7 +426,12 @@ export default function PatternScreenerTable() {
     
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { assetType: typeToFetch, limit: 30 },
+        body: { 
+          assetType: typeToFetch, 
+          limit: 50,
+          maxTickers: caps.maxTickersPerClass,
+          allowedPatterns: caps.allowedPatterns
+        },
       });
       
       if (fnError) throw fnError;
