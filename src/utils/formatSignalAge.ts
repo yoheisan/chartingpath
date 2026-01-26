@@ -1,15 +1,17 @@
 /**
- * Format signal age for daily timeframe data.
- * Shows "Today", "1d", "2d", etc. since daily bar timestamps are at midnight,
- * not when the pattern actually formed (market close).
+ * Format signal age based on timeframe.
  * 
- * This avoids misleading "0m" or "5m" displays for daily data.
+ * For daily data: Shows calendar days elapsed (0d, 1d, 2d...) including weekends.
+ * For intraday: Shows wall-clock time (5m, 2h...).
+ * 
+ * This avoids misleading minute-level precision for daily data while still
+ * counting all calendar time (weekends included) since pattern formation.
  */
 export function formatSignalAge(signalTs: string, timeframe: string = '1d'): { label: string; isFresh: boolean } {
   const signalDate = new Date(signalTs);
   const now = new Date();
   
-  // For daily timeframe, calculate in trading days, not minutes
+  // For daily timeframe, calculate in calendar days (weekends count)
   if (timeframe === '1d' || timeframe === 'D' || timeframe === 'daily') {
     // Get just the date parts (ignore time)
     const signalDay = new Date(signalDate.getFullYear(), signalDate.getMonth(), signalDate.getDate());
@@ -18,12 +20,7 @@ export function formatSignalAge(signalTs: string, timeframe: string = '1d'): { l
     const diffMs = today.getTime() - signalDay.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) {
-      return { label: 'Today', isFresh: true };
-    }
-    if (diffDays === 1) {
-      return { label: '1d', isFresh: true };
-    }
+    // Show consistent "Xd" format - 0d means formed on today's bar
     if (diffDays < 7) {
       return { label: `${diffDays}d`, isFresh: diffDays <= 2 };
     }
