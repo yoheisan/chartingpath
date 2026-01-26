@@ -34,7 +34,7 @@ serve(async (req) => {
       .eq('status', 'scheduled')
       .gte('scheduled_time', now.toISOString())
       .lte('scheduled_time', threeMinutesLater.toISOString())
-      .or('content.is.null,content.eq.');
+      .or('content.is.null,content.eq.""');
 
     if (fetchError) {
       console.error('Error fetching upcoming posts:', fetchError);
