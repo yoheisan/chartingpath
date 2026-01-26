@@ -36,6 +36,10 @@ interface LiveSetup {
   };
   bars: CompressedBar[];
   visualSpec: VisualSpec;
+  // Price data
+  currentPrice?: number;
+  prevClose?: number;
+  changePercent?: number | null;
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';

@@ -47,6 +47,10 @@ interface LiveSetup {
   };
   bars: any[];
   visualSpec: any;
+  // Price data
+  currentPrice?: number;
+  prevClose?: number;
+  changePercent?: number | null;
 }
 
 interface ScanResult {
@@ -672,6 +676,12 @@ export default function PatternScreenerTable() {
                         <SortIcon columnKey="direction" />
                       </div>
                     </TableHead>
+                    <TableHead className="text-right whitespace-nowrap">
+                      Price
+                    </TableHead>
+                    <TableHead className="text-right whitespace-nowrap">
+                      Chg %
+                    </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
                       onClick={() => handleSort('rr')}
@@ -680,9 +690,6 @@ export default function PatternScreenerTable() {
                         R:R
                         <SortIcon columnKey="rr" />
                       </div>
-                    </TableHead>
-                    <TableHead className="text-center whitespace-nowrap">
-                      TF
                     </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
@@ -700,7 +707,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={6} className="py-2">
+                        <TableCell colSpan={7} className="py-2">
                           <span className="font-semibold text-sm">{patternName}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -744,16 +751,32 @@ export default function PatternScreenerTable() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
+                              <span className="font-mono text-sm">
+                                {setup.currentPrice != null 
+                                  ? setup.currentPrice.toLocaleString(undefined, { 
+                                      minimumFractionDigits: setup.currentPrice < 10 ? 4 : 2,
+                                      maximumFractionDigits: setup.currentPrice < 10 ? 4 : 2
+                                    })
+                                  : '-'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {setup.changePercent != null ? (
+                                <span className={`font-mono text-sm font-medium ${
+                                  setup.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                                }`}>
+                                  {setup.changePercent >= 0 ? '+' : ''}{setup.changePercent.toFixed(2)}%
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
                               <span className={`font-semibold ${
                                 setup.tradePlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
                               }`}>
                                 {setup.tradePlan.rr.toFixed(1)}
                               </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className="text-xs font-mono">
-                                D
-                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`text-xs ${

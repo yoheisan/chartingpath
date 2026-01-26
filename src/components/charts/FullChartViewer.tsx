@@ -316,7 +316,7 @@ export default function FullChartViewer({
 
   if (!setup) return null;
 
-  const { tradePlan, direction, patternName, instrument, visualSpec, quality } = setup;
+  const { tradePlan, direction, patternName, instrument, visualSpec, quality, currentPrice, changePercent } = setup as SetupWithVisuals & { currentPrice?: number; changePercent?: number | null };
   const isLong = direction === 'long';
   const decimals = tradePlan.priceRounding?.priceDecimals || 2;
   const formatPrice = (price: number) => price.toFixed(Math.min(decimals, 6));
@@ -401,7 +401,24 @@ export default function FullChartViewer({
               </div>
               <div>
                 <DialogTitle className="text-xl">{instrument}</DialogTitle>
-                <p className="text-sm text-muted-foreground">{patternName} • {visualSpec.timeframe.toUpperCase()}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">{patternName} • {visualSpec.timeframe.toUpperCase()}</p>
+                  {currentPrice != null && (
+                    <span className="font-mono text-sm">
+                      {currentPrice.toLocaleString(undefined, { 
+                        minimumFractionDigits: currentPrice < 10 ? 4 : 2,
+                        maximumFractionDigits: currentPrice < 10 ? 4 : 2
+                      })}
+                    </span>
+                  )}
+                  {changePercent != null && (
+                    <span className={`font-mono text-sm font-medium ${
+                      changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
