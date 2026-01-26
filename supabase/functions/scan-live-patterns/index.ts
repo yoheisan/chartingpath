@@ -617,8 +617,14 @@ const PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayNam
 };
 
 // In-memory cache for scan results (persists within edge function instance)
+// Results cache - keyed by scan parameters
 const scanCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 1 minute cache
+const CACHE_TTL_MS = 60 * 1000; // 1 minute cache for fast assets
+const CACHE_TTL_MS_SLOW = 5 * 60 * 1000; // 5 minute cache for commodities
+
+// Per-symbol data cache to avoid re-fetching
+const symbolDataCache = new Map<string, { bars: any[]; timestamp: number }>();
+const SYMBOL_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minute symbol cache
 
 function calculateATR(bars: any[], period: number = 14): number {
   if (bars.length < period + 1) return 0;
@@ -634,7 +640,7 @@ function calculateATR(bars: any[], period: number = 14): number {
   return atrSum / period;
 }
 
-// Parallel fetch with concurrency limit to avoid rate limiting
+// Parallel fetch with concurrency limit and per-symbol caching
 async function fetchYahooDataBatch(
   symbols: string[],
   startDate: string,
@@ -643,10 +649,31 @@ async function fetchYahooDataBatch(
   concurrency: number = 10
 ): Promise<Map<string, any[]>> {
   const results = new Map<string, any[]>();
+  const now = Date.now();
   
-  // Process in parallel batches
-  for (let i = 0; i < symbols.length; i += concurrency) {
-    const batch = symbols.slice(i, i + concurrency);
+  // Separate symbols into cached vs needs-fetch
+  const symbolsToFetch: string[] = [];
+  
+  for (const symbol of symbols) {
+    const cacheKey = `${symbol}:${interval}`;
+    const cached = symbolDataCache.get(cacheKey);
+    
+    if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length > 0) {
+      results.set(symbol, cached.bars);
+    } else {
+      symbolsToFetch.push(symbol);
+    }
+  }
+  
+  console.log(`[fetchYahooDataBatch] ${results.size} cached, ${symbolsToFetch.length} to fetch`);
+  
+  if (symbolsToFetch.length === 0) {
+    return results;
+  }
+  
+  // Process remaining symbols in parallel batches
+  for (let i = 0; i < symbolsToFetch.length; i += concurrency) {
+    const batch = symbolsToFetch.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(
       batch.map(symbol => fetchYahooDataSingle(symbol, startDate, endDate, interval))
     );
@@ -655,6 +682,9 @@ async function fetchYahooDataBatch(
       const symbol = batch[idx];
       if (result.status === 'fulfilled' && result.value.length > 0) {
         results.set(symbol, result.value);
+        // Cache the successful fetch
+        const cacheKey = `${symbol}:${interval}`;
+        symbolDataCache.set(cacheKey, { bars: result.value, timestamp: now });
       }
     });
   }
@@ -770,16 +800,51 @@ async function persistPatterns(
     }
   }
   
-  // Upsert detected patterns
+  // Batch upsert detected patterns for performance
   const now = new Date().toISOString();
+  
+  // Separate into existing (update) and new (insert) patterns
+  const patternsToUpdate: { id: string; pattern: any; key: string }[] = [];
+  const patternsToInsert: any[] = [];
   
   for (const pattern of detectedPatterns) {
     const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
     const existing = existingMap.get(key);
     
     if (existing) {
-      // Pattern still active - update last_confirmed_at and price data
-      const { error: updateError } = await supabase
+      patternsToUpdate.push({ id: existing.id, pattern, key });
+      patternKeys.set(key, new Date(existing.first_detected_at));
+    } else {
+      patternsToInsert.push({
+        instrument: pattern.instrument,
+        pattern_id: pattern.patternId,
+        pattern_name: pattern.patternName,
+        direction: pattern.direction,
+        timeframe,
+        asset_type: assetType,
+        first_detected_at: now,
+        last_confirmed_at: now,
+        status: 'active',
+        entry_price: pattern.tradePlan.entry,
+        stop_loss_price: pattern.tradePlan.stopLoss,
+        take_profit_price: pattern.tradePlan.takeProfit,
+        risk_reward_ratio: pattern.tradePlan.rr,
+        visual_spec: pattern.visualSpec,
+        bars: pattern.bars,
+        current_price: pattern.currentPrice,
+        prev_close: pattern.prevClose,
+        change_percent: pattern.changePercent,
+        quality_score: pattern.quality?.score || 'B',
+        quality_reasons: pattern.quality?.reasons || [],
+        _key: `${pattern.instrument}|${pattern.patternId}|${timeframe}` // For mapping later
+      });
+    }
+  }
+  
+  // Batch update existing patterns (parallel)
+  if (patternsToUpdate.length > 0) {
+    const updatePromises = patternsToUpdate.map(({ id, pattern }) => 
+      supabase
         .from('live_pattern_detections')
         .update({
           last_confirmed_at: now,
@@ -790,64 +855,41 @@ async function persistPatterns(
           visual_spec: pattern.visualSpec,
           updated_at: now
         })
-        .eq('id', existing.id);
-      
-      if (updateError) {
-        console.error(`[persistPatterns] Error updating pattern ${key}:`, updateError);
-      }
-      
-      // Use original first_detected_at
-      patternKeys.set(key, new Date(existing.first_detected_at));
-    } else {
-      // New pattern - insert with current timestamp as first_detected_at
-      const { data: inserted, error: insertError } = await supabase
-        .from('live_pattern_detections')
-        .insert({
-          instrument: pattern.instrument,
-          pattern_id: pattern.patternId,
-          pattern_name: pattern.patternName,
-          direction: pattern.direction,
-          timeframe,
-          asset_type: assetType,
-          first_detected_at: now,
-          last_confirmed_at: now,
-          status: 'active',
-          entry_price: pattern.tradePlan.entry,
-          stop_loss_price: pattern.tradePlan.stopLoss,
-          take_profit_price: pattern.tradePlan.takeProfit,
-          risk_reward_ratio: pattern.tradePlan.rr,
-          visual_spec: pattern.visualSpec,
-          bars: pattern.bars,
-          current_price: pattern.currentPrice,
-          prev_close: pattern.prevClose,
-          change_percent: pattern.changePercent,
-          quality_score: pattern.quality?.score || 'B',
-          quality_reasons: pattern.quality?.reasons || []
-        })
-        .select('first_detected_at')
-        .single();
-      
-      if (insertError) {
-        // Handle unique constraint violation (race condition)
-        if (insertError.code === '23505') {
-          console.log(`[persistPatterns] Pattern ${key} already exists, fetching...`);
-          const { data: refetch } = await supabase
-            .from('live_pattern_detections')
-            .select('first_detected_at')
-            .eq('instrument', pattern.instrument)
-            .eq('pattern_id', pattern.patternId)
-            .eq('timeframe', timeframe)
-            .eq('status', 'active')
-            .single();
-          if (refetch) {
-            patternKeys.set(key, new Date(refetch.first_detected_at));
-          }
-        } else {
-          console.error(`[persistPatterns] Error inserting pattern ${key}:`, insertError);
+        .eq('id', id)
+    );
+    await Promise.allSettled(updatePromises);
+    console.log(`[persistPatterns] Batch updated ${patternsToUpdate.length} existing patterns`);
+  }
+  
+  // Batch insert new patterns
+  if (patternsToInsert.length > 0) {
+    const insertData = patternsToInsert.map(({ _key, ...data }) => data);
+    const { data: inserted, error: insertError } = await supabase
+      .from('live_pattern_detections')
+      .insert(insertData)
+      .select('instrument, pattern_id, first_detected_at');
+    
+    if (insertError) {
+      console.error('[persistPatterns] Batch insert error:', insertError);
+      // Fallback: try one by one for conflict handling
+      for (const pattern of patternsToInsert) {
+        const { _key, ...data } = pattern;
+        const { data: single, error } = await supabase
+          .from('live_pattern_detections')
+          .upsert(data, { onConflict: 'instrument,pattern_id,timeframe,status' })
+          .select('first_detected_at')
+          .single();
+        
+        if (!error && single) {
+          patternKeys.set(_key, new Date(single.first_detected_at));
+          console.log(`[persistPatterns] New pattern: ${data.instrument} - ${data.pattern_name}`);
         }
-      } else if (inserted) {
-        patternKeys.set(key, new Date(inserted.first_detected_at));
-        console.log(`[persistPatterns] New pattern detected: ${pattern.instrument} - ${pattern.patternName}`);
+      }
+    } else if (inserted) {
+      console.log(`[persistPatterns] Batch inserted ${inserted.length} new patterns`);
+      for (const ins of inserted) {
+        const key = `${ins.instrument}|${ins.pattern_id}|${timeframe}`;
+        patternKeys.set(key, new Date(ins.first_detected_at));
       }
     }
   }
@@ -899,10 +941,11 @@ serve(async (req) => {
     const extendedPatternsToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
     const allPatternsToScan = [...patternsToScan, ...extendedPatternsToScan];
     
-    // Check cache first
+    // Check cache first - use longer TTL for commodities (slower to fetch)
     const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
+    const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
     const cached = scanCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    if (cached && Date.now() - cached.timestamp < cacheTtl) {
       console.log('[scan-live-patterns] Returning cached result');
       return new Response(JSON.stringify(cached.data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -923,12 +966,14 @@ serve(async (req) => {
     startDate.setDate(startDate.getDate() - 90); // 90 days of data
     
     // PARALLEL FETCH: Fetch all instrument data concurrently
+    // Use higher concurrency for commodities since they're slower to respond
+    const fetchConcurrency = assetType === 'commodities' ? 25 : 15;
     const instrumentDataMap = await fetchYahooDataBatch(
       instruments,
       startDate.toISOString().split('T')[0],
       endDate.toISOString().split('T')[0],
       timeframe,
-      15 // 15 concurrent requests
+      fetchConcurrency
     );
     
     console.log(`[scan-live-patterns] Fetched data for ${instrumentDataMap.size}/${instruments.length} instruments`);
