@@ -15,6 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Copy,
   Bell,
   FileCode,
@@ -401,22 +406,36 @@ export default function FullChartViewer({
               </div>
               <div>
                 <DialogTitle className="text-xl">{instrument}</DialogTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm text-muted-foreground">{patternName} • {visualSpec.timeframe.toUpperCase()}</p>
                   {currentPrice != null && (
-                    <span className="font-mono text-sm">
-                      {currentPrice.toLocaleString(undefined, { 
-                        minimumFractionDigits: currentPrice < 10 ? 4 : 2,
-                        maximumFractionDigits: currentPrice < 10 ? 4 : 2
-                      })}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="font-mono text-sm cursor-help border-b border-dashed border-muted-foreground/30">
+                          {currentPrice.toLocaleString(undefined, { 
+                            minimumFractionDigits: currentPrice < 10 ? 4 : 2,
+                            maximumFractionDigits: currentPrice < 10 ? 4 : 2
+                          })}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p className="text-xs">Previous session close. Daily data only.</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {changePercent != null && (
-                    <span className={`font-mono text-sm font-medium ${
-                      changePercent >= 0 ? 'text-green-500' : 'text-red-500'
-                    }`}>
-                      {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className={`font-mono text-sm font-medium cursor-help border-b border-dashed border-muted-foreground/30 ${
+                          changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                          {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p className="text-xs">Change vs. prior session close. Intraday moves not shown.</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>
