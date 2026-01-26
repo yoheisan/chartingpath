@@ -471,6 +471,14 @@ serve(async (req) => {
             pivots: pivotsWithTimestamps,
           };
           
+          // Calculate % change from previous session close
+          const prevBar = bars.length >= 2 ? bars[bars.length - 2] : null;
+          const prevClose = prevBar ? prevBar.close : null;
+          const currentClose = lastBar.close;
+          const changePercent = prevClose && prevClose !== 0 
+            ? ((currentClose - prevClose) / prevClose) * 100 
+            : null;
+          
           setups.push({
             instrument,
             patternId,
@@ -487,6 +495,10 @@ serve(async (req) => {
             },
             bars: compressedBars,
             visualSpec,
+            // Price data
+            currentPrice: currentClose,
+            prevClose: prevClose,
+            changePercent: changePercent !== null ? Number(changePercent.toFixed(2)) : null,
           });
           
           console.log(`[scan-live-patterns] Found: ${instrument} - ${pattern.displayName}`);
