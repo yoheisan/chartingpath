@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { computeBracketLevels, BRACKET_LEVELS_VERSION, ROUNDING_CONFIG } from "../_shared/bracketLevels.ts";
 
 const corsHeaders = {
@@ -351,12 +352,162 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
   }
 }
 
+/**
+ * Upsert pattern detections to database for lifecycle tracking.
+ * Returns patterns with their original first_detected_at timestamp.
+ */
+async function persistPatterns(
+  supabase: any,
+  detectedPatterns: any[],
+  assetType: string,
+  timeframe: string
+): Promise<Map<string, Date>> {
+  const patternKeys = new Map<string, Date>();
+  
+  if (detectedPatterns.length === 0) return patternKeys;
+  
+  // Build unique keys for each detected pattern
+  const detectedKeys = new Set(
+    detectedPatterns.map(p => `${p.instrument}|${p.patternId}|${timeframe}`)
+  );
+  
+  // Fetch existing active patterns for this asset type
+  const { data: existingPatterns, error: fetchError } = await supabase
+    .from('live_pattern_detections')
+    .select('id, instrument, pattern_id, timeframe, first_detected_at, status')
+    .eq('asset_type', assetType)
+    .eq('timeframe', timeframe)
+    .eq('status', 'active');
+  
+  if (fetchError) {
+    console.error('[persistPatterns] Error fetching existing patterns:', fetchError);
+    return patternKeys;
+  }
+  
+  // Build map of existing patterns
+  const existingMap = new Map<string, { id: string; first_detected_at: string }>();
+  for (const ep of existingPatterns || []) {
+    const key = `${ep.instrument}|${ep.pattern_id}|${ep.timeframe}`;
+    existingMap.set(key, { id: ep.id, first_detected_at: ep.first_detected_at });
+  }
+  
+  // Mark patterns that are no longer detected as invalidated
+  const patternsToInvalidate: string[] = [];
+  for (const [key, existing] of existingMap) {
+    if (!detectedKeys.has(key)) {
+      patternsToInvalidate.push(existing.id);
+    }
+  }
+  
+  if (patternsToInvalidate.length > 0) {
+    const { error: invalidateError } = await supabase
+      .from('live_pattern_detections')
+      .update({ status: 'invalidated', updated_at: new Date().toISOString() })
+      .in('id', patternsToInvalidate);
+    
+    if (invalidateError) {
+      console.error('[persistPatterns] Error invalidating patterns:', invalidateError);
+    } else {
+      console.log(`[persistPatterns] Invalidated ${patternsToInvalidate.length} stale patterns`);
+    }
+  }
+  
+  // Upsert detected patterns
+  const now = new Date().toISOString();
+  
+  for (const pattern of detectedPatterns) {
+    const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
+    const existing = existingMap.get(key);
+    
+    if (existing) {
+      // Pattern still active - update last_confirmed_at and price data
+      const { error: updateError } = await supabase
+        .from('live_pattern_detections')
+        .update({
+          last_confirmed_at: now,
+          current_price: pattern.currentPrice,
+          prev_close: pattern.prevClose,
+          change_percent: pattern.changePercent,
+          bars: pattern.bars,
+          visual_spec: pattern.visualSpec,
+          updated_at: now
+        })
+        .eq('id', existing.id);
+      
+      if (updateError) {
+        console.error(`[persistPatterns] Error updating pattern ${key}:`, updateError);
+      }
+      
+      // Use original first_detected_at
+      patternKeys.set(key, new Date(existing.first_detected_at));
+    } else {
+      // New pattern - insert with current timestamp as first_detected_at
+      const { data: inserted, error: insertError } = await supabase
+        .from('live_pattern_detections')
+        .insert({
+          instrument: pattern.instrument,
+          pattern_id: pattern.patternId,
+          pattern_name: pattern.patternName,
+          direction: pattern.direction,
+          timeframe,
+          asset_type: assetType,
+          first_detected_at: now,
+          last_confirmed_at: now,
+          status: 'active',
+          entry_price: pattern.tradePlan.entry,
+          stop_loss_price: pattern.tradePlan.stopLoss,
+          take_profit_price: pattern.tradePlan.takeProfit,
+          risk_reward_ratio: pattern.tradePlan.rr,
+          visual_spec: pattern.visualSpec,
+          bars: pattern.bars,
+          current_price: pattern.currentPrice,
+          prev_close: pattern.prevClose,
+          change_percent: pattern.changePercent,
+          quality_score: pattern.quality?.score || 'B',
+          quality_reasons: pattern.quality?.reasons || []
+        })
+        .select('first_detected_at')
+        .single();
+      
+      if (insertError) {
+        // Handle unique constraint violation (race condition)
+        if (insertError.code === '23505') {
+          console.log(`[persistPatterns] Pattern ${key} already exists, fetching...`);
+          const { data: refetch } = await supabase
+            .from('live_pattern_detections')
+            .select('first_detected_at')
+            .eq('instrument', pattern.instrument)
+            .eq('pattern_id', pattern.patternId)
+            .eq('timeframe', timeframe)
+            .eq('status', 'active')
+            .single();
+          if (refetch) {
+            patternKeys.set(key, new Date(refetch.first_detected_at));
+          }
+        } else {
+          console.error(`[persistPatterns] Error inserting pattern ${key}:`, insertError);
+        }
+      } else if (inserted) {
+        patternKeys.set(key, new Date(inserted.first_detected_at));
+        console.log(`[persistPatterns] New pattern detected: ${pattern.instrument} - ${pattern.patternName}`);
+      }
+    }
+  }
+  
+  return patternKeys;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
   
   try {
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Support both query params and body
     const url = new URL(req.url);
     let limit = parseInt(url.searchParams.get('limit') || '30');
@@ -383,11 +534,9 @@ serve(async (req) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 90); // 90 days of data
     
-    const setups: any[] = [];
+    const detectedPatterns: any[] = [];
     
     for (const instrument of instruments) {
-      if (setups.length >= limit) break;
-      
       const bars = await fetchYahooData(
         instrument,
         startDate.toISOString().split('T')[0],
@@ -398,8 +547,6 @@ serve(async (req) => {
       if (bars.length < 20) continue;
       
       for (const patternId of ALL_PATTERNS) {
-        if (setups.length >= limit) break;
-        
         const pattern = PATTERN_REGISTRY[patternId];
         if (!pattern) continue;
         
@@ -408,7 +555,6 @@ serve(async (req) => {
         
         if (detectionResult.detected) {
           const lastBar = bars[bars.length - 1];
-          const signalTs = lastBar.date;
           const atr = calculateATR(bars, 14);
           
           const bracketLevels = computeBracketLevels({
@@ -451,7 +597,7 @@ serve(async (req) => {
             return {
               ...pivot,
               index: Math.max(0, visualIndex),
-              timestamp: bar?.date || signalTs
+              timestamp: bar?.date || lastBar.date
             };
           }).filter(p => p.index >= 0 && p.index < visualBars.length);
           
@@ -460,8 +606,8 @@ serve(async (req) => {
             symbol: instrument,
             timeframe,
             patternId,
-            signalTs,
-            window: { startTs: visualBars[0]?.date || signalTs, endTs: visualBars[visualBars.length - 1]?.date || signalTs },
+            signalTs: lastBar.date,
+            window: { startTs: visualBars[0]?.date || lastBar.date, endTs: visualBars[visualBars.length - 1]?.date || lastBar.date },
             yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 },
             overlays: [
               { type: 'hline', id: 'entry', price: entryPrice, label: 'Entry', style: 'primary' },
@@ -479,12 +625,11 @@ serve(async (req) => {
             ? ((currentClose - prevClose) / prevClose) * 100 
             : null;
           
-          setups.push({
+          detectedPatterns.push({
             instrument,
             patternId,
             patternName: pattern.displayName,
             direction: pattern.direction,
-            signalTs,
             quality: { score: 'B', reasons: ['Pattern detected on latest bar'] },
             tradePlan: {
               entryType: 'bar_close',
@@ -495,7 +640,6 @@ serve(async (req) => {
             },
             bars: compressedBars,
             visualSpec,
-            // Price data
             currentPrice: currentClose,
             prevClose: prevClose,
             changePercent: changePercent !== null ? Number(changePercent.toFixed(2)) : null,
@@ -505,6 +649,26 @@ serve(async (req) => {
         }
       }
     }
+    
+    // Persist patterns and get their original first_detected_at timestamps
+    const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
+    
+    // Build final response with accurate signalTs from database
+    const setups = detectedPatterns.slice(0, limit).map(pattern => {
+      const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
+      const firstDetectedAt = patternTimestamps.get(key);
+      
+      return {
+        ...pattern,
+        // Use the persisted first_detected_at as signalTs for accurate age calculation
+        signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
+        visualSpec: {
+          ...pattern.visualSpec,
+          // Also update signalTs in visualSpec for consistency
+          signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
+        }
+      };
+    });
     
     const marketOpen = isMarketOpen(assetType);
     console.log(`[scan-live-patterns] Scan complete. Found ${setups.length} patterns. Market open: ${marketOpen}`);
