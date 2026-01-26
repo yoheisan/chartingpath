@@ -414,15 +414,35 @@ export default function PatternScreenerTable() {
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
   const navigate = useNavigate();
   
+  // Client-side cache for instant asset type switching
+  const [cache, setCache] = useState<Record<AssetType, { patterns: LiveSetup[]; scannedAt: string; marketOpen: boolean } | null>>({
+    fx: null,
+    crypto: null,
+    stocks: null,
+    commodities: null,
+  });
+  
   // Get tier-based screener caps
   const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    setError(null);
-    
     const typeToFetch = selectedAssetType ?? assetType;
+    
+    // Show cached data immediately (optimistic)
+    const cachedResult = cache[typeToFetch];
+    if (cachedResult && !isRefresh) {
+      setPatterns(cachedResult.patterns);
+      setLastScanned(cachedResult.scannedAt);
+      setMarketOpen(cachedResult.marketOpen);
+      setLoading(false);
+      // Refresh in background
+      setRefreshing(true);
+    } else if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
     
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
@@ -440,13 +460,25 @@ export default function PatternScreenerTable() {
         setPatterns(data.patterns);
         setLastScanned(data.scannedAt);
         setMarketOpen(data.marketOpen ?? true);
+        // Update cache
+        setCache(prev => ({
+          ...prev,
+          [typeToFetch]: {
+            patterns: data.patterns,
+            scannedAt: data.scannedAt,
+            marketOpen: data.marketOpen ?? true,
+          }
+        }));
       } else {
         setPatterns([]);
         setMarketOpen(data?.marketOpen ?? true);
       }
     } catch (err: any) {
       console.error('[PatternScreenerTable] Error:', err);
-      setError('Failed to load patterns');
+      // Only show error if no cached data
+      if (!cachedResult) {
+        setError('Failed to load patterns');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -516,29 +548,84 @@ export default function PatternScreenerTable() {
     return sortAsc ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />;
   };
 
+  // Skeleton with full UI structure for faster perceived load
+  const LoadingSkeleton = () => (
+    <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="p-3 border-b bg-muted/30">
+        <div className="flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-8 w-24 rounded-md" />
+          ))}
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[200px]"><Skeleton className="h-4 w-16" /></TableHead>
+            <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+            <TableHead><Skeleton className="h-4 w-14" /></TableHead>
+            <TableHead className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableHead>
+            <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
+            <TableHead className="text-right"><Skeleton className="h-4 w-10 ml-auto" /></TableHead>
+            <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...Array(8)].map((_, i) => (
+            <TableRow key={i} className="h-14">
+              <TableCell><div className="flex items-center gap-2"><Skeleton className="h-7 w-7 rounded-full" /><Skeleton className="h-4 w-24" /></div></TableCell>
+              <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
+              <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-10 ml-auto" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   if (loading) {
     return (
-      <section className="py-12 px-6">
+      <section className="py-12 px-6 bg-muted/20">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-primary border-primary/50">
+                <Badge variant="outline" className="text-primary border-primary/50 animate-pulse">
                   <Zap className="h-3 w-3 mr-1" />
-                  Active Pattern Screener
+                  Loading...
                 </Badge>
               </div>
-              <h2 className="text-2xl font-bold">Live Pattern Signals</h2>
+              <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Scanning {UNIVERSE_INFO[assetType].count} instruments...
+              </p>
             </div>
-            <Skeleton className="h-9 w-32" />
-          </div>
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <div className="p-4 space-y-3">
-              {[...Array(10)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
+            <div className="flex items-center gap-3">
+              <Select value={assetType} onValueChange={(v) => setAssetType(v as AssetType)}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ASSET_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Link to="/patterns/live">
+                <Button variant="outline" size="sm">
+                  Full Screener
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
             </div>
           </div>
+          <LoadingSkeleton />
         </div>
       </section>
     );
