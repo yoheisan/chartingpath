@@ -7,8 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Instruments by asset type
-const INSTRUMENTS_BY_TYPE: Record<string, string[]> = {
+// Base instruments (FREE tier) - 25 per class
+const BASE_INSTRUMENTS: Record<string, string[]> = {
   fx: [
     'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'AUDUSD=X', 'USDCAD=X',
     'NZDUSD=X', 'USDCHF=X', 'EURGBP=X', 'EURJPY=X', 'GBPJPY=X',
@@ -34,18 +34,110 @@ const INSTRUMENTS_BY_TYPE: Record<string, string[]> = {
     'GC=F', 'SI=F', 'CL=F', 'NG=F', 'HG=F',
     'PL=F', 'PA=F', 'ZC=F', 'ZW=F', 'ZS=F',
     'KC=F', 'SB=F', 'CC=F', 'CT=F', 'LE=F',
-    'HE=F', 'GF=F', 'ZO=F', 'ZR=F', 'ZL=F'
+    'HE=F', 'GF=F', 'ZO=F', 'ZR=F', 'ZL=F',
+    'RB=F', 'HO=F', 'BZ=F', 'ALI=F', 'ZN=F'
   ]
 };
 
+// Extended instruments (PLUS+ tier) - 50 per class
+const EXTENDED_INSTRUMENTS: Record<string, string[]> = {
+  fx: [
+    'USDZAR=X', 'USDMXN=X', 'USDTRY=X', 'USDSEK=X', 'USDNOK=X',
+    'USDDKK=X', 'USDSGD=X', 'USDHKD=X', 'USDPLN=X', 'USDCZK=X',
+    'USDHUF=X', 'USDRUB=X', 'USDCNH=X', 'USDINR=X', 'USDTHB=X',
+    'EURSEK=X', 'EURNOK=X', 'EURDKK=X', 'EURPLN=X', 'EURCZK=X',
+    'EURHUF=X', 'EURTRY=X', 'GBPNZD=X', 'GBPZAR=X', 'AUDSGD=X'
+  ],
+  crypto: [
+    'SUI-USD', 'SEI-USD', 'TIA-USD', 'PEPE-USD', 'WIF-USD',
+    'BONK-USD', 'JUP-USD', 'PYTH-USD', 'RENDER-USD', 'FET-USD',
+    'TAO-USD', 'AR-USD', 'STX-USD', 'IMX-USD', 'AXS-USD',
+    'MANA-USD', 'GALA-USD', 'ENJ-USD', 'ICP-USD', 'VET-USD',
+    'ALGO-USD', 'HBAR-USD', 'EGLD-USD', 'FLOW-USD', 'THETA-USD'
+  ],
+  stocks: [
+    'AMD', 'INTC', 'QCOM', 'AVGO', 'TXN',
+    'IBM', 'ORCL', 'SAP', 'NOW', 'SNOW',
+    'PLTR', 'UBER', 'ABNB', 'SQ', 'PYPL',
+    'GS', 'MS', 'C', 'WFC', 'AXP',
+    'CVX', 'XOM', 'COP', 'SLB', 'EOG'
+  ],
+  commodities: [
+    'NQ=F', 'ES=F', 'YM=F', 'RTY=F', 'VIX=F',
+    'GE=F', 'ZT=F', 'ZF=F', 'ZB=F', 'UB=F',
+    'DX=F', '6E=F', '6J=F', '6B=F', '6C=F',
+    '6A=F', '6N=F', '6S=F', 'MGC=F', 'SIL=F',
+    'MCL=F', 'MNQ=F', 'MES=F', 'M2K=F', 'MYM=F'
+  ]
+};
+
+// Premium instruments (PRO/TEAM tier) - 75-100 per class
+const PREMIUM_INSTRUMENTS: Record<string, string[]> = {
+  fx: [
+    'USDIDR=X', 'USDPHP=X', 'USDMYR=X', 'USDKRW=X', 'USDTWD=X',
+    'USDCLP=X', 'USDCOP=X', 'USDBRL=X', 'USDARS=X', 'USDPEN=X',
+    'EURILS=X', 'EURRUB=X', 'EURRON=X', 'EURBGN=X', 'EURHRK=X',
+    'GBPMXN=X', 'GBPSGD=X', 'GBPHKD=X', 'AUDHKD=X', 'NZDSGD=X',
+    'CADMXN=X', 'CHFSGD=X', 'JPYKRW=X', 'SGDHKD=X', 'ZARJPY=X'
+  ],
+  crypto: [
+    'RNDR-USD', 'AGIX-USD', 'OCEAN-USD', 'WLD-USD', 'ONDO-USD',
+    'ETHFI-USD', 'ENA-USD', 'W-USD', 'STRK-USD', 'MANTA-USD',
+    'DYM-USD', 'ALT-USD', 'PIXEL-USD', 'PORTAL-USD', 'AEVO-USD',
+    'BOME-USD', 'SLERF-USD', 'MEW-USD', 'POPCAT-USD', 'BRETT-USD',
+    'TURBO-USD', 'FLOKI-USD', 'LUNC-USD', 'USTC-USD', 'ORDI-USD'
+  ],
+  stocks: [
+    'LLY', 'NVO', 'UNH', 'MRK', 'ABBV',
+    'PFE', 'TMO', 'ABT', 'DHR', 'BMY',
+    'SCHW', 'BLK', 'SPGI', 'ICE', 'CME',
+    'MMC', 'AON', 'TRV', 'PGR', 'AIG',
+    'F', 'GM', 'TM', 'RIVN', 'LCID'
+  ],
+  commodities: [
+    'LHc1', 'FCc1', 'LSUc1', 'LCOc1', 'WBSc1',
+    'OJc1', 'LBc1', 'CTc1', 'KCc1', 'SBc1',
+    'CCc1', 'RRc1', 'RSc1', 'ZMc1', 'ZLc1',
+    'OBc1', 'EHc1', 'NGLc1', 'PGc1', 'CLBc1',
+    'PAc1', 'PLc1', 'HGc1', 'SIc1', 'GCc1'
+  ]
+};
+
+// Helper to get instruments for a tier
+function getInstrumentsForTier(assetType: string, maxTickers: number): string[] {
+  const base = BASE_INSTRUMENTS[assetType] || [];
+  const extended = EXTENDED_INSTRUMENTS[assetType] || [];
+  const premium = PREMIUM_INSTRUMENTS[assetType] || [];
+  
+  const all = [...base, ...extended, ...premium];
+  return all.slice(0, maxTickers);
+}
+
+// Legacy support
+const INSTRUMENTS_BY_TYPE = BASE_INSTRUMENTS;
+
 const DEFAULT_ASSET_TYPE = 'fx';
 
-// All patterns to scan
-const ALL_PATTERNS = [
+// Base patterns (FREE tier) - 6 patterns
+const BASE_PATTERNS = [
   'donchian-breakout-long', 'donchian-breakout-short',
   'double-top', 'double-bottom',
   'ascending-triangle', 'descending-triangle'
 ];
+
+// Extended patterns (PLUS+ tier) - adds H&S, wedges
+const EXTENDED_PATTERNS = [
+  'head-and-shoulders', 'inverse-head-and-shoulders',
+  'rising-wedge', 'falling-wedge'
+];
+
+// Premium patterns (PRO/TEAM tier) - adds flags, cup & handle
+const PREMIUM_PATTERNS = [
+  'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom'
+];
+
+// All patterns combined
+const ALL_PATTERNS = [...BASE_PATTERNS];
 
 /**
  * Check if the market for a given asset type is currently open.
@@ -293,6 +385,235 @@ const PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayNam
     },
     displayName: 'Descending Triangle'
   },
+  // Head and Shoulders (bearish reversal)
+  'head-and-shoulders': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find local maxima (potential shoulders and head)
+      const peaks: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+      }
+      
+      if (peaks.length < 3) return { detected: false, pivots: [] };
+      
+      // Find head (highest peak)
+      let headIdx = 0;
+      for (let i = 1; i < peaks.length; i++) {
+        if (peaks[i].value > peaks[headIdx].value) headIdx = i;
+      }
+      
+      // Head must not be at edges
+      if (headIdx === 0 || headIdx === peaks.length - 1) return { detected: false, pivots: [] };
+      
+      const leftShoulder = peaks[headIdx - 1];
+      const head = peaks[headIdx];
+      const rightShoulder = peaks[headIdx + 1];
+      
+      // Validate pattern: head higher than shoulders, shoulders roughly equal
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = shoulderDiff / range < 0.25; // Shoulders within 25% of each other
+      const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
+      
+      if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
+      
+      // Find neckline (lowest low between shoulders)
+      let neckline = Infinity;
+      let necklineIdx = leftShoulder.index;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (lows[i] < neckline) {
+          neckline = lows[i];
+          necklineIdx = i;
+        }
+      }
+      
+      // Confirmation: close below neckline
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < neckline * 0.998;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: leftShoulder.index, price: leftShoulder.value, type: 'high', label: 'Left Shoulder' },
+          { index: head.index, price: head.value, type: 'high', label: 'Head' },
+          { index: rightShoulder.index, price: rightShoulder.value, type: 'high', label: 'Right Shoulder' },
+          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Head and Shoulders'
+  },
+  // Inverse Head and Shoulders (bullish reversal)
+  'inverse-head-and-shoulders': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find local minima (potential shoulders and head)
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      
+      if (troughs.length < 3) return { detected: false, pivots: [] };
+      
+      // Find head (lowest trough)
+      let headIdx = 0;
+      for (let i = 1; i < troughs.length; i++) {
+        if (troughs[i].value < troughs[headIdx].value) headIdx = i;
+      }
+      
+      // Head must not be at edges
+      if (headIdx === 0 || headIdx === troughs.length - 1) return { detected: false, pivots: [] };
+      
+      const leftShoulder = troughs[headIdx - 1];
+      const head = troughs[headIdx];
+      const rightShoulder = troughs[headIdx + 1];
+      
+      // Validate pattern: head lower than shoulders, shoulders roughly equal
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = shoulderDiff / range < 0.25;
+      const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
+      
+      if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
+      
+      // Find neckline (highest high between shoulders)
+      let neckline = -Infinity;
+      let necklineIdx = leftShoulder.index;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (highs[i] > neckline) {
+          neckline = highs[i];
+          necklineIdx = i;
+        }
+      }
+      
+      // Confirmation: close above neckline
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > neckline * 1.002;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: leftShoulder.index, price: leftShoulder.value, type: 'low', label: 'Left Shoulder' },
+          { index: head.index, price: head.value, type: 'low', label: 'Head' },
+          { index: rightShoulder.index, price: rightShoulder.value, type: 'low', label: 'Right Shoulder' },
+          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Inverse Head and Shoulders'
+  },
+  // Rising Wedge (bearish)
+  'rising-wedge': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Check for converging upward trendlines
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const firstHighs = firstHalf.map(d => d.high);
+      const secondHighs = secondHalf.map(d => d.high);
+      const firstLows = firstHalf.map(d => d.low);
+      const secondLows = secondHalf.map(d => d.low);
+      
+      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
+      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
+      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
+      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
+      
+      // Both trendlines rising
+      const upperRising = avgSecondHigh > avgFirstHigh;
+      const lowerRising = avgSecondLow > avgFirstLow;
+      
+      // Lines converging
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = secondRange < firstRange * 0.85;
+      
+      // Breakdown below lower trendline
+      const lastClose = closes[closes.length - 1];
+      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
+          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper Trend End' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+        ] : []
+      };
+    },
+    displayName: 'Rising Wedge'
+  },
+  // Falling Wedge (bullish)
+  'falling-wedge': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const firstHighs = firstHalf.map(d => d.high);
+      const secondHighs = secondHalf.map(d => d.high);
+      const firstLows = firstHalf.map(d => d.low);
+      const secondLows = secondHalf.map(d => d.low);
+      
+      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
+      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
+      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
+      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
+      
+      // Both trendlines falling
+      const upperFalling = avgSecondHigh < avgFirstHigh;
+      const lowerFalling = avgSecondLow < avgFirstLow;
+      
+      // Lines converging
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = secondRange < firstRange * 0.85;
+      
+      // Breakout above upper trendline
+      const lastClose = closes[closes.length - 1];
+      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
+          { index: window.length - 1, price: avgSecondLow, type: 'low', label: 'Lower Trend End' }
+        ] : []
+      };
+    },
+    displayName: 'Falling Wedge'
+  },
 };
 
 function calculateATR(bars: any[], period: number = 14): number {
@@ -513,6 +834,8 @@ serve(async (req) => {
     let limit = parseInt(url.searchParams.get('limit') || '30');
     let timeframe = url.searchParams.get('timeframe') || '1d';
     let assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
+    let maxTickers = parseInt(url.searchParams.get('maxTickers') || '25');
+    let allowedPatterns: string[] = BASE_PATTERNS;
     
     // Override with body params if provided
     if (req.method === 'POST') {
@@ -521,14 +844,32 @@ serve(async (req) => {
         if (body.limit) limit = parseInt(body.limit);
         if (body.timeframe) timeframe = body.timeframe;
         if (body.assetType) assetType = body.assetType;
+        if (body.maxTickers) maxTickers = parseInt(body.maxTickers);
+        if (body.allowedPatterns && Array.isArray(body.allowedPatterns)) {
+          allowedPatterns = body.allowedPatterns;
+        }
       } catch {
         // Body parsing failed, use query params
       }
     }
     
-    const instruments = INSTRUMENTS_BY_TYPE[assetType] || INSTRUMENTS_BY_TYPE[DEFAULT_ASSET_TYPE];
+    // Get instruments based on tier (maxTickers)
+    const instruments = getInstrumentsForTier(assetType, maxTickers);
     
-    console.log('[scan-live-patterns] Starting scan, limit:', limit, 'timeframe:', timeframe, 'assetType:', assetType);
+    // Filter patterns based on tier allowedPatterns
+    const patternsToScan = ALL_PATTERNS.filter(p => allowedPatterns.includes(p));
+    // Also add extended patterns if allowed
+    const extendedPatternsToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
+    const allPatternsToScan = [...patternsToScan, ...extendedPatternsToScan];
+    
+    console.log('[scan-live-patterns] Starting scan:', {
+      limit,
+      timeframe,
+      assetType,
+      instrumentCount: instruments.length,
+      patternCount: allPatternsToScan.length,
+      patterns: allPatternsToScan
+    });
     
     const endDate = new Date();
     const startDate = new Date();
@@ -546,7 +887,7 @@ serve(async (req) => {
       
       if (bars.length < 20) continue;
       
-      for (const patternId of ALL_PATTERNS) {
+      for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
         if (!pattern) continue;
         
