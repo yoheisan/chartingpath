@@ -485,13 +485,10 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Re-fetch when asset type or caps change (caps changes when profile loads)
+  // Fetch on mount and when asset type changes
   useEffect(() => {
-    // caps must be loaded before fetching
-    if (caps.maxTickersPerClass > 0 && caps.allowedPatterns.length > 0) {
-      fetchLivePatterns(false, assetType);
-    }
-  }, [assetType, caps.maxTickersPerClass, caps.allowedPatterns.length]);
+    fetchLivePatterns(false, assetType);
+  }, [assetType]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
