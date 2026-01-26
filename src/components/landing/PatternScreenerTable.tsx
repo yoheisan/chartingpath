@@ -485,9 +485,13 @@ export default function PatternScreenerTable() {
     }
   };
 
+  // Re-fetch when asset type or caps change (caps changes when profile loads)
   useEffect(() => {
-    fetchLivePatterns(false, assetType);
-  }, [assetType]);
+    // caps must be loaded before fetching
+    if (caps.maxTickersPerClass > 0 && caps.allowedPatterns.length > 0) {
+      fetchLivePatterns(false, assetType);
+    }
+  }, [assetType, caps.maxTickersPerClass, caps.allowedPatterns.length]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {

@@ -140,9 +140,13 @@ export default function LivePatternsPage() {
     fetchLivePatterns(false, newType);
   };
 
+  // Re-fetch when caps change (caps changes when profile loads)
   useEffect(() => {
-    fetchLivePatterns();
-  }, []);
+    // caps must be loaded before fetching
+    if (caps.maxTickersPerClass > 0 && caps.allowedPatterns.length > 0) {
+      fetchLivePatterns();
+    }
+  }, [caps.maxTickersPerClass, caps.allowedPatterns.length]);
 
   // Auto-open chart when highlight param is present and matching pattern is found
   useEffect(() => {
