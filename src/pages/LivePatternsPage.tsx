@@ -15,6 +15,7 @@ import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/t
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { withTimeout } from '@/utils/withTimeout';
 
 interface LiveSetup {
   instrument: string;
@@ -110,14 +111,25 @@ export default function LivePatternsPage() {
     const typeToFetch = selectedAssetType || assetType;
     
     try {
-      const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { 
-          assetType: typeToFetch, 
-          limit: 50,
-          maxTickers: caps.maxTickersPerClass,
-          allowedPatterns: caps.allowedPatterns
-        },
+      console.info('[LivePatternsPage] Fetching patterns', {
+        assetType: typeToFetch,
+        maxTickers: caps.maxTickersPerClass,
+        allowedPatterns: caps.allowedPatterns?.length,
+        isRefresh,
       });
+
+      const { data, error: fnError } = await withTimeout(
+        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+          body: {
+            assetType: typeToFetch,
+            limit: 50,
+            maxTickers: caps.maxTickersPerClass,
+            allowedPatterns: caps.allowedPatterns,
+          },
+        }),
+        12_000,
+        'scan-live-patterns',
+      );
       
       if (fnError) throw fnError;
       
@@ -128,7 +140,10 @@ export default function LivePatternsPage() {
       }
     } catch (err: any) {
       console.error('[LivePatternsPage] Error:', err);
-      setError('Failed to load live patterns');
+      const msg = err?.message?.includes('timed out')
+        ? 'Request timed out. Please check your connection and try again.'
+        : 'Failed to load live patterns';
+      setError(msg);
     } finally {
       setLoading(false);
       setRefreshing(false);
