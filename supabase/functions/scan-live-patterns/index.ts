@@ -616,6 +616,10 @@ const PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayNam
   },
 };
 
+// In-memory cache for scan results (persists within edge function instance)
+const scanCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_MS = 60 * 1000; // 1 minute cache
+
 function calculateATR(bars: any[], period: number = 14): number {
   if (bars.length < period + 1) return 0;
   const recentBars = bars.slice(-period - 1);
@@ -630,7 +634,35 @@ function calculateATR(bars: any[], period: number = 14): number {
   return atrSum / period;
 }
 
-async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+// Parallel fetch with concurrency limit to avoid rate limiting
+async function fetchYahooDataBatch(
+  symbols: string[],
+  startDate: string,
+  endDate: string,
+  interval: string = '1d',
+  concurrency: number = 10
+): Promise<Map<string, any[]>> {
+  const results = new Map<string, any[]>();
+  
+  // Process in parallel batches
+  for (let i = 0; i < symbols.length; i += concurrency) {
+    const batch = symbols.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(
+      batch.map(symbol => fetchYahooDataSingle(symbol, startDate, endDate, interval))
+    );
+    
+    batchResults.forEach((result, idx) => {
+      const symbol = batch[idx];
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        results.set(symbol, result.value);
+      }
+    });
+  }
+  
+  return results;
+}
+
+async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
     const yahooInterval = interval === '4h' ? '1h' : interval === '1h' ? '1h' : '1d';
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
@@ -671,6 +703,11 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
     console.error(`[fetchYahooData] Error for ${symbol}:`, error);
     return [];
   }
+}
+
+// Legacy single-fetch function for compatibility
+async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+  return fetchYahooDataSingle(symbol, startDate, endDate, interval);
 }
 
 /**
@@ -862,7 +899,17 @@ serve(async (req) => {
     const extendedPatternsToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
     const allPatternsToScan = [...patternsToScan, ...extendedPatternsToScan];
     
-    console.log('[scan-live-patterns] Starting scan:', {
+    // Check cache first
+    const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
+    const cached = scanCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      console.log('[scan-live-patterns] Returning cached result');
+      return new Response(JSON.stringify(cached.data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('[scan-live-patterns] Starting parallel scan:', {
       limit,
       timeframe,
       assetType,
@@ -875,17 +922,23 @@ serve(async (req) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 90); // 90 days of data
     
+    // PARALLEL FETCH: Fetch all instrument data concurrently
+    const instrumentDataMap = await fetchYahooDataBatch(
+      instruments,
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0],
+      timeframe,
+      15 // 15 concurrent requests
+    );
+    
+    console.log(`[scan-live-patterns] Fetched data for ${instrumentDataMap.size}/${instruments.length} instruments`);
+    
     const detectedPatterns: any[] = [];
     
+    // Process all instruments with their pre-fetched data
     for (const instrument of instruments) {
-      const bars = await fetchYahooData(
-        instrument,
-        startDate.toISOString().split('T')[0],
-        endDate.toISOString().split('T')[0],
-        timeframe
-      );
-      
-      if (bars.length < 20) continue;
+      const bars = instrumentDataMap.get(instrument);
+      if (!bars || bars.length < 20) continue;
       
       for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
@@ -1014,7 +1067,7 @@ serve(async (req) => {
     const marketOpen = isMarketOpen(assetType);
     console.log(`[scan-live-patterns] Scan complete. Found ${setups.length} patterns. Market open: ${marketOpen}`);
     
-    return new Response(JSON.stringify({
+    const responseData = {
       success: true,
       patterns: setups,
       scannedAt: new Date().toISOString(),
@@ -1022,7 +1075,12 @@ serve(async (req) => {
       assetType,
       marketOpen,
       marketStatus: marketOpen ? 'open' : 'closed',
-    }), {
+    };
+    
+    // Cache the successful response
+    scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
     
