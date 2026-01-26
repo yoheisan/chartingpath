@@ -677,10 +677,34 @@ export default function PatternScreenerTable() {
                       </div>
                     </TableHead>
                     <TableHead className="text-right whitespace-nowrap">
-                      Price
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center justify-end gap-1 cursor-help">
+                              Price
+                              <Info className="h-3 w-3 opacity-50" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Previous session close price. Daily data only—intraday movements are not reflected.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableHead>
                     <TableHead className="text-right whitespace-nowrap">
-                      Chg %
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center justify-end gap-1 cursor-help">
+                              Chg %
+                              <Info className="h-3 w-3 opacity-50" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Change from the prior session's close. Does not include today's price action.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
