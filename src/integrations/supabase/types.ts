@@ -1427,6 +1427,84 @@ export type Database = {
         }
         Relationships: []
       }
+      live_pattern_detections: {
+        Row: {
+          asset_type: string
+          bars: Json
+          change_percent: number | null
+          created_at: string
+          current_price: number | null
+          direction: string
+          entry_price: number
+          first_detected_at: string
+          id: string
+          instrument: string
+          last_confirmed_at: string
+          pattern_id: string
+          pattern_name: string
+          prev_close: number | null
+          quality_reasons: string[] | null
+          quality_score: string | null
+          risk_reward_ratio: number
+          status: string
+          stop_loss_price: number
+          take_profit_price: number
+          timeframe: string
+          updated_at: string
+          visual_spec: Json
+        }
+        Insert: {
+          asset_type: string
+          bars: Json
+          change_percent?: number | null
+          created_at?: string
+          current_price?: number | null
+          direction: string
+          entry_price: number
+          first_detected_at?: string
+          id?: string
+          instrument: string
+          last_confirmed_at?: string
+          pattern_id: string
+          pattern_name: string
+          prev_close?: number | null
+          quality_reasons?: string[] | null
+          quality_score?: string | null
+          risk_reward_ratio: number
+          status?: string
+          stop_loss_price: number
+          take_profit_price: number
+          timeframe?: string
+          updated_at?: string
+          visual_spec: Json
+        }
+        Update: {
+          asset_type?: string
+          bars?: Json
+          change_percent?: number | null
+          created_at?: string
+          current_price?: number | null
+          direction?: string
+          entry_price?: number
+          first_detected_at?: string
+          id?: string
+          instrument?: string
+          last_confirmed_at?: string
+          pattern_id?: string
+          pattern_name?: string
+          prev_close?: number | null
+          quality_reasons?: string[] | null
+          quality_score?: string | null
+          risk_reward_ratio?: number
+          status?: string
+          stop_loss_price?: number
+          take_profit_price?: number
+          timeframe?: string
+          updated_at?: string
+          visual_spec?: Json
+        }
+        Relationships: []
+      }
       market_report_subscriptions: {
         Row: {
           created_at: string
@@ -3369,6 +3447,7 @@ export type Database = {
         }
         Returns: number
       }
+      expire_stale_patterns: { Args: never; Returns: undefined }
       get_article_by_slug: {
         Args: { p_slug: string }
         Returns: {
