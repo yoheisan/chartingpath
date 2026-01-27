@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import MemberNavigation from "@/components/MemberNavigation";
 import LearningProgress from "@/components/LearningProgress";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
-import { User, CreditCard, Settings, Shield, Mail, Bell, Crown, Star, Zap, ArrowLeft } from "lucide-react";
+import { User, CreditCard, Settings, Shield, Mail, Bell, Crown, Star, Zap, ArrowLeft, KeyRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ const MemberAccount = () => {
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -99,6 +100,40 @@ const MemberAccount = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "No email address found for your account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your inbox for a link to reset your password.",
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReset(false);
+    }
   };
 
   if (loading) {
@@ -196,6 +231,26 @@ const MemberAccount = () => {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <Separator className="my-6" />
+
+                {/* Password Reset Section */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    Password & Security
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Click the button below to receive a password reset link via email.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={handlePasswordReset}
+                    disabled={sendingReset}
+                  >
+                    {sendingReset ? "Sending..." : "Send Password Reset Email"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
