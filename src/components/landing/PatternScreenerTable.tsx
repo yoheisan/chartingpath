@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info, Lock, Crown
+  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info, Lock, Crown, List
 } from 'lucide-react';
 import {
   Tooltip,
@@ -12,6 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -94,10 +99,122 @@ const UNIVERSE_INFO: Record<AssetType, { count: number; description: string; exa
     examples: 'AAPL, MSFT, GOOGL, AMZN, META, TSLA, NVDA, JPM, and 17 more',
   },
   commodities: {
-    count: 20,
-    description: '20 futures contracts (metals, energy, agriculture)',
-    examples: 'Gold, Silver, Crude Oil, Natural Gas, Corn, Wheat, and 14 more',
+    count: 25,
+    description: '25 futures contracts (metals, energy, agriculture)',
+    examples: 'Gold, Silver, Crude Oil, Natural Gas, Corn, Wheat, and 19 more',
   },
+};
+
+// Full list of instruments available per asset class (for display purposes)
+const AVAILABLE_INSTRUMENTS: Record<AssetType, { symbol: string; name: string }[]> = {
+  fx: [
+    { symbol: 'EURUSD', name: 'Euro / US Dollar' },
+    { symbol: 'GBPUSD', name: 'British Pound / US Dollar' },
+    { symbol: 'USDJPY', name: 'US Dollar / Japanese Yen' },
+    { symbol: 'AUDUSD', name: 'Australian Dollar / US Dollar' },
+    { symbol: 'USDCAD', name: 'US Dollar / Canadian Dollar' },
+    { symbol: 'NZDUSD', name: 'New Zealand Dollar / US Dollar' },
+    { symbol: 'USDCHF', name: 'US Dollar / Swiss Franc' },
+    { symbol: 'EURGBP', name: 'Euro / British Pound' },
+    { symbol: 'EURJPY', name: 'Euro / Japanese Yen' },
+    { symbol: 'GBPJPY', name: 'British Pound / Japanese Yen' },
+    { symbol: 'AUDJPY', name: 'Australian Dollar / Japanese Yen' },
+    { symbol: 'EURAUD', name: 'Euro / Australian Dollar' },
+    { symbol: 'EURCHF', name: 'Euro / Swiss Franc' },
+    { symbol: 'AUDNZD', name: 'Australian Dollar / New Zealand Dollar' },
+    { symbol: 'CADJPY', name: 'Canadian Dollar / Japanese Yen' },
+    { symbol: 'NZDJPY', name: 'New Zealand Dollar / Japanese Yen' },
+    { symbol: 'GBPAUD', name: 'British Pound / Australian Dollar' },
+    { symbol: 'GBPCAD', name: 'British Pound / Canadian Dollar' },
+    { symbol: 'AUDCAD', name: 'Australian Dollar / Canadian Dollar' },
+    { symbol: 'EURCAD', name: 'Euro / Canadian Dollar' },
+    { symbol: 'CHFJPY', name: 'Swiss Franc / Japanese Yen' },
+    { symbol: 'GBPCHF', name: 'British Pound / Swiss Franc' },
+    { symbol: 'EURNZD', name: 'Euro / New Zealand Dollar' },
+    { symbol: 'CADCHF', name: 'Canadian Dollar / Swiss Franc' },
+    { symbol: 'AUDCHF', name: 'Australian Dollar / Swiss Franc' },
+  ],
+  crypto: [
+    { symbol: 'BTC', name: 'Bitcoin' },
+    { symbol: 'ETH', name: 'Ethereum' },
+    { symbol: 'SOL', name: 'Solana' },
+    { symbol: 'BNB', name: 'Binance Coin' },
+    { symbol: 'XRP', name: 'Ripple' },
+    { symbol: 'ADA', name: 'Cardano' },
+    { symbol: 'AVAX', name: 'Avalanche' },
+    { symbol: 'DOGE', name: 'Dogecoin' },
+    { symbol: 'LINK', name: 'Chainlink' },
+    { symbol: 'MATIC', name: 'Polygon' },
+    { symbol: 'DOT', name: 'Polkadot' },
+    { symbol: 'SHIB', name: 'Shiba Inu' },
+    { symbol: 'LTC', name: 'Litecoin' },
+    { symbol: 'UNI', name: 'Uniswap' },
+    { symbol: 'ATOM', name: 'Cosmos' },
+    { symbol: 'XLM', name: 'Stellar' },
+    { symbol: 'NEAR', name: 'NEAR Protocol' },
+    { symbol: 'APT', name: 'Aptos' },
+    { symbol: 'ARB', name: 'Arbitrum' },
+    { symbol: 'OP', name: 'Optimism' },
+    { symbol: 'FIL', name: 'Filecoin' },
+    { symbol: 'INJ', name: 'Injective' },
+    { symbol: 'AAVE', name: 'Aave' },
+    { symbol: 'MKR', name: 'Maker' },
+    { symbol: 'SAND', name: 'The Sandbox' },
+  ],
+  stocks: [
+    { symbol: 'AAPL', name: 'Apple Inc.' },
+    { symbol: 'MSFT', name: 'Microsoft Corporation' },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+    { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+    { symbol: 'META', name: 'Meta Platforms Inc.' },
+    { symbol: 'TSLA', name: 'Tesla Inc.' },
+    { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+    { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+    { symbol: 'V', name: 'Visa Inc.' },
+    { symbol: 'JNJ', name: 'Johnson & Johnson' },
+    { symbol: 'WMT', name: 'Walmart Inc.' },
+    { symbol: 'PG', name: 'Procter & Gamble Co.' },
+    { symbol: 'UNH', name: 'UnitedHealth Group' },
+    { symbol: 'HD', name: 'Home Depot Inc.' },
+    { symbol: 'BAC', name: 'Bank of America Corp.' },
+    { symbol: 'MA', name: 'Mastercard Inc.' },
+    { symbol: 'DIS', name: 'Walt Disney Co.' },
+    { symbol: 'NFLX', name: 'Netflix Inc.' },
+    { symbol: 'ADBE', name: 'Adobe Inc.' },
+    { symbol: 'CRM', name: 'Salesforce Inc.' },
+    { symbol: 'PFE', name: 'Pfizer Inc.' },
+    { symbol: 'KO', name: 'Coca-Cola Co.' },
+    { symbol: 'PEP', name: 'PepsiCo Inc.' },
+    { symbol: 'MRK', name: 'Merck & Co.' },
+    { symbol: 'CSCO', name: 'Cisco Systems Inc.' },
+  ],
+  commodities: [
+    { symbol: 'GC', name: 'Gold' },
+    { symbol: 'SI', name: 'Silver' },
+    { symbol: 'CL', name: 'Crude Oil (WTI)' },
+    { symbol: 'NG', name: 'Natural Gas' },
+    { symbol: 'HG', name: 'Copper' },
+    { symbol: 'PL', name: 'Platinum' },
+    { symbol: 'PA', name: 'Palladium' },
+    { symbol: 'ZC', name: 'Corn' },
+    { symbol: 'ZW', name: 'Wheat' },
+    { symbol: 'ZS', name: 'Soybeans' },
+    { symbol: 'KC', name: 'Coffee' },
+    { symbol: 'SB', name: 'Sugar' },
+    { symbol: 'CC', name: 'Cocoa' },
+    { symbol: 'CT', name: 'Cotton' },
+    { symbol: 'LE', name: 'Live Cattle' },
+    { symbol: 'HE', name: 'Lean Hogs' },
+    { symbol: 'GF', name: 'Feeder Cattle' },
+    { symbol: 'ZO', name: 'Oats' },
+    { symbol: 'ZR', name: 'Rice' },
+    { symbol: 'ZL', name: 'Soybean Oil' },
+    { symbol: 'RB', name: 'Gasoline' },
+    { symbol: 'HO', name: 'Heating Oil' },
+    { symbol: 'BZ', name: 'Brent Crude' },
+    { symbol: 'ALI', name: 'Aluminum' },
+    { symbol: 'ZN', name: 'US 10-Year Note' },
+  ],
 };
 
 
@@ -436,6 +553,7 @@ export default function PatternScreenerTable() {
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
+  const [showInstrumentList, setShowInstrumentList] = useState(false);
   const navigate = useNavigate();
   
   // Client-side cache for instant asset type switching
@@ -769,6 +887,44 @@ export default function PatternScreenerTable() {
             </Link>
           </div>
         </div>
+
+        {/* Collapsible instrument list */}
+        <Collapsible open={showInstrumentList} onOpenChange={setShowInstrumentList}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mb-4 text-muted-foreground hover:text-foreground"
+            >
+              <List className="h-4 w-4 mr-2" />
+              View all {UNIVERSE_INFO[assetType].count} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments
+              {showInstrumentList ? (
+                <ChevronUp className="h-4 w-4 ml-2" />
+              ) : (
+                <ChevronDown className="h-4 w-4 ml-2" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mb-6 p-4 rounded-lg border bg-muted/30">
+              <p className="text-sm text-muted-foreground mb-3">
+                The following {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments are scanned for chart patterns. 
+                Only those with active pattern setups appear in the table below.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                {AVAILABLE_INSTRUMENTS[assetType].map(({ symbol, name }) => (
+                  <div 
+                    key={symbol}
+                    className="flex items-center gap-2 text-sm p-2 rounded bg-background/50 border border-border/50"
+                  >
+                    <span className="font-mono font-medium text-foreground">{symbol}</span>
+                    <span className="text-muted-foreground text-xs truncate">{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {error && (
           <div className="rounded-lg border bg-card p-8 text-center">
