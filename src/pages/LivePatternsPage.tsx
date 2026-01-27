@@ -261,8 +261,9 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
-      // Use longer timeout for stocks which can take longer to fetch from Yahoo Finance
-      const timeoutMs = typeToFetch === 'stocks' ? 25_000 : 15_000;
+      // DB-first caching makes loading much faster (data pre-cached in historical_prices)
+      // Fall back timeout is 15s for any remaining Yahoo fetches
+      const timeoutMs = 15_000;
       
       const { data, error: fnError } = await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {

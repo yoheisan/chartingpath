@@ -626,6 +626,115 @@ const CACHE_TTL_MS_SLOW = 5 * 60 * 1000; // 5 minute cache for commodities
 const symbolDataCache = new Map<string, { bars: any[]; timestamp: number }>();
 const SYMBOL_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minute symbol cache
 
+// =============================================================================
+// SYMBOL MAPPING: Yahoo symbols to canonical DB symbols
+// =============================================================================
+const YAHOO_TO_DB_SYMBOL: Record<string, string> = {
+  // Forex
+  'EURUSD=X': 'EUR/USD', 'GBPUSD=X': 'GBP/USD', 'USDJPY=X': 'USD/JPY',
+  'AUDUSD=X': 'AUD/USD', 'USDCAD=X': 'USD/CAD', 'NZDUSD=X': 'NZD/USD',
+  'USDCHF=X': 'USD/CHF', 'EURGBP=X': 'EUR/GBP', 'EURJPY=X': 'EUR/JPY',
+  'GBPJPY=X': 'GBP/JPY', 'AUDJPY=X': 'AUD/JPY', 'EURAUD=X': 'EUR/AUD',
+  'EURCHF=X': 'EUR/CHF', 'AUDNZD=X': 'AUD/NZD', 'CADJPY=X': 'CAD/JPY',
+  'NZDJPY=X': 'NZD/JPY', 'GBPAUD=X': 'GBP/AUD', 'GBPCAD=X': 'GBP/CAD',
+  'AUDCAD=X': 'AUD/CAD', 'EURCAD=X': 'EUR/CAD', 'CHFJPY=X': 'CHF/JPY',
+  'GBPCHF=X': 'GBP/CHF', 'EURNZD=X': 'EUR/NZD', 'CADCHF=X': 'CAD/CHF',
+  'AUDCHF=X': 'AUD/CHF',
+  // Crypto
+  'BTC-USD': 'BTC/USD', 'ETH-USD': 'ETH/USD', 'SOL-USD': 'SOL/USD',
+  'BNB-USD': 'BNB/USD', 'XRP-USD': 'XRP/USD', 'ADA-USD': 'ADA/USD',
+  'AVAX-USD': 'AVAX/USD', 'DOGE-USD': 'DOGE/USD', 'LINK-USD': 'LINK/USD',
+  'MATIC-USD': 'MATIC/USD', 'DOT-USD': 'DOT/USD', 'SHIB-USD': 'SHIB/USD',
+  'LTC-USD': 'LTC/USD', 'UNI-USD': 'UNI/USD', 'ATOM-USD': 'ATOM/USD',
+  'XLM-USD': 'XLM/USD', 'NEAR-USD': 'NEAR/USD', 'APT-USD': 'APT/USD',
+  'ARB-USD': 'ARB/USD', 'OP-USD': 'OP/USD', 'FIL-USD': 'FIL/USD',
+  'INJ-USD': 'INJ/USD', 'AAVE-USD': 'AAVE/USD', 'MKR-USD': 'MKR/USD',
+  'SAND-USD': 'SAND/USD',
+  // Stocks (same symbol)
+  // Commodities (same symbol)
+};
+
+function getDbSymbol(yahooSymbol: string): string {
+  return YAHOO_TO_DB_SYMBOL[yahooSymbol] || yahooSymbol;
+}
+
+/**
+ * Load data from historical_prices DB cache first.
+ * Returns a map of symbols that were found in DB cache.
+ */
+async function loadFromDbCache(
+  supabase: any,
+  symbols: string[],
+  timeframe: string,
+  minDays: number = 60
+): Promise<Map<string, any[]>> {
+  const results = new Map<string, any[]>();
+  const dbSymbols = symbols.map(s => getDbSymbol(s));
+  
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - minDays);
+    
+    // Check freshness - only use cache if updated today
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    
+    const { data, error } = await supabase
+      .from('historical_prices')
+      .select('symbol, date, open, high, low, close, volume, updated_at')
+      .in('symbol', dbSymbols)
+      .eq('timeframe', timeframe)
+      .gte('date', cutoffDate.toISOString())
+      .order('date', { ascending: true });
+    
+    if (error) {
+      console.error('[loadFromDbCache] Query error:', error);
+      return results;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log('[loadFromDbCache] No cached data found');
+      return results;
+    }
+    
+    // Group by symbol
+    const symbolGroups = new Map<string, any[]>();
+    for (const row of data) {
+      if (!symbolGroups.has(row.symbol)) {
+        symbolGroups.set(row.symbol, []);
+      }
+      symbolGroups.get(row.symbol)!.push({
+        date: row.date,
+        open: row.open,
+        high: row.high,
+        low: row.low,
+        close: row.close,
+        volume: row.volume || 0,
+      });
+    }
+    
+    // Map back to Yahoo symbols for screener compatibility
+    const dbToYahoo = new Map<string, string>();
+    for (const [yahoo, db] of Object.entries(YAHOO_TO_DB_SYMBOL)) {
+      dbToYahoo.set(db, yahoo);
+    }
+    
+    for (const [dbSymbol, bars] of symbolGroups) {
+      // Find original Yahoo symbol
+      const yahooSymbol = symbols.find(s => getDbSymbol(s) === dbSymbol);
+      if (yahooSymbol && bars.length >= 20) {
+        results.set(yahooSymbol, bars);
+      }
+    }
+    
+    console.log(`[loadFromDbCache] Found ${results.size}/${symbols.length} symbols in cache`);
+    return results;
+  } catch (err) {
+    console.error('[loadFromDbCache] Error:', err);
+    return results;
+  }
+}
+
 function calculateATR(bars: any[], period: number = 14): number {
   if (bars.length < period + 1) return 0;
   const recentBars = bars.slice(-period - 1);
@@ -641,7 +750,9 @@ function calculateATR(bars: any[], period: number = 14): number {
 }
 
 // Parallel fetch with concurrency limit and per-symbol caching
-async function fetchYahooDataBatch(
+// Now with DB-first approach: checks historical_prices table first
+async function fetchDataBatchWithDbFallback(
+  supabase: any,
   symbols: string[],
   startDate: string,
   endDate: string,
@@ -651,9 +762,8 @@ async function fetchYahooDataBatch(
   const results = new Map<string, any[]>();
   const now = Date.now();
   
-  // Separate symbols into cached vs needs-fetch
-  const symbolsToFetch: string[] = [];
-  
+  // Step 1: Check in-memory cache first (fastest)
+  const symbolsAfterMemCache: string[] = [];
   for (const symbol of symbols) {
     const cacheKey = `${symbol}:${interval}`;
     const cached = symbolDataCache.get(cacheKey);
@@ -661,19 +771,42 @@ async function fetchYahooDataBatch(
     if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length > 0) {
       results.set(symbol, cached.bars);
     } else {
-      symbolsToFetch.push(symbol);
+      symbolsAfterMemCache.push(symbol);
     }
   }
   
-  console.log(`[fetchYahooDataBatch] ${results.size} cached, ${symbolsToFetch.length} to fetch`);
+  console.log(`[fetchData] Memory cache: ${results.size} hits, ${symbolsAfterMemCache.length} remaining`);
   
-  if (symbolsToFetch.length === 0) {
+  if (symbolsAfterMemCache.length === 0) {
     return results;
   }
   
-  // Process remaining symbols in parallel batches
-  for (let i = 0; i < symbolsToFetch.length; i += concurrency) {
-    const batch = symbolsToFetch.slice(i, i + concurrency);
+  // Step 2: Load from DB cache (fast - no external API)
+  const dbCacheResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, 90);
+  
+  // Add DB results and update memory cache
+  const symbolsNeedingYahoo: string[] = [];
+  for (const symbol of symbolsAfterMemCache) {
+    const dbBars = dbCacheResults.get(symbol);
+    if (dbBars && dbBars.length >= 20) {
+      results.set(symbol, dbBars);
+      // Also store in memory cache
+      const cacheKey = `${symbol}:${interval}`;
+      symbolDataCache.set(cacheKey, { bars: dbBars, timestamp: now });
+    } else {
+      symbolsNeedingYahoo.push(symbol);
+    }
+  }
+  
+  console.log(`[fetchData] DB cache: ${dbCacheResults.size} hits, ${symbolsNeedingYahoo.length} need Yahoo fetch`);
+  
+  if (symbolsNeedingYahoo.length === 0) {
+    return results;
+  }
+  
+  // Step 3: Fetch remaining from Yahoo Finance (slowest)
+  for (let i = 0; i < symbolsNeedingYahoo.length; i += concurrency) {
+    const batch = symbolsNeedingYahoo.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(
       batch.map(symbol => fetchYahooDataSingle(symbol, startDate, endDate, interval))
     );
@@ -689,6 +822,7 @@ async function fetchYahooDataBatch(
     });
   }
   
+  console.log(`[fetchData] Final total: ${results.size}/${symbols.length} symbols loaded`);
   return results;
 }
 
@@ -965,11 +1099,11 @@ serve(async (req) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 90); // 90 days of data
     
-    // PARALLEL FETCH: Fetch all instrument data concurrently
-    // Use higher concurrency for all asset types since they can have up to 25+ symbols
-    // Stocks and commodities especially need higher concurrency for faster response
+    // DB-FIRST FETCH: Check historical_prices DB cache, then fall back to Yahoo
+    // This dramatically speeds up loading for daily charts since data is pre-cached
     const fetchConcurrency = 25;
-    const instrumentDataMap = await fetchYahooDataBatch(
+    const instrumentDataMap = await fetchDataBatchWithDbFallback(
+      supabase,
       instruments,
       startDate.toISOString().split('T')[0],
       endDate.toISOString().split('T')[0],
