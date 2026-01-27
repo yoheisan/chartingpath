@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
-  Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown
+  Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown,
+  LayoutGrid, ArrowUpDown
 } from 'lucide-react';
 import {
   Tooltip,
@@ -27,6 +28,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { withTimeout } from '@/utils/withTimeout';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import InstrumentLogo from '@/components/charts/InstrumentLogo';
 
 // Full list of instruments available per asset class
 const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> = {
@@ -220,6 +231,14 @@ export default function LivePatternsPage() {
   const [patternFilter, setPatternFilter] = useState<string>('all');
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
+  // View mode toggle: 'list' (table) or 'panel' (cards)
+  const [viewMode, setViewMode] = useState<'list' | 'panel'>('panel');
+  
+  // Sorting for list view
+  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
+  const [sortKey, setSortKey] = useState<SortKey>('signal');
+  const [sortAsc, setSortAsc] = useState(true);
+  
   // Full chart viewer state
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
@@ -306,14 +325,64 @@ export default function LivePatternsPage() {
     return true;
   });
 
-  // Sort highlighted symbol to top
-  const sortedPatterns = [...filteredPatterns].sort((a, b) => {
-    if (highlightSymbol) {
-      if (a.instrument.includes(highlightSymbol)) return -1;
-      if (b.instrument.includes(highlightSymbol)) return 1;
+  // Sorting logic for list view
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortKey(key);
+      setSortAsc(true);
     }
-    return 0;
-  });
+  };
+
+  // Sort patterns (highlight to top, then by selected key)
+  const sortedPatterns = useMemo(() => {
+    const sorted = [...filteredPatterns].sort((a, b) => {
+      // Always prioritize highlighted symbol
+      if (highlightSymbol) {
+        if (a.instrument.includes(highlightSymbol)) return -1;
+        if (b.instrument.includes(highlightSymbol)) return 1;
+      }
+      
+      // Then apply user-selected sort (for list view)
+      if (viewMode === 'list') {
+        let cmp = 0;
+        switch (sortKey) {
+          case 'instrument':
+            cmp = a.instrument.localeCompare(b.instrument);
+            break;
+          case 'direction':
+            cmp = a.direction.localeCompare(b.direction);
+            break;
+          case 'rr':
+            cmp = a.tradePlan.rr - b.tradePlan.rr;
+            break;
+          case 'signal':
+            cmp = new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
+            break;
+        }
+        return sortAsc ? cmp : -cmp;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [filteredPatterns, highlightSymbol, viewMode, sortKey, sortAsc]);
+
+  // Group patterns by pattern name for list view (same as homepage)
+  const groupedPatterns = useMemo(() => {
+    const groups = new Map<string, LiveSetup[]>();
+    sortedPatterns.forEach(setup => {
+      const name = setup.patternName;
+      if (!groups.has(name)) groups.set(name, []);
+      groups.get(name)!.push(setup);
+    });
+    return Array.from(groups.entries());
+  }, [sortedPatterns]);
+
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortKey !== columnKey) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortAsc ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />;
+  };
 
   const handleOpenChart = (setup: LiveSetup) => {
     // Convert to SetupWithVisuals format
@@ -459,6 +528,21 @@ export default function LivePatternsPage() {
             </SelectContent>
           </Select>
           
+          {/* View Toggle */}
+          <ToggleGroup 
+            type="single" 
+            value={viewMode} 
+            onValueChange={(v) => v && setViewMode(v as 'list' | 'panel')}
+            className="border rounded-md p-0.5"
+          >
+            <ToggleGroupItem value="list" aria-label="List view" className="h-8 w-8 p-0">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="panel" aria-label="Panel view" className="h-8 w-8 p-0">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
           <Button 
             variant="outline" 
             size="sm" 
@@ -538,8 +622,183 @@ export default function LivePatternsPage() {
         </Card>
       )}
 
-      {/* Patterns Grid */}
-      {sortedPatterns.length > 0 && (
+      {/* Patterns - List View */}
+      {sortedPatterns.length > 0 && viewMode === 'list' && (
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead 
+                    className="cursor-pointer select-none whitespace-nowrap"
+                    onClick={() => handleSort('instrument')}
+                  >
+                    <div className="flex items-center">
+                      Symbol
+                      <SortIcon columnKey="instrument" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="whitespace-nowrap">Pattern</TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none whitespace-nowrap"
+                    onClick={() => handleSort('direction')}
+                  >
+                    <div className="flex items-center">
+                      Signal
+                      <SortIcon columnKey="direction" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right whitespace-nowrap">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center justify-end gap-1 cursor-help">
+                            Price
+                            <Info className="h-3 w-3 opacity-50" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Previous session close price. Daily data only.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  <TableHead className="text-right whitespace-nowrap">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center justify-end gap-1 cursor-help">
+                            Chg %
+                            <Info className="h-3 w-3 opacity-50" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Change from prior session's close.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none text-right whitespace-nowrap"
+                    onClick={() => handleSort('rr')}
+                  >
+                    <div className="flex items-center justify-end">
+                      R:R
+                      <SortIcon columnKey="rr" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none text-right whitespace-nowrap"
+                    onClick={() => handleSort('signal')}
+                  >
+                    <div className="flex items-center justify-end">
+                      Age
+                      <SortIcon columnKey="signal" />
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {groupedPatterns.map(([patternName, setups]) => (
+                  <>
+                    {/* Pattern Group Header */}
+                    <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
+                      <TableCell colSpan={7} className="py-2">
+                        <span className="font-semibold text-sm">{patternName}</span>
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {setups.length}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    {/* Pattern Rows */}
+                    {setups.map((setup, idx) => {
+                      const isLong = setup.direction === 'long';
+                      const signalAge = formatSignalAgeSimple(setup.signalTs);
+                      const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
+                      const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
+                      
+                      return (
+                        <TableRow 
+                          key={`${setup.instrument}-${setup.patternId}-${idx}`}
+                          className={`cursor-pointer hover:bg-muted/50 transition-colors ${
+                            isHighlighted ? 'bg-primary/5' : ''
+                          }`}
+                          onClick={() => handleOpenChart(setup)}
+                        >
+                          <TableCell>
+                            <InstrumentLogo instrument={setup.instrument} />
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {setup.patternName}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="outline"
+                              className={`font-medium ${
+                                isLong 
+                                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30' 
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
+                              }`}
+                            >
+                              {isLong ? (
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                              ) : (
+                                <TrendingDown className="h-3 w-3 mr-1" />
+                              )}
+                              {isLong ? 'Long' : 'Short'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="font-mono text-sm">
+                              {setup.currentPrice != null 
+                                ? setup.currentPrice.toLocaleString(undefined, { 
+                                    minimumFractionDigits: setup.currentPrice < 10 ? 4 : 2,
+                                    maximumFractionDigits: setup.currentPrice < 10 ? 4 : 2
+                                  })
+                                : setup.tradePlan.entry.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  })}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {setup.changePercent != null ? (
+                              <span className={`font-mono text-sm font-medium ${
+                                setup.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.changePercent >= 0 ? '+' : ''}{setup.changePercent.toFixed(2)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className={`font-semibold ${
+                              setup.tradePlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
+                            }`}>
+                              {setup.tradePlan.rr.toFixed(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className={`text-xs ${
+                              isFresh ? 'text-green-500' : 'text-muted-foreground'
+                            }`}>
+                              {signalAge}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Patterns - Panel View (Cards) */}
+      {sortedPatterns.length > 0 && viewMode === 'panel' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedPatterns.map((setup, idx) => {
             const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
