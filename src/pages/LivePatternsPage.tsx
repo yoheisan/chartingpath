@@ -261,6 +261,9 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
+      // Use longer timeout for stocks which can take longer to fetch from Yahoo Finance
+      const timeoutMs = typeToFetch === 'stocks' ? 25_000 : 15_000;
+      
       const { data, error: fnError } = await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
@@ -270,7 +273,7 @@ export default function LivePatternsPage() {
             allowedPatterns: caps.allowedPatterns,
           },
         }),
-        12_000,
+        timeoutMs,
         'scan-live-patterns',
       );
       
