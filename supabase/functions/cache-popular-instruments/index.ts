@@ -1,132 +1,19 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { 
+  ALL_INSTRUMENTS, 
+  AssetCategory,
+  type Instrument 
+} from '../_shared/screenerInstruments.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// =============================================================================
-// ALL SCREENER INSTRUMENTS - Must match scan-live-patterns BASE_INSTRUMENTS
-// These are pre-cached daily for instant screener loading
-// =============================================================================
-
-const SCREENER_INSTRUMENTS = {
-  fx: [
-    { symbol: 'EUR/USD', yahooSymbol: 'EURUSD=X' },
-    { symbol: 'GBP/USD', yahooSymbol: 'GBPUSD=X' },
-    { symbol: 'USD/JPY', yahooSymbol: 'USDJPY=X' },
-    { symbol: 'AUD/USD', yahooSymbol: 'AUDUSD=X' },
-    { symbol: 'USD/CAD', yahooSymbol: 'USDCAD=X' },
-    { symbol: 'NZD/USD', yahooSymbol: 'NZDUSD=X' },
-    { symbol: 'USD/CHF', yahooSymbol: 'USDCHF=X' },
-    { symbol: 'EUR/GBP', yahooSymbol: 'EURGBP=X' },
-    { symbol: 'EUR/JPY', yahooSymbol: 'EURJPY=X' },
-    { symbol: 'GBP/JPY', yahooSymbol: 'GBPJPY=X' },
-    { symbol: 'AUD/JPY', yahooSymbol: 'AUDJPY=X' },
-    { symbol: 'EUR/AUD', yahooSymbol: 'EURAUD=X' },
-    { symbol: 'EUR/CHF', yahooSymbol: 'EURCHF=X' },
-    { symbol: 'AUD/NZD', yahooSymbol: 'AUDNZD=X' },
-    { symbol: 'CAD/JPY', yahooSymbol: 'CADJPY=X' },
-    { symbol: 'NZD/JPY', yahooSymbol: 'NZDJPY=X' },
-    { symbol: 'GBP/AUD', yahooSymbol: 'GBPAUD=X' },
-    { symbol: 'GBP/CAD', yahooSymbol: 'GBPCAD=X' },
-    { symbol: 'AUD/CAD', yahooSymbol: 'AUDCAD=X' },
-    { symbol: 'EUR/CAD', yahooSymbol: 'EURCAD=X' },
-    { symbol: 'CHF/JPY', yahooSymbol: 'CHFJPY=X' },
-    { symbol: 'GBP/CHF', yahooSymbol: 'GBPCHF=X' },
-    { symbol: 'EUR/NZD', yahooSymbol: 'EURNZD=X' },
-    { symbol: 'CAD/CHF', yahooSymbol: 'CADCHF=X' },
-    { symbol: 'AUD/CHF', yahooSymbol: 'AUDCHF=X' },
-  ],
-  crypto: [
-    { symbol: 'BTC/USD', yahooSymbol: 'BTC-USD' },
-    { symbol: 'ETH/USD', yahooSymbol: 'ETH-USD' },
-    { symbol: 'SOL/USD', yahooSymbol: 'SOL-USD' },
-    { symbol: 'BNB/USD', yahooSymbol: 'BNB-USD' },
-    { symbol: 'XRP/USD', yahooSymbol: 'XRP-USD' },
-    { symbol: 'ADA/USD', yahooSymbol: 'ADA-USD' },
-    { symbol: 'AVAX/USD', yahooSymbol: 'AVAX-USD' },
-    { symbol: 'DOGE/USD', yahooSymbol: 'DOGE-USD' },
-    { symbol: 'LINK/USD', yahooSymbol: 'LINK-USD' },
-    { symbol: 'MATIC/USD', yahooSymbol: 'MATIC-USD' },
-    { symbol: 'DOT/USD', yahooSymbol: 'DOT-USD' },
-    { symbol: 'SHIB/USD', yahooSymbol: 'SHIB-USD' },
-    { symbol: 'LTC/USD', yahooSymbol: 'LTC-USD' },
-    { symbol: 'UNI/USD', yahooSymbol: 'UNI-USD' },
-    { symbol: 'ATOM/USD', yahooSymbol: 'ATOM-USD' },
-    { symbol: 'XLM/USD', yahooSymbol: 'XLM-USD' },
-    { symbol: 'NEAR/USD', yahooSymbol: 'NEAR-USD' },
-    { symbol: 'APT/USD', yahooSymbol: 'APT-USD' },
-    { symbol: 'ARB/USD', yahooSymbol: 'ARB-USD' },
-    { symbol: 'OP/USD', yahooSymbol: 'OP-USD' },
-    { symbol: 'FIL/USD', yahooSymbol: 'FIL-USD' },
-    { symbol: 'INJ/USD', yahooSymbol: 'INJ-USD' },
-    { symbol: 'AAVE/USD', yahooSymbol: 'AAVE-USD' },
-    { symbol: 'MKR/USD', yahooSymbol: 'MKR-USD' },
-    { symbol: 'SAND/USD', yahooSymbol: 'SAND-USD' },
-  ],
-  stocks: [
-    { symbol: 'AAPL', yahooSymbol: 'AAPL' },
-    { symbol: 'MSFT', yahooSymbol: 'MSFT' },
-    { symbol: 'GOOGL', yahooSymbol: 'GOOGL' },
-    { symbol: 'AMZN', yahooSymbol: 'AMZN' },
-    { symbol: 'META', yahooSymbol: 'META' },
-    { symbol: 'TSLA', yahooSymbol: 'TSLA' },
-    { symbol: 'NVDA', yahooSymbol: 'NVDA' },
-    { symbol: 'JPM', yahooSymbol: 'JPM' },
-    { symbol: 'V', yahooSymbol: 'V' },
-    { symbol: 'JNJ', yahooSymbol: 'JNJ' },
-    { symbol: 'WMT', yahooSymbol: 'WMT' },
-    { symbol: 'PG', yahooSymbol: 'PG' },
-    { symbol: 'UNH', yahooSymbol: 'UNH' },
-    { symbol: 'HD', yahooSymbol: 'HD' },
-    { symbol: 'BAC', yahooSymbol: 'BAC' },
-    { symbol: 'MA', yahooSymbol: 'MA' },
-    { symbol: 'DIS', yahooSymbol: 'DIS' },
-    { symbol: 'NFLX', yahooSymbol: 'NFLX' },
-    { symbol: 'ADBE', yahooSymbol: 'ADBE' },
-    { symbol: 'CRM', yahooSymbol: 'CRM' },
-    { symbol: 'PFE', yahooSymbol: 'PFE' },
-    { symbol: 'KO', yahooSymbol: 'KO' },
-    { symbol: 'PEP', yahooSymbol: 'PEP' },
-    { symbol: 'MRK', yahooSymbol: 'MRK' },
-    { symbol: 'CSCO', yahooSymbol: 'CSCO' },
-  ],
-  commodities: [
-    { symbol: 'GC=F', yahooSymbol: 'GC=F' },  // Gold
-    { symbol: 'SI=F', yahooSymbol: 'SI=F' },  // Silver
-    { symbol: 'CL=F', yahooSymbol: 'CL=F' },  // Crude Oil
-    { symbol: 'NG=F', yahooSymbol: 'NG=F' },  // Natural Gas
-    { symbol: 'HG=F', yahooSymbol: 'HG=F' },  // Copper
-    { symbol: 'PL=F', yahooSymbol: 'PL=F' },  // Platinum
-    { symbol: 'PA=F', yahooSymbol: 'PA=F' },  // Palladium
-    { symbol: 'ZC=F', yahooSymbol: 'ZC=F' },  // Corn
-    { symbol: 'ZW=F', yahooSymbol: 'ZW=F' },  // Wheat
-    { symbol: 'ZS=F', yahooSymbol: 'ZS=F' },  // Soybeans
-    { symbol: 'KC=F', yahooSymbol: 'KC=F' },  // Coffee
-    { symbol: 'SB=F', yahooSymbol: 'SB=F' },  // Sugar
-    { symbol: 'CC=F', yahooSymbol: 'CC=F' },  // Cocoa
-    { symbol: 'CT=F', yahooSymbol: 'CT=F' },  // Cotton
-    { symbol: 'LE=F', yahooSymbol: 'LE=F' },  // Live Cattle
-    { symbol: 'HE=F', yahooSymbol: 'HE=F' },  // Lean Hogs
-    { symbol: 'GF=F', yahooSymbol: 'GF=F' },  // Feeder Cattle
-    { symbol: 'ZO=F', yahooSymbol: 'ZO=F' },  // Oats
-    { symbol: 'ZR=F', yahooSymbol: 'ZR=F' },  // Rice
-    { symbol: 'ZL=F', yahooSymbol: 'ZL=F' },  // Soybean Oil
-    { symbol: 'RB=F', yahooSymbol: 'RB=F' },  // Gasoline
-    { symbol: 'HO=F', yahooSymbol: 'HO=F' },  // Heating Oil
-    { symbol: 'BZ=F', yahooSymbol: 'BZ=F' },  // Brent Crude
-    { symbol: 'ALI=F', yahooSymbol: 'ALI=F' }, // Aluminum
-    { symbol: 'ZN=F', yahooSymbol: 'ZN=F' },  // 10-Year T-Note
-  ],
-};
-
-// Timeframe config - primarily daily for screener
-const TIMEFRAME_CONFIGS = [
-  { timeframe: '1d', interval: '1d', lookbackDays: 120 }, // 4 months of daily data for patterns
-];
+// Timeframe config - daily data for pattern detection
+const LOOKBACK_DAYS = 120; // 4 months of daily data
 
 interface CacheResult {
   success: boolean;
@@ -136,19 +23,18 @@ interface CacheResult {
 
 async function fetchAndCacheInstrument(
   supabase: any,
-  instrument: { symbol: string; yahooSymbol: string },
-  category: string,
-  tfConfig: typeof TIMEFRAME_CONFIGS[0]
+  instrument: Instrument,
+  category: string
 ): Promise<CacheResult> {
   try {
     const end = new Date();
     const start = new Date();
-    start.setDate(start.getDate() - tfConfig.lookbackDays);
+    start.setDate(start.getDate() - LOOKBACK_DAYS);
 
     const period1 = Math.floor(start.getTime() / 1000);
     const period2 = Math.floor(end.getTime() / 1000);
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${instrument.yahooSymbol}?period1=${period1}&period2=${period2}&interval=${tfConfig.interval}`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${instrument.yahooSymbol}?period1=${period1}&period2=${period2}&interval=1d`;
     
     const response = await fetch(url, {
       headers: {
@@ -174,7 +60,7 @@ async function fetchAndCacheInstrument(
       .map((timestamp: number, index: number) => ({
         symbol: instrument.symbol,
         instrument_type: category,
-        timeframe: tfConfig.timeframe,
+        timeframe: '1d',
         date: new Date(timestamp * 1000).toISOString(),
         open: quotes.open[index],
         high: quotes.high[index],
@@ -187,12 +73,12 @@ async function fetchAndCacheInstrument(
       );
 
     if (records.length > 0) {
-      // Delete old records for this symbol/timeframe first
+      // Delete old records for this symbol first
       await supabase
         .from('historical_prices')
         .delete()
         .eq('symbol', instrument.symbol)
-        .eq('timeframe', tfConfig.timeframe);
+        .eq('timeframe', '1d');
 
       // Insert fresh data
       const { error: insertError } = await supabase
@@ -214,21 +100,46 @@ async function fetchAndCacheInstrument(
   }
 }
 
+async function processCategoryBatch(
+  supabase: any,
+  category: AssetCategory,
+  instruments: Instrument[],
+  delayMs: number = 150
+): Promise<{ category: string; succeeded: number; failed: number; records: number }> {
+  let succeeded = 0;
+  let failed = 0;
+  let totalRecords = 0;
+
+  for (const instrument of instruments) {
+    const result = await fetchAndCacheInstrument(supabase, instrument, category);
+    if (result.success) {
+      succeeded++;
+      totalRecords += result.records;
+    } else {
+      failed++;
+    }
+    // Rate limit delay
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+
+  return { category, succeeded, failed, records: totalRecords };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   const startTime = Date.now();
-  console.log('🚀 Starting screener instruments cache job...');
+  console.log('🚀 Starting comprehensive instrument cache job...');
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if specific category was requested
-    let categoriesToCache = ['fx', 'crypto', 'stocks', 'commodities'];
+    // Parse request body for category filter
+    let categoriesToCache: AssetCategory[] = ['fx', 'crypto', 'stocks', 'commodities', 'indices', 'etfs'];
     
     try {
       const body = await req.json();
@@ -239,54 +150,50 @@ serve(async (req) => {
       // No body or invalid JSON, use defaults
     }
 
+    // Calculate total instruments
+    const totalInstruments = categoriesToCache.reduce(
+      (sum, cat) => sum + (ALL_INSTRUMENTS[cat]?.length || 0), 
+      0
+    );
+    
+    console.log(`📊 Caching ${totalInstruments} instruments across ${categoriesToCache.length} categories...`);
+
     const results: Array<{ 
-      instrument: string; 
-      category: string;
-      timeframe: string; 
-      success: boolean; 
-      records: number; 
-      error?: string 
+      category: string; 
+      succeeded: number; 
+      failed: number; 
+      records: number 
     }> = [];
 
-    // Process all instruments sequentially to avoid rate limiting
+    // Process each category sequentially to avoid overwhelming Yahoo Finance
     for (const category of categoriesToCache) {
-      const instruments = SCREENER_INSTRUMENTS[category as keyof typeof SCREENER_INSTRUMENTS] || [];
-      console.log(`📊 Caching ${instruments.length} ${category} instruments...`);
+      const instruments = ALL_INSTRUMENTS[category] || [];
+      console.log(`\n📈 Processing ${category}: ${instruments.length} instruments...`);
       
-      for (const instrument of instruments) {
-        for (const tfConfig of TIMEFRAME_CONFIGS) {
-          const result = await fetchAndCacheInstrument(supabase, instrument, category, tfConfig);
-          results.push({
-            instrument: instrument.symbol,
-            category,
-            timeframe: tfConfig.timeframe,
-            success: result.success,
-            records: result.records,
-            error: result.error
-          });
-          
-          // Delay between requests to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
+      const categoryResult = await processCategoryBatch(supabase, category, instruments);
+      results.push(categoryResult);
+      
+      console.log(`✓ ${category}: ${categoryResult.succeeded}/${instruments.length} succeeded, ${categoryResult.records} records`);
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    const successCount = results.filter(r => r.success).length;
+    const totalSucceeded = results.reduce((sum, r) => sum + r.succeeded, 0);
+    const totalFailed = results.reduce((sum, r) => sum + r.failed, 0);
     const totalRecords = results.reduce((sum, r) => sum + r.records, 0);
 
-    console.log(`✅ Cache job complete in ${duration}s: ${successCount}/${results.length} succeeded, ${totalRecords} records cached`);
+    console.log(`\n✅ Cache job complete in ${duration}s`);
+    console.log(`📊 Summary: ${totalSucceeded}/${totalInstruments} instruments, ${totalRecords} total records`);
 
     return new Response(JSON.stringify({
       success: true,
       duration: `${duration}s`,
       summary: {
-        total: results.length,
-        succeeded: successCount,
-        failed: results.length - successCount,
+        totalInstruments,
+        succeeded: totalSucceeded,
+        failed: totalFailed,
         recordsCached: totalRecords
       },
-      details: results
+      byCategory: results
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
