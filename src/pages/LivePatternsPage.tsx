@@ -5,8 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
-  Filter, Clock, BarChart3, Target, Shield, Lock, Crown
+  Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
@@ -258,9 +264,32 @@ export default function LivePatternsPage() {
             </span>
           )}
         </div>
-        <h1 className="text-3xl font-bold mb-2">Active Pattern Screener</h1>
+        <div className="flex items-center gap-2 mb-2">
+          <h1 className="text-3xl font-bold">Active Pattern Screener</h1>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Info className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-sm p-3">
+                <p className="font-medium mb-2">How This Works</p>
+                <p className="text-sm mb-2">
+                  We scan a curated universe of {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
+                  for chart patterns using daily timeframe data.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Only instruments where an active pattern is detected are displayed below. 
+                  No instrument shown means no pattern setup was found in the current scan.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <p className="text-muted-foreground">
-          Real-time pattern detection across {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments
+          Scanning {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
+          Showing {patterns.length} with active patterns
         </p>
       </div>
 

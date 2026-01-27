@@ -700,17 +700,24 @@ export default function PatternScreenerTable() {
                       <Info className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <p className="font-medium mb-1">{UNIVERSE_INFO[assetType].description}</p>
-                    <p className="text-xs text-muted-foreground">{UNIVERSE_INFO[assetType].examples}</p>
+                  <TooltipContent side="bottom" className="max-w-sm p-3">
+                    <p className="font-medium mb-2">Universe Coverage</p>
+                    <p className="text-sm mb-2">{UNIVERSE_INFO[assetType].description}</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      <span className="font-medium">Includes:</span> {UNIVERSE_INFO[assetType].examples}
+                    </p>
+                    <p className="text-xs text-muted-foreground border-t pt-2 mt-2">
+                      Only instruments with detected patterns are displayed below. 
+                      No pattern shown means no active setup was found.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Scanning {UNIVERSE_INFO[assetType].count} instruments • {!marketOpen && assetType !== 'crypto' 
-                ? 'Patterns from last trading session'
-                : 'Click any row to view the full chart'}
+              Scanning {UNIVERSE_INFO[assetType].count} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
+              Showing {patterns.length > 0 ? `${patterns.length} with active patterns` : 'no active patterns'} 
+              {!marketOpen && assetType !== 'crypto' && ' (last session)'}
             </p>
           </div>
           <div className="flex items-center gap-3">
