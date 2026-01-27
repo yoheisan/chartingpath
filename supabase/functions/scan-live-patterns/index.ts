@@ -966,8 +966,9 @@ serve(async (req) => {
     startDate.setDate(startDate.getDate() - 90); // 90 days of data
     
     // PARALLEL FETCH: Fetch all instrument data concurrently
-    // Use higher concurrency for commodities since they're slower to respond
-    const fetchConcurrency = assetType === 'commodities' ? 25 : 15;
+    // Use higher concurrency for all asset types since they can have up to 25+ symbols
+    // Stocks and commodities especially need higher concurrency for faster response
+    const fetchConcurrency = 25;
     const instrumentDataMap = await fetchYahooDataBatch(
       instruments,
       startDate.toISOString().split('T')[0],
