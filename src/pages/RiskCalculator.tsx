@@ -229,15 +229,6 @@ const RiskCalculator = () => {
                     </div>
                   )}
 
-                  <div className="p-4 bg-secondary/50 rounded-lg">
-                    <h4 className="font-semibold text-foreground mb-2">Automate this risk control with our scripts</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Our trading scripts automatically calculate and apply these risk parameters to every trade.
-                    </p>
-                    <Button variant="outline" className="w-full">
-                      Get Free Scripts
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
