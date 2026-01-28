@@ -1031,6 +1031,9 @@ async function readCachedPatternsFromDb(
       currentPrice: row.current_price,
       prevClose: row.prev_close,
       changePercent: row.change_percent,
+      // Trend alignment data
+      trendAlignment: row.trend_alignment || null,
+      trendIndicators: row.trend_indicators || null,
     }));
     
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };

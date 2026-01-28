@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown,
-  LayoutGrid, ArrowUpDown, Search
+  LayoutGrid, ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus
 } from 'lucide-react';
 import {
   Tooltip,
@@ -177,6 +177,14 @@ interface LiveSetup {
   currentPrice?: number;
   prevClose?: number;
   changePercent?: number | null;
+  // Trend alignment data
+  trendAlignment?: 'with_trend' | 'counter_trend' | 'neutral' | null;
+  trendIndicators?: {
+    macd_signal?: string;
+    ema_trend?: string;
+    rsi_zone?: string;
+    adx_strength?: string;
+  } | null;
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
@@ -233,6 +241,7 @@ export default function LivePatternsPage() {
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [patternFilter, setPatternFilter] = useState<string>('all');
+  const [trendFilter, setTrendFilter] = useState<'all' | 'with_trend' | 'counter_trend'>('all');
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
   // View mode toggle: 'list' (table) or 'panel' (cards)
@@ -242,6 +251,9 @@ export default function LivePatternsPage() {
   type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(true);
+  
+  // Retry counter for refresh
+  const [retryCount, setRetryCount] = useState(0);
   
   // Full chart viewer state
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
@@ -338,8 +350,17 @@ export default function LivePatternsPage() {
   const filteredPatterns = patterns.filter(p => {
     if (directionFilter !== 'all' && p.direction !== directionFilter) return false;
     if (patternFilter !== 'all' && p.patternId !== patternFilter) return false;
+    if (trendFilter !== 'all' && p.trendAlignment !== trendFilter) return false;
     return true;
   });
+
+  // Calculate trend alignment stats
+  const trendStats = useMemo(() => {
+    const withTrend = patterns.filter(p => p.trendAlignment === 'with_trend').length;
+    const counterTrend = patterns.filter(p => p.trendAlignment === 'counter_trend').length;
+    const neutral = patterns.filter(p => p.trendAlignment === 'neutral' || !p.trendAlignment).length;
+    return { withTrend, counterTrend, neutral };
+  }, [patterns]);
 
   // Sorting logic for list view
   const handleSort = (key: SortKey) => {
@@ -538,6 +559,36 @@ export default function LivePatternsPage() {
             </SelectContent>
           </Select>
           
+          {/* Trend Alignment Filter */}
+          <ToggleGroup 
+            type="single" 
+            value={trendFilter} 
+            onValueChange={(v) => v && setTrendFilter(v as 'all' | 'with_trend' | 'counter_trend')}
+            className="border rounded-md p-0.5"
+          >
+            <ToggleGroupItem value="all" className="text-xs px-2 h-7">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="with_trend" className="text-xs px-2 h-7 gap-1">
+              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+              Trend
+              {trendStats.withTrend > 0 && (
+                <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                  {trendStats.withTrend}
+                </Badge>
+              )}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-7 gap-1">
+              <ArrowDownRight className="h-3 w-3 text-amber-500" />
+              Counter
+              {trendStats.counterTrend > 0 && (
+                <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                  {trendStats.counterTrend}
+                </Badge>
+              )}
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
           {/* View Toggle */}
           <ToggleGroup 
             type="single" 
@@ -556,7 +607,10 @@ export default function LivePatternsPage() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => fetchLivePatterns(true)}
+            onClick={() => {
+              setRetryCount(0);
+              fetchLivePatterns(true);
+            }}
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
@@ -773,6 +827,26 @@ export default function LivePatternsPage() {
                               )}
                               {isLong ? 'Long' : 'Short'}
                             </Badge>
+                            {/* Trend Alignment Badge */}
+                            {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
+                              <Badge 
+                                variant="outline"
+                                className={`ml-1.5 text-[10px] px-1.5 py-0 ${
+                                  setup.trendAlignment === 'with_trend' 
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                }`}
+                                title={setup.trendAlignment === 'with_trend' 
+                                  ? 'Pattern aligns with larger market trend' 
+                                  : 'Pattern is against the larger trend'}
+                              >
+                                {setup.trendAlignment === 'with_trend' ? (
+                                  <ArrowUpRight className="h-2.5 w-2.5" />
+                                ) : (
+                                  <ArrowDownRight className="h-2.5 w-2.5" />
+                                )}
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <span className="font-mono text-sm">
@@ -872,9 +946,37 @@ export default function LivePatternsPage() {
                     </Badge>
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {setup.patternName}
-                  </p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-sm text-muted-foreground">
+                      {setup.patternName}
+                    </p>
+                    {/* Trend Alignment Badge */}
+                    {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
+                      <Badge 
+                        variant="outline"
+                        className={`text-[10px] px-1.5 py-0 ${
+                          setup.trendAlignment === 'with_trend' 
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                        }`}
+                        title={setup.trendAlignment === 'with_trend' 
+                          ? 'Pattern aligns with larger market trend' 
+                          : 'Pattern is against the larger trend'}
+                      >
+                        {setup.trendAlignment === 'with_trend' ? (
+                          <>
+                            <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" />
+                            Trend
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />
+                            Counter
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
                   
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
