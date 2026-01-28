@@ -192,6 +192,14 @@ interface LiveSetup {
     avgRMultiple: number;
     sampleSize: number;
     avgDurationBars?: number;
+    // Accumulated ROI by time period (%)
+    accumulatedRoi?: {
+      threeMonth: number | null;
+      sixMonth: number | null;
+      oneYear: number | null;
+      threeYear: number | null;
+      fiveYear: number | null;
+    };
   };
 }
 
@@ -908,17 +916,21 @@ export default function LivePatternsPage() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1 cursor-help">
-                            Avg ROI
+                          <span className="flex items-center justify-end gap-1 cursor-help text-xs">
+                            3M
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Average return on investment (R-multiple) from historical pattern occurrences.</p>
+                          <p className="text-xs">Accumulated ROI from this pattern in the last 3 months.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs">6M</TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs">1Y</TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs">3Y</TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs">5Y</TableHead>
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('rr')}
@@ -944,7 +956,7 @@ export default function LivePatternsPage() {
                   <>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={7} className="py-2">
+                      <TableCell colSpan={11} className="py-2">
                         <span className="font-semibold text-sm">{patternName}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1020,12 +1032,61 @@ export default function LivePatternsPage() {
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
+                          {/* 3M ROI */}
                           <TableCell className="text-right">
-                            {setup.historicalPerformance?.avgRMultiple != null ? (
-                              <span className={`font-mono text-sm font-medium ${
-                                setup.historicalPerformance.avgRMultiple >= 0 ? 'text-green-500' : 'text-red-500'
+                            {setup.historicalPerformance?.accumulatedRoi?.threeMonth != null ? (
+                              <span className={`font-mono text-xs font-medium ${
+                                setup.historicalPerformance.accumulatedRoi.threeMonth >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
-                                {setup.historicalPerformance.avgRMultiple >= 0 ? '+' : ''}{setup.historicalPerformance.avgRMultiple.toFixed(2)}R
+                                {setup.historicalPerformance.accumulatedRoi.threeMonth >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.threeMonth.toFixed(0)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          {/* 6M ROI */}
+                          <TableCell className="text-right">
+                            {setup.historicalPerformance?.accumulatedRoi?.sixMonth != null ? (
+                              <span className={`font-mono text-xs font-medium ${
+                                setup.historicalPerformance.accumulatedRoi.sixMonth >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.historicalPerformance.accumulatedRoi.sixMonth >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.sixMonth.toFixed(0)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          {/* 1Y ROI */}
+                          <TableCell className="text-right">
+                            {setup.historicalPerformance?.accumulatedRoi?.oneYear != null ? (
+                              <span className={`font-mono text-xs font-medium ${
+                                setup.historicalPerformance.accumulatedRoi.oneYear >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.historicalPerformance.accumulatedRoi.oneYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.oneYear.toFixed(0)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          {/* 3Y ROI */}
+                          <TableCell className="text-right">
+                            {setup.historicalPerformance?.accumulatedRoi?.threeYear != null ? (
+                              <span className={`font-mono text-xs font-medium ${
+                                setup.historicalPerformance.accumulatedRoi.threeYear >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.historicalPerformance.accumulatedRoi.threeYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.threeYear.toFixed(0)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          {/* 5Y ROI */}
+                          <TableCell className="text-right">
+                            {setup.historicalPerformance?.accumulatedRoi?.fiveYear != null ? (
+                              <span className={`font-mono text-xs font-medium ${
+                                setup.historicalPerformance.accumulatedRoi.fiveYear >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.historicalPerformance.accumulatedRoi.fiveYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.fiveYear.toFixed(0)}%
                               </span>
                             ) : (
                               <span className="text-muted-foreground text-xs">—</span>
