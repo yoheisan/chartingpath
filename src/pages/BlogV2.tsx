@@ -59,7 +59,7 @@ interface Article {
   view_count: number;
 }
 
-// Fetch articles with React Query for caching
+// Shared fetch function - excludes heavy content field for list view
 const fetchArticles = async (): Promise<Article[]> => {
   const { data, error } = await supabase
     .from('learning_articles')
