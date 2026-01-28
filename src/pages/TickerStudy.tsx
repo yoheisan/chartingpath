@@ -276,7 +276,7 @@ export default function TickerStudy() {
       <div className="container mx-auto py-8 px-4">
         <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Study a Ticker</CardTitle>
+            <CardTitle className="text-2xl">Search Ticker</CardTitle>
             <p className="text-muted-foreground">
               Search for any instrument to view its historical pattern occurrences
             </p>
