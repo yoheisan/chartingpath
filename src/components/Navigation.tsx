@@ -49,34 +49,34 @@ const Navigation = () => {
         : 'text-muted-foreground hover:text-foreground'
     }`;
 
-  // Mobile nav content - outcome-centric structure
+  // Mobile nav content - discovery-first structure (lite → heavy users)
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
-      {/* Active Pattern Screener */}
+      {/* 1. Screener - Instant value */}
       <Link to="/patterns/live" className="flex items-center gap-2 text-foreground font-medium py-2">
-        <Activity className="h-5 w-5" />
-        Active Pattern Screener
+        <Activity className="h-5 w-5 text-amber-500" />
+        Screener
       </Link>
       
-      {/* Primary: Projects */}
-      <Link to="/projects" className="flex items-center gap-2 text-muted-foreground py-2">
-        <FolderKanban className="h-5 w-5" />
-        Projects
-      </Link>
-      
-      {/* My Results (merged Vault + Scripts) */}
-      <Link to="/vault" className="flex items-center gap-2 text-muted-foreground py-2">
-        <Database className="h-5 w-5" />
-        My Results
-      </Link>
-      
-      {/* Learn */}
+      {/* 2. Learn - Education for discovery */}
       <Link to="/learn" className="flex items-center gap-2 text-muted-foreground py-2">
         <BookOpen className="h-5 w-5" />
         Learn
       </Link>
       
-      {/* Pricing */}
+      {/* 3. Projects - For engaged users */}
+      <Link to="/projects" className="flex items-center gap-2 text-muted-foreground py-2">
+        <FolderKanban className="h-5 w-5" />
+        Projects
+      </Link>
+      
+      {/* 4. My Results - Returning users */}
+      <Link to="/vault" className="flex items-center gap-2 text-muted-foreground py-2">
+        <Database className="h-5 w-5" />
+        My Results
+      </Link>
+      
+      {/* 5. Pricing */}
       <Link to="/projects/pricing" className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
         Pricing
@@ -128,7 +128,34 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              {/* Primary: Projects with submenu */}
+              {/* 1. Screener - Instant value for lite users */}
+              <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
+                <Activity className="h-4 w-4 text-amber-500" />
+                Screener
+              </Link>
+              
+              {/* 2. Learn - Education for discovery users */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+                  <BookOpen className="h-4 w-4" />
+                  Learn
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-popover z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/library">Pattern Library</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/learn">Blog & Articles</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* 3. Projects - For engaged/heavy users */}
               <DropdownMenu>
                 <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/projects') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
                   <FolderKanban className="h-4 w-4" />
@@ -138,12 +165,6 @@ const Navigation = () => {
                 <DropdownMenuContent className="w-56 bg-popover z-50">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Run Analysis</DropdownMenuLabel>
                   <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/patterns/live" className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-amber-500" />
-                        Active Pattern Screener
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
                         <Search className="h-4 w-4 text-emerald-500" />
@@ -179,7 +200,7 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* My Results (merged Vault + Scripts) */}
+              {/* 4. My Results - For returning users */}
               <DropdownMenu>
                 <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/vault') || isActive('/members/scripts') || isActive('/members/alerts') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
                   <Database className="h-4 w-4" />
@@ -199,34 +220,13 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* Learn */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
-                  <BookOpen className="h-4 w-4" />
-                  Learn
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/library">Pattern Library</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/learn">Blog & Articles</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Pricing */}
+              {/* 5. Pricing */}
               <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>
                 <DollarSign className="h-4 w-4" />
                 {t('navigation.pricing', 'Pricing')}
               </Link>
               
-              {/* More - Simplified */}
+              {/* 6. More - Tools & Company */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
