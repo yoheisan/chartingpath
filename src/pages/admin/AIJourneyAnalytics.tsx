@@ -17,6 +17,7 @@ import { JourneyFlowVisualization } from '@/components/admin/JourneyFlowVisualiz
 import { BrokenPathsAnalysis } from '@/components/admin/BrokenPathsAnalysis';
 import { AIInsightsPanel } from '@/components/admin/AIInsightsPanel';
 import { UserSegmentsCard } from '@/components/admin/UserSegmentsCard';
+import { KPIEmailSubscription } from '@/components/admin/KPIEmailSubscription';
 
 type TimeWindow = '7d' | '30d' | '90d';
 
@@ -214,8 +215,8 @@ const AIJourneyAnalytics = () => {
             </div>
 
             {/* Main Tabs */}
-            <Tabs defaultValue="insights" className="space-y-6">
-              <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+<Tabs defaultValue="insights" className="space-y-6">
+              <TabsList className="grid grid-cols-5 w-full max-w-3xl">
                 <TabsTrigger value="insights" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
                   AI Insights
@@ -231,6 +232,10 @@ const AIJourneyAnalytics = () => {
                 <TabsTrigger value="segments" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Segments
+                </TabsTrigger>
+                <TabsTrigger value="email" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Email Reports
                 </TabsTrigger>
               </TabsList>
 
@@ -254,6 +259,10 @@ const AIJourneyAnalytics = () => {
                   segments={analytics.userSegments}
                   trafficSources={analytics.trafficSources}
                 />
+              </TabsContent>
+
+              <TabsContent value="email">
+                <KPIEmailSubscription />
               </TabsContent>
             </Tabs>
 

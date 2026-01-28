@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_kpi_subscriptions: {
+        Row: {
+          created_at: string
+          email: string
+          frequency: string
+          id: string
+          include_broken_paths: boolean | null
+          include_journey_analytics: boolean | null
+          include_revenue_metrics: boolean | null
+          include_user_stats: boolean | null
+          is_active: boolean
+          last_sent_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          frequency?: string
+          id?: string
+          include_broken_paths?: boolean | null
+          include_journey_analytics?: boolean | null
+          include_revenue_metrics?: boolean | null
+          include_user_stats?: boolean | null
+          is_active?: boolean
+          last_sent_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          frequency?: string
+          id?: string
+          include_broken_paths?: boolean | null
+          include_journey_analytics?: boolean | null
+          include_revenue_metrics?: boolean | null
+          include_user_stats?: boolean | null
+          is_active?: boolean
+          last_sent_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_sessions: {
         Row: {
           id: string
