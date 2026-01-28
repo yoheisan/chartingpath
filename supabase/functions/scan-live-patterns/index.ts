@@ -1059,8 +1059,19 @@ serve(async (req) => {
       }
     }
     
-    // Get instruments based on tier (maxTickers)
+  // Get instruments based on tier (maxTickers)
     const instruments = getInstrumentsForTier(assetType, maxTickers);
+    
+    // Get total instruments in the full universe (for accurate UI display)
+    const assetMap: Record<string, number> = {
+      fx: ALL_INSTRUMENTS.fx.length,
+      crypto: ALL_INSTRUMENTS.crypto.length,
+      stocks: ALL_INSTRUMENTS.stocks.length,
+      commodities: ALL_INSTRUMENTS.commodities.length,
+      indices: ALL_INSTRUMENTS.indices.length,
+      etfs: ALL_INSTRUMENTS.etfs.length,
+    };
+    const totalInstrumentsInUniverse = assetMap[assetType] || instruments.length;
     
     // Filter patterns based on tier allowedPatterns
     const patternsToScan = ALL_PATTERNS.filter(p => allowedPatterns.includes(p));
@@ -1087,6 +1098,7 @@ serve(async (req) => {
           patterns: dbCached.patterns,
           scannedAt: new Date().toISOString(),
           instrumentsScanned: dbCached.instrumentsScanned,
+          totalInUniverse: totalInstrumentsInUniverse,
           assetType,
           marketOpen,
           marketStatus: marketOpen ? 'open' : 'closed',
@@ -1277,6 +1289,7 @@ serve(async (req) => {
       patterns: setups,
       scannedAt: new Date().toISOString(),
       instrumentsScanned: instruments.length,
+      totalInUniverse: totalInstrumentsInUniverse,
       assetType,
       marketOpen,
       marketStatus: marketOpen ? 'open' : 'closed',
