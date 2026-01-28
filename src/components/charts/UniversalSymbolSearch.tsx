@@ -265,36 +265,36 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
         )}
       </DialogTrigger>
       <DialogContent 
-        className="max-w-2xl p-0 gap-0 bg-card border-border overflow-hidden"
+        className="max-w-3xl w-[95vw] p-0 gap-0 bg-card border-border overflow-hidden"
         onKeyDown={handleKeyDown}
       >
         {/* Search Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-5 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               ref={inputRef}
               type="text"
               placeholder="Search symbols, companies, or instruments..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 h-12 text-lg bg-background border-border"
+              className="pl-12 pr-12 h-14 text-lg bg-background border-border"
             />
             {searchQuery && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={() => setSearchQuery('')}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             )}
           </div>
         </div>
 
         {/* Asset Type Tabs */}
-        <div className="flex items-center gap-1 p-2 border-b border-border bg-muted/30 overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-3 border-b border-border bg-muted/30 overflow-x-auto">
           {ASSET_TYPES.map((type) => {
             const Icon = type.icon;
             const isActive = selectedType === type.id;
@@ -304,13 +304,13 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                 variant={isActive ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedType(type.id)}
-                className={`gap-1.5 flex-shrink-0 ${
+                className={`gap-2 flex-shrink-0 h-9 px-4 ${
                   isActive 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-muted'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{type.label}</span>
                 <span className="sm:hidden">{type.shortLabel}</span>
               </Button>
@@ -319,7 +319,7 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
         </div>
 
         {/* Results */}
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-[500px]">
           {filteredInstruments.length > 0 ? (
             <div className="p-2">
               {filteredInstruments.map((instrument) => (
@@ -367,13 +367,13 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
         </ScrollArea>
 
         {/* Footer */}
-        <div className="p-3 border-t border-border bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
-          <span>{filteredInstruments.length} results</span>
+        <div className="p-3 border-t border-border bg-muted/30 text-sm text-muted-foreground flex items-center justify-between">
+          <span>{filteredInstruments.length} instruments available • Search across 200+ global markets</span>
           <span className="flex items-center gap-2">
             <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↵</kbd>
-            <span>to select</span>
+            <span>select</span>
             <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">esc</kbd>
-            <span>to close</span>
+            <span>close</span>
           </span>
         </div>
       </DialogContent>
