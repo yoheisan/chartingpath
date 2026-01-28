@@ -6,13 +6,14 @@ import { TrendingUp, TrendingDown, RotateCcw, Info } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
-
+import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 interface Pattern {
   name: string;
   type: "reversal" | "continuation" | "candlestick";
   description: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   successRate: number;
+  chartKey?: string; // Key for DynamicPatternChart
 }
 
 const PATTERN_LIBRARY: Pattern[] = [
@@ -22,28 +23,32 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "reversal",
     description: "Most reliable bearish reversal pattern with three peaks",
     difficulty: "Intermediate",
-    successRate: 89
+    successRate: 89,
+    chartKey: "head-shoulders"
   },
   {
     name: "Inverted Head and Shoulders",
     type: "reversal",
     description: "Bullish reversal pattern with three troughs - mirror of Head and Shoulders",
     difficulty: "Intermediate",
-    successRate: 85
+    successRate: 85,
+    chartKey: "inverted-head-shoulders"
   },
   {
     name: "Double Top",
     type: "reversal", 
     description: "Bearish reversal with two peaks at same level",
     difficulty: "Beginner",
-    successRate: 78
+    successRate: 78,
+    chartKey: "double-top"
   },
   {
     name: "Double Bottom",
     type: "reversal",
     description: "Bullish reversal with two troughs at same level", 
     difficulty: "Beginner",
-    successRate: 79
+    successRate: 79,
+    chartKey: "double-bottom"
   },
   {
     name: "Triple Top",
@@ -80,49 +85,56 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "continuation",
     description: "Bullish continuation with horizontal resistance",
     difficulty: "Beginner",
-    successRate: 73
+    successRate: 73,
+    chartKey: "ascending-triangle"
   },
   {
     name: "Descending Triangle", 
     type: "continuation",
     description: "Bearish continuation with horizontal support",
     difficulty: "Beginner",
-    successRate: 64
+    successRate: 64,
+    chartKey: "descending-triangle"
   },
   {
     name: "Symmetrical Triangle",
     type: "continuation", 
     description: "Neutral triangle with converging trend lines",
     difficulty: "Intermediate",
-    successRate: 75
+    successRate: 75,
+    chartKey: "symmetrical-triangle"
   },
   {
     name: "Bull Flag",
     type: "continuation",
     description: "Brief consolidation in strong uptrend",
     difficulty: "Beginner",
-    successRate: 86
+    successRate: 86,
+    chartKey: "bull-flag"
   },
   {
     name: "Bear Flag",
     type: "continuation",
     description: "Brief consolidation in strong downtrend", 
     difficulty: "Beginner",
-    successRate: 82
+    successRate: 82,
+    chartKey: "bear-flag"
   },
   {
     name: "Pennant",
     type: "continuation",
     description: "Small symmetrical triangle after strong move",
     difficulty: "Intermediate",
-    successRate: 76
+    successRate: 76,
+    chartKey: "symmetrical-triangle"
   },
   {
     name: "Cup with Handle",
     type: "continuation",
     description: "Bullish continuation resembling a cup",
     difficulty: "Intermediate",
-    successRate: 65
+    successRate: 65,
+    chartKey: "cup-handle"
   },
   {
     name: "Rectangle",
@@ -136,14 +148,16 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "reversal",
     description: "Bearish reversal with converging upward sloping trendlines",
     difficulty: "Intermediate",
-    successRate: 68
+    successRate: 68,
+    chartKey: "rising-wedge"
   },
   {
     name: "Falling Wedge",
     type: "reversal", 
     description: "Bullish reversal with converging downward sloping trendlines",
     difficulty: "Intermediate",
-    successRate: 72
+    successRate: 72,
+    chartKey: "falling-wedge"
   },
 
   // Candlestick Patterns
@@ -276,37 +290,60 @@ export const PatternLibrary = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {patterns.map((pattern, index) => (
-              <Card key={index} className="p-6 hover:bg-card/80 transition-colors border-border/50">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <h4 
-                      className="font-semibold text-foreground text-lg cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
+              <Card 
+                key={index} 
+                className="overflow-hidden hover:border-primary/50 transition-colors border-border/50 cursor-pointer group"
+                onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
+              >
+                {/* Pattern Chart Visualization */}
+                {pattern.chartKey ? (
+                  <div className="relative h-40 bg-muted/30 overflow-hidden">
+                    <DynamicPatternChart 
+                      patternType={pattern.chartKey} 
+                      width={400} 
+                      height={200} 
+                      showTitle={false}
+                      className="w-full h-full object-cover scale-110 -translate-y-2"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                    <Badge 
+                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                      className="absolute top-2 right-2 text-xs"
                     >
+                      {pattern.type}
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="relative h-40 bg-muted/30 flex items-center justify-center">
+                    <div className="text-muted-foreground/50 text-sm">Pattern visualization</div>
+                    <Badge 
+                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                      className="absolute top-2 right-2 text-xs"
+                    >
+                      {pattern.type}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <h4 className="font-semibold text-foreground text-lg group-hover:text-primary transition-colors">
                       {pattern.name}
                     </h4>
-                    <div className="flex gap-2">
-                      <Badge 
-                        variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {pattern.type}
-                      </Badge>
-                    </div>
                   </div>
                   
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
                     {pattern.description}
                   </p>
                   
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2">
                       <Badge className={`text-xs ${getDifficultyColor(pattern.difficulty)}`}>
                         {pattern.difficulty}
                       </Badge>
-                      <div className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded-md">
-                        <span className="text-sm font-semibold text-success">
-                          {pattern.successRate}% Success Rate
+                      <div className="flex items-center gap-1 bg-success/10 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-semibold text-success">
+                          {pattern.successRate}%
                         </span>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -314,7 +351,7 @@ export const PatternLibrary = () => {
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p className="text-xs">
-                              The "success rate" in the pattern library is based on historical statistical analysis and backtesting data from Thomas Bulkowski's Encyclopedia of Chart Patterns. These percentages represent the historical likelihood of a pattern achieving its measured move target when correctly identified and traded.
+                              Success rate based on Thomas Bulkowski's Encyclopedia of Chart Patterns.
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -322,10 +359,9 @@ export const PatternLibrary = () => {
                     </div>
                     
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
-                      className="text-xs"
-                      onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
+                      className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       Learn More
                     </Button>
