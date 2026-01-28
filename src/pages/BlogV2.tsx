@@ -7,6 +7,44 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, Clock, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Slugs that have comprehensive static pages at /learn/
+const STATIC_ARTICLE_SLUGS = new Set([
+  'head-and-shoulders',
+  'double-top-bottom',
+  'triangle-patterns',
+  'wedge-patterns',
+  'flag-pennant',
+  'flag-pennant-patterns',
+  'cup-and-handle',
+  'rectangle-pattern',
+  'support-resistance',
+  'trend-analysis',
+  'volume-analysis',
+  'moving-averages',
+  'rsi-indicator',
+  'macd-indicator',
+  'fibonacci-retracements',
+  'candlestick-patterns',
+  'price-action-basics',
+  'breakout-trading',
+  'pin-bar-strategy',
+  'risk-management',
+  'position-sizing',
+  'money-management',
+  'trading-psychology',
+  'trading-discipline',
+  'fear-and-greed',
+  'trading-journal',
+]);
+
+// Get the correct article URL based on whether a static page exists
+const getArticleUrl = (slug: string): string => {
+  if (STATIC_ARTICLE_SLUGS.has(slug)) {
+    return `/learn/${slug}`;
+  }
+  return `/blog/${slug}`;
+};
+
 interface Article {
   id: string;
   title: string;
@@ -151,7 +189,7 @@ const BlogV2 = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArticles.map((article) => (
-              <Link key={article.id} to={`/blog/${article.slug}`}>
+              <Link key={article.id} to={getArticleUrl(article.slug)}>
                 <Card className="h-full hover:shadow-lg transition-shadow border-2 hover:border-primary/50 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
