@@ -1,119 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { computeBracketLevels, BRACKET_LEVELS_VERSION, ROUNDING_CONFIG } from "../_shared/bracketLevels.ts";
+import { ALL_INSTRUMENTS, type Instrument } from "../_shared/screenerInstruments.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Base instruments (FREE tier) - 25 per class
-const BASE_INSTRUMENTS: Record<string, string[]> = {
-  fx: [
-    'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'AUDUSD=X', 'USDCAD=X',
-    'NZDUSD=X', 'USDCHF=X', 'EURGBP=X', 'EURJPY=X', 'GBPJPY=X',
-    'AUDJPY=X', 'EURAUD=X', 'EURCHF=X', 'AUDNZD=X', 'CADJPY=X',
-    'NZDJPY=X', 'GBPAUD=X', 'GBPCAD=X', 'AUDCAD=X', 'EURCAD=X',
-    'CHFJPY=X', 'GBPCHF=X', 'EURNZD=X', 'CADCHF=X', 'AUDCHF=X'
-  ],
-  crypto: [
-    'BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD', 'XRP-USD',
-    'ADA-USD', 'AVAX-USD', 'DOGE-USD', 'LINK-USD', 'MATIC-USD',
-    'DOT-USD', 'SHIB-USD', 'LTC-USD', 'UNI-USD', 'ATOM-USD',
-    'XLM-USD', 'NEAR-USD', 'APT-USD', 'ARB-USD', 'OP-USD',
-    'FIL-USD', 'INJ-USD', 'AAVE-USD', 'MKR-USD', 'SAND-USD'
-  ],
-  stocks: [
-    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
-    'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
-    'WMT', 'PG', 'UNH', 'HD', 'BAC',
-    'MA', 'DIS', 'NFLX', 'ADBE', 'CRM',
-    'PFE', 'KO', 'PEP', 'MRK', 'CSCO'
-  ],
-  commodities: [
-    'GC=F', 'SI=F', 'CL=F', 'NG=F', 'HG=F',
-    'PL=F', 'PA=F', 'ZC=F', 'ZW=F', 'ZS=F',
-    'KC=F', 'SB=F', 'CC=F', 'CT=F', 'LE=F',
-    'HE=F', 'GF=F', 'ZO=F', 'ZR=F', 'ZL=F',
-    'RB=F', 'HO=F', 'BZ=F', 'ALI=F', 'ZN=F'
-  ]
-};
-
-// Extended instruments (PLUS+ tier) - 50 per class
-const EXTENDED_INSTRUMENTS: Record<string, string[]> = {
-  fx: [
-    'USDZAR=X', 'USDMXN=X', 'USDTRY=X', 'USDSEK=X', 'USDNOK=X',
-    'USDDKK=X', 'USDSGD=X', 'USDHKD=X', 'USDPLN=X', 'USDCZK=X',
-    'USDHUF=X', 'USDRUB=X', 'USDCNH=X', 'USDINR=X', 'USDTHB=X',
-    'EURSEK=X', 'EURNOK=X', 'EURDKK=X', 'EURPLN=X', 'EURCZK=X',
-    'EURHUF=X', 'EURTRY=X', 'GBPNZD=X', 'GBPZAR=X', 'AUDSGD=X'
-  ],
-  crypto: [
-    'SUI-USD', 'SEI-USD', 'TIA-USD', 'PEPE-USD', 'WIF-USD',
-    'BONK-USD', 'JUP-USD', 'PYTH-USD', 'RENDER-USD', 'FET-USD',
-    'TAO-USD', 'AR-USD', 'STX-USD', 'IMX-USD', 'AXS-USD',
-    'MANA-USD', 'GALA-USD', 'ENJ-USD', 'ICP-USD', 'VET-USD',
-    'ALGO-USD', 'HBAR-USD', 'EGLD-USD', 'FLOW-USD', 'THETA-USD'
-  ],
-  stocks: [
-    'AMD', 'INTC', 'QCOM', 'AVGO', 'TXN',
-    'IBM', 'ORCL', 'SAP', 'NOW', 'SNOW',
-    'PLTR', 'UBER', 'ABNB', 'SQ', 'PYPL',
-    'GS', 'MS', 'C', 'WFC', 'AXP',
-    'CVX', 'XOM', 'COP', 'SLB', 'EOG'
-  ],
-  commodities: [
-    'NQ=F', 'ES=F', 'YM=F', 'RTY=F', 'VIX=F',
-    'GE=F', 'ZT=F', 'ZF=F', 'ZB=F', 'UB=F',
-    'DX=F', '6E=F', '6J=F', '6B=F', '6C=F',
-    '6A=F', '6N=F', '6S=F', 'MGC=F', 'SIL=F',
-    'MCL=F', 'MNQ=F', 'MES=F', 'M2K=F', 'MYM=F'
-  ]
-};
-
-// Premium instruments (PRO/TEAM tier) - 75-100 per class
-const PREMIUM_INSTRUMENTS: Record<string, string[]> = {
-  fx: [
-    'USDIDR=X', 'USDPHP=X', 'USDMYR=X', 'USDKRW=X', 'USDTWD=X',
-    'USDCLP=X', 'USDCOP=X', 'USDBRL=X', 'USDARS=X', 'USDPEN=X',
-    'EURILS=X', 'EURRUB=X', 'EURRON=X', 'EURBGN=X', 'EURHRK=X',
-    'GBPMXN=X', 'GBPSGD=X', 'GBPHKD=X', 'AUDHKD=X', 'NZDSGD=X',
-    'CADMXN=X', 'CHFSGD=X', 'JPYKRW=X', 'SGDHKD=X', 'ZARJPY=X'
-  ],
-  crypto: [
-    'RNDR-USD', 'AGIX-USD', 'OCEAN-USD', 'WLD-USD', 'ONDO-USD',
-    'ETHFI-USD', 'ENA-USD', 'W-USD', 'STRK-USD', 'MANTA-USD',
-    'DYM-USD', 'ALT-USD', 'PIXEL-USD', 'PORTAL-USD', 'AEVO-USD',
-    'BOME-USD', 'SLERF-USD', 'MEW-USD', 'POPCAT-USD', 'BRETT-USD',
-    'TURBO-USD', 'FLOKI-USD', 'LUNC-USD', 'USTC-USD', 'ORDI-USD'
-  ],
-  stocks: [
-    'LLY', 'NVO', 'UNH', 'MRK', 'ABBV',
-    'PFE', 'TMO', 'ABT', 'DHR', 'BMY',
-    'SCHW', 'BLK', 'SPGI', 'ICE', 'CME',
-    'MMC', 'AON', 'TRV', 'PGR', 'AIG',
-    'F', 'GM', 'TM', 'RIVN', 'LCID'
-  ],
-  commodities: [
-    'LHc1', 'FCc1', 'LSUc1', 'LCOc1', 'WBSc1',
-    'OJc1', 'LBc1', 'CTc1', 'KCc1', 'SBc1',
-    'CCc1', 'RRc1', 'RSc1', 'ZMc1', 'ZLc1',
-    'OBc1', 'EHc1', 'NGLc1', 'PGc1', 'CLBc1',
-    'PAc1', 'PLc1', 'HGc1', 'SIc1', 'GCc1'
-  ]
-};
-
-// Helper to get instruments for a tier
+// Helper to get instruments for a tier - now uses shared comprehensive instrument list
 function getInstrumentsForTier(assetType: string, maxTickers: number): string[] {
-  const base = BASE_INSTRUMENTS[assetType] || [];
-  const extended = EXTENDED_INSTRUMENTS[assetType] || [];
-  const premium = PREMIUM_INSTRUMENTS[assetType] || [];
+  // Map asset type to shared instruments
+  const assetMap: Record<string, Instrument[]> = {
+    fx: ALL_INSTRUMENTS.fx,
+    crypto: ALL_INSTRUMENTS.crypto,
+    stocks: ALL_INSTRUMENTS.stocks,
+    commodities: ALL_INSTRUMENTS.commodities,
+    indices: ALL_INSTRUMENTS.indices,
+    etfs: ALL_INSTRUMENTS.etfs,
+  };
   
-  const all = [...base, ...extended, ...premium];
-  return all.slice(0, maxTickers);
+  const instruments = assetMap[assetType] || [];
+  // Return yahoo symbols, limited by tier's maxTickers
+  return instruments.slice(0, maxTickers).map(i => i.yahooSymbol);
 }
 
-// Legacy support
+// Legacy support - build from shared instruments
+const BASE_INSTRUMENTS: Record<string, string[]> = {
+  fx: ALL_INSTRUMENTS.fx.slice(0, 25).map(i => i.yahooSymbol),
+  crypto: ALL_INSTRUMENTS.crypto.slice(0, 25).map(i => i.yahooSymbol),
+  stocks: ALL_INSTRUMENTS.stocks.slice(0, 25).map(i => i.yahooSymbol),
+  commodities: ALL_INSTRUMENTS.commodities.slice(0, 25).map(i => i.yahooSymbol),
+};
+
 const INSTRUMENTS_BY_TYPE = BASE_INSTRUMENTS;
 
 const DEFAULT_ASSET_TYPE = 'fx';
