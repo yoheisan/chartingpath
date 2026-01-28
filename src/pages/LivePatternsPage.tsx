@@ -193,6 +193,7 @@ interface ScanResult {
   assetType?: AssetType;
   scannedAt: string;
   instrumentsScanned: number;
+  totalInUniverse?: number;
 }
 
 // Helper to detect asset type from instrument symbol
@@ -224,6 +225,7 @@ export default function LivePatternsPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [instrumentsScanned, setInstrumentsScanned] = useState(0);
+  const [totalInUniverse, setTotalInUniverse] = useState(0);
   
   // Filters - use detected type from highlight or default to 'fx'
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
@@ -278,6 +280,7 @@ export default function LivePatternsPage() {
         setPatterns(data.patterns);
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
+        setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
       } else {
         // No patterns found but not an error - show empty state
         setPatterns([]);
@@ -462,8 +465,13 @@ export default function LivePatternsPage() {
               <TooltipContent side="bottom" className="max-w-sm p-3">
                 <p className="font-medium mb-2">How This Works</p>
                 <p className="text-sm mb-2">
-                  We scan a curated universe of {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
+                  We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
                   for chart patterns using daily timeframe data.
+                  {instrumentsScanned < (totalInUniverse || 0) && (
+                    <span className="block mt-1 text-xs text-muted-foreground">
+                      Your plan has access to {instrumentsScanned} of these instruments.
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Only instruments where an active pattern is detected are displayed below. 
@@ -474,7 +482,7 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          Scanning {instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
+          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
           Showing {patterns.length} with active patterns
         </p>
       </div>
@@ -563,7 +571,7 @@ export default function LivePatternsPage() {
             className="mb-4 text-muted-foreground hover:text-foreground"
           >
             <List className="h-4 w-4 mr-2" />
-            View all {instrumentsScanned || AVAILABLE_INSTRUMENTS[assetType]?.length || 25} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments we scan
+            View all {totalInUniverse || instrumentsScanned || AVAILABLE_INSTRUMENTS[assetType]?.length || 25} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments we analyze
             {showInstrumentList ? (
               <ChevronUp className="h-4 w-4 ml-2" />
             ) : (
