@@ -94,7 +94,10 @@ export function HistoricalOccurrencesList({
     neutral: 0,
     winRate: 0,
     withTrendWinRate: 0,
-    counterTrendWinRate: 0
+    counterTrendWinRate: 0,
+    accumulatedRoi: 0,
+    withTrendRoi: 0,
+    counterTrendRoi: 0
   });
 
   useEffect(() => {
@@ -189,6 +192,19 @@ export function HistoricalOccurrencesList({
           const counterTrendWins = mapped.filter(o => o.trendAlignment === 'counter_trend' && o.outcome === 'win').length;
           const counterTrendTotal = mapped.filter(o => o.trendAlignment === 'counter_trend' && (o.outcome === 'win' || o.outcome === 'loss')).length;
           
+          // Calculate accumulated ROI (sum of all outcomePnlPercent)
+          const accumulatedRoi = mapped
+            .filter(o => o.outcomePnlPercent !== null)
+            .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
+          
+          const withTrendRoi = mapped
+            .filter(o => o.trendAlignment === 'with_trend' && o.outcomePnlPercent !== null)
+            .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
+          
+          const counterTrendRoi = mapped
+            .filter(o => o.trendAlignment === 'counter_trend' && o.outcomePnlPercent !== null)
+            .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
+          
           setStats({ 
             wins, 
             losses, 
@@ -198,7 +214,10 @@ export function HistoricalOccurrencesList({
             neutral,
             winRate,
             withTrendWinRate: withTrendTotal > 0 ? (withTrendWins / withTrendTotal) * 100 : 0,
-            counterTrendWinRate: counterTrendTotal > 0 ? (counterTrendWins / counterTrendTotal) * 100 : 0
+            counterTrendWinRate: counterTrendTotal > 0 ? (counterTrendWins / counterTrendTotal) * 100 : 0,
+            accumulatedRoi,
+            withTrendRoi,
+            counterTrendRoi
           });
         } else {
           // No data in DB - show empty state
@@ -295,6 +314,9 @@ export function HistoricalOccurrencesList({
   const filteredLosses = filteredOccurrences.filter(o => o.outcome === 'loss').length;
   const filteredTotal = filteredWins + filteredLosses;
   const filteredWinRate = filteredTotal > 0 ? (filteredWins / filteredTotal) * 100 : 0;
+  const filteredRoi = filteredOccurrences
+    .filter(o => o.outcomePnlPercent !== null)
+    .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
 
   return (
     <Card className={cn('overflow-hidden', className)}>
@@ -359,7 +381,7 @@ export function HistoricalOccurrencesList({
         
         {/* Accumulated Stats Panel */}
         <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
             <div>
               <div className="text-xs text-muted-foreground mb-1">
                 {trendFilter === 'all' ? 'Overall' : trendFilter === 'with_trend' ? 'With Trend' : 'Counter Trend'}
@@ -371,6 +393,16 @@ export function HistoricalOccurrencesList({
                 {filteredWinRate.toFixed(1)}%
               </div>
               <div className="text-xs text-muted-foreground">Win Rate</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Accumulated</div>
+              <div className={cn(
+                "text-lg font-bold",
+                filteredRoi >= 0 ? "text-bullish" : "text-bearish"
+              )}>
+                {filteredRoi >= 0 ? '+' : ''}{filteredRoi.toFixed(1)}%
+              </div>
+              <div className="text-xs text-muted-foreground">Total ROI</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground mb-1">Wins</div>
@@ -391,7 +423,7 @@ export function HistoricalOccurrencesList({
           
           {/* Trend Comparison (only show when 'all' filter is active and data exists) */}
           {trendFilter === 'all' && (stats.withTrend > 0 || stats.counterTrend > 0) && (
-            <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap justify-center gap-4 text-xs">
+            <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap justify-center gap-6 text-xs">
               {stats.withTrend > 0 && (
                 <div className="flex items-center gap-1.5">
                   <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
@@ -400,9 +432,14 @@ export function HistoricalOccurrencesList({
                     "font-semibold",
                     stats.withTrendWinRate >= 50 ? "text-bullish" : "text-bearish"
                   )}>
-                    {stats.withTrendWinRate.toFixed(1)}%
+                    {stats.withTrendWinRate.toFixed(1)}% win
                   </span>
-                  <span className="text-muted-foreground">({stats.withTrend})</span>
+                  <span className={cn(
+                    "font-semibold",
+                    stats.withTrendRoi >= 0 ? "text-bullish" : "text-bearish"
+                  )}>
+                    ({stats.withTrendRoi >= 0 ? '+' : ''}{stats.withTrendRoi.toFixed(1)}% ROI)
+                  </span>
                 </div>
               )}
               {stats.counterTrend > 0 && (
@@ -413,9 +450,14 @@ export function HistoricalOccurrencesList({
                     "font-semibold",
                     stats.counterTrendWinRate >= 50 ? "text-bullish" : "text-bearish"
                   )}>
-                    {stats.counterTrendWinRate.toFixed(1)}%
+                    {stats.counterTrendWinRate.toFixed(1)}% win
                   </span>
-                  <span className="text-muted-foreground">({stats.counterTrend})</span>
+                  <span className={cn(
+                    "font-semibold",
+                    stats.counterTrendRoi >= 0 ? "text-bullish" : "text-bearish"
+                  )}>
+                    ({stats.counterTrendRoi >= 0 ? '+' : ''}{stats.counterTrendRoi.toFixed(1)}% ROI)
+                  </span>
                 </div>
               )}
             </div>
