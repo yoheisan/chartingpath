@@ -416,28 +416,8 @@ export default function LivePatternsPage() {
     setChartOpen(true);
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-12 max-w-6xl">
-        <div className="mb-8">
-          <Skeleton className="h-8 w-64 mb-2" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <Skeleton className="h-40 w-full" />
-              <CardContent className="p-4">
-                <Skeleton className="h-5 w-24 mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-3 w-32" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Progressive loading: Show UI shell immediately, data loads in place
+  const showSkeletonCards = loading && patterns.length === 0;
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-6xl">
@@ -622,8 +602,24 @@ export default function LivePatternsPage() {
         </Card>
       )}
 
+      {/* Loading state - inline skeleton cards */}
+      {showSkeletonCards && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <Skeleton className="h-40 w-full" />
+              <CardContent className="p-4">
+                <Skeleton className="h-5 w-24 mb-2" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Empty state */}
-      {!error && sortedPatterns.length === 0 && (
+      {!error && !showSkeletonCards && sortedPatterns.length === 0 && (
         <Card className="p-12 text-center">
           <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Patterns Found</h3>
