@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { BookOpen, Clock, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 // Slugs that have comprehensive static pages at /learn/
 const STATIC_ARTICLE_SLUGS = new Set([
@@ -58,41 +59,33 @@ interface Article {
   view_count: number;
 }
 
+// Fetch articles with React Query for caching
+const fetchArticles = async (): Promise<Article[]> => {
+  const { data, error } = await supabase
+    .from('learning_articles')
+    .select('id, title, slug, excerpt, category, difficulty_level, reading_time_minutes, tags, published_at, view_count')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
 const BlogV2 = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  useEffect(() => {
-    fetchArticles();
-  }, []);
+  // React Query with 5-minute cache and background refetching
+  const { data: articles = [], isLoading } = useQuery({
+    queryKey: ['learning-articles'],
+    queryFn: fetchArticles,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchOnWindowFocus: false,
+  });
 
-  useEffect(() => {
-    filterArticles();
-  }, [searchQuery, selectedCategory, articles]);
-
-  const fetchArticles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('learning_articles')
-        .select('id, title, slug, excerpt, category, difficulty_level, reading_time_minutes, tags, published_at, view_count')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
-
-      if (error) throw error;
-
-      setArticles(data || []);
-      setFilteredArticles(data || []);
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterArticles = () => {
+  // Memoized filtering for performance
+  const filteredArticles = useMemo(() => {
     let filtered = articles;
 
     // Filter by category
@@ -110,12 +103,15 @@ const BlogV2 = () => {
       );
     }
 
-    setFilteredArticles(filtered);
-  };
+    return filtered;
+  }, [articles, searchQuery, selectedCategory]);
 
-  const categories = ["all", ...Array.from(new Set(articles.map(a => a.category)))];
+  const categories = useMemo(() => 
+    ["all", ...Array.from(new Set(articles.map(a => a.category)))],
+    [articles]
+  );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-12">

@@ -186,29 +186,32 @@ export function TrendIndicatorSettings({ onConfigChange, trigger }: TrendIndicat
           <Accordion type="multiple" defaultValue={['macd', 'ema']} className="space-y-2">
             {/* MACD Settings */}
             <AccordionItem value="macd" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={config.macd.enabled}
-                    onCheckedChange={(checked) => updateConfig('macd', { enabled: checked })}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className={cn(!config.macd.enabled && "text-muted-foreground")}>
-                    MACD
-                  </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="text-xs">Moving Average Convergence Divergence measures momentum by comparing two EMAs. Bullish when MACD crosses above signal line.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
+              <div className="flex items-center gap-3 py-4">
+                <Switch
+                  checked={config.macd.enabled}
+                  onCheckedChange={(checked) => updateConfig('macd', { enabled: checked })}
+                />
+                <AccordionTrigger className="hover:no-underline flex-1 py-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(!config.macd.enabled && "text-muted-foreground")}>
+                      MACD
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <span className="cursor-help">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="text-xs">Moving Average Convergence Divergence measures momentum by comparing two EMAs. Bullish when MACD crosses above signal line.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="pt-0 pb-4 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">Fast Period</Label>
@@ -255,29 +258,32 @@ export function TrendIndicatorSettings({ onConfigChange, trigger }: TrendIndicat
 
             {/* EMA Settings */}
             <AccordionItem value="ema" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={config.ema.enabled}
-                    onCheckedChange={(checked) => updateConfig('ema', { enabled: checked })}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className={cn(!config.ema.enabled && "text-muted-foreground")}>
-                    EMA Crossover
-                  </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="text-xs">Compares short and long Exponential Moving Averages. Bullish when price {'>'} short EMA {'>'} long EMA.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
+              <div className="flex items-center gap-3 py-4">
+                <Switch
+                  checked={config.ema.enabled}
+                  onCheckedChange={(checked) => updateConfig('ema', { enabled: checked })}
+                />
+                <AccordionTrigger className="hover:no-underline flex-1 py-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(!config.ema.enabled && "text-muted-foreground")}>
+                      EMA Crossover
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <span className="cursor-help">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="text-xs">Compares short and long Exponential Moving Averages. Bullish when price {'>'} short EMA {'>'} long EMA.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="pt-0 pb-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">Short EMA Period</Label>
@@ -312,29 +318,32 @@ export function TrendIndicatorSettings({ onConfigChange, trigger }: TrendIndicat
 
             {/* RSI Settings */}
             <AccordionItem value="rsi" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={config.rsi.enabled}
-                    onCheckedChange={(checked) => updateConfig('rsi', { enabled: checked })}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className={cn(!config.rsi.enabled && "text-muted-foreground")}>
-                    RSI
-                  </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="text-xs">Relative Strength Index measures overbought/oversold conditions. Values 0-100, typically {'<'}30 oversold, {'>'}70 overbought.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
+              <div className="flex items-center gap-3 py-4">
+                <Switch
+                  checked={config.rsi.enabled}
+                  onCheckedChange={(checked) => updateConfig('rsi', { enabled: checked })}
+                />
+                <AccordionTrigger className="hover:no-underline flex-1 py-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(!config.rsi.enabled && "text-muted-foreground")}>
+                      RSI
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <span className="cursor-help">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="text-xs">Relative Strength Index measures overbought/oversold conditions. Values 0-100, typically {'<'}30 oversold, {'>'}70 overbought.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="pt-0 pb-4 space-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Period</Label>
                   <Input
@@ -385,29 +394,32 @@ export function TrendIndicatorSettings({ onConfigChange, trigger }: TrendIndicat
 
             {/* ADX Settings */}
             <AccordionItem value="adx" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={config.adx.enabled}
-                    onCheckedChange={(checked) => updateConfig('adx', { enabled: checked })}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className={cn(!config.adx.enabled && "text-muted-foreground")}>
-                    ADX
-                  </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="text-xs">Average Directional Index measures trend strength (not direction). Higher values = stronger trend.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
+              <div className="flex items-center gap-3 py-4">
+                <Switch
+                  checked={config.adx.enabled}
+                  onCheckedChange={(checked) => updateConfig('adx', { enabled: checked })}
+                />
+                <AccordionTrigger className="hover:no-underline flex-1 py-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(!config.adx.enabled && "text-muted-foreground")}>
+                      ADX
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <span className="cursor-help">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="text-xs">Average Directional Index measures trend strength (not direction). Higher values = stronger trend.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="pt-0 pb-4 space-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Period</Label>
                   <Input
