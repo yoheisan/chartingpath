@@ -219,10 +219,41 @@ export function HistoricalOccurrencesList({
     return (
       <Card className={cn('overflow-hidden', className)}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            Historical Occurrences
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              Historical Occurrences
+            </CardTitle>
+            
+            {/* Show disabled filters during loading */}
+            <div className="flex items-center gap-2 opacity-50">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              <ToggleGroup type="single" value="all" className="h-7" disabled>
+                <ToggleGroupItem value="all" className="text-xs px-2 h-6">All</ToggleGroupItem>
+                <ToggleGroupItem value="with_trend" className="text-xs px-2 h-6">
+                  <ArrowUpRight className="h-3 w-3 mr-1 text-emerald-500" />
+                  With Trend
+                </ToggleGroupItem>
+                <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-6">
+                  <ArrowDownRight className="h-3 w-3 mr-1 text-amber-500" />
+                  Counter
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
+          
+          {/* Loading stats skeleton */}
+          <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i}>
+                  <Skeleton className="h-3 w-12 mx-auto mb-2" />
+                  <Skeleton className="h-6 w-10 mx-auto mb-1" />
+                  <Skeleton className="h-3 w-8 mx-auto" />
+                </div>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {[1, 2, 3].map(i => (
