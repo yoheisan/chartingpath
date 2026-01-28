@@ -155,9 +155,9 @@ export function HistoricalOccurrencesList({
             qualityScore: row.quality_score || 'B',
             visualSpec: row.visual_spec,
             bars: Array.isArray(row.bars) ? row.bars : [],
-            // NEW: Trend alignment fields
-            trendAlignment: (row as any).trend_alignment as 'with_trend' | 'counter_trend' | 'neutral' | null,
-            trendIndicators: (row as any).trend_indicators || null
+            // Trend alignment fields
+            trendAlignment: row.trend_alignment as 'with_trend' | 'counter_trend' | 'neutral' | null,
+            trendIndicators: row.trend_indicators as HistoricalOccurrence['trendIndicators']
           }));
           
           setOccurrences(mapped);
