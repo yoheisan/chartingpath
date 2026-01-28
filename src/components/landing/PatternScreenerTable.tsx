@@ -553,6 +553,7 @@ export default function PatternScreenerTable() {
         isRefresh,
       });
 
+      // Increase timeout - cold starts can take 15s+, but cached responses are <1s
       const { data, error: fnError } = await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
@@ -562,7 +563,7 @@ export default function PatternScreenerTable() {
             allowedPatterns: caps.allowedPatterns,
           },
         }),
-        12_000,
+        25_000,
         'scan-live-patterns',
       );
       

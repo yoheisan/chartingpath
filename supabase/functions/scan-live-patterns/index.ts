@@ -1126,7 +1126,11 @@ serve(async (req) => {
         
         console.log(`[scan-live-patterns] Fast path: Returning ${dbCached.patterns.length} patterns from DB cache (isFresh=${dbCached.isFresh})`);
         return new Response(JSON.stringify(responseData), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+          },
         });
       }
     }
@@ -1138,7 +1142,11 @@ serve(async (req) => {
     if (cached && Date.now() - cached.timestamp < cacheTtl && !forceRefresh) {
       console.log('[scan-live-patterns] Returning memory cached result');
       return new Response(JSON.stringify(cached.data), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+        },
       });
     }
     
@@ -1318,7 +1326,11 @@ serve(async (req) => {
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
     
     return new Response(JSON.stringify(responseData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+      },
     });
     
   } catch (error) {
