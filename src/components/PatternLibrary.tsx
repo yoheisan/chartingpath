@@ -55,28 +55,32 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "reversal",
     description: "Strong bearish reversal with three equal peaks",
     difficulty: "Advanced",
-    successRate: 83
+    successRate: 83,
+    chartKey: "triple-top"
   },
   {
     name: "Triple Bottom", 
     type: "reversal",
     description: "Strong bullish reversal with three equal troughs",
     difficulty: "Advanced",
-    successRate: 81
+    successRate: 81,
+    chartKey: "triple-bottom"
   },
   {
     name: "Bump-and-Run Reversal",
     type: "reversal",
     description: "Three-phase reversal pattern with trend acceleration",
     difficulty: "Advanced",
-    successRate: 64
+    successRate: 64,
+    chartKey: "bump-run-reversal"
   },
   {
     name: "Island Reversal",
     type: "reversal",
     description: "Gap-based reversal pattern isolated from main trend",
     difficulty: "Advanced",
-    successRate: 59
+    successRate: 59,
+    chartKey: "island-reversal"
   },
   
   // Continuation Patterns
@@ -141,7 +145,8 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "continuation",
     description: "Consolidation between horizontal support and resistance",
     difficulty: "Beginner",
-    successRate: 67
+    successRate: 67,
+    chartKey: "rectangle"
   },
   {
     name: "Rising Wedge",
@@ -166,63 +171,72 @@ const PATTERN_LIBRARY: Pattern[] = [
     type: "candlestick",
     description: "Bullish reversal with long lower shadow",
     difficulty: "Beginner",
-    successRate: 60
+    successRate: 60,
+    chartKey: "hammer"
   },
   {
     name: "Hanging Man",
     type: "candlestick", 
     description: "Bearish reversal with long lower shadow",
     difficulty: "Beginner",
-    successRate: 59
+    successRate: 59,
+    chartKey: "hanging-man"
   },
   {
     name: "Shooting Star",
     type: "candlestick",
     description: "Bearish reversal with long upper shadow",
     difficulty: "Beginner",
-    successRate: 62
+    successRate: 62,
+    chartKey: "shooting-star"
   },
   {
     name: "Doji",
     type: "candlestick",
     description: "Indecision candle with equal open/close",
     difficulty: "Beginner",
-    successRate: 52
+    successRate: 52,
+    chartKey: "doji"
   },
   {
     name: "Bullish Harami",
     type: "candlestick",
     description: "Small candle inside previous large bearish candle",
     difficulty: "Intermediate",
-    successRate: 63
+    successRate: 63,
+    chartKey: "bullish-harami"
   },
   {
     name: "Bearish Harami",
     type: "candlestick",
     description: "Small candle inside previous large bullish candle", 
     difficulty: "Intermediate",
-    successRate: 61
+    successRate: 61,
+    chartKey: "bearish-harami"
   },
   {
     name: "Bullish Engulfing",
     type: "candlestick",
     description: "Large bullish candle engulfing previous bearish candle",
     difficulty: "Beginner",
-    successRate: 63
+    successRate: 63,
+    chartKey: "bullish-engulfing"
   },
   {
     name: "Bearish Engulfing", 
     type: "candlestick",
     description: "Large bearish candle engulfing previous bullish candle",
     difficulty: "Beginner",
-    successRate: 79
+    successRate: 79,
+    chartKey: "bearish-engulfing"
   },
   {
     name: "Spinning Top",
     type: "candlestick",
     description: "Small body with long shadows indicating indecision",
     difficulty: "Beginner",
-    successRate: 45
+    successRate: 45,
+    chartKey: "spinning-top"
   }
 ];
 
@@ -295,35 +309,23 @@ export const PatternLibrary = () => {
                 className="overflow-hidden hover:border-primary/50 transition-colors border-border/50 cursor-pointer group"
                 onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
               >
-                {/* Pattern Chart Visualization */}
-                {pattern.chartKey ? (
-                  <div className="relative h-40 bg-muted/30 overflow-hidden">
-                    <DynamicPatternChart 
-                      patternType={pattern.chartKey} 
-                      width={400} 
-                      height={200} 
-                      showTitle={false}
-                      className="w-full h-full object-cover scale-110 -translate-y-2"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                    <Badge 
-                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="absolute top-2 right-2 text-xs"
-                    >
-                      {pattern.type}
-                    </Badge>
-                  </div>
-                ) : (
-                  <div className="relative h-40 bg-muted/30 flex items-center justify-center">
-                    <div className="text-muted-foreground/50 text-sm">Pattern visualization</div>
-                    <Badge 
-                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="absolute top-2 right-2 text-xs"
-                    >
-                      {pattern.type}
-                    </Badge>
-                  </div>
-                )}
+                {/* Pattern Chart Visualization - Now all patterns have chartKey */}
+                <div className="relative h-40 bg-muted/30 overflow-hidden">
+                  <DynamicPatternChart 
+                    patternType={pattern.chartKey || pattern.name.toLowerCase().replace(/\s+/g, '-')} 
+                    width={400} 
+                    height={200} 
+                    showTitle={false}
+                    className="w-full h-full object-cover scale-110 -translate-y-2"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                  <Badge 
+                    variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                    className="absolute top-2 right-2 text-xs"
+                  >
+                    {pattern.type}
+                  </Badge>
+                </div>
 
                 <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between">

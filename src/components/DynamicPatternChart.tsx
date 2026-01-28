@@ -10,20 +10,41 @@ interface DynamicPatternChartProps {
 }
 
 const PATTERN_TYPES: Record<string, { name: string; type: "reversal" | "continuation" | "candlestick" }> = {
+  // Reversal Patterns
   "head-shoulders": { name: "Head and Shoulders", type: "reversal" },
   "head-and-shoulders": { name: "Head and Shoulders", type: "reversal" },
   "inverted-head-shoulders": { name: "Inverted Head and Shoulders", type: "reversal" },
+  "inverse-head-shoulders": { name: "Inverted Head and Shoulders", type: "reversal" },
   "double-top": { name: "Double Top", type: "reversal" },
   "double-bottom": { name: "Double Bottom", type: "reversal" },
+  "triple-top": { name: "Triple Top", type: "reversal" },
+  "triple-bottom": { name: "Triple Bottom", type: "reversal" },
+  "bump-run-reversal": { name: "Bump-and-Run Reversal", type: "reversal" },
+  "island-reversal": { name: "Island Reversal", type: "reversal" },
+  "rising-wedge": { name: "Rising Wedge", type: "reversal" },
+  "falling-wedge": { name: "Falling Wedge", type: "reversal" },
+  
+  // Continuation Patterns
   "ascending-triangle": { name: "Ascending Triangle", type: "continuation" },
   "descending-triangle": { name: "Descending Triangle", type: "continuation" },
   "symmetrical-triangle": { name: "Symmetrical Triangle", type: "continuation" },
   "bull-flag": { name: "Bull Flag", type: "continuation" },
   "bear-flag": { name: "Bear Flag", type: "continuation" },
+  "pennant": { name: "Pennant", type: "continuation" },
   "cup-handle": { name: "Cup with Handle", type: "continuation" },
   "cup-and-handle": { name: "Cup with Handle", type: "continuation" },
-  "rising-wedge": { name: "Rising Wedge", type: "reversal" },
-  "falling-wedge": { name: "Falling Wedge", type: "reversal" },
+  "rectangle": { name: "Rectangle", type: "continuation" },
+  
+  // Candlestick Patterns
+  "hammer": { name: "Hammer", type: "candlestick" },
+  "hanging-man": { name: "Hanging Man", type: "candlestick" },
+  "shooting-star": { name: "Shooting Star", type: "candlestick" },
+  "doji": { name: "Doji", type: "candlestick" },
+  "bullish-harami": { name: "Bullish Harami", type: "candlestick" },
+  "bearish-harami": { name: "Bearish Harami", type: "candlestick" },
+  "bullish-engulfing": { name: "Bullish Engulfing", type: "candlestick" },
+  "bearish-engulfing": { name: "Bearish Engulfing", type: "candlestick" },
+  "spinning-top": { name: "Spinning Top", type: "candlestick" },
 };
 
 export const DynamicPatternChart = ({ 
