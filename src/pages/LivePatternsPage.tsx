@@ -261,9 +261,9 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
-      // DB-first caching makes loading much faster (data pre-cached in historical_prices)
-      // Fall back timeout is 15s for any remaining Yahoo fetches
-      const timeoutMs = 15_000;
+      // DB-first caching makes loading much faster (data pre-cached in live_pattern_detections)
+      // Fast path reads from DB in <1s; fallback live scan timeout is 25s
+      const timeoutMs = 25_000;
       
       const { data, error: fnError } = await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
