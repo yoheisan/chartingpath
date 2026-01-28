@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.seed-historical-patterns]
 verify_jwt = false
+
+[functions.backfill-trend-alignment]
+verify_jwt = false

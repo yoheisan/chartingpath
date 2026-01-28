@@ -666,9 +666,12 @@ function runHistoricalBacktest(
     const patternBars = bars.slice(Math.max(0, i - 49), i + 1);
     
     // NEW: Calculate trend alignment using full available history up to entry point
-    // Need 200+ bars for 200 EMA calculation
+    // Need 200+ bars for 200 EMA calculation - only compute if we have enough data
     const trendBars = bars.slice(Math.max(0, i - 250), i + 1);
-    const trendAnalysis = analyzePatternTrend(trendBars, pattern.direction);
+    // analyzePatternTrend requires 200+ bars, so only attempt if we have enough
+    const trendAnalysis = trendBars.length >= 200 
+      ? analyzePatternTrend(trendBars, pattern.direction)
+      : null;
     
     occurrences.push({
       symbol,
