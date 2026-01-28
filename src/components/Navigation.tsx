@@ -25,6 +25,7 @@ import {
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import { wedgeConfig } from "@/config/wedge";
+import { usePrefetchArticles } from "@/hooks/usePrefetchArticles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 const Navigation = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { prefetchArticles } = usePrefetchArticles();
   
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
@@ -59,7 +61,11 @@ const Navigation = () => {
       </Link>
       
       {/* 2. Learn - Education for discovery */}
-      <Link to="/learn" className="flex items-center gap-2 text-muted-foreground py-2">
+      <Link 
+        to="/learn" 
+        className="flex items-center gap-2 text-muted-foreground py-2"
+        onMouseEnter={prefetchArticles}
+      >
         <BookOpen className="h-5 w-5" />
         Learn
       </Link>
@@ -136,7 +142,10 @@ const Navigation = () => {
               
               {/* 2. Learn - Education for discovery users */}
               <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
+                <DropdownMenuTrigger 
+                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                  onMouseEnter={prefetchArticles}
+                >
                   <BookOpen className="h-4 w-4" />
                   Learn
                   <ChevronDown className="h-3 w-3" />
