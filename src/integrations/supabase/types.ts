@@ -1208,6 +1208,90 @@ export type Database = {
         }
         Relationships: []
       }
+      historical_pattern_occurrences: {
+        Row: {
+          asset_type: string
+          bars: Json
+          bars_to_outcome: number | null
+          created_at: string
+          detected_at: string
+          direction: string
+          entry_price: number
+          id: string
+          outcome: string | null
+          outcome_date: string | null
+          outcome_pnl_percent: number | null
+          outcome_price: number | null
+          pattern_end_date: string
+          pattern_id: string
+          pattern_name: string
+          pattern_start_date: string
+          quality_reasons: string[] | null
+          quality_score: string | null
+          risk_reward_ratio: number
+          stop_loss_price: number
+          symbol: string
+          take_profit_price: number
+          timeframe: string
+          updated_at: string
+          visual_spec: Json
+        }
+        Insert: {
+          asset_type: string
+          bars?: Json
+          bars_to_outcome?: number | null
+          created_at?: string
+          detected_at: string
+          direction: string
+          entry_price: number
+          id?: string
+          outcome?: string | null
+          outcome_date?: string | null
+          outcome_pnl_percent?: number | null
+          outcome_price?: number | null
+          pattern_end_date: string
+          pattern_id: string
+          pattern_name: string
+          pattern_start_date: string
+          quality_reasons?: string[] | null
+          quality_score?: string | null
+          risk_reward_ratio: number
+          stop_loss_price: number
+          symbol: string
+          take_profit_price: number
+          timeframe?: string
+          updated_at?: string
+          visual_spec?: Json
+        }
+        Update: {
+          asset_type?: string
+          bars?: Json
+          bars_to_outcome?: number | null
+          created_at?: string
+          detected_at?: string
+          direction?: string
+          entry_price?: number
+          id?: string
+          outcome?: string | null
+          outcome_date?: string | null
+          outcome_pnl_percent?: number | null
+          outcome_price?: number | null
+          pattern_end_date?: string
+          pattern_id?: string
+          pattern_name?: string
+          pattern_start_date?: string
+          quality_reasons?: string[] | null
+          quality_score?: string | null
+          risk_reward_ratio?: number
+          stop_loss_price?: number
+          symbol?: string
+          take_profit_price?: number
+          timeframe?: string
+          updated_at?: string
+          visual_spec?: Json
+        }
+        Relationships: []
+      }
       historical_prices: {
         Row: {
           close: number
