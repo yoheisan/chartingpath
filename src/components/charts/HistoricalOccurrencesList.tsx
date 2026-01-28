@@ -50,12 +50,15 @@ interface HistoricalOccurrencesListProps {
   className?: string;
 }
 
+// Show substantially more historical occurrences for proper 5-year backtested view
+const DEFAULT_LIMIT = 50;
+
 export function HistoricalOccurrencesList({ 
   patternId, 
   patternName,
   timeframe = '1d',
   direction,
-  limit = 10,
+  limit = DEFAULT_LIMIT,
   className 
 }: HistoricalOccurrencesListProps) {
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
