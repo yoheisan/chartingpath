@@ -1,17 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { computeBracketLevels, BRACKET_LEVELS_VERSION, ROUNDING_CONFIG } from "../_shared/bracketLevels.ts";
+import { computeBracketLevels } from "../_shared/bracketLevels.ts";
 import { ALL_INSTRUMENTS, type Instrument } from "../_shared/screenerInstruments.ts";
-import { analyzePatternTrend, type TrendAnalysisResult, type OHLCBar } from "../_shared/trendIndicators.ts";
+import { analyzePatternTrend, type OHLCBar } from "../_shared/trendIndicators.ts";
+import {
+  PATTERN_REGISTRY,
+  BASE_PATTERNS,
+  EXTENDED_PATTERNS,
+  PREMIUM_PATTERNS,
+  ALL_PATTERNS,
+  calculateATR,
+  isMarketOpen,
+  getDbSymbol,
+} from "../_shared/patternDetectors.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper to get instruments for a tier - now uses shared comprehensive instrument list
 function getInstrumentsForTier(assetType: string, maxTickers: number): string[] {
-  // Map asset type to shared instruments
   const assetMap: Record<string, Instrument[]> = {
     fx: ALL_INSTRUMENTS.fx,
     crypto: ALL_INSTRUMENTS.crypto,
@@ -20,649 +28,23 @@ function getInstrumentsForTier(assetType: string, maxTickers: number): string[] 
     indices: ALL_INSTRUMENTS.indices,
     etfs: ALL_INSTRUMENTS.etfs,
   };
-  
   const instruments = assetMap[assetType] || [];
-  // Return yahoo symbols, limited by tier's maxTickers
   return instruments.slice(0, maxTickers).map(i => i.yahooSymbol);
 }
 
-// Legacy support - build from shared instruments
-const BASE_INSTRUMENTS: Record<string, string[]> = {
-  fx: ALL_INSTRUMENTS.fx.slice(0, 25).map(i => i.yahooSymbol),
-  crypto: ALL_INSTRUMENTS.crypto.slice(0, 25).map(i => i.yahooSymbol),
-  stocks: ALL_INSTRUMENTS.stocks.slice(0, 25).map(i => i.yahooSymbol),
-  commodities: ALL_INSTRUMENTS.commodities.slice(0, 25).map(i => i.yahooSymbol),
-};
-
-const INSTRUMENTS_BY_TYPE = BASE_INSTRUMENTS;
-
-const DEFAULT_ASSET_TYPE = 'fx';
-
-// Base patterns (FREE tier) - 6 patterns
-const BASE_PATTERNS = [
-  'donchian-breakout-long', 'donchian-breakout-short',
-  'double-top', 'double-bottom',
-  'ascending-triangle', 'descending-triangle'
-];
-
-// Extended patterns (PLUS+ tier) - adds H&S, wedges
-const EXTENDED_PATTERNS = [
-  'head-and-shoulders', 'inverse-head-and-shoulders',
-  'rising-wedge', 'falling-wedge'
-];
-
-// Premium patterns (PRO/TEAM tier) - adds flags, cup & handle
-const PREMIUM_PATTERNS = [
-  'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom'
-];
-
-// All patterns combined
-const ALL_PATTERNS = [...BASE_PATTERNS];
-
-/**
- * Check if the market for a given asset type is currently open.
- * Used for UI indication only - does NOT filter out patterns.
- */
-function isMarketOpen(assetType: string): boolean {
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Crypto is 24/7
-  if (assetType === 'crypto') {
-    return true;
-  }
-  
-  // FX, stocks, commodities are closed on weekends
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  return !isWeekend;
-}
-
-
-interface PatternPivot {
-  index: number;
-  price: number;
-  type: 'high' | 'low';
-  label: string;
-  timestamp?: string;
-}
-
-interface PatternDetectionResult {
-  detected: boolean;
-  pivots: PatternPivot[];
-}
-
-// Pattern registry with detection logic
-const PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult }> = {
-  'donchian-breakout-long': {
-    direction: 'long',
-    detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const closes = window.map(d => d.close);
-      const lookbackHighs = highs.slice(0, -2);
-      const recentHigh = Math.max(...lookbackHighs);
-      const recentHighIdx = lookbackHighs.indexOf(recentHigh);
-      const currentClose = closes[closes.length - 1];
-      const prevClose = closes[closes.length - 2];
-      const detected = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
-      return {
-        detected,
-        pivots: detected ? [
-          { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
-          { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
-        ] : []
-      };
-    },
-    displayName: 'Donchian Breakout Long'
-  },
-  'donchian-breakout-short': {
-    direction: 'short',
-    detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      const lookbackLows = lows.slice(0, -2);
-      const recentLow = Math.min(...lookbackLows);
-      const recentLowIdx = lookbackLows.indexOf(recentLow);
-      const currentClose = closes[closes.length - 1];
-      const prevClose = closes[closes.length - 2];
-      const detected = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
-      return {
-        detected,
-        pivots: detected ? [
-          { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
-          { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
-        ] : []
-      };
-    },
-    displayName: 'Donchian Breakout Short'
-  },
-  'double-top': {
-    direction: 'short',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      const highestHigh = Math.max(...highs);
-      const lowestLow = Math.min(...lows);
-      const range = highestHigh - lowestLow;
-      const tolerance = range * 0.03;
-      
-      let firstTop = -1, secondTop = -1;
-      for (let i = 2; i < window.length - 3; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= 3 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
-            secondTop = i;
-            break;
-          }
-        }
-      }
-      
-      if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
-      
-      let necklineIdx = firstTop;
-      let neckline = lows[firstTop];
-      for (let i = firstTop; i <= secondTop; i++) {
-        if (lows[i] < neckline) {
-          neckline = lows[i];
-          necklineIdx = i;
-        }
-      }
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose < neckline * 0.998;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: firstTop, price: highs[firstTop], type: 'high', label: 'Top 1' },
-          { index: secondTop, price: highs[secondTop], type: 'high', label: 'Top 2' },
-          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
-        ] : []
-      };
-    },
-    displayName: 'Double Top'
-  },
-  'double-bottom': {
-    direction: 'long',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      const highestHigh = Math.max(...highs);
-      const lowestLow = Math.min(...lows);
-      const range = highestHigh - lowestLow;
-      const tolerance = range * 0.03;
-      
-      let firstBottom = -1, secondBottom = -1;
-      for (let i = 2; i < window.length - 3; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
-          if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= 3 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
-            secondBottom = i;
-            break;
-          }
-        }
-      }
-      
-      if (firstBottom === -1 || secondBottom === -1) return { detected: false, pivots: [] };
-      
-      let necklineIdx = firstBottom;
-      let neckline = highs[firstBottom];
-      for (let i = firstBottom; i <= secondBottom; i++) {
-        if (highs[i] > neckline) {
-          neckline = highs[i];
-          necklineIdx = i;
-        }
-      }
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose > neckline * 1.002;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: firstBottom, price: lows[firstBottom], type: 'low', label: 'Bottom 1' },
-          { index: secondBottom, price: lows[secondBottom], type: 'low', label: 'Bottom 2' },
-          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
-        ] : []
-      };
-    },
-    displayName: 'Double Bottom'
-  },
-  'ascending-triangle': {
-    direction: 'long',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      const resistanceZone = Math.max(...highs.slice(0, -2));
-      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
-      
-      const recentLows = lows.slice(-10);
-      let risingLows = true;
-      for (let i = 1; i < recentLows.length; i++) {
-        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLows = false;
-      }
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = resistanceTests >= 2 && risingLows && lastClose > resistanceZone * 1.002;
-      
-      const resistanceIdx = highs.indexOf(resistanceZone);
-      const lowestRecentLowIdx = window.length - 10 + recentLows.indexOf(Math.min(...recentLows));
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: resistanceIdx, price: resistanceZone, type: 'high', label: 'Resistance' },
-          { index: lowestRecentLowIdx, price: Math.min(...recentLows), type: 'low', label: 'Rising Support' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
-        ] : []
-      };
-    },
-    displayName: 'Ascending Triangle'
-  },
-  'descending-triangle': {
-    direction: 'short',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      const supportZone = Math.min(...lows.slice(0, -2));
-      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
-      
-      const recentHighs = highs.slice(-10);
-      let fallingHighs = true;
-      for (let i = 1; i < recentHighs.length; i++) {
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighs = false;
-      }
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = supportTests >= 2 && fallingHighs && lastClose < supportZone * 0.998;
-      
-      const supportIdx = lows.indexOf(supportZone);
-      const highestRecentHighIdx = window.length - 10 + recentHighs.indexOf(Math.max(...recentHighs));
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: supportIdx, price: supportZone, type: 'low', label: 'Support' },
-          { index: highestRecentHighIdx, price: Math.max(...recentHighs), type: 'high', label: 'Falling Resistance' },
-          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
-        ] : []
-      };
-    },
-    displayName: 'Descending Triangle'
-  },
-  // Head and Shoulders (bearish reversal)
-  'head-and-shoulders': {
-    direction: 'short',
-    detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      // Find local maxima (potential shoulders and head)
-      const peaks: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          peaks.push({ index: i, value: highs[i] });
-        }
-      }
-      
-      if (peaks.length < 3) return { detected: false, pivots: [] };
-      
-      // Find head (highest peak)
-      let headIdx = 0;
-      for (let i = 1; i < peaks.length; i++) {
-        if (peaks[i].value > peaks[headIdx].value) headIdx = i;
-      }
-      
-      // Head must not be at edges
-      if (headIdx === 0 || headIdx === peaks.length - 1) return { detected: false, pivots: [] };
-      
-      const leftShoulder = peaks[headIdx - 1];
-      const head = peaks[headIdx];
-      const rightShoulder = peaks[headIdx + 1];
-      
-      // Validate pattern: head higher than shoulders, shoulders roughly equal
-      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
-      const symmetryOk = shoulderDiff / range < 0.25; // Shoulders within 25% of each other
-      const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
-      
-      if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
-      
-      // Find neckline (lowest low between shoulders)
-      let neckline = Infinity;
-      let necklineIdx = leftShoulder.index;
-      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
-        if (lows[i] < neckline) {
-          neckline = lows[i];
-          necklineIdx = i;
-        }
-      }
-      
-      // Confirmation: close below neckline
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose < neckline * 0.998;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: leftShoulder.index, price: leftShoulder.value, type: 'high', label: 'Left Shoulder' },
-          { index: head.index, price: head.value, type: 'high', label: 'Head' },
-          { index: rightShoulder.index, price: rightShoulder.value, type: 'high', label: 'Right Shoulder' },
-          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
-        ] : []
-      };
-    },
-    displayName: 'Head and Shoulders'
-  },
-  // Inverse Head and Shoulders (bullish reversal)
-  'inverse-head-and-shoulders': {
-    direction: 'long',
-    detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      // Find local minima (potential shoulders and head)
-      const troughs: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
-          troughs.push({ index: i, value: lows[i] });
-        }
-      }
-      
-      if (troughs.length < 3) return { detected: false, pivots: [] };
-      
-      // Find head (lowest trough)
-      let headIdx = 0;
-      for (let i = 1; i < troughs.length; i++) {
-        if (troughs[i].value < troughs[headIdx].value) headIdx = i;
-      }
-      
-      // Head must not be at edges
-      if (headIdx === 0 || headIdx === troughs.length - 1) return { detected: false, pivots: [] };
-      
-      const leftShoulder = troughs[headIdx - 1];
-      const head = troughs[headIdx];
-      const rightShoulder = troughs[headIdx + 1];
-      
-      // Validate pattern: head lower than shoulders, shoulders roughly equal
-      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
-      const symmetryOk = shoulderDiff / range < 0.25;
-      const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
-      
-      if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
-      
-      // Find neckline (highest high between shoulders)
-      let neckline = -Infinity;
-      let necklineIdx = leftShoulder.index;
-      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
-        if (highs[i] > neckline) {
-          neckline = highs[i];
-          necklineIdx = i;
-        }
-      }
-      
-      // Confirmation: close above neckline
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose > neckline * 1.002;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: leftShoulder.index, price: leftShoulder.value, type: 'low', label: 'Left Shoulder' },
-          { index: head.index, price: head.value, type: 'low', label: 'Head' },
-          { index: rightShoulder.index, price: rightShoulder.value, type: 'low', label: 'Right Shoulder' },
-          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
-        ] : []
-      };
-    },
-    displayName: 'Inverse Head and Shoulders'
-  },
-  // Rising Wedge (bearish)
-  'rising-wedge': {
-    direction: 'short',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      // Check for converging upward trendlines
-      const firstHalf = window.slice(0, Math.floor(window.length / 2));
-      const secondHalf = window.slice(Math.floor(window.length / 2));
-      
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
-      
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
-      
-      // Both trendlines rising
-      const upperRising = avgSecondHigh > avgFirstHigh;
-      const lowerRising = avgSecondLow > avgFirstLow;
-      
-      // Lines converging
-      const firstRange = avgFirstHigh - avgFirstLow;
-      const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = secondRange < firstRange * 0.85;
-      
-      // Breakdown below lower trendline
-      const lastClose = closes[closes.length - 1];
-      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper Trend End' },
-          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
-          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
-        ] : []
-      };
-    },
-    displayName: 'Rising Wedge'
-  },
-  // Falling Wedge (bullish)
-  'falling-wedge': {
-    direction: 'long',
-    detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
-      const highs = window.map(d => d.high);
-      const lows = window.map(d => d.low);
-      const closes = window.map(d => d.close);
-      
-      const firstHalf = window.slice(0, Math.floor(window.length / 2));
-      const secondHalf = window.slice(Math.floor(window.length / 2));
-      
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
-      
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
-      
-      // Both trendlines falling
-      const upperFalling = avgSecondHigh < avgFirstHigh;
-      const lowerFalling = avgSecondLow < avgFirstLow;
-      
-      // Lines converging
-      const firstRange = avgFirstHigh - avgFirstLow;
-      const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = secondRange < firstRange * 0.85;
-      
-      // Breakout above upper trendline
-      const lastClose = closes[closes.length - 1];
-      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
-      
-      return {
-        detected,
-        pivots: detected ? [
-          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' },
-          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
-          { index: window.length - 1, price: avgSecondLow, type: 'low', label: 'Lower Trend End' }
-        ] : []
-      };
-    },
-    displayName: 'Falling Wedge'
-  },
-};
-
-// In-memory cache for scan results (persists within edge function instance)
-// Results cache - keyed by scan parameters
+// Cache configuration
 const scanCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 1 minute cache for fast assets
-const CACHE_TTL_MS_SLOW = 5 * 60 * 1000; // 5 minute cache for commodities
-
-// Per-symbol data cache to avoid re-fetching
+const CACHE_TTL_MS = 60 * 1000;
+const CACHE_TTL_MS_SLOW = 5 * 60 * 1000;
 const symbolDataCache = new Map<string, { bars: any[]; timestamp: number }>();
-const SYMBOL_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minute symbol cache
+const SYMBOL_CACHE_TTL_MS = 3 * 60 * 1000;
 
-// =============================================================================
-// SYMBOL MAPPING: Yahoo symbols to canonical DB symbols
-// =============================================================================
-const YAHOO_TO_DB_SYMBOL: Record<string, string> = {
-  // Forex
-  'EURUSD=X': 'EUR/USD', 'GBPUSD=X': 'GBP/USD', 'USDJPY=X': 'USD/JPY',
-  'AUDUSD=X': 'AUD/USD', 'USDCAD=X': 'USD/CAD', 'NZDUSD=X': 'NZD/USD',
-  'USDCHF=X': 'USD/CHF', 'EURGBP=X': 'EUR/GBP', 'EURJPY=X': 'EUR/JPY',
-  'GBPJPY=X': 'GBP/JPY', 'AUDJPY=X': 'AUD/JPY', 'EURAUD=X': 'EUR/AUD',
-  'EURCHF=X': 'EUR/CHF', 'AUDNZD=X': 'AUD/NZD', 'CADJPY=X': 'CAD/JPY',
-  'NZDJPY=X': 'NZD/JPY', 'GBPAUD=X': 'GBP/AUD', 'GBPCAD=X': 'GBP/CAD',
-  'AUDCAD=X': 'AUD/CAD', 'EURCAD=X': 'EUR/CAD', 'CHFJPY=X': 'CHF/JPY',
-  'GBPCHF=X': 'GBP/CHF', 'EURNZD=X': 'EUR/NZD', 'CADCHF=X': 'CAD/CHF',
-  'AUDCHF=X': 'AUD/CHF',
-  // Crypto
-  'BTC-USD': 'BTC/USD', 'ETH-USD': 'ETH/USD', 'SOL-USD': 'SOL/USD',
-  'BNB-USD': 'BNB/USD', 'XRP-USD': 'XRP/USD', 'ADA-USD': 'ADA/USD',
-  'AVAX-USD': 'AVAX/USD', 'DOGE-USD': 'DOGE/USD', 'LINK-USD': 'LINK/USD',
-  'MATIC-USD': 'MATIC/USD', 'DOT-USD': 'DOT/USD', 'SHIB-USD': 'SHIB/USD',
-  'LTC-USD': 'LTC/USD', 'UNI-USD': 'UNI/USD', 'ATOM-USD': 'ATOM/USD',
-  'XLM-USD': 'XLM/USD', 'NEAR-USD': 'NEAR/USD', 'APT-USD': 'APT/USD',
-  'ARB-USD': 'ARB/USD', 'OP-USD': 'OP/USD', 'FIL-USD': 'FIL/USD',
-  'INJ-USD': 'INJ/USD', 'AAVE-USD': 'AAVE/USD', 'MKR-USD': 'MKR/USD',
-  'SAND-USD': 'SAND/USD',
-  // Stocks (same symbol)
-  // Commodities (same symbol)
-};
-
-function getDbSymbol(yahooSymbol: string): string {
-  return YAHOO_TO_DB_SYMBOL[yahooSymbol] || yahooSymbol;
-}
-
-/**
- * Load data from historical_prices DB cache first.
- * Returns a map of symbols that were found in DB cache.
- */
-async function loadFromDbCache(
-  supabase: any,
-  symbols: string[],
-  timeframe: string,
-  minDays: number = 60,
-  minBarsRequired: number = 20
-): Promise<Map<string, any[]>> {
-  const results = new Map<string, any[]>();
-  const dbSymbols = symbols.map(s => getDbSymbol(s));
-  
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - minDays);
-    
-    // Check freshness - only use cache if updated today
-    const todayStart = new Date();
-    todayStart.setUTCHours(0, 0, 0, 0);
-    
-    const { data, error } = await supabase
-      .from('historical_prices')
-      .select('symbol, date, open, high, low, close, volume, updated_at')
-      .in('symbol', dbSymbols)
-      .eq('timeframe', timeframe)
-      .gte('date', cutoffDate.toISOString())
-      .order('date', { ascending: true });
-    
-    if (error) {
-      console.error('[loadFromDbCache] Query error:', error);
-      return results;
-    }
-    
-    if (!data || data.length === 0) {
-      console.log('[loadFromDbCache] No cached data found');
-      return results;
-    }
-    
-    // Group by symbol
-    const symbolGroups = new Map<string, any[]>();
-    for (const row of data) {
-      if (!symbolGroups.has(row.symbol)) {
-        symbolGroups.set(row.symbol, []);
-      }
-      symbolGroups.get(row.symbol)!.push({
-        date: row.date,
-        open: row.open,
-        high: row.high,
-        low: row.low,
-        close: row.close,
-        volume: row.volume || 0,
-      });
-    }
-    
-    // Map back to Yahoo symbols for screener compatibility
-    const dbToYahoo = new Map<string, string>();
-    for (const [yahoo, db] of Object.entries(YAHOO_TO_DB_SYMBOL)) {
-      dbToYahoo.set(db, yahoo);
-    }
-    
-    for (const [dbSymbol, bars] of symbolGroups) {
-      // Find original Yahoo symbol
-      const yahooSymbol = symbols.find(s => getDbSymbol(s) === dbSymbol);
-      if (yahooSymbol && bars.length >= minBarsRequired) {
-        results.set(yahooSymbol, bars);
-      }
-    }
-    
-    console.log(`[loadFromDbCache] Found ${results.size}/${symbols.length} symbols in cache`);
-    return results;
-  } catch (err) {
-    console.error('[loadFromDbCache] Error:', err);
-    return results;
-  }
-}
-
-// Fetch historical performance stats for patterns from historical_pattern_occurrences table
+// Pattern stats interface
 interface PatternStats {
   winRate: number;
   avgRMultiple: number;
   sampleSize: number;
   avgDurationBars: number;
-  // Accumulated ROI by time period
   accumulatedRoi: {
     threeMonth: number | null;
     sixMonth: number | null;
@@ -672,620 +54,291 @@ interface PatternStats {
   };
 }
 
-async function fetchPatternStats(
-  supabase: any,
-  patternIds: string[]
-): Promise<Map<string, PatternStats>> {
-  const statsMap = new Map<string, PatternStats>();
-  
-  if (patternIds.length === 0) return statsMap;
+async function loadFromDbCache(
+  supabase: any, symbols: string[], timeframe: string, minDays: number = 60, minBarsRequired: number = 20
+): Promise<Map<string, any[]>> {
+  const results = new Map<string, any[]>();
+  const dbSymbols = symbols.map(s => getDbSymbol(s));
   
   try {
-    // Query aggregated stats from historical_pattern_occurrences
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - minDays);
+    
+    const { data, error } = await supabase
+      .from('historical_prices')
+      .select('symbol, date, open, high, low, close, volume')
+      .in('symbol', dbSymbols)
+      .eq('timeframe', timeframe)
+      .gte('date', cutoffDate.toISOString())
+      .order('date', { ascending: true });
+    
+    if (error || !data?.length) return results;
+    
+    const symbolGroups = new Map<string, any[]>();
+    for (const row of data) {
+      if (!symbolGroups.has(row.symbol)) symbolGroups.set(row.symbol, []);
+      symbolGroups.get(row.symbol)!.push({
+        date: row.date, open: row.open, high: row.high, low: row.low, close: row.close, volume: row.volume || 0,
+      });
+    }
+    
+    for (const [dbSymbol, bars] of symbolGroups) {
+      const yahooSymbol = symbols.find(s => getDbSymbol(s) === dbSymbol);
+      if (yahooSymbol && bars.length >= minBarsRequired) results.set(yahooSymbol, bars);
+    }
+    return results;
+  } catch { return results; }
+}
+
+async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<Map<string, PatternStats>> {
+  const statsMap = new Map<string, PatternStats>();
+  if (!patternIds.length) return statsMap;
+  
+  try {
     const { data, error } = await supabase
       .from('historical_pattern_occurrences')
       .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
       .in('pattern_id', patternIds)
       .not('outcome', 'is', null);
     
-    if (error) {
-      console.warn('[fetchPatternStats] DB error:', error.message);
-      return statsMap;
-    }
+    if (error || !data?.length) return statsMap;
     
-    if (!data || data.length === 0) {
-      return statsMap;
-    }
-    
-    // Define time period boundaries
     const now = new Date();
-    const threeMonthsAgo = new Date(now);
-    threeMonthsAgo.setMonth(now.getMonth() - 3);
-    const sixMonthsAgo = new Date(now);
-    sixMonthsAgo.setMonth(now.getMonth() - 6);
-    const oneYearAgo = new Date(now);
-    oneYearAgo.setFullYear(now.getFullYear() - 1);
-    const threeYearsAgo = new Date(now);
-    threeYearsAgo.setFullYear(now.getFullYear() - 3);
-    const fiveYearsAgo = new Date(now);
-    fiveYearsAgo.setFullYear(now.getFullYear() - 5);
+    const threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3);
+    const sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(now.getMonth() - 6);
+    const oneYearAgo = new Date(now); oneYearAgo.setFullYear(now.getFullYear() - 1);
+    const threeYearsAgo = new Date(now); threeYearsAgo.setFullYear(now.getFullYear() - 3);
+    const fiveYearsAgo = new Date(now); fiveYearsAgo.setFullYear(now.getFullYear() - 5);
     
-    // Group by pattern_id and calculate stats
-    interface PatternAccumulator {
-      wins: number;
-      total: number;
-      pnlSum: number;
-      durationSum: number;
-      durationCount: number;
-      roi3m: number;
-      roi6m: number;
-      roi1y: number;
-      roi3y: number;
-      roi5y: number;
-      count3m: number;
-      count6m: number;
-      count1y: number;
-      count3y: number;
-      count5y: number;
-    }
-    const grouped = new Map<string, PatternAccumulator>();
-    
+    const grouped = new Map<string, any>();
     for (const row of data) {
       const pid = row.pattern_id;
       if (!grouped.has(pid)) {
-        grouped.set(pid, { 
-          wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
+        grouped.set(pid, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
           roi3m: 0, roi6m: 0, roi1y: 0, roi3y: 0, roi5y: 0,
-          count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0
-        });
+          count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0 });
       }
-      const entry = grouped.get(pid)!;
-      
+      const e = grouped.get(pid)!;
       if (row.outcome === 'hit_tp' || row.outcome === 'hit_sl') {
-        entry.total++;
-        if (row.outcome === 'hit_tp') entry.wins++;
+        e.total++;
+        if (row.outcome === 'hit_tp') e.wins++;
         const pnl = row.outcome_pnl_percent ?? 0;
-        if (row.outcome_pnl_percent != null) entry.pnlSum += pnl;
-        if (row.bars_to_outcome != null) {
-          entry.durationSum += row.bars_to_outcome;
-          entry.durationCount++;
-        }
-        
-        // Calculate ROI by time period
-        const detectedDate = new Date(row.detected_at);
-        if (detectedDate >= threeMonthsAgo) {
-          entry.roi3m += pnl;
-          entry.count3m++;
-        }
-        if (detectedDate >= sixMonthsAgo) {
-          entry.roi6m += pnl;
-          entry.count6m++;
-        }
-        if (detectedDate >= oneYearAgo) {
-          entry.roi1y += pnl;
-          entry.count1y++;
-        }
-        if (detectedDate >= threeYearsAgo) {
-          entry.roi3y += pnl;
-          entry.count3y++;
-        }
-        if (detectedDate >= fiveYearsAgo) {
-          entry.roi5y += pnl;
-          entry.count5y++;
-        }
+        e.pnlSum += pnl;
+        if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
+        const d = new Date(row.detected_at);
+        if (d >= threeMonthsAgo) { e.roi3m += pnl; e.count3m++; }
+        if (d >= sixMonthsAgo) { e.roi6m += pnl; e.count6m++; }
+        if (d >= oneYearAgo) { e.roi1y += pnl; e.count1y++; }
+        if (d >= threeYearsAgo) { e.roi3y += pnl; e.count3y++; }
+        if (d >= fiveYearsAgo) { e.roi5y += pnl; e.count5y++; }
       }
     }
     
-    for (const [pid, entry] of grouped) {
-      if (entry.total > 0) {
+    for (const [pid, e] of grouped) {
+      if (e.total > 0) {
         statsMap.set(pid, {
-          winRate: (entry.wins / entry.total) * 100,
-          avgRMultiple: entry.pnlSum / entry.total / 100, // Convert % to R-multiple (approx)
-          sampleSize: entry.total,
-          avgDurationBars: entry.durationCount > 0 ? Math.round(entry.durationSum / entry.durationCount) : 0,
+          winRate: (e.wins / e.total) * 100,
+          avgRMultiple: e.pnlSum / e.total / 100,
+          sampleSize: e.total,
+          avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
           accumulatedRoi: {
-            threeMonth: entry.count3m > 0 ? entry.roi3m : null,
-            sixMonth: entry.count6m > 0 ? entry.roi6m : null,
-            oneYear: entry.count1y > 0 ? entry.roi1y : null,
-            threeYear: entry.count3y > 0 ? entry.roi3y : null,
-            fiveYear: entry.count5y > 0 ? entry.roi5y : null,
+            threeMonth: e.count3m > 0 ? e.roi3m : null, sixMonth: e.count6m > 0 ? e.roi6m : null,
+            oneYear: e.count1y > 0 ? e.roi1y : null, threeYear: e.count3y > 0 ? e.roi3y : null,
+            fiveYear: e.count5y > 0 ? e.roi5y : null,
           },
         });
       }
     }
-    
-    console.log(`[fetchPatternStats] Loaded stats for ${statsMap.size}/${patternIds.length} patterns`);
     return statsMap;
-  } catch (err) {
-    console.error('[fetchPatternStats] Error:', err);
-    return statsMap;
-  }
-}
-
-function calculateATR(bars: any[], period: number = 14): number {
-  if (bars.length < period + 1) return 0;
-  const recentBars = bars.slice(-period - 1);
-  let atrSum = 0;
-  for (let i = 1; i < recentBars.length; i++) {
-    const high = recentBars[i].high;
-    const low = recentBars[i].low;
-    const prevClose = recentBars[i - 1].close;
-    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
-    atrSum += tr;
-  }
-  return atrSum / period;
-}
-
-// Parallel fetch with concurrency limit and per-symbol caching
-// Now with DB-first approach: checks historical_prices table first
-async function fetchDataBatchWithDbFallback(
-  supabase: any,
-  symbols: string[],
-  startDate: string,
-  endDate: string,
-  interval: string = '1d',
-  concurrency: number = 10,
-  minBarsRequired: number = 20
-): Promise<Map<string, any[]>> {
-  const results = new Map<string, any[]>();
-  const now = Date.now();
-  
-  // Step 1: Check in-memory cache first (fastest)
-  const symbolsAfterMemCache: string[] = [];
-  for (const symbol of symbols) {
-    const cacheKey = `${symbol}:${interval}`;
-    const cached = symbolDataCache.get(cacheKey);
-    
-    if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length >= minBarsRequired) {
-      results.set(symbol, cached.bars);
-    } else {
-      symbolsAfterMemCache.push(symbol);
-    }
-  }
-  
-  console.log(`[fetchData] Memory cache: ${results.size} hits, ${symbolsAfterMemCache.length} remaining`);
-  
-  if (symbolsAfterMemCache.length === 0) {
-    return results;
-  }
-  
-  // Step 2: Load from DB cache (fast - no external API)
-  // Use DB cache for the same lookback window we requested.
-  // NOTE: We still enforce minBarsRequired so trend-alignment calls can force a Yahoo fetch when cache is too short.
-  const daysRequested = Math.max(
-    1,
-    Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))
-  );
-  const dbCacheResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, daysRequested, minBarsRequired);
-  
-  // Add DB results and update memory cache
-  const symbolsNeedingYahoo: string[] = [];
-  for (const symbol of symbolsAfterMemCache) {
-    const dbBars = dbCacheResults.get(symbol);
-    if (dbBars && dbBars.length >= minBarsRequired) {
-      results.set(symbol, dbBars);
-      // Also store in memory cache
-      const cacheKey = `${symbol}:${interval}`;
-      symbolDataCache.set(cacheKey, { bars: dbBars, timestamp: now });
-    } else {
-      symbolsNeedingYahoo.push(symbol);
-    }
-  }
-  
-  console.log(`[fetchData] DB cache: ${dbCacheResults.size} hits, ${symbolsNeedingYahoo.length} need Yahoo fetch`);
-  
-  if (symbolsNeedingYahoo.length === 0) {
-    return results;
-  }
-  
-  // Step 3: Fetch remaining from Yahoo Finance (slowest)
-  for (let i = 0; i < symbolsNeedingYahoo.length; i += concurrency) {
-    const batch = symbolsNeedingYahoo.slice(i, i + concurrency);
-    const batchResults = await Promise.allSettled(
-      batch.map(symbol => fetchYahooDataSingle(symbol, startDate, endDate, interval))
-    );
-    
-    batchResults.forEach((result, idx) => {
-      const symbol = batch[idx];
-      if (result.status === 'fulfilled' && result.value.length > 0) {
-        results.set(symbol, result.value);
-        // Cache the successful fetch
-        const cacheKey = `${symbol}:${interval}`;
-        symbolDataCache.set(cacheKey, { bars: result.value, timestamp: now });
-      }
-    });
-  }
-  
-  console.log(`[fetchData] Final total: ${results.size}/${symbols.length} symbols loaded`);
-  return results;
-}
-
-function safeComputeTrend(
-  bars: any[],
-  direction: 'long' | 'short'
-): { trendAlignment: string | null; trendIndicators: any | null } {
-  if (!bars || bars.length < 200) {
-    return { trendAlignment: null, trendIndicators: null };
-  }
-
-  try {
-    const ohlcBars: OHLCBar[] = bars.map(b => ({
-      date: b.date,
-      open: b.open,
-      high: b.high,
-      low: b.low,
-      close: b.close,
-      volume: b.volume || 0,
-    }));
-
-    const trendResult = analyzePatternTrend(ohlcBars, direction);
-    if (!trendResult) {
-      return { trendAlignment: null, trendIndicators: null };
-    }
-
-    return {
-      trendAlignment: trendResult.alignment,
-      trendIndicators: trendResult.indicators,
-    };
-  } catch (trendError) {
-    console.warn(`[scan-live-patterns] Trend calc error:`, trendError);
-    return { trendAlignment: null, trendIndicators: null };
-  }
+  } catch { return statsMap; }
 }
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
-    const yahooInterval = interval === '4h' ? '1h' : interval === '1h' ? '1h' : '1d';
+    const yahooInterval = interval === '4h' || interval === '1h' ? '1h' : '1d';
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
-    
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${period1}&period2=${period2}&interval=${yahooInterval}`;
-    
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
-    
+    const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!response.ok) return [];
-    
     const data = await response.json();
     const result = data.chart?.result?.[0];
-    if (!result || !result.timestamp) return [];
-    
+    if (!result?.timestamp) return [];
     const timestamps = result.timestamp;
     const quotes = result.indicators?.quote?.[0];
     if (!quotes) return [];
-    
     const bars: any[] = [];
     for (let i = 0; i < timestamps.length; i++) {
       if (quotes.open[i] != null && quotes.high[i] != null && quotes.low[i] != null && quotes.close[i] != null) {
-        bars.push({
-          date: new Date(timestamps[i] * 1000).toISOString(),
-          open: quotes.open[i],
-          high: quotes.high[i],
-          low: quotes.low[i],
-          close: quotes.close[i],
-          volume: quotes.volume[i] || 0,
-        });
+        bars.push({ date: new Date(timestamps[i] * 1000).toISOString(), open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i], volume: quotes.volume[i] || 0 });
       }
     }
-    
     return bars;
-  } catch (error) {
-    console.error(`[fetchYahooData] Error for ${symbol}:`, error);
-    return [];
+  } catch { return []; }
+}
+
+async function fetchDataBatchWithDbFallback(
+  supabase: any, symbols: string[], startDate: string, endDate: string, interval: string = '1d', concurrency: number = 10, minBarsRequired: number = 20
+): Promise<Map<string, any[]>> {
+  const results = new Map<string, any[]>();
+  const now = Date.now();
+  const symbolsAfterMemCache: string[] = [];
+  
+  for (const symbol of symbols) {
+    const cached = symbolDataCache.get(`${symbol}:${interval}`);
+    if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length >= minBarsRequired) {
+      results.set(symbol, cached.bars);
+    } else symbolsAfterMemCache.push(symbol);
   }
+  if (!symbolsAfterMemCache.length) return results;
+  
+  const daysRequested = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)));
+  const dbResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, daysRequested, minBarsRequired);
+  const symbolsNeedingYahoo: string[] = [];
+  
+  for (const symbol of symbolsAfterMemCache) {
+    const dbBars = dbResults.get(symbol);
+    if (dbBars && dbBars.length >= minBarsRequired) {
+      results.set(symbol, dbBars);
+      symbolDataCache.set(`${symbol}:${interval}`, { bars: dbBars, timestamp: now });
+    } else symbolsNeedingYahoo.push(symbol);
+  }
+  
+  for (let i = 0; i < symbolsNeedingYahoo.length; i += concurrency) {
+    const batch = symbolsNeedingYahoo.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(batch.map(s => fetchYahooDataSingle(s, startDate, endDate, interval)));
+    batchResults.forEach((r, idx) => {
+      const symbol = batch[idx];
+      if (r.status === 'fulfilled' && r.value.length > 0) {
+        results.set(symbol, r.value);
+        symbolDataCache.set(`${symbol}:${interval}`, { bars: r.value, timestamp: now });
+      }
+    });
+  }
+  return results;
 }
 
-// Legacy single-fetch function for compatibility
-async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
-  return fetchYahooDataSingle(symbol, startDate, endDate, interval);
+function safeComputeTrend(bars: any[], direction: 'long' | 'short'): { trendAlignment: string | null; trendIndicators: any | null } {
+  if (!bars || bars.length < 200) return { trendAlignment: null, trendIndicators: null };
+  try {
+    const ohlcBars: OHLCBar[] = bars.map(b => ({ date: b.date, open: b.open, high: b.high, low: b.low, close: b.close, volume: b.volume || 0 }));
+    const result = analyzePatternTrend(ohlcBars, direction);
+    return result ? { trendAlignment: result.alignment, trendIndicators: result.indicators } : { trendAlignment: null, trendIndicators: null };
+  } catch { return { trendAlignment: null, trendIndicators: null }; }
 }
 
-/**
- * Upsert pattern detections to database for lifecycle tracking.
- * Returns patterns with their original first_detected_at timestamp.
- */
-async function persistPatterns(
-  supabase: any,
-  detectedPatterns: any[],
-  assetType: string,
-  timeframe: string
-): Promise<Map<string, Date>> {
+async function persistPatterns(supabase: any, detectedPatterns: any[], assetType: string, timeframe: string): Promise<Map<string, Date>> {
   const patternKeys = new Map<string, Date>();
+  if (!detectedPatterns.length) return patternKeys;
   
-  if (detectedPatterns.length === 0) return patternKeys;
+  const detectedKeys = new Set(detectedPatterns.map(p => `${p.instrument}|${p.patternId}|${timeframe}`));
+  const { data: existingPatterns } = await supabase.from('live_pattern_detections').select('id, instrument, pattern_id, timeframe, first_detected_at')
+    .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active');
   
-  // Build unique keys for each detected pattern
-  const detectedKeys = new Set(
-    detectedPatterns.map(p => `${p.instrument}|${p.patternId}|${timeframe}`)
-  );
-  
-  // Fetch existing active patterns for this asset type
-  const { data: existingPatterns, error: fetchError } = await supabase
-    .from('live_pattern_detections')
-    .select('id, instrument, pattern_id, timeframe, first_detected_at, status')
-    .eq('asset_type', assetType)
-    .eq('timeframe', timeframe)
-    .eq('status', 'active');
-  
-  if (fetchError) {
-    console.error('[persistPatterns] Error fetching existing patterns:', fetchError);
-    return patternKeys;
-  }
-  
-  // Build map of existing patterns
   const existingMap = new Map<string, { id: string; first_detected_at: string }>();
   for (const ep of existingPatterns || []) {
-    const key = `${ep.instrument}|${ep.pattern_id}|${ep.timeframe}`;
-    existingMap.set(key, { id: ep.id, first_detected_at: ep.first_detected_at });
+    existingMap.set(`${ep.instrument}|${ep.pattern_id}|${ep.timeframe}`, { id: ep.id, first_detected_at: ep.first_detected_at });
   }
   
-  // Mark patterns that are no longer detected as invalidated
-  const patternsToInvalidate: string[] = [];
-  for (const [key, existing] of existingMap) {
-    if (!detectedKeys.has(key)) {
-      patternsToInvalidate.push(existing.id);
-    }
-  }
+  const toInvalidate = [...existingMap].filter(([k]) => !detectedKeys.has(k)).map(([, v]) => v.id);
+  if (toInvalidate.length) await supabase.from('live_pattern_detections').update({ status: 'invalidated', updated_at: new Date().toISOString() }).in('id', toInvalidate);
   
-  if (patternsToInvalidate.length > 0) {
-    const { error: invalidateError } = await supabase
-      .from('live_pattern_detections')
-      .update({ status: 'invalidated', updated_at: new Date().toISOString() })
-      .in('id', patternsToInvalidate);
-    
-    if (invalidateError) {
-      console.error('[persistPatterns] Error invalidating patterns:', invalidateError);
-    } else {
-      console.log(`[persistPatterns] Invalidated ${patternsToInvalidate.length} stale patterns`);
-    }
-  }
-  
-  // Batch upsert detected patterns for performance
   const now = new Date().toISOString();
+  const toUpdate: any[] = [], toInsert: any[] = [];
   
-  // Separate into existing (update) and new (insert) patterns
-  const patternsToUpdate: { id: string; pattern: any; key: string }[] = [];
-  const patternsToInsert: any[] = [];
-  
-  for (const pattern of detectedPatterns) {
-    const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
+  for (const p of detectedPatterns) {
+    const key = `${p.instrument}|${p.patternId}|${timeframe}`;
     const existing = existingMap.get(key);
-    
     if (existing) {
-      patternsToUpdate.push({ id: existing.id, pattern, key });
+      toUpdate.push({ id: existing.id, pattern: p, key });
       patternKeys.set(key, new Date(existing.first_detected_at));
     } else {
-      patternsToInsert.push({
-        instrument: pattern.instrument,
-        pattern_id: pattern.patternId,
-        pattern_name: pattern.patternName,
-        direction: pattern.direction,
-        timeframe,
-        asset_type: assetType,
-        first_detected_at: now,
-        last_confirmed_at: now,
-        status: 'active',
-        entry_price: pattern.tradePlan.entry,
-        stop_loss_price: pattern.tradePlan.stopLoss,
-        take_profit_price: pattern.tradePlan.takeProfit,
-        risk_reward_ratio: pattern.tradePlan.rr,
-        visual_spec: pattern.visualSpec,
-        bars: pattern.bars,
-        current_price: pattern.currentPrice,
-        prev_close: pattern.prevClose,
-        change_percent: pattern.changePercent,
-        quality_score: pattern.quality?.score || 'B',
-        quality_reasons: pattern.quality?.reasons || [],
-        trend_alignment: pattern.trendAlignment || null,
-        trend_indicators: pattern.trendIndicators || {},
-        _key: `${pattern.instrument}|${pattern.patternId}|${timeframe}` // For mapping later
+      toInsert.push({
+        instrument: p.instrument, pattern_id: p.patternId, pattern_name: p.patternName, direction: p.direction,
+        timeframe, asset_type: assetType, first_detected_at: now, last_confirmed_at: now, status: 'active',
+        entry_price: p.tradePlan.entry, stop_loss_price: p.tradePlan.stopLoss, take_profit_price: p.tradePlan.takeProfit,
+        risk_reward_ratio: p.tradePlan.rr, visual_spec: p.visualSpec, bars: p.bars,
+        current_price: p.currentPrice, prev_close: p.prevClose, change_percent: p.changePercent,
+        quality_score: p.quality?.score || 'B', quality_reasons: p.quality?.reasons || [],
+        trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {}, _key: key,
       });
     }
   }
   
-  // Batch update existing patterns (parallel)
-  if (patternsToUpdate.length > 0) {
-    const updatePromises = patternsToUpdate.map(({ id, pattern }) => 
-      supabase
-        .from('live_pattern_detections')
-        .update({
-          last_confirmed_at: now,
-          current_price: pattern.currentPrice,
-          prev_close: pattern.prevClose,
-          change_percent: pattern.changePercent,
-          bars: pattern.bars,
-          visual_spec: pattern.visualSpec,
-          trend_alignment: pattern.trendAlignment || null,
-          trend_indicators: pattern.trendIndicators || {},
-          updated_at: now
-        })
-        .eq('id', id)
-    );
-    await Promise.allSettled(updatePromises);
-    console.log(`[persistPatterns] Batch updated ${patternsToUpdate.length} existing patterns`);
+  if (toUpdate.length) {
+    await Promise.allSettled(toUpdate.map(({ id, pattern }) =>
+      supabase.from('live_pattern_detections').update({
+        last_confirmed_at: now, current_price: pattern.currentPrice, prev_close: pattern.prevClose,
+        change_percent: pattern.changePercent, bars: pattern.bars, visual_spec: pattern.visualSpec,
+        trend_alignment: pattern.trendAlignment, trend_indicators: pattern.trendIndicators || {}, updated_at: now,
+      }).eq('id', id)
+    ));
   }
   
-  // Batch insert new patterns
-  if (patternsToInsert.length > 0) {
-    const insertData = patternsToInsert.map(({ _key, ...data }) => data);
-    const { data: inserted, error: insertError } = await supabase
-      .from('live_pattern_detections')
-      .insert(insertData)
-      .select('instrument, pattern_id, first_detected_at');
-    
-    if (insertError) {
-      console.error('[persistPatterns] Batch insert error:', insertError);
-      // Fallback: try one by one for conflict handling
-      for (const pattern of patternsToInsert) {
-        const { _key, ...data } = pattern;
-        const { data: single, error } = await supabase
-          .from('live_pattern_detections')
-          .upsert(data, { onConflict: 'instrument,pattern_id,timeframe,status' })
-          .select('first_detected_at')
-          .single();
-        
-        if (!error && single) {
-          patternKeys.set(_key, new Date(single.first_detected_at));
-          console.log(`[persistPatterns] New pattern: ${data.instrument} - ${data.pattern_name}`);
-        }
-      }
-    } else if (inserted) {
-      console.log(`[persistPatterns] Batch inserted ${inserted.length} new patterns`);
-      for (const ins of inserted) {
-        const key = `${ins.instrument}|${ins.pattern_id}|${timeframe}`;
-        patternKeys.set(key, new Date(ins.first_detected_at));
-      }
+  if (toInsert.length) {
+    const insertData = toInsert.map(({ _key, ...d }) => d);
+    const { data: inserted } = await supabase.from('live_pattern_detections').insert(insertData).select('instrument, pattern_id, first_detected_at');
+    if (inserted) {
+      for (const ins of inserted) patternKeys.set(`${ins.instrument}|${ins.pattern_id}|${timeframe}`, new Date(ins.first_detected_at));
     }
   }
-  
   return patternKeys;
 }
 
-/**
- * Fast path: Read pre-cached patterns from live_pattern_detections table
- * This avoids the expensive live scan entirely when fresh data exists
- * 
- * Returns patterns if found, or empty array with isFresh=true if no patterns but cache is fresh
- */
-async function readCachedPatternsFromDb(
-  supabase: any,
-  assetType: string,
-  timeframe: string,
-  allowedPatterns: string[],
-  limit: number,
-  maxTickers: number
-): Promise<{ patterns: any[]; instrumentsScanned: number; isFresh: boolean } | null> {
+async function readCachedPatternsFromDb(supabase: any, assetType: string, timeframe: string, allowedPatterns: string[], limit: number, maxTickers: number) {
   try {
-    // Get list of instruments for this tier to count properly
     const instruments = getInstrumentsForTier(assetType, maxTickers);
-    
-    // Query patterns updated within last 2 hours (more aggressive caching)
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     
-    const { data: cachedPatterns, error } = await supabase
-      .from('live_pattern_detections')
-      .select('*')
-      .eq('asset_type', assetType)
-      .eq('timeframe', timeframe)
-      .eq('status', 'active')
-      .in('pattern_id', allowedPatterns)
-      .in('instrument', instruments)
-      .gte('last_confirmed_at', twoHoursAgo)
-      .order('last_confirmed_at', { ascending: false })
-      .limit(limit);
+    const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select('*')
+      .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
+      .in('pattern_id', allowedPatterns).in('instrument', instruments)
+      .gte('last_confirmed_at', twoHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
     
-    if (error) {
-      console.error('[scan-live-patterns] DB cache read error:', error);
+    if (error) return null;
+    if (!cachedPatterns?.length) {
+      const { data: anyRecent } = await supabase.from('live_pattern_detections').select('last_confirmed_at')
+        .eq('asset_type', assetType).eq('timeframe', timeframe).gte('updated_at', twoHoursAgo).limit(1);
+      if (anyRecent?.length) return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
       return null;
     }
     
-    // Check if we have ANY recent activity (even invalidated patterns) to know cache is fresh
-    if (!cachedPatterns || cachedPatterns.length === 0) {
-      // Check if there's any recent scan activity for this asset type
-      const { data: anyRecent } = await supabase
-        .from('live_pattern_detections')
-        .select('last_confirmed_at')
-        .eq('asset_type', assetType)
-        .eq('timeframe', timeframe)
-        .gte('updated_at', twoHoursAgo)
-        .limit(1);
-      
-      if (anyRecent && anyRecent.length > 0) {
-        // Cache is fresh, just no patterns detected - return empty immediately
-        console.log('[scan-live-patterns] DB fast path: Cache fresh, no patterns for', assetType);
-        return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
-      }
-      
-      console.log('[scan-live-patterns] No fresh cached patterns in DB, will run live scan');
-      return null;
-    }
-    
-    console.log(`[scan-live-patterns] DB fast path: Found ${cachedPatterns.length} cached patterns for ${assetType}`);
-    
-    // Transform DB rows to API response format
-    let patterns = cachedPatterns.map((row: any) => ({
-      instrument: row.instrument,
-      patternId: row.pattern_id,
-      patternName: row.pattern_name,
-      direction: row.direction as 'long' | 'short',
-      signalTs: row.first_detected_at,
-      quality: row.quality_score ? { score: row.quality_score, reasons: row.quality_reasons || [] } : { score: 'B', reasons: [] },
-      tradePlan: {
-        entryType: 'bar_close',
-        entry: row.entry_price,
-        stopLoss: row.stop_loss_price,
-        takeProfit: row.take_profit_price,
-        rr: row.risk_reward_ratio,
-      },
-      bars: row.bars || [],
-      visualSpec: row.visual_spec || {},
-      currentPrice: row.current_price,
-      prevClose: row.prev_close,
-      changePercent: row.change_percent,
-      // Trend alignment data
-      trendAlignment: row.trend_alignment || null,
-      trendIndicators: row.trend_indicators || null,
-      // Historical performance data (pre-computed from DB cache)
-      historicalPerformance: row.historical_performance || undefined,
+    let patterns = cachedPatterns.map((r: any) => ({
+      instrument: r.instrument, patternId: r.pattern_id, patternName: r.pattern_name, direction: r.direction as 'long' | 'short',
+      signalTs: r.first_detected_at, quality: { score: r.quality_score || 'B', reasons: r.quality_reasons || [] },
+      tradePlan: { entryType: 'bar_close', entry: r.entry_price, stopLoss: r.stop_loss_price, takeProfit: r.take_profit_price, rr: r.risk_reward_ratio },
+      bars: r.bars || [], visualSpec: r.visual_spec || {}, currentPrice: r.current_price, prevClose: r.prev_close, changePercent: r.change_percent,
+      trendAlignment: r.trend_alignment, trendIndicators: r.trend_indicators, historicalPerformance: r.historical_performance || undefined,
     }));
     
-    // Enrich with historical stats if missing from any patterns (backward compatibility)
-    const patternsNeedingStats = patterns.filter(p => !p.historicalPerformance);
-    if (patternsNeedingStats.length > 0) {
-      const uniquePatternIds = [...new Set(patternsNeedingStats.map(p => p.patternId))];
-      const patternStats = await fetchPatternStats(supabase, uniquePatternIds);
-      
+    const needStats = patterns.filter(p => !p.historicalPerformance);
+    if (needStats.length) {
+      const stats = await fetchPatternStats(supabase, [...new Set(needStats.map(p => p.patternId))]);
       patterns = patterns.map(p => {
         if (!p.historicalPerformance) {
-          const stats = patternStats.get(p.patternId);
-          if (stats) {
-            return {
-              ...p,
-              historicalPerformance: {
-                winRate: stats.winRate,
-                avgRMultiple: stats.avgRMultiple,
-                sampleSize: stats.sampleSize,
-                avgDurationBars: stats.avgDurationBars,
-                accumulatedRoi: stats.accumulatedRoi,
-              },
-            };
-          }
+          const s = stats.get(p.patternId);
+          if (s) return { ...p, historicalPerformance: { winRate: s.winRate, avgRMultiple: s.avgRMultiple, sampleSize: s.sampleSize, avgDurationBars: s.avgDurationBars, accumulatedRoi: s.accumulatedRoi } };
         }
         return p;
       });
-      
-      console.log(`[scan-live-patterns] Enriched ${patterns.filter(p => p.historicalPerformance).length}/${patterns.length} patterns with historical stats`);
     }
-    
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
-  } catch (err) {
-    console.error('[scan-live-patterns] DB cache read exception:', err);
-    return null;
-  }
+  } catch { return null; }
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Support both query params and body
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const url = new URL(req.url);
     let limit = parseInt(url.searchParams.get('limit') || '30');
     let timeframe = url.searchParams.get('timeframe') || '1d';
-    let assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
+    let assetType = url.searchParams.get('assetType') || 'fx';
     let maxTickers = parseInt(url.searchParams.get('maxTickers') || '25');
     let allowedPatterns: string[] = BASE_PATTERNS;
     let forceRefresh = false;
     
-    // Override with body params if provided
     if (req.method === 'POST') {
       try {
         const body = await req.json();
@@ -1293,118 +346,40 @@ serve(async (req) => {
         if (body.timeframe) timeframe = body.timeframe;
         if (body.assetType) assetType = body.assetType;
         if (body.maxTickers) maxTickers = parseInt(body.maxTickers);
-        if (body.allowedPatterns && Array.isArray(body.allowedPatterns)) {
-          allowedPatterns = body.allowedPatterns;
-        }
+        if (body.allowedPatterns?.length) allowedPatterns = body.allowedPatterns;
         if (body.forceRefresh) forceRefresh = true;
-      } catch {
-        // Body parsing failed, use query params
-      }
+      } catch {}
     }
     
-  // Get instruments based on tier (maxTickers)
     const instruments = getInstrumentsForTier(assetType, maxTickers);
-    
-    // Get total instruments in the full universe (for accurate UI display)
-    const assetMap: Record<string, number> = {
-      fx: ALL_INSTRUMENTS.fx.length,
-      crypto: ALL_INSTRUMENTS.crypto.length,
-      stocks: ALL_INSTRUMENTS.stocks.length,
-      commodities: ALL_INSTRUMENTS.commodities.length,
-      indices: ALL_INSTRUMENTS.indices.length,
-      etfs: ALL_INSTRUMENTS.etfs.length,
-    };
-    const totalInstrumentsInUniverse = assetMap[assetType] || instruments.length;
-    
-    // Filter patterns based on tier allowedPatterns
+    const assetMap: Record<string, number> = { fx: ALL_INSTRUMENTS.fx.length, crypto: ALL_INSTRUMENTS.crypto.length, stocks: ALL_INSTRUMENTS.stocks.length, commodities: ALL_INSTRUMENTS.commodities.length, indices: ALL_INSTRUMENTS.indices.length, etfs: ALL_INSTRUMENTS.etfs.length };
+    const totalInUniverse = assetMap[assetType] || instruments.length;
     const patternsToScan = ALL_PATTERNS.filter(p => allowedPatterns.includes(p));
-    // Also add extended patterns if allowed
-    const extendedPatternsToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
-    const allPatternsToScan = [...patternsToScan, ...extendedPatternsToScan];
+    const extendedToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
+    const allPatternsToScan = [...patternsToScan, ...extendedToScan];
     
-    // FAST PATH: Try to read from live_pattern_detections DB table first (sub-second)
-    // This avoids the slow Yahoo Finance scanning entirely
+    // FAST PATH
     if (!forceRefresh) {
-      const dbCached = await readCachedPatternsFromDb(
-        supabase,
-        assetType,
-        timeframe,
-        allPatternsToScan,
-        limit,
-        maxTickers
-      );
-      
-      // Return immediately if cache is fresh (even if empty - no patterns detected is valid)
-      if (dbCached && dbCached.isFresh) {
-        const marketOpen = isMarketOpen(assetType);
-        const responseData = {
-          success: true,
-          patterns: dbCached.patterns,
-          scannedAt: new Date().toISOString(),
-          instrumentsScanned: dbCached.instrumentsScanned,
-          totalInUniverse: totalInstrumentsInUniverse,
-          assetType,
-          marketOpen,
-          marketStatus: marketOpen ? 'open' : 'closed',
-          source: 'db_cache', // Indicate this came from fast path
-        };
-        
-        console.log(`[scan-live-patterns] Fast path: Returning ${dbCached.patterns.length} patterns from DB cache (isFresh=${dbCached.isFresh})`);
-        return new Response(JSON.stringify(responseData), {
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-          },
-        });
+      const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
+      if (dbCached?.isFresh) {
+        return new Response(JSON.stringify({ success: true, patterns: dbCached.patterns, scannedAt: new Date().toISOString(), instrumentsScanned: dbCached.instrumentsScanned, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType), source: 'db_cache' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
       }
     }
     
-    // SLOW PATH: Memory cache check before live scanning
+    // MEMORY CACHE
     const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
-    const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
     const cached = scanCache.get(cacheKey);
+    const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
     if (cached && Date.now() - cached.timestamp < cacheTtl && !forceRefresh) {
-      console.log('[scan-live-patterns] Returning memory cached result');
-      return new Response(JSON.stringify(cached.data), {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-        },
-      });
+      return new Response(JSON.stringify(cached.data), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
     }
     
-    console.log('[scan-live-patterns] Starting parallel scan:', {
-      limit,
-      timeframe,
-      assetType,
-      instrumentCount: instruments.length,
-      patternCount: allPatternsToScan.length,
-      patterns: allPatternsToScan
-    });
-    
+    // SLOW PATH - Live scan
     const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 365); // 365 days of data for trend analysis (need 200+ bars)
-    
-    // DB-FIRST FETCH: Check historical_prices DB cache, then fall back to Yahoo
-    // This dramatically speeds up loading for daily charts since data is pre-cached
-    const fetchConcurrency = 25;
-    const instrumentDataMap = await fetchDataBatchWithDbFallback(
-      supabase,
-      instruments,
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0],
-      timeframe,
-      fetchConcurrency
-    );
-    
-    console.log(`[scan-live-patterns] Fetched data for ${instrumentDataMap.size}/${instruments.length} instruments`);
+    const startDate = new Date(); startDate.setDate(startDate.getDate() - 365);
+    const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
     
     const detectedPatterns: any[] = [];
-    
-    // Process all instruments with their pre-fetched data
     for (const instrument of instruments) {
       const bars = instrumentDataMap.get(instrument);
       if (!bars || bars.length < 20) continue;
@@ -1412,232 +387,69 @@ serve(async (req) => {
       for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
         if (!pattern) continue;
+        const detectionResult = pattern.detector(bars.slice(-20));
+        if (!detectionResult.detected) continue;
         
-        const window = bars.slice(-20);
-        const detectionResult = pattern.detector(window);
+        const lastBar = bars[bars.length - 1];
+        const atr = calculateATR(bars, 14);
+        const bracketLevels = computeBracketLevels({ direction: pattern.direction, entryPrice: lastBar.close, stopPercent: (atr / lastBar.close) * 100 * 2, targetPercent: (atr / lastBar.close) * 100 * 4, atr, atrMultiplier: 2.0, stopLossMethod: 'atr', takeProfitMethod: 'ratio' });
         
-        if (detectionResult.detected) {
-          const lastBar = bars[bars.length - 1];
-          const atr = calculateATR(bars, 14);
-          
-          const bracketLevels = computeBracketLevels({
-            direction: pattern.direction,
-            entryPrice: lastBar.close,
-            stopPercent: (atr / lastBar.close) * 100 * 2,
-            targetPercent: (atr / lastBar.close) * 100 * 4,
-            atr,
-            atrMultiplier: 2.0,
-            stopLossMethod: 'atr',
-            takeProfitMethod: 'ratio',
-          });
-          
-          const entryPrice = lastBar.close;
-          
-          // Visual spec - last 60 bars for compact view
-          const visualBars = bars.slice(-60);
-          const compressedBars = visualBars.map(b => ({
-            t: b.date,
-            o: Number(b.open.toFixed(6)),
-            h: Number(b.high.toFixed(6)),
-            l: Number(b.low.toFixed(6)),
-            c: Number(b.close.toFixed(6)),
-            v: b.volume || 0,
-          }));
-          
-          const allLows = visualBars.map(b => b.low);
-          const allHighs = visualBars.map(b => b.high);
-          const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
-          const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, entryPrice);
-          
-          // Map pivots to visual window
-          const windowOffset = bars.length - 20;
-          const visualOffset = bars.length - 60;
-          
-          const pivotsWithTimestamps = detectionResult.pivots.map(pivot => {
-            const absoluteIndex = windowOffset + pivot.index;
-            const visualIndex = absoluteIndex - visualOffset;
-            const bar = bars[absoluteIndex];
-            return {
-              ...pivot,
-              index: Math.max(0, visualIndex),
-              timestamp: bar?.date || lastBar.date
-            };
-          }).filter(p => p.index >= 0 && p.index < visualBars.length);
-          
-          const visualSpec = {
-            version: '2.0.0',
-            symbol: instrument,
-            timeframe,
-            patternId,
-            signalTs: lastBar.date,
-            window: { startTs: visualBars[0]?.date || lastBar.date, endTs: visualBars[visualBars.length - 1]?.date || lastBar.date },
-            yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 },
-            overlays: [
-              { type: 'hline', id: 'entry', price: entryPrice, label: 'Entry', style: 'primary' },
-              { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' },
-              { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' },
-            ],
-            pivots: pivotsWithTimestamps,
-          };
-          
-          // Calculate % change from previous session close
-          const prevBar = bars.length >= 2 ? bars[bars.length - 2] : null;
-          const prevClose = prevBar ? prevBar.close : null;
-          const currentClose = lastBar.close;
-          const changePercent = prevClose && prevClose !== 0 
-            ? ((currentClose - prevClose) / prevClose) * 100 
-            : null;
-          
-          // Calculate trend alignment indicators
-          let trendAlignment: string | null = null;
-          let trendIndicators: any = null;
-          
-          // Need at least 200 bars for proper trend analysis
-          if (bars.length >= 200) {
-            try {
-              const ohlcBars: OHLCBar[] = bars.map(b => ({
-                date: b.date,
-                open: b.open,
-                high: b.high,
-                low: b.low,
-                close: b.close,
-                volume: b.volume || 0,
-              }));
-              
-              const trendResult = analyzePatternTrend(ohlcBars, pattern.direction);
-              if (trendResult) {
-                trendAlignment = trendResult.alignment;
-                trendIndicators = trendResult.indicators;
-              }
-            } catch (trendError) {
-              console.warn(`[scan-live-patterns] Trend calc error for ${instrument}:`, trendError);
-            }
-          }
-          
-          detectedPatterns.push({
-            instrument,
-            patternId,
-            patternName: pattern.displayName,
-            direction: pattern.direction,
-            quality: { score: 'B', reasons: ['Pattern detected on latest bar'] },
-            tradePlan: {
-              entryType: 'bar_close',
-              entry: entryPrice,
-              stopLoss: bracketLevels.stopLossPrice,
-              takeProfit: bracketLevels.takeProfitPrice,
-              rr: bracketLevels.riskRewardRatio,
-            },
-            bars: compressedBars,
-            visualSpec,
-            currentPrice: currentClose,
-            prevClose: prevClose,
-            changePercent: changePercent !== null ? Number(changePercent.toFixed(2)) : null,
-            trendAlignment,
-            trendIndicators,
-          });
-          
-          console.log(`[scan-live-patterns] Found: ${instrument} - ${pattern.displayName} (trend: ${trendAlignment || 'N/A'})`);
+        const visualBars = bars.slice(-60);
+        const compressedBars = visualBars.map(b => ({ t: b.date, o: +b.open.toFixed(6), h: +b.high.toFixed(6), l: +b.low.toFixed(6), c: +b.close.toFixed(6), v: b.volume || 0 }));
+        const allLows = visualBars.map(b => b.low), allHighs = visualBars.map(b => b.high);
+        const minPrice = Math.min(...allLows, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, lastBar.close);
+        const maxPrice = Math.max(...allHighs, bracketLevels.stopLossPrice, bracketLevels.takeProfitPrice, lastBar.close);
+        
+        const windowOffset = bars.length - 20, visualOffset = bars.length - 60;
+        const pivotsWithTs = detectionResult.pivots.map(pivot => {
+          const absIdx = windowOffset + pivot.index;
+          const visIdx = absIdx - visualOffset;
+          return { ...pivot, index: Math.max(0, visIdx), timestamp: bars[absIdx]?.date || lastBar.date };
+        }).filter(p => p.index >= 0 && p.index < visualBars.length);
+        
+        const visualSpec = { version: '2.0.0', symbol: instrument, timeframe, patternId, signalTs: lastBar.date, window: { startTs: visualBars[0]?.date, endTs: visualBars[visualBars.length - 1]?.date }, yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 }, overlays: [{ type: 'hline', id: 'entry', price: lastBar.close, label: 'Entry', style: 'primary' }, { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' }, { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' }], pivots: pivotsWithTs };
+        
+        const prevBar = bars.length >= 2 ? bars[bars.length - 2] : null;
+        const changePercent = prevBar?.close ? ((lastBar.close - prevBar.close) / prevBar.close) * 100 : null;
+        
+        let trendAlignment: string | null = null, trendIndicators: any = null;
+        if (bars.length >= 200) {
+          const computed = safeComputeTrend(bars, pattern.direction);
+          trendAlignment = computed.trendAlignment;
+          trendIndicators = computed.trendIndicators;
         }
+        
+        detectedPatterns.push({ instrument, patternId, patternName: pattern.displayName, direction: pattern.direction, quality: { score: 'B', reasons: ['Pattern detected'] }, tradePlan: { entryType: 'bar_close', entry: lastBar.close, stopLoss: bracketLevels.stopLossPrice, takeProfit: bracketLevels.takeProfitPrice, rr: bracketLevels.riskRewardRatio }, bars: compressedBars, visualSpec, currentPrice: lastBar.close, prevClose: prevBar?.close, changePercent: changePercent != null ? +changePercent.toFixed(2) : null, trendAlignment, trendIndicators });
       }
     }
     
-    // If we detected patterns but trend data is missing (common when cache only has ~90 bars),
-    // do a targeted re-fetch for ONLY the instruments that actually produced patterns.
-    // This keeps the scan fast while making the Trend/Counter filters usable.
-    const instrumentsNeedingTrend = Array.from(
-      new Set(detectedPatterns.filter(p => !p.trendAlignment).map(p => p.instrument))
-    );
-
-    if (instrumentsNeedingTrend.length > 0) {
-      console.log(
-        `[scan-live-patterns] Enriching trend data for ${instrumentsNeedingTrend.length} instruments (minBars=200)`
-      );
-
-      const trendBarsMap = await fetchDataBatchWithDbFallback(
-        supabase,
-        instrumentsNeedingTrend,
-        startDate.toISOString().split('T')[0],
-        endDate.toISOString().split('T')[0],
-        timeframe,
-        Math.min(fetchConcurrency, 6),
-        200
-      );
-
+    // Enrich missing trend data
+    const needTrend = [...new Set(detectedPatterns.filter(p => !p.trendAlignment).map(p => p.instrument))];
+    if (needTrend.length) {
+      const trendBars = await fetchDataBatchWithDbFallback(supabase, needTrend, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 6, 200);
       for (const p of detectedPatterns) {
         if (p.trendAlignment) continue;
-
-        const fullBars = trendBarsMap.get(p.instrument);
-        if (!fullBars || fullBars.length < 200) continue;
-
-        const computed = safeComputeTrend(fullBars, p.direction);
-        p.trendAlignment = computed.trendAlignment;
-        p.trendIndicators = computed.trendIndicators;
+        const fullBars = trendBars.get(p.instrument);
+        if (fullBars?.length >= 200) Object.assign(p, safeComputeTrend(fullBars, p.direction));
       }
     }
-
-    // Persist patterns and get their original first_detected_at timestamps
+    
     const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
+    const patternStats = await fetchPatternStats(supabase, [...new Set(detectedPatterns.map(p => p.patternId))]);
     
-    // Fetch historical performance stats for all pattern types detected
-    const uniquePatternIds = [...new Set(detectedPatterns.map(p => p.patternId))];
-    const patternStats = await fetchPatternStats(supabase, uniquePatternIds);
-    
-    // Build final response with accurate signalTs from database and historical performance
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
       const stats = patternStats.get(pattern.patternId);
-      
-      return {
-        ...pattern,
-        // Use the persisted first_detected_at as signalTs for accurate age calculation
-        signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
-        visualSpec: {
-          ...pattern.visualSpec,
-          // Also update signalTs in visualSpec for consistency
-          signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
-        },
-        // Add historical performance data (including accumulated ROI)
-        historicalPerformance: stats ? {
-          winRate: stats.winRate,
-          avgRMultiple: stats.avgRMultiple,
-          sampleSize: stats.sampleSize,
-          avgDurationBars: stats.avgDurationBars,
-          accumulatedRoi: stats.accumulatedRoi,
-        } : undefined,
-      };
+      return { ...pattern, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs, visualSpec: { ...pattern.visualSpec, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs }, historicalPerformance: stats ? { winRate: stats.winRate, avgRMultiple: stats.avgRMultiple, sampleSize: stats.sampleSize, avgDurationBars: stats.avgDurationBars, accumulatedRoi: stats.accumulatedRoi } : undefined };
     });
     
-    const marketOpen = isMarketOpen(assetType);
-    console.log(`[scan-live-patterns] Scan complete. Found ${setups.length} patterns. Market open: ${marketOpen}`);
-    
-    const responseData = {
-      success: true,
-      patterns: setups,
-      scannedAt: new Date().toISOString(),
-      instrumentsScanned: instruments.length,
-      totalInUniverse: totalInstrumentsInUniverse,
-      assetType,
-      marketOpen,
-      marketStatus: marketOpen ? 'open' : 'closed',
-    };
-    
-    // Cache the successful response
+    const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
     
-    return new Response(JSON.stringify(responseData), {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-      },
-    });
-    
+    return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
   } catch (error) {
     console.error('[scan-live-patterns] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
