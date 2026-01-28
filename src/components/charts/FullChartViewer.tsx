@@ -714,14 +714,13 @@ export default function FullChartViewer({
           </p>
         </div>
 
-        {/* Historical Pattern Occurrences List */}
+        {/* Historical Pattern Occurrences List - uses default 50 limit for proper 5-year backtested view */}
         <div className="mt-6">
           <HistoricalOccurrencesList
             patternId={setup.patternId}
             patternName={setup.patternName}
             timeframe={visualSpec.timeframe}
             direction={direction}
-            limit={15}
             className="border-border/50"
           />
         </div>
