@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { withTimeout } from '@/utils/withTimeout';
+import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 
 interface LiveSetup {
   instrument: string;
@@ -498,49 +499,7 @@ function getCryptoLogoName(ticker: string): string {
   return names[ticker] || ticker.toLowerCase();
 }
 
-// InstrumentLogo component with multi-source fallback
-function InstrumentLogo({ instrument }: { instrument: string }) {
-  const [logoIndex, setLogoIndex] = useState(0);
-  const [logoFailed, setLogoFailed] = useState(false);
-  
-  const ticker = cleanInstrumentName(instrument);
-  const meta = getInstrumentMeta(instrument);
-  const logoUrls = meta ? getLogoUrls(ticker, meta.category) : [];
-  
-  const handleError = () => {
-    if (logoIndex < logoUrls.length - 1) {
-      setLogoIndex(prev => prev + 1);
-    } else {
-      setLogoFailed(true);
-    }
-  };
-  
-  const currentLogoUrl = !logoFailed && logoUrls.length > 0 ? logoUrls[logoIndex] : null;
-  
-  return (
-    <div className="flex items-center gap-2 min-w-0">
-      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0 border border-border/50">
-        {currentLogoUrl && !logoFailed ? (
-          <img 
-            src={currentLogoUrl} 
-            alt={ticker}
-            className="w-full h-full object-cover"
-            onError={handleError}
-          />
-        ) : (
-          <span className="text-[10px] font-bold text-primary">
-            {ticker.slice(0, 2)}
-          </span>
-        )}
-      </div>
-      {meta?.name && (
-        <span className="text-sm text-foreground truncate">
-          {meta.name}
-        </span>
-      )}
-    </div>
-  );
-}
+// InstrumentLogo is now imported from @/components/charts/InstrumentLogo
 
 export default function PatternScreenerTable() {
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
