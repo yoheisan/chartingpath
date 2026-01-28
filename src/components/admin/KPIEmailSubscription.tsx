@@ -28,7 +28,7 @@ export function KPIEmailSubscription() {
   const [sendingTest, setSendingTest] = useState(false);
   const [subscription, setSubscription] = useState<KPISubscription | null>(null);
   const [email, setEmail] = useState('');
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState(true);
   const [frequency, setFrequency] = useState('weekly');
   const [includeJourney, setIncludeJourney] = useState(true);
   const [includeUsers, setIncludeUsers] = useState(true);
