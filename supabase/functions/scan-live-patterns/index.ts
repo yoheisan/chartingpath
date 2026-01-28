@@ -662,6 +662,14 @@ interface PatternStats {
   avgRMultiple: number;
   sampleSize: number;
   avgDurationBars: number;
+  // Accumulated ROI by time period
+  accumulatedRoi: {
+    threeMonth: number | null;
+    sixMonth: number | null;
+    oneYear: number | null;
+    threeYear: number | null;
+    fiveYear: number | null;
+  };
 }
 
 async function fetchPatternStats(
@@ -676,7 +684,7 @@ async function fetchPatternStats(
     // Query aggregated stats from historical_pattern_occurrences
     const { data, error } = await supabase
       .from('historical_pattern_occurrences')
-      .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome')
+      .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
       .in('pattern_id', patternIds)
       .not('outcome', 'is', null);
     
@@ -689,23 +697,81 @@ async function fetchPatternStats(
       return statsMap;
     }
     
+    // Define time period boundaries
+    const now = new Date();
+    const threeMonthsAgo = new Date(now);
+    threeMonthsAgo.setMonth(now.getMonth() - 3);
+    const sixMonthsAgo = new Date(now);
+    sixMonthsAgo.setMonth(now.getMonth() - 6);
+    const oneYearAgo = new Date(now);
+    oneYearAgo.setFullYear(now.getFullYear() - 1);
+    const threeYearsAgo = new Date(now);
+    threeYearsAgo.setFullYear(now.getFullYear() - 3);
+    const fiveYearsAgo = new Date(now);
+    fiveYearsAgo.setFullYear(now.getFullYear() - 5);
+    
     // Group by pattern_id and calculate stats
-    const grouped = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
+    interface PatternAccumulator {
+      wins: number;
+      total: number;
+      pnlSum: number;
+      durationSum: number;
+      durationCount: number;
+      roi3m: number;
+      roi6m: number;
+      roi1y: number;
+      roi3y: number;
+      roi5y: number;
+      count3m: number;
+      count6m: number;
+      count1y: number;
+      count3y: number;
+      count5y: number;
+    }
+    const grouped = new Map<string, PatternAccumulator>();
     
     for (const row of data) {
       const pid = row.pattern_id;
       if (!grouped.has(pid)) {
-        grouped.set(pid, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
+        grouped.set(pid, { 
+          wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
+          roi3m: 0, roi6m: 0, roi1y: 0, roi3y: 0, roi5y: 0,
+          count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0
+        });
       }
       const entry = grouped.get(pid)!;
       
       if (row.outcome === 'hit_tp' || row.outcome === 'hit_sl') {
         entry.total++;
         if (row.outcome === 'hit_tp') entry.wins++;
-        if (row.outcome_pnl_percent != null) entry.pnlSum += row.outcome_pnl_percent;
+        const pnl = row.outcome_pnl_percent ?? 0;
+        if (row.outcome_pnl_percent != null) entry.pnlSum += pnl;
         if (row.bars_to_outcome != null) {
           entry.durationSum += row.bars_to_outcome;
           entry.durationCount++;
+        }
+        
+        // Calculate ROI by time period
+        const detectedDate = new Date(row.detected_at);
+        if (detectedDate >= threeMonthsAgo) {
+          entry.roi3m += pnl;
+          entry.count3m++;
+        }
+        if (detectedDate >= sixMonthsAgo) {
+          entry.roi6m += pnl;
+          entry.count6m++;
+        }
+        if (detectedDate >= oneYearAgo) {
+          entry.roi1y += pnl;
+          entry.count1y++;
+        }
+        if (detectedDate >= threeYearsAgo) {
+          entry.roi3y += pnl;
+          entry.count3y++;
+        }
+        if (detectedDate >= fiveYearsAgo) {
+          entry.roi5y += pnl;
+          entry.count5y++;
         }
       }
     }
@@ -717,6 +783,13 @@ async function fetchPatternStats(
           avgRMultiple: entry.pnlSum / entry.total / 100, // Convert % to R-multiple (approx)
           sampleSize: entry.total,
           avgDurationBars: entry.durationCount > 0 ? Math.round(entry.durationSum / entry.durationCount) : 0,
+          accumulatedRoi: {
+            threeMonth: entry.count3m > 0 ? entry.roi3m : null,
+            sixMonth: entry.count6m > 0 ? entry.roi6m : null,
+            oneYear: entry.count1y > 0 ? entry.roi1y : null,
+            threeYear: entry.count3y > 0 ? entry.roi3y : null,
+            fiveYear: entry.count5y > 0 ? entry.roi5y : null,
+          },
         });
       }
     }
