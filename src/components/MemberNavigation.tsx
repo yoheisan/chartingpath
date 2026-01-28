@@ -25,11 +25,6 @@ const MemberNavigation = () => {
       label: "Projects",
     },
     {
-      to: "/vault",
-      icon: Database,
-      label: "My Results",
-    },
-    {
       to: "/members/courses",
       icon: BookOpen,
       label: "Courses",
@@ -40,9 +35,14 @@ const MemberNavigation = () => {
       label: "Downloads",
     },
     {
+      to: "/vault",
+      icon: Database,
+      label: "My Results",
+    },
+    {
       to: "/members/account",
       icon: Settings,
-      label: "Settings",
+      label: "Account",
     },
   ];
 
