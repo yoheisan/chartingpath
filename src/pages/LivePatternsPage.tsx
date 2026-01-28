@@ -261,36 +261,31 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
-      // DB-first caching makes loading much faster (data pre-cached in live_pattern_detections)
-      // Fast path reads from DB in <1s; fallback live scan timeout is 25s
-      const timeoutMs = 25_000;
-      
-      const { data, error: fnError } = await withTimeout(
-        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-          body: {
-            assetType: typeToFetch,
-            limit: 50,
-            maxTickers: caps.maxTickersPerClass,
-            allowedPatterns: caps.allowedPatterns,
-          },
-        }),
-        timeoutMs,
-        'scan-live-patterns',
-      );
+      // No timeout wrapper needed - edge function now uses fast DB-first path
+      // which returns in <1s from cached live_pattern_detections table
+      const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+        body: {
+          assetType: typeToFetch,
+          limit: 50,
+          maxTickers: caps.maxTickersPerClass,
+          allowedPatterns: caps.allowedPatterns,
+        },
+      });
       
       if (fnError) throw fnError;
       
-      if (data?.success && data.patterns) {
+      if (data?.patterns) {
         setPatterns(data.patterns);
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
+      } else {
+        // No patterns found but not an error - show empty state
+        setPatterns([]);
+        setLastScanned(new Date().toISOString());
       }
     } catch (err: any) {
       console.error('[LivePatternsPage] Error:', err);
-      const msg = err?.message?.includes('timed out')
-        ? 'Request timed out. Please check your connection and try again.'
-        : 'Failed to load live patterns';
-      setError(msg);
+      setError('Failed to load patterns. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);

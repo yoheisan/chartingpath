@@ -44,13 +44,14 @@ export default function LivePatternPreview() {
     setError(null);
     
     try {
+      // Use fx as default for homepage preview - fast DB-first path returns in <1s
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: {},
+        body: { assetType: 'fx', limit: 4 },
       });
       
       if (fnError) throw fnError;
       
-      if (data?.success && data.patterns) {
+      if (data?.patterns) {
         setPatterns(data.patterns.slice(0, 4)); // Show max 4
         setLastScanned(data.scannedAt);
       }
