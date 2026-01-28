@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown,
-  LayoutGrid, ArrowUpDown
+  LayoutGrid, ArrowUpDown, Search
 } from 'lucide-react';
 import {
   Tooltip,
@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
+import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 
 // Full list of instruments available per asset class
 const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> = {
@@ -218,6 +219,7 @@ export default function LivePatternsPage() {
   
   // Detect initial asset type from highlight symbol if present
   const initialAssetType = highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx';
+  const navigate = useNavigate();
   
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -453,8 +455,17 @@ export default function LivePatternsPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-3 mb-2">
           <h1 className="text-3xl font-bold">Active Pattern Screener</h1>
+          <UniversalSymbolSearch 
+            onSelect={(symbol) => navigate(`/study/${encodeURIComponent(symbol)}`)}
+            trigger={
+              <Button variant="outline" size="sm" className="gap-2">
+                <Search className="h-4 w-4" />
+                Study Ticker
+              </Button>
+            }
+          />
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
