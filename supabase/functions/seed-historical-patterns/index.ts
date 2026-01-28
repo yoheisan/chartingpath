@@ -32,12 +32,12 @@ interface PatternDetectionResult {
 
 // All detectable patterns
 const PATTERN_REGISTRY: Record<string, { 
-  direction: 'long' | 'short'; 
+  direction: 'bullish' | 'bearish'; 
   displayName: string; 
   detector: (w: OHLCBar[]) => PatternDetectionResult 
 }> = {
   'double-top': {
-    direction: 'short',
+    direction: 'bearish',
     displayName: 'Double Top',
     detector: (window) => {
       if (window.length < 15) return { detected: false, pivots: [] };
@@ -570,8 +570,8 @@ function runHistoricalBacktest(
     const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
     const riskReward = tpDistance / stopDistance;
     
-    // Simulate trade outcome
-    let outcome: 'win' | 'loss' | 'pending' | null = null;
+    // Simulate trade outcome (DB constraint requires hit_tp, hit_sl, timeout, pending, invalidated)
+    let outcome: 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | null = null;
     let outcomePrice: number | null = null;
     let outcomeDate: string | null = null;
     let barsToOutcome: number | null = null;
@@ -581,14 +581,14 @@ function runHistoricalBacktest(
       
       if (isLong) {
         if (bar.low <= stopLoss) {
-          outcome = 'loss';
+          outcome = 'hit_sl';
           outcomePrice = stopLoss;
           outcomeDate = bar.date;
           barsToOutcome = j - i;
           break;
         }
         if (bar.high >= takeProfit) {
-          outcome = 'win';
+          outcome = 'hit_tp';
           outcomePrice = takeProfit;
           outcomeDate = bar.date;
           barsToOutcome = j - i;
@@ -596,14 +596,14 @@ function runHistoricalBacktest(
         }
       } else {
         if (bar.high >= stopLoss) {
-          outcome = 'loss';
+          outcome = 'hit_sl';
           outcomePrice = stopLoss;
           outcomeDate = bar.date;
           barsToOutcome = j - i;
           break;
         }
         if (bar.low <= takeProfit) {
-          outcome = 'win';
+          outcome = 'hit_tp';
           outcomePrice = takeProfit;
           outcomeDate = bar.date;
           barsToOutcome = j - i;
@@ -808,7 +808,7 @@ serve(async (req) => {
           asset_type: occ.asset_type,
           pattern_id: occ.pattern_id,
           pattern_name: occ.pattern_name,
-          direction: occ.direction,
+          direction: occ.direction === 'long' ? 'bullish' : 'bearish', // Map to DB constraint values
           timeframe: occ.timeframe,
           detected_at: occ.detected_at,
           pattern_start_date: occ.pattern_start_date,
@@ -821,7 +821,7 @@ serve(async (req) => {
           visual_spec: occ.visual_spec,
           quality_score: occ.quality_score,
           quality_reasons: occ.quality_reasons,
-          outcome: occ.outcome,
+          outcome: occ.outcome, // Already using hit_tp, hit_sl, timeout, pending
           outcome_price: occ.outcome_price,
           outcome_date: occ.outcome_date,
           outcome_pnl_percent: occ.outcome_pnl_percent,
@@ -837,9 +837,9 @@ serve(async (req) => {
 
     console.log(`Inserted ${insertedCount} occurrences into database`);
 
-    // Compute statistics
-    const winCount = allOccurrences.filter(o => o.outcome === 'win').length;
-    const lossCount = allOccurrences.filter(o => o.outcome === 'loss').length;
+    // Compute statistics (using new outcome names)
+    const winCount = allOccurrences.filter(o => o.outcome === 'hit_tp').length;
+    const lossCount = allOccurrences.filter(o => o.outcome === 'hit_sl').length;
     const totalWithOutcome = winCount + lossCount;
     const winRate = totalWithOutcome > 0 ? (winCount / totalWithOutcome * 100).toFixed(1) : 'N/A';
 
@@ -862,8 +862,8 @@ serve(async (req) => {
       },
       byPattern: patterns.reduce((acc, p) => {
         const patternOccs = allOccurrences.filter(o => o.pattern_id === p);
-        const wins = patternOccs.filter(o => o.outcome === 'win').length;
-        const losses = patternOccs.filter(o => o.outcome === 'loss').length;
+        const wins = patternOccs.filter(o => o.outcome === 'hit_tp').length;
+        const losses = patternOccs.filter(o => o.outcome === 'hit_sl').length;
         acc[p] = {
           count: patternOccs.length,
           wins,
