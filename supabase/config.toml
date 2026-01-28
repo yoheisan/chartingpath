@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.scan-live-patterns]
 verify_jwt = false
+
+[functions.seed-historical-patterns]
+verify_jwt = false
