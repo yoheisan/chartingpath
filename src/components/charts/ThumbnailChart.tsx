@@ -18,7 +18,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
   const chartRef = useRef<IChartApi | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || bars.length === 0) return;
+    if (!containerRef.current || !bars || bars.length === 0) return;
 
     // Detect theme
     const isDark = document.documentElement.classList.contains('dark');
@@ -87,27 +87,29 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
 
     candleSeries.setData(chartData);
 
-    // Add price lines for overlays
-    visualSpec.overlays.forEach((overlay) => {
-      if (overlay.type === 'hline') {
-        const color =
-          overlay.style === 'primary'
-            ? '#3b82f6'
-            : overlay.style === 'destructive'
-              ? '#ef4444'
-              : overlay.style === 'positive'
-                ? '#22c55e'
-                : '#888888';
+    // Add price lines for overlays (defensive: check if overlays exist)
+    if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+      visualSpec.overlays.forEach((overlay) => {
+        if (overlay.type === 'hline') {
+          const color =
+            overlay.style === 'primary'
+              ? '#3b82f6'
+              : overlay.style === 'destructive'
+                ? '#ef4444'
+                : overlay.style === 'positive'
+                  ? '#22c55e'
+                  : '#888888';
 
-        candleSeries.createPriceLine({
-          price: overlay.price,
-          color,
-          lineWidth: 1,
-          lineStyle: 2, // dashed
-          axisLabelVisible: false,
-        });
-      }
-    });
+          candleSeries.createPriceLine({
+            price: overlay.price,
+            color,
+            lineWidth: 1,
+            lineStyle: 2, // dashed
+            axisLabelVisible: false,
+          });
+        }
+      });
+    }
 
     // Add pattern pivot markers as candle-level visual markers
     // Pivots can carry intraday timestamps while bars are daily; markers must snap to an existing bar time.
@@ -173,7 +175,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     };
   }, [bars, visualSpec, height]);
 
-  if (bars.length === 0) {
+  if (!bars || bars.length === 0) {
     return (
       <div 
         className="w-full bg-muted/30 rounded flex items-center justify-center text-muted-foreground text-xs"
