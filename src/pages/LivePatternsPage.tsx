@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown,
-  LayoutGrid, ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus
+  LayoutGrid, ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -39,6 +39,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
+import { TrendIndicatorSettings, loadTrendConfig, TrendIndicatorConfig } from '@/components/TrendIndicatorSettings';
 
 // Full list of instruments available per asset class
 const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> = {
@@ -258,6 +259,9 @@ export default function LivePatternsPage() {
   // Full chart viewer state
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
+  
+  // Trend indicator configuration
+  const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
   
   // Get tier-based screener caps
   const screenerCapsResult = useScreenerCaps();
@@ -667,6 +671,19 @@ export default function LivePatternsPage() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          {/* Trend Indicator Settings */}
+          <TrendIndicatorSettings 
+            onConfigChange={(config) => {
+              setTrendConfig(config);
+              // Trigger a refresh to recalculate with new settings
+            }}
+            trigger={
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Trend Indicator Settings">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            }
+          />
           
           {/* View Toggle */}
           <ToggleGroup 
