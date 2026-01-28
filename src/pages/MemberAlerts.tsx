@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
@@ -10,11 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search } from "lucide-react";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 
 interface UserProfile {
   subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
@@ -471,12 +471,22 @@ const MemberAlerts = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input
-                id="symbol"
-                placeholder={wedgeConfig.wedgeEnabled ? "e.g., BTC, ETH, SOL" : "e.g., AAPL, EURUSD, BTCUSDT"}
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
+              <Label>Symbol</Label>
+              <UniversalSymbolSearch
+                onSelect={(selectedSymbol) => setSymbol(selectedSymbol)}
+                trigger={
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between h-10 font-normal"
+                  >
+                    {symbol ? (
+                      <span className="text-foreground font-medium">{symbol}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Search for a symbol...</span>
+                    )}
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                }
               />
             </div>
 
