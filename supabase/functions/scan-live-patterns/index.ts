@@ -586,7 +586,8 @@ async function loadFromDbCache(
   supabase: any,
   symbols: string[],
   timeframe: string,
-  minDays: number = 60
+  minDays: number = 60,
+  minBarsRequired: number = 20
 ): Promise<Map<string, any[]>> {
   const results = new Map<string, any[]>();
   const dbSymbols = symbols.map(s => getDbSymbol(s));
@@ -642,7 +643,7 @@ async function loadFromDbCache(
     for (const [dbSymbol, bars] of symbolGroups) {
       // Find original Yahoo symbol
       const yahooSymbol = symbols.find(s => getDbSymbol(s) === dbSymbol);
-      if (yahooSymbol && bars.length >= 20) {
+      if (yahooSymbol && bars.length >= minBarsRequired) {
         results.set(yahooSymbol, bars);
       }
     }
@@ -677,7 +678,8 @@ async function fetchDataBatchWithDbFallback(
   startDate: string,
   endDate: string,
   interval: string = '1d',
-  concurrency: number = 10
+  concurrency: number = 10,
+  minBarsRequired: number = 20
 ): Promise<Map<string, any[]>> {
   const results = new Map<string, any[]>();
   const now = Date.now();
@@ -688,7 +690,7 @@ async function fetchDataBatchWithDbFallback(
     const cacheKey = `${symbol}:${interval}`;
     const cached = symbolDataCache.get(cacheKey);
     
-    if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length > 0) {
+    if (cached && now - cached.timestamp < SYMBOL_CACHE_TTL_MS && cached.bars.length >= minBarsRequired) {
       results.set(symbol, cached.bars);
     } else {
       symbolsAfterMemCache.push(symbol);
@@ -702,13 +704,19 @@ async function fetchDataBatchWithDbFallback(
   }
   
   // Step 2: Load from DB cache (fast - no external API)
-  const dbCacheResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, 90);
+  // Use DB cache for the same lookback window we requested.
+  // NOTE: We still enforce minBarsRequired so trend-alignment calls can force a Yahoo fetch when cache is too short.
+  const daysRequested = Math.max(
+    1,
+    Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))
+  );
+  const dbCacheResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, daysRequested, minBarsRequired);
   
   // Add DB results and update memory cache
   const symbolsNeedingYahoo: string[] = [];
   for (const symbol of symbolsAfterMemCache) {
     const dbBars = dbCacheResults.get(symbol);
-    if (dbBars && dbBars.length >= 20) {
+    if (dbBars && dbBars.length >= minBarsRequired) {
       results.set(symbol, dbBars);
       // Also store in memory cache
       const cacheKey = `${symbol}:${interval}`;
@@ -744,6 +752,39 @@ async function fetchDataBatchWithDbFallback(
   
   console.log(`[fetchData] Final total: ${results.size}/${symbols.length} symbols loaded`);
   return results;
+}
+
+function safeComputeTrend(
+  bars: any[],
+  direction: 'long' | 'short'
+): { trendAlignment: string | null; trendIndicators: any | null } {
+  if (!bars || bars.length < 200) {
+    return { trendAlignment: null, trendIndicators: null };
+  }
+
+  try {
+    const ohlcBars: OHLCBar[] = bars.map(b => ({
+      date: b.date,
+      open: b.open,
+      high: b.high,
+      low: b.low,
+      close: b.close,
+      volume: b.volume || 0,
+    }));
+
+    const trendResult = analyzePatternTrend(ohlcBars, direction);
+    if (!trendResult) {
+      return { trendAlignment: null, trendIndicators: null };
+    }
+
+    return {
+      trendAlignment: trendResult.alignment,
+      trendIndicators: trendResult.indicators,
+    };
+  } catch (trendError) {
+    console.warn(`[scan-live-patterns] Trend calc error:`, trendError);
+    return { trendAlignment: null, trendIndicators: null };
+  }
 }
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
@@ -1324,6 +1365,40 @@ serve(async (req) => {
       }
     }
     
+    // If we detected patterns but trend data is missing (common when cache only has ~90 bars),
+    // do a targeted re-fetch for ONLY the instruments that actually produced patterns.
+    // This keeps the scan fast while making the Trend/Counter filters usable.
+    const instrumentsNeedingTrend = Array.from(
+      new Set(detectedPatterns.filter(p => !p.trendAlignment).map(p => p.instrument))
+    );
+
+    if (instrumentsNeedingTrend.length > 0) {
+      console.log(
+        `[scan-live-patterns] Enriching trend data for ${instrumentsNeedingTrend.length} instruments (minBars=200)`
+      );
+
+      const trendBarsMap = await fetchDataBatchWithDbFallback(
+        supabase,
+        instrumentsNeedingTrend,
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0],
+        timeframe,
+        Math.min(fetchConcurrency, 6),
+        200
+      );
+
+      for (const p of detectedPatterns) {
+        if (p.trendAlignment) continue;
+
+        const fullBars = trendBarsMap.get(p.instrument);
+        if (!fullBars || fullBars.length < 200) continue;
+
+        const computed = safeComputeTrend(fullBars, p.direction);
+        p.trendAlignment = computed.trendAlignment;
+        p.trendIndicators = computed.trendIndicators;
+      }
+    }
+
     // Persist patterns and get their original first_detected_at timestamps
     const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
     
