@@ -6,7 +6,7 @@ import { TrendingUp, TrendingDown, RotateCcw, Info } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+
 interface Pattern {
   name: string;
   type: "reversal" | "continuation" | "candlestick";
@@ -309,16 +309,11 @@ export const PatternLibrary = () => {
                 className="overflow-hidden hover:border-primary/50 transition-colors border-border/50 cursor-pointer group"
                 onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
               >
-                {/* Pattern Chart Visualization - Now all patterns have chartKey */}
-                <div className="relative h-40 bg-muted/30 overflow-hidden">
-                  <DynamicPatternChart 
-                    patternType={pattern.chartKey || pattern.name.toLowerCase().replace(/\s+/g, '-')} 
-                    width={400} 
-                    height={200} 
-                    showTitle={false}
-                    className="w-full h-full object-cover scale-110 -translate-y-2"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                {/* Pattern Type Badge Header */}
+                <div className="relative h-24 bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
+                  <div className="text-4xl opacity-20">
+                    {pattern.type === "reversal" ? "↩" : pattern.type === "continuation" ? "→" : "🕯"}
+                  </div>
                   <Badge 
                     variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
                     className="absolute top-2 right-2 text-xs"

@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Brain, AlertTriangle, Lightbulb, Info } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
+import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 
 interface PatternDetailModalProps {
   isOpen: boolean;
@@ -101,6 +102,24 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               <div className="text-center p-3 border rounded-lg">
                 <Clock className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">{patternDetail.timeframe}</div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Pattern Chart Visualization */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Pattern Visualization
+              </h3>
+              <div className="rounded-xl overflow-hidden border border-border bg-card">
+                <DynamicPatternChart 
+                  patternType={patternKey} 
+                  width={700} 
+                  height={400} 
+                  showTitle={false}
+                />
               </div>
             </div>
 
