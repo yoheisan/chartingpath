@@ -12,8 +12,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Timeframe config - daily data for pattern detection
-const LOOKBACK_DAYS = 120; // 4 months of daily data
+// Timeframe config - 5 years of daily data for comprehensive backtesting
+const LOOKBACK_DAYS = 1825; // 5 years of daily data (as available per asset)
 
 interface CacheResult {
   success: boolean;
@@ -80,14 +80,18 @@ async function fetchAndCacheInstrument(
         .eq('symbol', instrument.symbol)
         .eq('timeframe', '1d');
 
-      // Insert fresh data
-      const { error: insertError } = await supabase
-        .from('historical_prices')
-        .insert(records);
+      // Insert in chunks to avoid payload size limits (5 years = ~1300 records per symbol)
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+        const chunk = records.slice(i, i + CHUNK_SIZE);
+        const { error: insertError } = await supabase
+          .from('historical_prices')
+          .insert(chunk);
 
-      if (insertError) {
-        console.error(`Insert error for ${instrument.symbol}:`, insertError);
-        return { success: false, records: 0, error: insertError.message };
+        if (insertError) {
+          console.error(`Insert error for ${instrument.symbol} chunk ${i}:`, insertError);
+          return { success: false, records: 0, error: insertError.message };
+        }
       }
 
       return { success: true, records: records.length };
