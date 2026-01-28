@@ -250,6 +250,9 @@ export default function LivePatternsPage() {
   // Get tier-based screener caps
   const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
 
+  // Get loading state from screener caps hook
+  const capsReady = !useScreenerCaps().loading;
+
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -265,16 +268,19 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
-      // No timeout wrapper needed - edge function now uses fast DB-first path
-      // which returns in <1s from cached live_pattern_detections table
-      const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: {
-          assetType: typeToFetch,
-          limit: 50,
-          maxTickers: caps.maxTickersPerClass,
-          allowedPatterns: caps.allowedPatterns,
-        },
-      });
+      // Use timeout to handle cold starts - fast path returns <1s, fallback can take 15s+
+      const { data, error: fnError } = await withTimeout(
+        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+          body: {
+            assetType: typeToFetch,
+            limit: 50,
+            maxTickers: caps.maxTickersPerClass,
+            allowedPatterns: caps.allowedPatterns,
+          },
+        }),
+        25_000,
+        'scan-live-patterns'
+      );
       
       if (fnError) throw fnError;
       
@@ -290,7 +296,11 @@ export default function LivePatternsPage() {
       }
     } catch (err: any) {
       console.error('[LivePatternsPage] Error:', err);
-      setError('Failed to load patterns. Please try again.');
+      // Provide more specific error message
+      const message = err.message?.includes('timed out') 
+        ? 'Scan is taking longer than expected. The scanner may be processing a large dataset. Please try again.'
+        : 'Failed to load patterns. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -302,10 +312,12 @@ export default function LivePatternsPage() {
     fetchLivePatterns(false, newType);
   };
 
-  // Fetch on mount
+  // Fetch on mount - wait for caps to be ready
   useEffect(() => {
-    fetchLivePatterns();
-  }, []);
+    if (capsReady) {
+      fetchLivePatterns();
+    }
+  }, [capsReady]);
 
   // Auto-open chart when highlight param is present and matching pattern is found
   useEffect(() => {
