@@ -19,6 +19,7 @@ export interface TrendIndicators {
   ema_trend: 'bullish' | 'bearish' | 'neutral';
   rsi_zone: 'oversold' | 'neutral' | 'overbought';
   adx_strength: 'weak' | 'moderate' | 'strong';
+  adx_direction: 'bullish' | 'bearish' | 'neutral'; // Based on +DI vs -DI
   // Individual values for detailed display
   macd_value?: number;
   macd_signal_line?: number;
@@ -27,6 +28,8 @@ export interface TrendIndicators {
   ema_200?: number;
   rsi_value?: number;
   adx_value?: number;
+  plus_di?: number;
+  minus_di?: number;
 }
 
 export type TrendAlignment = 'with_trend' | 'counter_trend' | 'neutral';
@@ -301,18 +304,33 @@ export function analyzeTrendIndicators(bars: OHLCBar[]): TrendIndicators | null 
     }
   }
   
+  // Determine ADX direction based on +DI vs -DI
+  let adxDirection: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+  if (adx) {
+    const diDiff = adx.plusDI - adx.minusDI;
+    // Require meaningful difference (>5 points) to declare direction
+    if (diDiff > 5) {
+      adxDirection = 'bullish';
+    } else if (diDiff < -5) {
+      adxDirection = 'bearish';
+    }
+  }
+  
   return {
     macd_signal: macd?.signal || 'neutral',
     ema_trend: emaTrend,
     rsi_zone: rsi?.zone || 'neutral',
     adx_strength: adx?.strength || 'weak',
+    adx_direction: adxDirection,
     macd_value: macd?.macdLine,
     macd_signal_line: macd?.signalLine,
     macd_histogram: macd?.histogram,
     ema_50: ema50 || undefined,
     ema_200: ema200 || undefined,
     rsi_value: rsi?.value,
-    adx_value: adx?.value
+    adx_value: adx?.value,
+    plus_di: adx?.plusDI,
+    minus_di: adx?.minusDI
   };
 }
 
@@ -323,41 +341,69 @@ export function determineTrendAlignment(
 ): TrendAlignment {
   const isLong = direction === 'long' || direction === 'bullish';
   
-  // Count bullish vs bearish signals
-  let bullishCount = 0;
-  let bearishCount = 0;
+  // Count bullish vs bearish signals with weighted scoring
+  let bullishScore = 0;
+  let bearishScore = 0;
   
-  // MACD signal (weight: 1)
-  if (indicators.macd_signal === 'bullish') bullishCount++;
-  else if (indicators.macd_signal === 'bearish') bearishCount++;
+  // MACD signal (weight: 1.0) - momentum direction
+  if (indicators.macd_signal === 'bullish') bullishScore += 1.0;
+  else if (indicators.macd_signal === 'bearish') bearishScore += 1.0;
   
-  // EMA trend (weight: 1)
-  if (indicators.ema_trend === 'bullish') bullishCount++;
-  else if (indicators.ema_trend === 'bearish') bearishCount++;
+  // EMA trend (weight: 1.0) - primary trend direction
+  if (indicators.ema_trend === 'bullish') bullishScore += 1.0;
+  else if (indicators.ema_trend === 'bearish') bearishScore += 1.0;
   
-  // RSI zone (weight: 0.5 - less decisive)
-  // For longs, oversold is actually favorable (potential reversal up)
-  // For shorts, overbought is favorable (potential reversal down)
-  // So we don't penalize counter-RSI as heavily
-  if (indicators.rsi_zone === 'oversold') bullishCount += 0.5;
-  else if (indicators.rsi_zone === 'overbought') bearishCount += 0.5;
+  // ADX direction (weight: 1.0) - directional movement (+DI vs -DI)
+  // This is crucial for short trades: -DI > +DI indicates bearish pressure
+  if (indicators.adx_direction === 'bullish') bullishScore += 1.0;
+  else if (indicators.adx_direction === 'bearish') bearishScore += 1.0;
   
-  // ADX strength modifier: only count trend signals if trend is moderate/strong
-  const trendStrengthMod = indicators.adx_strength === 'weak' ? 0.5 : 1;
+  // RSI zone (weight: 0.5) - momentum confirmation
+  // For trend-following: 
+  // - In uptrend, RSI 50-70 confirms bullish momentum
+  // - In downtrend, RSI 30-50 confirms bearish momentum
+  // - Extreme zones (oversold/overbought) may signal exhaustion
+  if (indicators.rsi_zone === 'neutral' && indicators.rsi_value !== undefined) {
+    // RSI in healthy trend range (40-60 is neutral territory)
+    if (indicators.rsi_value > 50 && indicators.rsi_value < 70) {
+      bullishScore += 0.5; // Bullish momentum
+    } else if (indicators.rsi_value < 50 && indicators.rsi_value > 30) {
+      bearishScore += 0.5; // Bearish momentum
+    }
+  } else if (indicators.rsi_zone === 'overbought') {
+    // Overbought can mean strong bullish OR potential reversal
+    // For trend-following, we treat this as bullish confirmation
+    bullishScore += 0.25;
+  } else if (indicators.rsi_zone === 'oversold') {
+    // Oversold can mean strong bearish OR potential reversal
+    // For trend-following, we treat this as bearish confirmation
+    bearishScore += 0.25;
+  }
   
-  // Adjust counts by trend strength
-  bullishCount *= trendStrengthMod;
-  bearishCount *= trendStrengthMod;
+  // ADX strength modifier: only count trend signals strongly if trend is moderate/strong
+  const trendStrengthMod = indicators.adx_strength === 'weak' ? 0.6 : 
+                           indicators.adx_strength === 'moderate' ? 0.85 : 1.0;
   
-  // Determine alignment
-  const marketBias = bullishCount > bearishCount ? 'bullish' : 
-                     bearishCount > bullishCount ? 'bearish' : 'neutral';
+  // Apply strength modifier
+  bullishScore *= trendStrengthMod;
+  bearishScore *= trendStrengthMod;
+  
+  // Determine market bias with threshold to avoid noise
+  const scoreDiff = Math.abs(bullishScore - bearishScore);
+  const minThreshold = 0.3; // Require meaningful difference
+  
+  let marketBias: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+  if (scoreDiff >= minThreshold) {
+    marketBias = bullishScore > bearishScore ? 'bullish' : 'bearish';
+  }
   
   if (marketBias === 'neutral') {
     return 'neutral';
   }
   
   // Check if trade direction matches market bias
+  // For LONG trades: market should be bullish
+  // For SHORT trades: market should be bearish
   if ((isLong && marketBias === 'bullish') || (!isLong && marketBias === 'bearish')) {
     return 'with_trend';
   } else {
