@@ -1,11 +1,51 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Tag } from "lucide-react";
+import { ArrowLeft, Clock, Tag, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
+import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+
+// Slugs that have comprehensive static pages - redirect to them
+const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
+  'head-and-shoulders': '/learn/head-and-shoulders',
+  'double-top-bottom': '/learn/double-top-bottom',
+  'triangle-patterns': '/learn/triangle-patterns',
+  'wedge-patterns': '/learn/wedge-patterns',
+  'flag-pennant': '/learn/flag-pennant',
+  'flag-pennant-patterns': '/learn/flag-pennant',
+  'cup-and-handle': '/learn/cup-and-handle',
+  'rectangle-pattern': '/learn/rectangle-pattern',
+  'support-resistance': '/learn/support-resistance',
+  'trend-analysis': '/learn/trend-analysis',
+  'volume-analysis': '/learn/volume-analysis',
+  'moving-averages': '/learn/moving-averages',
+  'rsi-indicator': '/learn/rsi-indicator',
+  'macd-indicator': '/learn/macd-indicator',
+  'fibonacci-retracements': '/learn/fibonacci-retracements',
+  'candlestick-patterns': '/learn/candlestick-patterns',
+  'price-action-basics': '/learn/price-action-basics',
+  'breakout-trading': '/learn/breakout-trading',
+  'pin-bar-strategy': '/learn/pin-bar-strategy',
+  'risk-management': '/learn/risk-management',
+  'position-sizing': '/learn/position-sizing',
+  'money-management': '/learn/money-management',
+  'trading-psychology': '/learn/trading-psychology',
+  'trading-discipline': '/learn/trading-discipline',
+  'fear-and-greed': '/learn/fear-and-greed',
+  'trading-journal': '/learn/trading-journal',
+};
+
+// Pattern types that can be rendered with DynamicPatternChart
+const RENDERABLE_PATTERNS = [
+  'double-top', 'double-bottom', 'head-and-shoulders', 'inverse-head-and-shoulders',
+  'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
+  'bull-flag', 'bear-flag', 'rising-wedge', 'falling-wedge',
+  'cup-and-handle', 'doji', 'hammer', 'shooting-star', 'bullish-engulfing',
+  'bearish-engulfing', 'morning-star', 'evening-star', 'spinning-top'
+];
 
 interface Article {
   id: string;
@@ -33,11 +73,24 @@ const DynamicArticle = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Redirect to static page if it exists
+  useEffect(() => {
+    if (slug && STATIC_ARTICLE_REDIRECTS[slug]) {
+      navigate(STATIC_ARTICLE_REDIRECTS[slug], { replace: true });
+    }
+  }, [slug, navigate]);
+
+  // Fetch article data
   useEffect(() => {
     const fetchArticle = async () => {
       if (!slug) {
         setError("Article not found");
         setLoading(false);
+        return;
+      }
+
+      // Skip fetch if redirecting to static page
+      if (STATIC_ARTICLE_REDIRECTS[slug]) {
         return;
       }
 
