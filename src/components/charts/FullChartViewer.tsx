@@ -508,6 +508,42 @@ export default function FullChartViewer({
               </div>
             </div>
 
+            {/* Historical Performance Stats */}
+            {(setup as any).historicalPerformance && (
+              <div className="grid grid-cols-3 gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
+                  <p className={`font-mono font-bold ${
+                    (setup as any).historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
+                  }`}>
+                    {(setup as any).historicalPerformance.winRate.toFixed(1)}%
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    ({(setup as any).historicalPerformance.sampleSize} samples)
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Avg ROI</div>
+                  <p className={`font-mono font-bold ${
+                    (setup as any).historicalPerformance.avgRMultiple >= 0 ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {(setup as any).historicalPerformance.avgRMultiple >= 0 ? '+' : ''}
+                    {(setup as any).historicalPerformance.avgRMultiple.toFixed(2)}R
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">per trade</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Avg Duration</div>
+                  <p className="font-mono font-bold">
+                    {(setup as any).historicalPerformance.avgDurationBars 
+                      ? `${(setup as any).historicalPerformance.avgDurationBars} bars` 
+                      : '—'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">to outcome</p>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={onCopyPlan} className="flex-1">
