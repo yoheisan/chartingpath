@@ -1,32 +1,36 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, TrendingUp, BarChart3, Target, Shield, Brain } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, TrendingUp, BarChart3, Target, Shield, Brain, GraduationCap } from "lucide-react";
 
 const blogPosts = [
   {
     id: "head-and-shoulders",
     title: "Head and Shoulders Pattern: Complete Trading Guide",
-    description: "Master the Head and Shoulders reversal pattern with detailed analysis, entry strategies, and risk management techniques.",
+    description: "From novice to professional — master pattern identification, entry strategies, volume confirmation, and risk management with visual examples.",
     category: "Chart Patterns",
     icon: BarChart3,
-    readTime: "8 min read"
+    readTime: "15 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced", "Professional"]
   },
   {
     id: "double-top-bottom",
-    title: "Double Top and Double Bottom Patterns",
-    description: "Learn to identify and trade these powerful reversal patterns with high probability setups and confirmation strategies.",
+    title: "Double Top and Double Bottom Patterns: Complete Guide",
+    description: "Comprehensive coverage from basics to advanced techniques — pattern validation, Adam/Eve variations, and professional execution strategies.",
     category: "Chart Patterns",
     icon: TrendingUp,
-    readTime: "7 min read"
+    readTime: "12 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
   },
   {
     id: "triangle-patterns",
     title: "Triangle Patterns: Ascending, Descending & Symmetrical",
-    description: "Comprehensive guide to trading triangle continuation patterns including breakout strategies and volume analysis.",
+    description: "Complete guide to trading triangle continuation patterns including breakout strategies, volume analysis, and measured move targets.",
     category: "Chart Patterns",
     icon: BarChart3,
-    readTime: "10 min read"
+    readTime: "14 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
   },
   {
     id: "wedge-patterns",
@@ -250,17 +254,26 @@ const Blog = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredPosts.map((post) => {
             const Icon = post.icon;
+            const hasSkillLevels = 'skillLevels' in post && Array.isArray((post as any).skillLevels);
             return (
               <Link key={post.id} to={`/learn/${post.id}`}>
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
+                <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-3">
                       <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                         <Icon className="h-6 w-6" />
                       </div>
-                      <span className="text-sm text-muted-foreground">{post.readTime}</span>
+                      <div className="flex items-center gap-2">
+                        {hasSkillLevels && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <GraduationCap className="h-3 w-3" />
+                            All Levels
+                          </Badge>
+                        )}
+                        <span className="text-sm text-muted-foreground">{post.readTime}</span>
+                      </div>
                     </div>
-                    <CardTitle className="group-hover:text-primary transition-colors">
+                    <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
                       {post.title}
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
@@ -268,7 +281,20 @@ const Blog = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{post.description}</p>
+                    <p className="text-muted-foreground text-sm line-clamp-3">{post.description}</p>
+                    {hasSkillLevels && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {((post as any).skillLevels as string[]).map((level: string) => (
+                          <Badge 
+                            key={level} 
+                            variant="secondary" 
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {level}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </Link>
