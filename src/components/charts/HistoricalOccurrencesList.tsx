@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -16,7 +17,8 @@ import {
   ChevronRight,
   ArrowUpRight,
   ArrowDownRight,
-  Minus
+  Minus,
+  Filter
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -42,7 +44,6 @@ interface HistoricalOccurrence {
   qualityScore: string;
   visualSpec: any;
   bars: any[];
-  // NEW: Trend alignment fields
   trendAlignment: 'with_trend' | 'counter_trend' | 'neutral' | null;
   trendIndicators: {
     macd_signal?: string;
@@ -55,14 +56,15 @@ interface HistoricalOccurrence {
 interface HistoricalOccurrencesListProps {
   patternId: string;
   patternName: string;
-  symbol?: string; // Optional: filter by specific symbol for instrument-specific history
+  symbol?: string;
   timeframe?: string;
   direction?: 'long' | 'short';
   limit?: number;
   className?: string;
 }
 
-// Show substantially more historical occurrences for proper 5-year backtested view
+type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
+
 const DEFAULT_LIMIT = 50;
 
 export function HistoricalOccurrencesList({ 
@@ -76,6 +78,7 @@ export function HistoricalOccurrencesList({
 }: HistoricalOccurrencesListProps) {
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trendFilter, setTrendFilter] = useState<TrendFilter>('all');
   const [stats, setStats] = useState({ 
     wins: 0, 
     losses: 0, 
@@ -83,7 +86,7 @@ export function HistoricalOccurrencesList({
     withTrend: 0,
     counterTrend: 0,
     neutral: 0,
-    // Win rates by trend alignment
+    winRate: 0,
     withTrendWinRate: 0,
     counterTrendWinRate: 0
   });
@@ -166,6 +169,8 @@ export function HistoricalOccurrencesList({
           const wins = mapped.filter(o => o.outcome === 'win').length;
           const losses = mapped.filter(o => o.outcome === 'loss').length;
           const pending = mapped.filter(o => !o.outcome || o.outcome === 'pending').length;
+          const totalResolved = wins + losses;
+          const winRate = totalResolved > 0 ? (wins / totalResolved) * 100 : 0;
           
           // Trend alignment stats
           const withTrend = mapped.filter(o => o.trendAlignment === 'with_trend').length;
@@ -185,6 +190,7 @@ export function HistoricalOccurrencesList({
             withTrend,
             counterTrend,
             neutral,
+            winRate,
             withTrendWinRate: withTrendTotal > 0 ? (withTrendWins / withTrendTotal) * 100 : 0,
             counterTrendWinRate: counterTrendTotal > 0 ? (counterTrendWins / counterTrendTotal) * 100 : 0
           });
@@ -241,39 +247,130 @@ export function HistoricalOccurrencesList({
     );
   }
 
+  // Filter occurrences based on trend filter
+  const filteredOccurrences = occurrences.filter(o => {
+    if (trendFilter === 'all') return true;
+    return o.trendAlignment === trendFilter;
+  });
+
+  // Calculate filtered stats
+  const filteredWins = filteredOccurrences.filter(o => o.outcome === 'win').length;
+  const filteredLosses = filteredOccurrences.filter(o => o.outcome === 'loss').length;
+  const filteredTotal = filteredWins + filteredLosses;
+  const filteredWinRate = filteredTotal > 0 ? (filteredWins / filteredTotal) * 100 : 0;
+
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             Historical Occurrences
           </CardTitle>
-          <div className="flex items-center gap-2 text-xs">
-            <Badge variant="outline" className="bg-bullish/10 text-bullish border-bullish/30">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              {stats.wins} wins
-            </Badge>
-            <Badge variant="outline" className="bg-bearish/10 text-bearish border-bearish/30">
-              <XCircle className="h-3 w-3 mr-1" />
-              {stats.losses} losses
-            </Badge>
-            {stats.pending > 0 && (
-              <Badge variant="outline" className="text-muted-foreground">
-                <Clock className="h-3 w-3 mr-1" />
-                {stats.pending} pending
-              </Badge>
-            )}
+          
+          {/* Trend Filter Toggle */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <ToggleGroup 
+              type="single" 
+              value={trendFilter} 
+              onValueChange={(val) => val && setTrendFilter(val as TrendFilter)}
+              className="h-7"
+            >
+              <ToggleGroupItem value="all" className="text-xs px-2 h-6">
+                All
+              </ToggleGroupItem>
+              <ToggleGroupItem value="with_trend" className="text-xs px-2 h-6">
+                <ArrowUpRight className="h-3 w-3 mr-1 text-emerald-500" />
+                With Trend
+              </ToggleGroupItem>
+              <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-6">
+                <ArrowDownRight className="h-3 w-3 mr-1 text-amber-500" />
+                Counter
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
+        </div>
+        
+        {/* Accumulated Stats Panel */}
+        <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">
+                {trendFilter === 'all' ? 'Overall' : trendFilter === 'with_trend' ? 'With Trend' : 'Counter Trend'}
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                filteredWinRate >= 50 ? "text-bullish" : "text-bearish"
+              )}>
+                {filteredWinRate.toFixed(1)}%
+              </div>
+              <div className="text-xs text-muted-foreground">Win Rate</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Wins</div>
+              <div className="text-lg font-bold text-bullish">{filteredWins}</div>
+              <div className="text-xs text-muted-foreground">trades</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Losses</div>
+              <div className="text-lg font-bold text-bearish">{filteredLosses}</div>
+              <div className="text-xs text-muted-foreground">trades</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Sample Size</div>
+              <div className="text-lg font-bold text-foreground">{filteredTotal}</div>
+              <div className="text-xs text-muted-foreground">resolved</div>
+            </div>
+          </div>
+          
+          {/* Trend Comparison (only show when 'all' filter is active and data exists) */}
+          {trendFilter === 'all' && (stats.withTrend > 0 || stats.counterTrend > 0) && (
+            <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap justify-center gap-4 text-xs">
+              {stats.withTrend > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-muted-foreground">With Trend:</span>
+                  <span className={cn(
+                    "font-semibold",
+                    stats.withTrendWinRate >= 50 ? "text-bullish" : "text-bearish"
+                  )}>
+                    {stats.withTrendWinRate.toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">({stats.withTrend})</span>
+                </div>
+              )}
+              {stats.counterTrend > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <ArrowDownRight className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-muted-foreground">Counter Trend:</span>
+                  <span className={cn(
+                    "font-semibold",
+                    stats.counterTrendWinRate >= 50 ? "text-bullish" : "text-bearish"
+                  )}>
+                    {stats.counterTrendWinRate.toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">({stats.counterTrend})</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       
       <CardContent className="pt-2">
         <ScrollArea className="h-[300px] pr-2">
           <div className="space-y-2">
-            {occurrences.map((occurrence) => (
-              <OccurrenceRow key={occurrence.id} occurrence={occurrence} />
-            ))}
+            {filteredOccurrences.length > 0 ? (
+              filteredOccurrences.map((occurrence) => (
+                <OccurrenceRow key={occurrence.id} occurrence={occurrence} />
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Filter className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No {trendFilter.replace('_', ' ')} patterns found</p>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </CardContent>
