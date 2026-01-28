@@ -1527,6 +1527,7 @@ export type Database = {
           direction: string
           entry_price: number
           first_detected_at: string
+          historical_performance: Json | null
           id: string
           instrument: string
           last_confirmed_at: string
@@ -1554,6 +1555,7 @@ export type Database = {
           direction: string
           entry_price: number
           first_detected_at?: string
+          historical_performance?: Json | null
           id?: string
           instrument: string
           last_confirmed_at?: string
@@ -1581,6 +1583,7 @@ export type Database = {
           direction?: string
           entry_price?: number
           first_detected_at?: string
+          historical_performance?: Json | null
           id?: string
           instrument?: string
           last_confirmed_at?: string
