@@ -246,7 +246,8 @@ export default function LivePatternsPage() {
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
   // View mode toggle: 'list' (table) or 'panel' (cards)
-  const [viewMode, setViewMode] = useState<'list' | 'panel'>('panel');
+  // Default to 'list' for fastest loading (no thumbnail charts to render)
+  const [viewMode, setViewMode] = useState<'list' | 'panel'>('list');
   
   // Sorting for list view
   type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
