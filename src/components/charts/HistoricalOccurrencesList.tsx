@@ -4,6 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -268,28 +274,56 @@ export function HistoricalOccurrencesList({
             Historical Occurrences
           </CardTitle>
           
-          {/* Trend Filter Toggle */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-            <ToggleGroup 
-              type="single" 
-              value={trendFilter} 
-              onValueChange={(val) => val && setTrendFilter(val as TrendFilter)}
-              className="h-7"
-            >
-              <ToggleGroupItem value="all" className="text-xs px-2 h-6">
-                All
-              </ToggleGroupItem>
-              <ToggleGroupItem value="with_trend" className="text-xs px-2 h-6">
-                <ArrowUpRight className="h-3 w-3 mr-1 text-emerald-500" />
-                With Trend
-              </ToggleGroupItem>
-              <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-6">
-                <ArrowDownRight className="h-3 w-3 mr-1 text-amber-500" />
-                Counter
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+          {/* Trend Filter Toggle with Tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  <ToggleGroup 
+                    type="single" 
+                    value={trendFilter} 
+                    onValueChange={(val) => val && setTrendFilter(val as TrendFilter)}
+                    className="h-7"
+                  >
+                    <ToggleGroupItem value="all" className="text-xs px-2 h-6">
+                      All
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="with_trend" className="text-xs px-2 h-6">
+                      <ArrowUpRight className="h-3 w-3 mr-1 text-emerald-500" />
+                      With Trend
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-6">
+                      <ArrowDownRight className="h-3 w-3 mr-1 text-amber-500" />
+                      Counter
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm p-4" side="bottom">
+                <p className="font-semibold mb-2">What is Trend Alignment?</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  We analyze each pattern against the higher-timeframe trend using MACD, 50/200 EMA, RSI, and ADX indicators.
+                </p>
+                <div className="text-xs space-y-2">
+                  <div className="flex gap-2">
+                    <ArrowUpRight className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    <div>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">With Trend:</span>
+                      <span className="text-muted-foreground"> Pattern direction matches the dominant market trend. Generally higher probability trades.</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <ArrowDownRight className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">Counter Trend:</span>
+                      <span className="text-muted-foreground"> Pattern direction opposes the trend. Higher risk, potential reversal trades.</span>
+                    </div>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         
         {/* Accumulated Stats Panel */}

@@ -622,27 +622,45 @@ export default function LivePatternsPage() {
                   </ToggleGroup>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="font-semibold mb-1">Trend Alignment Filter</p>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Filter patterns based on whether they align with the larger market trend (MACD, EMA, RSI, ADX).
+              <TooltipContent className="max-w-sm p-4">
+                <p className="font-semibold mb-2">Trend Alignment Filter</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Each pattern is analyzed against the higher-timeframe trend using MACD, 50/200 EMA, RSI, and ADX indicators.
                 </p>
-                <div className="text-xs space-y-1">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                    <span><strong>With Trend:</strong> {trendStats.withTrend} patterns</span>
+                <div className="text-xs space-y-2.5 mb-3">
+                  <div className="flex gap-2">
+                    <ArrowUpRight className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">With Trend</span>
+                      <span className="text-muted-foreground"> ({trendStats.withTrend})</span>
+                      <p className="text-muted-foreground mt-0.5">
+                        Pattern direction aligns with the dominant market trend. Long setups appear in uptrends; short setups in downtrends. Historically higher probability.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <ArrowDownRight className="h-3 w-3 text-amber-500" />
-                    <span><strong>Counter Trend:</strong> {trendStats.counterTrend} patterns</span>
+                  <div className="flex gap-2">
+                    <ArrowDownRight className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">Counter Trend</span>
+                      <span className="text-muted-foreground"> ({trendStats.counterTrend})</span>
+                      <p className="text-muted-foreground mt-0.5">
+                        Pattern direction opposes the dominant trend. These reversal trades carry higher risk but may offer larger rewards if the trend changes.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Minus className="h-3 w-3 text-muted-foreground" />
-                    <span><strong>Not Analyzed:</strong> {trendStats.neutral} patterns</span>
+                  <div className="flex gap-2">
+                    <Minus className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Not Analyzed</span>
+                      <span className="text-muted-foreground"> ({trendStats.neutral})</span>
+                      <p className="text-muted-foreground mt-0.5">
+                        Insufficient data to determine trend alignment or mixed indicator signals.
+                      </p>
+                    </div>
                   </div>
                 </div>
                 {trendStats.neutral > 0 && trendStats.withTrend === 0 && trendStats.counterTrend === 0 && (
-                  <p className="text-xs text-amber-500 mt-2">
+                  <p className="text-xs text-amber-500 border-t border-border/50 pt-2">
                     💡 Click "Refresh" to calculate trend alignment for all patterns.
                   </p>
                 )}
