@@ -260,10 +260,9 @@ export default function LivePatternsPage() {
   const [chartOpen, setChartOpen] = useState(false);
   
   // Get tier-based screener caps
-  const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
-
-  // Get loading state from screener caps hook
-  const capsReady = !useScreenerCaps().loading;
+  const screenerCapsResult = useScreenerCaps();
+  const { caps, tier, upgradeIncentive, lockedPatterns, loading: capsLoading } = screenerCapsResult;
+  const capsReady = !capsLoading;
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
