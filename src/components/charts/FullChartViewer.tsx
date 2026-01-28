@@ -34,10 +34,12 @@ import {
   Bookmark,
   ExternalLink,
   X,
+  History,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
+import { HistoricalHitRate } from './HistoricalHitRate';
 import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
 
@@ -710,6 +712,17 @@ export default function FullChartViewer({
           <p className="text-xs text-muted-foreground leading-relaxed">
             {DISCLAIMERS.SHORT}
           </p>
+        </div>
+
+        {/* Historical Pattern Occurrences */}
+        <div className="mt-6">
+          <HistoricalHitRate
+            patternId={setup.patternId}
+            patternName={setup.patternName}
+            timeframe={visualSpec.timeframe}
+            direction={direction}
+            className="border-border/50"
+          />
         </div>
       </DialogContent>
     </Dialog>
