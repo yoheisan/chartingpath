@@ -1204,7 +1204,7 @@ async function readCachedPatternsFromDb(
     console.log(`[scan-live-patterns] DB fast path: Found ${cachedPatterns.length} cached patterns for ${assetType}`);
     
     // Transform DB rows to API response format
-    const patterns = cachedPatterns.map((row: any) => ({
+    let patterns = cachedPatterns.map((row: any) => ({
       instrument: row.instrument,
       patternId: row.pattern_id,
       patternName: row.pattern_name,
@@ -1226,7 +1226,37 @@ async function readCachedPatternsFromDb(
       // Trend alignment data
       trendAlignment: row.trend_alignment || null,
       trendIndicators: row.trend_indicators || null,
+      // Historical performance data (pre-computed from DB cache)
+      historicalPerformance: row.historical_performance || undefined,
     }));
+    
+    // Enrich with historical stats if missing from any patterns (backward compatibility)
+    const patternsNeedingStats = patterns.filter(p => !p.historicalPerformance);
+    if (patternsNeedingStats.length > 0) {
+      const uniquePatternIds = [...new Set(patternsNeedingStats.map(p => p.patternId))];
+      const patternStats = await fetchPatternStats(supabase, uniquePatternIds);
+      
+      patterns = patterns.map(p => {
+        if (!p.historicalPerformance) {
+          const stats = patternStats.get(p.patternId);
+          if (stats) {
+            return {
+              ...p,
+              historicalPerformance: {
+                winRate: stats.winRate,
+                avgRMultiple: stats.avgRMultiple,
+                sampleSize: stats.sampleSize,
+                avgDurationBars: stats.avgDurationBars,
+                accumulatedRoi: stats.accumulatedRoi,
+              },
+            };
+          }
+        }
+        return p;
+      });
+      
+      console.log(`[scan-live-patterns] Enriched ${patterns.filter(p => p.historicalPerformance).length}/${patterns.length} patterns with historical stats`);
+    }
     
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
   } catch (err) {
@@ -1567,12 +1597,13 @@ serve(async (req) => {
           // Also update signalTs in visualSpec for consistency
           signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
         },
-        // Add historical performance data
+        // Add historical performance data (including accumulated ROI)
         historicalPerformance: stats ? {
           winRate: stats.winRate,
           avgRMultiple: stats.avgRMultiple,
           sampleSize: stats.sampleSize,
           avgDurationBars: stats.avgDurationBars,
+          accumulatedRoi: stats.accumulatedRoi,
         } : undefined,
       };
     });
