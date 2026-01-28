@@ -714,11 +714,12 @@ export default function FullChartViewer({
           </p>
         </div>
 
-        {/* Historical Pattern Occurrences List - uses default 50 limit for proper 5-year backtested view */}
+        {/* Historical Pattern Occurrences List - filter by symbol for instrument-specific 5-year history */}
         <div className="mt-6">
           <HistoricalOccurrencesList
             patternId={setup.patternId}
             patternName={setup.patternName}
+            symbol={setup.instrument}
             timeframe={visualSpec.timeframe}
             direction={direction}
             className="border-border/50"
