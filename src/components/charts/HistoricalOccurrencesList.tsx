@@ -67,6 +67,12 @@ export function HistoricalOccurrencesList({
       setLoading(true);
       
       try {
+        // Map direction from UI values to database constraint values
+        const dbDirectionMap: Record<string, string> = {
+          'long': 'bullish',
+          'short': 'bearish'
+        };
+        
         // Query historical_pattern_occurrences table
         let query = supabase
           .from('historical_pattern_occurrences')
@@ -77,7 +83,8 @@ export function HistoricalOccurrencesList({
           .limit(limit);
         
         if (direction) {
-          query = query.eq('direction', direction);
+          const dbDirection = dbDirectionMap[direction] || direction;
+          query = query.eq('direction', dbDirection);
         }
         
         const { data, error } = await query;
@@ -85,11 +92,25 @@ export function HistoricalOccurrencesList({
         if (error) throw error;
         
         if (data && data.length > 0) {
+          // Map database values back to UI-friendly values
+          const outcomeMap: Record<string, 'win' | 'loss' | 'pending'> = {
+            'hit_tp': 'win',
+            'hit_sl': 'loss',
+            'timeout': 'pending',
+            'pending': 'pending',
+            'invalidated': 'pending'
+          };
+          
+          const directionMap: Record<string, 'long' | 'short'> = {
+            'bullish': 'long',
+            'bearish': 'short'
+          };
+          
           const mapped: HistoricalOccurrence[] = data.map(row => ({
             id: row.id,
             symbol: row.symbol,
             patternName: row.pattern_name,
-            direction: row.direction as 'long' | 'short',
+            direction: directionMap[row.direction] || (row.direction as 'long' | 'short'),
             detectedAt: row.detected_at,
             patternStartDate: row.pattern_start_date,
             patternEndDate: row.pattern_end_date,
@@ -97,7 +118,7 @@ export function HistoricalOccurrencesList({
             stopLossPrice: Number(row.stop_loss_price),
             takeProfitPrice: Number(row.take_profit_price),
             riskRewardRatio: Number(row.risk_reward_ratio),
-            outcome: row.outcome as 'win' | 'loss' | 'pending' | null,
+            outcome: row.outcome ? outcomeMap[row.outcome] || (row.outcome as 'win' | 'loss' | 'pending') : null,
             outcomePnlPercent: row.outcome_pnl_percent ? Number(row.outcome_pnl_percent) : null,
             barsToOutcome: row.bars_to_outcome,
             qualityScore: row.quality_score || 'B',
