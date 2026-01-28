@@ -950,6 +950,78 @@ async function persistPatterns(
   return patternKeys;
 }
 
+/**
+ * Fast path: Read pre-cached patterns from live_pattern_detections table
+ * This avoids the expensive live scan entirely when fresh data exists
+ */
+async function readCachedPatternsFromDb(
+  supabase: any,
+  assetType: string,
+  timeframe: string,
+  allowedPatterns: string[],
+  limit: number,
+  maxTickers: number
+): Promise<{ patterns: any[]; instrumentsScanned: number } | null> {
+  try {
+    // Get list of instruments for this tier to count properly
+    const instruments = getInstrumentsForTier(assetType, maxTickers);
+    
+    // Query patterns updated within last 6 hours (background scheduler runs hourly)
+    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    
+    const { data: cachedPatterns, error } = await supabase
+      .from('live_pattern_detections')
+      .select('*')
+      .eq('asset_type', assetType)
+      .eq('timeframe', timeframe)
+      .eq('status', 'active')
+      .in('pattern_id', allowedPatterns)
+      .in('instrument', instruments)
+      .gte('last_confirmed_at', sixHoursAgo)
+      .order('last_confirmed_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('[scan-live-patterns] DB cache read error:', error);
+      return null;
+    }
+    
+    if (!cachedPatterns || cachedPatterns.length === 0) {
+      console.log('[scan-live-patterns] No fresh cached patterns in DB');
+      return null;
+    }
+    
+    console.log(`[scan-live-patterns] DB fast path: Found ${cachedPatterns.length} cached patterns for ${assetType}`);
+    
+    // Transform DB rows to API response format
+    const patterns = cachedPatterns.map((row: any) => ({
+      instrument: row.instrument,
+      patternId: row.pattern_id,
+      patternName: row.pattern_name,
+      direction: row.direction as 'long' | 'short',
+      signalTs: row.first_detected_at,
+      quality: row.quality_score ? { score: row.quality_score, reasons: row.quality_reasons || [] } : { score: 'B', reasons: [] },
+      tradePlan: {
+        entryType: 'bar_close',
+        entry: row.entry_price,
+        stopLoss: row.stop_loss_price,
+        takeProfit: row.take_profit_price,
+        rr: row.risk_reward_ratio,
+      },
+      bars: row.bars || [],
+      visualSpec: row.visual_spec || {},
+      currentPrice: row.current_price,
+      prevClose: row.prev_close,
+      changePercent: row.change_percent,
+    }));
+    
+    return { patterns, instrumentsScanned: instruments.length };
+  } catch (err) {
+    console.error('[scan-live-patterns] DB cache read exception:', err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -968,6 +1040,7 @@ serve(async (req) => {
     let assetType = url.searchParams.get('assetType') || DEFAULT_ASSET_TYPE;
     let maxTickers = parseInt(url.searchParams.get('maxTickers') || '25');
     let allowedPatterns: string[] = BASE_PATTERNS;
+    let forceRefresh = false;
     
     // Override with body params if provided
     if (req.method === 'POST') {
@@ -980,6 +1053,7 @@ serve(async (req) => {
         if (body.allowedPatterns && Array.isArray(body.allowedPatterns)) {
           allowedPatterns = body.allowedPatterns;
         }
+        if (body.forceRefresh) forceRefresh = true;
       } catch {
         // Body parsing failed, use query params
       }
@@ -994,12 +1068,44 @@ serve(async (req) => {
     const extendedPatternsToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
     const allPatternsToScan = [...patternsToScan, ...extendedPatternsToScan];
     
-    // Check cache first - use longer TTL for commodities (slower to fetch)
+    // FAST PATH: Try to read from live_pattern_detections DB table first (sub-second)
+    // This avoids the slow Yahoo Finance scanning entirely
+    if (!forceRefresh) {
+      const dbCached = await readCachedPatternsFromDb(
+        supabase,
+        assetType,
+        timeframe,
+        allPatternsToScan,
+        limit,
+        maxTickers
+      );
+      
+      if (dbCached && dbCached.patterns.length > 0) {
+        const marketOpen = isMarketOpen(assetType);
+        const responseData = {
+          success: true,
+          patterns: dbCached.patterns,
+          scannedAt: new Date().toISOString(),
+          instrumentsScanned: dbCached.instrumentsScanned,
+          assetType,
+          marketOpen,
+          marketStatus: marketOpen ? 'open' : 'closed',
+          source: 'db_cache', // Indicate this came from fast path
+        };
+        
+        console.log(`[scan-live-patterns] Fast path: Returning ${dbCached.patterns.length} patterns from DB cache`);
+        return new Response(JSON.stringify(responseData), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    // SLOW PATH: Memory cache check before live scanning
     const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
     const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
     const cached = scanCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < cacheTtl) {
-      console.log('[scan-live-patterns] Returning cached result');
+    if (cached && Date.now() - cached.timestamp < cacheTtl && !forceRefresh) {
+      console.log('[scan-live-patterns] Returning memory cached result');
       return new Response(JSON.stringify(cached.data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
