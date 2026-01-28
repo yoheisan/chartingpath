@@ -44,6 +44,7 @@ interface HistoricalOccurrence {
 interface HistoricalOccurrencesListProps {
   patternId: string;
   patternName: string;
+  symbol?: string; // Optional: filter by specific symbol for instrument-specific history
   timeframe?: string;
   direction?: 'long' | 'short';
   limit?: number;
@@ -56,6 +57,7 @@ const DEFAULT_LIMIT = 50;
 export function HistoricalOccurrencesList({ 
   patternId, 
   patternName,
+  symbol,
   timeframe = '1d',
   direction,
   limit = DEFAULT_LIMIT,
@@ -84,6 +86,11 @@ export function HistoricalOccurrencesList({
           .eq('timeframe', timeframe)
           .order('detected_at', { ascending: false })
           .limit(limit);
+        
+        // Filter by symbol if provided (for instrument-specific history)
+        if (symbol) {
+          query = query.eq('symbol', symbol);
+        }
         
         if (direction) {
           const dbDirection = dbDirectionMap[direction] || direction;
@@ -149,7 +156,7 @@ export function HistoricalOccurrencesList({
     };
     
     fetchOccurrences();
-  }, [patternId, timeframe, direction, limit]);
+  }, [patternId, symbol, timeframe, direction, limit]);
 
   if (loading) {
     return (
