@@ -8,6 +8,11 @@ import {
   type OHLCBar,
   type PatternQualityScorerInput 
 } from "../_shared/patternQualityScorer.ts";
+import {
+  analyzePatternTrend,
+  type TrendIndicators,
+  type TrendAlignment
+} from "../_shared/trendIndicators.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -536,6 +541,9 @@ interface HistoricalOccurrence {
   outcome_date: string | null;
   outcome_pnl_percent: number | null;
   bars_to_outcome: number | null;
+  // NEW: Trend alignment fields
+  trend_alignment: TrendAlignment | null;
+  trend_indicators: TrendIndicators | null;
 }
 
 function runHistoricalBacktest(
@@ -657,6 +665,11 @@ function runHistoricalBacktest(
     // Store pattern bars (last 50)
     const patternBars = bars.slice(Math.max(0, i - 49), i + 1);
     
+    // NEW: Calculate trend alignment using full available history up to entry point
+    // Need 200+ bars for 200 EMA calculation
+    const trendBars = bars.slice(Math.max(0, i - 250), i + 1);
+    const trendAnalysis = analyzePatternTrend(trendBars, pattern.direction);
+    
     occurrences.push({
       symbol,
       asset_type: assetType,
@@ -679,7 +692,10 @@ function runHistoricalBacktest(
       outcome_price: outcomePrice,
       outcome_date: outcomeDate,
       outcome_pnl_percent: outcomePnl,
-      bars_to_outcome: barsToOutcome
+      bars_to_outcome: barsToOutcome,
+      // NEW: Trend alignment
+      trend_alignment: trendAnalysis?.alignment || null,
+      trend_indicators: trendAnalysis?.indicators || null
     });
     
     // Skip ahead to avoid overlapping detections
@@ -825,7 +841,10 @@ serve(async (req) => {
           outcome_price: occ.outcome_price,
           outcome_date: occ.outcome_date,
           outcome_pnl_percent: occ.outcome_pnl_percent,
-          bars_to_outcome: occ.bars_to_outcome
+          bars_to_outcome: occ.bars_to_outcome,
+          // NEW: Trend alignment fields
+          trend_alignment: occ.trend_alignment,
+          trend_indicators: occ.trend_indicators
         })));
       
       if (insertError) {

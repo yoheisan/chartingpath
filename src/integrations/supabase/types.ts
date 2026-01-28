@@ -1233,6 +1233,8 @@ export type Database = {
           symbol: string
           take_profit_price: number
           timeframe: string
+          trend_alignment: string | null
+          trend_indicators: Json | null
           updated_at: string
           visual_spec: Json
         }
@@ -1260,6 +1262,8 @@ export type Database = {
           symbol: string
           take_profit_price: number
           timeframe?: string
+          trend_alignment?: string | null
+          trend_indicators?: Json | null
           updated_at?: string
           visual_spec?: Json
         }
@@ -1287,6 +1291,8 @@ export type Database = {
           symbol?: string
           take_profit_price?: number
           timeframe?: string
+          trend_alignment?: string | null
+          trend_indicators?: Json | null
           updated_at?: string
           visual_spec?: Json
         }
@@ -1534,6 +1540,8 @@ export type Database = {
           stop_loss_price: number
           take_profit_price: number
           timeframe: string
+          trend_alignment: string | null
+          trend_indicators: Json | null
           updated_at: string
           visual_spec: Json
         }
@@ -1559,6 +1567,8 @@ export type Database = {
           stop_loss_price: number
           take_profit_price: number
           timeframe?: string
+          trend_alignment?: string | null
+          trend_indicators?: Json | null
           updated_at?: string
           visual_spec: Json
         }
@@ -1584,6 +1594,8 @@ export type Database = {
           stop_loss_price?: number
           take_profit_price?: number
           timeframe?: string
+          trend_alignment?: string | null
+          trend_indicators?: Json | null
           updated_at?: string
           visual_spec?: Json
         }

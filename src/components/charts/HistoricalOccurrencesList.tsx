@@ -13,7 +13,10 @@ import {
   XCircle,
   Clock,
   BarChart3,
-  ChevronRight
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -39,6 +42,14 @@ interface HistoricalOccurrence {
   qualityScore: string;
   visualSpec: any;
   bars: any[];
+  // NEW: Trend alignment fields
+  trendAlignment: 'with_trend' | 'counter_trend' | 'neutral' | null;
+  trendIndicators: {
+    macd_signal?: string;
+    ema_trend?: string;
+    rsi_zone?: string;
+    adx_strength?: string;
+  } | null;
 }
 
 interface HistoricalOccurrencesListProps {
@@ -65,7 +76,17 @@ export function HistoricalOccurrencesList({
 }: HistoricalOccurrencesListProps) {
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ wins: 0, losses: 0, pending: 0 });
+  const [stats, setStats] = useState({ 
+    wins: 0, 
+    losses: 0, 
+    pending: 0,
+    withTrend: 0,
+    counterTrend: 0,
+    neutral: 0,
+    // Win rates by trend alignment
+    withTrendWinRate: 0,
+    counterTrendWinRate: 0
+  });
 
   useEffect(() => {
     const fetchOccurrences = async () => {
@@ -133,7 +154,10 @@ export function HistoricalOccurrencesList({
             barsToOutcome: row.bars_to_outcome,
             qualityScore: row.quality_score || 'B',
             visualSpec: row.visual_spec,
-            bars: Array.isArray(row.bars) ? row.bars : []
+            bars: Array.isArray(row.bars) ? row.bars : [],
+            // NEW: Trend alignment fields
+            trendAlignment: (row as any).trend_alignment as 'with_trend' | 'counter_trend' | 'neutral' | null,
+            trendIndicators: (row as any).trend_indicators || null
           }));
           
           setOccurrences(mapped);
@@ -142,7 +166,28 @@ export function HistoricalOccurrencesList({
           const wins = mapped.filter(o => o.outcome === 'win').length;
           const losses = mapped.filter(o => o.outcome === 'loss').length;
           const pending = mapped.filter(o => !o.outcome || o.outcome === 'pending').length;
-          setStats({ wins, losses, pending });
+          
+          // Trend alignment stats
+          const withTrend = mapped.filter(o => o.trendAlignment === 'with_trend').length;
+          const counterTrend = mapped.filter(o => o.trendAlignment === 'counter_trend').length;
+          const neutral = mapped.filter(o => o.trendAlignment === 'neutral' || !o.trendAlignment).length;
+          
+          // Win rates by trend alignment
+          const withTrendWins = mapped.filter(o => o.trendAlignment === 'with_trend' && o.outcome === 'win').length;
+          const withTrendTotal = mapped.filter(o => o.trendAlignment === 'with_trend' && (o.outcome === 'win' || o.outcome === 'loss')).length;
+          const counterTrendWins = mapped.filter(o => o.trendAlignment === 'counter_trend' && o.outcome === 'win').length;
+          const counterTrendTotal = mapped.filter(o => o.trendAlignment === 'counter_trend' && (o.outcome === 'win' || o.outcome === 'loss')).length;
+          
+          setStats({ 
+            wins, 
+            losses, 
+            pending,
+            withTrend,
+            counterTrend,
+            neutral,
+            withTrendWinRate: withTrendTotal > 0 ? (withTrendWins / withTrendTotal) * 100 : 0,
+            counterTrendWinRate: counterTrendTotal > 0 ? (counterTrendWins / counterTrendTotal) * 100 : 0
+          });
         } else {
           // No data in DB - show empty state
           setOccurrences([]);
@@ -257,6 +302,48 @@ function OccurrenceRow({ occurrence }: OccurrenceRowProps) {
     }
   };
 
+  const getTrendAlignmentBadge = (alignment: string | null) => {
+    if (!alignment) return null;
+    
+    switch (alignment) {
+      case 'with_trend':
+        return (
+          <Badge 
+            variant="outline" 
+            className="text-xs px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+            title="Trade aligns with larger market trend (MACD, EMAs, RSI, ADX)"
+          >
+            <ArrowUpRight className="h-3 w-3 mr-0.5" />
+            With Trend
+          </Badge>
+        );
+      case 'counter_trend':
+        return (
+          <Badge 
+            variant="outline" 
+            className="text-xs px-1.5 py-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+            title="Trade is against the larger market trend"
+          >
+            <ArrowDownRight className="h-3 w-3 mr-0.5" />
+            Counter
+          </Badge>
+        );
+      case 'neutral':
+        return (
+          <Badge 
+            variant="outline" 
+            className="text-xs px-1.5 py-0 text-muted-foreground"
+            title="Mixed signals from trend indicators"
+          >
+            <Minus className="h-3 w-3 mr-0.5" />
+            Neutral
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   const formattedDate = format(new Date(occurrence.detectedAt), 'MMM dd, yyyy');
   const formattedTime = format(new Date(occurrence.detectedAt), 'HH:mm');
 
@@ -279,7 +366,7 @@ function OccurrenceRow({ occurrence }: OccurrenceRowProps) {
       
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className="font-medium text-sm">{occurrence.symbol}</span>
           <Badge 
             variant="outline" 
@@ -300,6 +387,8 @@ function OccurrenceRow({ occurrence }: OccurrenceRowProps) {
           <Badge variant="outline" className="text-xs px-1.5 py-0 text-muted-foreground">
             {occurrence.qualityScore}
           </Badge>
+          {/* NEW: Trend Alignment Badge */}
+          {getTrendAlignmentBadge(occurrence.trendAlignment)}
         </div>
         
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
