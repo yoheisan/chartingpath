@@ -107,6 +107,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
 const TickerStudy = lazy(() => import("./pages/TickerStudy"));
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
+const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -230,6 +231,16 @@ const App = () => (
             }
           />
           <Route path="/admin/translation-management" element={<TranslationManagement />} />
+          <Route
+            path="/admin/journey-analytics"
+            element={
+              <Suspense
+                fallback={<div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>}
+              >
+                <AIJourneyAnalytics />
+              </Suspense>
+            }
+          />
           <Route path="/admin/social-cms" element={<SocialMediaCMS />} />
           <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
           <Route path="/terms" element={<Terms />} />
