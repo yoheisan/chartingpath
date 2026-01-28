@@ -263,10 +263,20 @@ export default function LivePatternsPage() {
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
   
-  // Get tier-based screener caps
+  // Get tier-based screener caps - but don't block on loading
   const screenerCapsResult = useScreenerCaps();
   const { caps, tier, upgradeIncentive, lockedPatterns, loading: capsLoading } = screenerCapsResult;
-  const capsReady = !capsLoading;
+  
+  // Use default caps immediately for fast initial load, upgrade later if needed
+  const DEFAULT_CAPS = {
+    maxTickersPerClass: 25,
+    allowedPatterns: [
+      'donchian-breakout-long', 'donchian-breakout-short',
+      'double-top', 'double-bottom',
+      'ascending-triangle', 'descending-triangle'
+    ]
+  };
+  const effectiveCaps = capsLoading ? DEFAULT_CAPS : caps;
 
   const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     if (isRefresh) setRefreshing(true);
@@ -275,14 +285,17 @@ export default function LivePatternsPage() {
     
     const typeToFetch = selectedAssetType || assetType;
     
+    // Use the provided caps or fall back to effective caps
+    const capsToUse = effectiveCaps;
+    
     const invokeScan = async (forceRefresh: boolean, timeoutMs: number) => {
       return await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
             assetType: typeToFetch,
             limit: 50,
-            maxTickers: caps.maxTickersPerClass,
-            allowedPatterns: caps.allowedPatterns,
+            maxTickers: capsToUse.maxTickersPerClass,
+            allowedPatterns: capsToUse.allowedPatterns,
             forceRefresh, // only true when we explicitly want a full rescan
           },
         }),
@@ -294,8 +307,8 @@ export default function LivePatternsPage() {
     try {
       console.info('[LivePatternsPage] Fetching patterns', {
         assetType: typeToFetch,
-        maxTickers: caps.maxTickersPerClass,
-        allowedPatterns: caps.allowedPatterns?.length,
+        maxTickers: capsToUse.maxTickersPerClass,
+        allowedPatterns: capsToUse.allowedPatterns?.length,
         isRefresh,
       });
 
@@ -373,12 +386,29 @@ export default function LivePatternsPage() {
     fetchLivePatterns(false, newType);
   };
 
-  // Fetch on mount - wait for caps to be ready
+  // Track if we've already fetched patterns
+  const [hasFetchedInitial, setHasFetchedInitial] = useState(false);
+  
+  // Fetch immediately on mount - don't wait for auth
   useEffect(() => {
-    if (capsReady) {
+    if (!hasFetchedInitial) {
+      setHasFetchedInitial(true);
       fetchLivePatterns();
     }
-  }, [capsReady]);
+  }, []);
+  
+  // Re-fetch if caps change after auth loads (upgraded user scenario)
+  useEffect(() => {
+    if (!capsLoading && hasFetchedInitial) {
+      // Only re-fetch if caps are different from defaults (user is authenticated with better tier)
+      const isDifferent = effectiveCaps.maxTickersPerClass !== DEFAULT_CAPS.maxTickersPerClass ||
+        effectiveCaps.allowedPatterns.length !== DEFAULT_CAPS.allowedPatterns.length;
+      if (isDifferent) {
+        console.info('[LivePatternsPage] Caps upgraded, re-fetching');
+        fetchLivePatterns();
+      }
+    }
+  }, [capsLoading, tier]);
 
   // Auto-open chart when highlight param is present and matching pattern is found
   useEffect(() => {
