@@ -367,7 +367,56 @@ export default function TickerStudy() {
         </Card>
       </div>
 
-      {/* Live Patterns Section */}
+      {/* Price Chart Section */}
+      {priceData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Price Chart (Daily)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ThumbnailChart 
+                bars={priceData}
+                visualSpec={{
+                  version: '1.0',
+                  symbol: displaySymbol,
+                  timeframe: '1d',
+                  patternId: '',
+                  signalTs: new Date().toISOString(),
+                  window: {
+                    startTs: priceData[0]?.t || new Date().toISOString(),
+                    endTs: priceData[priceData.length - 1]?.t || new Date().toISOString(),
+                  },
+                  yDomain: {
+                    min: Math.min(...priceData.map(p => p.l)),
+                    max: Math.max(...priceData.map(p => p.h)),
+                  },
+                  overlays: [],
+                }}
+                height={280}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State for Chart */}
+      {loading && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Price Chart
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      )}
       {livePatterns.length > 0 && (
         <Card className="border-primary/50">
           <CardHeader className="pb-2">

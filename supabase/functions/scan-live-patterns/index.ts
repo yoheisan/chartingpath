@@ -656,6 +656,79 @@ async function loadFromDbCache(
   }
 }
 
+// Fetch historical performance stats for patterns from historical_pattern_occurrences table
+interface PatternStats {
+  winRate: number;
+  avgRMultiple: number;
+  sampleSize: number;
+  avgDurationBars: number;
+}
+
+async function fetchPatternStats(
+  supabase: any,
+  patternIds: string[]
+): Promise<Map<string, PatternStats>> {
+  const statsMap = new Map<string, PatternStats>();
+  
+  if (patternIds.length === 0) return statsMap;
+  
+  try {
+    // Query aggregated stats from historical_pattern_occurrences
+    const { data, error } = await supabase
+      .from('historical_pattern_occurrences')
+      .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome')
+      .in('pattern_id', patternIds)
+      .not('outcome', 'is', null);
+    
+    if (error) {
+      console.warn('[fetchPatternStats] DB error:', error.message);
+      return statsMap;
+    }
+    
+    if (!data || data.length === 0) {
+      return statsMap;
+    }
+    
+    // Group by pattern_id and calculate stats
+    const grouped = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
+    
+    for (const row of data) {
+      const pid = row.pattern_id;
+      if (!grouped.has(pid)) {
+        grouped.set(pid, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
+      }
+      const entry = grouped.get(pid)!;
+      
+      if (row.outcome === 'hit_tp' || row.outcome === 'hit_sl') {
+        entry.total++;
+        if (row.outcome === 'hit_tp') entry.wins++;
+        if (row.outcome_pnl_percent != null) entry.pnlSum += row.outcome_pnl_percent;
+        if (row.bars_to_outcome != null) {
+          entry.durationSum += row.bars_to_outcome;
+          entry.durationCount++;
+        }
+      }
+    }
+    
+    for (const [pid, entry] of grouped) {
+      if (entry.total > 0) {
+        statsMap.set(pid, {
+          winRate: (entry.wins / entry.total) * 100,
+          avgRMultiple: entry.pnlSum / entry.total / 100, // Convert % to R-multiple (approx)
+          sampleSize: entry.total,
+          avgDurationBars: entry.durationCount > 0 ? Math.round(entry.durationSum / entry.durationCount) : 0,
+        });
+      }
+    }
+    
+    console.log(`[fetchPatternStats] Loaded stats for ${statsMap.size}/${patternIds.length} patterns`);
+    return statsMap;
+  } catch (err) {
+    console.error('[fetchPatternStats] Error:', err);
+    return statsMap;
+  }
+}
+
 function calculateATR(bars: any[], period: number = 14): number {
   if (bars.length < period + 1) return 0;
   const recentBars = bars.slice(-period - 1);
@@ -1402,10 +1475,15 @@ serve(async (req) => {
     // Persist patterns and get their original first_detected_at timestamps
     const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
     
-    // Build final response with accurate signalTs from database
+    // Fetch historical performance stats for all pattern types detected
+    const uniquePatternIds = [...new Set(detectedPatterns.map(p => p.patternId))];
+    const patternStats = await fetchPatternStats(supabase, uniquePatternIds);
+    
+    // Build final response with accurate signalTs from database and historical performance
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
+      const stats = patternStats.get(pattern.patternId);
       
       return {
         ...pattern,
@@ -1415,7 +1493,14 @@ serve(async (req) => {
           ...pattern.visualSpec,
           // Also update signalTs in visualSpec for consistency
           signalTs: firstDetectedAt ? firstDetectedAt.toISOString() : pattern.visualSpec.signalTs,
-        }
+        },
+        // Add historical performance data
+        historicalPerformance: stats ? {
+          winRate: stats.winRate,
+          avgRMultiple: stats.avgRMultiple,
+          sampleSize: stats.sampleSize,
+          avgDurationBars: stats.avgDurationBars,
+        } : undefined,
       };
     });
     

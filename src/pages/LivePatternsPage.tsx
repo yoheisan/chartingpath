@@ -186,6 +186,13 @@ interface LiveSetup {
     rsi_zone?: string;
     adx_strength?: string;
   } | null;
+  // Historical performance data
+  historicalPerformance?: {
+    winRate: number;
+    avgRMultiple: number;
+    sampleSize: number;
+    avgDurationBars?: number;
+  };
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
@@ -887,12 +894,12 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help">
-                            Price
+                            Win %
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Previous session close price. Daily data only.</p>
+                          <p className="text-xs">Historical win rate for this pattern based on 5 years of backtested data.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -902,12 +909,12 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help">
-                            Chg %
+                            Avg ROI
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Change from prior session's close.</p>
+                          <p className="text-xs">Average return on investment (R-multiple) from historical pattern occurrences.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1003,27 +1010,25 @@ export default function LivePatternsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className="font-mono text-sm">
-                              {setup.currentPrice != null 
-                                ? setup.currentPrice.toLocaleString(undefined, { 
-                                    minimumFractionDigits: setup.currentPrice < 10 ? 4 : 2,
-                                    maximumFractionDigits: setup.currentPrice < 10 ? 4 : 2
-                                  })
-                                : setup.tradePlan.entry.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                  })}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {setup.changePercent != null ? (
+                            {setup.historicalPerformance?.winRate != null ? (
                               <span className={`font-mono text-sm font-medium ${
-                                setup.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
+                                setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
                               }`}>
-                                {setup.changePercent >= 0 ? '+' : ''}{setup.changePercent.toFixed(2)}%
+                                {setup.historicalPerformance.winRate.toFixed(0)}%
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {setup.historicalPerformance?.avgRMultiple != null ? (
+                              <span className={`font-mono text-sm font-medium ${
+                                setup.historicalPerformance.avgRMultiple >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {setup.historicalPerformance.avgRMultiple >= 0 ? '+' : ''}{setup.historicalPerformance.avgRMultiple.toFixed(2)}R
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
@@ -1132,17 +1137,37 @@ export default function LivePatternsPage() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-4 gap-2 text-xs">
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Entry</div>
-                      <div className="font-medium">${setup.tradePlan.entry.toFixed(2)}</div>
+                      <div className="text-muted-foreground mb-0.5">Win %</div>
+                      <div className={`font-medium ${
+                        setup.historicalPerformance?.winRate != null && setup.historicalPerformance.winRate >= 50 
+                          ? 'text-green-500' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {setup.historicalPerformance?.winRate != null 
+                          ? `${setup.historicalPerformance.winRate.toFixed(0)}%` 
+                          : '—'}
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
+                      <div className="text-muted-foreground mb-0.5">Avg ROI</div>
+                      <div className={`font-medium ${
+                        setup.historicalPerformance?.avgRMultiple != null && setup.historicalPerformance.avgRMultiple >= 0 
+                          ? 'text-green-500' 
+                          : 'text-red-500'
+                      }`}>
+                        {setup.historicalPerformance?.avgRMultiple != null 
+                          ? `${setup.historicalPerformance.avgRMultiple >= 0 ? '+' : ''}${setup.historicalPerformance.avgRMultiple.toFixed(2)}R` 
+                          : '—'}
+                      </div>
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
                       <div className="text-muted-foreground mb-0.5">R:R</div>
                       <div className="font-medium">{setup.tradePlan.rr.toFixed(1)}</div>
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Signal</div>
+                      <div className="text-muted-foreground mb-0.5">Age</div>
                       <div className="font-medium">{formatSignalAgeSimple(setup.signalTs)}</div>
                     </div>
                   </div>
