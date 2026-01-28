@@ -39,7 +39,7 @@ import {
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
-import { HistoricalHitRate } from './HistoricalHitRate';
+import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
 import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
 
@@ -714,13 +714,14 @@ export default function FullChartViewer({
           </p>
         </div>
 
-        {/* Historical Pattern Occurrences */}
+        {/* Historical Pattern Occurrences List */}
         <div className="mt-6">
-          <HistoricalHitRate
+          <HistoricalOccurrencesList
             patternId={setup.patternId}
             patternName={setup.patternName}
             timeframe={visualSpec.timeframe}
             direction={direction}
+            limit={15}
             className="border-border/50"
           />
         </div>
