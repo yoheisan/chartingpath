@@ -271,6 +271,22 @@ export default function LivePatternsPage() {
     
     const typeToFetch = selectedAssetType || assetType;
     
+    const invokeScan = async (forceRefresh: boolean, timeoutMs: number) => {
+      return await withTimeout(
+        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+          body: {
+            assetType: typeToFetch,
+            limit: 50,
+            maxTickers: caps.maxTickersPerClass,
+            allowedPatterns: caps.allowedPatterns,
+            forceRefresh, // only true when we explicitly want a full rescan
+          },
+        }),
+        timeoutMs,
+        'scan-live-patterns'
+      );
+    };
+
     try {
       console.info('[LivePatternsPage] Fetching patterns', {
         assetType: typeToFetch,
@@ -279,20 +295,32 @@ export default function LivePatternsPage() {
         isRefresh,
       });
 
-      // Use timeout to handle cold starts - fast path returns <1s, fallback can take 15s+
-      const { data, error: fnError } = await withTimeout(
-        supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-          body: {
-            assetType: typeToFetch,
-            limit: 50,
-            maxTickers: caps.maxTickersPerClass,
-            allowedPatterns: caps.allowedPatterns,
-            forceRefresh: isRefresh, // Force live scan when user explicitly refreshes
-          },
-        }),
-        isRefresh ? 45_000 : 25_000, // Allow more time for forced refresh
-        'scan-live-patterns'
-      );
+      // Fast path returns quickly; forced refresh can be slower.
+      // If a forced refresh times out, we fall back to fetching cached results
+      // (often the scan completed and persisted, but the response didn't make it back in time).
+      let data: ScanResult | null = null;
+      let fnError: any = null;
+
+      try {
+        const res = await invokeScan(isRefresh, isRefresh ? 45_000 : 25_000);
+        data = res.data ?? null;
+        fnError = res.error ?? null;
+      } catch (err: any) {
+        // Timeout during forced refresh: try a quick cached read.
+        const isTimeout = typeof err?.message === 'string' && err.message.includes('timed out');
+        if (isRefresh && isTimeout) {
+          try {
+            const res2 = await invokeScan(false, 15_000);
+            data = res2.data ?? null;
+            fnError = res2.error ?? null;
+            setError('Refresh is still running. Showing the latest cached results — try again in a moment.');
+          } catch {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
       
       if (fnError) throw fnError;
       
@@ -694,7 +722,7 @@ export default function LivePatternsPage() {
       {error && (
         <Card className="p-8 text-center mb-6">
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button variant="outline" onClick={() => fetchLivePatterns()}>
+          <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
