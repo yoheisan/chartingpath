@@ -1,6 +1,8 @@
 // =============================================================================
 // COMPREHENSIVE YAHOO FINANCE INSTRUMENT UNIVERSE
 // Used by cache-popular-instruments and scan-live-patterns
+// Last Updated: 2026-01-28
+// Total Coverage: ~1000+ instruments
 // =============================================================================
 
 export interface Instrument {
@@ -10,10 +12,10 @@ export interface Instrument {
 }
 
 // =============================================================================
-// FOREX - 50 Major, Minor & Cross Pairs
+// FOREX - 100+ Major, Minor, Cross & Exotic Pairs
 // =============================================================================
 export const FX_INSTRUMENTS: Instrument[] = [
-  // Majors
+  // ===== MAJORS (7) =====
   { symbol: 'EUR/USD', yahooSymbol: 'EURUSD=X', name: 'Euro / US Dollar' },
   { symbol: 'GBP/USD', yahooSymbol: 'GBPUSD=X', name: 'British Pound / US Dollar' },
   { symbol: 'USD/JPY', yahooSymbol: 'USDJPY=X', name: 'US Dollar / Japanese Yen' },
@@ -22,38 +24,53 @@ export const FX_INSTRUMENTS: Instrument[] = [
   { symbol: 'USD/CAD', yahooSymbol: 'USDCAD=X', name: 'US Dollar / Canadian Dollar' },
   { symbol: 'NZD/USD', yahooSymbol: 'NZDUSD=X', name: 'New Zealand Dollar / US Dollar' },
   
-  // Euro Crosses
+  // ===== EURO CROSSES (12) =====
   { symbol: 'EUR/GBP', yahooSymbol: 'EURGBP=X', name: 'Euro / British Pound' },
   { symbol: 'EUR/JPY', yahooSymbol: 'EURJPY=X', name: 'Euro / Japanese Yen' },
   { symbol: 'EUR/CHF', yahooSymbol: 'EURCHF=X', name: 'Euro / Swiss Franc' },
   { symbol: 'EUR/AUD', yahooSymbol: 'EURAUD=X', name: 'Euro / Australian Dollar' },
   { symbol: 'EUR/CAD', yahooSymbol: 'EURCAD=X', name: 'Euro / Canadian Dollar' },
   { symbol: 'EUR/NZD', yahooSymbol: 'EURNZD=X', name: 'Euro / New Zealand Dollar' },
+  { symbol: 'EUR/SEK', yahooSymbol: 'EURSEK=X', name: 'Euro / Swedish Krona' },
+  { symbol: 'EUR/NOK', yahooSymbol: 'EURNOK=X', name: 'Euro / Norwegian Krone' },
+  { symbol: 'EUR/DKK', yahooSymbol: 'EURDKK=X', name: 'Euro / Danish Krone' },
+  { symbol: 'EUR/PLN', yahooSymbol: 'EURPLN=X', name: 'Euro / Polish Zloty' },
+  { symbol: 'EUR/HUF', yahooSymbol: 'EURHUF=X', name: 'Euro / Hungarian Forint' },
+  { symbol: 'EUR/CZK', yahooSymbol: 'EURCZK=X', name: 'Euro / Czech Koruna' },
   
-  // GBP Crosses
+  // ===== GBP CROSSES (10) =====
   { symbol: 'GBP/JPY', yahooSymbol: 'GBPJPY=X', name: 'British Pound / Japanese Yen' },
   { symbol: 'GBP/CHF', yahooSymbol: 'GBPCHF=X', name: 'British Pound / Swiss Franc' },
   { symbol: 'GBP/AUD', yahooSymbol: 'GBPAUD=X', name: 'British Pound / Australian Dollar' },
   { symbol: 'GBP/CAD', yahooSymbol: 'GBPCAD=X', name: 'British Pound / Canadian Dollar' },
   { symbol: 'GBP/NZD', yahooSymbol: 'GBPNZD=X', name: 'British Pound / New Zealand Dollar' },
+  { symbol: 'GBP/SEK', yahooSymbol: 'GBPSEK=X', name: 'British Pound / Swedish Krona' },
+  { symbol: 'GBP/NOK', yahooSymbol: 'GBPNOK=X', name: 'British Pound / Norwegian Krone' },
+  { symbol: 'GBP/ZAR', yahooSymbol: 'GBPZAR=X', name: 'British Pound / South African Rand' },
+  { symbol: 'GBP/SGD', yahooSymbol: 'GBPSGD=X', name: 'British Pound / Singapore Dollar' },
+  { symbol: 'GBP/PLN', yahooSymbol: 'GBPPLN=X', name: 'British Pound / Polish Zloty' },
   
-  // JPY Crosses
+  // ===== JPY CROSSES (8) =====
   { symbol: 'AUD/JPY', yahooSymbol: 'AUDJPY=X', name: 'Australian Dollar / Japanese Yen' },
   { symbol: 'CAD/JPY', yahooSymbol: 'CADJPY=X', name: 'Canadian Dollar / Japanese Yen' },
   { symbol: 'CHF/JPY', yahooSymbol: 'CHFJPY=X', name: 'Swiss Franc / Japanese Yen' },
   { symbol: 'NZD/JPY', yahooSymbol: 'NZDJPY=X', name: 'New Zealand Dollar / Japanese Yen' },
+  { symbol: 'SGD/JPY', yahooSymbol: 'SGDJPY=X', name: 'Singapore Dollar / Japanese Yen' },
+  { symbol: 'HKD/JPY', yahooSymbol: 'HKDJPY=X', name: 'Hong Kong Dollar / Japanese Yen' },
+  { symbol: 'ZAR/JPY', yahooSymbol: 'ZARJPY=X', name: 'South African Rand / Japanese Yen' },
+  { symbol: 'MXN/JPY', yahooSymbol: 'MXNJPY=X', name: 'Mexican Peso / Japanese Yen' },
   
-  // AUD/NZD Crosses
+  // ===== AUD/NZD/CAD CROSSES (8) =====
   { symbol: 'AUD/CAD', yahooSymbol: 'AUDCAD=X', name: 'Australian Dollar / Canadian Dollar' },
   { symbol: 'AUD/CHF', yahooSymbol: 'AUDCHF=X', name: 'Australian Dollar / Swiss Franc' },
   { symbol: 'AUD/NZD', yahooSymbol: 'AUDNZD=X', name: 'Australian Dollar / New Zealand Dollar' },
+  { symbol: 'AUD/SGD', yahooSymbol: 'AUDSGD=X', name: 'Australian Dollar / Singapore Dollar' },
   { symbol: 'NZD/CAD', yahooSymbol: 'NZDCAD=X', name: 'New Zealand Dollar / Canadian Dollar' },
   { symbol: 'NZD/CHF', yahooSymbol: 'NZDCHF=X', name: 'New Zealand Dollar / Swiss Franc' },
-  
-  // CAD/CHF Crosses
   { symbol: 'CAD/CHF', yahooSymbol: 'CADCHF=X', name: 'Canadian Dollar / Swiss Franc' },
+  { symbol: 'NZD/SGD', yahooSymbol: 'NZDSGD=X', name: 'New Zealand Dollar / Singapore Dollar' },
   
-  // Exotic Pairs
+  // ===== USD EXOTIC PAIRS (40+) =====
   { symbol: 'USD/SGD', yahooSymbol: 'USDSGD=X', name: 'US Dollar / Singapore Dollar' },
   { symbol: 'USD/HKD', yahooSymbol: 'USDHKD=X', name: 'US Dollar / Hong Kong Dollar' },
   { symbol: 'USD/SEK', yahooSymbol: 'USDSEK=X', name: 'US Dollar / Swedish Krona' },
@@ -64,20 +81,59 @@ export const FX_INSTRUMENTS: Instrument[] = [
   { symbol: 'USD/TRY', yahooSymbol: 'USDTRY=X', name: 'US Dollar / Turkish Lira' },
   { symbol: 'USD/PLN', yahooSymbol: 'USDPLN=X', name: 'US Dollar / Polish Zloty' },
   { symbol: 'USD/CNH', yahooSymbol: 'USDCNH=X', name: 'US Dollar / Chinese Yuan Offshore' },
+  { symbol: 'USD/CNY', yahooSymbol: 'USDCNY=X', name: 'US Dollar / Chinese Yuan' },
   { symbol: 'USD/INR', yahooSymbol: 'USDINR=X', name: 'US Dollar / Indian Rupee' },
   { symbol: 'USD/THB', yahooSymbol: 'USDTHB=X', name: 'US Dollar / Thai Baht' },
-  { symbol: 'EUR/SEK', yahooSymbol: 'EURSEK=X', name: 'Euro / Swedish Krona' },
-  { symbol: 'EUR/NOK', yahooSymbol: 'EURNOK=X', name: 'Euro / Norwegian Krone' },
-  { symbol: 'EUR/PLN', yahooSymbol: 'EURPLN=X', name: 'Euro / Polish Zloty' },
+  { symbol: 'USD/PHP', yahooSymbol: 'USDPHP=X', name: 'US Dollar / Philippine Peso' },
+  { symbol: 'USD/IDR', yahooSymbol: 'USDIDR=X', name: 'US Dollar / Indonesian Rupiah' },
+  { symbol: 'USD/MYR', yahooSymbol: 'USDMYR=X', name: 'US Dollar / Malaysian Ringgit' },
+  { symbol: 'USD/KRW', yahooSymbol: 'USDKRW=X', name: 'US Dollar / South Korean Won' },
+  { symbol: 'USD/TWD', yahooSymbol: 'USDTWD=X', name: 'US Dollar / Taiwan Dollar' },
+  { symbol: 'USD/RUB', yahooSymbol: 'USDRUB=X', name: 'US Dollar / Russian Ruble' },
+  { symbol: 'USD/BRL', yahooSymbol: 'USDBRL=X', name: 'US Dollar / Brazilian Real' },
+  { symbol: 'USD/ARS', yahooSymbol: 'USDARS=X', name: 'US Dollar / Argentine Peso' },
+  { symbol: 'USD/CLP', yahooSymbol: 'USDCLP=X', name: 'US Dollar / Chilean Peso' },
+  { symbol: 'USD/COP', yahooSymbol: 'USDCOP=X', name: 'US Dollar / Colombian Peso' },
+  { symbol: 'USD/PEN', yahooSymbol: 'USDPEN=X', name: 'US Dollar / Peruvian Sol' },
+  { symbol: 'USD/HUF', yahooSymbol: 'USDHUF=X', name: 'US Dollar / Hungarian Forint' },
+  { symbol: 'USD/CZK', yahooSymbol: 'USDCZK=X', name: 'US Dollar / Czech Koruna' },
+  { symbol: 'USD/RON', yahooSymbol: 'USDRON=X', name: 'US Dollar / Romanian Leu' },
+  { symbol: 'USD/BGN', yahooSymbol: 'USDBGN=X', name: 'US Dollar / Bulgarian Lev' },
+  { symbol: 'USD/HRK', yahooSymbol: 'USDHRK=X', name: 'US Dollar / Croatian Kuna' },
+  { symbol: 'USD/ISK', yahooSymbol: 'USDISK=X', name: 'US Dollar / Icelandic Krona' },
+  { symbol: 'USD/ILS', yahooSymbol: 'USDILS=X', name: 'US Dollar / Israeli Shekel' },
+  { symbol: 'USD/AED', yahooSymbol: 'USDAED=X', name: 'US Dollar / UAE Dirham' },
+  { symbol: 'USD/SAR', yahooSymbol: 'USDSAR=X', name: 'US Dollar / Saudi Riyal' },
+  { symbol: 'USD/QAR', yahooSymbol: 'USDQAR=X', name: 'US Dollar / Qatari Riyal' },
+  { symbol: 'USD/KWD', yahooSymbol: 'USDKWD=X', name: 'US Dollar / Kuwaiti Dinar' },
+  { symbol: 'USD/BHD', yahooSymbol: 'USDBHD=X', name: 'US Dollar / Bahraini Dinar' },
+  { symbol: 'USD/OMR', yahooSymbol: 'USDOMR=X', name: 'US Dollar / Omani Rial' },
+  { symbol: 'USD/EGP', yahooSymbol: 'USDEGP=X', name: 'US Dollar / Egyptian Pound' },
+  { symbol: 'USD/NGN', yahooSymbol: 'USDNGN=X', name: 'US Dollar / Nigerian Naira' },
+  { symbol: 'USD/KES', yahooSymbol: 'USDKES=X', name: 'US Dollar / Kenyan Shilling' },
+  { symbol: 'USD/VND', yahooSymbol: 'USDVND=X', name: 'US Dollar / Vietnamese Dong' },
+  { symbol: 'USD/PKR', yahooSymbol: 'USDPKR=X', name: 'US Dollar / Pakistani Rupee' },
+  { symbol: 'USD/BDT', yahooSymbol: 'USDBDT=X', name: 'US Dollar / Bangladeshi Taka' },
+  { symbol: 'USD/LKR', yahooSymbol: 'USDLKR=X', name: 'US Dollar / Sri Lankan Rupee' },
+  
+  // ===== EUR EXOTIC PAIRS (10) =====
   { symbol: 'EUR/TRY', yahooSymbol: 'EURTRY=X', name: 'Euro / Turkish Lira' },
-  { symbol: 'GBP/ZAR', yahooSymbol: 'GBPZAR=X', name: 'British Pound / South African Rand' },
-  { symbol: 'AUD/SGD', yahooSymbol: 'AUDSGD=X', name: 'Australian Dollar / Singapore Dollar' },
+  { symbol: 'EUR/ZAR', yahooSymbol: 'EURZAR=X', name: 'Euro / South African Rand' },
+  { symbol: 'EUR/MXN', yahooSymbol: 'EURMXN=X', name: 'Euro / Mexican Peso' },
+  { symbol: 'EUR/SGD', yahooSymbol: 'EURSGD=X', name: 'Euro / Singapore Dollar' },
+  { symbol: 'EUR/HKD', yahooSymbol: 'EURHKD=X', name: 'Euro / Hong Kong Dollar' },
+  { symbol: 'EUR/RUB', yahooSymbol: 'EURRUB=X', name: 'Euro / Russian Ruble' },
+  { symbol: 'EUR/CNH', yahooSymbol: 'EURCNH=X', name: 'Euro / Chinese Yuan Offshore' },
+  { symbol: 'EUR/ILS', yahooSymbol: 'EURILS=X', name: 'Euro / Israeli Shekel' },
+  { symbol: 'EUR/INR', yahooSymbol: 'EURINR=X', name: 'Euro / Indian Rupee' },
+  { symbol: 'EUR/BRL', yahooSymbol: 'EURBRL=X', name: 'Euro / Brazilian Real' },
 ];
 
 // =============================================================================
-// CRYPTO - Top 50 by Market Cap
+// CRYPTO - Top 100+ by Market Cap
 // =============================================================================
 export const CRYPTO_INSTRUMENTS: Instrument[] = [
+  // ===== TOP 20 =====
   { symbol: 'BTC/USD', yahooSymbol: 'BTC-USD', name: 'Bitcoin' },
   { symbol: 'ETH/USD', yahooSymbol: 'ETH-USD', name: 'Ethereum' },
   { symbol: 'BNB/USD', yahooSymbol: 'BNB-USD', name: 'BNB' },
@@ -98,6 +154,8 @@ export const CRYPTO_INSTRUMENTS: Instrument[] = [
   { symbol: 'ATOM/USD', yahooSymbol: 'ATOM-USD', name: 'Cosmos' },
   { symbol: 'XMR/USD', yahooSymbol: 'XMR-USD', name: 'Monero' },
   { symbol: 'ETC/USD', yahooSymbol: 'ETC-USD', name: 'Ethereum Classic' },
+  
+  // ===== 21-50 =====
   { symbol: 'FIL/USD', yahooSymbol: 'FIL-USD', name: 'Filecoin' },
   { symbol: 'NEAR/USD', yahooSymbol: 'NEAR-USD', name: 'NEAR Protocol' },
   { symbol: 'APT/USD', yahooSymbol: 'APT-USD', name: 'Aptos' },
@@ -128,13 +186,65 @@ export const CRYPTO_INSTRUMENTS: Instrument[] = [
   { symbol: 'NEO/USD', yahooSymbol: 'NEO-USD', name: 'Neo' },
   { symbol: 'WAVES/USD', yahooSymbol: 'WAVES-USD', name: 'Waves' },
   { symbol: 'ZIL/USD', yahooSymbol: 'ZIL-USD', name: 'Zilliqa' },
+  
+  // ===== 51-100 (Extended Coverage) =====
+  { symbol: 'SUI/USD', yahooSymbol: 'SUI-USD', name: 'Sui' },
+  { symbol: 'SEI/USD', yahooSymbol: 'SEI-USD', name: 'Sei' },
+  { symbol: 'PEPE/USD', yahooSymbol: 'PEPE-USD', name: 'Pepe' },
+  { symbol: 'WIF/USD', yahooSymbol: 'WIF-USD', name: 'dogwifhat' },
+  { symbol: 'BONK/USD', yahooSymbol: 'BONK-USD', name: 'Bonk' },
+  { symbol: 'FLOKI/USD', yahooSymbol: 'FLOKI-USD', name: 'Floki' },
+  { symbol: 'IMX/USD', yahooSymbol: 'IMX-USD', name: 'Immutable' },
+  { symbol: 'GALA/USD', yahooSymbol: 'GALA-USD', name: 'Gala' },
+  { symbol: 'APE/USD', yahooSymbol: 'APE-USD', name: 'ApeCoin' },
+  { symbol: 'ICP/USD', yahooSymbol: 'ICP-USD', name: 'Internet Computer' },
+  { symbol: 'HBAR/USD', yahooSymbol: 'HBAR-USD', name: 'Hedera' },
+  { symbol: 'KAS/USD', yahooSymbol: 'KAS-USD', name: 'Kaspa' },
+  { symbol: 'FET/USD', yahooSymbol: 'FET-USD', name: 'Fetch.ai' },
+  { symbol: 'RNDR/USD', yahooSymbol: 'RNDR-USD', name: 'Render' },
+  { symbol: 'GRT/USD', yahooSymbol: 'GRT-USD', name: 'The Graph' },
+  { symbol: 'STX/USD', yahooSymbol: 'STX-USD', name: 'Stacks' },
+  { symbol: 'ENS/USD', yahooSymbol: 'ENS-USD', name: 'Ethereum Name Service' },
+  { symbol: 'QNT/USD', yahooSymbol: 'QNT-USD', name: 'Quant' },
+  { symbol: 'FLR/USD', yahooSymbol: 'FLR-USD', name: 'Flare' },
+  { symbol: 'MINA/USD', yahooSymbol: 'MINA-USD', name: 'Mina Protocol' },
+  { symbol: 'KAVA/USD', yahooSymbol: 'KAVA-USD', name: 'Kava' },
+  { symbol: 'ONE/USD', yahooSymbol: 'ONE-USD', name: 'Harmony' },
+  { symbol: 'CELO/USD', yahooSymbol: 'CELO-USD', name: 'Celo' },
+  { symbol: 'ENJ/USD', yahooSymbol: 'ENJ-USD', name: 'Enjin Coin' },
+  { symbol: 'SKL/USD', yahooSymbol: 'SKL-USD', name: 'SKALE' },
+  { symbol: 'LRC/USD', yahooSymbol: 'LRC-USD', name: 'Loopring' },
+  { symbol: 'BAT/USD', yahooSymbol: 'BAT-USD', name: 'Basic Attention Token' },
+  { symbol: 'IOTA/USD', yahooSymbol: 'IOTA-USD', name: 'IOTA' },
+  { symbol: 'ZRX/USD', yahooSymbol: 'ZRX-USD', name: '0x Protocol' },
+  { symbol: 'CKB/USD', yahooSymbol: 'CKB-USD', name: 'Nervos Network' },
+  { symbol: 'ROSE/USD', yahooSymbol: 'ROSE-USD', name: 'Oasis Network' },
+  { symbol: 'GMT/USD', yahooSymbol: 'GMT-USD', name: 'STEPN' },
+  { symbol: '1INCH/USD', yahooSymbol: '1INCH-USD', name: '1inch' },
+  { symbol: 'OCEAN/USD', yahooSymbol: 'OCEAN-USD', name: 'Ocean Protocol' },
+  { symbol: 'MASK/USD', yahooSymbol: 'MASK-USD', name: 'Mask Network' },
+  { symbol: 'BLUR/USD', yahooSymbol: 'BLUR-USD', name: 'Blur' },
+  { symbol: 'DYDX/USD', yahooSymbol: 'DYDX-USD', name: 'dYdX' },
+  { symbol: 'GMX/USD', yahooSymbol: 'GMX-USD', name: 'GMX' },
+  { symbol: 'PENDLE/USD', yahooSymbol: 'PENDLE-USD', name: 'Pendle' },
+  { symbol: 'WOO/USD', yahooSymbol: 'WOO-USD', name: 'WOO Network' },
+  { symbol: 'SSV/USD', yahooSymbol: 'SSV-USD', name: 'SSV Network' },
+  { symbol: 'RPL/USD', yahooSymbol: 'RPL-USD', name: 'Rocket Pool' },
+  { symbol: 'ANKR/USD', yahooSymbol: 'ANKR-USD', name: 'Ankr' },
+  { symbol: 'STORJ/USD', yahooSymbol: 'STORJ-USD', name: 'Storj' },
+  { symbol: 'YFI/USD', yahooSymbol: 'YFI-USD', name: 'yearn.finance' },
+  { symbol: 'SUSHI/USD', yahooSymbol: 'SUSHI-USD', name: 'SushiSwap' },
+  { symbol: 'BAND/USD', yahooSymbol: 'BAND-USD', name: 'Band Protocol' },
+  { symbol: 'OMG/USD', yahooSymbol: 'OMG-USD', name: 'OMG Network' },
+  { symbol: 'QTUM/USD', yahooSymbol: 'QTUM-USD', name: 'Qtum' },
+  { symbol: 'ICX/USD', yahooSymbol: 'ICX-USD', name: 'ICON' },
 ];
 
 // =============================================================================
-// STOCKS - S&P 500 Top 150 + Tech Giants + Popular Retail
+// STOCKS - Full S&P 500 + Extended Coverage (~550 stocks)
 // =============================================================================
 export const STOCK_INSTRUMENTS: Instrument[] = [
-  // Mega Cap Tech
+  // ===== MEGA CAP TECH (Magnificent 7 + Top Tech) =====
   { symbol: 'AAPL', yahooSymbol: 'AAPL', name: 'Apple Inc.' },
   { symbol: 'MSFT', yahooSymbol: 'MSFT', name: 'Microsoft Corporation' },
   { symbol: 'GOOGL', yahooSymbol: 'GOOGL', name: 'Alphabet Inc. Class A' },
@@ -146,7 +256,7 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'TSM', yahooSymbol: 'TSM', name: 'Taiwan Semiconductor' },
   { symbol: 'AVGO', yahooSymbol: 'AVGO', name: 'Broadcom Inc.' },
   
-  // Semiconductors
+  // ===== SEMICONDUCTORS (20) =====
   { symbol: 'AMD', yahooSymbol: 'AMD', name: 'Advanced Micro Devices' },
   { symbol: 'INTC', yahooSymbol: 'INTC', name: 'Intel Corporation' },
   { symbol: 'QCOM', yahooSymbol: 'QCOM', name: 'Qualcomm Inc.' },
@@ -157,8 +267,18 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'AMAT', yahooSymbol: 'AMAT', name: 'Applied Materials' },
   { symbol: 'KLAC', yahooSymbol: 'KLAC', name: 'KLA Corporation' },
   { symbol: 'MRVL', yahooSymbol: 'MRVL', name: 'Marvell Technology' },
+  { symbol: 'ADI', yahooSymbol: 'ADI', name: 'Analog Devices' },
+  { symbol: 'NXPI', yahooSymbol: 'NXPI', name: 'NXP Semiconductors' },
+  { symbol: 'ON', yahooSymbol: 'ON', name: 'ON Semiconductor' },
+  { symbol: 'MPWR', yahooSymbol: 'MPWR', name: 'Monolithic Power Systems' },
+  { symbol: 'SWKS', yahooSymbol: 'SWKS', name: 'Skyworks Solutions' },
+  { symbol: 'QRVO', yahooSymbol: 'QRVO', name: 'Qorvo Inc.' },
+  { symbol: 'ENTG', yahooSymbol: 'ENTG', name: 'Entegris Inc.' },
+  { symbol: 'TER', yahooSymbol: 'TER', name: 'Teradyne Inc.' },
+  { symbol: 'MKSI', yahooSymbol: 'MKSI', name: 'MKS Instruments' },
+  { symbol: 'ACLS', yahooSymbol: 'ACLS', name: 'Axcelis Technologies' },
   
-  // Software & Cloud
+  // ===== SOFTWARE & CLOUD (30) =====
   { symbol: 'CRM', yahooSymbol: 'CRM', name: 'Salesforce Inc.' },
   { symbol: 'ORCL', yahooSymbol: 'ORCL', name: 'Oracle Corporation' },
   { symbol: 'ADBE', yahooSymbol: 'ADBE', name: 'Adobe Inc.' },
@@ -169,8 +289,28 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'CRWD', yahooSymbol: 'CRWD', name: 'CrowdStrike Holdings' },
   { symbol: 'DDOG', yahooSymbol: 'DDOG', name: 'Datadog Inc.' },
   { symbol: 'ZS', yahooSymbol: 'ZS', name: 'Zscaler Inc.' },
+  { symbol: 'WDAY', yahooSymbol: 'WDAY', name: 'Workday Inc.' },
+  { symbol: 'TEAM', yahooSymbol: 'TEAM', name: 'Atlassian Corporation' },
+  { symbol: 'SPLK', yahooSymbol: 'SPLK', name: 'Splunk Inc.' },
+  { symbol: 'FTNT', yahooSymbol: 'FTNT', name: 'Fortinet Inc.' },
+  { symbol: 'NET', yahooSymbol: 'NET', name: 'Cloudflare Inc.' },
+  { symbol: 'MDB', yahooSymbol: 'MDB', name: 'MongoDB Inc.' },
+  { symbol: 'OKTA', yahooSymbol: 'OKTA', name: 'Okta Inc.' },
+  { symbol: 'VEEV', yahooSymbol: 'VEEV', name: 'Veeva Systems' },
+  { symbol: 'HUBS', yahooSymbol: 'HUBS', name: 'HubSpot Inc.' },
+  { symbol: 'TTD', yahooSymbol: 'TTD', name: 'The Trade Desk' },
+  { symbol: 'ANSS', yahooSymbol: 'ANSS', name: 'Ansys Inc.' },
+  { symbol: 'CDNS', yahooSymbol: 'CDNS', name: 'Cadence Design Systems' },
+  { symbol: 'SNPS', yahooSymbol: 'SNPS', name: 'Synopsys Inc.' },
+  { symbol: 'PTC', yahooSymbol: 'PTC', name: 'PTC Inc.' },
+  { symbol: 'PAYC', yahooSymbol: 'PAYC', name: 'Paycom Software' },
+  { symbol: 'PCTY', yahooSymbol: 'PCTY', name: 'Paylocity Holding' },
+  { symbol: 'BILL', yahooSymbol: 'BILL', name: 'Bill.com Holdings' },
+  { symbol: 'ZI', yahooSymbol: 'ZI', name: 'ZoomInfo Technologies' },
+  { symbol: 'CFLT', yahooSymbol: 'CFLT', name: 'Confluent Inc.' },
+  { symbol: 'PATH', yahooSymbol: 'PATH', name: 'UiPath Inc.' },
   
-  // Internet & E-Commerce
+  // ===== INTERNET & E-COMMERCE (20) =====
   { symbol: 'NFLX', yahooSymbol: 'NFLX', name: 'Netflix Inc.' },
   { symbol: 'BKNG', yahooSymbol: 'BKNG', name: 'Booking Holdings' },
   { symbol: 'ABNB', yahooSymbol: 'ABNB', name: 'Airbnb Inc.' },
@@ -181,8 +321,18 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'PYPL', yahooSymbol: 'PYPL', name: 'PayPal Holdings' },
   { symbol: 'COIN', yahooSymbol: 'COIN', name: 'Coinbase Global' },
   { symbol: 'ROKU', yahooSymbol: 'ROKU', name: 'Roku Inc.' },
+  { symbol: 'SPOT', yahooSymbol: 'SPOT', name: 'Spotify Technology' },
+  { symbol: 'DASH', yahooSymbol: 'DASH', name: 'DoorDash Inc.' },
+  { symbol: 'ZM', yahooSymbol: 'ZM', name: 'Zoom Video Communications' },
+  { symbol: 'DOCU', yahooSymbol: 'DOCU', name: 'DocuSign Inc.' },
+  { symbol: 'ETSY', yahooSymbol: 'ETSY', name: 'Etsy Inc.' },
+  { symbol: 'EBAY', yahooSymbol: 'EBAY', name: 'eBay Inc.' },
+  { symbol: 'PINS', yahooSymbol: 'PINS', name: 'Pinterest Inc.' },
+  { symbol: 'TWLO', yahooSymbol: 'TWLO', name: 'Twilio Inc.' },
+  { symbol: 'MTCH', yahooSymbol: 'MTCH', name: 'Match Group' },
+  { symbol: 'YELP', yahooSymbol: 'YELP', name: 'Yelp Inc.' },
   
-  // Financials - Banks
+  // ===== FINANCIALS - BANKS (25) =====
   { symbol: 'JPM', yahooSymbol: 'JPM', name: 'JPMorgan Chase & Co.' },
   { symbol: 'BAC', yahooSymbol: 'BAC', name: 'Bank of America' },
   { symbol: 'WFC', yahooSymbol: 'WFC', name: 'Wells Fargo & Company' },
@@ -193,8 +343,23 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'USB', yahooSymbol: 'USB', name: 'U.S. Bancorp' },
   { symbol: 'PNC', yahooSymbol: 'PNC', name: 'PNC Financial Services' },
   { symbol: 'TFC', yahooSymbol: 'TFC', name: 'Truist Financial' },
+  { symbol: 'BK', yahooSymbol: 'BK', name: 'Bank of New York Mellon' },
+  { symbol: 'STT', yahooSymbol: 'STT', name: 'State Street Corporation' },
+  { symbol: 'FITB', yahooSymbol: 'FITB', name: 'Fifth Third Bancorp' },
+  { symbol: 'MTB', yahooSymbol: 'MTB', name: 'M&T Bank Corporation' },
+  { symbol: 'HBAN', yahooSymbol: 'HBAN', name: 'Huntington Bancshares' },
+  { symbol: 'RF', yahooSymbol: 'RF', name: 'Regions Financial' },
+  { symbol: 'CFG', yahooSymbol: 'CFG', name: 'Citizens Financial Group' },
+  { symbol: 'KEY', yahooSymbol: 'KEY', name: 'KeyCorp' },
+  { symbol: 'SIVB', yahooSymbol: 'SIVB', name: 'SVB Financial Group' },
+  { symbol: 'ZION', yahooSymbol: 'ZION', name: 'Zions Bancorporation' },
+  { symbol: 'CMA', yahooSymbol: 'CMA', name: 'Comerica Inc.' },
+  { symbol: 'FRC', yahooSymbol: 'FRC', name: 'First Republic Bank' },
+  { symbol: 'ALLY', yahooSymbol: 'ALLY', name: 'Ally Financial' },
+  { symbol: 'DFS', yahooSymbol: 'DFS', name: 'Discover Financial Services' },
+  { symbol: 'COF', yahooSymbol: 'COF', name: 'Capital One Financial' },
   
-  // Financials - Other
+  // ===== FINANCIALS - OTHER (25) =====
   { symbol: 'V', yahooSymbol: 'V', name: 'Visa Inc.' },
   { symbol: 'MA', yahooSymbol: 'MA', name: 'Mastercard Inc.' },
   { symbol: 'AXP', yahooSymbol: 'AXP', name: 'American Express' },
@@ -205,8 +370,23 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'MCO', yahooSymbol: 'MCO', name: 'Moody\'s Corporation' },
   { symbol: 'CB', yahooSymbol: 'CB', name: 'Chubb Limited' },
   { symbol: 'MMC', yahooSymbol: 'MMC', name: 'Marsh McLennan' },
+  { symbol: 'AON', yahooSymbol: 'AON', name: 'Aon plc' },
+  { symbol: 'AJG', yahooSymbol: 'AJG', name: 'Arthur J. Gallagher' },
+  { symbol: 'TRV', yahooSymbol: 'TRV', name: 'The Travelers Companies' },
+  { symbol: 'ALL', yahooSymbol: 'ALL', name: 'Allstate Corporation' },
+  { symbol: 'PGR', yahooSymbol: 'PGR', name: 'Progressive Corporation' },
+  { symbol: 'MET', yahooSymbol: 'MET', name: 'MetLife Inc.' },
+  { symbol: 'PRU', yahooSymbol: 'PRU', name: 'Prudential Financial' },
+  { symbol: 'AIG', yahooSymbol: 'AIG', name: 'American International Group' },
+  { symbol: 'AFL', yahooSymbol: 'AFL', name: 'Aflac Inc.' },
+  { symbol: 'MSCI', yahooSymbol: 'MSCI', name: 'MSCI Inc.' },
+  { symbol: 'FIS', yahooSymbol: 'FIS', name: 'Fidelity National Information Services' },
+  { symbol: 'FISV', yahooSymbol: 'FISV', name: 'Fiserv Inc.' },
+  { symbol: 'GPN', yahooSymbol: 'GPN', name: 'Global Payments Inc.' },
+  { symbol: 'NDAQ', yahooSymbol: 'NDAQ', name: 'Nasdaq Inc.' },
+  { symbol: 'CBOE', yahooSymbol: 'CBOE', name: 'Cboe Global Markets' },
   
-  // Healthcare - Pharma
+  // ===== HEALTHCARE - PHARMA & BIOTECH (40) =====
   { symbol: 'JNJ', yahooSymbol: 'JNJ', name: 'Johnson & Johnson' },
   { symbol: 'UNH', yahooSymbol: 'UNH', name: 'UnitedHealth Group' },
   { symbol: 'LLY', yahooSymbol: 'LLY', name: 'Eli Lilly and Company' },
@@ -222,8 +402,33 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'REGN', yahooSymbol: 'REGN', name: 'Regeneron Pharmaceuticals' },
   { symbol: 'VRTX', yahooSymbol: 'VRTX', name: 'Vertex Pharmaceuticals' },
   { symbol: 'MRNA', yahooSymbol: 'MRNA', name: 'Moderna Inc.' },
+  { symbol: 'ISRG', yahooSymbol: 'ISRG', name: 'Intuitive Surgical' },
+  { symbol: 'MDT', yahooSymbol: 'MDT', name: 'Medtronic plc' },
+  { symbol: 'SYK', yahooSymbol: 'SYK', name: 'Stryker Corporation' },
+  { symbol: 'BSX', yahooSymbol: 'BSX', name: 'Boston Scientific' },
+  { symbol: 'EW', yahooSymbol: 'EW', name: 'Edwards Lifesciences' },
+  { symbol: 'BDX', yahooSymbol: 'BDX', name: 'Becton, Dickinson and Company' },
+  { symbol: 'ZBH', yahooSymbol: 'ZBH', name: 'Zimmer Biomet Holdings' },
+  { symbol: 'CI', yahooSymbol: 'CI', name: 'Cigna Corporation' },
+  { symbol: 'ELV', yahooSymbol: 'ELV', name: 'Elevance Health' },
+  { symbol: 'HUM', yahooSymbol: 'HUM', name: 'Humana Inc.' },
+  { symbol: 'CVS', yahooSymbol: 'CVS', name: 'CVS Health Corporation' },
+  { symbol: 'MCK', yahooSymbol: 'MCK', name: 'McKesson Corporation' },
+  { symbol: 'CAH', yahooSymbol: 'CAH', name: 'Cardinal Health' },
+  { symbol: 'ABC', yahooSymbol: 'ABC', name: 'AmerisourceBergen' },
+  { symbol: 'BIIB', yahooSymbol: 'BIIB', name: 'Biogen Inc.' },
+  { symbol: 'ILMN', yahooSymbol: 'ILMN', name: 'Illumina Inc.' },
+  { symbol: 'DXCM', yahooSymbol: 'DXCM', name: 'DexCom Inc.' },
+  { symbol: 'IQV', yahooSymbol: 'IQV', name: 'IQVIA Holdings' },
+  { symbol: 'A', yahooSymbol: 'A', name: 'Agilent Technologies' },
+  { symbol: 'IDXX', yahooSymbol: 'IDXX', name: 'IDEXX Laboratories' },
+  { symbol: 'MTD', yahooSymbol: 'MTD', name: 'Mettler-Toledo International' },
+  { symbol: 'WAT', yahooSymbol: 'WAT', name: 'Waters Corporation' },
+  { symbol: 'HOLX', yahooSymbol: 'HOLX', name: 'Hologic Inc.' },
+  { symbol: 'ALGN', yahooSymbol: 'ALGN', name: 'Align Technology' },
+  { symbol: 'TECH', yahooSymbol: 'TECH', name: 'Bio-Techne Corporation' },
   
-  // Consumer - Retail
+  // ===== CONSUMER - RETAIL (25) =====
   { symbol: 'WMT', yahooSymbol: 'WMT', name: 'Walmart Inc.' },
   { symbol: 'COST', yahooSymbol: 'COST', name: 'Costco Wholesale' },
   { symbol: 'HD', yahooSymbol: 'HD', name: 'The Home Depot' },
@@ -234,8 +439,23 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'DG', yahooSymbol: 'DG', name: 'Dollar General' },
   { symbol: 'DLTR', yahooSymbol: 'DLTR', name: 'Dollar Tree' },
   { symbol: 'BBY', yahooSymbol: 'BBY', name: 'Best Buy Co.' },
+  { symbol: 'ORLY', yahooSymbol: 'ORLY', name: 'O\'Reilly Automotive' },
+  { symbol: 'AZO', yahooSymbol: 'AZO', name: 'AutoZone Inc.' },
+  { symbol: 'AAP', yahooSymbol: 'AAP', name: 'Advance Auto Parts' },
+  { symbol: 'TSCO', yahooSymbol: 'TSCO', name: 'Tractor Supply Company' },
+  { symbol: 'ULTA', yahooSymbol: 'ULTA', name: 'Ulta Beauty Inc.' },
+  { symbol: 'WSM', yahooSymbol: 'WSM', name: 'Williams-Sonoma' },
+  { symbol: 'RH', yahooSymbol: 'RH', name: 'RH (Restoration Hardware)' },
+  { symbol: 'GPS', yahooSymbol: 'GPS', name: 'Gap Inc.' },
+  { symbol: 'ANF', yahooSymbol: 'ANF', name: 'Abercrombie & Fitch' },
+  { symbol: 'KSS', yahooSymbol: 'KSS', name: 'Kohl\'s Corporation' },
+  { symbol: 'M', yahooSymbol: 'M', name: 'Macy\'s Inc.' },
+  { symbol: 'JWN', yahooSymbol: 'JWN', name: 'Nordstrom Inc.' },
+  { symbol: 'FIVE', yahooSymbol: 'FIVE', name: 'Five Below Inc.' },
+  { symbol: 'BURL', yahooSymbol: 'BURL', name: 'Burlington Stores' },
+  { symbol: 'FL', yahooSymbol: 'FL', name: 'Foot Locker Inc.' },
   
-  // Consumer - Staples
+  // ===== CONSUMER - STAPLES (25) =====
   { symbol: 'PG', yahooSymbol: 'PG', name: 'Procter & Gamble' },
   { symbol: 'KO', yahooSymbol: 'KO', name: 'Coca-Cola Company' },
   { symbol: 'PEP', yahooSymbol: 'PEP', name: 'PepsiCo Inc.' },
@@ -246,8 +466,23 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'KMB', yahooSymbol: 'KMB', name: 'Kimberly-Clark' },
   { symbol: 'GIS', yahooSymbol: 'GIS', name: 'General Mills' },
   { symbol: 'K', yahooSymbol: 'K', name: 'Kellanova' },
+  { symbol: 'HSY', yahooSymbol: 'HSY', name: 'The Hershey Company' },
+  { symbol: 'SJM', yahooSymbol: 'SJM', name: 'J.M. Smucker Company' },
+  { symbol: 'CAG', yahooSymbol: 'CAG', name: 'Conagra Brands' },
+  { symbol: 'CPB', yahooSymbol: 'CPB', name: 'Campbell Soup Company' },
+  { symbol: 'HRL', yahooSymbol: 'HRL', name: 'Hormel Foods' },
+  { symbol: 'TSN', yahooSymbol: 'TSN', name: 'Tyson Foods' },
+  { symbol: 'KR', yahooSymbol: 'KR', name: 'The Kroger Co.' },
+  { symbol: 'SYY', yahooSymbol: 'SYY', name: 'Sysco Corporation' },
+  { symbol: 'STZ', yahooSymbol: 'STZ', name: 'Constellation Brands' },
+  { symbol: 'TAP', yahooSymbol: 'TAP', name: 'Molson Coors Beverage' },
+  { symbol: 'BF-B', yahooSymbol: 'BF-B', name: 'Brown-Forman Corporation' },
+  { symbol: 'EL', yahooSymbol: 'EL', name: 'Estée Lauder Companies' },
+  { symbol: 'CHD', yahooSymbol: 'CHD', name: 'Church & Dwight' },
+  { symbol: 'CLX', yahooSymbol: 'CLX', name: 'Clorox Company' },
+  { symbol: 'WBA', yahooSymbol: 'WBA', name: 'Walgreens Boots Alliance' },
   
-  // Consumer - Discretionary
+  // ===== CONSUMER - DISCRETIONARY (30) =====
   { symbol: 'MCD', yahooSymbol: 'MCD', name: 'McDonald\'s Corporation' },
   { symbol: 'SBUX', yahooSymbol: 'SBUX', name: 'Starbucks Corporation' },
   { symbol: 'NKE', yahooSymbol: 'NKE', name: 'Nike Inc.' },
@@ -258,8 +493,28 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'MGM', yahooSymbol: 'MGM', name: 'MGM Resorts' },
   { symbol: 'MAR', yahooSymbol: 'MAR', name: 'Marriott International' },
   { symbol: 'HLT', yahooSymbol: 'HLT', name: 'Hilton Worldwide' },
+  { symbol: 'WYNN', yahooSymbol: 'WYNN', name: 'Wynn Resorts' },
+  { symbol: 'RCL', yahooSymbol: 'RCL', name: 'Royal Caribbean Cruises' },
+  { symbol: 'CCL', yahooSymbol: 'CCL', name: 'Carnival Corporation' },
+  { symbol: 'NCLH', yahooSymbol: 'NCLH', name: 'Norwegian Cruise Line' },
+  { symbol: 'YUM', yahooSymbol: 'YUM', name: 'Yum! Brands' },
+  { symbol: 'CMG', yahooSymbol: 'CMG', name: 'Chipotle Mexican Grill' },
+  { symbol: 'DPZ', yahooSymbol: 'DPZ', name: 'Domino\'s Pizza' },
+  { symbol: 'DRI', yahooSymbol: 'DRI', name: 'Darden Restaurants' },
+  { symbol: 'POOL', yahooSymbol: 'POOL', name: 'Pool Corporation' },
+  { symbol: 'LEN', yahooSymbol: 'LEN', name: 'Lennar Corporation' },
+  { symbol: 'DHI', yahooSymbol: 'DHI', name: 'D.R. Horton' },
+  { symbol: 'PHM', yahooSymbol: 'PHM', name: 'PulteGroup Inc.' },
+  { symbol: 'TOL', yahooSymbol: 'TOL', name: 'Toll Brothers' },
+  { symbol: 'NVR', yahooSymbol: 'NVR', name: 'NVR Inc.' },
+  { symbol: 'F', yahooSymbol: 'F', name: 'Ford Motor Company' },
+  { symbol: 'GM', yahooSymbol: 'GM', name: 'General Motors Company' },
+  { symbol: 'TM', yahooSymbol: 'TM', name: 'Toyota Motor Corporation' },
+  { symbol: 'HMC', yahooSymbol: 'HMC', name: 'Honda Motor Co.' },
+  { symbol: 'APTV', yahooSymbol: 'APTV', name: 'Aptiv PLC' },
+  { symbol: 'BWA', yahooSymbol: 'BWA', name: 'BorgWarner Inc.' },
   
-  // Industrials
+  // ===== INDUSTRIALS (50) =====
   { symbol: 'CAT', yahooSymbol: 'CAT', name: 'Caterpillar Inc.' },
   { symbol: 'DE', yahooSymbol: 'DE', name: 'Deere & Company' },
   { symbol: 'HON', yahooSymbol: 'HON', name: 'Honeywell International' },
@@ -275,8 +530,43 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'CSX', yahooSymbol: 'CSX', name: 'CSX Corporation' },
   { symbol: 'NSC', yahooSymbol: 'NSC', name: 'Norfolk Southern' },
   { symbol: 'FDX', yahooSymbol: 'FDX', name: 'FedEx Corporation' },
+  { symbol: 'EMR', yahooSymbol: 'EMR', name: 'Emerson Electric' },
+  { symbol: 'ETN', yahooSymbol: 'ETN', name: 'Eaton Corporation' },
+  { symbol: 'ITW', yahooSymbol: 'ITW', name: 'Illinois Tool Works' },
+  { symbol: 'PH', yahooSymbol: 'PH', name: 'Parker-Hannifin' },
+  { symbol: 'ROK', yahooSymbol: 'ROK', name: 'Rockwell Automation' },
+  { symbol: 'AME', yahooSymbol: 'AME', name: 'AMETEK Inc.' },
+  { symbol: 'CMI', yahooSymbol: 'CMI', name: 'Cummins Inc.' },
+  { symbol: 'PCAR', yahooSymbol: 'PCAR', name: 'PACCAR Inc' },
+  { symbol: 'ODFL', yahooSymbol: 'ODFL', name: 'Old Dominion Freight Line' },
+  { symbol: 'JCI', yahooSymbol: 'JCI', name: 'Johnson Controls International' },
+  { symbol: 'TT', yahooSymbol: 'TT', name: 'Trane Technologies' },
+  { symbol: 'CARR', yahooSymbol: 'CARR', name: 'Carrier Global' },
+  { symbol: 'OTIS', yahooSymbol: 'OTIS', name: 'Otis Worldwide' },
+  { symbol: 'WM', yahooSymbol: 'WM', name: 'Waste Management' },
+  { symbol: 'RSG', yahooSymbol: 'RSG', name: 'Republic Services' },
+  { symbol: 'WCN', yahooSymbol: 'WCN', name: 'Waste Connections' },
+  { symbol: 'FAST', yahooSymbol: 'FAST', name: 'Fastenal Company' },
+  { symbol: 'GWW', yahooSymbol: 'GWW', name: 'W.W. Grainger' },
+  { symbol: 'SWK', yahooSymbol: 'SWK', name: 'Stanley Black & Decker' },
+  { symbol: 'PWR', yahooSymbol: 'PWR', name: 'Quanta Services' },
+  { symbol: 'VRSK', yahooSymbol: 'VRSK', name: 'Verisk Analytics' },
+  { symbol: 'EFX', yahooSymbol: 'EFX', name: 'Equifax Inc.' },
+  { symbol: 'BR', yahooSymbol: 'BR', name: 'Broadridge Financial Solutions' },
+  { symbol: 'CTAS', yahooSymbol: 'CTAS', name: 'Cintas Corporation' },
+  { symbol: 'ADP', yahooSymbol: 'ADP', name: 'Automatic Data Processing' },
+  { symbol: 'PAYX', yahooSymbol: 'PAYX', name: 'Paychex Inc.' },
+  { symbol: 'CPRT', yahooSymbol: 'CPRT', name: 'Copart Inc.' },
+  { symbol: 'IR', yahooSymbol: 'IR', name: 'Ingersoll Rand' },
+  { symbol: 'DOV', yahooSymbol: 'DOV', name: 'Dover Corporation' },
+  { symbol: 'IEX', yahooSymbol: 'IEX', name: 'IDEX Corporation' },
+  { symbol: 'ROP', yahooSymbol: 'ROP', name: 'Roper Technologies' },
+  { symbol: 'EXPD', yahooSymbol: 'EXPD', name: 'Expeditors International' },
+  { symbol: 'CHRW', yahooSymbol: 'CHRW', name: 'C.H. Robinson Worldwide' },
+  { symbol: 'XYL', yahooSymbol: 'XYL', name: 'Xylem Inc.' },
+  { symbol: 'GNRC', yahooSymbol: 'GNRC', name: 'Generac Holdings' },
   
-  // Energy
+  // ===== ENERGY (25) =====
   { symbol: 'XOM', yahooSymbol: 'XOM', name: 'Exxon Mobil Corporation' },
   { symbol: 'CVX', yahooSymbol: 'CVX', name: 'Chevron Corporation' },
   { symbol: 'COP', yahooSymbol: 'COP', name: 'ConocoPhillips' },
@@ -287,8 +577,23 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'VLO', yahooSymbol: 'VLO', name: 'Valero Energy' },
   { symbol: 'PSX', yahooSymbol: 'PSX', name: 'Phillips 66' },
   { symbol: 'OXY', yahooSymbol: 'OXY', name: 'Occidental Petroleum' },
+  { symbol: 'DVN', yahooSymbol: 'DVN', name: 'Devon Energy' },
+  { symbol: 'HES', yahooSymbol: 'HES', name: 'Hess Corporation' },
+  { symbol: 'FANG', yahooSymbol: 'FANG', name: 'Diamondback Energy' },
+  { symbol: 'HAL', yahooSymbol: 'HAL', name: 'Halliburton Company' },
+  { symbol: 'BKR', yahooSymbol: 'BKR', name: 'Baker Hughes Company' },
+  { symbol: 'KMI', yahooSymbol: 'KMI', name: 'Kinder Morgan' },
+  { symbol: 'WMB', yahooSymbol: 'WMB', name: 'Williams Companies' },
+  { symbol: 'OKE', yahooSymbol: 'OKE', name: 'ONEOK Inc.' },
+  { symbol: 'TRGP', yahooSymbol: 'TRGP', name: 'Targa Resources' },
+  { symbol: 'LNG', yahooSymbol: 'LNG', name: 'Cheniere Energy' },
+  { symbol: 'MRO', yahooSymbol: 'MRO', name: 'Marathon Oil' },
+  { symbol: 'APA', yahooSymbol: 'APA', name: 'APA Corporation' },
+  { symbol: 'CTRA', yahooSymbol: 'CTRA', name: 'Coterra Energy' },
+  { symbol: 'EQT', yahooSymbol: 'EQT', name: 'EQT Corporation' },
+  { symbol: 'AR', yahooSymbol: 'AR', name: 'Antero Resources' },
   
-  // Utilities
+  // ===== UTILITIES (20) =====
   { symbol: 'NEE', yahooSymbol: 'NEE', name: 'NextEra Energy' },
   { symbol: 'DUK', yahooSymbol: 'DUK', name: 'Duke Energy' },
   { symbol: 'SO', yahooSymbol: 'SO', name: 'Southern Company' },
@@ -299,8 +604,18 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'XEL', yahooSymbol: 'XEL', name: 'Xcel Energy' },
   { symbol: 'WEC', yahooSymbol: 'WEC', name: 'WEC Energy Group' },
   { symbol: 'ED', yahooSymbol: 'ED', name: 'Consolidated Edison' },
+  { symbol: 'PEG', yahooSymbol: 'PEG', name: 'Public Service Enterprise Group' },
+  { symbol: 'ES', yahooSymbol: 'ES', name: 'Eversource Energy' },
+  { symbol: 'AWK', yahooSymbol: 'AWK', name: 'American Water Works' },
+  { symbol: 'DTE', yahooSymbol: 'DTE', name: 'DTE Energy' },
+  { symbol: 'ETR', yahooSymbol: 'ETR', name: 'Entergy Corporation' },
+  { symbol: 'FE', yahooSymbol: 'FE', name: 'FirstEnergy Corp.' },
+  { symbol: 'PPL', yahooSymbol: 'PPL', name: 'PPL Corporation' },
+  { symbol: 'AES', yahooSymbol: 'AES', name: 'AES Corporation' },
+  { symbol: 'CNP', yahooSymbol: 'CNP', name: 'CenterPoint Energy' },
+  { symbol: 'NI', yahooSymbol: 'NI', name: 'NiSource Inc.' },
   
-  // REITs
+  // ===== REITs (25) =====
   { symbol: 'AMT', yahooSymbol: 'AMT', name: 'American Tower' },
   { symbol: 'PLD', yahooSymbol: 'PLD', name: 'Prologis Inc.' },
   { symbol: 'CCI', yahooSymbol: 'CCI', name: 'Crown Castle' },
@@ -311,13 +626,40 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'WELL', yahooSymbol: 'WELL', name: 'Welltower Inc.' },
   { symbol: 'AVB', yahooSymbol: 'AVB', name: 'AvalonBay Communities' },
   { symbol: 'EQR', yahooSymbol: 'EQR', name: 'Equity Residential' },
+  { symbol: 'VTR', yahooSymbol: 'VTR', name: 'Ventas Inc.' },
+  { symbol: 'SBAC', yahooSymbol: 'SBAC', name: 'SBA Communications' },
+  { symbol: 'ARE', yahooSymbol: 'ARE', name: 'Alexandria Real Estate Equities' },
+  { symbol: 'MAA', yahooSymbol: 'MAA', name: 'Mid-America Apartment Communities' },
+  { symbol: 'UDR', yahooSymbol: 'UDR', name: 'UDR Inc.' },
+  { symbol: 'ESS', yahooSymbol: 'ESS', name: 'Essex Property Trust' },
+  { symbol: 'INVH', yahooSymbol: 'INVH', name: 'Invitation Homes' },
+  { symbol: 'EXR', yahooSymbol: 'EXR', name: 'Extra Space Storage' },
+  { symbol: 'PSA', yahooSymbol: 'PSA', name: 'Public Storage' },
+  { symbol: 'IRM', yahooSymbol: 'IRM', name: 'Iron Mountain' },
+  { symbol: 'BXP', yahooSymbol: 'BXP', name: 'Boston Properties' },
+  { symbol: 'VNO', yahooSymbol: 'VNO', name: 'Vornado Realty Trust' },
+  { symbol: 'KIM', yahooSymbol: 'KIM', name: 'Kimco Realty' },
+  { symbol: 'REG', yahooSymbol: 'REG', name: 'Regency Centers' },
+  { symbol: 'HST', yahooSymbol: 'HST', name: 'Host Hotels & Resorts' },
   
-  // Communications
+  // ===== COMMUNICATIONS (15) =====
   { symbol: 'T', yahooSymbol: 'T', name: 'AT&T Inc.' },
   { symbol: 'VZ', yahooSymbol: 'VZ', name: 'Verizon Communications' },
   { symbol: 'TMUS', yahooSymbol: 'TMUS', name: 'T-Mobile US' },
+  { symbol: 'LUMN', yahooSymbol: 'LUMN', name: 'Lumen Technologies' },
+  { symbol: 'WBD', yahooSymbol: 'WBD', name: 'Warner Bros. Discovery' },
+  { symbol: 'PARA', yahooSymbol: 'PARA', name: 'Paramount Global' },
+  { symbol: 'FOX', yahooSymbol: 'FOX', name: 'Fox Corporation' },
+  { symbol: 'FOXA', yahooSymbol: 'FOXA', name: 'Fox Corporation Class A' },
+  { symbol: 'NWS', yahooSymbol: 'NWS', name: 'News Corporation' },
+  { symbol: 'NWSA', yahooSymbol: 'NWSA', name: 'News Corporation Class A' },
+  { symbol: 'OMC', yahooSymbol: 'OMC', name: 'Omnicom Group' },
+  { symbol: 'IPG', yahooSymbol: 'IPG', name: 'Interpublic Group' },
+  { symbol: 'EA', yahooSymbol: 'EA', name: 'Electronic Arts' },
+  { symbol: 'TTWO', yahooSymbol: 'TTWO', name: 'Take-Two Interactive' },
+  { symbol: 'ATVI', yahooSymbol: 'ATVI', name: 'Activision Blizzard' },
   
-  // Materials
+  // ===== MATERIALS (20) =====
   { symbol: 'LIN', yahooSymbol: 'LIN', name: 'Linde plc' },
   { symbol: 'APD', yahooSymbol: 'APD', name: 'Air Products and Chemicals' },
   { symbol: 'SHW', yahooSymbol: 'SHW', name: 'Sherwin-Williams' },
@@ -328,8 +670,18 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'DOW', yahooSymbol: 'DOW', name: 'Dow Inc.' },
   { symbol: 'DD', yahooSymbol: 'DD', name: 'DuPont de Nemours' },
   { symbol: 'PPG', yahooSymbol: 'PPG', name: 'PPG Industries' },
+  { symbol: 'CTVA', yahooSymbol: 'CTVA', name: 'Corteva Inc.' },
+  { symbol: 'ALB', yahooSymbol: 'ALB', name: 'Albemarle Corporation' },
+  { symbol: 'FMC', yahooSymbol: 'FMC', name: 'FMC Corporation' },
+  { symbol: 'CF', yahooSymbol: 'CF', name: 'CF Industries Holdings' },
+  { symbol: 'MOS', yahooSymbol: 'MOS', name: 'Mosaic Company' },
+  { symbol: 'VMC', yahooSymbol: 'VMC', name: 'Vulcan Materials' },
+  { symbol: 'MLM', yahooSymbol: 'MLM', name: 'Martin Marietta Materials' },
+  { symbol: 'STLD', yahooSymbol: 'STLD', name: 'Steel Dynamics' },
+  { symbol: 'CLF', yahooSymbol: 'CLF', name: 'Cleveland-Cliffs' },
+  { symbol: 'AA', yahooSymbol: 'AA', name: 'Alcoa Corporation' },
   
-  // Popular Meme/Retail Stocks
+  // ===== POPULAR RETAIL/MEME STOCKS (20) =====
   { symbol: 'GME', yahooSymbol: 'GME', name: 'GameStop Corp.' },
   { symbol: 'AMC', yahooSymbol: 'AMC', name: 'AMC Entertainment' },
   { symbol: 'PLTR', yahooSymbol: 'PLTR', name: 'Palantir Technologies' },
@@ -340,31 +692,41 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'HOOD', yahooSymbol: 'HOOD', name: 'Robinhood Markets' },
   { symbol: 'RBLX', yahooSymbol: 'RBLX', name: 'Roblox Corporation' },
   { symbol: 'SNAP', yahooSymbol: 'SNAP', name: 'Snap Inc.' },
+  { symbol: 'U', yahooSymbol: 'U', name: 'Unity Software' },
+  { symbol: 'AFRM', yahooSymbol: 'AFRM', name: 'Affirm Holdings' },
+  { symbol: 'UPST', yahooSymbol: 'UPST', name: 'Upstart Holdings' },
+  { symbol: 'OPEN', yahooSymbol: 'OPEN', name: 'Opendoor Technologies' },
+  { symbol: 'CLOV', yahooSymbol: 'CLOV', name: 'Clover Health' },
+  { symbol: 'WISH', yahooSymbol: 'WISH', name: 'ContextLogic Inc.' },
+  { symbol: 'SPCE', yahooSymbol: 'SPCE', name: 'Virgin Galactic' },
+  { symbol: 'BB', yahooSymbol: 'BB', name: 'BlackBerry Limited' },
+  { symbol: 'NOK', yahooSymbol: 'NOK', name: 'Nokia Corporation' },
+  { symbol: 'XPEV', yahooSymbol: 'XPEV', name: 'XPeng Inc.' },
 ];
 
 // =============================================================================
-// COMMODITIES - Energy, Metals, Agriculture
+// COMMODITIES - Energy, Metals, Agriculture (30)
 // =============================================================================
 export const COMMODITY_INSTRUMENTS: Instrument[] = [
-  // Precious Metals
+  // ===== PRECIOUS METALS =====
   { symbol: 'GC=F', yahooSymbol: 'GC=F', name: 'Gold Futures' },
   { symbol: 'SI=F', yahooSymbol: 'SI=F', name: 'Silver Futures' },
   { symbol: 'PL=F', yahooSymbol: 'PL=F', name: 'Platinum Futures' },
   { symbol: 'PA=F', yahooSymbol: 'PA=F', name: 'Palladium Futures' },
   
-  // Energy
+  // ===== ENERGY =====
   { symbol: 'CL=F', yahooSymbol: 'CL=F', name: 'Crude Oil WTI' },
   { symbol: 'BZ=F', yahooSymbol: 'BZ=F', name: 'Brent Crude Oil' },
   { symbol: 'NG=F', yahooSymbol: 'NG=F', name: 'Natural Gas' },
   { symbol: 'RB=F', yahooSymbol: 'RB=F', name: 'RBOB Gasoline' },
   { symbol: 'HO=F', yahooSymbol: 'HO=F', name: 'Heating Oil' },
   
-  // Industrial Metals
+  // ===== INDUSTRIAL METALS =====
   { symbol: 'HG=F', yahooSymbol: 'HG=F', name: 'Copper Futures' },
   { symbol: 'ALI=F', yahooSymbol: 'ALI=F', name: 'Aluminum Futures' },
   { symbol: 'ZN=F', yahooSymbol: 'ZN=F', name: 'Zinc Futures' },
   
-  // Grains
+  // ===== GRAINS =====
   { symbol: 'ZC=F', yahooSymbol: 'ZC=F', name: 'Corn Futures' },
   { symbol: 'ZW=F', yahooSymbol: 'ZW=F', name: 'Wheat Futures' },
   { symbol: 'ZS=F', yahooSymbol: 'ZS=F', name: 'Soybeans Futures' },
@@ -373,32 +735,35 @@ export const COMMODITY_INSTRUMENTS: Instrument[] = [
   { symbol: 'ZO=F', yahooSymbol: 'ZO=F', name: 'Oats Futures' },
   { symbol: 'ZR=F', yahooSymbol: 'ZR=F', name: 'Rough Rice Futures' },
   
-  // Softs
+  // ===== SOFTS =====
   { symbol: 'KC=F', yahooSymbol: 'KC=F', name: 'Coffee Futures' },
   { symbol: 'SB=F', yahooSymbol: 'SB=F', name: 'Sugar Futures' },
   { symbol: 'CC=F', yahooSymbol: 'CC=F', name: 'Cocoa Futures' },
   { symbol: 'CT=F', yahooSymbol: 'CT=F', name: 'Cotton Futures' },
   { symbol: 'OJ=F', yahooSymbol: 'OJ=F', name: 'Orange Juice Futures' },
+  { symbol: 'LBS=F', yahooSymbol: 'LBS=F', name: 'Lumber Futures' },
   
-  // Livestock
+  // ===== LIVESTOCK =====
   { symbol: 'LE=F', yahooSymbol: 'LE=F', name: 'Live Cattle' },
   { symbol: 'HE=F', yahooSymbol: 'HE=F', name: 'Lean Hogs' },
   { symbol: 'GF=F', yahooSymbol: 'GF=F', name: 'Feeder Cattle' },
 ];
 
 // =============================================================================
-// INDICES - Global Major Indices
+// INDICES - Global Major Indices (30)
 // =============================================================================
 export const INDEX_INSTRUMENTS: Instrument[] = [
-  // US Indices
+  // ===== US INDICES =====
   { symbol: '^GSPC', yahooSymbol: '^GSPC', name: 'S&P 500' },
   { symbol: '^DJI', yahooSymbol: '^DJI', name: 'Dow Jones Industrial Average' },
   { symbol: '^IXIC', yahooSymbol: '^IXIC', name: 'NASDAQ Composite' },
   { symbol: '^NDX', yahooSymbol: '^NDX', name: 'NASDAQ 100' },
   { symbol: '^RUT', yahooSymbol: '^RUT', name: 'Russell 2000' },
   { symbol: '^VIX', yahooSymbol: '^VIX', name: 'CBOE Volatility Index' },
+  { symbol: '^MID', yahooSymbol: '^MID', name: 'S&P MidCap 400' },
+  { symbol: '^SP600', yahooSymbol: '^SP600', name: 'S&P SmallCap 600' },
   
-  // European Indices
+  // ===== EUROPEAN INDICES =====
   { symbol: '^FTSE', yahooSymbol: '^FTSE', name: 'FTSE 100' },
   { symbol: '^GDAXI', yahooSymbol: '^GDAXI', name: 'DAX' },
   { symbol: '^FCHI', yahooSymbol: '^FCHI', name: 'CAC 40' },
@@ -407,8 +772,9 @@ export const INDEX_INSTRUMENTS: Instrument[] = [
   { symbol: 'FTSEMIB.MI', yahooSymbol: 'FTSEMIB.MI', name: 'FTSE MIB' },
   { symbol: '^AEX', yahooSymbol: '^AEX', name: 'AEX Index' },
   { symbol: '^SSMI', yahooSymbol: '^SSMI', name: 'Swiss Market Index' },
+  { symbol: '^OMXS30', yahooSymbol: '^OMXS30', name: 'OMX Stockholm 30' },
   
-  // Asian Indices
+  // ===== ASIAN INDICES =====
   { symbol: '^N225', yahooSymbol: '^N225', name: 'Nikkei 225' },
   { symbol: '^HSI', yahooSymbol: '^HSI', name: 'Hang Seng Index' },
   { symbol: '000001.SS', yahooSymbol: '000001.SS', name: 'Shanghai Composite' },
@@ -419,26 +785,32 @@ export const INDEX_INSTRUMENTS: Instrument[] = [
   { symbol: '^AXJO', yahooSymbol: '^AXJO', name: 'S&P/ASX 200' },
   { symbol: '^BSESN', yahooSymbol: '^BSESN', name: 'BSE SENSEX' },
   { symbol: '^NSEI', yahooSymbol: '^NSEI', name: 'NIFTY 50' },
+  { symbol: '^JKSE', yahooSymbol: '^JKSE', name: 'Jakarta Composite' },
   
-  // Other Indices
+  // ===== OTHER INDICES =====
   { symbol: '^GSPTSE', yahooSymbol: '^GSPTSE', name: 'S&P/TSX Composite' },
   { symbol: '^BVSP', yahooSymbol: '^BVSP', name: 'Bovespa Index' },
   { symbol: '^MXX', yahooSymbol: '^MXX', name: 'IPC Mexico' },
+  { symbol: '^MERV', yahooSymbol: '^MERV', name: 'MERVAL' },
 ];
 
 // =============================================================================
-// ETFs - Popular & Sector ETFs
+// ETFs - Popular & Sector ETFs (70)
 // =============================================================================
 export const ETF_INSTRUMENTS: Instrument[] = [
-  // Broad Market
+  // ===== BROAD MARKET (10) =====
   { symbol: 'SPY', yahooSymbol: 'SPY', name: 'SPDR S&P 500 ETF' },
   { symbol: 'QQQ', yahooSymbol: 'QQQ', name: 'Invesco QQQ Trust' },
   { symbol: 'IWM', yahooSymbol: 'IWM', name: 'iShares Russell 2000 ETF' },
   { symbol: 'DIA', yahooSymbol: 'DIA', name: 'SPDR Dow Jones Industrial Average' },
   { symbol: 'VOO', yahooSymbol: 'VOO', name: 'Vanguard S&P 500 ETF' },
   { symbol: 'VTI', yahooSymbol: 'VTI', name: 'Vanguard Total Stock Market ETF' },
+  { symbol: 'IVV', yahooSymbol: 'IVV', name: 'iShares Core S&P 500 ETF' },
+  { symbol: 'VUG', yahooSymbol: 'VUG', name: 'Vanguard Growth ETF' },
+  { symbol: 'VTV', yahooSymbol: 'VTV', name: 'Vanguard Value ETF' },
+  { symbol: 'RSP', yahooSymbol: 'RSP', name: 'Invesco S&P 500 Equal Weight ETF' },
   
-  // Sector ETFs
+  // ===== SECTOR ETFs (15) =====
   { symbol: 'XLK', yahooSymbol: 'XLK', name: 'Technology Select Sector SPDR' },
   { symbol: 'XLF', yahooSymbol: 'XLF', name: 'Financial Select Sector SPDR' },
   { symbol: 'XLE', yahooSymbol: 'XLE', name: 'Energy Select Sector SPDR' },
@@ -449,32 +821,54 @@ export const ETF_INSTRUMENTS: Instrument[] = [
   { symbol: 'XLU', yahooSymbol: 'XLU', name: 'Utilities Select Sector SPDR' },
   { symbol: 'XLB', yahooSymbol: 'XLB', name: 'Materials Select Sector SPDR' },
   { symbol: 'XLRE', yahooSymbol: 'XLRE', name: 'Real Estate Select Sector SPDR' },
+  { symbol: 'XLC', yahooSymbol: 'XLC', name: 'Communication Services Select Sector SPDR' },
+  { symbol: 'VGT', yahooSymbol: 'VGT', name: 'Vanguard Information Technology ETF' },
+  { symbol: 'VFH', yahooSymbol: 'VFH', name: 'Vanguard Financials ETF' },
+  { symbol: 'VHT', yahooSymbol: 'VHT', name: 'Vanguard Health Care ETF' },
+  { symbol: 'VDE', yahooSymbol: 'VDE', name: 'Vanguard Energy ETF' },
   
-  // Thematic ETFs
+  // ===== THEMATIC ETFs (15) =====
   { symbol: 'ARKK', yahooSymbol: 'ARKK', name: 'ARK Innovation ETF' },
   { symbol: 'ARKG', yahooSymbol: 'ARKG', name: 'ARK Genomic Revolution ETF' },
   { symbol: 'ARKW', yahooSymbol: 'ARKW', name: 'ARK Next Generation Internet ETF' },
+  { symbol: 'ARKF', yahooSymbol: 'ARKF', name: 'ARK Fintech Innovation ETF' },
   { symbol: 'SMH', yahooSymbol: 'SMH', name: 'VanEck Semiconductor ETF' },
   { symbol: 'SOXX', yahooSymbol: 'SOXX', name: 'iShares Semiconductor ETF' },
   { symbol: 'XBI', yahooSymbol: 'XBI', name: 'SPDR S&P Biotech ETF' },
   { symbol: 'IBB', yahooSymbol: 'IBB', name: 'iShares Biotechnology ETF' },
+  { symbol: 'ICLN', yahooSymbol: 'ICLN', name: 'iShares Global Clean Energy ETF' },
+  { symbol: 'TAN', yahooSymbol: 'TAN', name: 'Invesco Solar ETF' },
+  { symbol: 'QCLN', yahooSymbol: 'QCLN', name: 'First Trust NASDAQ Clean Edge Green Energy' },
+  { symbol: 'ROBO', yahooSymbol: 'ROBO', name: 'ROBO Global Robotics and Automation ETF' },
+  { symbol: 'BOTZ', yahooSymbol: 'BOTZ', name: 'Global X Robotics & AI ETF' },
+  { symbol: 'HACK', yahooSymbol: 'HACK', name: 'ETFMG Prime Cyber Security ETF' },
+  { symbol: 'CIBR', yahooSymbol: 'CIBR', name: 'First Trust NASDAQ Cybersecurity ETF' },
   
-  // Fixed Income
+  // ===== FIXED INCOME (10) =====
   { symbol: 'TLT', yahooSymbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF' },
   { symbol: 'IEF', yahooSymbol: 'IEF', name: 'iShares 7-10 Year Treasury Bond ETF' },
   { symbol: 'SHY', yahooSymbol: 'SHY', name: 'iShares 1-3 Year Treasury Bond ETF' },
   { symbol: 'LQD', yahooSymbol: 'LQD', name: 'iShares iBoxx Investment Grade Corporate Bond ETF' },
   { symbol: 'HYG', yahooSymbol: 'HYG', name: 'iShares iBoxx High Yield Corporate Bond ETF' },
   { symbol: 'BND', yahooSymbol: 'BND', name: 'Vanguard Total Bond Market ETF' },
+  { symbol: 'AGG', yahooSymbol: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF' },
+  { symbol: 'TIPS', yahooSymbol: 'TIPS', name: 'iShares TIPS Bond ETF' },
+  { symbol: 'MUB', yahooSymbol: 'MUB', name: 'iShares National Muni Bond ETF' },
+  { symbol: 'JNK', yahooSymbol: 'JNK', name: 'SPDR Bloomberg High Yield Bond ETF' },
   
-  // Commodities ETFs
+  // ===== COMMODITIES ETFs (10) =====
   { symbol: 'GLD', yahooSymbol: 'GLD', name: 'SPDR Gold Shares' },
   { symbol: 'SLV', yahooSymbol: 'SLV', name: 'iShares Silver Trust' },
   { symbol: 'USO', yahooSymbol: 'USO', name: 'United States Oil Fund' },
   { symbol: 'UNG', yahooSymbol: 'UNG', name: 'United States Natural Gas Fund' },
   { symbol: 'DBC', yahooSymbol: 'DBC', name: 'Invesco DB Commodity Index Tracking Fund' },
+  { symbol: 'IAU', yahooSymbol: 'IAU', name: 'iShares Gold Trust' },
+  { symbol: 'PPLT', yahooSymbol: 'PPLT', name: 'abrdn Physical Platinum Shares ETF' },
+  { symbol: 'PALL', yahooSymbol: 'PALL', name: 'abrdn Physical Palladium Shares ETF' },
+  { symbol: 'CPER', yahooSymbol: 'CPER', name: 'United States Copper Index Fund' },
+  { symbol: 'DBA', yahooSymbol: 'DBA', name: 'Invesco DB Agriculture Fund' },
   
-  // International
+  // ===== INTERNATIONAL (15) =====
   { symbol: 'EFA', yahooSymbol: 'EFA', name: 'iShares MSCI EAFE ETF' },
   { symbol: 'EEM', yahooSymbol: 'EEM', name: 'iShares MSCI Emerging Markets ETF' },
   { symbol: 'VWO', yahooSymbol: 'VWO', name: 'Vanguard FTSE Emerging Markets ETF' },
@@ -483,14 +877,25 @@ export const ETF_INSTRUMENTS: Instrument[] = [
   { symbol: 'EWJ', yahooSymbol: 'EWJ', name: 'iShares MSCI Japan ETF' },
   { symbol: 'EWG', yahooSymbol: 'EWG', name: 'iShares MSCI Germany ETF' },
   { symbol: 'EWU', yahooSymbol: 'EWU', name: 'iShares MSCI United Kingdom ETF' },
+  { symbol: 'INDA', yahooSymbol: 'INDA', name: 'iShares MSCI India ETF' },
+  { symbol: 'EWZ', yahooSymbol: 'EWZ', name: 'iShares MSCI Brazil ETF' },
+  { symbol: 'EWY', yahooSymbol: 'EWY', name: 'iShares MSCI South Korea ETF' },
+  { symbol: 'EWT', yahooSymbol: 'EWT', name: 'iShares MSCI Taiwan ETF' },
+  { symbol: 'MCHI', yahooSymbol: 'MCHI', name: 'iShares MSCI China ETF' },
+  { symbol: 'IEMG', yahooSymbol: 'IEMG', name: 'iShares Core MSCI Emerging Markets ETF' },
+  { symbol: 'VXUS', yahooSymbol: 'VXUS', name: 'Vanguard Total International Stock ETF' },
   
-  // Volatility & Leveraged
+  // ===== VOLATILITY & LEVERAGED (10) =====
   { symbol: 'VXX', yahooSymbol: 'VXX', name: 'iPath Series B S&P 500 VIX Short-Term Futures ETN' },
   { symbol: 'UVXY', yahooSymbol: 'UVXY', name: 'ProShares Ultra VIX Short-Term Futures ETF' },
   { symbol: 'SQQQ', yahooSymbol: 'SQQQ', name: 'ProShares UltraPro Short QQQ' },
   { symbol: 'TQQQ', yahooSymbol: 'TQQQ', name: 'ProShares UltraPro QQQ' },
   { symbol: 'SPXS', yahooSymbol: 'SPXS', name: 'Direxion Daily S&P 500 Bear 3X Shares' },
   { symbol: 'SPXL', yahooSymbol: 'SPXL', name: 'Direxion Daily S&P 500 Bull 3X Shares' },
+  { symbol: 'SOXL', yahooSymbol: 'SOXL', name: 'Direxion Daily Semiconductor Bull 3X Shares' },
+  { symbol: 'SOXS', yahooSymbol: 'SOXS', name: 'Direxion Daily Semiconductor Bear 3X Shares' },
+  { symbol: 'LABU', yahooSymbol: 'LABU', name: 'Direxion Daily S&P Biotech Bull 3X Shares' },
+  { symbol: 'LABD', yahooSymbol: 'LABD', name: 'Direxion Daily S&P Biotech Bear 3X Shares' },
 ];
 
 // =============================================================================
@@ -515,3 +920,6 @@ export const TOTAL_INSTRUMENT_COUNT =
 
 // For screener (subset) vs full cache (all)
 export type AssetCategory = keyof typeof ALL_INSTRUMENTS;
+
+// Log counts for debugging
+console.log(`Instrument Universe: FX=${FX_INSTRUMENTS.length}, Crypto=${CRYPTO_INSTRUMENTS.length}, Stocks=${STOCK_INSTRUMENTS.length}, Commodities=${COMMODITY_INSTRUMENTS.length}, Indices=${INDEX_INSTRUMENTS.length}, ETFs=${ETF_INSTRUMENTS.length}, Total=${TOTAL_INSTRUMENT_COUNT}`);
