@@ -953,6 +953,8 @@ async function persistPatterns(
 /**
  * Fast path: Read pre-cached patterns from live_pattern_detections table
  * This avoids the expensive live scan entirely when fresh data exists
+ * 
+ * Returns patterns if found, or empty array with isFresh=true if no patterns but cache is fresh
  */
 async function readCachedPatternsFromDb(
   supabase: any,
@@ -961,13 +963,13 @@ async function readCachedPatternsFromDb(
   allowedPatterns: string[],
   limit: number,
   maxTickers: number
-): Promise<{ patterns: any[]; instrumentsScanned: number } | null> {
+): Promise<{ patterns: any[]; instrumentsScanned: number; isFresh: boolean } | null> {
   try {
     // Get list of instruments for this tier to count properly
     const instruments = getInstrumentsForTier(assetType, maxTickers);
     
-    // Query patterns updated within last 6 hours (background scheduler runs hourly)
-    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    // Query patterns updated within last 2 hours (more aggressive caching)
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     
     const { data: cachedPatterns, error } = await supabase
       .from('live_pattern_detections')
@@ -977,7 +979,7 @@ async function readCachedPatternsFromDb(
       .eq('status', 'active')
       .in('pattern_id', allowedPatterns)
       .in('instrument', instruments)
-      .gte('last_confirmed_at', sixHoursAgo)
+      .gte('last_confirmed_at', twoHoursAgo)
       .order('last_confirmed_at', { ascending: false })
       .limit(limit);
     
@@ -986,8 +988,24 @@ async function readCachedPatternsFromDb(
       return null;
     }
     
+    // Check if we have ANY recent activity (even invalidated patterns) to know cache is fresh
     if (!cachedPatterns || cachedPatterns.length === 0) {
-      console.log('[scan-live-patterns] No fresh cached patterns in DB');
+      // Check if there's any recent scan activity for this asset type
+      const { data: anyRecent } = await supabase
+        .from('live_pattern_detections')
+        .select('last_confirmed_at')
+        .eq('asset_type', assetType)
+        .eq('timeframe', timeframe)
+        .gte('updated_at', twoHoursAgo)
+        .limit(1);
+      
+      if (anyRecent && anyRecent.length > 0) {
+        // Cache is fresh, just no patterns detected - return empty immediately
+        console.log('[scan-live-patterns] DB fast path: Cache fresh, no patterns for', assetType);
+        return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
+      }
+      
+      console.log('[scan-live-patterns] No fresh cached patterns in DB, will run live scan');
       return null;
     }
     
@@ -1015,7 +1033,7 @@ async function readCachedPatternsFromDb(
       changePercent: row.change_percent,
     }));
     
-    return { patterns, instrumentsScanned: instruments.length };
+    return { patterns, instrumentsScanned: instruments.length, isFresh: true };
   } catch (err) {
     console.error('[scan-live-patterns] DB cache read exception:', err);
     return null;
@@ -1091,7 +1109,8 @@ serve(async (req) => {
         maxTickers
       );
       
-      if (dbCached && dbCached.patterns.length > 0) {
+      // Return immediately if cache is fresh (even if empty - no patterns detected is valid)
+      if (dbCached && dbCached.isFresh) {
         const marketOpen = isMarketOpen(assetType);
         const responseData = {
           success: true,
@@ -1105,7 +1124,7 @@ serve(async (req) => {
           source: 'db_cache', // Indicate this came from fast path
         };
         
-        console.log(`[scan-live-patterns] Fast path: Returning ${dbCached.patterns.length} patterns from DB cache`);
+        console.log(`[scan-live-patterns] Fast path: Returning ${dbCached.patterns.length} patterns from DB cache (isFresh=${dbCached.isFresh})`);
         return new Response(JSON.stringify(responseData), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
