@@ -304,25 +304,42 @@ export default function LivePatternsPage() {
       // (often the scan completed and persisted, but the response didn't make it back in time).
       let data: ScanResult | null = null;
       let fnError: any = null;
+      let lastError: any = null;
 
-      try {
-        const res = await invokeScan(isRefresh, isRefresh ? 45_000 : 25_000);
-        data = res.data ?? null;
-        fnError = res.error ?? null;
-      } catch (err: any) {
-        // Timeout during forced refresh: try a quick cached read.
-        const isTimeout = typeof err?.message === 'string' && err.message.includes('timed out');
-        if (isRefresh && isTimeout) {
-          try {
-            const res2 = await invokeScan(false, 15_000);
-            data = res2.data ?? null;
-            fnError = res2.error ?? null;
-            setError('Refresh is still running. Showing the latest cached results — try again in a moment.');
-          } catch {
-            throw err;
+      // Retry logic with increasing timeouts for resilience against cold starts
+      const attempts = isRefresh ? [
+        { forceRefresh: true, timeout: 30_000 },   // First attempt: quick refresh
+        { forceRefresh: false, timeout: 20_000 },  // Fallback: read cached
+        { forceRefresh: false, timeout: 25_000 },  // Final retry: cached with longer timeout
+      ] : [
+        { forceRefresh: false, timeout: 20_000 },  // Initial load: fast cached read
+        { forceRefresh: false, timeout: 30_000 },  // Retry with longer timeout
+      ];
+
+      for (let i = 0; i < attempts.length; i++) {
+        const { forceRefresh: fr, timeout } = attempts[i];
+        try {
+          console.info(`[LivePatternsPage] Attempt ${i + 1}/${attempts.length}`, { forceRefresh: fr, timeout });
+          const res = await invokeScan(fr, timeout);
+          data = res.data ?? null;
+          fnError = res.error ?? null;
+          if (data?.patterns) {
+            // Success - if this was a fallback, inform user
+            if (isRefresh && i > 0) {
+              setError('Refresh completed. Showing the latest results.');
+            }
+            break;
           }
-        } else {
-          throw err;
+        } catch (err: any) {
+          lastError = err;
+          const isTimeout = typeof err?.message === 'string' && err.message.includes('timed out');
+          console.warn(`[LivePatternsPage] Attempt ${i + 1} failed`, { isTimeout, message: err.message });
+          // Continue to next attempt if we have more
+          if (i === attempts.length - 1) {
+            throw err; // Last attempt failed
+          }
+          // Small delay before retry to allow cold start to complete
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
       
