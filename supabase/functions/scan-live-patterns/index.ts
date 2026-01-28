@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { computeBracketLevels, BRACKET_LEVELS_VERSION, ROUNDING_CONFIG } from "../_shared/bracketLevels.ts";
 import { ALL_INSTRUMENTS, type Instrument } from "../_shared/screenerInstruments.ts";
+import { analyzePatternTrend, type TrendAnalysisResult, type OHLCBar } from "../_shared/trendIndicators.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -889,6 +890,8 @@ async function persistPatterns(
         change_percent: pattern.changePercent,
         quality_score: pattern.quality?.score || 'B',
         quality_reasons: pattern.quality?.reasons || [],
+        trend_alignment: pattern.trendAlignment || null,
+        trend_indicators: pattern.trendIndicators || {},
         _key: `${pattern.instrument}|${pattern.patternId}|${timeframe}` // For mapping later
       });
     }
@@ -906,6 +909,8 @@ async function persistPatterns(
           change_percent: pattern.changePercent,
           bars: pattern.bars,
           visual_spec: pattern.visualSpec,
+          trend_alignment: pattern.trendAlignment || null,
+          trend_indicators: pattern.trendIndicators || {},
           updated_at: now
         })
         .eq('id', id)
@@ -1164,7 +1169,7 @@ serve(async (req) => {
     
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 90); // 90 days of data
+    startDate.setDate(startDate.getDate() - 365); // 365 days of data for trend analysis (need 200+ bars)
     
     // DB-FIRST FETCH: Check historical_prices DB cache, then fall back to Yahoo
     // This dramatically speeds up loading for daily charts since data is pre-cached
@@ -1266,6 +1271,32 @@ serve(async (req) => {
             ? ((currentClose - prevClose) / prevClose) * 100 
             : null;
           
+          // Calculate trend alignment indicators
+          let trendAlignment: string | null = null;
+          let trendIndicators: any = null;
+          
+          // Need at least 200 bars for proper trend analysis
+          if (bars.length >= 200) {
+            try {
+              const ohlcBars: OHLCBar[] = bars.map(b => ({
+                date: b.date,
+                open: b.open,
+                high: b.high,
+                low: b.low,
+                close: b.close,
+                volume: b.volume || 0,
+              }));
+              
+              const trendResult = analyzePatternTrend(ohlcBars, pattern.direction);
+              if (trendResult) {
+                trendAlignment = trendResult.alignment;
+                trendIndicators = trendResult.indicators;
+              }
+            } catch (trendError) {
+              console.warn(`[scan-live-patterns] Trend calc error for ${instrument}:`, trendError);
+            }
+          }
+          
           detectedPatterns.push({
             instrument,
             patternId,
@@ -1284,9 +1315,11 @@ serve(async (req) => {
             currentPrice: currentClose,
             prevClose: prevClose,
             changePercent: changePercent !== null ? Number(changePercent.toFixed(2)) : null,
+            trendAlignment,
+            trendIndicators,
           });
           
-          console.log(`[scan-live-patterns] Found: ${instrument} - ${pattern.displayName}`);
+          console.log(`[scan-live-patterns] Found: ${instrument} - ${pattern.displayName} (trend: ${trendAlignment || 'N/A'})`);
         }
       }
     }

@@ -287,9 +287,10 @@ export default function LivePatternsPage() {
             limit: 50,
             maxTickers: caps.maxTickersPerClass,
             allowedPatterns: caps.allowedPatterns,
+            forceRefresh: isRefresh, // Force live scan when user explicitly refreshes
           },
         }),
-        25_000,
+        isRefresh ? 45_000 : 25_000, // Allow more time for forced refresh
         'scan-live-patterns'
       );
       
@@ -559,34 +560,67 @@ export default function LivePatternsPage() {
           </Select>
           
           {/* Trend Alignment Filter */}
-          <ToggleGroup 
-            type="single" 
-            value={trendFilter} 
-            onValueChange={(v) => v && setTrendFilter(v as 'all' | 'with_trend' | 'counter_trend')}
-            className="border rounded-md p-0.5"
-          >
-            <ToggleGroupItem value="all" className="text-xs px-2 h-7">
-              All
-            </ToggleGroupItem>
-            <ToggleGroupItem value="with_trend" className="text-xs px-2 h-7 gap-1">
-              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-              Trend
-              {trendStats.withTrend > 0 && (
-                <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
-                  {trendStats.withTrend}
-                </Badge>
-              )}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-7 gap-1">
-              <ArrowDownRight className="h-3 w-3 text-amber-500" />
-              Counter
-              {trendStats.counterTrend > 0 && (
-                <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
-                  {trendStats.counterTrend}
-                </Badge>
-              )}
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <ToggleGroup 
+                    type="single" 
+                    value={trendFilter} 
+                    onValueChange={(v) => v && setTrendFilter(v as 'all' | 'with_trend' | 'counter_trend')}
+                    className="border rounded-md p-0.5"
+                  >
+                    <ToggleGroupItem value="all" className="text-xs px-2 h-7">
+                      All
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="with_trend" className="text-xs px-2 h-7 gap-1">
+                      <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                      Trend
+                      {trendStats.withTrend > 0 && (
+                        <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                          {trendStats.withTrend}
+                        </Badge>
+                      )}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-7 gap-1">
+                      <ArrowDownRight className="h-3 w-3 text-amber-500" />
+                      Counter
+                      {trendStats.counterTrend > 0 && (
+                        <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                          {trendStats.counterTrend}
+                        </Badge>
+                      )}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="font-semibold mb-1">Trend Alignment Filter</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Filter patterns based on whether they align with the larger market trend (MACD, EMA, RSI, ADX).
+                </p>
+                <div className="text-xs space-y-1">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                    <span><strong>With Trend:</strong> {trendStats.withTrend} patterns</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ArrowDownRight className="h-3 w-3 text-amber-500" />
+                    <span><strong>Counter Trend:</strong> {trendStats.counterTrend} patterns</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Minus className="h-3 w-3 text-muted-foreground" />
+                    <span><strong>Not Analyzed:</strong> {trendStats.neutral} patterns</span>
+                  </div>
+                </div>
+                {trendStats.neutral > 0 && trendStats.withTrend === 0 && trendStats.counterTrend === 0 && (
+                  <p className="text-xs text-amber-500 mt-2">
+                    💡 Click "Refresh" to calculate trend alignment for all patterns.
+                  </p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           {/* View Toggle */}
           <ToggleGroup 
@@ -689,14 +723,24 @@ export default function LivePatternsPage() {
           <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Patterns Found</h3>
           <p className="text-muted-foreground mb-4">
-            {patterns.length > 0 
-              ? 'Try adjusting your filters to see more results.'
-              : 'No active patterns detected at the moment. Check back soon!'}
+            {trendFilter !== 'all' && trendStats.withTrend === 0 && trendStats.counterTrend === 0
+              ? 'Trend alignment data is being calculated. Click "Refresh" to analyze patterns with trend indicators.'
+              : patterns.length > 0 
+                ? 'Try adjusting your filters to see more results.'
+                : 'No active patterns detected at the moment. Check back soon!'}
           </p>
           {patterns.length > 0 && (
-            <Button variant="outline" onClick={() => { setDirectionFilter('all'); setPatternFilter('all'); }}>
-              Clear Filters
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              <Button variant="outline" onClick={() => { setDirectionFilter('all'); setPatternFilter('all'); setTrendFilter('all'); }}>
+                Clear Filters
+              </Button>
+              {trendFilter !== 'all' && trendStats.withTrend === 0 && trendStats.counterTrend === 0 && (
+                <Button variant="default" onClick={() => fetchLivePatterns(true)} disabled={refreshing}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  Calculate Trend Data
+                </Button>
+              )}
+            </div>
           )}
         </Card>
       )}
