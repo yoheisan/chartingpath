@@ -53,12 +53,11 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
 
     chartRef.current = chart;
 
-    // Create candlestick series (v5 API)
+    // Create candlestick series (v5 API) - solid filled candles
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      borderDownColor: '#ef4444',
+      borderVisible: false,
       wickUpColor: '#22c55e',
       wickDownColor: '#ef4444',
     });
