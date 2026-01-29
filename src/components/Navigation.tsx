@@ -76,23 +76,23 @@ const Navigation = () => {
         Projects
       </Link>
       
-      {/* 4. My Results - Returning users */}
-      <Link to="/vault" className="flex items-center gap-2 text-muted-foreground py-2">
-        <Database className="h-5 w-5" />
-        My Results
-      </Link>
-      
-      {/* 5. Pricing */}
+      {/* 4. Pricing */}
       <Link to="/projects/pricing" className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
         Pricing
       </Link>
       
-      {/* Account */}
-      <Link to="/members/dashboard" className="flex items-center gap-2 text-muted-foreground py-2">
-        <User className="h-5 w-5" />
-        Account
-      </Link>
+      {/* Account section with My Results nested */}
+      <div className="border-t pt-4 mt-2">
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Account</p>
+        <div className="flex flex-col gap-2 pl-2">
+          <Link to="/members/dashboard" className="text-sm text-muted-foreground py-1">Dashboard</Link>
+          <Link to="/vault" className="text-sm text-muted-foreground py-1">My Results</Link>
+          <Link to="/members/courses" className="text-sm text-muted-foreground py-1">Courses</Link>
+          <Link to="/members/downloads" className="text-sm text-muted-foreground py-1">Downloads</Link>
+          <Link to="/members/account" className="text-sm text-muted-foreground py-1">Settings</Link>
+        </div>
+      </div>
       
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Advanced</p>
@@ -209,27 +209,7 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* 4. My Results - For returning users */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/vault') || isActive('/members/scripts') || isActive('/members/alerts') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
-                  <Database className="h-4 w-4" />
-                  My Results
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/vault">Results Vault</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/scripts">Saved Scripts</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/alerts">Active Alerts</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* 5. Pricing */}
+              {/* 4. Pricing */}
               <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>
                 <DollarSign className="h-4 w-4" />
                 {t('navigation.pricing', 'Pricing')}
@@ -294,7 +274,7 @@ const Navigation = () => {
               
               {/* Account dropdown */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/members') || isActive('/vault') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
                   <User className="h-4 w-4" />
                   Account
                   <ChevronDown className="h-3 w-3" />
@@ -303,6 +283,13 @@ const Navigation = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/members/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/vault" className="flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      My Results
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/members/courses">Courses</Link>
                   </DropdownMenuItem>
