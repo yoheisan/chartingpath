@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,69 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import About from "./pages/About";
-import { StrategyDetail } from "./pages/StrategyDetail";
-import PipCalculator from "./pages/PipCalculator";
-import RiskCalculator from "./pages/RiskCalculator";
-import MarketBreadthReport from "./pages/MarketBreadthReport";
-import ScriptGenerator from "./pages/ScriptGenerator";
-import Pricing from "./pages/Pricing";
-import MemberScripts from "./pages/MemberScripts";
-import MemberDownloads from "./pages/MemberDownloads";
-import MemberAlerts from "./pages/MemberAlerts";
-import MemberAccount from "./pages/MemberAccount";
-import MemberDashboard from "./pages/MemberDashboard";
-import Auth from "./pages/Auth";
-import AdminLogin from "./pages/AdminLogin";
-import AdminContentManagement from "./pages/AdminContentManagement";
-import PatternGenerator from "./pages/PatternGenerator";
-import PatternLibraryPage from "./pages/PatternLibraryPage";
-import TradingStrategiesPage from "./pages/TradingStrategiesPage";
-import PatternQuizPage from "./pages/PatternQuizPage";
-import PatternIdentificationQuizPage from "./pages/PatternIdentificationQuizPage";
-import TradingKnowledgeQuizPage from "./pages/TradingKnowledgeQuizPage";
-import StockMarketQuiz from "./pages/StockMarketQuiz";
-import ForexQuiz from "./pages/ForexQuiz";
-import CryptoQuiz from "./pages/CryptoQuiz";
-import CommoditiesQuiz from "./pages/CommoditiesQuiz";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import AIBuilder from "./pages/AIBuilder";
-import Forge from "./pages/Forge";
-import PaperTrading from "./pages/PaperTrading";
-import BacktestWorkspace from "./pages/BacktestWorkspace";
-import BacktestVault from "./pages/BacktestVault";
-import StrategyWorkspace from "./pages/StrategyWorkspace";
-import EliteDashboard from "./pages/EliteDashboard";
-import SharedBacktest from "./pages/SharedBacktest";
-import { TranslationManagement } from "./pages/TranslationManagement";
-import Projects from "./pages/Projects";
-import ProjectsPricing from "./pages/ProjectsPricing";
-import SetupFinderWizard from "./pages/projects/SetupFinderWizard";
-import PatternLabWizard from "./pages/projects/PatternLabWizard";
-import PortfolioCheckupWizard from "./pages/projects/PortfolioCheckupWizard";
-import PortfolioSimulatorWizard from "./pages/projects/PortfolioSimulatorWizard";
-
-import StockMarket from "./pages/markets/StockMarket";
-import ForexMarket from "./pages/markets/ForexMarket";
-import CryptoMarket from "./pages/markets/CryptoMarket";
-
-import EnergyCommodities from "./pages/markets/commodities/EnergyCommodities";
-import PreciousMetals from "./pages/markets/commodities/PreciousMetals";
-import AgriculturalCommodities from "./pages/markets/commodities/AgriculturalCommodities";
-import MajorCurrencyPairs from "./pages/markets/forex/MajorCurrencyPairs";
-import CrossCurrencyPairs from "./pages/markets/forex/CrossCurrencyPairs";
-import MajorIndices from "./pages/markets/stocks/MajorIndices";
-import StockSectors from "./pages/markets/stocks/StockSectors";
-import Bitcoin from "./pages/markets/crypto/Bitcoin";
-import Ethereum from "./pages/markets/crypto/Ethereum";
-import Altcoins from "./pages/markets/crypto/Altcoins";
-import BlogV2 from "./pages/BlogV2";
-import EmailPreview from "./pages/EmailPreview";
-import EconomicCalendar from "./pages/EconomicCalendar";
-import SocialMediaCMS from "./pages/SocialMediaCMS";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
 
 // Reusable loading fallback
@@ -76,7 +13,68 @@ const PageLoader = () => (
   <div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>
 );
 
+const withSuspense = (node: ReactNode) => (
+  <Suspense fallback={<PageLoader />}>{node}</Suspense>
+);
+
+// Core pages (lazy to avoid pulling the entire route tree on first load)
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const About = lazy(() => import("./pages/About"));
+const StrategyDetail = lazy(() =>
+  import("./pages/StrategyDetail").then((m) => ({ default: m.StrategyDetail }))
+);
+const PipCalculator = lazy(() => import("./pages/PipCalculator"));
+const RiskCalculator = lazy(() => import("./pages/RiskCalculator"));
+const MarketBreadthReport = lazy(() => import("./pages/MarketBreadthReport"));
+const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
+const EmailPreview = lazy(() => import("./pages/EmailPreview"));
+
+const PatternGenerator = lazy(() => import("./pages/PatternGenerator"));
+const PatternLibraryPage = lazy(() => import("./pages/PatternLibraryPage"));
+const TradingStrategiesPage = lazy(() => import("./pages/TradingStrategiesPage"));
+const PatternQuizPage = lazy(() => import("./pages/PatternQuizPage"));
+const PatternIdentificationQuizPage = lazy(() => import("./pages/PatternIdentificationQuizPage"));
+const TradingKnowledgeQuizPage = lazy(() => import("./pages/TradingKnowledgeQuizPage"));
+const StockMarketQuiz = lazy(() => import("./pages/StockMarketQuiz"));
+const ForexQuiz = lazy(() => import("./pages/ForexQuiz"));
+const CryptoQuiz = lazy(() => import("./pages/CryptoQuiz"));
+const CommoditiesQuiz = lazy(() => import("./pages/CommoditiesQuiz"));
+
+const Projects = lazy(() => import("./pages/Projects"));
+const ProjectsPricing = lazy(() => import("./pages/ProjectsPricing"));
+const SetupFinderWizard = lazy(() => import("./pages/projects/SetupFinderWizard"));
+const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"));
+const PortfolioCheckupWizard = lazy(() => import("./pages/projects/PortfolioCheckupWizard"));
+const PortfolioSimulatorWizard = lazy(() => import("./pages/projects/PortfolioSimulatorWizard"));
+
+const Forge = lazy(() => import("./pages/Forge"));
+const PaperTrading = lazy(() => import("./pages/PaperTrading"));
+const BacktestVault = lazy(() => import("./pages/BacktestVault"));
+const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
+const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
+const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
+
+const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
+const MemberScripts = lazy(() => import("./pages/MemberScripts"));
+const MemberDownloads = lazy(() => import("./pages/MemberDownloads"));
+const MemberAlerts = lazy(() => import("./pages/MemberAlerts"));
+const MemberAccount = lazy(() => import("./pages/MemberAccount"));
+
+const Auth = lazy(() => import("./pages/Auth"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminContentManagement = lazy(() => import("./pages/AdminContentManagement"));
+const SocialMediaCMS = lazy(() => import("./pages/SocialMediaCMS"));
+const TranslationManagement = lazy(() =>
+  import("./pages/TranslationManagement").then((m) => ({ default: m.TranslationManagement }))
+);
+
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+
 // Lazy-load blog pages - reduces initial bundle by ~60-80%
+const BlogV2 = lazy(() => import("./pages/BlogV2"));
 const DynamicArticle = lazy(() => import("./pages/blog/DynamicArticle"));
 const HeadAndShoulders = lazy(() => import("./pages/blog/HeadAndShoulders"));
 const DoubleTopBottom = lazy(() => import("./pages/blog/DoubleTopBottom"));
@@ -116,6 +114,21 @@ const TickerStudy = lazy(() => import("./pages/TickerStudy"));
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 
+// Markets
+const StockMarket = lazy(() => import("./pages/markets/StockMarket"));
+const ForexMarket = lazy(() => import("./pages/markets/ForexMarket"));
+const CryptoMarket = lazy(() => import("./pages/markets/CryptoMarket"));
+const EnergyCommodities = lazy(() => import("./pages/markets/commodities/EnergyCommodities"));
+const PreciousMetals = lazy(() => import("./pages/markets/commodities/PreciousMetals"));
+const AgriculturalCommodities = lazy(() => import("./pages/markets/commodities/AgriculturalCommodities"));
+const MajorCurrencyPairs = lazy(() => import("./pages/markets/forex/MajorCurrencyPairs"));
+const CrossCurrencyPairs = lazy(() => import("./pages/markets/forex/CrossCurrencyPairs"));
+const MajorIndices = lazy(() => import("./pages/markets/stocks/MajorIndices"));
+const StockSectors = lazy(() => import("./pages/markets/stocks/StockSectors"));
+const Bitcoin = lazy(() => import("./pages/markets/crypto/Bitcoin"));
+const Ethereum = lazy(() => import("./pages/markets/crypto/Ethereum"));
+const Altcoins = lazy(() => import("./pages/markets/crypto/Altcoins"));
+
 const App = () => (
   <TooltipProvider>
       <Toaster />
@@ -124,108 +137,108 @@ const App = () => (
       <PageCaptureButton />
       <Layout>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/tools/pip-calculator" element={<PipCalculator />} />
-          <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
-          <Route path="/tools/market-breadth" element={<MarketBreadthReport />} />
-          <Route path="/tools/script-generator" element={<ScriptGenerator />} />
-          <Route path="/tools/economic-calendar" element={<EconomicCalendar />} />
-          <Route path="/email-preview" element={<EmailPreview />} />
-          <Route path="/chart-patterns/generator" element={<PatternGenerator />} />
-          <Route path="/chart-patterns/library" element={<PatternLibraryPage />} />
-          <Route path="/patterns/live" element={<Suspense fallback={<PageLoader />}><LivePatternsPage /></Suspense>} />
-          <Route path="/study" element={<Suspense fallback={<PageLoader />}><TickerStudy /></Suspense>} />
-          <Route path="/study/:symbol" element={<Suspense fallback={<PageLoader />}><TickerStudy /></Suspense>} />
-          <Route path="/chart-patterns/strategies" element={<TradingStrategiesPage />} />
-          <Route path="/chart-patterns/quiz" element={<PatternQuizPage />} />
-          <Route path="/quiz/pattern-identification" element={<PatternIdentificationQuizPage />} />
-          <Route path="/quiz/trading-knowledge" element={<TradingKnowledgeQuizPage />} />
-          <Route path="/quiz/stock-market" element={<StockMarketQuiz />} />
-          <Route path="/quiz/forex" element={<ForexQuiz />} />
-          <Route path="/quiz/crypto" element={<CryptoQuiz />} />
-          <Route path="/quiz/commodities" element={<CommoditiesQuiz />} />
-          <Route path="/learn" element={<BlogV2 />} />
-          <Route path="/blog/:slug" element={<Suspense fallback={<PageLoader />}><DynamicArticle /></Suspense>} />
-          <Route path="/learn/head-and-shoulders" element={<Suspense fallback={<PageLoader />}><HeadAndShoulders /></Suspense>} />
-          <Route path="/learn/double-top-bottom" element={<Suspense fallback={<PageLoader />}><DoubleTopBottom /></Suspense>} />
-          <Route path="/learn/triangle-patterns" element={<Suspense fallback={<PageLoader />}><TrianglePatterns /></Suspense>} />
-          <Route path="/learn/wedge-patterns" element={<Suspense fallback={<PageLoader />}><WedgePatterns /></Suspense>} />
-          <Route path="/learn/flag-pennant" element={<Suspense fallback={<PageLoader />}><FlagPennant /></Suspense>} />
-          <Route path="/learn/cup-and-handle" element={<Suspense fallback={<PageLoader />}><CupAndHandle /></Suspense>} />
-          <Route path="/learn/rectangle-pattern" element={<Suspense fallback={<PageLoader />}><RectanglePattern /></Suspense>} />
-          <Route path="/learn/support-resistance" element={<Suspense fallback={<PageLoader />}><SupportResistance /></Suspense>} />
-          <Route path="/learn/trend-analysis" element={<Suspense fallback={<PageLoader />}><TrendAnalysis /></Suspense>} />
-          <Route path="/learn/volume-analysis" element={<Suspense fallback={<PageLoader />}><VolumeAnalysis /></Suspense>} />
-          <Route path="/learn/moving-averages" element={<Suspense fallback={<PageLoader />}><MovingAverages /></Suspense>} />
-          <Route path="/learn/rsi-indicator" element={<Suspense fallback={<PageLoader />}><RSIIndicator /></Suspense>} />
-          <Route path="/learn/macd-indicator" element={<Suspense fallback={<PageLoader />}><MACDIndicator /></Suspense>} />
-          <Route path="/learn/fibonacci-retracements" element={<Suspense fallback={<PageLoader />}><FibonacciRetracements /></Suspense>} />
-          <Route path="/learn/candlestick-patterns" element={<Suspense fallback={<PageLoader />}><CandlestickPatterns /></Suspense>} />
-          <Route path="/learn/price-action-basics" element={<Suspense fallback={<PageLoader />}><PriceActionBasics /></Suspense>} />
-          <Route path="/learn/breakout-trading" element={<Suspense fallback={<PageLoader />}><BreakoutTrading /></Suspense>} />
-          <Route path="/learn/pin-bar-strategy" element={<Suspense fallback={<PageLoader />}><PinBarStrategy /></Suspense>} />
-          <Route path="/learn/risk-management" element={<Suspense fallback={<PageLoader />}><RiskManagement /></Suspense>} />
-          <Route path="/learn/position-sizing" element={<Suspense fallback={<PageLoader />}><PositionSizing /></Suspense>} />
-          <Route path="/learn/money-management" element={<Suspense fallback={<PageLoader />}><MoneyManagement /></Suspense>} />
-          <Route path="/learn/trading-psychology" element={<Suspense fallback={<PageLoader />}><TradingPsychology /></Suspense>} />
-          <Route path="/learn/trading-discipline" element={<Suspense fallback={<PageLoader />}><TradingDiscipline /></Suspense>} />
-          <Route path="/learn/fear-and-greed" element={<Suspense fallback={<PageLoader />}><FearAndGreed /></Suspense>} />
-          <Route path="/learn/trading-journal" element={<Suspense fallback={<PageLoader />}><TradingJournal /></Suspense>} />
-          <Route path="/markets/stocks" element={<StockMarket />} />
-          <Route path="/markets/stocks/indices" element={<MajorIndices />} />
-          <Route path="/markets/stocks/sectors" element={<StockSectors />} />
-          <Route path="/markets/forex" element={<ForexMarket />} />
-          <Route path="/markets/forex/major-pairs" element={<MajorCurrencyPairs />} />
-          <Route path="/markets/forex/cross-pairs" element={<CrossCurrencyPairs />} />
-          <Route path="/markets/crypto" element={<CryptoMarket />} />
-          <Route path="/markets/crypto/bitcoin" element={<Bitcoin />} />
-          <Route path="/markets/crypto/ethereum" element={<Ethereum />} />
-          <Route path="/markets/crypto/altcoins" element={<Altcoins />} />
-          <Route path="/markets/commodities" element={<Suspense fallback={<PageLoader />}><CommodityMarket /></Suspense>} />
-          <Route path="/markets/commodities/energy" element={<EnergyCommodities />} />
-          <Route path="/markets/commodities/precious-metals" element={<PreciousMetals />} />
-          <Route path="/markets/commodities/agricultural" element={<AgriculturalCommodities />} />
-          <Route path="/markets/commodities/industrial-metals" element={<Suspense fallback={<PageLoader />}><IndustrialMetals /></Suspense>} />
-          <Route path="/strategy-workspace" element={<StrategyWorkspace />} />
+          <Route path="/" element={withSuspense(<Index />)} />
+          <Route path="/about" element={withSuspense(<About />)} />
+          <Route path="/tools/pip-calculator" element={withSuspense(<PipCalculator />)} />
+          <Route path="/tools/risk-calculator" element={withSuspense(<RiskCalculator />)} />
+          <Route path="/tools/market-breadth" element={withSuspense(<MarketBreadthReport />)} />
+          <Route path="/tools/script-generator" element={withSuspense(<ScriptGenerator />)} />
+          <Route path="/tools/economic-calendar" element={withSuspense(<EconomicCalendar />)} />
+          <Route path="/email-preview" element={withSuspense(<EmailPreview />)} />
+          <Route path="/chart-patterns/generator" element={withSuspense(<PatternGenerator />)} />
+          <Route path="/chart-patterns/library" element={withSuspense(<PatternLibraryPage />)} />
+          <Route path="/patterns/live" element={withSuspense(<LivePatternsPage />)} />
+          <Route path="/study" element={withSuspense(<TickerStudy />)} />
+          <Route path="/study/:symbol" element={withSuspense(<TickerStudy />)} />
+          <Route path="/chart-patterns/strategies" element={withSuspense(<TradingStrategiesPage />)} />
+          <Route path="/chart-patterns/quiz" element={withSuspense(<PatternQuizPage />)} />
+          <Route path="/quiz/pattern-identification" element={withSuspense(<PatternIdentificationQuizPage />)} />
+          <Route path="/quiz/trading-knowledge" element={withSuspense(<TradingKnowledgeQuizPage />)} />
+          <Route path="/quiz/stock-market" element={withSuspense(<StockMarketQuiz />)} />
+          <Route path="/quiz/forex" element={withSuspense(<ForexQuiz />)} />
+          <Route path="/quiz/crypto" element={withSuspense(<CryptoQuiz />)} />
+          <Route path="/quiz/commodities" element={withSuspense(<CommoditiesQuiz />)} />
+          <Route path="/learn" element={withSuspense(<BlogV2 />)} />
+          <Route path="/blog/:slug" element={withSuspense(<DynamicArticle />)} />
+          <Route path="/learn/head-and-shoulders" element={withSuspense(<HeadAndShoulders />)} />
+          <Route path="/learn/double-top-bottom" element={withSuspense(<DoubleTopBottom />)} />
+          <Route path="/learn/triangle-patterns" element={withSuspense(<TrianglePatterns />)} />
+          <Route path="/learn/wedge-patterns" element={withSuspense(<WedgePatterns />)} />
+          <Route path="/learn/flag-pennant" element={withSuspense(<FlagPennant />)} />
+          <Route path="/learn/cup-and-handle" element={withSuspense(<CupAndHandle />)} />
+          <Route path="/learn/rectangle-pattern" element={withSuspense(<RectanglePattern />)} />
+          <Route path="/learn/support-resistance" element={withSuspense(<SupportResistance />)} />
+          <Route path="/learn/trend-analysis" element={withSuspense(<TrendAnalysis />)} />
+          <Route path="/learn/volume-analysis" element={withSuspense(<VolumeAnalysis />)} />
+          <Route path="/learn/moving-averages" element={withSuspense(<MovingAverages />)} />
+          <Route path="/learn/rsi-indicator" element={withSuspense(<RSIIndicator />)} />
+          <Route path="/learn/macd-indicator" element={withSuspense(<MACDIndicator />)} />
+          <Route path="/learn/fibonacci-retracements" element={withSuspense(<FibonacciRetracements />)} />
+          <Route path="/learn/candlestick-patterns" element={withSuspense(<CandlestickPatterns />)} />
+          <Route path="/learn/price-action-basics" element={withSuspense(<PriceActionBasics />)} />
+          <Route path="/learn/breakout-trading" element={withSuspense(<BreakoutTrading />)} />
+          <Route path="/learn/pin-bar-strategy" element={withSuspense(<PinBarStrategy />)} />
+          <Route path="/learn/risk-management" element={withSuspense(<RiskManagement />)} />
+          <Route path="/learn/position-sizing" element={withSuspense(<PositionSizing />)} />
+          <Route path="/learn/money-management" element={withSuspense(<MoneyManagement />)} />
+          <Route path="/learn/trading-psychology" element={withSuspense(<TradingPsychology />)} />
+          <Route path="/learn/trading-discipline" element={withSuspense(<TradingDiscipline />)} />
+          <Route path="/learn/fear-and-greed" element={withSuspense(<FearAndGreed />)} />
+          <Route path="/learn/trading-journal" element={withSuspense(<TradingJournal />)} />
+          <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
+          <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
+          <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
+          <Route path="/markets/forex" element={withSuspense(<ForexMarket />)} />
+          <Route path="/markets/forex/major-pairs" element={withSuspense(<MajorCurrencyPairs />)} />
+          <Route path="/markets/forex/cross-pairs" element={withSuspense(<CrossCurrencyPairs />)} />
+          <Route path="/markets/crypto" element={withSuspense(<CryptoMarket />)} />
+          <Route path="/markets/crypto/bitcoin" element={withSuspense(<Bitcoin />)} />
+          <Route path="/markets/crypto/ethereum" element={withSuspense(<Ethereum />)} />
+          <Route path="/markets/crypto/altcoins" element={withSuspense(<Altcoins />)} />
+          <Route path="/markets/commodities" element={withSuspense(<CommodityMarket />)} />
+          <Route path="/markets/commodities/energy" element={withSuspense(<EnergyCommodities />)} />
+          <Route path="/markets/commodities/precious-metals" element={withSuspense(<PreciousMetals />)} />
+          <Route path="/markets/commodities/agricultural" element={withSuspense(<AgriculturalCommodities />)} />
+          <Route path="/markets/commodities/industrial-metals" element={withSuspense(<IndustrialMetals />)} />
+          <Route path="/strategy-workspace" element={withSuspense(<StrategyWorkspace />)} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/pricing" element={<ProjectsPricing />} />
-          <Route path="/projects/setup-finder/new" element={<SetupFinderWizard />} />
-          <Route path="/projects/pattern-lab/new" element={<PatternLabWizard />} />
-          <Route path="/projects/portfolio-checkup/new" element={<PortfolioCheckupWizard />} />
-          <Route path="/projects/portfolio-sim/new" element={<PortfolioSimulatorWizard />} />
-          <Route path="/projects/runs/:runId" element={<Suspense fallback={<PageLoader />}><ProjectRun /></Suspense>} />
-          <Route path="/forge" element={<Forge />} />
+          <Route path="/projects" element={withSuspense(<Projects />)} />
+          <Route path="/projects/pricing" element={withSuspense(<ProjectsPricing />)} />
+          <Route path="/projects/setup-finder/new" element={withSuspense(<SetupFinderWizard />)} />
+          <Route path="/projects/pattern-lab/new" element={withSuspense(<PatternLabWizard />)} />
+          <Route path="/projects/portfolio-checkup/new" element={withSuspense(<PortfolioCheckupWizard />)} />
+          <Route path="/projects/portfolio-sim/new" element={withSuspense(<PortfolioSimulatorWizard />)} />
+          <Route path="/projects/runs/:runId" element={withSuspense(<ProjectRun />)} />
+          <Route path="/forge" element={withSuspense(<Forge />)} />
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
-          <Route path="/members/dashboard" element={<MemberDashboard />} />
-          <Route path="/members/trading" element={<PaperTrading />} />
-          <Route path="/vault" element={<BacktestVault />} />
-          <Route path="/elite" element={<EliteDashboard />} />
-          <Route path="/share/:token" element={<SharedBacktest />} />
-          <Route path="/members/scripts" element={<MemberScripts />} />
-          <Route path="/members/courses" element={<Suspense fallback={<PageLoader />}><MemberCourses /></Suspense>} />
-          <Route path="/members/downloads" element={<MemberDownloads />} />
-          <Route path="/members/alerts" element={<MemberAlerts />} />
-          <Route path="/members/account" element={<MemberAccount />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/*" element={<Auth />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/login/*" element={<AdminLogin />} />
+          <Route path="/members/dashboard" element={withSuspense(<MemberDashboard />)} />
+          <Route path="/members/trading" element={withSuspense(<PaperTrading />)} />
+          <Route path="/vault" element={withSuspense(<BacktestVault />)} />
+          <Route path="/elite" element={withSuspense(<EliteDashboard />)} />
+          <Route path="/share/:token" element={withSuspense(<SharedBacktest />)} />
+          <Route path="/members/scripts" element={withSuspense(<MemberScripts />)} />
+          <Route path="/members/courses" element={withSuspense(<MemberCourses />)} />
+          <Route path="/members/downloads" element={withSuspense(<MemberDownloads />)} />
+          <Route path="/members/alerts" element={withSuspense(<MemberAlerts />)} />
+          <Route path="/members/account" element={withSuspense(<MemberAccount />)} />
+          <Route path="/auth" element={withSuspense(<Auth />)} />
+          <Route path="/auth/*" element={withSuspense(<Auth />)} />
+          <Route path="/admin/login" element={withSuspense(<AdminLogin />)} />
+          <Route path="/admin/login/*" element={withSuspense(<AdminLogin />)} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
-          <Route path="/admin/content" element={<AdminContentManagement />} />
-          <Route path="/admin/kpi" element={<Suspense fallback={<PageLoader />}><AdminKPIDashboard /></Suspense>} />
-          <Route path="/admin/translation-management" element={<TranslationManagement />} />
-          <Route path="/admin/journey-analytics" element={<Suspense fallback={<PageLoader />}><AIJourneyAnalytics /></Suspense>} />
-          <Route path="/admin/social-cms" element={<SocialMediaCMS />} />
-          <Route path="/strategy/:strategyId" element={<StrategyDetail />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/faq" element={<Suspense fallback={<PageLoader />}><FAQ /></Suspense>} />
+          <Route path="/admin/dashboard" element={withSuspense(<AdminDashboard />)} />
+          <Route path="/admin/content" element={withSuspense(<AdminContentManagement />)} />
+          <Route path="/admin/kpi" element={withSuspense(<AdminKPIDashboard />)} />
+          <Route path="/admin/translation-management" element={withSuspense(<TranslationManagement />)} />
+          <Route path="/admin/journey-analytics" element={withSuspense(<AIJourneyAnalytics />)} />
+          <Route path="/admin/social-cms" element={withSuspense(<SocialMediaCMS />)} />
+          <Route path="/strategy/:strategyId" element={withSuspense(<StrategyDetail />)} />
+          <Route path="/terms" element={withSuspense(<Terms />)} />
+          <Route path="/privacy" element={withSuspense(<Privacy />)} />
+          <Route path="/faq" element={withSuspense(<FAQ />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={withSuspense(<NotFound />)} />
         </Routes>
       </Layout>
     </TooltipProvider>
