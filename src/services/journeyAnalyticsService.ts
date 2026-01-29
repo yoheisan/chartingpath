@@ -91,6 +91,27 @@ export interface TrafficSource {
   bounceRate: number;
 }
 
+export interface LoopCompletionMetrics {
+  overall: {
+    completedCount: number;
+    totalUsers: number;
+    rate: number;
+    target: number;
+  };
+  byTier: {
+    free: { rate: number; target: number; onTarget: boolean };
+    paid: { rate: number; target: number; onTarget: boolean };
+  };
+  byStage: {
+    discover: { completed: number; percentage: number };
+    research: { completed: number; percentage: number };
+    execute: { completed: number; percentage: number };
+    automate: { completed: number; percentage: number };
+  };
+  avgTimeToComplete: number; // hours
+  medianTimeToComplete: number; // hours
+}
+
 export interface JourneyAnalytics {
   flow: JourneyFlow;
   brokenPaths: BrokenPath[];
@@ -98,6 +119,7 @@ export interface JourneyAnalytics {
   aiInsights: AIInsight[];
   userSegments: UserSegment[];
   trafficSources: TrafficSource[];
+  loopCompletion: LoopCompletionMetrics;
   healthScore: number; // 0-100
   lastUpdated: string;
 }
@@ -732,6 +754,166 @@ function calculateHealthScore(
   return Math.max(0, Math.min(100, score));
 }
 
+// ============= LOOP COMPLETION RATE =============
+
+/**
+ * Calculate Loop Completion Rate - the core business KPI
+ * 
+ * A "completed loop" means a user has touched all 4 stages within 7 days:
+ * 1. Discover: screener_view OR pattern_clicked
+ * 2. Research: backtest_completed OR result_summary_viewed
+ * 3. Execute: tradingview_opened OR alert_created
+ * 4. Automate: pine_generated OR pine_copied
+ */
+function calculateLoopCompletion(events: Array<{
+  event_name: string;
+  user_id: string | null;
+  session_id: string;
+  created_at: string;
+}>): LoopCompletionMetrics {
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  
+  // Stage event mappings (aligned with BUSINESS_MODEL.stages)
+  const stageEvents = {
+    discover: new Set(['screener_view', 'pattern_clicked']),
+    research: new Set(['backtest_completed', 'result_summary_viewed']),
+    execute: new Set(['tradingview_opened', 'alert_created']),
+    automate: new Set(['pine_generated', 'pine_copied']),
+  };
+  
+  // Group events by user
+  const userJourneys: Record<string, Array<{ event: string; time: Date }>> = {};
+  
+  for (const event of events) {
+    const key = event.user_id || event.session_id;
+    if (!userJourneys[key]) userJourneys[key] = [];
+    userJourneys[key].push({ event: event.event_name, time: new Date(event.created_at) });
+  }
+  
+  // Analyze each user's journey
+  let completedLoops = 0;
+  const completionTimes: number[] = [];
+  const stageCompletion = {
+    discover: 0,
+    research: 0,
+    execute: 0,
+    automate: 0,
+  };
+  
+  // Track free vs paid (we'll use paid_started event to distinguish)
+  let freeCompleted = 0;
+  let freeTotal = 0;
+  let paidCompleted = 0;
+  let paidTotal = 0;
+  
+  for (const [, journey] of Object.entries(userJourneys)) {
+    journey.sort((a, b) => a.time.getTime() - b.time.getTime());
+    
+    const isPaid = journey.some(e => e.event === 'paid_started');
+    if (isPaid) paidTotal++; else freeTotal++;
+    
+    // Find first occurrence of each stage
+    const stageFirstOccurrence: Record<string, Date | null> = {
+      discover: null,
+      research: null,
+      execute: null,
+      automate: null,
+    };
+    
+    for (const entry of journey) {
+      for (const [stage, eventSet] of Object.entries(stageEvents)) {
+        if (eventSet.has(entry.event) && !stageFirstOccurrence[stage]) {
+          stageFirstOccurrence[stage] = entry.time;
+        }
+      }
+    }
+    
+    // Check which stages were completed
+    const stagesCompleted = Object.entries(stageFirstOccurrence).filter(([, time]) => time !== null);
+    
+    for (const [stage] of stagesCompleted) {
+      stageCompletion[stage as keyof typeof stageCompletion]++;
+    }
+    
+    // Check if full loop completed within 7 days
+    const allStagesCompleted = stagesCompleted.length === 4;
+    if (allStagesCompleted) {
+      const times = Object.values(stageFirstOccurrence).filter((t): t is Date => t !== null);
+      const firstTime = Math.min(...times.map(t => t.getTime()));
+      const lastTime = Math.max(...times.map(t => t.getTime()));
+      const duration = lastTime - firstTime;
+      
+      if (duration <= SEVEN_DAYS_MS) {
+        completedLoops++;
+        completionTimes.push(duration / (60 * 60 * 1000)); // hours
+        
+        if (isPaid) paidCompleted++; else freeCompleted++;
+      }
+    }
+  }
+  
+  const totalUsers = Object.keys(userJourneys).length;
+  const overallRate = totalUsers > 0 ? completedLoops / totalUsers : 0;
+  
+  // Calculate avg and median completion times
+  const avgTime = completionTimes.length > 0 
+    ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length 
+    : 0;
+  
+  const sortedTimes = [...completionTimes].sort((a, b) => a - b);
+  const medianTime = sortedTimes.length > 0 
+    ? sortedTimes[Math.floor(sortedTimes.length / 2)] 
+    : 0;
+  
+  // Targets from business model
+  const FREE_TARGET = 0.15;
+  const PAID_TARGET = 0.40;
+  
+  const freeRate = freeTotal > 0 ? freeCompleted / freeTotal : 0;
+  const paidRate = paidTotal > 0 ? paidCompleted / paidTotal : 0;
+  
+  return {
+    overall: {
+      completedCount: completedLoops,
+      totalUsers,
+      rate: overallRate,
+      target: FREE_TARGET, // Use free target as overall baseline
+    },
+    byTier: {
+      free: {
+        rate: freeRate,
+        target: FREE_TARGET,
+        onTarget: freeRate >= FREE_TARGET,
+      },
+      paid: {
+        rate: paidRate,
+        target: PAID_TARGET,
+        onTarget: paidRate >= PAID_TARGET,
+      },
+    },
+    byStage: {
+      discover: {
+        completed: stageCompletion.discover,
+        percentage: totalUsers > 0 ? (stageCompletion.discover / totalUsers) * 100 : 0,
+      },
+      research: {
+        completed: stageCompletion.research,
+        percentage: totalUsers > 0 ? (stageCompletion.research / totalUsers) * 100 : 0,
+      },
+      execute: {
+        completed: stageCompletion.execute,
+        percentage: totalUsers > 0 ? (stageCompletion.execute / totalUsers) * 100 : 0,
+      },
+      automate: {
+        completed: stageCompletion.automate,
+        percentage: totalUsers > 0 ? (stageCompletion.automate / totalUsers) * 100 : 0,
+      },
+    },
+    avgTimeToComplete: avgTime,
+    medianTimeToComplete: medianTime,
+  };
+}
+
 // ============= MAIN EXPORT =============
 
 export async function fetchJourneyAnalytics(days: number = 30): Promise<JourneyAnalytics> {
@@ -743,6 +925,7 @@ export async function fetchJourneyAnalytics(days: number = 30): Promise<JourneyA
   const aiInsights = generateAIInsights(flow, brokenPaths, conversionFunnel);
   const userSegments = segmentUsers(events);
   const trafficSources = analyzeTrafficSources(events);
+  const loopCompletion = calculateLoopCompletion(events);
   const healthScore = calculateHealthScore(conversionFunnel, brokenPaths);
   
   return {
@@ -752,6 +935,7 @@ export async function fetchJourneyAnalytics(days: number = 30): Promise<JourneyA
     aiInsights,
     userSegments,
     trafficSources,
+    loopCompletion,
     healthScore,
     lastUpdated: new Date().toISOString(),
   };

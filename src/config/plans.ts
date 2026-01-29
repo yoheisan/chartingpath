@@ -71,65 +71,65 @@ export interface PlansConfig {
 export const PLANS_CONFIG: PlansConfig = {
   tiers: {
     FREE: {
-      monthlyCredits: 25,
-      dailyRunCap: 1,
+      monthlyCredits: 50,
+      dailyRunCap: 3, // 3 backtests/scans per day - primary gate at Research stage
       maxConcurrentRuns: 1,
-      maxActiveAlerts: 3,
+      maxActiveAlerts: 1, // Secondary gate at Automate stage
       screener: {
-        maxTickersPerClass: 25,
+        maxTickersPerClass: 100, // Unlimited screener access for Discover stage
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
       },
       projects: {
         setup_finder: { maxInstruments: 10, maxLookbackYears: 1, maxPatterns: 3, allowedTimeframes: ['1d'] },
-        pattern_lab: { enabled: false },
+        pattern_lab: { enabled: true, maxInstruments: 5, maxLookbackYears: 1, maxPatterns: 3, maxSweeps: 0, allowedTimeframes: ['1d'] },
         portfolio_checkup: { maxHoldings: 10, maxLookbackYears: 1, allowedTimeframes: ['1d'] },
         portfolio_sim: { maxHoldings: 10, maxLookbackYears: 3, rebalanceOptions: ['yearly'], allowedTimeframes: ['1d'] }
       }
     },
     PLUS: {
       monthlyCredits: 300,
-      dailyRunCap: 3,
+      dailyRunCap: 10, // Upgraded: 10 daily scans
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
       screener: {
-        maxTickersPerClass: 50,
+        maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
       },
       projects: {
         setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 5, maxLookbackYears: 5, maxPatterns: 4, maxSweeps: 1, allowedTimeframes: ['1d'] },
+        pattern_lab: { enabled: true, maxInstruments: 10, maxLookbackYears: 5, maxPatterns: 6, maxSweeps: 2, allowedTimeframes: ['1d'] },
         portfolio_checkup: { maxHoldings: 50, maxLookbackYears: 3, allowedTimeframes: ['1d', '4h'] },
         portfolio_sim: { maxHoldings: 20, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
     PRO: {
       monthlyCredits: 900,
-      dailyRunCap: 10,
-      maxConcurrentRuns: 1,
+      dailyRunCap: 30, // Upgraded: 30 daily scans
+      maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
       screener: {
-        maxTickersPerClass: 75,
+        maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
       },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 10, maxLookbackYears: 7, maxPatterns: 6, maxSweeps: 3, allowedTimeframes: ['4h', '1d'] },
+        pattern_lab: { enabled: true, maxInstruments: 15, maxLookbackYears: 7, maxPatterns: 8, maxSweeps: 5, allowedTimeframes: ['4h', '1d'] },
         portfolio_checkup: { maxHoldings: 100, maxLookbackYears: 5, allowedTimeframes: ['1d', '4h'] },
         portfolio_sim: { maxHoldings: 30, maxLookbackYears: 15, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
     TEAM: {
       monthlyCredits: 3000,
-      dailyRunCap: 30,
-      maxConcurrentRuns: 2,
-      maxActiveAlerts: 300,
+      dailyRunCap: 100, // Upgraded: unlimited for teams
+      maxConcurrentRuns: 5,
+      maxActiveAlerts: 500,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
       },
       projects: {
         setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 25, maxLookbackYears: 10, maxPatterns: 8, maxSweeps: 5, allowedTimeframes: ['4h', '1d'] },
+        pattern_lab: { enabled: true, maxInstruments: 25, maxLookbackYears: 10, maxPatterns: 10, maxSweeps: 10, allowedTimeframes: ['4h', '1d'] },
         portfolio_checkup: { maxHoldings: 250, maxLookbackYears: 10, allowedTimeframes: ['1d', '4h'] },
         portfolio_sim: { maxHoldings: 100, maxLookbackYears: 20, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
@@ -267,10 +267,10 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     name: 'Free',
     monthlyPrice: 0,
     annualPrice: 0,
-    monthlyCredits: 25,
-    dailyRunCap: 1,
-    maxActiveAlerts: 3,
-    bestFor: 'Exploring pattern recognition basics',
+    monthlyCredits: 50,
+    dailyRunCap: 3,
+    maxActiveAlerts: 1,
+    bestFor: 'Discover signals, validate 3 per day',
     color: 'text-muted-foreground'
   },
   PLUS: {
@@ -278,9 +278,9 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 29,
     annualPrice: 290,
     monthlyCredits: 300,
-    dailyRunCap: 3,
+    dailyRunCap: 10,
     maxActiveAlerts: 25,
-    bestFor: 'Active traders building systematic edge',
+    bestFor: 'Active research with unlimited validation',
     color: 'text-blue-500'
   },
   PRO: {
@@ -288,7 +288,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 79,
     annualPrice: 790,
     monthlyCredits: 900,
-    dailyRunCap: 10,
+    dailyRunCap: 30,
     maxActiveAlerts: 100,
     bestFor: 'Professional traders with diverse portfolios',
     color: 'text-violet-500'
@@ -298,8 +298,8 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
-    dailyRunCap: 30,
-    maxActiveAlerts: 300,
+    dailyRunCap: 100,
+    maxActiveAlerts: 500,
     bestFor: 'Trading teams and prop desks',
     color: 'text-amber-500'
   }
@@ -351,4 +351,56 @@ export function validateProjectInputs(
 /**
  * Plans config version for sync verification
  */
-export const PLANS_CONFIG_VERSION = '1.0.0';
+export const PLANS_CONFIG_VERSION = '2.0.0';
+
+// ============= BUSINESS MODEL CONSTANTS =============
+
+/**
+ * Business Model: Research-Gate with Daily Scans
+ * 
+ * Stage 1: DISCOVER (Free & Unlimited)
+ *   - Screener access for signal discovery
+ *   - No limits on viewing patterns
+ * 
+ * Stage 2: RESEARCH (Primary Gate)
+ *   - 3 backtests/scans per day for FREE
+ *   - Unlimited for PLUS+
+ *   - Conversion trigger: hitting daily limit
+ * 
+ * Stage 3: EXECUTE (Full Access)
+ *   - TradingView integration
+ *   - Trade plans
+ * 
+ * Stage 4: AUTOMATE (Secondary Gate)
+ *   - 1 active alert for FREE
+ *   - Unlimited for PLUS+
+ */
+
+export const BUSINESS_MODEL = {
+  primaryGate: 'research' as const,
+  secondaryGate: 'automate' as const,
+  retentionMechanism: 'daily_scans' as const,
+  coreKpi: 'loop_completion_rate' as const,
+  
+  // Loop Completion Rate targets
+  targets: {
+    free: 0.15, // 15% of free users complete loop in 7 days
+    paid: 0.40, // 40% of paid users complete loop in 7 days
+  },
+  
+  // Stage definitions for tracking
+  stages: {
+    discover: ['screener_view', 'pattern_clicked'],
+    research: ['backtest_completed', 'result_summary_viewed'],
+    execute: ['tradingview_opened', 'alert_created'],
+    automate: ['pine_generated', 'pine_copied'],
+  },
+  
+  // Conversion trigger events
+  triggers: {
+    freeToPaywall: 'daily_cap_reached',
+    paywallToCheckout: 'pricing_clicked',
+  }
+} as const;
+
+export type BusinessStage = keyof typeof BUSINESS_MODEL.stages;

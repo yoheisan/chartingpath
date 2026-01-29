@@ -18,6 +18,7 @@ import { BrokenPathsAnalysis } from '@/components/admin/BrokenPathsAnalysis';
 import { AIInsightsPanel } from '@/components/admin/AIInsightsPanel';
 import { UserSegmentsCard } from '@/components/admin/UserSegmentsCard';
 import { KPIEmailSubscription } from '@/components/admin/KPIEmailSubscription';
+import { LoopCompletionCard } from '@/components/admin/LoopCompletionCard';
 
 type TimeWindow = '7d' | '30d' | '90d';
 
@@ -199,54 +200,55 @@ const AIJourneyAnalytics = () => {
               </CardContent>
             </Card>
 
-            {/* Health Score + Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className={`col-span-1 ${getHealthScoreBg(analytics.healthScore)}`}>
-                <CardContent className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">Journey Health Score</p>
-                  <p className={`text-5xl font-bold ${getHealthScoreColor(analytics.healthScore)}`}>
-                    {analytics.healthScore}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">out of 100</p>
-                </CardContent>
-              </Card>
+            {/* Loop Completion Rate - Core KPI */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <LoopCompletionCard metrics={analytics.loopCompletion} />
               
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <Activity className="h-4 w-4" />
-                    <span className="text-sm">Total Sessions</span>
-                  </div>
-                  <p className="text-3xl font-bold">{analytics.flow.totalSessions.toLocaleString()}</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <Users className="h-4 w-4" />
-                    <span className="text-sm">Unique Users</span>
-                  </div>
-                  <p className="text-3xl font-bold">{analytics.flow.uniqueUsers.toLocaleString()}</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm">Journey Drop-offs</span>
-                  </div>
-                  <p className="text-3xl font-bold">
-                    {analytics.brokenPaths.filter(p => p.severity !== 'info').length}
-                  </p>
-                  <div className="flex gap-2 mt-1">
-                    <Badge variant="destructive" className="text-xs">
-                      {analytics.brokenPaths.filter(p => p.severity === 'critical').length} critical
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      {analytics.brokenPaths.filter(p => p.severity === 'warning').length} warnings
-                    </Badge>
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Quick Stats</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                        <Activity className="h-4 w-4" />
+                        <span className="text-sm">Total Sessions</span>
+                      </div>
+                      <p className="text-2xl font-bold">{analytics.flow.totalSessions.toLocaleString()}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                        <Users className="h-4 w-4" />
+                        <span className="text-sm">Unique Users</span>
+                      </div>
+                      <p className="text-2xl font-bold">{analytics.flow.uniqueUsers.toLocaleString()}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-sm">Drop-offs</span>
+                      </div>
+                      <p className="text-2xl font-bold">
+                        {analytics.brokenPaths.filter(p => p.severity !== 'info').length}
+                      </p>
+                      <div className="flex gap-1 mt-1">
+                        <Badge variant="destructive" className="text-xs">
+                          {analytics.brokenPaths.filter(p => p.severity === 'critical').length} crit
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <Card className={`${getHealthScoreBg(analytics.healthScore)} border-0`}>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Health Score</p>
+                        <p className={`text-3xl font-bold ${getHealthScoreColor(analytics.healthScore)}`}>
+                          {analytics.healthScore}
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                 </CardContent>
               </Card>
