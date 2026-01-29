@@ -358,12 +358,6 @@ const MemberDashboard = () => {
                   </Link>
                 </Button>
 
-                <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                  <Link to="/members/courses">
-                    <BookOpen className="h-6 w-6" />
-                    <span>Courses</span>
-                  </Link>
-                </Button>
 
                 <Button asChild variant="outline" className="h-20 flex-col gap-2">
                   <Link to="/members/alerts">
