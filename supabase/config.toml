@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.send-weekly-kpi-report]
 verify_jwt = false
+
+[functions.schedule-pattern-scans]
+verify_jwt = false
