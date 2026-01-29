@@ -195,7 +195,9 @@ export function getTradingViewUrl(
 
   const tvInterval = intervalMap[interval] || '60';
 
-  return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}&interval=${tvInterval}`;
+  // style=1 ensures candlestick chart display for all asset classes
+  // TradingView style codes: 0=Bars, 1=Candles, 2=Line, 3=Area, 4=Renko, 5=Kagi, 6=Point&Figure, 7=Line Break, 8=Heikin Ashi, 9=Hollow Candles
+  return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}&interval=${tvInterval}&style=1`;
 }
 
 /**
