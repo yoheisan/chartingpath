@@ -161,6 +161,44 @@ const AIJourneyAnalytics = () => {
       <div className="container mx-auto px-6 py-8 space-y-8">
         {analytics && (
           <>
+            {/* Journey Stage Overview */}
+            <Card className="bg-gradient-to-r from-amber-500/5 via-violet-500/5 via-primary/5 to-cyan-500/5 border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  4-Stage User Journey
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { stage: 'Discover', icon: '🔍', color: 'text-amber-500', events: ['screener_view', 'pattern_clicked'] },
+                    { stage: 'Research', icon: '📊', color: 'text-violet-500', events: ['backtest_completed', 'result_summary_viewed'] },
+                    { stage: 'Execute', icon: '⚡', color: 'text-primary', events: ['alert_created', 'tradingview_opened'] },
+                    { stage: 'Automate', icon: '🤖', color: 'text-cyan-500', events: ['pine_generated', 'scripts_page_viewed'] },
+                  ].map((s, i) => {
+                    const stageEvents = analytics.flow.nodes.filter(n => s.events.includes(n.id));
+                    const stageCount = stageEvents.reduce((sum, n) => sum + n.count, 0);
+                    return (
+                      <div key={s.stage} className="relative">
+                        <div className="text-center p-4 rounded-lg bg-background/50 border border-border/30">
+                          <span className="text-2xl">{s.icon}</span>
+                          <p className={`text-sm font-medium ${s.color} mt-1`}>{s.stage}</p>
+                          <p className="text-2xl font-bold">{stageCount.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">users</p>
+                        </div>
+                        {i < 3 && (
+                          <div className="absolute top-1/2 -right-1 transform -translate-y-1/2 text-muted-foreground">
+                            →
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Health Score + Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className={`col-span-1 ${getHealthScoreBg(analytics.healthScore)}`}>
@@ -197,7 +235,7 @@ const AIJourneyAnalytics = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm">Issues Detected</span>
+                    <span className="text-sm">Journey Drop-offs</span>
                   </div>
                   <p className="text-3xl font-bold">
                     {analytics.brokenPaths.filter(p => p.severity !== 'info').length}
@@ -266,30 +304,37 @@ const AIJourneyAnalytics = () => {
               </TabsContent>
             </Tabs>
 
-            {/* Conversion Summary Card */}
+            {/* Journey Funnel Summary Card */}
             <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Free-to-Paid Conversion Summary
+                  Journey Funnel: Discover → Research → Execute → Automate → Paid
                 </CardTitle>
                 <CardDescription>
-                  Key metrics for monetization funnel optimization
+                  Track user progression through the 4-stage journey to conversion
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {analytics.conversionFunnel.map(stage => (
-                    <div key={stage.stage} className="text-center p-3 rounded-lg bg-background/50">
-                      <p className="text-xs text-muted-foreground mb-1">{stage.displayName}</p>
-                      <p className="text-2xl font-bold">{stage.count.toLocaleString()}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {analytics.conversionFunnel.map((stage, idx) => (
+                    <div key={stage.stage} className="text-center p-3 rounded-lg bg-background/50 relative">
+                      <p className="text-[10px] text-muted-foreground mb-1 truncate" title={stage.displayName}>
+                        {stage.displayName}
+                      </p>
+                      <p className="text-xl font-bold">{stage.count.toLocaleString()}</p>
                       {stage.rate < 100 && (
                         <p className={`text-xs ${
                           stage.performance === 'above' ? 'text-green-500' :
                           stage.performance === 'below' ? 'text-red-500' : 'text-muted-foreground'
                         }`}>
-                          {stage.rate.toFixed(1)}% conv
+                          {stage.rate.toFixed(1)}%
                         </p>
+                      )}
+                      {idx < analytics.conversionFunnel.length - 1 && (
+                        <span className="absolute -right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs hidden md:block">
+                          →
+                        </span>
                       )}
                     </div>
                   ))}
