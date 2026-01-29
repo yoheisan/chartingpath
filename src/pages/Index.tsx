@@ -14,11 +14,18 @@ import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import PatternScreenerTable from '@/components/landing/PatternScreenerTable';
+import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-  
+  const { prefetchArticles } = usePrefetchArticles();
+
+  // Prime articles cache on homepage load for instant /learn navigation
+  useEffect(() => {
+    prefetchArticles();
+  }, [prefetchArticles]);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();

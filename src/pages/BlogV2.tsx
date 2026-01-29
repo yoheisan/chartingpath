@@ -77,13 +77,14 @@ const BlogV2 = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const prefetchArticle = usePrefetchArticle();
 
-  // React Query with 5-minute cache and background refetching
-  const { data: articles = [], isLoading } = useQuery({
+  // React Query with aggressive cache: show stale data instantly while revalidating
+  const { data: articles = [], isLoading, isFetching } = useQuery({
     queryKey: ['learning-articles'],
     queryFn: fetchArticles,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 60 * 60 * 1000, // 1 hour – treat as fresh for a long time
+    gcTime: 24 * 60 * 60 * 1000, // keep cache for 24h
     refetchOnWindowFocus: false,
+    refetchOnMount: 'always', // still revalidate in background
   });
 
   // Hover-intent prefetch handler with debounce
