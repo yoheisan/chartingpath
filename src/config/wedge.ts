@@ -35,7 +35,11 @@ export const wedgeConfig = {
     'double_top',
     'double_bottom', 
     'ascending_triangle',
-    'descending_triangle'
+    'descending_triangle',
+    'head_and_shoulders',
+    'inverse_head_and_shoulders',
+    'rising_wedge',
+    'falling_wedge'
   ] as const,
   
   // Symbol suffix for data providers (USDT pairs)
@@ -220,6 +224,105 @@ export const SUPPORTED_WEDGE_PATTERNS: WedgePatternConfig[] = [
       maxConcurrentTrades: 1,
     },
   },
+  // === HEAD & SHOULDERS (Bulkowski-grade) ===
+  // Bulkowski stats: H&S has 93% success rate with avg decline of 22%
+  {
+    id: 'head_and_shoulders',
+    patternType: 'head_and_shoulders',
+    name: 'Head & Shoulders (Short)',
+    category: 'classical',
+    enabled: false,
+    priority: 7,
+    direction: 'bearish',
+    parameters: {
+      // Bulkowski: Shoulder height within 25% of each other
+      shoulderSymmetryTolerance: 0.25,
+      // Head must be 2%+ higher than shoulders
+      headProminence: 0.02,
+      // Require neckline break confirmation
+      necklineBreakConfirmation: 2,
+      // Volume typically decreases across pattern
+      volumeConfirmation: false,
+      side: 'short',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern', // Above right shoulder
+      takeProfitMethod: 'pattern', // Measured move = head to neckline
+      maxConcurrentTrades: 1,
+    },
+  },
+  {
+    id: 'inverse_head_and_shoulders',
+    patternType: 'inverse_head_and_shoulders',
+    name: 'Inverse H&S (Long)',
+    category: 'classical',
+    enabled: false,
+    priority: 8,
+    direction: 'bullish',
+    parameters: {
+      shoulderSymmetryTolerance: 0.25,
+      headProminence: 0.02,
+      necklineBreakConfirmation: 2,
+      volumeConfirmation: false,
+      side: 'long',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern', // Below right shoulder
+      takeProfitMethod: 'pattern', // Measured move = head to neckline
+      maxConcurrentTrades: 1,
+    },
+  },
+  // === WEDGE PATTERNS (Bulkowski-grade) ===
+  // Bulkowski: Rising wedge breaks down 69% of time
+  {
+    id: 'rising_wedge',
+    patternType: 'rising_wedge',
+    name: 'Rising Wedge (Short)',
+    category: 'classical',
+    enabled: false,
+    priority: 9,
+    direction: 'bearish',
+    parameters: {
+      // Both trendlines must be rising
+      // Range must converge by at least 15%
+      convergenceThreshold: 0.15,
+      // Minimum touches on each trendline
+      minTouchPoints: 2,
+      // Breakdown confirmation bars
+      breakdownConfirmation: 2,
+      side: 'short',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern', // Above upper trendline
+      takeProfitMethod: 'pattern', // Measured move to wedge base
+      maxConcurrentTrades: 1,
+    },
+  },
+  // Bulkowski: Falling wedge breaks up 68% of time
+  {
+    id: 'falling_wedge',
+    patternType: 'falling_wedge',
+    name: 'Falling Wedge (Long)',
+    category: 'classical',
+    enabled: false,
+    priority: 10,
+    direction: 'bullish',
+    parameters: {
+      convergenceThreshold: 0.15,
+      minTouchPoints: 2,
+      breakoutConfirmation: 2,
+      side: 'long',
+    },
+    riskSettings: {
+      riskPerTrade: 2,
+      stopLossMethod: 'pattern', // Below lower trendline
+      takeProfitMethod: 'pattern', // Measured move to wedge base
+      maxConcurrentTrades: 1,
+    },
+  },
 ];
 
 // Canonical mapping: Pattern IDs → Display names with direction
@@ -231,6 +334,10 @@ export const WEDGE_PATTERN_ID_MAP: Record<string, string> = {
   'double_bottom': 'Double Bottom (Long)',
   'ascending_triangle': 'Ascending Triangle (Long)',
   'descending_triangle': 'Descending Triangle (Short)',
+  'head_and_shoulders': 'Head & Shoulders (Short)',
+  'inverse_head_and_shoulders': 'Inverse H&S (Long)',
+  'rising_wedge': 'Rising Wedge (Short)',
+  'falling_wedge': 'Falling Wedge (Long)',
 };
 
 // Set of all supported pattern IDs for O(1) lookup
@@ -351,6 +458,15 @@ export const featuredPresets = [
   { symbol: 'ETH', patternId: 'double_bottom', label: 'ETH 1H Double Bottom (Long)' },
   { symbol: 'BTC', patternId: 'ascending_triangle', label: 'BTC 1H Ascending Triangle (Long)' },
   { symbol: 'BTC', patternId: 'descending_triangle', label: 'BTC 1H Descending Triangle (Short)' },
+  // New H&S and Wedge presets
+  { symbol: 'BTC', patternId: 'head_and_shoulders', label: 'BTC 1H Head & Shoulders (Short)' },
+  { symbol: 'BTC', patternId: 'inverse_head_and_shoulders', label: 'BTC 1H Inverse H&S (Long)' },
+  { symbol: 'ETH', patternId: 'head_and_shoulders', label: 'ETH 1H Head & Shoulders (Short)' },
+  { symbol: 'ETH', patternId: 'inverse_head_and_shoulders', label: 'ETH 1H Inverse H&S (Long)' },
+  { symbol: 'BTC', patternId: 'rising_wedge', label: 'BTC 1H Rising Wedge (Short)' },
+  { symbol: 'BTC', patternId: 'falling_wedge', label: 'BTC 1H Falling Wedge (Long)' },
+  { symbol: 'SOL', patternId: 'falling_wedge', label: 'SOL 1H Falling Wedge (Long)' },
+  { symbol: 'SOL', patternId: 'rising_wedge', label: 'SOL 1H Rising Wedge (Short)' },
 ] as const;
 
 export type WedgeSymbol = typeof wedgeConfig.featuredSymbols[number];
