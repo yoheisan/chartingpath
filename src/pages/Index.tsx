@@ -142,16 +142,16 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-4xl text-center px-6">
           {/* H1 - Primary headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
-            <span className="text-foreground">TradingView chart patterns</span>
+            <span className="text-foreground">Discover signals.</span>
             <br />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              → repeatable trade plans.
+              Research. Execute. Automate.
             </span>
           </h1>
           
           {/* Subheadline */}
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            Scan markets, backtest playbooks, and trigger alerts—without prompts.
+            Find pattern-based setups, validate with historical data, and export trading scripts—all in one platform.
           </p>
           
           {/* CTAs */}
