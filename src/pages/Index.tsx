@@ -229,11 +229,11 @@ const Index = () => {
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Badge variant="secondary" className="px-3 py-1">
                   <Zap className="h-3.5 w-3.5 mr-1.5" />
-                  Crypto • 1H Timeframe
+                  Daily Timeframe • All Markets
                 </Badge>
               </div>
-              <h2 className="text-3xl font-bold mb-3">Featured Presets</h2>
-              <p className="text-muted-foreground">One-click playbooks ready to backtest and alert</p>
+              <h2 className="text-3xl font-bold mb-3">Quick Start Presets</h2>
+              <p className="text-muted-foreground">Pre-configured playbooks to research and validate</p>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -248,7 +248,7 @@ const Index = () => {
                       {preset.symbol}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      1H {WEDGE_PATTERN_ID_MAP[preset.patternId] || preset.patternId}
+                      {WEDGE_PATTERN_ID_MAP[preset.patternId] || preset.patternId}
                     </div>
                   </CardContent>
                 </Card>
@@ -257,13 +257,13 @@ const Index = () => {
             
             <div className="text-center mt-8">
               <Button variant="outline" onClick={handlePresetsClick}>
-                See all presets in Workspace
+                Research in Workspace
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
             
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Presets are starter configurations—always validate with your risk rules.
+              Presets are starter configurations—always validate with historical data.
             </p>
           </div>
         </section>
