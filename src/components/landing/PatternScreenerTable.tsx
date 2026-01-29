@@ -36,9 +36,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
 import { withTimeout } from '@/utils/withTimeout';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
+import { SupportedPatternsList } from '@/components/screener/SupportedPatternsList';
 
 interface LiveSetup {
   instrument: string;
@@ -509,6 +510,7 @@ export default function PatternScreenerTable() {
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<AssetType>('fx');
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
+  const [patternFilter, setPatternFilter] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
@@ -615,12 +617,17 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Filter by direction, then group by pattern, then sort within groups
+  // Filter by direction and pattern, then group by pattern, then sort within groups
   const groupedPatterns = useMemo(() => {
     // Apply direction filter
-    const filtered = directionFilter === 'all' 
+    let filtered = directionFilter === 'all' 
       ? patterns 
       : patterns.filter(p => p.direction === directionFilter);
+    
+    // Apply pattern filter
+    if (patternFilter !== 'all') {
+      filtered = filtered.filter(p => p.patternId === patternFilter);
+    }
 
     const grouped = filtered.reduce((acc, setup) => {
       const key = setup.patternName;
@@ -654,7 +661,7 @@ export default function PatternScreenerTable() {
     });
 
     return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [patterns, directionFilter, sortKey, sortAsc]);
+  }, [patterns, directionFilter, patternFilter, sortKey, sortAsc]);
 
   const handleRowClick = (setup: LiveSetup) => {
     navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`);
@@ -886,6 +893,42 @@ export default function PatternScreenerTable() {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Supported Patterns Overview */}
+        <div className="mb-6 p-4 rounded-lg border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Patterns We Detect</span>
+              <Badge variant="secondary" className="text-[10px]">
+                {ALL_PATTERN_IDS.length} types
+              </Badge>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              Click to filter • Locked patterns require upgrade
+            </span>
+          </div>
+          <SupportedPatternsList
+            patternCounts={ALL_PATTERN_IDS.map(patternId => {
+              const matching = patterns.filter(p => p.patternId === patternId);
+              return {
+                patternId,
+                count: matching.length,
+                longCount: matching.filter(p => p.direction === 'long').length,
+                shortCount: matching.filter(p => p.direction === 'short').length,
+              };
+            })}
+            lockedPatterns={lockedPatterns}
+            compact={true}
+            selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
+            onPatternClick={(patternId) => {
+              if (patternFilter === patternId) {
+                setPatternFilter('all');
+              } else {
+                setPatternFilter(patternId);
+              }
+            }}
+          />
+        </div>
+
         {error && (
           <div className="rounded-lg border bg-card p-8 text-center">
             <p className="text-muted-foreground mb-4">{error}</p>
@@ -899,13 +942,22 @@ export default function PatternScreenerTable() {
         {!error && groupedPatterns.length === 0 && (
           <div className="rounded-lg border bg-card p-8 text-center">
             <p className="text-muted-foreground mb-4">
-              No patterns detected for {ASSET_TYPE_LABELS[assetType]} at this time.
+              {patternFilter !== 'all' 
+                ? `No active ${PATTERN_DISPLAY_NAMES[patternFilter] || patternFilter} signals for ${ASSET_TYPE_LABELS[assetType]} at this time.`
+                : `No patterns detected for ${ASSET_TYPE_LABELS[assetType]} at this time.`}
               {!marketOpen && assetType !== 'crypto' && ' (Market currently closed)'}
             </p>
-            <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              {patternFilter !== 'all' && (
+                <Button variant="outline" onClick={() => setPatternFilter('all')}>
+                  Clear Filter
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         )}
 
