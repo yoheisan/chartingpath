@@ -40,6 +40,7 @@ import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks
 import { withTimeout } from '@/utils/withTimeout';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { SupportedPatternsList } from '@/components/screener/SupportedPatternsList';
+import { EdgeMetricsInline, EdgeMetrics } from '@/components/screener/EdgeMetricsBadge';
 
 interface LiveSetup {
   instrument: string;
@@ -60,6 +61,13 @@ interface LiveSetup {
   currentPrice?: number;
   prevClose?: number;
   changePercent?: number | null;
+  // Historical edge metrics (from pattern_hit_rates)
+  historicalPerformance?: {
+    winRate: number;
+    avgRMultiple: number;
+    sampleSize: number;
+    profitFactor?: number;
+  };
 }
 
 interface ScanResult {
@@ -692,6 +700,7 @@ export default function PatternScreenerTable() {
             <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
             <TableHead className="text-right"><Skeleton className="h-4 w-10 ml-auto" /></TableHead>
             <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
+            <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -703,6 +712,7 @@ export default function PatternScreenerTable() {
               <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
               <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
               <TableCell className="text-right"><Skeleton className="h-4 w-10 ml-auto" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
               <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
             </TableRow>
           ))}
@@ -919,6 +929,7 @@ export default function PatternScreenerTable() {
             lockedPatterns={lockedPatterns}
             compact={true}
             selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
+            blurEdgeMetrics={tier === 'FREE'}
             onPatternClick={(patternId) => {
               if (patternFilter === patternId) {
                 setPatternFilter('all');
@@ -1025,6 +1036,21 @@ export default function PatternScreenerTable() {
                         <SortIcon columnKey="rr" />
                       </div>
                     </TableHead>
+                    <TableHead className="text-right whitespace-nowrap">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center justify-end gap-1 cursor-help">
+                              Edge
+                              <Crown className="h-3 w-3 text-amber-500 opacity-70" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Historical win rate from backtested data. Upgrade to see full edge metrics.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
                       onClick={() => handleSort('signal')}
@@ -1041,7 +1067,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={7} className="py-2">
+                        <TableCell colSpan={8} className="py-2">
                           <span className="font-semibold text-sm">{patternName}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -1111,6 +1137,17 @@ export default function PatternScreenerTable() {
                               }`}>
                                 {setup.tradePlan.rr.toFixed(1)}
                               </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <EdgeMetricsInline
+                                metrics={setup.historicalPerformance ? {
+                                  winRate: setup.historicalPerformance.winRate,
+                                  avgRMultiple: setup.historicalPerformance.avgRMultiple,
+                                  profitFactor: setup.historicalPerformance.profitFactor ?? null,
+                                  sampleSize: setup.historicalPerformance.sampleSize,
+                                } : null}
+                                isLocked={tier === 'FREE'}
+                              />
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`text-xs ${
