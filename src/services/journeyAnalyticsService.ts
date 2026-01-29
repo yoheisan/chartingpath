@@ -104,39 +104,65 @@ export interface JourneyAnalytics {
 
 // ============= EVENT DEFINITIONS =============
 
+// Journey stages aligned with user flow: Discover → Research → Execute → Automate
 const JOURNEY_STAGES = {
-  // Acquisition
-  session_start: { displayName: 'Session Started', category: 'acquisition' as const, isRequired: false },
-  landing_view: { displayName: 'Landing Viewed', category: 'acquisition' as const, isRequired: false },
+  // Stage 1: DISCOVER (Screener)
+  session_start: { displayName: 'Session Started', category: 'acquisition' as const, stage: 'discover', isRequired: false },
+  landing_view: { displayName: 'Landing Viewed', category: 'acquisition' as const, stage: 'discover', isRequired: false },
+  screener_view: { displayName: 'Screener Viewed', category: 'acquisition' as const, stage: 'discover', isRequired: true },
+  pattern_clicked: { displayName: 'Pattern Clicked', category: 'activation' as const, stage: 'discover', isRequired: true },
   
-  // Activation
-  signup_completed: { displayName: 'Signed Up', category: 'activation' as const, isRequired: true },
-  preset_loaded: { displayName: 'Loaded Preset', category: 'activation' as const, isRequired: true },
-  backtest_started: { displayName: 'Started Backtest', category: 'activation' as const, isRequired: false },
-  backtest_completed: { displayName: 'Completed Backtest', category: 'activation' as const, isRequired: true },
+  // Stage 2: RESEARCH (Pattern Lab / History)
+  signup_completed: { displayName: 'Signed Up', category: 'activation' as const, stage: 'research', isRequired: true },
+  pattern_lab_started: { displayName: 'Pattern Lab Started', category: 'activation' as const, stage: 'research', isRequired: false },
+  preset_loaded: { displayName: 'Loaded Preset', category: 'activation' as const, stage: 'research', isRequired: true },
+  backtest_started: { displayName: 'Started Backtest', category: 'activation' as const, stage: 'research', isRequired: false },
+  backtest_completed: { displayName: 'Completed Backtest', category: 'activation' as const, stage: 'research', isRequired: true },
+  result_summary_viewed: { displayName: 'Viewed Results', category: 'engagement' as const, stage: 'research', isRequired: false },
   
-  // Engagement
-  alert_created: { displayName: 'Created Alert', category: 'engagement' as const, isRequired: true },
-  result_summary_viewed: { displayName: 'Viewed Results', category: 'engagement' as const, isRequired: false },
-  share_created: { displayName: 'Shared Result', category: 'engagement' as const, isRequired: false },
-  tradingview_opened: { displayName: 'Opened TradingView', category: 'engagement' as const, isRequired: false },
-  pine_generated: { displayName: 'Generated Pine Script', category: 'engagement' as const, isRequired: false },
+  // Stage 3: EXECUTE (TradingView / Alerts)
+  tradingview_opened: { displayName: 'Opened TradingView', category: 'engagement' as const, stage: 'execute', isRequired: false },
+  alert_created: { displayName: 'Created Alert', category: 'engagement' as const, stage: 'execute', isRequired: true },
+  share_created: { displayName: 'Shared Result', category: 'engagement' as const, stage: 'execute', isRequired: false },
   
-  // Monetization
-  paywall_shown: { displayName: 'Paywall Shown', category: 'monetization' as const, isRequired: false },
-  pricing_viewed: { displayName: 'Viewed Pricing', category: 'monetization' as const, isRequired: false },
-  pricing_clicked: { displayName: 'Clicked Pricing', category: 'monetization' as const, isRequired: false },
-  checkout_started: { displayName: 'Started Checkout', category: 'monetization' as const, isRequired: true },
-  checkout_completed: { displayName: 'Completed Checkout', category: 'monetization' as const, isRequired: false },
-  paid_started: { displayName: 'Subscription Active', category: 'monetization' as const, isRequired: true },
+  // Stage 4: AUTOMATE (Scripts)
+  scripts_page_viewed: { displayName: 'Scripts Page Viewed', category: 'engagement' as const, stage: 'automate', isRequired: false },
+  pine_generated: { displayName: 'Generated Pine Script', category: 'engagement' as const, stage: 'automate', isRequired: true },
+  pine_copied: { displayName: 'Copied Pine Script', category: 'engagement' as const, stage: 'automate', isRequired: false },
+  pine_downloaded: { displayName: 'Downloaded Script', category: 'engagement' as const, stage: 'automate', isRequired: false },
+  
+  // Monetization (spans all stages)
+  paywall_shown: { displayName: 'Paywall Shown', category: 'monetization' as const, stage: 'monetization', isRequired: false },
+  pricing_viewed: { displayName: 'Viewed Pricing', category: 'monetization' as const, stage: 'monetization', isRequired: false },
+  pricing_clicked: { displayName: 'Clicked Pricing', category: 'monetization' as const, stage: 'monetization', isRequired: false },
+  checkout_started: { displayName: 'Started Checkout', category: 'monetization' as const, stage: 'monetization', isRequired: true },
+  checkout_completed: { displayName: 'Completed Checkout', category: 'monetization' as const, stage: 'monetization', isRequired: false },
+  paid_started: { displayName: 'Subscription Active', category: 'monetization' as const, stage: 'monetization', isRequired: true },
 };
 
-// Expected conversion benchmarks (industry standards for fintech)
+// Expected conversion benchmarks aligned with the 4-stage journey
 const CONVERSION_BENCHMARKS: Record<string, number> = {
-  'landing_view->signup_completed': 3.5,
+  // Discover stage
+  'landing_view->screener_view': 65,
+  'screener_view->pattern_clicked': 40,
+  'pattern_clicked->signup_completed': 15,
+  
+  // Research stage
   'signup_completed->preset_loaded': 45,
   'preset_loaded->backtest_completed': 65,
+  'backtest_completed->result_summary_viewed': 80,
+  
+  // Execute stage
+  'result_summary_viewed->tradingview_opened': 35,
+  'result_summary_viewed->alert_created': 25,
   'backtest_completed->alert_created': 25,
+  
+  // Automate stage
+  'alert_created->scripts_page_viewed': 20,
+  'scripts_page_viewed->pine_generated': 50,
+  'pine_generated->pine_copied': 75,
+  
+  // Monetization
   'alert_created->paywall_shown': 40,
   'paywall_shown->pricing_clicked': 30,
   'pricing_clicked->checkout_started': 20,
@@ -262,13 +288,26 @@ function buildJourneyFlow(events: Array<{
 function identifyBrokenPaths(flow: JourneyFlow): BrokenPath[] {
   const brokenPaths: BrokenPath[] = [];
   
-  // Define expected critical transitions
+  // Define expected critical transitions aligned with 4-stage journey
   const criticalTransitions = [
-    { from: 'landing_view', to: 'signup_completed', expected: 3.5 },
+    // Discover stage
+    { from: 'landing_view', to: 'screener_view', expected: 65 },
+    { from: 'screener_view', to: 'pattern_clicked', expected: 40 },
+    { from: 'pattern_clicked', to: 'signup_completed', expected: 15 },
+    
+    // Research stage
     { from: 'signup_completed', to: 'preset_loaded', expected: 45 },
     { from: 'preset_loaded', to: 'backtest_completed', expected: 65 },
+    
+    // Execute stage
     { from: 'backtest_completed', to: 'alert_created', expected: 25 },
-    { from: 'alert_created', to: 'paywall_shown', expected: 40 },
+    { from: 'backtest_completed', to: 'tradingview_opened', expected: 35 },
+    
+    // Automate stage
+    { from: 'alert_created', to: 'scripts_page_viewed', expected: 20 },
+    { from: 'scripts_page_viewed', to: 'pine_generated', expected: 50 },
+    
+    // Monetization
     { from: 'paywall_shown', to: 'pricing_clicked', expected: 30 },
     { from: 'pricing_clicked', to: 'checkout_started', expected: 20 },
     { from: 'checkout_started', to: 'paid_started', expected: 70 },
@@ -312,11 +351,24 @@ function identifyBrokenPaths(flow: JourneyFlow): BrokenPath[] {
 
 function generateSuggestedFix(from: string, to: string, actual: number, expected: number): string {
   const fixes: Record<string, string> = {
-    'landing_view->signup_completed': 'Improve landing page CTA visibility and value proposition clarity. Consider A/B testing hero copy.',
-    'signup_completed->preset_loaded': 'Add onboarding flow highlighting preset library. Consider auto-suggesting first preset.',
+    // Discover stage
+    'landing_view->screener_view': 'Make screener more prominent on landing. Add visual preview of active patterns above the fold.',
+    'screener_view->pattern_clicked': 'Improve pattern card design. Add visual thumbnails and clearer signal strength indicators.',
+    'pattern_clicked->signup_completed': 'Reduce friction in signup. Consider social login and highlight the value of creating an account.',
+    
+    // Research stage
+    'signup_completed->preset_loaded': 'Add onboarding flow highlighting Pattern Lab. Consider auto-suggesting first analysis.',
     'preset_loaded->backtest_completed': 'Reduce friction in backtest setup. Pre-fill common parameters and add loading feedback.',
+    
+    // Execute stage
     'backtest_completed->alert_created': 'Make alert creation more prominent on results page. Add "Create Alert" CTA with 1-click action.',
-    'alert_created->paywall_shown': 'Optimize alert limit timing. Consider delaying paywall until user sees value.',
+    'backtest_completed->tradingview_opened': 'Make TradingView link more visible. Add educational content about analyzing in TradingView.',
+    
+    // Automate stage
+    'alert_created->scripts_page_viewed': 'Add Scripts CTA in alert confirmation. Highlight automation benefits for repeat trades.',
+    'scripts_page_viewed->pine_generated': 'Simplify script generation. Show preview and explain what the script does before generation.',
+    
+    // Monetization
     'paywall_shown->pricing_clicked': 'Improve paywall messaging. Highlight specific benefits user will get with upgrade.',
     'pricing_clicked->checkout_started': 'Simplify pricing page. Reduce options, add social proof and money-back guarantee.',
     'checkout_started->paid_started': 'Optimize checkout flow. Reduce form fields, add trust signals, ensure fast loading.',
@@ -326,14 +378,25 @@ function generateSuggestedFix(from: string, to: string, actual: number, expected
 }
 
 function buildConversionFunnel(flow: JourneyFlow): ConversionFunnel[] {
+  // Funnel aligned with 4-stage journey: Discover → Research → Execute → Automate
   const stages = [
-    { id: 'landing_view', displayName: 'Landing', benchmarkRate: 100 },
-    { id: 'signup_completed', displayName: 'Signup', benchmarkRate: 3.5 },
-    { id: 'preset_loaded', displayName: 'First Preset', benchmarkRate: 45 },
-    { id: 'backtest_completed', displayName: 'First Backtest', benchmarkRate: 65 },
-    { id: 'alert_created', displayName: 'First Alert', benchmarkRate: 25 },
-    { id: 'checkout_started', displayName: 'Checkout Started', benchmarkRate: 15 },
-    { id: 'paid_started', displayName: 'Paid Subscriber', benchmarkRate: 70 },
+    // Discover
+    { id: 'landing_view', displayName: '1. Landing', benchmarkRate: 100 },
+    { id: 'screener_view', displayName: '2. Screener', benchmarkRate: 65 },
+    { id: 'pattern_clicked', displayName: '3. Pattern Detail', benchmarkRate: 40 },
+    { id: 'signup_completed', displayName: '4. Signup', benchmarkRate: 15 },
+    
+    // Research  
+    { id: 'backtest_completed', displayName: '5. Research Complete', benchmarkRate: 45 },
+    
+    // Execute
+    { id: 'alert_created', displayName: '6. Alert/Execute', benchmarkRate: 25 },
+    
+    // Automate
+    { id: 'pine_generated', displayName: '7. Script Generated', benchmarkRate: 15 },
+    
+    // Monetization
+    { id: 'paid_started', displayName: '8. Paid Subscriber', benchmarkRate: 10 },
   ];
   
   const funnel: ConversionFunnel[] = [];
@@ -493,58 +556,79 @@ function segmentUsers(events: Array<{
   
   const segments: UserSegment[] = [
     {
-      id: 'power-users',
-      name: 'Power Users',
-      description: 'Completed backtest, created alert, and reached checkout',
+      id: 'full-journey',
+      name: 'Full Journey Completed',
+      description: 'Completed all 4 stages: Discover → Research → Execute → Automate',
       count: 0,
       percentage: 0,
-      avgLTV: 240,
-      conversionRate: 25,
-      characteristics: ['Multiple backtests', 'Active alerts', 'Regular logins'],
+      avgLTV: 360,
+      conversionRate: 40,
+      characteristics: ['Used scripts', 'Created alerts', 'High engagement'],
     },
     {
-      id: 'engaged',
-      name: 'Engaged Users',
-      description: 'Completed at least one backtest and created an alert',
+      id: 'executors',
+      name: 'Executors',
+      description: 'Reached Execute stage (created alerts or opened TradingView)',
       count: 0,
       percentage: 0,
-      avgLTV: 80,
-      conversionRate: 10,
-      characteristics: ['Completed onboarding', 'Uses core features'],
+      avgLTV: 120,
+      conversionRate: 20,
+      characteristics: ['Created alerts', 'Active trading intent'],
     },
     {
-      id: 'explorers',
-      name: 'Explorers',
-      description: 'Signed up and loaded presets but haven\'t completed backtest',
+      id: 'researchers',
+      name: 'Researchers',
+      description: 'Completed Research stage (ran backtests)',
       count: 0,
       percentage: 0,
-      avgLTV: 20,
-      conversionRate: 3,
-      characteristics: ['Browsing behavior', 'No deep engagement yet'],
+      avgLTV: 60,
+      conversionRate: 8,
+      characteristics: ['Completed backtests', 'Viewed results'],
+    },
+    {
+      id: 'discoverers',
+      name: 'Discoverers',
+      description: 'Engaged with Discover stage (viewed screener, clicked patterns)',
+      count: 0,
+      percentage: 0,
+      avgLTV: 15,
+      conversionRate: 2,
+      characteristics: ['Browsed screener', 'Viewed patterns'],
     },
     {
       id: 'bounced',
       name: 'Bounced',
-      description: 'Session started but didn\'t sign up',
+      description: 'Session started but didn\'t engage with journey',
       count: 0,
       percentage: 0,
       avgLTV: 0,
       conversionRate: 0,
-      characteristics: ['Quick exit', 'No account created'],
+      characteristics: ['Quick exit', 'No pattern interaction'],
     },
   ];
   
   const totalUsers = Object.keys(userEvents).length;
   
   for (const events of Object.values(userEvents)) {
-    if (events.has('checkout_started') || events.has('paid_started')) {
+    // Full Journey: Has script + alert
+    if (events.has('pine_generated') || events.has('pine_copied')) {
       segments[0].count++;
-    } else if (events.has('backtest_completed') && events.has('alert_created')) {
+    } 
+    // Executors: Has alert or TradingView
+    else if (events.has('alert_created') || events.has('tradingview_opened')) {
       segments[1].count++;
-    } else if (events.has('signup_completed') || events.has('preset_loaded')) {
+    } 
+    // Researchers: Has backtest
+    else if (events.has('backtest_completed') || events.has('result_summary_viewed')) {
       segments[2].count++;
-    } else {
+    } 
+    // Discoverers: Has screener or pattern interaction
+    else if (events.has('screener_view') || events.has('pattern_clicked') || events.has('signup_completed')) {
       segments[3].count++;
+    } 
+    // Bounced
+    else {
+      segments[4].count++;
     }
   }
   
