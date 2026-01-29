@@ -145,6 +145,172 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       return highTrend < -0.01 && lowFlatness < 1.03;
     },
     displayName: 'Descending Triangle (Short)'
+  },
+  // === HEAD & SHOULDERS (Bulkowski-grade) ===
+  'head-and-shoulders': {
+    direction: 'short',
+    detector: (window: any[]) => {
+      if (window.length < 20) return false;
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find peaks (potential shoulders and head)
+      const peaks: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+      }
+      
+      if (peaks.length < 3) return false;
+      
+      // Find highest peak as head
+      let headIdx = 0;
+      for (let i = 1; i < peaks.length; i++) {
+        if (peaks[i].value > peaks[headIdx].value) headIdx = i;
+      }
+      
+      if (headIdx === 0 || headIdx === peaks.length - 1) return false;
+      
+      const leftShoulder = peaks[headIdx - 1];
+      const head = peaks[headIdx];
+      const rightShoulder = peaks[headIdx + 1];
+      
+      // Shoulder symmetry check (within 25%)
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      
+      // Head must be 2%+ higher than shoulders
+      const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
+      
+      if (!symmetryOk || !headHigherOk) return false;
+      
+      // Find neckline (lowest low between shoulders)
+      let neckline = Infinity;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (lows[i] < neckline) neckline = lows[i];
+      }
+      
+      // Check for neckline break
+      const lastClose = closes[closes.length - 1];
+      return lastClose < neckline * 0.998;
+    },
+    displayName: 'Head & Shoulders (Short)'
+  },
+  'inverse-head-and-shoulders': {
+    direction: 'long',
+    detector: (window: any[]) => {
+      if (window.length < 20) return false;
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find troughs (potential shoulders and head)
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      
+      if (troughs.length < 3) return false;
+      
+      // Find lowest trough as head
+      let headIdx = 0;
+      for (let i = 1; i < troughs.length; i++) {
+        if (troughs[i].value < troughs[headIdx].value) headIdx = i;
+      }
+      
+      if (headIdx === 0 || headIdx === troughs.length - 1) return false;
+      
+      const leftShoulder = troughs[headIdx - 1];
+      const head = troughs[headIdx];
+      const rightShoulder = troughs[headIdx + 1];
+      
+      // Shoulder symmetry check
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      
+      // Head must be 2%+ lower than shoulders
+      const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
+      
+      if (!symmetryOk || !headLowerOk) return false;
+      
+      // Find neckline (highest high between shoulders)
+      let neckline = -Infinity;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (highs[i] > neckline) neckline = highs[i];
+      }
+      
+      // Check for neckline break
+      const lastClose = closes[closes.length - 1];
+      return lastClose > neckline * 1.002;
+    },
+    displayName: 'Inverse H&S (Long)'
+  },
+  // === WEDGE PATTERNS (Bulkowski-grade) ===
+  'rising-wedge': {
+    direction: 'short',
+    detector: (window: any[]) => {
+      if (window.length < 15) return false;
+      const closes = window.map(d => d.close);
+      
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const avgFirstHigh = firstHalf.reduce((sum, d) => sum + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((sum, d) => sum + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
+      
+      // Both trendlines must be rising
+      const upperRising = avgSecondHigh > avgFirstHigh;
+      const lowerRising = avgSecondLow > avgFirstLow;
+      
+      // Range must converge (at least 15%)
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
+      
+      // Breakdown confirmation
+      const lastClose = closes[closes.length - 1];
+      return upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
+    },
+    displayName: 'Rising Wedge (Short)'
+  },
+  'falling-wedge': {
+    direction: 'long',
+    detector: (window: any[]) => {
+      if (window.length < 15) return false;
+      const closes = window.map(d => d.close);
+      
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const avgFirstHigh = firstHalf.reduce((sum, d) => sum + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((sum, d) => sum + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
+      
+      // Both trendlines must be falling
+      const upperFalling = avgSecondHigh < avgFirstHigh;
+      const lowerFalling = avgSecondLow < avgFirstLow;
+      
+      // Range must converge
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
+      
+      // Breakout confirmation
+      const lastClose = closes[closes.length - 1];
+      return upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
+    },
+    displayName: 'Falling Wedge (Long)'
   }
 };
 

@@ -188,6 +188,192 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       return { detected, pivots };
     },
     displayName: 'Descending Triangle (Short)'
+  },
+  // === HEAD & SHOULDERS (Bulkowski-grade) ===
+  'head-and-shoulders': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      const peaks: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+      }
+      
+      if (peaks.length < 3) return { detected: false, pivots: [] };
+      
+      let headIdx = 0;
+      for (let i = 1; i < peaks.length; i++) {
+        if (peaks[i].value > peaks[headIdx].value) headIdx = i;
+      }
+      
+      if (headIdx === 0 || headIdx === peaks.length - 1) return { detected: false, pivots: [] };
+      
+      const leftShoulder = peaks[headIdx - 1];
+      const head = peaks[headIdx];
+      const rightShoulder = peaks[headIdx + 1];
+      
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
+      
+      if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
+      
+      let neckline = Infinity;
+      let necklineIdx = leftShoulder.index;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (lows[i] < neckline) { neckline = lows[i]; necklineIdx = i; }
+      }
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < neckline * 0.998;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: leftShoulder.index, price: leftShoulder.value, type: 'high', label: 'Left Shoulder' },
+          { index: head.index, price: head.value, type: 'high', label: 'Head' },
+          { index: rightShoulder.index, price: rightShoulder.value, type: 'high', label: 'Right Shoulder' },
+          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Head & Shoulders (Short)'
+  },
+  'inverse-head-and-shoulders': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      
+      if (troughs.length < 3) return { detected: false, pivots: [] };
+      
+      let headIdx = 0;
+      for (let i = 1; i < troughs.length; i++) {
+        if (troughs[i].value < troughs[headIdx].value) headIdx = i;
+      }
+      
+      if (headIdx === 0 || headIdx === troughs.length - 1) return { detected: false, pivots: [] };
+      
+      const leftShoulder = troughs[headIdx - 1];
+      const head = troughs[headIdx];
+      const rightShoulder = troughs[headIdx + 1];
+      
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
+      
+      if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
+      
+      let neckline = -Infinity;
+      let necklineIdx = leftShoulder.index;
+      for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
+        if (highs[i] > neckline) { neckline = highs[i]; necklineIdx = i; }
+      }
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > neckline * 1.002;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: leftShoulder.index, price: leftShoulder.value, type: 'low', label: 'Left Shoulder' },
+          { index: head.index, price: head.value, type: 'low', label: 'Head' },
+          { index: rightShoulder.index, price: rightShoulder.value, type: 'low', label: 'Right Shoulder' },
+          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Inverse H&S (Long)'
+  },
+  // === WEDGE PATTERNS (Bulkowski-grade) ===
+  'rising-wedge': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const avgFirstHigh = firstHalf.reduce((sum, d) => sum + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((sum, d) => sum + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
+      
+      const upperRising = avgSecondHigh > avgFirstHigh;
+      const lowerRising = avgSecondLow > avgFirstLow;
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Start' },
+          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper End' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Start' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+        ] : []
+      };
+    },
+    displayName: 'Rising Wedge (Short)'
+  },
+  'falling-wedge': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      
+      const firstHalf = window.slice(0, Math.floor(window.length / 2));
+      const secondHalf = window.slice(Math.floor(window.length / 2));
+      
+      const avgFirstHigh = firstHalf.reduce((sum, d) => sum + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((sum, d) => sum + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
+      
+      const upperFalling = avgSecondHigh < avgFirstHigh;
+      const lowerFalling = avgSecondLow < avgFirstLow;
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Start' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Start' },
+          { index: window.length - 1, price: avgSecondLow, type: 'low', label: 'Lower End' }
+        ] : []
+      };
+    },
+    displayName: 'Falling Wedge (Long)'
   }
 };
 
