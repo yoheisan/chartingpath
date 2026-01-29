@@ -20,7 +20,8 @@ import {
   Globe,
   HelpCircle,
   Info,
-  Activity
+  Activity,
+  FileCode
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
@@ -51,29 +52,30 @@ const Navigation = () => {
         : 'text-muted-foreground hover:text-foreground'
     }`;
 
-  // Mobile nav content - discovery-first structure (lite → heavy users)
+  // Mobile nav content - journey-aligned structure (Discover → Research → Execute → Automate)
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
-      {/* 1. Screener - Instant value */}
+      {/* 1. Screener - Discover signals */}
       <Link to="/patterns/live" className="flex items-center gap-2 text-foreground font-medium py-2">
         <Activity className="h-5 w-5 text-amber-500" />
         Screener
       </Link>
       
-      {/* 2. Learn - Education for discovery */}
-      <Link 
-        to="/learn" 
-        className="flex items-center gap-2 text-muted-foreground py-2"
-        onMouseEnter={prefetchArticles}
-      >
-        <BookOpen className="h-5 w-5" />
-        Learn
-      </Link>
+      {/* 2. Research - Historical performance */}
+      <div className="border-t pt-4 mt-2">
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Research</p>
+        <div className="flex flex-col gap-2 pl-2">
+          <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground py-1">Pattern Lab</Link>
+          <Link to="/projects/setup-finder/new" className="text-sm text-muted-foreground py-1">Setup Finder</Link>
+          <Link to="/chart-patterns/library" className="text-sm text-muted-foreground py-1">Pattern Library</Link>
+          <Link to="/learn" className="text-sm text-muted-foreground py-1">Blog & Articles</Link>
+        </div>
+      </div>
       
-      {/* 3. Projects - For engaged users */}
-      <Link to="/projects" className="flex items-center gap-2 text-muted-foreground py-2">
-        <FolderKanban className="h-5 w-5" />
-        Projects
+      {/* 3. Scripts - Automate */}
+      <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2">
+        <FileCode className="h-5 w-5 text-cyan-500" />
+        Scripts
       </Link>
       
       {/* 4. Pricing */}
@@ -82,23 +84,14 @@ const Navigation = () => {
         Pricing
       </Link>
       
-      {/* Account section with My Results nested */}
+      {/* Account section */}
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Account</p>
         <div className="flex flex-col gap-2 pl-2">
           <Link to="/members/dashboard" className="text-sm text-muted-foreground py-1">Dashboard</Link>
           <Link to="/vault" className="text-sm text-muted-foreground py-1">My Results</Link>
-          
           <Link to="/members/downloads" className="text-sm text-muted-foreground py-1">Downloads</Link>
           <Link to="/members/account" className="text-sm text-muted-foreground py-1">Settings</Link>
-        </div>
-      </div>
-      
-      <div className="border-t pt-4 mt-2">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Advanced</p>
-        <div className="flex flex-col gap-2 pl-2">
-          <Link to="/strategy-workspace" className="text-sm text-muted-foreground py-1">Playbook Builder</Link>
-          <Link to="/forge" className="text-sm text-muted-foreground py-1">MultiScript Converter</Link>
         </div>
       </div>
       
@@ -134,80 +127,61 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              {/* 1. Screener - Instant value for lite users */}
+              {/* 1. Screener - Discover signals */}
               <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
                 <Activity className="h-4 w-4 text-amber-500" />
                 Screener
               </Link>
               
-              {/* 2. Learn - Education for discovery users */}
+              {/* 2. Research - Historical performance */}
               <DropdownMenu>
                 <DropdownMenuTrigger 
-                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') || isActive('/projects/pattern-lab') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                   onMouseEnter={prefetchArticles}
                 >
                   <BookOpen className="h-4 w-4" />
-                  Learn
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/library">Pattern Library</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/learn">Blog & Articles</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* 3. Projects - For engaged/heavy users */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/projects') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
-                  <FolderKanban className="h-4 w-4" />
-                  Projects
+                  Research
                   <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-popover z-50">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Run Analysis</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Historical Analysis</DropdownMenuLabel>
                   <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
-                        <Search className="h-4 w-4 text-emerald-500" />
-                        Weekly Setup Finder
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
                         <FlaskConical className="h-4 w-4 text-violet-500" />
                         Pattern Lab
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-emerald-500" />
+                        Setup Finder
+                      </Link>
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                   
                   <DropdownMenuSeparator />
                   
-                  <DropdownMenuItem asChild>
-                    <Link to="/projects" className="flex items-center gap-2">
-                      <FolderKanban className="h-4 w-4" />
-                      All Projects
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Advanced</DropdownMenuLabel>
-                  <DropdownMenuItem asChild>
-                    <Link to="/strategy-workspace" className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Playbook Builder
-                    </Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Learn</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/chart-patterns/library">Pattern Library</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/learn">Blog & Articles</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {/* 3. Scripts - Automate trading */}
+              <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
+                <FileCode className="h-4 w-4 text-cyan-500" />
+                Scripts
+              </Link>
               
               {/* 4. Pricing */}
               <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>

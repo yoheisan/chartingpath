@@ -691,28 +691,65 @@ export default function FullChartViewer({
               </CardContent>
             </Card>
 
-            {/* TradingView Affiliate CTA */}
-            <button
-              type="button"
-              onClick={() => openExternal(tradingViewAffiliateUrl)}
-              className="block w-full text-left"
-              aria-label="Analyze on TradingView"
-            >
-              <Card className="border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group">
-                <CardContent className="pt-4 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <TrendingUp className="h-4 w-4 text-primary" />
+            {/* Journey CTAs - Next Steps */}
+            <Card className="border-border/50 bg-gradient-to-br from-muted/30 to-muted/10">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  Next Steps
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {/* Research History */}
+                <a 
+                  href={`/projects/pattern-lab/new?pattern=${setup.patternId}&instrument=${encodeURIComponent(instrument)}`}
+                  className="block"
+                >
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="p-1.5 rounded bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
+                      <History className="h-3.5 w-3.5 text-violet-500" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Analyze on TradingView</p>
-                      <p className="text-xs text-muted-foreground">Professional charts & tools</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Research History</p>
+                      <p className="text-[10px] text-muted-foreground truncate">5-year backtest for {patternName}</p>
                     </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                </CardContent>
-              </Card>
-            </button>
+                </a>
+
+                {/* Open in TradingView */}
+                <button
+                  type="button"
+                  onClick={() => openExternal(tradingViewAffiliateUrl)}
+                  className="block w-full text-left"
+                >
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="p-1.5 rounded bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Execute on TradingView</p>
+                      <p className="text-[10px] text-muted-foreground truncate">Professional charts & trading</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Get Script */}
+                <a 
+                  href="/members/scripts"
+                  className="block"
+                >
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="p-1.5 rounded bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors">
+                      <FileCode className="h-3.5 w-3.5 text-cyan-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Automate with Scripts</p>
+                      <p className="text-[10px] text-muted-foreground truncate">Pine Script & MT4/MT5 export</p>
+                    </div>
+                  </div>
+                </a>
+              </CardContent>
+            </Card>
 
             {/* Metadata */}
             <Card className="border-border/50">
