@@ -42,7 +42,7 @@ export const usePrefetchArticles = () => {
     queryClient.prefetchQuery({
       queryKey: ['learning-articles'],
       queryFn: fetchArticlesList,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 60 * 60 * 1000, // 1 hour - keep in sync with BlogV2
     });
   }, [queryClient]);
 
