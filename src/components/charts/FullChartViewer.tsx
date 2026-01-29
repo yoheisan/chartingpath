@@ -192,11 +192,12 @@ export default function FullChartViewer({
 
         chartRef.current = chart;
 
-        // Solid filled candlesticks - borderVisible:false prevents hollow candle appearance
+        // Solid filled candlesticks - must set border colors same as body to prevent hollow appearance
         const candleSeries = chart.addSeries(CandlestickSeries, {
           upColor: '#22c55e',
           downColor: '#ef4444',
-          borderVisible: false,
+          borderUpColor: '#22c55e',
+          borderDownColor: '#ef4444',
           wickUpColor: '#22c55e',
           wickDownColor: '#ef4444',
         });
