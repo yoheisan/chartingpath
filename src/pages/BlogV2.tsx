@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, Clock, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { usePrefetchArticle } from "@/hooks/usePrefetchArticle";
 
 // Slugs that have comprehensive static pages at /learn/
 const STATIC_ARTICLE_SLUGS = new Set([
@@ -74,6 +75,7 @@ const fetchArticles = async (): Promise<Article[]> => {
 const BlogV2 = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const prefetchArticle = usePrefetchArticle();
 
   // React Query with 5-minute cache and background refetching
   const { data: articles = [], isLoading } = useQuery({
@@ -83,6 +85,11 @@ const BlogV2 = () => {
     gcTime: 10 * 60 * 1000, // 10 minutes cache
     refetchOnWindowFocus: false,
   });
+
+  // Hover-intent prefetch handler with debounce
+  const handleHover = useCallback((slug: string) => {
+    prefetchArticle(slug);
+  }, [prefetchArticle]);
 
   // Memoized filtering for performance
   const filteredArticles = useMemo(() => {
@@ -185,7 +192,11 @@ const BlogV2 = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArticles.map((article) => (
-              <Link key={article.id} to={getArticleUrl(article.slug)}>
+              <Link 
+                key={article.id} 
+                to={getArticleUrl(article.slug)}
+                onMouseEnter={() => handleHover(article.slug)}
+              >
                 <Card className="h-full hover:shadow-lg transition-shadow border-2 hover:border-primary/50 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
