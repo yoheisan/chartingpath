@@ -35,9 +35,11 @@ import {
   Calendar,
   Tag,
   Database,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
@@ -59,7 +61,9 @@ interface BacktestRun {
 }
 
 const BacktestVault = () => {
-  const { user, profile, hasFeatureAccess } = useUserProfile();
+  // Auth guard - redirects to /auth if not logged in
+  const { user: authUser, loading: authLoading } = useRequireAuth();
+  const { profile, hasFeatureAccess } = useUserProfile();
   const [runs, setRuns] = useState<BacktestRun[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<BacktestRun[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,11 +76,20 @@ const BacktestVault = () => {
   const canAccessVault = hasFeatureAccess('backtesting') || profile?.subscription_plan !== 'free';
   const maxRuns = getMaxRuns(profile?.subscription_plan || 'free');
 
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   useEffect(() => {
-    if (user && canAccessVault) {
+    if (authUser && canAccessVault) {
       fetchBacktestRuns();
     }
-  }, [user, canAccessVault]);
+  }, [authUser, canAccessVault]);
 
   useEffect(() => {
     filterRuns();
@@ -87,7 +100,7 @@ const BacktestVault = () => {
       const { data, error } = await supabase
         .from('backtest_runs')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', authUser?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
