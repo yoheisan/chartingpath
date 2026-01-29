@@ -374,22 +374,26 @@ serve(async (req) => {
     const extendedToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
     const allPatternsToScan = [...patternsToScan, ...extendedToScan];
     
-    // FAST PATH - Always try DB cache first for instant response
-    const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
-    if (dbCached) {
-      console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);
-      return new Response(JSON.stringify({ 
-        success: true, 
-        patterns: dbCached.patterns, 
-        scannedAt: new Date().toISOString(), 
-        instrumentsScanned: dbCached.instrumentsScanned, 
-        totalInUniverse, 
-        assetType, 
-        marketOpen: isMarketOpen(assetType), 
-        source: 'db_cache' 
-      }), { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' } 
-      });
+    // FAST PATH - Only use DB cache when NOT forcing refresh (normal user requests)
+    if (!forceRefresh) {
+      const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
+      if (dbCached) {
+        console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          patterns: dbCached.patterns, 
+          scannedAt: new Date().toISOString(), 
+          instrumentsScanned: dbCached.instrumentsScanned, 
+          totalInUniverse, 
+          assetType, 
+          marketOpen: isMarketOpen(assetType), 
+          source: 'db_cache' 
+        }), { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' } 
+        });
+      }
+    } else {
+      console.info(`[scan-live-patterns] forceRefresh=true, bypassing fast path for ${assetType}@${timeframe}`);
     }
     
     // Only proceed to slow path if forceRefresh is explicitly requested (cron job only)
@@ -422,7 +426,12 @@ serve(async (req) => {
     // SLOW PATH - Live scan
     const endDate = new Date();
     const startDate = new Date(); startDate.setDate(startDate.getDate() - 365);
+    console.log(`[scan-live-patterns] Slow path: fetching data for ${instruments.length} instruments, timeframe=${timeframe}`);
     const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
+    
+    console.log(`[scan-live-patterns] Data fetched for ${instrumentDataMap.size} instruments`);
+    const instrumentsWithData = [...instrumentDataMap.entries()].filter(([, bars]) => bars.length >= 20);
+    console.log(`[scan-live-patterns] Instruments with >=20 bars: ${instrumentsWithData.length}`);
     
     const detectedPatterns: any[] = [];
     for (const instrument of instruments) {
