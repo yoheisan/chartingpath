@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingDown, TrendingUp, Target, CheckCircle, BookOpen, Ale
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { LazyPatternChart } from "@/components/LazyPatternChart";
 import {
   SkillLevelSection,
   TradingRule,
@@ -74,7 +74,7 @@ const HeadAndShoulders = () => {
 
             {/* Visual Chart */}
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="head-shoulders" width={800} height={500} />
+              <LazyPatternChart patternType="head-shoulders" width={800} height={500} />
             </div>
           </section>
 
@@ -427,7 +427,7 @@ const HeadAndShoulders = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Inverse Head and Shoulders (Bullish)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="inverted-head-shoulders" width={800} height={500} />
+              <LazyPatternChart patternType="inverted-head-shoulders" width={800} height={500} />
             </div>
 
             <p className="text-muted-foreground leading-relaxed mb-6">

@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Target, CheckCircle, AlertTriangle
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { LazyPatternChart } from "@/components/LazyPatternChart";
 import {
   SkillLevelSection,
   TradingRule,
@@ -74,7 +74,7 @@ const DoubleTopBottom = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Double Top Pattern (Bearish Reversal)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="double-top" width={800} height={500} />
+              <LazyPatternChart patternType="double-top" width={800} height={500} />
             </div>
 
             <SkillLevelSection level="novice" title="Understanding the Double Top">
@@ -204,7 +204,7 @@ const DoubleTopBottom = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Double Bottom Pattern (Bullish Reversal)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="double-bottom" width={800} height={500} />
+              <LazyPatternChart patternType="double-bottom" width={800} height={500} />
             </div>
 
             <SkillLevelSection level="novice" title="Understanding the Double Bottom">

@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Target, CheckCircle, AlertTriangle
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { LazyPatternChart } from "@/components/LazyPatternChart";
 import {
   SkillLevelSection,
   TradingRule,
@@ -103,7 +103,7 @@ const TrianglePatterns = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Ascending Triangle (Bullish)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="ascending-triangle" width={800} height={500} />
+              <LazyPatternChart patternType="ascending-triangle" width={800} height={500} />
             </div>
 
             <SkillLevelSection level="novice" title="Understanding the Ascending Triangle">
@@ -193,7 +193,7 @@ const TrianglePatterns = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Descending Triangle (Bearish)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="descending-triangle" width={800} height={500} />
+              <LazyPatternChart patternType="descending-triangle" width={800} height={500} />
             </div>
 
             <SkillLevelSection level="novice" title="Understanding the Descending Triangle">
@@ -265,7 +265,7 @@ const TrianglePatterns = () => {
             <h2 className="text-2xl font-bold mt-12 mb-4">Symmetrical Triangle (Neutral)</h2>
             
             <div className="my-8 rounded-xl overflow-hidden border border-border bg-card">
-              <DynamicPatternChart patternType="symmetrical-triangle" width={800} height={500} />
+              <LazyPatternChart patternType="symmetrical-triangle" width={800} height={500} />
             </div>
 
             <SkillLevelSection level="intermediate" title="Trading the Symmetrical Triangle">

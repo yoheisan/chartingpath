@@ -3,7 +3,7 @@ import { ArrowLeft, BarChart3, TrendingUp, TrendingDown, CheckCircle, AlertTrian
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { LazyPatternChart } from "@/components/LazyPatternChart";
 import {
   SkillLevelSection,
   ProTip,
@@ -159,7 +159,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Doji</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="doji" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="doji" height={350} showTitle={false} />
                 </div>
                 <div className="bg-accent/50 p-6 rounded-lg">
                   <Badge className="mb-3 bg-yellow-500/20 text-yellow-600">Neutral / Reversal</Badge>
@@ -182,7 +182,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Hammer</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="hammer" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="hammer" height={350} showTitle={false} />
                 </div>
                 <div className="bg-primary/5 border border-primary/20 p-6 rounded-lg">
                   <Badge className="mb-3 bg-green-500/20 text-green-600">Bullish Reversal</Badge>
@@ -205,7 +205,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Shooting Star</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="shooting-star" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="shooting-star" height={350} showTitle={false} />
                 </div>
                 <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-lg">
                   <Badge className="mb-3 bg-red-500/20 text-red-600">Bearish Reversal</Badge>
@@ -228,7 +228,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Spinning Top</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="spinning-top" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="spinning-top" height={350} showTitle={false} />
                 </div>
                 <div className="bg-accent/50 p-6 rounded-lg">
                   <Badge className="mb-3 bg-yellow-500/20 text-yellow-600">Indecision / Reversal</Badge>
@@ -264,7 +264,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Bullish Engulfing</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="bullish-engulfing" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="bullish-engulfing" height={350} showTitle={false} />
                 </div>
                 <div className="bg-primary/5 border border-primary/20 p-6 rounded-lg">
                   <Badge className="mb-3 bg-green-500/20 text-green-600">Strong Bullish Reversal</Badge>
@@ -287,7 +287,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Bearish Engulfing</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="bearish-engulfing" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="bearish-engulfing" height={350} showTitle={false} />
                 </div>
                 <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-lg">
                   <Badge className="mb-3 bg-red-500/20 text-red-600">Strong Bearish Reversal</Badge>
@@ -310,7 +310,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Bullish Harami</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="bullish-harami" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="bullish-harami" height={350} showTitle={false} />
                 </div>
                 <div className="bg-accent/50 p-6 rounded-lg">
                   <Badge className="mb-3 bg-green-500/20 text-green-600">Moderate Bullish Reversal</Badge>
@@ -333,7 +333,7 @@ const CandlestickPatterns = () => {
               <h3 className="text-xl font-semibold mt-8 mb-4">Bearish Harami</h3>
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-xl overflow-hidden border border-border">
-                  <DynamicPatternChart patternType="bearish-harami" height={350} showTitle={false} />
+                  <LazyPatternChart patternType="bearish-harami" height={350} showTitle={false} />
                 </div>
                 <div className="bg-accent/50 p-6 rounded-lg">
                   <Badge className="mb-3 bg-red-500/20 text-red-600">Moderate Bearish Reversal</Badge>
