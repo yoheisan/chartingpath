@@ -335,14 +335,11 @@ export default function LivePatternsPage() {
       let fnError: any = null;
       let lastError: any = null;
 
-      // Retry logic with increasing timeouts for resilience against cold starts
-      const attempts = isRefresh ? [
-        { forceRefresh: true, timeout: 30_000 },   // First attempt: quick refresh
-        { forceRefresh: false, timeout: 20_000 },  // Fallback: read cached
-        { forceRefresh: false, timeout: 25_000 },  // Final retry: cached with longer timeout
-      ] : [
-        { forceRefresh: false, timeout: 20_000 },  // Initial load: fast cached read
-        { forceRefresh: false, timeout: 30_000 },  // Retry with longer timeout
+      // Retry logic - ALWAYS use cached path for speed; forceRefresh disabled for UI
+      // Full scans happen via background cron only to prevent timeout issues
+      const attempts = [
+        { forceRefresh: false, timeout: 15_000 },  // Fast path: read from DB cache
+        { forceRefresh: false, timeout: 20_000 },  // Retry with longer timeout
       ];
 
       for (let i = 0; i < attempts.length; i++) {

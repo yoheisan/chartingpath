@@ -288,19 +288,30 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
 async function readCachedPatternsFromDb(supabase: any, assetType: string, timeframe: string, allowedPatterns: string[], limit: number, maxTickers: number) {
   try {
     const instruments = getInstrumentsForTier(assetType, maxTickers);
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Extend staleness window to 24 hours for reliability - patterns don't change that fast on daily timeframe
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
     const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select('*')
       .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
       .in('pattern_id', allowedPatterns).in('instrument', instruments)
-      .gte('last_confirmed_at', twoHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
+      .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
     
-    if (error) return null;
-    if (!cachedPatterns?.length) {
-      const { data: anyRecent } = await supabase.from('live_pattern_detections').select('last_confirmed_at')
-        .eq('asset_type', assetType).eq('timeframe', timeframe).gte('updated_at', twoHoursAgo).limit(1);
-      if (anyRecent?.length) return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
+    if (error) {
+      console.error('[scan-live-patterns] DB cache read error:', error.message);
       return null;
+    }
+    
+    // Always return cached data if available, even if empty
+    if (!cachedPatterns?.length) {
+      // Check if we have ANY recent data for this asset type
+      const { data: anyRecent } = await supabase.from('live_pattern_detections').select('last_confirmed_at')
+        .eq('asset_type', assetType).eq('timeframe', timeframe).gte('updated_at', twentyFourHoursAgo).limit(1);
+      if (anyRecent?.length) {
+        return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
+      }
+      // No data at all - trigger background scan but still return empty for fast response
+      console.info('[scan-live-patterns] No cached data, returning empty and triggering background scan');
+      return { patterns: [], instrumentsScanned: instruments.length, isFresh: true, needsBackgroundScan: true };
     }
     
     let patterns = cachedPatterns.map((r: any) => ({
@@ -311,6 +322,7 @@ async function readCachedPatternsFromDb(supabase: any, assetType: string, timefr
       trendAlignment: r.trend_alignment, trendIndicators: r.trend_indicators, historicalPerformance: r.historical_performance || undefined,
     }));
     
+    // Only enrich stats if missing - fast parallel fetch
     const needStats = patterns.filter(p => !p.historicalPerformance);
     if (needStats.length) {
       const stats = await fetchPatternStats(supabase, [...new Set(needStats.map(p => p.patternId))]);
@@ -322,8 +334,12 @@ async function readCachedPatternsFromDb(supabase: any, assetType: string, timefr
         return p;
       });
     }
+    console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
-  } catch { return null; }
+  } catch (err: any) {
+    console.error('[scan-live-patterns] DB cache error:', err.message);
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -358,19 +374,48 @@ serve(async (req) => {
     const extendedToScan = [...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS].filter(p => allowedPatterns.includes(p));
     const allPatternsToScan = [...patternsToScan, ...extendedToScan];
     
-    // FAST PATH
-    if (!forceRefresh) {
-      const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
-      if (dbCached?.isFresh) {
-        return new Response(JSON.stringify({ success: true, patterns: dbCached.patterns, scannedAt: new Date().toISOString(), instrumentsScanned: dbCached.instrumentsScanned, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType), source: 'db_cache' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
-      }
+    // FAST PATH - Always try DB cache first for instant response
+    const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
+    if (dbCached) {
+      console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        patterns: dbCached.patterns, 
+        scannedAt: new Date().toISOString(), 
+        instrumentsScanned: dbCached.instrumentsScanned, 
+        totalInUniverse, 
+        assetType, 
+        marketOpen: isMarketOpen(assetType), 
+        source: 'db_cache' 
+      }), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' } 
+      });
     }
     
-    // MEMORY CACHE
+    // Only proceed to slow path if forceRefresh is explicitly requested (cron job only)
+    if (!forceRefresh) {
+      console.info('[scan-live-patterns] No cache, returning empty without slow path');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        patterns: [], 
+        scannedAt: new Date().toISOString(), 
+        instrumentsScanned: instruments.length, 
+        totalInUniverse, 
+        assetType, 
+        marketOpen: isMarketOpen(assetType), 
+        source: 'no_cache' 
+      }), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+    
+    console.info('[scan-live-patterns] forceRefresh=true, proceeding to slow path scan');
+    
+    // MEMORY CACHE (only for slow path)
     const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
     const cached = scanCache.get(cacheKey);
     const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
-    if (cached && Date.now() - cached.timestamp < cacheTtl && !forceRefresh) {
+    if (cached && Date.now() - cached.timestamp < cacheTtl) {
       return new Response(JSON.stringify(cached.data), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
     }
     
