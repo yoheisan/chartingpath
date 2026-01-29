@@ -256,6 +256,7 @@ export default function LivePatternsPage() {
   
   // Filters - use detected type from highlight or default to 'fx'
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
+  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '1d' | '1wk'>('1d');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [patternFilter, setPatternFilter] = useState<string>('all');
   const [trendFilter, setTrendFilter] = useState<'all' | 'with_trend' | 'counter_trend'>('all');
@@ -295,21 +296,23 @@ export default function LivePatternsPage() {
   };
   const effectiveCaps = capsLoading ? DEFAULT_CAPS : caps;
 
-  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
+  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType, selectedTimeframe?: string) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     
     const typeToFetch = selectedAssetType || assetType;
+    const tfToFetch = selectedTimeframe || timeframe;
     
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
     
-    const invokeScan = async (forceRefresh: boolean, timeoutMs: number) => {
+    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string) => {
       return await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
             assetType: typeToFetch,
+            timeframe: tfToFetch,
             limit: 50,
             maxTickers: capsToUse.maxTickersPerClass,
             allowedPatterns: capsToUse.allowedPatterns,
@@ -324,6 +327,7 @@ export default function LivePatternsPage() {
     try {
       console.info('[LivePatternsPage] Fetching patterns', {
         assetType: typeToFetch,
+        timeframe: tfToFetch,
         maxTickers: capsToUse.maxTickersPerClass,
         allowedPatterns: capsToUse.allowedPatterns?.length,
         isRefresh,
@@ -347,7 +351,7 @@ export default function LivePatternsPage() {
         const { forceRefresh: fr, timeout } = attempts[i];
         try {
           console.info(`[LivePatternsPage] Attempt ${i + 1}/${attempts.length}`, { forceRefresh: fr, timeout });
-          const res = await invokeScan(fr, timeout);
+          const res = await invokeScan(fr, timeout, tfToFetch);
           data = res.data ?? null;
           fnError = res.error ?? null;
           if (data?.patterns) {
@@ -397,7 +401,12 @@ export default function LivePatternsPage() {
 
   const handleAssetTypeChange = (newType: AssetType) => {
     setAssetType(newType);
-    fetchLivePatterns(false, newType);
+    fetchLivePatterns(false, newType, timeframe);
+  };
+
+  const handleTimeframeChange = (newTf: '1h' | '4h' | '1d' | '1wk') => {
+    setTimeframe(newTf);
+    fetchLivePatterns(false, assetType, newTf);
   };
 
   // Track if we've already fetched patterns
@@ -583,7 +592,7 @@ export default function LivePatternsPage() {
                 <p className="font-medium mb-2">How This Works</p>
                 <p className="text-sm mb-2">
                   We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
-                  for chart patterns using daily timeframe data.
+                  for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
                   {instrumentsScanned < (totalInUniverse || 0) && (
                     <span className="block mt-1 text-xs text-muted-foreground">
                       Your plan has access to {instrumentsScanned} of these instruments.
@@ -599,7 +608,7 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
+          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments on {timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '1wk' ? 'Weekly' : 'Daily'} • 
           Showing {patterns.length} with active patterns
         </p>
       </div>
@@ -626,6 +635,40 @@ export default function LivePatternsPage() {
               <SelectItem value="commodities">🛢️ Commodities</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Timeframe Selector */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Select value={timeframe} onValueChange={(v) => handleTimeframeChange(v as '1h' | '4h' | '1d' | '1wk')}>
+                    <SelectTrigger className="w-24">
+                      <Clock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                      <SelectValue placeholder="Timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1h">1H</SelectItem>
+                      <SelectItem value="4h">4H</SelectItem>
+                      <SelectItem value="1d">Daily</SelectItem>
+                      <SelectItem value="1wk">Weekly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs p-3">
+                <p className="font-medium mb-1">Chart Timeframe</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Pattern detection uses the selected timeframe. Historical performance stats correspond to the same timeframe.
+                </p>
+                <div className="text-xs space-y-1 text-muted-foreground">
+                  <div><span className="font-medium">1H:</span> Intraday signals (last 30 days history)</div>
+                  <div><span className="font-medium">4H:</span> Swing trading (last 30 days history)</div>
+                  <div><span className="font-medium">Daily:</span> Position trading (5+ years history)</div>
+                  <div><span className="font-medium">Weekly:</span> Long-term investing (5+ years history)</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as any)}>
             <SelectTrigger className="w-32">
