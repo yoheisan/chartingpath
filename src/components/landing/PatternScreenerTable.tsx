@@ -929,7 +929,7 @@ export default function PatternScreenerTable() {
             lockedPatterns={lockedPatterns}
             compact={true}
             selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
-            blurEdgeMetrics={tier === 'FREE'}
+            blurEdgeMetrics={false}
             onPatternClick={(patternId) => {
               if (patternFilter === patternId) {
                 setPatternFilter('all');
@@ -1146,7 +1146,7 @@ export default function PatternScreenerTable() {
                                   profitFactor: setup.historicalPerformance.profitFactor ?? null,
                                   sampleSize: setup.historicalPerformance.sampleSize,
                                 } : null}
-                                isLocked={tier === 'FREE'}
+                                isLocked={false}
                               />
                             </TableCell>
                             <TableCell className="text-right">

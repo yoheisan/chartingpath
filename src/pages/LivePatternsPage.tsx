@@ -883,7 +883,7 @@ export default function LivePatternsPage() {
           lockedPatterns={lockedPatterns}
           compact={false}
           selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
-          blurEdgeMetrics={tier === 'FREE'}
+          blurEdgeMetrics={false}
           onPatternClick={(patternId) => {
             if (patternFilter === patternId) {
               setPatternFilter('all');
