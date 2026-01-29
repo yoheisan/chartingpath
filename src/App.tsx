@@ -104,7 +104,7 @@ const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
-const MemberCourses = lazy(() => import("./pages/MemberCourses"));
+
 const IndustrialMetals = lazy(() => import("./pages/markets/commodities/IndustrialMetals"));
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
@@ -218,7 +218,7 @@ const App = () => (
           <Route path="/elite" element={withSuspense(<EliteDashboard />)} />
           <Route path="/share/:token" element={withSuspense(<SharedBacktest />)} />
           <Route path="/members/scripts" element={withSuspense(<MemberScripts />)} />
-          <Route path="/members/courses" element={withSuspense(<MemberCourses />)} />
+          
           <Route path="/members/downloads" element={withSuspense(<MemberDownloads />)} />
           <Route path="/members/alerts" element={withSuspense(<MemberAlerts />)} />
           <Route path="/members/account" element={withSuspense(<MemberAccount />)} />

@@ -85,15 +85,6 @@ const EliteDashboard = () => {
       color: "text-red-500"
     },
     {
-      icon: BookOpen,
-      title: "Elite Courses",
-      description: "Exclusive advanced trading masterclasses",
-      status: "Full Access",
-      action: "Learn Now",
-      link: "/members/courses",
-      color: "text-indigo-500"
-    },
-    {
       icon: Target,
       title: "Paper Trading Pro",
       description: "Advanced simulation with real market conditions",

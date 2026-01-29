@@ -88,7 +88,7 @@ const Navigation = () => {
         <div className="flex flex-col gap-2 pl-2">
           <Link to="/members/dashboard" className="text-sm text-muted-foreground py-1">Dashboard</Link>
           <Link to="/vault" className="text-sm text-muted-foreground py-1">My Results</Link>
-          <Link to="/members/courses" className="text-sm text-muted-foreground py-1">Courses</Link>
+          
           <Link to="/members/downloads" className="text-sm text-muted-foreground py-1">Downloads</Link>
           <Link to="/members/account" className="text-sm text-muted-foreground py-1">Settings</Link>
         </div>
@@ -288,10 +288,6 @@ const Navigation = () => {
                       <Database className="h-4 w-4" />
                       My Results
                     </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/courses">Courses</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/members/downloads">Downloads</Link>

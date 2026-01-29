@@ -25,11 +25,6 @@ const MemberNavigation = () => {
       label: "Projects",
     },
     {
-      to: "/members/courses",
-      icon: BookOpen,
-      label: "Courses",
-    },
-    {
       to: "/members/downloads",
       icon: Download,
       label: "Downloads",
