@@ -26,7 +26,8 @@ import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
-import { useScreenerCaps, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
+import { SupportedPatternsList } from '@/components/screener/SupportedPatternsList';
 import { withTimeout } from '@/utils/withTimeout';
 import {
   Table,
@@ -812,6 +813,42 @@ export default function LivePatternsPage() {
           </Card>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Supported Patterns Overview */}
+      <Card className="mb-6 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Patterns We Detect</span>
+            <Badge variant="secondary" className="text-[10px]">
+              {ALL_PATTERN_IDS.length} types
+            </Badge>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Click to filter
+          </span>
+        </div>
+        <SupportedPatternsList
+          patternCounts={ALL_PATTERN_IDS.map(patternId => {
+            const matching = patterns.filter(p => p.patternId === patternId);
+            return {
+              patternId,
+              count: matching.length,
+              longCount: matching.filter(p => p.direction === 'long').length,
+              shortCount: matching.filter(p => p.direction === 'short').length,
+            };
+          })}
+          lockedPatterns={lockedPatterns}
+          compact={false}
+          selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
+          onPatternClick={(patternId) => {
+            if (patternFilter === patternId) {
+              setPatternFilter('all');
+            } else {
+              setPatternFilter(patternId);
+            }
+          }}
+        />
+      </Card>
 
       {/* Error state */}
       {error && (
