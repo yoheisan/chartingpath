@@ -24,6 +24,14 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Settings2 } from 'lucide-react';
+import { 
+  getThemeColors, 
+  CANDLE_COLORS, 
+  VOLUME_COLORS, 
+  VOLUME_SCALE_MARGINS, 
+  getVolumeColor,
+  INDICATOR_COLORS,
+} from './chartConstants';
 
 export interface IndicatorSettings {
   ema20: boolean;
@@ -94,11 +102,8 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
   useEffect(() => {
     if (!containerRef.current || !bars || bars.length === 0) return;
 
-    // Detect theme
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#0f0f0f' : '#ffffff';
-    const textColor = isDark ? '#a1a1a1' : '#666666';
-    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    // Use unified theme colors
+    const theme = getThemeColors();
 
     // Clean up existing chart
     if (chartRef.current) {
@@ -110,21 +115,21 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       width: containerRef.current.clientWidth,
       height,
       layout: {
-        background: { color: bgColor },
-        textColor,
+        background: { color: theme.background },
+        textColor: theme.text,
       },
       grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
+        vertLines: { color: theme.grid },
+        horzLines: { color: theme.grid },
       },
       rightPriceScale: {
         visible: true,
-        borderColor: gridColor,
+        borderColor: theme.grid,
       },
       timeScale: {
         visible: true,
         borderVisible: true,
-        borderColor: gridColor,
+        borderColor: theme.grid,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -135,15 +140,8 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
 
     chartRef.current = chart;
 
-    // Candlestick series - solid filled
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      borderDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-    });
+    // Use unified candlestick colors
+    const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
     // Transform bars to lightweight-charts format
     const chartData: CandlestickData[] = bars
@@ -173,13 +171,13 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
       const volumeSeries = chart.addSeries(HistogramSeries, {
-        color: '#6b7280',
+        color: VOLUME_COLORS.default,
         priceFormat: { type: 'volume' },
         priceScaleId: 'volume',
       });
 
       chart.priceScale('volume').applyOptions({
-        scaleMargins: { top: 0.8, bottom: 0 },
+        scaleMargins: VOLUME_SCALE_MARGINS.standard,
         borderVisible: false,
       });
 
@@ -189,7 +187,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         return {
           time: d.time,
           value: bar?.v || 0,
-          color: isUp ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
+          color: getVolumeColor(isUp),
         };
       });
 
@@ -198,12 +196,12 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
 
     // === TECHNICAL INDICATORS ===
 
-    // EMA 20 (fast) - Orange
+    // EMA 20 (fast)
     if (indicators.ema20) {
       const ema20Data = calculateEMA(bars, 20);
       if (ema20Data.length > 0) {
         const ema20Series = chart.addSeries(LineSeries, {
-          color: '#f97316',
+          color: INDICATOR_COLORS.ema20,
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -212,12 +210,12 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       }
     }
 
-    // EMA 50 (slow) - Blue
+    // EMA 50 (slow)
     if (indicators.ema50) {
       const ema50Data = calculateEMA(bars, 50);
       if (ema50Data.length > 0) {
         const ema50Series = chart.addSeries(LineSeries, {
-          color: '#3b82f6',
+          color: INDICATOR_COLORS.ema50,
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -226,12 +224,12 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       }
     }
 
-    // SMA 200 (trend) - Purple dashed
+    // SMA 200 (trend)
     if (indicators.sma200) {
       const sma200Data = calculateSMA(bars, 200);
       if (sma200Data.length > 0) {
         const sma200Series = chart.addSeries(LineSeries, {
-          color: '#8b5cf6',
+          color: INDICATOR_COLORS.sma200,
           lineWidth: 1,
           lineStyle: 2,
           priceLineVisible: false,
@@ -241,12 +239,12 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       }
     }
 
-    // Bollinger Bands (20, 2) - Gray translucent
+    // Bollinger Bands (20, 2)
     if (indicators.bollingerBands) {
       const bbData = calculateBollingerBands(bars, 20, 2);
       if (bbData.length > 0) {
         const bbUpperSeries = chart.addSeries(LineSeries, {
-          color: 'rgba(156, 163, 175, 0.5)',
+          color: INDICATOR_COLORS.bollingerBands,
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -254,7 +252,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         bbUpperSeries.setData(bbData.map((p) => ({ time: p.time as Time, value: p.upper })));
 
         const bbLowerSeries = chart.addSeries(LineSeries, {
-          color: 'rgba(156, 163, 175, 0.5)',
+          color: INDICATOR_COLORS.bollingerBands,
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -263,12 +261,12 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       }
     }
 
-    // VWAP - Cyan dashed
+    // VWAP
     if (indicators.vwap) {
       const vwapData = calculateVWAP(bars);
       if (vwapData.length > 0) {
         const vwapSeries = chart.addSeries(LineSeries, {
-          color: '#06b6d4',
+          color: INDICATOR_COLORS.vwap,
           lineWidth: 1,
           lineStyle: 2,
           priceLineVisible: false,

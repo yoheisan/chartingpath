@@ -62,6 +62,16 @@ import { getTradingViewUrl } from '@/utils/tradingViewLinks';
 import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
 import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
+import { 
+  getThemeColors, 
+  CANDLE_COLORS, 
+  VOLUME_COLORS, 
+  VOLUME_SCALE_MARGINS, 
+  getVolumeColor,
+  getOverlayColor,
+  INDICATOR_COLORS,
+  PIVOT_COLORS,
+} from './chartConstants';
 
 // Indicator settings interface
 export interface IndicatorSettings {
@@ -251,10 +261,8 @@ export default function FullChartViewer({
       }
 
       try {
-        const isDark = document.documentElement.classList.contains('dark');
-        const bgColor = isDark ? '#0f0f0f' : '#ffffff';
-        const textColor = isDark ? '#a1a1a1' : '#666666';
-        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        // Use unified theme colors
+        const theme = getThemeColors();
 
         // Recreate chart each time we open/change setup to avoid stale/blank canvas.
         if (chartRef.current) {
@@ -266,20 +274,20 @@ export default function FullChartViewer({
           width: containerWidth,
           height: Math.max(containerHeight, 350),
           layout: {
-            background: { color: bgColor },
-            textColor,
+            background: { color: theme.background },
+            textColor: theme.text,
           },
           grid: {
-            vertLines: { color: gridColor },
-            horzLines: { color: gridColor },
+            vertLines: { color: theme.grid },
+            horzLines: { color: theme.grid },
           },
           rightPriceScale: {
-            borderColor: gridColor,
-            visible: true, // Price ruler visible
+            borderColor: theme.grid,
+            visible: true,
           },
           timeScale: {
-            borderColor: gridColor,
-            timeVisible: true, // Time series visible
+            borderColor: theme.grid,
+            timeVisible: true,
             secondsVisible: false,
             visible: true,
           },
@@ -290,19 +298,8 @@ export default function FullChartViewer({
 
         chartRef.current = chart;
 
-        // STANDARD: Solid filled candlesticks - border colors MUST match body colors to prevent hollow appearance
-        // This ensures consistent visual rendering across all chart instances (FullChart, Thumbnail, Study)
-        const CANDLE_UP = '#22c55e';
-        const CANDLE_DOWN = '#ef4444';
-        
-        const candleSeries = chart.addSeries(CandlestickSeries, {
-          upColor: CANDLE_UP,
-          downColor: CANDLE_DOWN,
-          borderUpColor: CANDLE_UP,
-          borderDownColor: CANDLE_DOWN,
-          wickUpColor: CANDLE_UP,
-          wickDownColor: CANDLE_DOWN,
-        });
+        // Use unified candlestick colors
+        const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
         const chartData: CandlestickData[] = bars
           .map((bar) => {
@@ -331,13 +328,13 @@ export default function FullChartViewer({
         const hasVolume = bars.some(bar => bar.v && bar.v > 0);
         if (hasVolume) {
           const volumeSeries = chart.addSeries(HistogramSeries, {
-            color: '#6b7280',
+            color: VOLUME_COLORS.default,
             priceFormat: { type: 'volume' },
             priceScaleId: 'volume',
           });
 
           chart.priceScale('volume').applyOptions({
-            scaleMargins: { top: 0.8, bottom: 0 },
+            scaleMargins: VOLUME_SCALE_MARGINS.standard,
             borderVisible: false,
           });
 
@@ -347,7 +344,7 @@ export default function FullChartViewer({
             return {
               time: d.time,
               value: bar?.v || 0,
-              color: isUp ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
+              color: getVolumeColor(isUp),
             };
           });
 
@@ -355,15 +352,14 @@ export default function FullChartViewer({
         }
 
         // === ADD TECHNICAL INDICATORS (conditional based on settings) ===
-        // Use ref to get current indicator settings
         const currentIndicators = indicatorsRef.current;
         
-        // EMA 20 (fast) - Orange
+        // EMA 20 (fast)
         if (currentIndicators.ema20) {
           const ema20Data = calculateEMA(bars, 20);
           if (ema20Data.length > 0) {
             const ema20Series = chart.addSeries(LineSeries, {
-              color: '#f97316',
+              color: INDICATOR_COLORS.ema20,
               lineWidth: 1,
               priceLineVisible: false,
               lastValueVisible: false,
@@ -372,12 +368,12 @@ export default function FullChartViewer({
           }
         }
 
-        // EMA 50 (slow) - Blue
+        // EMA 50 (slow)
         if (currentIndicators.ema50) {
           const ema50Data = calculateEMA(bars, 50);
           if (ema50Data.length > 0) {
             const ema50Series = chart.addSeries(LineSeries, {
-              color: '#3b82f6',
+              color: INDICATOR_COLORS.ema50,
               lineWidth: 1,
               priceLineVisible: false,
               lastValueVisible: false,
@@ -386,14 +382,14 @@ export default function FullChartViewer({
           }
         }
 
-        // SMA 200 (trend) - Purple
+        // SMA 200 (trend)
         if (currentIndicators.sma200) {
           const sma200Data = calculateSMA(bars, 200);
           if (sma200Data.length > 0) {
             const sma200Series = chart.addSeries(LineSeries, {
-              color: '#8b5cf6',
+              color: INDICATOR_COLORS.sma200,
               lineWidth: 1,
-              lineStyle: 2, // Dashed
+              lineStyle: 2,
               priceLineVisible: false,
               lastValueVisible: false,
             });
@@ -405,18 +401,16 @@ export default function FullChartViewer({
         if (currentIndicators.bollingerBands) {
           const bbData = calculateBollingerBands(bars, 20, 2);
           if (bbData.length > 0) {
-            // Upper band
             const bbUpperSeries = chart.addSeries(LineSeries, {
-              color: 'rgba(156, 163, 175, 0.5)',
+              color: INDICATOR_COLORS.bollingerBands,
               lineWidth: 1,
               priceLineVisible: false,
               lastValueVisible: false,
             });
             bbUpperSeries.setData(bbData.map(p => ({ time: p.time as Time, value: p.upper })));
 
-            // Lower band
             const bbLowerSeries = chart.addSeries(LineSeries, {
-              color: 'rgba(156, 163, 175, 0.5)',
+              color: INDICATOR_COLORS.bollingerBands,
               lineWidth: 1,
               priceLineVisible: false,
               lastValueVisible: false,
@@ -425,12 +419,12 @@ export default function FullChartViewer({
           }
         }
 
-        // VWAP - Cyan dashed
+        // VWAP
         if (currentIndicators.vwap) {
           const vwapData = calculateVWAP(bars);
           if (vwapData.length > 0) {
             const vwapSeries = chart.addSeries(LineSeries, {
-              color: '#06b6d4',
+              color: INDICATOR_COLORS.vwap,
               lineWidth: 1,
               lineStyle: 2,
               priceLineVisible: false,
@@ -443,18 +437,9 @@ export default function FullChartViewer({
         // Pattern overlays (entry, SL, TP lines)
         visualSpec.overlays.forEach((overlay) => {
           if (overlay.type === 'hline') {
-            const color =
-              overlay.style === 'primary'
-                ? '#3b82f6'
-                : overlay.style === 'destructive'
-                  ? '#ef4444'
-                  : overlay.style === 'positive'
-                    ? '#22c55e'
-                    : '#888888';
-
             candleSeries.createPriceLine({
               price: overlay.price,
-              color,
+              color: getOverlayColor(overlay.style),
               lineWidth: 2,
               lineStyle: overlay.id === 'entry' ? 0 : 2,
               axisLabelVisible: true,
@@ -489,7 +474,7 @@ export default function FullChartViewer({
               return {
                 time: t as Time,
                 position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-                color: isHigh ? '#f97316' : '#8b5cf6',
+                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
                 shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
                 text: pivot.label || (isHigh ? 'H' : 'L'),
               };
