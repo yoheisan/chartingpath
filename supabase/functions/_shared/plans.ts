@@ -48,6 +48,10 @@ export interface ScreenerCaps {
   allowedPatterns: string[];
 }
 
+export interface StudyCaps {
+  allowedTimeframes: string[];
+}
+
 export interface ProjectCaps {
   setup_finder: SetupFinderCaps;
   pattern_lab: PatternLabCaps;
@@ -61,6 +65,7 @@ export interface TierConfig {
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
   screener: ScreenerCaps;
+  study: StudyCaps;
   projects: ProjectCaps;
 }
 
@@ -79,6 +84,9 @@ export const PLANS_CONFIG: PlansConfig = {
         maxTickersPerClass: 100, // Unlimited screener access for Discover stage
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
       },
+      study: {
+        allowedTimeframes: ['1d'] // Free users: daily only
+      },
       projects: {
         setup_finder: { maxInstruments: 10, maxLookbackYears: 1, maxPatterns: 3, allowedTimeframes: ['1d'] },
         pattern_lab: { enabled: true, maxInstruments: 5, maxLookbackYears: 1, maxPatterns: 3, maxSweeps: 0, allowedTimeframes: ['1d'] },
@@ -94,6 +102,9 @@ export const PLANS_CONFIG: PlansConfig = {
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
+      },
+      study: {
+        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Plus+: all timeframes
       },
       projects: {
         setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
@@ -111,6 +122,9 @@ export const PLANS_CONFIG: PlansConfig = {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
       },
+      study: {
+        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Pro: all timeframes
+      },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
         pattern_lab: { enabled: true, maxInstruments: 15, maxLookbackYears: 7, maxPatterns: 8, maxSweeps: 5, allowedTimeframes: ['4h', '1d'] },
@@ -126,6 +140,9 @@ export const PLANS_CONFIG: PlansConfig = {
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
+      },
+      study: {
+        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Team: all timeframes
       },
       projects: {
         setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
