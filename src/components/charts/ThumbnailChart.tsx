@@ -91,6 +91,13 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
           Number.isFinite(d.close)
       );
 
+    // If no valid chart data after filtering, clean up and show fallback
+    if (chartData.length === 0) {
+      chart.remove();
+      chartRef.current = null;
+      return;
+    }
+
     candleSeries.setData(chartData);
 
     // Add volume histogram if volume data is available
