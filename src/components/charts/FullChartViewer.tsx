@@ -288,14 +288,18 @@ export default function FullChartViewer({
 
         chartRef.current = chart;
 
-        // Solid filled candlesticks - must set border colors same as body to prevent hollow appearance
+        // STANDARD: Solid filled candlesticks - border colors MUST match body colors to prevent hollow appearance
+        // This ensures consistent visual rendering across all chart instances (FullChart, Thumbnail, Study)
+        const CANDLE_UP = '#22c55e';
+        const CANDLE_DOWN = '#ef4444';
+        
         const candleSeries = chart.addSeries(CandlestickSeries, {
-          upColor: '#22c55e',
-          downColor: '#ef4444',
-          borderUpColor: '#22c55e',
-          borderDownColor: '#ef4444',
-          wickUpColor: '#22c55e',
-          wickDownColor: '#ef4444',
+          upColor: CANDLE_UP,
+          downColor: CANDLE_DOWN,
+          borderUpColor: CANDLE_UP,
+          borderDownColor: CANDLE_DOWN,
+          wickUpColor: CANDLE_UP,
+          wickDownColor: CANDLE_DOWN,
         });
 
         const chartData: CandlestickData[] = bars
