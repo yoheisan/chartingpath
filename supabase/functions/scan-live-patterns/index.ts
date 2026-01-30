@@ -55,15 +55,17 @@ interface PatternStats {
 }
 
 // Cache computed historical stats in-memory to keep the DB-cache fast path responsive.
-// These stats are pattern-level aggregates; they don't change frequently.
-const patternStatsCache = new Map<string, { stats: PatternStats; ts: number }>();
+// Key is now "patternId|symbol" for per-asset stats.
+const patternSymbolStatsCache = new Map<string, { stats: PatternStats; ts: number }>();
 const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
+
+// Minimum sample size threshold - below this we consider stats unreliable
+const MIN_SAMPLE_SIZE = 5;
 
 function isStatsSuspect(hp: any): boolean {
   // Treat missing or very small samples as stale/placeholder.
-  // This prevents old cached rows (written before pagination fix) from showing mock-like ROI.
   const n = hp?.sampleSize;
-  return typeof n !== 'number' || n < 50;
+  return typeof n !== 'number' || n < MIN_SAMPLE_SIZE;
 }
 
 function toHistoricalPerformance(stats: PatternStats) {
@@ -76,31 +78,17 @@ function toHistoricalPerformance(stats: PatternStats) {
   };
 }
 
-async function getPatternStatsCached(supabase: any, patternIds: string[]): Promise<Map<string, PatternStats>> {
-  const out = new Map<string, PatternStats>();
-  if (!patternIds.length) return out;
+// Build a cache key for pattern+symbol combination
+function getStatsKey(patternId: string, symbol: string): string {
+  return `${patternId}|${symbol}`;
+}
 
-  const now = Date.now();
-  const toFetch: string[] = [];
-
-  for (const pid of patternIds) {
-    const cached = patternStatsCache.get(pid);
-    if (cached && now - cached.ts < PATTERN_STATS_TTL_MS) {
-      out.set(pid, cached.stats);
-    } else {
-      toFetch.push(pid);
-    }
-  }
-
-  if (toFetch.length) {
-    const fetched = await fetchPatternStats(supabase, toFetch);
-    for (const [pid, stats] of fetched) {
-      patternStatsCache.set(pid, { stats, ts: now });
-      out.set(pid, stats);
-    }
-  }
-
-  return out;
+// Normalize symbol for DB lookup (Yahoo symbol -> DB symbol)
+// NOTE: historical_pattern_occurrences stores symbols in Yahoo format (e.g. GBPNZD=X, BTC-USD)
+// so we should NOT strip the suffix
+function normalizeSymbolForStats(yahooSymbol: string): string {
+  // The DB stores symbols in Yahoo format, so return as-is
+  return yahooSymbol;
 }
 
 async function loadFromDbCache(
@@ -139,18 +127,43 @@ async function loadFromDbCache(
   } catch { return results; }
 }
 
-async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<Map<string, PatternStats>> {
+// Fetch stats per (pattern_id, symbol) combination - returns Map keyed by "patternId|symbol"
+async function fetchPatternSymbolStats(
+  supabase: any, 
+  patternSymbolPairs: Array<{ patternId: string; symbol: string }>
+): Promise<Map<string, PatternStats>> {
   const statsMap = new Map<string, PatternStats>();
-  if (!patternIds.length) {
-    console.info('[fetchPatternStats] No pattern IDs to fetch stats for');
+  if (!patternSymbolPairs.length) {
+    console.info('[fetchPatternSymbolStats] No pairs to fetch stats for');
+    return statsMap;
+  }
+  
+  const now = Date.now();
+  const toFetch: Array<{ patternId: string; symbol: string }> = [];
+  
+  // Check cache first
+  for (const pair of patternSymbolPairs) {
+    const key = getStatsKey(pair.patternId, pair.symbol);
+    const cached = patternSymbolStatsCache.get(key);
+    if (cached && now - cached.ts < PATTERN_STATS_TTL_MS) {
+      statsMap.set(key, cached.stats);
+    } else {
+      toFetch.push(pair);
+    }
+  }
+  
+  if (!toFetch.length) {
+    console.info(`[fetchPatternSymbolStats] All ${patternSymbolPairs.length} stats served from cache`);
     return statsMap;
   }
   
   try {
-    console.info(`[fetchPatternStats] Fetching stats for ${patternIds.length} patterns: ${patternIds.join(', ')}`);
+    const uniquePatternIds = [...new Set(toFetch.map(p => p.patternId))];
+    const uniqueSymbols = [...new Set(toFetch.map(p => normalizeSymbolForStats(p.symbol)))];
     
-    // Fetch ALL records with pagination to avoid default 1000 row limit
-    // With 17k+ historical records, we need to paginate
+    console.info(`[fetchPatternSymbolStats] Fetching from DB: ${toFetch.length} pairs, ${uniquePatternIds.length} patterns, ${uniqueSymbols.length} symbols`);
+    
+    // Fetch ALL records with pagination
     const PAGE_SIZE = 5000;
     let allData: any[] = [];
     let page = 0;
@@ -159,13 +172,14 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
     while (hasMore) {
       const { data: pageData, error } = await supabase
         .from('historical_pattern_occurrences')
-        .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
-        .in('pattern_id', patternIds)
+        .select('pattern_id, symbol, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
+        .in('pattern_id', uniquePatternIds)
+        .in('symbol', uniqueSymbols)
         .not('outcome', 'is', null)
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
       
       if (error) {
-        console.error('[fetchPatternStats] Query error:', error.message);
+        console.error('[fetchPatternSymbolStats] Query error:', error.message);
         return statsMap;
       }
       
@@ -178,31 +192,30 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
       }
     }
     
-    const data = allData;
-    
-    if (!data?.length) {
-      console.warn(`[fetchPatternStats] No historical data found for patterns: ${patternIds.join(', ')}`);
+    if (!allData.length) {
+      console.warn(`[fetchPatternSymbolStats] No historical data found`);
       return statsMap;
     }
     
-    console.info(`[fetchPatternStats] Found ${data.length} historical occurrences (fetched ${page} pages)`);
+    console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences (fetched ${page} pages)`);
     
-    const now = new Date();
-    const threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3);
-    const sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(now.getMonth() - 6);
-    const oneYearAgo = new Date(now); oneYearAgo.setFullYear(now.getFullYear() - 1);
-    const threeYearsAgo = new Date(now); threeYearsAgo.setFullYear(now.getFullYear() - 3);
-    const fiveYearsAgo = new Date(now); fiveYearsAgo.setFullYear(now.getFullYear() - 5);
+    const nowDate = new Date();
+    const threeMonthsAgo = new Date(nowDate); threeMonthsAgo.setMonth(nowDate.getMonth() - 3);
+    const sixMonthsAgo = new Date(nowDate); sixMonthsAgo.setMonth(nowDate.getMonth() - 6);
+    const oneYearAgo = new Date(nowDate); oneYearAgo.setFullYear(nowDate.getFullYear() - 1);
+    const threeYearsAgo = new Date(nowDate); threeYearsAgo.setFullYear(nowDate.getFullYear() - 3);
+    const fiveYearsAgo = new Date(nowDate); fiveYearsAgo.setFullYear(nowDate.getFullYear() - 5);
     
+    // Group by pattern_id|symbol
     const grouped = new Map<string, any>();
-    for (const row of data) {
-      const pid = row.pattern_id;
-      if (!grouped.has(pid)) {
-        grouped.set(pid, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
+    for (const row of allData) {
+      const key = `${row.pattern_id}|${row.symbol}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
           roi3m: 0, roi6m: 0, roi1y: 0, roi3y: 0, roi5y: 0,
           count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0 });
       }
-      const e = grouped.get(pid)!;
+      const e = grouped.get(key)!;
       if (row.outcome === 'hit_tp' || row.outcome === 'hit_sl') {
         e.total++;
         if (row.outcome === 'hit_tp') e.wins++;
@@ -218,10 +231,11 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
       }
     }
     
-    for (const [pid, e] of grouped) {
+    // Build stats for each pair
+    for (const [key, e] of grouped) {
       if (e.total > 0) {
         const stats: PatternStats = {
-          winRate: Math.round((e.wins / e.total) * 1000) / 10, // 1 decimal
+          winRate: Math.round((e.wins / e.total) * 1000) / 10,
           avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
           sampleSize: e.total,
           avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
@@ -233,18 +247,34 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
             fiveYear: e.count5y > 0 ? Math.round(e.roi5y * 10) / 10 : null,
           },
         };
-        statsMap.set(pid, stats);
-        console.info(`[fetchPatternStats] Stats for ${pid}: winRate=${stats.winRate}%, samples=${stats.sampleSize}`);
+        statsMap.set(key, stats);
+        patternSymbolStatsCache.set(key, { stats, ts: now });
       }
     }
     
-    console.info(`[fetchPatternStats] Computed stats for ${statsMap.size} patterns`);
+    // For requested pairs that didn't get stats, check if we need to map Yahoo symbols
+    for (const pair of toFetch) {
+      const yahooKey = getStatsKey(pair.patternId, pair.symbol);
+      if (statsMap.has(yahooKey)) continue;
+      
+      // Try with normalized symbol
+      const normalizedSymbol = normalizeSymbolForStats(pair.symbol);
+      const normalizedKey = `${pair.patternId}|${normalizedSymbol}`;
+      const normalizedStats = statsMap.get(normalizedKey);
+      if (normalizedStats) {
+        statsMap.set(yahooKey, normalizedStats);
+        patternSymbolStatsCache.set(yahooKey, { stats: normalizedStats, ts: now });
+      }
+    }
+    
+    console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs`);
     return statsMap;
   } catch (err: any) {
-    console.error('[fetchPatternStats] Exception:', err.message);
+    console.error('[fetchPatternSymbolStats] Exception:', err.message);
     return statsMap;
   }
 }
+
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
@@ -484,52 +514,52 @@ async function readCachedPatternsFromDb(
       };
     });
     
-    // Stats enrichment (fast path)
-    // We *also* override low-sample cached stats, because older rows may contain placeholder
-    // values created before the pagination fix.
-    const needStats = patterns.filter((p: any) => isStatsSuspect(p.historicalPerformance));
-    console.info(`[scan-live-patterns] Patterns needing stats enrichment (missing/low sample): ${needStats.length}/${patterns.length}`);
+    // Stats enrichment (fast path) - now per (pattern, symbol) for unique per-asset stats
+    // We always enrich with per-asset stats to show unique ROI per instrument
+    const pairsToEnrich = patterns.map((p: any) => ({ 
+      patternId: p.patternId, 
+      symbol: p.instrument,
+      dbId: p.dbId 
+    }));
+    console.info(`[scan-live-patterns] Enriching ${pairsToEnrich.length} patterns with per-asset stats`);
 
-    if (needStats.length) {
-      const uniquePatternIds = [...new Set(needStats.map((p: any) => p.patternId))];
-      console.info(`[scan-live-patterns] Fetching stats for unique patterns: ${uniquePatternIds.join(', ')}`);
-
-      const stats = await getPatternStatsCached(supabase, uniquePatternIds);
-      console.info(`[scan-live-patterns] Stats enrichment returned ${stats.size} pattern stats`);
+    if (pairsToEnrich.length) {
+      const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich);
+      console.info(`[scan-live-patterns] Per-asset stats enrichment returned ${stats.size} entries`);
 
       // Track which DB rows should be updated so future fast-path calls are instant.
-      const updatesByPattern = new Map<string, string[]>();
+      const updatesToPerform: Array<{ id: string; hp: any }> = [];
 
       let enrichedCount = 0;
       patterns = patterns.map((p: any) => {
-        if (!isStatsSuspect(p.historicalPerformance)) return p;
-        const s = stats.get(p.patternId);
+        const key = getStatsKey(p.patternId, p.instrument);
+        const s = stats.get(key);
         if (!s) return p;
 
         enrichedCount++;
-        if (p.dbId) {
-          if (!updatesByPattern.has(p.patternId)) updatesByPattern.set(p.patternId, []);
-          updatesByPattern.get(p.patternId)!.push(p.dbId);
+        const hp = toHistoricalPerformance(s);
+        
+        // Only backfill DB if stats differ from cached
+        if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
+          updatesToPerform.push({ id: p.dbId, hp });
         }
 
-        return { ...p, historicalPerformance: toHistoricalPerformance(s) };
+        return { ...p, historicalPerformance: hp };
       });
 
       // Best-effort DB backfill of corrected stats (keeps future responses fast).
-      if (updatesByPattern.size) {
+      if (updatesToPerform.length) {
         await Promise.allSettled(
-          [...updatesByPattern.entries()].map(([patternId, ids]) => {
-            const s = stats.get(patternId);
-            if (!s) return Promise.resolve();
-            return supabase
+          updatesToPerform.map(({ id, hp }) => 
+            supabase
               .from('live_pattern_detections')
-              .update({ historical_performance: toHistoricalPerformance(s) })
-              .in('id', ids);
-          })
+              .update({ historical_performance: hp })
+              .eq('id', id)
+          )
         );
       }
 
-      console.info(`[scan-live-patterns] Enriched ${enrichedCount} patterns with historical stats`);
+      console.info(`[scan-live-patterns] Enriched ${enrichedCount}/${patterns.length} patterns with per-asset historical stats`);
     }
     console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
@@ -704,29 +734,27 @@ serve(async (req) => {
     }
     
     const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
-    const patternStats = await fetchPatternStats(supabase, [...new Set(detectedPatterns.map(p => p.patternId))]);
-    console.info(`[scan-live-patterns] Slow path: patternStats size=${patternStats.size}, detected=${detectedPatterns.length}`);
+    
+    // Fetch per-(pattern, symbol) stats for unique ROI per asset
+    const patternSymbolPairs = detectedPatterns.map(p => ({ patternId: p.patternId, symbol: p.instrument }));
+    const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs);
+    console.info(`[scan-live-patterns] Slow path: per-asset patternStats size=${patternStats.size}, detected=${detectedPatterns.length}`);
     
     let statsAttachedCount = 0;
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
-      const stats = patternStats.get(pattern.patternId);
+      const statsKey = getStatsKey(pattern.patternId, pattern.instrument);
+      const stats = patternStats.get(statsKey);
       if (stats) statsAttachedCount++;
       return { 
         ...pattern, 
         signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs, 
         visualSpec: { ...pattern.visualSpec, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs }, 
-        historicalPerformance: stats ? { 
-          winRate: stats.winRate, 
-          avgRMultiple: stats.avgRMultiple, 
-          sampleSize: stats.sampleSize, 
-          avgDurationBars: stats.avgDurationBars, 
-          accumulatedRoi: stats.accumulatedRoi 
-        } : undefined 
+        historicalPerformance: stats ? toHistoricalPerformance(stats) : undefined 
       };
     });
-    console.info(`[scan-live-patterns] Slow path: attached stats to ${statsAttachedCount}/${setups.length} patterns`);
+    console.info(`[scan-live-patterns] Slow path: attached per-asset stats to ${statsAttachedCount}/${setups.length} patterns`);
     
     const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
