@@ -1,4 +1,4 @@
-import { useEffect, useRef, memo } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, HistogramSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { CompactQualityScore } from './PatternQualityBadge';
@@ -16,7 +16,9 @@ import {
 } from './chartConstants';
 
 interface ThumbnailChartProps {
-  bars: CompressedBar[];
+  // Some DB rows store legacy bar objects (date/open/high/low/close/volume).
+  // We coerce them into CompressedBar format inside the component.
+  bars: any[];
   visualSpec: VisualSpec;
   quality?: PatternQuality;
   height?: number;
@@ -24,12 +26,66 @@ interface ThumbnailChartProps {
   instrument?: string;
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function coerceBars(input: any[] | undefined | null): CompressedBar[] {
+  if (!Array.isArray(input) || input.length === 0) return [];
+
+  const out: CompressedBar[] = [];
+  for (const b of input) {
+    const t = typeof b?.t === 'string'
+      ? b.t
+      : typeof b?.date === 'string'
+        ? b.date
+        : typeof b?.time === 'string'
+          ? b.time
+          : typeof b?.timestamp === 'string'
+            ? b.timestamp
+            : null;
+
+    if (!t) continue;
+    const ts = new Date(t).getTime();
+    if (!Number.isFinite(ts)) continue;
+
+    const o = typeof b?.o === 'number' ? b.o : Number(b?.open);
+    const h = typeof b?.h === 'number' ? b.h : Number(b?.high);
+    const l = typeof b?.l === 'number' ? b.l : Number(b?.low);
+    const c = typeof b?.c === 'number' ? b.c : Number(b?.close);
+    const vRaw = typeof b?.v === 'number' ? b.v : b?.volume;
+    const v = Number(vRaw ?? 0);
+
+    if (![o, h, l, c].every(isFiniteNumber)) continue;
+
+    out.push({ t, o, h, l, c, v: Number.isFinite(v) ? v : 0 });
+  }
+
+  return out;
+}
+
 const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick, instrument }: ThumbnailChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
+
+  const coercedBars = useMemo(() => coerceBars(bars), [bars]);
 
   useEffect(() => {
-    if (!containerRef.current || !bars || bars.length === 0) return;
+    // Always clean up any existing chart instance before rebuilding.
+    if (chartRef.current) {
+      chartRef.current.remove();
+      chartRef.current = null;
+    }
+
+    if (!containerRef.current) return;
+
+    if (!coercedBars || coercedBars.length === 0) {
+      setFallbackReason('No chart data');
+      return;
+    }
+
+    setFallbackReason(null);
 
     // Use unified theme colors
     const theme = getThemeColors();
@@ -68,7 +124,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
     // Normalize bars for consistent day-to-day coloring (green = up, red = down)
-    const normalizedBars = normalizeBarsForConsistentColoring(bars);
+    const normalizedBars = normalizeBarsForConsistentColoring(coercedBars);
 
     // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs)
     const chartData: CandlestickData[] = normalizedBars
@@ -95,13 +151,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     if (chartData.length === 0) {
       chart.remove();
       chartRef.current = null;
+      setFallbackReason('No chart data');
       return;
     }
 
     candleSeries.setData(chartData);
 
     // Add volume histogram if volume data is available
-    const hasVolume = bars.some(bar => bar.v && bar.v > 0);
+    const hasVolume = coercedBars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
       const volumeSeries = chart.addSeries(HistogramSeries, {
         color: VOLUME_COLORS.default,
@@ -115,7 +172,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       });
 
       const volumeData = chartData.map((d) => {
-        const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
+        const bar = coercedBars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
         const isUp = bar ? bar.c >= bar.o : true;
         return {
           time: d.time,
@@ -153,8 +210,8 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
 
           let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
 
-          if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
-            t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+          if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < coercedBars.length) {
+            t = Math.floor(new Date(coercedBars[pivot.index].t).getTime() / 1000);
           }
 
           if (!timeSet.has(t)) return null;
@@ -183,7 +240,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     // Calculate optimal price margins based on actual data volatility
     // This ensures charts never look "flat" - low volatility = tighter margins
     const hasOverlays = visualSpec?.overlays && visualSpec.overlays.length > 0;
-    const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
+    const optimalMargins = calculateOptimalPriceMargins(coercedBars, hasOverlays);
     
     chart.priceScale('right').applyOptions({
       autoScale: true,
@@ -209,15 +266,15 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, visualSpec, height]);
+  }, [coercedBars, visualSpec, height]);
 
-  if (!bars || bars.length === 0) {
+  if (fallbackReason) {
     return (
       <div 
         className="w-full bg-muted/30 rounded flex items-center justify-center text-muted-foreground text-xs"
         style={{ height }}
       >
-        No chart data
+        {fallbackReason}
       </div>
     );
   }
