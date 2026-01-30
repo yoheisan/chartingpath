@@ -11,7 +11,7 @@ const Footer = () => {
     return (
       <footer className="border-t bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-8 max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
             {/* Logo and Brand */}
             <div>
               <div className="flex items-center gap-3 mb-4">
@@ -31,17 +31,18 @@ const Footer = () => {
               </p>
             </div>
 
+            {/* Discover & Research - matches header journey */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Product</h3>
+              <h3 className="font-semibold mb-4 text-foreground">Discover</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Projects
+                <Link to="/patterns/live" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Screener
                 </Link>
-                <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Playbooks
+                <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pattern Lab
                 </Link>
-                <Link to="/members/alerts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Alerts
+                <Link to="/projects/setup-finder/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Setup Finder
                 </Link>
                 <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Scripts
@@ -52,15 +53,43 @@ const Footer = () => {
               </nav>
             </div>
 
-            {/* Company */}
+            {/* Learn - matches header Research dropdown */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Company</h3>
+              <h3 className="font-semibold mb-4 text-foreground">Learn</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
+                <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pattern Library
+                </Link>
+                <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pattern Quizzes
+                </Link>
+                <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog & Articles
+                </Link>
+              </nav>
+            </div>
+
+            {/* Tools & Company - matches header More dropdown */}
+            <div>
+              <h3 className="font-semibold mb-4 text-foreground">More</h3>
+              <nav className="flex flex-col gap-2">
+                <Link to="/forge" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  MultiScript Converter
+                </Link>
+                <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pip Calculator
+                </Link>
+                <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Risk Calculator
+                </Link>
+                <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Economic Calendar
                 </Link>
                 <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   FAQ
+                </Link>
+                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  About
                 </Link>
               </nav>
             </div>
