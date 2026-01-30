@@ -169,9 +169,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       }
     }
 
-    // Enable autoScale for dynamic price range fitting
+    // Enable autoScale with tighter margins for more sensitive price display
+    // scaleMargins: top/bottom ratio (0 = edge). Smaller values = taller candles.
     chart.priceScale('right').applyOptions({
       autoScale: true,
+      scaleMargins: {
+        top: 0.1,    // 10% padding at top
+        bottom: 0.1, // 10% padding at bottom (80% for price action)
+      },
     });
     
     // Fit content
