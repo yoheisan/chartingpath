@@ -5,9 +5,20 @@ import {
   CandlestickData,
   Time,
   CandlestickSeries,
+  LineSeries,
+  HistogramSeries,
   createSeriesMarkers,
   SeriesMarkerShape,
+  ISeriesApi,
 } from 'lightweight-charts';
+import {
+  calculateEMA,
+  calculateSMA,
+  calculateRSI,
+  calculateMACD,
+  calculateBollingerBands,
+  calculateVWAP,
+} from '@/utils/chartIndicators';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -183,11 +194,13 @@ export default function FullChartViewer({
           },
           rightPriceScale: {
             borderColor: gridColor,
+            visible: true, // Price ruler visible
           },
           timeScale: {
             borderColor: gridColor,
-            timeVisible: true,
+            timeVisible: true, // Time series visible
             secondsVisible: false,
+            visible: true,
           },
           crosshair: {
             mode: 1,
@@ -229,6 +242,81 @@ export default function FullChartViewer({
 
         candleSeries.setData(chartData);
 
+        // === ADD TECHNICAL INDICATORS ===
+        
+        // EMA 20 (fast) - Orange
+        const ema20Data = calculateEMA(bars, 20);
+        if (ema20Data.length > 0) {
+          const ema20Series = chart.addSeries(LineSeries, {
+            color: '#f97316',
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          ema20Series.setData(ema20Data.map(p => ({ time: p.time as Time, value: p.value })));
+        }
+
+        // EMA 50 (slow) - Blue
+        const ema50Data = calculateEMA(bars, 50);
+        if (ema50Data.length > 0) {
+          const ema50Series = chart.addSeries(LineSeries, {
+            color: '#3b82f6',
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          ema50Series.setData(ema50Data.map(p => ({ time: p.time as Time, value: p.value })));
+        }
+
+        // SMA 200 (trend) - Purple
+        const sma200Data = calculateSMA(bars, 200);
+        if (sma200Data.length > 0) {
+          const sma200Series = chart.addSeries(LineSeries, {
+            color: '#8b5cf6',
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          sma200Series.setData(sma200Data.map(p => ({ time: p.time as Time, value: p.value })));
+        }
+
+        // Bollinger Bands (20, 2)
+        const bbData = calculateBollingerBands(bars, 20, 2);
+        if (bbData.length > 0) {
+          // Upper band
+          const bbUpperSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(156, 163, 175, 0.5)',
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          bbUpperSeries.setData(bbData.map(p => ({ time: p.time as Time, value: p.upper })));
+
+          // Lower band
+          const bbLowerSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(156, 163, 175, 0.5)',
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          bbLowerSeries.setData(bbData.map(p => ({ time: p.time as Time, value: p.lower })));
+        }
+
+        // VWAP - Cyan dashed
+        const vwapData = calculateVWAP(bars);
+        if (vwapData.length > 0) {
+          const vwapSeries = chart.addSeries(LineSeries, {
+            color: '#06b6d4',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          vwapSeries.setData(vwapData.map(p => ({ time: p.time as Time, value: p.value })));
+        }
+
+        // Pattern overlays (entry, SL, TP lines)
         visualSpec.overlays.forEach((overlay) => {
           if (overlay.type === 'hline') {
             const color =

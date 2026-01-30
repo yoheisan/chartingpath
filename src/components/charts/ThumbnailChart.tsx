@@ -38,11 +38,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
         horzLines: { color: gridColor },
       },
       rightPriceScale: {
-        visible: false,
+        visible: true, // Price ruler visible
+        borderColor: gridColor,
       },
       timeScale: {
-        visible: false,
-        borderVisible: false,
+        visible: true, // Time series visible
+        borderVisible: true,
+        borderColor: gridColor,
+        timeVisible: false, // Hide time labels for compact view
       },
       crosshair: {
         mode: 0, // disabled
