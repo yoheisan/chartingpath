@@ -103,3 +103,51 @@ export function getOverlayColor(style?: string): string {
     default: return OVERLAY_COLORS.default;
   }
 }
+
+/**
+ * Normalize OHLC bars so that open = previous bar's close.
+ * This ensures consistent candle coloring based on day-to-day price movement:
+ * - Green: close > previous close (price went UP)
+ * - Red: close < previous close (price went DOWN)
+ * 
+ * Without this, raw OHLC data uses intraday opens which can show green candles
+ * during a downtrend if the day closed above its open (but below prior close).
+ */
+export interface NormalizedBar {
+  t: string;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+export function normalizeBarsForConsistentColoring<T extends { t: string; o: number; h: number; l: number; c: number; v: number }>(
+  bars: T[]
+): T[] {
+  if (!bars || bars.length === 0) return bars;
+
+  // Sort chronologically first to ensure correct prev-close logic
+  const sorted = [...bars].sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+
+  const result: T[] = [];
+  let prevClose: number | null = null;
+
+  for (const bar of sorted) {
+    // Use previous bar's close as this bar's open for day-to-day coloring
+    // For first bar, use a tiny offset below close to show as green (neutral)
+    const eps = Math.max(Math.abs(bar.c) * 1e-6, 1e-6);
+    const normalizedOpen = prevClose !== null ? prevClose : bar.c - eps;
+
+    result.push({
+      ...bar,
+      o: normalizedOpen,
+      h: Math.max(bar.h, normalizedOpen, bar.c),
+      l: Math.min(bar.l, normalizedOpen, bar.c),
+    });
+
+    prevClose = bar.c;
+  }
+
+  return result;
+}

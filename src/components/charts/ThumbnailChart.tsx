@@ -11,6 +11,7 @@ import {
   getVolumeColor, 
   getOverlayColor,
   PIVOT_COLORS,
+  normalizeBarsForConsistentColoring,
 } from './chartConstants';
 
 interface ThumbnailChartProps {
@@ -65,8 +66,11 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     // Use unified candlestick colors
     const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
-    // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs, sort)
-    const chartData: CandlestickData[] = bars
+    // Normalize bars for consistent day-to-day coloring (green = up, red = down)
+    const normalizedBars = normalizeBarsForConsistentColoring(bars);
+
+    // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs)
+    const chartData: CandlestickData[] = normalizedBars
       .map((bar) => {
         const ts = Math.floor(new Date(bar.t).getTime() / 1000);
         return {
@@ -84,8 +88,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
           Number.isFinite(d.high) &&
           Number.isFinite(d.low) &&
           Number.isFinite(d.close)
-      )
-      .sort((a, b) => (a.time as number) - (b.time as number));
+      );
 
     candleSeries.setData(chartData);
 
