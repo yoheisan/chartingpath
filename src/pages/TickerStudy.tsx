@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, Search, TrendingUp, TrendingDown, Target, Shield, 
   Clock, BarChart3, List, CalendarDays, CheckCircle, XCircle, Timer,
-  ExternalLink, ChevronDown, ChevronUp, Filter
+  ExternalLink, ChevronDown, ChevronUp, Filter, X
 } from 'lucide-react';
 import {
   Table,
@@ -24,6 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
@@ -106,39 +112,38 @@ function toYahooSymbol(symbol: string, category: string): string {
 export default function TickerStudy() {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  
   const [loading, setLoading] = useState(true);
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [livePatterns, setLivePatterns] = useState<LivePattern[]>([]);
   const [priceData, setPriceData] = useState<CompressedBar[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<HistoricalPattern | LivePattern | null>(null);
-  const [patternFilter, setPatternFilter] = useState<string>('all');
-  const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
-  const [expandedView, setExpandedView] = useState(false);
-
-  const displaySymbol = symbol ? normalizeSymbol(decodeURIComponent(symbol)) : '';
   
-  // Fetch historical patterns and price data
+  // Multi-select pattern filter
+  const [selectedPatternTypes, setSelectedPatternTypes] = useState<string[]>([]);
+  const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
+
+  const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
+  const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
+
   useEffect(() => {
     if (!symbol) return;
 
     const fetchData = async () => {
       setLoading(true);
-      const decodedSymbol = decodeURIComponent(symbol);
-      const normalized = normalizeSymbol(decodedSymbol);
-
       try {
-        // Fetch historical patterns - try multiple symbol formats
+        const normalized = normalizeSymbol(decodedSymbol);
+        
+        // Build symbol variants for querying
         const symbolVariants = [
+          decodedSymbol,
           normalized,
           `${normalized}=X`,
           `${normalized}=F`,
           `${normalized}-USD`,
           `${normalized}/USD`,
-          decodedSymbol,
         ];
 
+        // Fetch historical patterns
         const { data: historicalData, error: historicalError } = await supabase
           .from('historical_pattern_occurrences')
           .select('*')
@@ -149,13 +154,39 @@ export default function TickerStudy() {
         if (historicalError) {
           console.error('Error fetching historical patterns:', historicalError);
         } else if (historicalData) {
-          // Map database JSON to typed interface
-          const mapped: HistoricalPattern[] = historicalData.map((row: any) => ({
-            ...row,
-            visual_spec: row.visual_spec as VisualSpec,
-            bars: row.bars as CompressedBar[],
+          const mappedHistorical: HistoricalPattern[] = historicalData.map((p: any) => ({
+            id: p.id,
+            symbol: p.symbol,
+            asset_type: p.asset_type,
+            pattern_id: p.pattern_id,
+            pattern_name: p.pattern_name,
+            direction: p.direction as 'bullish' | 'bearish',
+            timeframe: p.timeframe,
+            detected_at: p.detected_at,
+            pattern_start_date: p.pattern_start_date,
+            pattern_end_date: p.pattern_end_date,
+            entry_price: p.entry_price,
+            stop_loss_price: p.stop_loss_price,
+            take_profit_price: p.take_profit_price,
+            risk_reward_ratio: p.risk_reward_ratio,
+            quality_score: p.quality_score || 'B',
+            quality_reasons: p.quality_reasons || [],
+            outcome: p.outcome,
+            outcome_price: p.outcome_price,
+            outcome_date: p.outcome_date,
+            outcome_pnl_percent: p.outcome_pnl_percent,
+            bars_to_outcome: p.bars_to_outcome,
+            visual_spec: p.visual_spec as VisualSpec,
+            bars: (p.bars || []).map((b: any) => ({
+              t: b.date || b.t,
+              o: b.open ?? b.o,
+              h: b.high ?? b.h,
+              l: b.low ?? b.l,
+              c: b.close ?? b.c,
+              v: b.volume ?? b.v ?? 0,
+            })),
           }));
-          setHistoricalPatterns(mapped);
+          setHistoricalPatterns(mappedHistorical);
         }
 
         // Fetch live patterns
@@ -169,16 +200,33 @@ export default function TickerStudy() {
         if (liveError) {
           console.error('Error fetching live patterns:', liveError);
         } else if (liveData) {
-          const mappedLive: LivePattern[] = liveData.map((row: any) => ({
-            ...row,
-            visual_spec: row.visual_spec as VisualSpec,
-            bars: row.bars as CompressedBar[],
+          const mappedLive: LivePattern[] = liveData.map((p: any) => ({
+            id: p.id,
+            instrument: p.instrument,
+            pattern_id: p.pattern_id,
+            pattern_name: p.pattern_name,
+            direction: p.direction,
+            entry_price: p.entry_price,
+            stop_loss_price: p.stop_loss_price,
+            take_profit_price: p.take_profit_price,
+            risk_reward_ratio: p.risk_reward_ratio,
+            quality_score: p.quality_score || 'B',
+            visual_spec: p.visual_spec as VisualSpec,
+            bars: (p.bars || []).map((b: any) => ({
+              t: b.date || b.t,
+              o: b.open ?? b.o,
+              h: b.high ?? b.h,
+              l: b.low ?? b.l,
+              c: b.close ?? b.c,
+              v: b.volume ?? b.v ?? 0,
+            })),
+            first_detected_at: p.first_detected_at,
+            status: p.status,
           }));
           setLivePatterns(mappedLive);
         }
 
         // Fetch historical price data for chart (limit to 200 bars for speed)
-        // Try exact symbol match first for speed
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData = null;
         
@@ -207,11 +255,11 @@ export default function TickerStudy() {
               c: Number(p.close),
               v: Number(p.volume || 0),
             }))
-            .reverse(); // Reverse to ascending order for chart
+            .reverse();
           setPriceData(bars);
         }
       } catch (err) {
-        console.error('Error loading ticker data:', err);
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
@@ -220,12 +268,13 @@ export default function TickerStudy() {
     fetchData();
   }, [symbol]);
 
-  // Filter patterns
+  // Filter patterns based on multi-select and outcome
   const filteredHistoricalPatterns = useMemo(() => {
     let results = historicalPatterns;
     
-    if (patternFilter !== 'all') {
-      results = results.filter(p => p.pattern_id === patternFilter);
+    // Multi-select pattern filter
+    if (selectedPatternTypes.length > 0) {
+      results = results.filter(p => selectedPatternTypes.includes(p.pattern_id));
     }
     
     if (outcomeFilter !== 'all') {
@@ -233,24 +282,39 @@ export default function TickerStudy() {
     }
     
     return results;
-  }, [historicalPatterns, patternFilter, outcomeFilter]);
+  }, [historicalPatterns, selectedPatternTypes, outcomeFilter]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const withOutcome = historicalPatterns.filter(p => p.outcome && p.outcome !== 'pending');
+  // Calculate stats from FILTERED patterns (dynamic)
+  const filteredStats = useMemo(() => {
+    const withOutcome = filteredHistoricalPatterns.filter(p => p.outcome && p.outcome !== 'pending');
     const wins = withOutcome.filter(p => p.outcome === 'hit_tp');
     const losses = withOutcome.filter(p => p.outcome === 'hit_sl');
     const totalPnl = withOutcome.reduce((sum, p) => sum + (p.outcome_pnl_percent || 0), 0);
     
+    // Calculate profit factor
+    const totalWinPnl = wins.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0);
+    const totalLossPnl = losses.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0);
+    const profitFactor = totalLossPnl > 0 ? totalWinPnl / totalLossPnl : totalWinPnl > 0 ? Infinity : 0;
+    
+    // Calculate expectancy (average R-multiple approximation)
+    const avgWin = wins.length > 0 ? wins.reduce((sum, p) => sum + (p.outcome_pnl_percent || 0), 0) / wins.length : 0;
+    const avgLoss = losses.length > 0 ? losses.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0) / losses.length : 0;
+    const winRate = withOutcome.length > 0 ? wins.length / withOutcome.length : 0;
+    const expectancy = (winRate * avgWin) - ((1 - winRate) * avgLoss);
+    
     return {
-      totalPatterns: historicalPatterns.length,
+      totalPatterns: filteredHistoricalPatterns.length,
       activePatterns: livePatterns.length,
       winRate: withOutcome.length > 0 ? (wins.length / withOutcome.length * 100) : 0,
       avgPnl: withOutcome.length > 0 ? totalPnl / withOutcome.length : 0,
+      totalPnl,
       wins: wins.length,
       losses: losses.length,
+      profitFactor: Number.isFinite(profitFactor) ? profitFactor : 0,
+      expectancy,
+      sampleSize: withOutcome.length,
     };
-  }, [historicalPatterns, livePatterns]);
+  }, [filteredHistoricalPatterns, livePatterns]);
 
   // Unique pattern types for filter
   const patternTypes = useMemo(() => {
@@ -260,6 +324,18 @@ export default function TickerStudy() {
 
   const handleSymbolSelect = (newSymbol: string, name: string, category: string) => {
     navigate(`/study/${encodeURIComponent(newSymbol)}`);
+  };
+
+  const togglePatternType = (patternId: string) => {
+    setSelectedPatternTypes(prev => 
+      prev.includes(patternId)
+        ? prev.filter(id => id !== patternId)
+        : [...prev, patternId]
+    );
+  };
+
+  const clearPatternFilter = () => {
+    setSelectedPatternTypes([]);
   };
 
   const getOutcomeIcon = (outcome: string | null) => {
@@ -337,48 +413,6 @@ export default function TickerStudy() {
         />
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{stats.totalPatterns}</p>
-            <p className="text-xs text-muted-foreground">Historical Patterns</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-primary">{stats.activePatterns}</p>
-            <p className="text-xs text-muted-foreground">Active Now</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-500">{stats.winRate.toFixed(1)}%</p>
-            <p className="text-xs text-muted-foreground">Win Rate</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className={`text-2xl font-bold ${stats.avgPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {stats.avgPnl >= 0 ? '+' : ''}{stats.avgPnl.toFixed(2)}%
-            </p>
-            <p className="text-xs text-muted-foreground">Avg P&L</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-500">{stats.wins}</p>
-            <p className="text-xs text-muted-foreground">Wins</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">{stats.losses}</p>
-            <p className="text-xs text-muted-foreground">Losses</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Price Chart Section */}
       {priceData.length > 0 && (
         <Card>
@@ -412,6 +446,74 @@ export default function TickerStudy() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dynamic Stats Cards - Below Chart, Updates with Filters */}
+      <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Performance Metrics
+              {selectedPatternTypes.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  Filtered: {selectedPatternTypes.length} pattern{selectedPatternTypes.length > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </CardTitle>
+            {filteredStats.sampleSize > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Based on {filteredStats.sampleSize} resolved trades
+              </p>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold">{filteredStats.totalPatterns}</p>
+              <p className="text-xs text-muted-foreground">Patterns</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-primary">{filteredStats.activePatterns}</p>
+              <p className="text-xs text-muted-foreground">Active Now</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.winRate >= 50 ? 'text-green-500' : 'text-amber-500'}`}>
+                {filteredStats.winRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.avgPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.avgPnl >= 0 ? '+' : ''}{filteredStats.avgPnl.toFixed(2)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Avg P&L</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.totalPnl >= 0 ? '+' : ''}{filteredStats.totalPnl.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Total P&L</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.profitFactor >= 1 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.profitFactor.toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground">Profit Factor</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-green-500">{filteredStats.wins}</p>
+              <p className="text-xs text-muted-foreground">Wins</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-red-500">{filteredStats.losses}</p>
+              <p className="text-xs text-muted-foreground">Losses</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Active Patterns */}
       {livePatterns.length > 0 && (
         <Card className="border-primary/50">
           <CardHeader className="pb-2">
@@ -469,7 +571,7 @@ export default function TickerStudy() {
         </Card>
       )}
 
-      {/* Historical Patterns Section */}
+      {/* Historical Patterns Section with Multi-Select Filter */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -477,26 +579,72 @@ export default function TickerStudy() {
               <CalendarDays className="h-5 w-5" />
               Historical Pattern Occurrences
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Select value={patternFilter} onValueChange={setPatternFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="All Patterns" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Patterns</SelectItem>
-                  {patternTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {PATTERN_DISPLAY_NAMES[type] || type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Multi-select Pattern Filter */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Filter className="h-4 w-4" />
+                    {selectedPatternTypes.length === 0 
+                      ? 'All Patterns' 
+                      : `${selectedPatternTypes.length} Selected`}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-64 p-3 bg-popover border border-border shadow-lg z-50" 
+                  align="end"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Filter by Pattern</p>
+                      {selectedPatternTypes.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs"
+                          onClick={clearPatternFilter}
+                        >
+                          Clear all
+                        </Button>
+                      )}
+                    </div>
+                    <ScrollArea className="h-[200px]">
+                      <div className="space-y-2">
+                        {patternTypes.map((patternId) => (
+                          <div 
+                            key={patternId} 
+                            className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 cursor-pointer"
+                            onClick={() => togglePatternType(patternId)}
+                          >
+                            <Checkbox 
+                              id={patternId}
+                              checked={selectedPatternTypes.includes(patternId)}
+                              onCheckedChange={() => togglePatternType(patternId)}
+                            />
+                            <label 
+                              htmlFor={patternId} 
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {PATTERN_DISPLAY_NAMES[patternId] || patternId}
+                            </label>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {historicalPatterns.filter(p => p.pattern_id === patternId).length}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Outcome Filter */}
               <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="All Outcomes" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover border border-border shadow-lg z-50">
                   <SelectItem value="all">All Outcomes</SelectItem>
                   <SelectItem value="hit_tp">Target Hit</SelectItem>
                   <SelectItem value="hit_sl">Stop Hit</SelectItem>
@@ -506,6 +654,23 @@ export default function TickerStudy() {
               </Select>
             </div>
           </div>
+
+          {/* Active Filter Tags */}
+          {selectedPatternTypes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {selectedPatternTypes.map(patternId => (
+                <Badge 
+                  key={patternId} 
+                  variant="secondary" 
+                  className="gap-1 cursor-pointer hover:bg-destructive/20"
+                  onClick={() => togglePatternType(patternId)}
+                >
+                  {PATTERN_DISPLAY_NAMES[patternId] || patternId}
+                  <X className="h-3 w-3" />
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -614,7 +779,7 @@ export default function TickerStudy() {
               <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No Historical Patterns Found</p>
               <p className="text-sm">
-                {patternFilter !== 'all' || outcomeFilter !== 'all' 
+                {selectedPatternTypes.length > 0 || outcomeFilter !== 'all' 
                   ? 'Try adjusting your filters' 
                   : 'Pattern history will populate as patterns are detected and resolved'}
               </p>
