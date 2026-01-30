@@ -30,6 +30,17 @@ const STATIC_ARTICLE_SLUGS = new Set([
   'fear-and-greed',
   'trading-journal',
   'trading-strategies-guide',
+  // Strategy articles
+  'strategies/scalping',
+  'strategies/day-trading',
+  'strategies/trend-following',
+  'strategies/breakout',
+  'strategies/mean-reversion',
+  'strategies/momentum',
+  'strategies/swing-trading',
+  'strategies/position-trading',
+  'strategies/macd-strategy',
+  'strategies/bollinger-bands',
 ]);
 
 /**
@@ -73,6 +84,17 @@ export function usePrefetchArticle() {
         'fear-and-greed': () => import('@/pages/blog/FearAndGreed'),
         'trading-journal': () => import('@/pages/blog/TradingJournal'),
         'trading-strategies-guide': () => import('@/pages/blog/TradingStrategiesGuide'),
+        // Strategy articles
+        'strategies/scalping': () => import('@/pages/strategies/ScalpingStrategy'),
+        'strategies/day-trading': () => import('@/pages/strategies/DayTradingStrategy'),
+        'strategies/trend-following': () => import('@/pages/strategies/TrendFollowingStrategy'),
+        'strategies/breakout': () => import('@/pages/strategies/BreakoutStrategy'),
+        'strategies/mean-reversion': () => import('@/pages/strategies/MeanReversionStrategy'),
+        'strategies/momentum': () => import('@/pages/strategies/MomentumStrategy'),
+        'strategies/swing-trading': () => import('@/pages/strategies/SwingTradingStrategy'),
+        'strategies/position-trading': () => import('@/pages/strategies/PositionTradingStrategy'),
+        'strategies/macd-strategy': () => import('@/pages/strategies/MACDStrategy'),
+        'strategies/bollinger-bands': () => import('@/pages/strategies/BollingerBandsStrategy'),
       };
       
       const prefetchFn = prefetchMap[slug];

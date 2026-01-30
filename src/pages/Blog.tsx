@@ -207,10 +207,101 @@ const blogPosts = [
     category: "Psychology",
     icon: BookOpen,
     readTime: "8 min read"
+  },
+  // Trading Strategies
+  {
+    id: "strategies/scalping",
+    title: "Scalping Strategy: High-Frequency Trading Guide",
+    description: "Master rapid-fire trading with sub-minute entries, tight stops, and high win-rate execution across liquid markets.",
+    category: "Trading Strategies",
+    icon: TrendingUp,
+    readTime: "18 min read",
+    skillLevels: ["Intermediate", "Advanced", "Professional"]
+  },
+  {
+    id: "strategies/day-trading",
+    title: "Day Trading: Complete Intraday Strategy Guide",
+    description: "Close all positions by market close with Opening Range Breakouts, VWAP pullbacks, and momentum entries.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "20 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/trend-following",
+    title: "Trend Following: Ride Major Market Moves",
+    description: "Systematic approach to capturing extended trends using moving averages, ATR stops, and position scaling.",
+    category: "Trading Strategies",
+    icon: TrendingUp,
+    readTime: "22 min read",
+    skillLevels: ["Intermediate", "Advanced", "Professional"]
+  },
+  {
+    id: "strategies/breakout",
+    title: "Breakout Trading: Capture Explosive Moves",
+    description: "Identify and trade powerful breakouts from consolidation patterns with volume confirmation and retest entries.",
+    category: "Trading Strategies",
+    icon: Target,
+    readTime: "18 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/mean-reversion",
+    title: "Mean Reversion: Counter-Trend Trading Guide",
+    description: "Trade statistical extremes back to equilibrium using RSI, Bollinger Bands, and standard deviation analysis.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "20 min read",
+    skillLevels: ["Intermediate", "Advanced", "Professional"]
+  },
+  {
+    id: "strategies/momentum",
+    title: "Momentum Trading: Ride Strong Price Moves",
+    description: "Capture accelerating price action using RSI, MACD histogram, and relative strength analysis.",
+    category: "Trading Strategies",
+    icon: TrendingUp,
+    readTime: "19 min read",
+    skillLevels: ["Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/swing-trading",
+    title: "Swing Trading: Multi-Day Position Strategy",
+    description: "Hold positions for days to weeks capturing medium-term trends with optimal entry timing.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "21 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/position-trading",
+    title: "Position Trading: Long-Term Trend Strategy",
+    description: "Build wealth through weeks-to-months positions using weekly charts and fundamental confluence.",
+    category: "Trading Strategies",
+    icon: Target,
+    readTime: "23 min read",
+    skillLevels: ["Intermediate", "Advanced", "Professional"]
+  },
+  {
+    id: "strategies/macd-strategy",
+    title: "MACD Trading Strategy: Signal Line Crossovers",
+    description: "Master MACD histogram analysis, zero-line crosses, and divergence setups for trend entries.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "17 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/bollinger-bands",
+    title: "Bollinger Bands Strategy: Volatility Trading",
+    description: "Trade band squeezes, walks, and mean reversion using standard deviation envelopes.",
+    category: "Trading Strategies",
+    icon: TrendingUp,
+    readTime: "18 min read",
+    skillLevels: ["Intermediate", "Advanced"]
   }
 ];
 
-const categories = ["All", "Chart Patterns", "Technical Analysis", "Price Action", "Risk Management", "Psychology"];
+const categories = ["All", "Chart Patterns", "Technical Analysis", "Price Action", "Risk Management", "Psychology", "Trading Strategies"];
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
