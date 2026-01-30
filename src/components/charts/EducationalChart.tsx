@@ -97,14 +97,15 @@ export const EducationalChart = ({
     canvas.style.height = `${height}px`;
     ctx.scale(dpr, dpr);
 
-    // Theme colors (dark mode optimized)
+    // Theme colors (dark mode optimized) - using unified chart colors
+    // Green: #22c55e = hsl(142, 71%, 45%), Red: #ef4444 = hsl(0, 84%, 60%)
     const colors = {
       background: "hsl(223, 39%, 4%)",
       grid: "hsl(215, 15%, 20%)",
       text: "hsl(217, 10%, 65%)",
       textBright: "hsl(210, 40%, 98%)",
-      bullish: "hsl(142, 76%, 36%)",
-      bearish: "hsl(0, 84%, 60%)",
+      bullish: "#22c55e",  // Unified green for up candles
+      bearish: "#ef4444",  // Unified red for down candles
       volumeAvg: "hsl(45, 93%, 47%)",
       highlight: "hsla(217, 91%, 60%, 0.3)",
       arrow: "hsl(217, 91%, 60%)",
