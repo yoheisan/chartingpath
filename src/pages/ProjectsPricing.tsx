@@ -4,68 +4,85 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Zap, TrendingUp, Shield, Target, ArrowRight, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { PLANS_CONFIG } from "@/config/plans";
+import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
 
 const ProjectsPricing = () => {
   const { t } = useTranslation();
 
-  const tiers = [
+  const tiers: Array<{
+    key: PlanTier;
+    name: string;
+    price: number;
+    config: typeof PLANS_CONFIG.tiers.FREE;
+    popular: boolean;
+    cta: string;
+    bestFor: string;
+  }> = [
     {
-      key: 'FREE' as const,
+      key: 'FREE',
       name: 'Free',
       price: 0,
       config: PLANS_CONFIG.tiers.FREE,
       popular: false,
-      cta: t('projects.pricing.cta.free'),
-      bestFor: t('projects.pricing.bestFor.free'),
+      cta: t('projects.pricing.cta.free', 'Start Free'),
+      bestFor: TIER_DISPLAY.FREE.bestFor,
     },
     {
-      key: 'PLUS' as const,
+      key: 'LITE',
+      name: 'Lite',
+      price: 12,
+      config: PLANS_CONFIG.tiers.LITE,
+      popular: false,
+      cta: 'Get Lite',
+      bestFor: TIER_DISPLAY.LITE.bestFor,
+    },
+    {
+      key: 'PLUS',
       name: 'Plus',
       price: 29,
       config: PLANS_CONFIG.tiers.PLUS,
       popular: false,
-      cta: t('projects.pricing.cta.plus'),
-      bestFor: t('projects.pricing.bestFor.plus'),
+      cta: t('projects.pricing.cta.plus', 'Get Plus'),
+      bestFor: TIER_DISPLAY.PLUS.bestFor,
     },
     {
-      key: 'PRO' as const,
+      key: 'PRO',
       name: 'Pro',
       price: 79,
       config: PLANS_CONFIG.tiers.PRO,
       popular: true,
-      cta: t('projects.pricing.cta.pro'),
-      bestFor: t('projects.pricing.bestFor.pro'),
+      cta: t('projects.pricing.cta.pro', 'Go Pro'),
+      bestFor: TIER_DISPLAY.PRO.bestFor,
     },
     {
-      key: 'TEAM' as const,
+      key: 'TEAM',
       name: 'Team',
       price: 199,
       config: PLANS_CONFIG.tiers.TEAM,
       popular: false,
-      cta: t('projects.pricing.cta.team'),
-      bestFor: t('projects.pricing.bestFor.team'),
+      cta: t('projects.pricing.cta.team', 'Contact Sales'),
+      bestFor: TIER_DISPLAY.TEAM.bestFor,
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16 max-w-6xl">
+      <div className="container mx-auto px-4 py-16 max-w-7xl">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <Badge variant="secondary" className="mb-4">
-            Trading Projects
+            Beta Pricing
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
-            {t('projects.pricing.headline')}
+            {t('projects.pricing.headline', 'Simple, Credit-Based Pricing')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            {t('projects.pricing.subheadline')}
+            {t('projects.pricing.subheadline', 'Credits scale with symbols × history × patterns. Start free, upgrade as you grow.')}
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid gap-6 lg:grid-cols-4 mb-16">
+        {/* Pricing Cards - 5 columns on large screens */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-16">
           {tiers.map((tier) => (
             <Card 
               key={tier.key} 
@@ -84,77 +101,69 @@ const ProjectsPricing = () => {
               )}
 
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
-                <div className="mt-4">
+                <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
+                <div className="mt-3">
                   {tier.price === 0 ? (
-                    <div className="text-4xl font-bold text-foreground">Free</div>
+                    <div className="text-3xl font-bold text-foreground">Free</div>
                   ) : (
-                    <div className="text-4xl font-bold text-foreground">
+                    <div className="text-3xl font-bold text-foreground">
                       ${tier.price}
-                      <span className="text-lg text-muted-foreground font-normal">/mo</span>
+                      <span className="text-sm text-muted-foreground font-normal">/mo</span>
                     </div>
                   )}
                 </div>
-                <CardDescription className="text-sm mt-2">
+                <CardDescription className="text-xs mt-2">
                   {tier.bestFor}
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col">
-                {/* Key Limits */}
-                <div className="space-y-3 mb-6">
+                {/* Key Limits - Simplified to credits only */}
+                <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('projects.pricing.features.monthlyCredits')}</span>
-                    <span className="font-semibold text-foreground">{tier.config.monthlyCredits}</span>
+                    <span className="text-muted-foreground">Credits</span>
+                    <span className="font-semibold text-foreground">{tier.config.monthlyCredits}/mo</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('projects.pricing.features.dailyRuns')}</span>
-                    <span className="font-semibold text-foreground">{tier.config.dailyRunCap}/day</span>
+                    <span className="text-muted-foreground">Alerts</span>
+                    <span className="font-semibold text-foreground">{tier.config.maxActiveAlerts}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('projects.pricing.features.maxInstruments')}</span>
+                    <span className="text-muted-foreground">Instruments</span>
                     <span className="font-semibold text-foreground">
                       {tier.config.projects.setup_finder.maxInstruments}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('projects.pricing.features.maxLookback')}</span>
+                    <span className="text-muted-foreground">Lookback</span>
                     <span className="font-semibold text-foreground">
                       {tier.config.projects.setup_finder.maxLookbackYears}y
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('projects.pricing.features.activeAlerts')}</span>
-                    <span className="font-semibold text-foreground">{tier.config.maxActiveAlerts}</span>
-                  </div>
                 </div>
 
                 {/* Project Features */}
-                <div className="space-y-2 mb-6">
+                <div className="space-y-1.5 mb-4 text-xs">
                   <div className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-sm text-muted-foreground">Setup Finder</span>
+                    <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Setup Finder</span>
                   </div>
                   {tier.config.projects.pattern_lab.enabled !== false && (
                     <div className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <span className="text-sm text-muted-foreground">Pattern Lab</span>
+                      <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground">Pattern Lab</span>
                     </div>
                   )}
                   <div className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-sm text-muted-foreground">Portfolio Checkup</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-sm text-muted-foreground">Portfolio Sim</span>
+                    <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Portfolio Tools</span>
                   </div>
                 </div>
 
                 {/* CTA */}
                 <div className="mt-auto">
                   {tier.key === 'TEAM' ? (
-                    <Button variant="outline" className="w-full" asChild>
+                    <Button variant="outline" className="w-full" size="sm" asChild>
                       <a href="mailto:team@chartingpath.com">
                         <Mail className="h-4 w-4 mr-2" />
                         {tier.cta}
@@ -164,6 +173,7 @@ const ProjectsPricing = () => {
                     <Button 
                       variant={tier.popular ? "default" : "outline"} 
                       className="w-full"
+                      size="sm"
                       asChild
                     >
                       <Link to="/auth">
@@ -188,16 +198,16 @@ const ProjectsPricing = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              {t('projects.pricing.creditsExplained')}. {t('projects.pricing.estimatedBefore')}
+              {t('projects.pricing.creditsExplained', 'Credits scale with symbols × history × patterns × timeframe')}. {t('projects.pricing.estimatedBefore', 'Credits are estimated before you run.')}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-muted-foreground">{t('projects.pricing.examples.setupFinder50')}</span>
+                <span className="text-muted-foreground">{t('projects.pricing.examples.setupFinder50', 'Setup Finder (50 symbols, 4H, 2y, 6 patterns) ≈ 17 credits')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Target className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-muted-foreground">{t('projects.pricing.examples.patternLab10')}</span>
+                <span className="text-muted-foreground">{t('projects.pricing.examples.patternLab10', 'Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits')}</span>
               </div>
             </div>
           </CardContent>
@@ -208,7 +218,7 @@ const ProjectsPricing = () => {
           <Card className="border-border/50 bg-card/50 text-center p-6">
             <Shield className="h-8 w-8 text-primary mx-auto mb-3" />
             <h3 className="font-semibold text-foreground mb-1">
-              {t('projects.pricing.trust.execution')}
+              {t('projects.pricing.trust.execution', 'Execution Assumptions Transparency')}
             </h3>
             <p className="text-sm text-muted-foreground">
               Every backtest includes documented assumptions
@@ -217,7 +227,7 @@ const ProjectsPricing = () => {
           <Card className="border-border/50 bg-card/50 text-center p-6">
             <Zap className="h-8 w-8 text-primary mx-auto mb-3" />
             <h3 className="font-semibold text-foreground mb-1">
-              {t('projects.pricing.trust.bracket')}
+              {t('projects.pricing.trust.bracket', 'Deterministic bracket engine (v1.0.0)')}
             </h3>
             <p className="text-sm text-muted-foreground">
               Consistent SL/TP calculation across all features
@@ -226,7 +236,7 @@ const ProjectsPricing = () => {
           <Card className="border-border/50 bg-card/50 text-center p-6">
             <Target className="h-8 w-8 text-primary mx-auto mb-3" />
             <h3 className="font-semibold text-foreground mb-1">
-              {t('projects.pricing.trust.alerts')}
+              {t('projects.pricing.trust.alerts', 'Alerts include SL/TP & target reached')}
             </h3>
             <p className="text-sm text-muted-foreground">
               Get notified when price hits your targets
