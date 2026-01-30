@@ -72,6 +72,7 @@ import {
   INDICATOR_COLORS,
   PIVOT_COLORS,
   normalizeBarsForConsistentColoring,
+  calculateOptimalPriceMargins,
 } from './chartConstants';
 
 // Indicator settings interface
@@ -493,6 +494,14 @@ export default function FullChartViewer({
             console.warn('Failed to render pivot markers:', e);
           }
         }
+        // Calculate optimal price margins based on data volatility
+        // Ensures charts never look "flat" regardless of actual price movement
+        const hasOverlays = visualSpec?.overlays && visualSpec.overlays.length > 0;
+        const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
+        chart.priceScale('right').applyOptions({
+          autoScale: true,
+          scaleMargins: optimalMargins,
+        });
 
         chart.timeScale().fitContent();
 

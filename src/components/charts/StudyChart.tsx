@@ -32,6 +32,7 @@ import {
   getVolumeColor,
   INDICATOR_COLORS,
   normalizeBarsForConsistentColoring,
+  calculateOptimalPriceMargins,
 } from './chartConstants';
 
 export interface IndicatorSettings {
@@ -278,6 +279,14 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         vwapSeries.setData(vwapData.map((p) => ({ time: p.time as Time, value: p.value })));
       }
     }
+
+    // Calculate optimal price margins based on data volatility
+    // Ensures charts never look "flat" regardless of actual price movement
+    const optimalMargins = calculateOptimalPriceMargins(bars, false);
+    chart.priceScale('right').applyOptions({
+      autoScale: true,
+      scaleMargins: optimalMargins,
+    });
 
     // Fit content
     chart.timeScale().fitContent();

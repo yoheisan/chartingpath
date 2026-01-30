@@ -12,6 +12,7 @@ import {
   getOverlayColor,
   PIVOT_COLORS,
   normalizeBarsForConsistentColoring,
+  calculateOptimalPriceMargins,
 } from './chartConstants';
 
 interface ThumbnailChartProps {
@@ -172,14 +173,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       }
     }
 
-    // Enable autoScale with tighter margins for more sensitive price display
-    // scaleMargins: top/bottom ratio (0 = edge). Smaller values = taller candles.
+    // Calculate optimal price margins based on actual data volatility
+    // This ensures charts never look "flat" - low volatility = tighter margins
+    const hasOverlays = visualSpec?.overlays && visualSpec.overlays.length > 0;
+    const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
+    
     chart.priceScale('right').applyOptions({
       autoScale: true,
-      scaleMargins: {
-        top: 0.1,    // 10% padding at top
-        bottom: 0.1, // 10% padding at bottom (80% for price action)
-      },
+      scaleMargins: optimalMargins,
     });
     
     // Fit content
