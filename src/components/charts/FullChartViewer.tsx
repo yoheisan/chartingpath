@@ -71,6 +71,7 @@ import {
   getOverlayColor,
   INDICATOR_COLORS,
   PIVOT_COLORS,
+  normalizeBarsForConsistentColoring,
 } from './chartConstants';
 
 // Indicator settings interface
@@ -301,7 +302,10 @@ export default function FullChartViewer({
         // Use unified candlestick colors
         const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
-        const chartData: CandlestickData[] = bars
+        // Normalize bars for consistent day-to-day coloring (green = up, red = down)
+        const normalizedBars = normalizeBarsForConsistentColoring(bars);
+
+        const chartData: CandlestickData[] = normalizedBars
           .map((bar) => {
             const ts = Math.floor(new Date(bar.t).getTime() / 1000);
             return {
@@ -319,8 +323,7 @@ export default function FullChartViewer({
               Number.isFinite(d.high) &&
               Number.isFinite(d.low) &&
               Number.isFinite(d.close)
-          )
-          .sort((a, b) => (a.time as number) - (b.time as number));
+          );
 
         candleSeries.setData(chartData);
 

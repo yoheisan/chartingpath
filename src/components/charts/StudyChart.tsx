@@ -31,6 +31,7 @@ import {
   VOLUME_SCALE_MARGINS, 
   getVolumeColor,
   INDICATOR_COLORS,
+  normalizeBarsForConsistentColoring,
 } from './chartConstants';
 
 export interface IndicatorSettings {
@@ -143,8 +144,11 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
     // Use unified candlestick colors
     const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
+    // Normalize bars for consistent day-to-day coloring (green = up, red = down)
+    const normalizedBars = normalizeBarsForConsistentColoring(bars);
+
     // Transform bars to lightweight-charts format
-    const chartData: CandlestickData[] = bars
+    const chartData: CandlestickData[] = normalizedBars
       .map((bar) => {
         const ts = Math.floor(new Date(bar.t).getTime() / 1000);
         return {
@@ -162,8 +166,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
           Number.isFinite(d.high) &&
           Number.isFinite(d.low) &&
           Number.isFinite(d.close)
-      )
-      .sort((a, b) => (a.time as number) - (b.time as number));
+      );
 
     candleSeries.setData(chartData);
 
