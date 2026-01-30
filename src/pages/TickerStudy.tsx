@@ -8,8 +8,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, Search, TrendingUp, TrendingDown, Target, Shield, 
   Clock, BarChart3, List, CalendarDays, CheckCircle, XCircle, Timer,
-  ExternalLink, ChevronDown, ChevronUp, Filter, X
+  ExternalLink, ChevronDown, ChevronUp, Filter, X, ChevronRight
 } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Table,
   TableBody,
@@ -107,6 +112,84 @@ function toYahooSymbol(symbol: string, category: string): string {
     default:
       return normalized;
   }
+}
+
+// Active Patterns Accordion Component
+interface ActivePatternsAccordionProps {
+  livePatterns: LivePattern[];
+  onSelectPattern: (pattern: LivePattern) => void;
+}
+
+function ActivePatternsAccordion({ livePatterns, onSelectPattern }: ActivePatternsAccordionProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <Card className="border-primary/50">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <CardTitle className="text-lg">
+                  Active Patterns ({livePatterns.length})
+                </CardTitle>
+              </div>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {livePatterns.map((pattern) => (
+                <Card 
+                  key={pattern.id} 
+                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => onSelectPattern(pattern)}
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Badge variant={pattern.direction === 'bullish' ? 'default' : 'destructive'}>
+                        {pattern.direction === 'bullish' ? (
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 mr-1" />
+                        )}
+                        {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
+                      </Badge>
+                      <Badge variant="outline">{pattern.quality_score}</Badge>
+                    </div>
+                    <div className="h-24">
+                      <ThumbnailChart 
+                        bars={pattern.bars}
+                        visualSpec={pattern.visual_spec}
+                        height={96}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">Entry</p>
+                        <p className="font-medium">${pattern.entry_price.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Target</p>
+                        <p className="font-medium text-green-500">${pattern.take_profit_price.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Stop</p>
+                        <p className="font-medium text-red-500">${pattern.stop_loss_price.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
 }
 
 export default function TickerStudy() {
@@ -448,62 +531,12 @@ export default function TickerStudy() {
       )}
 
 
-      {/* Active Patterns */}
+      {/* Active Patterns - Collapsible Accordion */}
       {livePatterns.length > 0 && (
-        <Card className="border-primary/50">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <CardTitle className="text-lg">Active Patterns</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {livePatterns.map((pattern) => (
-                <Card 
-                  key={pattern.id} 
-                  className="cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => setSelectedPattern(pattern as any)}
-                >
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Badge variant={pattern.direction === 'bullish' ? 'default' : 'destructive'}>
-                        {pattern.direction === 'bullish' ? (
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 mr-1" />
-                        )}
-                        {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
-                      </Badge>
-                      <Badge variant="outline">{pattern.quality_score}</Badge>
-                    </div>
-                    <div className="h-24">
-                      <ThumbnailChart 
-                        bars={pattern.bars}
-                        visualSpec={pattern.visual_spec}
-                        height={96}
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <p className="text-muted-foreground">Entry</p>
-                        <p className="font-medium">${pattern.entry_price.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Target</p>
-                        <p className="font-medium text-green-500">${pattern.take_profit_price.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Stop</p>
-                        <p className="font-medium text-red-500">${pattern.stop_loss_price.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ActivePatternsAccordion 
+          livePatterns={livePatterns} 
+          onSelectPattern={(pattern) => setSelectedPattern(pattern as any)} 
+        />
       )}
 
       {/* Performance Metrics - Right above Historical Patterns for immediate filter feedback */}
