@@ -101,6 +101,7 @@ const TradingJournal = lazy(() => import("./pages/blog/TradingJournal"));
 const RectanglePattern = lazy(() => import("./pages/blog/RectanglePattern"));
 const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
+const TradingStrategiesGuide = lazy(() => import("./pages/blog/TradingStrategiesGuide"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -185,6 +186,7 @@ const App = () => (
           <Route path="/learn/trading-discipline" element={withSuspense(<TradingDiscipline />)} />
           <Route path="/learn/fear-and-greed" element={withSuspense(<FearAndGreed />)} />
           <Route path="/learn/trading-journal" element={withSuspense(<TradingJournal />)} />
+          <Route path="/learn/trading-strategies-guide" element={withSuspense(<TradingStrategiesGuide />)} />
           <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
           <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
           <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
