@@ -1451,9 +1451,10 @@ export default function LivePatternsPage() {
           }}
           setup={selectedSetup}
           loading={loadingChartDetails}
+          selectedRR={filters.selectedRR}
           onCopyPlan={() => {
             navigator.clipboard.writeText(
-              `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${selectedSetup.tradePlan.rr.toFixed(1)}`
+              `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${filters.selectedRR.toFixed(1)}`
             );
           }}
           onCreateAlert={() => {

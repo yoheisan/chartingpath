@@ -114,6 +114,7 @@ interface FullChartViewerProps {
   onSaveToVault?: () => void;
   isCreatingAlert: boolean;
   isSavingToVault?: boolean;
+  selectedRR?: number; // User-selected R:R for trade planning
 }
 
 // Do Not Trade conditions based on pattern and market structure
@@ -177,6 +178,7 @@ export default function FullChartViewer({
   onSaveToVault,
   isCreatingAlert,
   isSavingToVault = false,
+  selectedRR = 2,
 }: FullChartViewerProps) {
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -1152,6 +1154,7 @@ export default function FullChartViewer({
             symbol={setup.instrument}
             timeframe={visualSpec.timeframe}
             direction={direction}
+            selectedRR={selectedRR}
             className="border-border/50"
           />
         </div>
