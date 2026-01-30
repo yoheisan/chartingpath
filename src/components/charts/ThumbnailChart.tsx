@@ -127,7 +127,8 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     const normalizedBars = normalizeBarsForConsistentColoring(coercedBars);
 
     // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs)
-    const chartData: CandlestickData[] = normalizedBars
+    // lightweight-charts REQUIRES sorted ascending unique timestamps
+    const chartDataRaw: CandlestickData[] = normalizedBars
       .map((bar) => {
         const ts = Math.floor(new Date(bar.t).getTime() / 1000);
         return {
@@ -147,6 +148,18 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
           Number.isFinite(d.close)
       );
 
+    // Sort ascending and dedupe by time
+    chartDataRaw.sort((a, b) => (a.time as number) - (b.time as number));
+    const seenTimes = new Set<number>();
+    const chartData: CandlestickData[] = [];
+    for (const d of chartDataRaw) {
+      const t = d.time as number;
+      if (!seenTimes.has(t)) {
+        seenTimes.add(t);
+        chartData.push(d);
+      }
+    }
+
     // If no valid chart data after filtering, clean up and show fallback
     if (chartData.length === 0) {
       chart.remove();
@@ -155,7 +168,15 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       return;
     }
 
-    candleSeries.setData(chartData);
+    try {
+      candleSeries.setData(chartData);
+    } catch (e) {
+      console.warn('ThumbnailChart: setData failed', e);
+      chart.remove();
+      chartRef.current = null;
+      setFallbackReason('Chart render error');
+      return;
+    }
 
     // Add volume histogram if volume data is available
     const hasVolume = coercedBars.some(bar => bar.v && bar.v > 0);
