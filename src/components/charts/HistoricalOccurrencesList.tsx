@@ -29,7 +29,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import ThumbnailChart from './ThumbnailChart';
+import { Button } from '@/components/ui/button';
 import type { SetupWithVisuals } from '@/types/VisualSpec';
 
 interface HistoricalOccurrence {
@@ -493,9 +493,10 @@ export function HistoricalOccurrencesList({
 interface OccurrenceRowProps {
   occurrence: HistoricalOccurrence;
   selectedRR?: number;
+  onOpenChart?: (occurrence: HistoricalOccurrence) => void;
 }
 
-function OccurrenceRow({ occurrence, selectedRR = 2 }: OccurrenceRowProps) {
+function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart }: OccurrenceRowProps) {
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'win': return 'text-bullish bg-bullish/10 border-bullish/30';
@@ -563,15 +564,20 @@ function OccurrenceRow({ occurrence, selectedRR = 2 }: OccurrenceRowProps) {
       'hover:bg-muted/30 hover:border-border/80',
       'border-border/50 bg-card/50'
     )}>
-      {/* Mini Chart Preview */}
-      {occurrence.bars && occurrence.bars.length > 0 && (
-        <div className="w-16 h-10 rounded overflow-hidden bg-background/50 flex-shrink-0">
-          <ThumbnailChart
-            bars={occurrence.bars.slice(-30)}
-            visualSpec={occurrence.visualSpec}
-            height={40}
-          />
-        </div>
+      {/* Open Chart Button - replaced busy thumbnails per UX refinement */}
+      {occurrence.bars && occurrence.bars.length > 0 && onOpenChart && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-xs flex-shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenChart(occurrence);
+          }}
+        >
+          <BarChart3 className="h-3.5 w-3.5 mr-1" />
+          Chart
+        </Button>
       )}
       
       {/* Main Content */}
