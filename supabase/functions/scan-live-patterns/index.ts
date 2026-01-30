@@ -54,6 +54,55 @@ interface PatternStats {
   };
 }
 
+// Cache computed historical stats in-memory to keep the DB-cache fast path responsive.
+// These stats are pattern-level aggregates; they don't change frequently.
+const patternStatsCache = new Map<string, { stats: PatternStats; ts: number }>();
+const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
+
+function isStatsSuspect(hp: any): boolean {
+  // Treat missing or very small samples as stale/placeholder.
+  // This prevents old cached rows (written before pagination fix) from showing mock-like ROI.
+  const n = hp?.sampleSize;
+  return typeof n !== 'number' || n < 50;
+}
+
+function toHistoricalPerformance(stats: PatternStats) {
+  return {
+    winRate: stats.winRate,
+    avgRMultiple: stats.avgRMultiple,
+    sampleSize: stats.sampleSize,
+    avgDurationBars: stats.avgDurationBars,
+    accumulatedRoi: stats.accumulatedRoi,
+  };
+}
+
+async function getPatternStatsCached(supabase: any, patternIds: string[]): Promise<Map<string, PatternStats>> {
+  const out = new Map<string, PatternStats>();
+  if (!patternIds.length) return out;
+
+  const now = Date.now();
+  const toFetch: string[] = [];
+
+  for (const pid of patternIds) {
+    const cached = patternStatsCache.get(pid);
+    if (cached && now - cached.ts < PATTERN_STATS_TTL_MS) {
+      out.set(pid, cached.stats);
+    } else {
+      toFetch.push(pid);
+    }
+  }
+
+  if (toFetch.length) {
+    const fetched = await fetchPatternStats(supabase, toFetch);
+    for (const [pid, stats] of fetched) {
+      patternStatsCache.set(pid, { stats, ts: now });
+      out.set(pid, stats);
+    }
+  }
+
+  return out;
+}
+
 async function loadFromDbCache(
   supabase: any, symbols: string[], timeframe: string, minDays: number = 60, minBarsRequired: number = 20
 ): Promise<Map<string, any[]>> {
@@ -435,37 +484,51 @@ async function readCachedPatternsFromDb(
       };
     });
     
-    // Only enrich stats if missing - fast parallel fetch
-    const needStats = patterns.filter(p => !p.historicalPerformance);
-    console.info(`[scan-live-patterns] Patterns needing stats enrichment: ${needStats.length}/${patterns.length}`);
-    
+    // Stats enrichment (fast path)
+    // We *also* override low-sample cached stats, because older rows may contain placeholder
+    // values created before the pagination fix.
+    const needStats = patterns.filter((p: any) => isStatsSuspect(p.historicalPerformance));
+    console.info(`[scan-live-patterns] Patterns needing stats enrichment (missing/low sample): ${needStats.length}/${patterns.length}`);
+
     if (needStats.length) {
-      const uniquePatternIds = [...new Set(needStats.map(p => p.patternId))];
+      const uniquePatternIds = [...new Set(needStats.map((p: any) => p.patternId))];
       console.info(`[scan-live-patterns] Fetching stats for unique patterns: ${uniquePatternIds.join(', ')}`);
-      
-      const stats = await fetchPatternStats(supabase, uniquePatternIds);
+
+      const stats = await getPatternStatsCached(supabase, uniquePatternIds);
       console.info(`[scan-live-patterns] Stats enrichment returned ${stats.size} pattern stats`);
-      
+
+      // Track which DB rows should be updated so future fast-path calls are instant.
+      const updatesByPattern = new Map<string, string[]>();
+
       let enrichedCount = 0;
-      patterns = patterns.map(p => {
-        if (!p.historicalPerformance) {
-          const s = stats.get(p.patternId);
-          if (s) {
-            enrichedCount++;
-            return { 
-              ...p, 
-              historicalPerformance: { 
-                winRate: s.winRate, 
-                avgRMultiple: s.avgRMultiple, 
-                sampleSize: s.sampleSize, 
-                avgDurationBars: s.avgDurationBars, 
-                accumulatedRoi: s.accumulatedRoi 
-              } 
-            };
-          }
+      patterns = patterns.map((p: any) => {
+        if (!isStatsSuspect(p.historicalPerformance)) return p;
+        const s = stats.get(p.patternId);
+        if (!s) return p;
+
+        enrichedCount++;
+        if (p.dbId) {
+          if (!updatesByPattern.has(p.patternId)) updatesByPattern.set(p.patternId, []);
+          updatesByPattern.get(p.patternId)!.push(p.dbId);
         }
-        return p;
+
+        return { ...p, historicalPerformance: toHistoricalPerformance(s) };
       });
+
+      // Best-effort DB backfill of corrected stats (keeps future responses fast).
+      if (updatesByPattern.size) {
+        await Promise.allSettled(
+          [...updatesByPattern.entries()].map(([patternId, ids]) => {
+            const s = stats.get(patternId);
+            if (!s) return Promise.resolve();
+            return supabase
+              .from('live_pattern_detections')
+              .update({ historical_performance: toHistoricalPerformance(s) })
+              .in('id', ids);
+          })
+        );
+      }
+
       console.info(`[scan-live-patterns] Enriched ${enrichedCount} patterns with historical stats`);
     }
     console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
