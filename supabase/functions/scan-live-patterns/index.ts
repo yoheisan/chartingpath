@@ -100,23 +100,43 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
   try {
     console.info(`[fetchPatternStats] Fetching stats for ${patternIds.length} patterns: ${patternIds.join(', ')}`);
     
-    const { data, error } = await supabase
-      .from('historical_pattern_occurrences')
-      .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
-      .in('pattern_id', patternIds)
-      .not('outcome', 'is', null);
+    // Fetch ALL records with pagination to avoid default 1000 row limit
+    // With 17k+ historical records, we need to paginate
+    const PAGE_SIZE = 5000;
+    let allData: any[] = [];
+    let page = 0;
+    let hasMore = true;
     
-    if (error) {
-      console.error('[fetchPatternStats] Query error:', error.message);
-      return statsMap;
+    while (hasMore) {
+      const { data: pageData, error } = await supabase
+        .from('historical_pattern_occurrences')
+        .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
+        .in('pattern_id', patternIds)
+        .not('outcome', 'is', null)
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      
+      if (error) {
+        console.error('[fetchPatternStats] Query error:', error.message);
+        return statsMap;
+      }
+      
+      if (!pageData?.length) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(pageData);
+        hasMore = pageData.length === PAGE_SIZE;
+        page++;
+      }
     }
+    
+    const data = allData;
     
     if (!data?.length) {
       console.warn(`[fetchPatternStats] No historical data found for patterns: ${patternIds.join(', ')}`);
       return statsMap;
     }
     
-    console.info(`[fetchPatternStats] Found ${data.length} historical occurrences`);
+    console.info(`[fetchPatternStats] Found ${data.length} historical occurrences (fetched ${page} pages)`);
     
     const now = new Date();
     const threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3);
@@ -622,13 +642,28 @@ serve(async (req) => {
     
     const patternTimestamps = await persistPatterns(supabase, detectedPatterns, assetType, timeframe);
     const patternStats = await fetchPatternStats(supabase, [...new Set(detectedPatterns.map(p => p.patternId))]);
+    console.info(`[scan-live-patterns] Slow path: patternStats size=${patternStats.size}, detected=${detectedPatterns.length}`);
     
+    let statsAttachedCount = 0;
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
       const stats = patternStats.get(pattern.patternId);
-      return { ...pattern, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs, visualSpec: { ...pattern.visualSpec, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs }, historicalPerformance: stats ? { winRate: stats.winRate, avgRMultiple: stats.avgRMultiple, sampleSize: stats.sampleSize, avgDurationBars: stats.avgDurationBars, accumulatedRoi: stats.accumulatedRoi } : undefined };
+      if (stats) statsAttachedCount++;
+      return { 
+        ...pattern, 
+        signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs, 
+        visualSpec: { ...pattern.visualSpec, signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs }, 
+        historicalPerformance: stats ? { 
+          winRate: stats.winRate, 
+          avgRMultiple: stats.avgRMultiple, 
+          sampleSize: stats.sampleSize, 
+          avgDurationBars: stats.avgDurationBars, 
+          accumulatedRoi: stats.accumulatedRoi 
+        } : undefined 
+      };
     });
+    console.info(`[scan-live-patterns] Slow path: attached stats to ${statsAttachedCount}/${setups.length} patterns`);
     
     const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
