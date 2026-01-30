@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
+import StudyChart from '@/components/charts/StudyChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
@@ -384,32 +385,15 @@ export default function TickerStudy() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Price Chart (Daily)
+              Price Chart (Daily) — {displaySymbol}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ThumbnailChart 
-                bars={priceData}
-                visualSpec={{
-                  version: '1.0',
-                  symbol: displaySymbol,
-                  timeframe: '1d',
-                  patternId: '',
-                  signalTs: new Date().toISOString(),
-                  window: {
-                    startTs: priceData[0]?.t || new Date().toISOString(),
-                    endTs: priceData[priceData.length - 1]?.t || new Date().toISOString(),
-                  },
-                  yDomain: {
-                    min: Math.min(...priceData.map(p => p.l)),
-                    max: Math.max(...priceData.map(p => p.h)),
-                  },
-                  overlays: [],
-                }}
-                height={280}
-              />
-            </div>
+            <StudyChart 
+              bars={priceData}
+              symbol={displaySymbol}
+              height={350}
+            />
           </CardContent>
         </Card>
       )}
