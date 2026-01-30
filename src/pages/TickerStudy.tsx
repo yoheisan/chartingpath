@@ -176,26 +176,37 @@ export default function TickerStudy() {
           setLivePatterns(mappedLive);
         }
 
-        // Fetch historical price data for chart
-        const { data: pricesData, error: pricesError } = await supabase
-          .from('historical_prices')
-          .select('*')
-          .in('symbol', symbolVariants)
-          .eq('timeframe', '1d')
-          .order('date', { ascending: true })
-          .limit(500);
-
-        if (pricesError) {
-          console.error('Error fetching prices:', pricesError);
-        } else if (pricesData) {
-          const bars: CompressedBar[] = pricesData.map(p => ({
-            t: new Date(p.date).toISOString(),
-            o: Number(p.open),
-            h: Number(p.high),
-            l: Number(p.low),
-            c: Number(p.close),
-            v: Number(p.volume || 0),
-          }));
+        // Fetch historical price data for chart (limit to 200 bars for speed)
+        // Try exact symbol match first for speed
+        const priceSymbols = [decodedSymbol, normalized];
+        let pricesData = null;
+        
+        for (const sym of priceSymbols) {
+          const { data, error } = await supabase
+            .from('historical_prices')
+            .select('date, open, high, low, close, volume')
+            .eq('symbol', sym)
+            .eq('timeframe', '1d')
+            .order('date', { ascending: false })
+            .limit(200);
+          
+          if (!error && data && data.length > 0) {
+            pricesData = data;
+            break;
+          }
+        }
+        
+        if (pricesData) {
+          const bars: CompressedBar[] = pricesData
+            .map(p => ({
+              t: new Date(p.date).toISOString(),
+              o: Number(p.open),
+              h: Number(p.high),
+              l: Number(p.low),
+              c: Number(p.close),
+              v: Number(p.volume || 0),
+            }))
+            .reverse(); // Reverse to ascending order for chart
           setPriceData(bars);
         }
       } catch (err) {
@@ -525,6 +536,7 @@ export default function TickerStudy() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Pattern</TableHead>
+                    <TableHead className="w-[140px]">Chart</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead className="text-right">Entry</TableHead>
                     <TableHead className="text-right">Target</TableHead>
@@ -555,6 +567,21 @@ export default function TickerStudy() {
                             {pattern.quality_score}
                           </Badge>
                         </div>
+                      </TableCell>
+                      <TableCell className="py-1">
+                        {pattern.bars && pattern.bars.length > 0 ? (
+                          <div className="w-[120px] h-[50px]">
+                            <ThumbnailChart 
+                              bars={pattern.bars}
+                              visualSpec={pattern.visual_spec}
+                              height={50}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-[120px] h-[50px] bg-muted/30 rounded flex items-center justify-center text-[10px] text-muted-foreground">
+                            No chart
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
