@@ -391,18 +391,34 @@ export default function TickerStudy() {
             const idx = (yfData as any)?.index as string[] | undefined;
             const matrix = (yfData as any)?.data as number[][] | undefined;
             if (Array.isArray(idx) && Array.isArray(matrix) && idx.length > 0 && matrix.length > 0) {
-              const closeBars: CompressedBar[] = idx
-                .map((d: string, i: number) => {
-                  const close = Number(matrix[i]?.[0]);
-                  if (!Number.isFinite(close) || close === 0) return null;
-                  const iso = new Date(d).toISOString();
-                  return { t: iso, o: close, h: close, l: close, c: close, v: 0 };
-                })
-                .filter(Boolean)
-                .slice(-200) as CompressedBar[];
+              // Build close-only bars with synthetic open based on previous close
+              // This ensures candles get proper up/down coloring
+              const closeBars: CompressedBar[] = [];
+              let prevClose: number | null = null;
+              
+              for (let i = 0; i < idx.length; i++) {
+                const close = Number(matrix[i]?.[0]);
+                if (!Number.isFinite(close) || close === 0) continue;
+                
+                const iso = new Date(idx[i]).toISOString();
+                // Use previous close as open to determine candle direction
+                // If no previous close, use current close (will render as neutral but with color)
+                const open = prevClose !== null ? prevClose : close;
+                closeBars.push({ 
+                  t: iso, 
+                  o: open, 
+                  h: Math.max(open, close), 
+                  l: Math.min(open, close), 
+                  c: close, 
+                  v: 0 
+                });
+                prevClose = close;
+              }
+              
+              const limitedBars = closeBars.slice(-200);
 
-              if (closeBars.length > 0) {
-                setPriceData(closeBars);
+              if (limitedBars.length > 0) {
+                setPriceData(limitedBars);
                 break;
               }
             }
