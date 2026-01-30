@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
-  Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, List, ChevronUp, ChevronDown,
-  LayoutGrid, ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2
+  Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
+  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import ThumbnailChart from '@/components/charts/ThumbnailChart';
+
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,7 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import { TrendIndicatorSettings, loadTrendConfig, TrendIndicatorConfig } from '@/components/TrendIndicatorSettings';
@@ -280,9 +280,6 @@ export default function LivePatternsPage() {
   const [filters, setFilters] = useState<ScreenerFiltersState>(DEFAULT_SCREENER_FILTERS);
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
-  // View mode toggle: 'list' (table) or 'panel' (cards)
-  // Default to 'list' for fastest loading (no thumbnail charts to render)
-  const [viewMode, setViewMode] = useState<'list' | 'panel'>('list');
   
   // Sorting for list view
   type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
@@ -343,7 +340,7 @@ export default function LivePatternsPage() {
     
     const typeToFetch = selectedAssetType || assetType;
     const tfToFetch = selectedTimeframe || timeframe;
-    const includeDetails = includeDetailsOverride ?? viewMode === 'panel';
+    const includeDetails = includeDetailsOverride ?? false;
     
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
@@ -563,29 +560,26 @@ export default function LivePatternsPage() {
         if (b.instrument.includes(highlightSymbol)) return 1;
       }
       
-      // Then apply user-selected sort (for list view)
-      if (viewMode === 'list') {
-        let cmp = 0;
-        switch (sortKey) {
-          case 'instrument':
-            cmp = a.instrument.localeCompare(b.instrument);
-            break;
-          case 'direction':
-            cmp = a.direction.localeCompare(b.direction);
-            break;
-          case 'rr':
-            cmp = a.tradePlan.rr - b.tradePlan.rr;
-            break;
-          case 'signal':
-            cmp = new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
-            break;
-        }
-        return sortAsc ? cmp : -cmp;
+      // Apply user-selected sort
+      let cmp = 0;
+      switch (sortKey) {
+        case 'instrument':
+          cmp = a.instrument.localeCompare(b.instrument);
+          break;
+        case 'direction':
+          cmp = a.direction.localeCompare(b.direction);
+          break;
+        case 'rr':
+          cmp = a.tradePlan.rr - b.tradePlan.rr;
+          break;
+        case 'signal':
+          cmp = new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
+          break;
       }
-      return 0;
+      return sortAsc ? cmp : -cmp;
     });
     return sorted;
-  }, [filteredPatterns, highlightSymbol, viewMode, sortKey, sortAsc]);
+  }, [filteredPatterns, highlightSymbol, sortKey, sortAsc]);
 
   // Group patterns by pattern name for list view (same as homepage)
   const groupedPatterns = useMemo(() => {
@@ -906,19 +900,6 @@ export default function LivePatternsPage() {
               </Button>
             }
           />
-          <ToggleGroup 
-            type="single" 
-            value={viewMode} 
-            onValueChange={(v) => v && setViewMode(v as 'list' | 'panel')}
-            className="border rounded-md p-0.5"
-          >
-            <ToggleGroupItem value="list" aria-label="List view" className="h-8 w-8 p-0">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="panel" aria-label="Panel view" className="h-8 w-8 p-0">
-              <LayoutGrid className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
           
           <Button 
             variant="outline" 
@@ -954,7 +935,7 @@ export default function LivePatternsPage() {
             size="sm" 
             className="mb-4 text-muted-foreground hover:text-foreground"
           >
-            <List className="h-4 w-4 mr-2" />
+            <BarChart3 className="h-4 w-4 mr-2" />
             View all {totalInUniverse || instrumentsScanned || AVAILABLE_INSTRUMENTS[assetType]?.length || 25} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments we analyze
             {showInstrumentList ? (
               <ChevronUp className="h-4 w-4 ml-2" />
@@ -1077,7 +1058,7 @@ export default function LivePatternsPage() {
       )}
 
       {/* Patterns - List View */}
-      {sortedPatterns.length > 0 && viewMode === 'list' && (
+      {sortedPatterns.length > 0 && (
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
@@ -1275,139 +1256,6 @@ export default function LivePatternsPage() {
         </div>
       )}
 
-      {/* Patterns - Panel View (Cards) */}
-      {sortedPatterns.length > 0 && viewMode === 'panel' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedPatterns.map((setup, idx) => {
-            const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
-            
-            return (
-              <Card 
-                key={`${setup.instrument}-${setup.patternId}-${idx}`}
-                className={`overflow-hidden hover:border-primary/50 transition-all group cursor-pointer ${
-                  isHighlighted ? 'ring-2 ring-primary border-primary' : ''
-                }`}
-                onClick={() => handleOpenChart(setup)}
-              >
-                <div className="h-40 bg-card relative">
-                  <ThumbnailChart
-                    bars={setup.bars}
-                    visualSpec={setup.visualSpec}
-                    height={160}
-                    instrument={setup.instrument}
-                  />
-                  {isHighlighted && (
-                    <Badge className="absolute top-2 right-2 bg-primary">
-                      Selected
-                    </Badge>
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {setup.instrument.replace('-USD', '').replace('=X', '')}
-                    </span>
-                    <Badge 
-                      variant={setup.direction === 'long' ? 'default' : 'secondary'}
-                      className={`${
-                        setup.direction === 'long' 
-                          ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30' 
-                          : 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30'
-                      }`}
-                    >
-                      {setup.direction === 'long' ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {setup.direction}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-3">
-                    <p className="text-sm text-muted-foreground">
-                      {setup.patternName}
-                    </p>
-                    {/* Trend Alignment Badge */}
-                    {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
-                      <Badge 
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 ${
-                          setup.trendAlignment === 'with_trend' 
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                        }`}
-                        title={setup.trendAlignment === 'with_trend' 
-                          ? 'Pattern aligns with larger market trend' 
-                          : 'Pattern is against the larger trend'}
-                      >
-                        {setup.trendAlignment === 'with_trend' ? (
-                          <>
-                            <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" />
-                            Trend
-                          </>
-                        ) : (
-                          <>
-                            <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />
-                            Counter
-                          </>
-                        )}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-4 gap-2 text-xs">
-                    <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Win %</div>
-                      <div className={`font-medium ${
-                        setup.historicalPerformance?.winRate != null && setup.historicalPerformance.winRate >= 50 
-                          ? 'text-green-500' 
-                          : 'text-muted-foreground'
-                      }`}>
-                        {setup.historicalPerformance?.winRate != null 
-                          ? `${setup.historicalPerformance.winRate.toFixed(0)}%` 
-                          : '—'}
-                      </div>
-                    </div>
-                    <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Exp.</div>
-                      <div className={`font-medium ${(() => {
-                        if (setup.historicalPerformance?.winRate == null) return 'text-muted-foreground';
-                        const exp = calculateProjectedExpectancy(setup.historicalPerformance.winRate, filters.selectedRR);
-                        return exp >= 0 ? 'text-green-500' : 'text-red-500';
-                      })()}`}>
-                        {setup.historicalPerformance?.winRate != null 
-                          ? `${(() => {
-                              const exp = calculateProjectedExpectancy(setup.historicalPerformance.winRate, filters.selectedRR);
-                              return `${exp >= 0 ? '+' : ''}${exp.toFixed(2)}R`;
-                            })()}` 
-                          : '—'}
-                      </div>
-                    </div>
-                    <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">R:R</div>
-                      <div className="font-medium">{filters.selectedRR.toFixed(1)}</div>
-                    </div>
-                    <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Age</div>
-                      <div className="font-medium">{formatSignalAgeSimple(setup.signalTs)}</div>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full mt-3 group-hover:bg-primary/10"
-                  >
-                    View Full Chart
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
 
       {/* CTA Section */}
       <Card className="mt-12 p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
