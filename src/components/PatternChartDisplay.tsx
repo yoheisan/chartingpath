@@ -85,8 +85,8 @@ export const PatternChartDisplay = ({ patternType, className = "" }: PatternChar
 
       const isBullish = candle.close > candle.open;
       
-      // Draw wick
-      ctx.strokeStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      // Draw wick - Unified chart colors: #22c55e (green) and #ef4444 (red)
+      ctx.strokeStyle = isBullish ? "#22c55e" : "#ef4444";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(x, yHigh);
@@ -94,7 +94,7 @@ export const PatternChartDisplay = ({ patternType, className = "" }: PatternChar
       ctx.stroke();
 
       // Draw body
-      ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      ctx.fillStyle = isBullish ? "#22c55e" : "#ef4444";
       const bodyTop = Math.min(yOpen, yClose);
       const bodyHeight = Math.abs(yClose - yOpen);
       
@@ -172,7 +172,8 @@ export const PatternChartDisplay = ({ patternType, className = "" }: PatternChar
       const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
       const isBullish = candle.close > candle.open;
       
-      ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%, 0.6)" : "hsl(0, 84%, 60%, 0.6)";
+      // Unified volume colors: rgba(34, 197, 94, 0.6) and rgba(239, 68, 68, 0.6)
+      ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.6)" : "rgba(239, 68, 68, 0.6)";
       ctx.fillRect(x - candleWidth/2 * 0.6, volumeTop + volumeHeight - volumeBarHeight, 
                    candleWidth * 0.6, volumeBarHeight);
     });

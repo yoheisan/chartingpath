@@ -147,14 +147,15 @@ export const DynamicPatternChart = ({
       const yLow = priceToY(candle.low);
       const isBullish = candle.close > candle.open;
       
-      ctx.strokeStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      // Unified chart colors: #22c55e (green) and #ef4444 (red)
+      ctx.strokeStyle = isBullish ? "#22c55e" : "#ef4444";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(x, yHigh);
       ctx.lineTo(x, yLow);
       ctx.stroke();
 
-      ctx.fillStyle = isBullish ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      ctx.fillStyle = isBullish ? "#22c55e" : "#ef4444";
       const bodyTop = Math.min(yOpen, yClose);
       const bodyHeight = Math.abs(yClose - yOpen);
       
@@ -263,12 +264,12 @@ export const DynamicPatternChart = ({
         labelY += 15;
       }
       if (keyLevels.target) {
-        ctx.fillStyle = "hsl(142, 76%, 36%)";
+        ctx.fillStyle = "#22c55e"; // Unified green
         ctx.fillText(`Target: ${keyLevels.target.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
         labelY += 15;
       }
       if (keyLevels.stopLoss) {
-        ctx.fillStyle = "hsl(0, 84%, 60%)";
+        ctx.fillStyle = "#ef4444"; // Unified red
         ctx.fillText(`Stop Loss: ${keyLevels.stopLoss.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
       }
     }
