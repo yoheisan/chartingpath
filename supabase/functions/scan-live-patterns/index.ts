@@ -16,7 +16,7 @@ import {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 function getInstrumentsForTier(assetType: string, maxTickers: number): string[] {
@@ -285,13 +285,47 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
   return patternKeys;
 }
 
-async function readCachedPatternsFromDb(supabase: any, assetType: string, timeframe: string, allowedPatterns: string[], limit: number, maxTickers: number) {
+async function readCachedPatternsFromDb(
+  supabase: any,
+  assetType: string,
+  timeframe: string,
+  allowedPatterns: string[],
+  limit: number,
+  maxTickers: number,
+  includeDetails: boolean,
+) {
   try {
     const instruments = getInstrumentsForTier(assetType, maxTickers);
     // Extend staleness window to 24 hours for reliability - patterns don't change that fast on daily timeframe
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
-    const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select('*')
+    // IMPORTANT: Large JSON payloads (bars, visual_spec) can cause client timeouts.
+    // For the screener list we allow a lightweight response to keep loads <1s.
+    const selectColumns = includeDetails
+      ? '*'
+      : [
+          'id',
+          'instrument',
+          'pattern_id',
+          'pattern_name',
+          'direction',
+          'first_detected_at',
+          'entry_price',
+          'stop_loss_price',
+          'take_profit_price',
+          'risk_reward_ratio',
+          'current_price',
+          'prev_close',
+          'change_percent',
+          'quality_score',
+          'quality_reasons',
+          'trend_alignment',
+          'trend_indicators',
+          'historical_performance',
+          'last_confirmed_at',
+        ].join(',');
+
+    const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
       .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
       .in('pattern_id', allowedPatterns).in('instrument', instruments)
       .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
@@ -314,13 +348,48 @@ async function readCachedPatternsFromDb(supabase: any, assetType: string, timefr
       return { patterns: [], instrumentsScanned: instruments.length, isFresh: true, needsBackgroundScan: true };
     }
     
-    let patterns = cachedPatterns.map((r: any) => ({
-      instrument: r.instrument, patternId: r.pattern_id, patternName: r.pattern_name, direction: r.direction as 'long' | 'short',
-      signalTs: r.first_detected_at, quality: { score: r.quality_score || 'B', reasons: r.quality_reasons || [] },
-      tradePlan: { entryType: 'bar_close', entry: r.entry_price, stopLoss: r.stop_loss_price, takeProfit: r.take_profit_price, rr: r.risk_reward_ratio },
-      bars: r.bars || [], visualSpec: r.visual_spec || {}, currentPrice: r.current_price, prevClose: r.prev_close, changePercent: r.change_percent,
-      trendAlignment: r.trend_alignment, trendIndicators: r.trend_indicators, historicalPerformance: r.historical_performance || undefined,
-    }));
+    const nowIso = new Date().toISOString();
+    let patterns = cachedPatterns.map((r: any) => {
+      const signalTs = r.first_detected_at || nowIso;
+      return {
+        // Stable DB identifier for lazy-detail fetching
+        dbId: r.id,
+        instrument: r.instrument,
+        patternId: r.pattern_id,
+        patternName: r.pattern_name,
+        direction: r.direction as 'long' | 'short',
+        signalTs,
+        quality: { score: r.quality_score || 'B', reasons: r.quality_reasons || [] },
+        tradePlan: {
+          entryType: 'bar_close',
+          entry: r.entry_price,
+          stopLoss: r.stop_loss_price,
+          takeProfit: r.take_profit_price,
+          rr: r.risk_reward_ratio,
+        },
+        // When includeDetails=false we intentionally omit large JSON fields
+        bars: includeDetails ? (r.bars || []) : [],
+        visualSpec: includeDetails
+          ? (r.visual_spec || {})
+          : {
+              version: '2.0.0',
+              symbol: r.instrument,
+              timeframe,
+              patternId: r.pattern_id,
+              signalTs,
+              window: { startTs: signalTs, endTs: signalTs },
+              yDomain: { min: r.entry_price ?? 0, max: r.entry_price ?? 0 },
+              overlays: [],
+              pivots: [],
+            },
+        currentPrice: r.current_price,
+        prevClose: r.prev_close,
+        changePercent: r.change_percent,
+        trendAlignment: r.trend_alignment,
+        trendIndicators: r.trend_indicators,
+        historicalPerformance: r.historical_performance || undefined,
+      };
+    });
     
     // Only enrich stats if missing - fast parallel fetch
     const needStats = patterns.filter(p => !p.historicalPerformance);
@@ -343,7 +412,7 @@ async function readCachedPatternsFromDb(supabase: any, assetType: string, timefr
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -354,6 +423,7 @@ serve(async (req) => {
     let maxTickers = parseInt(url.searchParams.get('maxTickers') || '25');
     let allowedPatterns: string[] = BASE_PATTERNS;
     let forceRefresh = false;
+    let includeDetails = true;
     
     if (req.method === 'POST') {
       try {
@@ -364,6 +434,7 @@ serve(async (req) => {
         if (body.maxTickers) maxTickers = parseInt(body.maxTickers);
         if (body.allowedPatterns?.length) allowedPatterns = body.allowedPatterns;
         if (body.forceRefresh) forceRefresh = true;
+        if (typeof body.includeDetails === 'boolean') includeDetails = body.includeDetails;
       } catch {}
     }
     
@@ -376,7 +447,15 @@ serve(async (req) => {
     
     // FAST PATH - Only use DB cache when NOT forcing refresh (normal user requests)
     if (!forceRefresh) {
-      const dbCached = await readCachedPatternsFromDb(supabase, assetType, timeframe, allPatternsToScan, limit, maxTickers);
+      const dbCached = await readCachedPatternsFromDb(
+        supabase,
+        assetType,
+        timeframe,
+        allPatternsToScan,
+        limit,
+        maxTickers,
+        includeDetails,
+      );
       if (dbCached) {
         console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);
         return new Response(JSON.stringify({ 
@@ -425,7 +504,15 @@ serve(async (req) => {
     
     // SLOW PATH - Live scan
     const endDate = new Date();
-    const startDate = new Date(); startDate.setDate(startDate.getDate() - 365);
+    const startDate = new Date();
+    // Use the minimum lookback needed for detection + trend alignment to keep scans under runtime limits.
+    // Intraday only needs ~45d; daily needs ~400d for 200 bars; weekly needs ~5y for 200 bars.
+    const lookbackDays = timeframe === '1h' || timeframe === '4h'
+      ? 45
+      : timeframe === '1wk'
+        ? 365 * 5
+        : 400;
+    startDate.setDate(startDate.getDate() - lookbackDays);
     console.log(`[scan-live-patterns] Slow path: fetching data for ${instruments.length} instruments, timeframe=${timeframe}`);
     const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
     
