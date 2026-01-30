@@ -92,16 +92,31 @@ async function loadFromDbCache(
 
 async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<Map<string, PatternStats>> {
   const statsMap = new Map<string, PatternStats>();
-  if (!patternIds.length) return statsMap;
+  if (!patternIds.length) {
+    console.info('[fetchPatternStats] No pattern IDs to fetch stats for');
+    return statsMap;
+  }
   
   try {
+    console.info(`[fetchPatternStats] Fetching stats for ${patternIds.length} patterns: ${patternIds.join(', ')}`);
+    
     const { data, error } = await supabase
       .from('historical_pattern_occurrences')
       .select('pattern_id, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
       .in('pattern_id', patternIds)
       .not('outcome', 'is', null);
     
-    if (error || !data?.length) return statsMap;
+    if (error) {
+      console.error('[fetchPatternStats] Query error:', error.message);
+      return statsMap;
+    }
+    
+    if (!data?.length) {
+      console.warn(`[fetchPatternStats] No historical data found for patterns: ${patternIds.join(', ')}`);
+      return statsMap;
+    }
+    
+    console.info(`[fetchPatternStats] Found ${data.length} historical occurrences`);
     
     const now = new Date();
     const threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3);
@@ -136,21 +151,30 @@ async function fetchPatternStats(supabase: any, patternIds: string[]): Promise<M
     
     for (const [pid, e] of grouped) {
       if (e.total > 0) {
-        statsMap.set(pid, {
-          winRate: (e.wins / e.total) * 100,
-          avgRMultiple: e.pnlSum / e.total / 100,
+        const stats: PatternStats = {
+          winRate: Math.round((e.wins / e.total) * 1000) / 10, // 1 decimal
+          avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
           sampleSize: e.total,
           avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
           accumulatedRoi: {
-            threeMonth: e.count3m > 0 ? e.roi3m : null, sixMonth: e.count6m > 0 ? e.roi6m : null,
-            oneYear: e.count1y > 0 ? e.roi1y : null, threeYear: e.count3y > 0 ? e.roi3y : null,
-            fiveYear: e.count5y > 0 ? e.roi5y : null,
+            threeMonth: e.count3m > 0 ? Math.round(e.roi3m * 10) / 10 : null,
+            sixMonth: e.count6m > 0 ? Math.round(e.roi6m * 10) / 10 : null,
+            oneYear: e.count1y > 0 ? Math.round(e.roi1y * 10) / 10 : null,
+            threeYear: e.count3y > 0 ? Math.round(e.roi3y * 10) / 10 : null,
+            fiveYear: e.count5y > 0 ? Math.round(e.roi5y * 10) / 10 : null,
           },
-        });
+        };
+        statsMap.set(pid, stats);
+        console.info(`[fetchPatternStats] Stats for ${pid}: winRate=${stats.winRate}%, samples=${stats.sampleSize}`);
       }
     }
+    
+    console.info(`[fetchPatternStats] Computed stats for ${statsMap.size} patterns`);
     return statsMap;
-  } catch { return statsMap; }
+  } catch (err: any) {
+    console.error('[fetchPatternStats] Exception:', err.message);
+    return statsMap;
+  }
 }
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
@@ -393,15 +417,36 @@ async function readCachedPatternsFromDb(
     
     // Only enrich stats if missing - fast parallel fetch
     const needStats = patterns.filter(p => !p.historicalPerformance);
+    console.info(`[scan-live-patterns] Patterns needing stats enrichment: ${needStats.length}/${patterns.length}`);
+    
     if (needStats.length) {
-      const stats = await fetchPatternStats(supabase, [...new Set(needStats.map(p => p.patternId))]);
+      const uniquePatternIds = [...new Set(needStats.map(p => p.patternId))];
+      console.info(`[scan-live-patterns] Fetching stats for unique patterns: ${uniquePatternIds.join(', ')}`);
+      
+      const stats = await fetchPatternStats(supabase, uniquePatternIds);
+      console.info(`[scan-live-patterns] Stats enrichment returned ${stats.size} pattern stats`);
+      
+      let enrichedCount = 0;
       patterns = patterns.map(p => {
         if (!p.historicalPerformance) {
           const s = stats.get(p.patternId);
-          if (s) return { ...p, historicalPerformance: { winRate: s.winRate, avgRMultiple: s.avgRMultiple, sampleSize: s.sampleSize, avgDurationBars: s.avgDurationBars, accumulatedRoi: s.accumulatedRoi } };
+          if (s) {
+            enrichedCount++;
+            return { 
+              ...p, 
+              historicalPerformance: { 
+                winRate: s.winRate, 
+                avgRMultiple: s.avgRMultiple, 
+                sampleSize: s.sampleSize, 
+                avgDurationBars: s.avgDurationBars, 
+                accumulatedRoi: s.accumulatedRoi 
+              } 
+            };
+          }
         }
         return p;
       });
+      console.info(`[scan-live-patterns] Enriched ${enrichedCount} patterns with historical stats`);
     }
     console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
