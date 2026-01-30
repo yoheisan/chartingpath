@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 
 import { 
   Select, 
@@ -29,6 +28,7 @@ import {
   Filter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RR_TIERS, RRTier, DEFAULT_RR, formatRR } from '@/utils/rrCalculator';
 
 export type DirectionFilter = 'all' | 'long' | 'short';
 export type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
@@ -45,7 +45,7 @@ export interface ScreenerFiltersState {
   direction: DirectionFilter;
   pattern: string;
   trend: TrendFilter;
-  minRR: number;
+  selectedRR: RRTier;  // User-selected R:R tier for TP calculation
   age: AgeFilter;
 }
 
@@ -79,7 +79,7 @@ export const DEFAULT_SCREENER_FILTERS: ScreenerFiltersState = {
   direction: 'all',
   pattern: 'all',
   trend: 'all',
-  minRR: 0,
+  selectedRR: DEFAULT_RR,
   age: 'all',
 };
 
@@ -94,7 +94,7 @@ export function ScreenerFilters({
     return filters.direction !== 'all' ||
            filters.pattern !== 'all' ||
            filters.trend !== 'all' ||
-           filters.minRR > 0 ||
+           filters.selectedRR !== DEFAULT_RR ||
            filters.age !== 'all';
   }, [filters]);
 
@@ -255,41 +255,40 @@ export function ScreenerFilters({
         </div>
       </div>
 
-      {/* Secondary Filter Row: R:R Threshold + Age Filter */}
+      {/* Secondary Filter Row: R:R Tier Selector + Age Filter */}
       <div className="flex flex-wrap items-center gap-4">
-        {/* Min R:R Slider - Using trader-friendly notation: 1:X (risk 1 to gain X) */}
-        {/* Filters pre-computed R:R values from backend - no new computation triggered */}
+        {/* R:R Tier Selector - Recalculates TP based on selection */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-border/40 bg-muted/30">
-                <div className="flex items-center gap-1.5">
-                  <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">Min R:R</span>
-                </div>
-                <Slider
-                  value={[filters.minRR]}
-                  onValueChange={([v]) => onChange({ minRR: v })}
-                  min={0}
-                  max={5}
-                  step={0.5}
-                  className="w-28"
-                />
-                <Badge 
-                  variant={filters.minRR > 0 ? 'default' : 'outline'} 
-                  className="text-[11px] font-mono min-w-[3.5rem] justify-center"
-                >
-                  {filters.minRR === 0 ? 'Any' : `1:${filters.minRR}`}
-                </Badge>
+              <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 p-1">
+                <Target className="h-3.5 w-3.5 text-muted-foreground ml-2" />
+                <span className="text-xs text-muted-foreground whitespace-nowrap mr-1">R:R</span>
+                {RR_TIERS.map((tier) => (
+                  <Button
+                    key={tier}
+                    variant={filters.selectedRR === tier ? 'default' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      "h-7 px-2.5 text-xs font-mono",
+                      filters.selectedRR === tier && "bg-primary"
+                    )}
+                    onClick={() => onChange({ selectedRR: tier })}
+                  >
+                    {formatRR(tier)}
+                  </Button>
+                ))}
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              <p className="font-medium mb-2">Minimum Risk:Reward Ratio</p>
+              <p className="font-medium mb-2">Target Risk:Reward Ratio</p>
               <div className="text-xs space-y-1.5 text-muted-foreground">
-                <div><strong className="font-mono">1:2</strong> — Risk $1 to potentially gain $2</div>
+                <div><strong className="font-mono">1:2</strong> — Risk $1 to potentially gain $2 (default)</div>
                 <div><strong className="font-mono">1:3</strong> — Risk $1 to potentially gain $3</div>
+                <div><strong className="font-mono">1:4</strong> — Risk $1 to potentially gain $4</div>
+                <div><strong className="font-mono">1:5</strong> — Risk $1 to potentially gain $5</div>
                 <div className="pt-1.5 border-t border-border/50 text-muted-foreground/80">
-                  Pro traders typically require at least 1:2
+                  Take Profit is recalculated based on your selection
                 </div>
               </div>
             </TooltipContent>
@@ -410,11 +409,6 @@ export function filterByAge(
   });
 }
 
-// Helper to filter patterns by minRR
-export function filterByMinRR<T extends { tradePlan: { rr: number } }>(
-  patterns: T[],
-  minRR: number
-): T[] {
-  if (minRR <= 0) return patterns;
-  return patterns.filter(p => p.tradePlan.rr >= minRR);
-}
+// Re-export R:R utilities for convenience
+export { recalculateTradePlan, RR_TIERS, DEFAULT_RR, formatRR } from '@/utils/rrCalculator';
+export type { RRTier } from '@/utils/rrCalculator';

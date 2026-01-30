@@ -47,7 +47,8 @@ import {
   DEFAULT_SCREENER_FILTERS,
   calculateAgeStats,
   filterByAge,
-  filterByMinRR
+  recalculateTradePlan,
+  RRTier
 } from '@/components/screener/ScreenerFilters';
 
 // Full list of instruments available per asset class
@@ -530,9 +531,6 @@ export default function LivePatternsPage() {
       return true;
     });
     
-    // Apply R:R filter
-    result = filterByMinRR(result, filters.minRR);
-    
     // Apply age filter
     result = filterByAge(result, filters.age) as typeof result;
     
@@ -624,7 +622,7 @@ export default function LivePatternsPage() {
     };
   };
 
-  const toSetupWithVisuals = (setup: LiveSetup): SetupWithVisuals & {
+  const toSetupWithVisuals = (setup: LiveSetup, selectedRR?: RRTier): SetupWithVisuals & {
     currentPrice?: number;
     prevClose?: number;
     changePercent?: number | null;
@@ -632,6 +630,21 @@ export default function LivePatternsPage() {
     trendIndicators?: LiveSetup['trendIndicators'];
   } => {
     const visualSpec = setup.visualSpec || buildFallbackVisualSpec(setup);
+    
+    // Recalculate trade plan based on user-selected R:R tier
+    const baseTradePlan = {
+      entry: setup.tradePlan.entry,
+      stopLoss: setup.tradePlan.stopLoss,
+      takeProfit: setup.tradePlan.takeProfit,
+      rr: setup.tradePlan.rr,
+      stopDistance: setup.tradePlan.stopDistance || Math.abs(setup.tradePlan.entry - setup.tradePlan.stopLoss),
+      tpDistance: setup.tradePlan.tpDistance || Math.abs(setup.tradePlan.takeProfit - setup.tradePlan.entry),
+    };
+    
+    // Apply R:R recalculation if a tier is selected
+    const recalculated = selectedRR 
+      ? recalculateTradePlan(baseTradePlan, setup.direction, selectedRR)
+      : baseTradePlan;
 
     return {
       instrument: setup.instrument,
@@ -642,12 +655,12 @@ export default function LivePatternsPage() {
       quality: setup.quality,
       tradePlan: {
         entryType: setup.tradePlan.entryType || 'bar_close',
-        entry: setup.tradePlan.entry,
-        stopLoss: setup.tradePlan.stopLoss,
-        takeProfit: setup.tradePlan.takeProfit,
-        rr: setup.tradePlan.rr,
-        stopDistance: setup.tradePlan.stopDistance || Math.abs(setup.tradePlan.entry - setup.tradePlan.stopLoss),
-        tpDistance: setup.tradePlan.tpDistance || Math.abs(setup.tradePlan.takeProfit - setup.tradePlan.entry),
+        entry: recalculated.entry,
+        stopLoss: recalculated.stopLoss,
+        takeProfit: recalculated.takeProfit,
+        rr: recalculated.rr,
+        stopDistance: recalculated.stopDistance,
+        tpDistance: recalculated.tpDistance,
         timeStopBars: setup.tradePlan.timeStopBars || 100,
         bracketLevelsVersion: setup.tradePlan.bracketLevelsVersion || '1.0.0',
         priceRounding: setup.tradePlan.priceRounding || { priceDecimals: 2, rrDecimals: 1 },
@@ -679,7 +692,7 @@ export default function LivePatternsPage() {
 
     try {
       // Ensure we have at least a minimal setup so the dialog header renders.
-      setSelectedSetup(toSetupWithVisuals(setup));
+      setSelectedSetup(toSetupWithVisuals(setup, filters.selectedRR));
 
       const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
       const hasOverlays =
@@ -730,7 +743,7 @@ export default function LivePatternsPage() {
           // Ignore stale responses if user opened a different setup while this was in-flight.
           if (chartDetailsRequestIdRef.current !== requestId) return;
 
-          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+          setSelectedSetup(toSetupWithVisuals(res.data.pattern, filters.selectedRR));
           return;
         } catch (err: any) {
           lastErr = err;
@@ -1284,9 +1297,9 @@ export default function LivePatternsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <span className={`font-semibold ${
-                              setup.tradePlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
+                              filters.selectedRR >= 2 ? 'text-green-500' : 'text-muted-foreground'
                             }`}>
-                              {setup.tradePlan.rr.toFixed(1)}
+                              {filters.selectedRR.toFixed(1)}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
@@ -1415,7 +1428,7 @@ export default function LivePatternsPage() {
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
                       <div className="text-muted-foreground mb-0.5">R:R</div>
-                      <div className="font-medium">{setup.tradePlan.rr.toFixed(1)}</div>
+                      <div className="font-medium">{filters.selectedRR.toFixed(1)}</div>
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
                       <div className="text-muted-foreground mb-0.5">Age</div>
