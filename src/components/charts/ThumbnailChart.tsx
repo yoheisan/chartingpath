@@ -169,9 +169,9 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       }
     }
 
-    // Set visible range based on yDomain
+    // Enable autoScale for dynamic price range fitting
     chart.priceScale('right').applyOptions({
-      autoScale: false,
+      autoScale: true,
     });
     
     // Fit content
