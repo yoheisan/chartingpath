@@ -29,6 +29,7 @@ const STATIC_ARTICLE_SLUGS = new Set([
   'trading-discipline',
   'fear-and-greed',
   'trading-journal',
+  'trading-strategies-guide',
 ]);
 
 /**
@@ -71,6 +72,7 @@ export function usePrefetchArticle() {
         'trading-discipline': () => import('@/pages/blog/TradingDiscipline'),
         'fear-and-greed': () => import('@/pages/blog/FearAndGreed'),
         'trading-journal': () => import('@/pages/blog/TradingJournal'),
+        'trading-strategies-guide': () => import('@/pages/blog/TradingStrategiesGuide'),
       };
       
       const prefetchFn = prefetchMap[slug];
