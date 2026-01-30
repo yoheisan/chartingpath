@@ -543,9 +543,36 @@ export default function LivePatternsPage() {
     return sortAsc ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />;
   };
 
-  const handleOpenChart = (setup: LiveSetup) => {
-    // Convert to SetupWithVisuals format
-    const fullSetup: SetupWithVisuals = {
+  const buildFallbackVisualSpec = (setup: LiveSetup): VisualSpec => {
+    const entry = setup?.tradePlan?.entry ?? 0;
+    return {
+      version: '2.0.0',
+      symbol: setup.instrument,
+      timeframe: (setup as any)?.visualSpec?.timeframe || timeframe,
+      patternId: setup.patternId,
+      signalTs: setup.signalTs,
+      window: {
+        startTs: setup.signalTs,
+        endTs: setup.signalTs,
+      },
+      yDomain: {
+        min: entry,
+        max: entry,
+      },
+      overlays: [],
+    };
+  };
+
+  const toSetupWithVisuals = (setup: LiveSetup): SetupWithVisuals & {
+    currentPrice?: number;
+    prevClose?: number;
+    changePercent?: number | null;
+    trendAlignment?: LiveSetup['trendAlignment'];
+    trendIndicators?: LiveSetup['trendIndicators'];
+  } => {
+    const visualSpec = setup.visualSpec || buildFallbackVisualSpec(setup);
+
+    return {
       instrument: setup.instrument,
       patternId: setup.patternId,
       patternName: setup.patternName,
@@ -564,11 +591,62 @@ export default function LivePatternsPage() {
         bracketLevelsVersion: setup.tradePlan.bracketLevelsVersion || '1.0.0',
         priceRounding: setup.tradePlan.priceRounding || { priceDecimals: 2, rrDecimals: 1 },
       },
-      bars: setup.bars,
-      visualSpec: setup.visualSpec,
+      bars: Array.isArray(setup.bars) ? setup.bars : [],
+      visualSpec,
+      // passthrough optional enrichment fields for the viewer
+      currentPrice: setup.currentPrice,
+      prevClose: setup.prevClose,
+      changePercent: setup.changePercent,
+      trendAlignment: setup.trendAlignment,
+      trendIndicators: setup.trendIndicators,
     };
-    setSelectedSetup(fullSetup);
+  };
+
+  const handleOpenChart = async (setup: LiveSetup) => {
+    // Open immediately with a loading overlay; then lazy-load full bars/VisualSpec.
     setChartOpen(true);
+    setLoadingChartDetails(true);
+
+    // Ensure we have at least a minimal setup so the dialog header renders.
+    setSelectedSetup(toSetupWithVisuals(setup));
+
+    const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
+    const hasOverlays = Array.isArray(setup.visualSpec?.overlays) && setup.visualSpec.overlays.length > 0;
+    const needsDetails = !hasBars || !hasOverlays;
+
+    if (!needsDetails) {
+      setLoadingChartDetails(false);
+      return;
+    }
+
+    if (!setup.dbId) {
+      console.warn('[LivePatternsPage] Missing dbId; cannot load detailed chart data');
+      setLoadingChartDetails(false);
+      return;
+    }
+
+    try {
+      const res = await withTimeout(
+        supabase.functions.invoke<PatternDetailsResponse>('get-live-pattern-details', {
+          body: { id: setup.dbId },
+        }),
+        20_000,
+        'get-live-pattern-details'
+      );
+
+      if (res.error) throw res.error;
+
+      if (!res.data?.success || !res.data.pattern) {
+        throw new Error(res.data?.error || 'Failed to load pattern details');
+      }
+
+      setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+    } catch (err: any) {
+      console.error('[LivePatternsPage] Failed to load chart details:', err?.message || err);
+      // Keep the dialog open with a readable fallback state in the viewer.
+    } finally {
+      setLoadingChartDetails(false);
+    }
   };
 
   // Progressive loading: Show UI shell immediately, data loads in place
@@ -1412,6 +1490,7 @@ export default function LivePatternsPage() {
           open={chartOpen}
           onOpenChange={setChartOpen}
           setup={selectedSetup}
+          loading={loadingChartDetails}
           onCopyPlan={() => {
             navigator.clipboard.writeText(
               `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${selectedSetup.tradePlan.rr.toFixed(1)}`

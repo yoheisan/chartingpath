@@ -47,6 +47,7 @@ interface FullChartViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setup: SetupWithVisuals | null;
+  loading?: boolean;
   onCopyPlan: () => void;
   onCreateAlert: () => void;
   onExportPine?: () => void;
@@ -109,6 +110,7 @@ export default function FullChartViewer({
   open, 
   onOpenChange, 
   setup,
+  loading = false,
   onCopyPlan,
   onCreateAlert,
   onExportPine,
@@ -127,6 +129,8 @@ export default function FullChartViewer({
     if (!containerEl || !setup || !open) return;
 
     setChartError(null);
+
+    if (loading) return;
 
     const { bars, visualSpec } = setup;
     if (!bars || bars.length === 0) return;
@@ -320,9 +324,11 @@ export default function FullChartViewer({
         chartRef.current = null;
       }
     };
-  }, [setup, open, containerEl]);
+  }, [setup, open, containerEl, loading]);
 
   if (!setup) return null;
+
+  const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
 
   const { tradePlan, direction, patternName, instrument, visualSpec, quality, currentPrice, changePercent } = setup as SetupWithVisuals & { currentPrice?: number; changePercent?: number | null };
   const isLong = direction === 'long';
@@ -476,6 +482,13 @@ export default function FullChartViewer({
                 {chartError && (
                   <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/30">
                     {chartError}
+                  </div>
+                )}
+
+                {!chartError && (loading || !hasBars) && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>{loading ? 'Loading detailed chart…' : 'No chart data available for this setup.'}</span>
                   </div>
                 )}
               </div>
