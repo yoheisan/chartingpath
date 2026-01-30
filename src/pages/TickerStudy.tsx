@@ -447,71 +447,6 @@ export default function TickerStudy() {
         </Card>
       )}
 
-      {/* Dynamic Stats Cards - Below Chart, Updates with Filters */}
-      <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Performance Metrics
-              {selectedPatternTypes.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  Filtered: {selectedPatternTypes.length} pattern{selectedPatternTypes.length > 1 ? 's' : ''}
-                </Badge>
-              )}
-            </CardTitle>
-            {filteredStats.sampleSize > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Based on {filteredStats.sampleSize} resolved trades
-              </p>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className="text-2xl font-bold">{filteredStats.totalPatterns}</p>
-              <p className="text-xs text-muted-foreground">Patterns</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className="text-2xl font-bold text-primary">{filteredStats.activePatterns}</p>
-              <p className="text-xs text-muted-foreground">Active Now</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className={`text-2xl font-bold ${filteredStats.winRate >= 50 ? 'text-green-500' : 'text-amber-500'}`}>
-                {filteredStats.winRate.toFixed(1)}%
-              </p>
-              <p className="text-xs text-muted-foreground">Win Rate</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className={`text-2xl font-bold ${filteredStats.avgPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {filteredStats.avgPnl >= 0 ? '+' : ''}{filteredStats.avgPnl.toFixed(2)}%
-              </p>
-              <p className="text-xs text-muted-foreground">Avg P&L</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className={`text-2xl font-bold ${filteredStats.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {filteredStats.totalPnl >= 0 ? '+' : ''}{filteredStats.totalPnl.toFixed(1)}%
-              </p>
-              <p className="text-xs text-muted-foreground">Total P&L</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className={`text-2xl font-bold ${filteredStats.profitFactor >= 1 ? 'text-green-500' : 'text-red-500'}`}>
-                {filteredStats.profitFactor.toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground">Profit Factor</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className="text-2xl font-bold text-green-500">{filteredStats.wins}</p>
-              <p className="text-xs text-muted-foreground">Wins</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-background/50">
-              <p className="text-2xl font-bold text-red-500">{filteredStats.losses}</p>
-              <p className="text-xs text-muted-foreground">Losses</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Active Patterns */}
       {livePatterns.length > 0 && (
@@ -571,19 +506,28 @@ export default function TickerStudy() {
         </Card>
       )}
 
-      {/* Historical Patterns Section with Multi-Select Filter */}
-      <Card>
-        <CardHeader>
+      {/* Performance Metrics - Right above Historical Patterns for immediate filter feedback */}
+      <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Historical Pattern Occurrences
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Performance Metrics
+              </CardTitle>
+              {filteredStats.sampleSize > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Based on {filteredStats.sampleSize} resolved trades
+                </p>
+              )}
+            </div>
+            
+            {/* Filters for immediate feedback */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* Multi-select Pattern Filter */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
                     <Filter className="h-4 w-4" />
                     {selectedPatternTypes.length === 0 
                       ? 'All Patterns' 
@@ -618,12 +562,12 @@ export default function TickerStudy() {
                             onClick={() => togglePatternType(patternId)}
                           >
                             <Checkbox 
-                              id={patternId}
+                              id={`perf-${patternId}`}
                               checked={selectedPatternTypes.includes(patternId)}
                               onCheckedChange={() => togglePatternType(patternId)}
                             />
                             <label 
-                              htmlFor={patternId} 
+                              htmlFor={`perf-${patternId}`} 
                               className="text-sm cursor-pointer flex-1"
                             >
                               {PATTERN_DISPLAY_NAMES[patternId] || patternId}
@@ -641,7 +585,7 @@ export default function TickerStudy() {
 
               {/* Outcome Filter */}
               <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[130px] h-9">
                   <SelectValue placeholder="All Outcomes" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border border-border shadow-lg z-50">
@@ -654,7 +598,7 @@ export default function TickerStudy() {
               </Select>
             </div>
           </div>
-
+          
           {/* Active Filter Tags */}
           {selectedPatternTypes.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-3">
@@ -671,6 +615,60 @@ export default function TickerStudy() {
               ))}
             </div>
           )}
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold">{filteredStats.totalPatterns}</p>
+              <p className="text-xs text-muted-foreground">Patterns</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-primary">{filteredStats.activePatterns}</p>
+              <p className="text-xs text-muted-foreground">Active Now</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.winRate >= 50 ? 'text-green-500' : 'text-amber-500'}`}>
+                {filteredStats.winRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.avgPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.avgPnl >= 0 ? '+' : ''}{filteredStats.avgPnl.toFixed(2)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Avg P&L</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.totalPnl >= 0 ? '+' : ''}{filteredStats.totalPnl.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Total P&L</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className={`text-2xl font-bold ${filteredStats.profitFactor >= 1 ? 'text-green-500' : 'text-red-500'}`}>
+                {filteredStats.profitFactor.toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground">Profit Factor</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-green-500">{filteredStats.wins}</p>
+              <p className="text-xs text-muted-foreground">Wins</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-background/50">
+              <p className="text-2xl font-bold text-red-500">{filteredStats.losses}</p>
+              <p className="text-xs text-muted-foreground">Losses</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Historical Patterns Section */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5" />
+            Historical Pattern Occurrences
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
