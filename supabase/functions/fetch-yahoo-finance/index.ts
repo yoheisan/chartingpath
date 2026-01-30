@@ -10,6 +10,7 @@ interface YahooFinanceRequest {
   startDate: string;
   endDate: string;
   interval?: string; // 1d, 1wk, 1mo, 1h, etc.
+  includeOhlc?: boolean;
 }
 
 serve(async (req) => {
@@ -18,7 +19,13 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, startDate, endDate, interval = '1d' }: YahooFinanceRequest = await req.json();
+    const {
+      symbol,
+      startDate,
+      endDate,
+      interval = '1d',
+      includeOhlc = false,
+    }: YahooFinanceRequest = await req.json();
     
     console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}`);
 
@@ -46,11 +53,47 @@ serve(async (req) => {
     }
 
     const result = data.chart.result[0];
-    const timestamps = result.timestamp;
-    const quotes = result.indicators.quote[0];
+    const timestamps: number[] = result.timestamp || [];
+    const quotes = result.indicators?.quote?.[0];
+
+    if (!Array.isArray(timestamps) || timestamps.length === 0 || !quotes) {
+      throw new Error('Yahoo Finance returned an empty time series');
+    }
+
+    // Optional: OHLC bars for candlestick rendering
+    const ohlcBars = includeOhlc
+      ? timestamps
+          .map((ts: number, idx: number) => {
+            const o = quotes.open?.[idx];
+            const h = quotes.high?.[idx];
+            const l = quotes.low?.[idx];
+            const c = quotes.close?.[idx];
+            const v = quotes.volume?.[idx] ?? 0;
+
+            // Filter out null/undefined points
+            if (
+              !Number.isFinite(o) ||
+              !Number.isFinite(h) ||
+              !Number.isFinite(l) ||
+              !Number.isFinite(c)
+            ) {
+              return null;
+            }
+
+            return {
+              t: new Date(ts * 1000).toISOString(),
+              o: Number(o),
+              h: Number(h),
+              l: Number(l),
+              c: Number(c),
+              v: Number(v) || 0,
+            };
+          })
+          .filter(Boolean)
+      : null;
     
     // Format data into PriceFrame format
-    const priceFrame = {
+    const priceFrame: Record<string, unknown> = {
       index: timestamps.map((ts: number) => new Date(ts * 1000).toISOString().split('T')[0]),
       columns: [symbol],
       data: timestamps.map((ts: number, idx: number) => [
@@ -65,6 +108,10 @@ serve(async (req) => {
         dataGranularity: result.meta.dataGranularity
       }
     };
+
+    if (includeOhlc) {
+      priceFrame.bars = ohlcBars || [];
+    }
 
     console.log(`Successfully fetched ${priceFrame.index.length} data points for ${symbol}`);
 
