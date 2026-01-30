@@ -815,20 +815,19 @@ export default function TickerStudy() {
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="py-1">
-                        {pattern.bars && pattern.bars.length > 0 ? (
-                          <div className="w-[120px] h-[50px]">
-                            <ThumbnailChart 
-                              bars={pattern.bars}
-                              visualSpec={pattern.visual_spec}
-                              height={50}
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-[120px] h-[50px] bg-muted/30 rounded flex items-center justify-center text-[10px] text-muted-foreground">
-                            No chart
-                          </div>
-                        )}
+                      <TableCell className="py-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPattern(pattern);
+                          }}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1.5" />
+                          Open Chart
+                        </Button>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
