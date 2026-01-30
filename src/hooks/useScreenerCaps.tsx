@@ -3,18 +3,6 @@ import { PLANS_CONFIG, PlanTier, ScreenerCaps } from '@/config/plans';
 import { useUserProfile } from './useUserProfile';
 
 /**
- * Default screener caps for anonymous/FREE users
- */
-const DEFAULT_SCREENER_CAPS: ScreenerCaps = {
-  maxTickersPerClass: 25,
-  allowedPatterns: [
-    'donchian-breakout-long', 'donchian-breakout-short',
-    'double-top', 'double-bottom',
-    'ascending-triangle', 'descending-triangle'
-  ]
-};
-
-/**
  * All possible patterns for display purposes
  */
 export const ALL_PATTERN_IDS = [
@@ -51,29 +39,22 @@ export const PATTERN_DISPLAY_NAMES: Record<string, string> = {
 };
 
 /**
+ * Full access screener caps - all patterns unlocked for all users
+ */
+const FULL_ACCESS_SCREENER_CAPS: ScreenerCaps = {
+  maxTickersPerClass: 100,
+  allowedPatterns: ALL_PATTERN_IDS
+};
+
+/**
  * Hook to get screener caps based on user's subscription tier
+ * NOTE: Currently all patterns are unlocked for all users (free tier included)
  */
 export function useScreenerCaps() {
   const { profile, loading: profileLoading } = useUserProfile();
   
-  const caps = useMemo(() => {
-    if (!profile?.subscription_plan) {
-      return DEFAULT_SCREENER_CAPS;
-    }
-    
-    // Map subscription_plan to PlanTier
-    const planMapping: Record<string, PlanTier> = {
-      'starter': 'FREE',
-      'free': 'FREE',
-      'plus': 'PLUS',
-      'pro': 'PRO',
-      'elite': 'TEAM',
-      'team': 'TEAM'
-    };
-    
-    const tier = planMapping[profile.subscription_plan.toLowerCase()] || 'FREE';
-    return PLANS_CONFIG.tiers[tier]?.screener || DEFAULT_SCREENER_CAPS;
-  }, [profile?.subscription_plan]);
+  // All users get full access to all patterns
+  const caps = FULL_ACCESS_SCREENER_CAPS;
   
   const tier = useMemo(() => {
     if (!profile?.subscription_plan) return 'FREE' as PlanTier;
@@ -90,37 +71,11 @@ export function useScreenerCaps() {
     return planMapping[profile.subscription_plan.toLowerCase()] || 'FREE';
   }, [profile?.subscription_plan]);
   
-  // Locked patterns are those not in the user's allowed list
-  const lockedPatterns = useMemo(() => {
-    return ALL_PATTERN_IDS.filter(p => !caps.allowedPatterns.includes(p));
-  }, [caps.allowedPatterns]);
+  // No locked patterns - everything is available to all users
+  const lockedPatterns: string[] = [];
   
-  // Calculate upgrade incentive text
-  const upgradeIncentive = useMemo(() => {
-    if (tier === 'TEAM') return null;
-    
-    const nextTierPatterns = tier === 'FREE' 
-      ? PLANS_CONFIG.tiers.PLUS.screener.allowedPatterns.length 
-      : tier === 'PLUS' 
-        ? PLANS_CONFIG.tiers.PRO.screener.allowedPatterns.length 
-        : PLANS_CONFIG.tiers.TEAM.screener.allowedPatterns.length;
-    
-    const nextTierTickers = tier === 'FREE' 
-      ? PLANS_CONFIG.tiers.PLUS.screener.maxTickersPerClass 
-      : tier === 'PLUS' 
-        ? PLANS_CONFIG.tiers.PRO.screener.maxTickersPerClass 
-        : PLANS_CONFIG.tiers.TEAM.screener.maxTickersPerClass;
-    
-    const nextTierName = tier === 'FREE' ? 'Plus' : tier === 'PLUS' ? 'Pro' : 'Team';
-    
-    return {
-      tierName: nextTierName,
-      patternsUnlocked: nextTierPatterns,
-      tickersUnlocked: nextTierTickers,
-      additionalPatterns: nextTierPatterns - caps.allowedPatterns.length,
-      additionalTickers: nextTierTickers - caps.maxTickersPerClass
-    };
-  }, [tier, caps]);
+  // No upgrade incentive needed since everything is unlocked
+  const upgradeIncentive = null;
   
   return {
     caps,
@@ -128,6 +83,6 @@ export function useScreenerCaps() {
     loading: profileLoading,
     lockedPatterns,
     upgradeIncentive,
-    isPatternLocked: (patternId: string) => !caps.allowedPatterns.includes(patternId)
+    isPatternLocked: () => false // Nothing is locked
   };
 }
