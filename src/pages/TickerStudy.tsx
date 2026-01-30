@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,7 @@ import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import StudyChart from '@/components/charts/StudyChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
+import { TimeframeSelector, useStudyTimeframes, STUDY_TIMEFRAMES } from '@/components/charts/TimeframeSelector';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -118,9 +119,10 @@ function toYahooSymbol(symbol: string, category: string): string {
 interface ActivePatternsAccordionProps {
   livePatterns: LivePattern[];
   onSelectPattern: (pattern: LivePattern) => void;
+  timeframeLabel: string;
 }
 
-function ActivePatternsAccordion({ livePatterns, onSelectPattern }: ActivePatternsAccordionProps) {
+function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel }: ActivePatternsAccordionProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -134,6 +136,9 @@ function ActivePatternsAccordion({ livePatterns, onSelectPattern }: ActivePatter
                 <CardTitle className="text-lg">
                   Active Patterns ({livePatterns.length})
                 </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {timeframeLabel}
+                </Badge>
               </div>
               <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </div>
@@ -201,12 +206,32 @@ export default function TickerStudy() {
   const [priceData, setPriceData] = useState<CompressedBar[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<HistoricalPattern | LivePattern | null>(null);
   
+  // Timeframe selection (paid feature)
+  const { allowedTimeframes, isTimeframeAllowed } = useStudyTimeframes();
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1d');
+  
   // Multi-select pattern filter
   const [selectedPatternTypes, setSelectedPatternTypes] = useState<string[]>([]);
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
 
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
+  
+  // Get timeframe label for display
+  const timeframeLabel = useMemo(() => {
+    return STUDY_TIMEFRAMES.find(tf => tf.value === selectedTimeframe)?.label || 'Daily';
+  }, [selectedTimeframe]);
+
+  // Convert selected timeframe to Yahoo interval format
+  const getYahooInterval = useCallback((tf: string) => {
+    const mapping: Record<string, string> = {
+      '1h': '1h',
+      '4h': '4h', // Yahoo doesn't support 4h directly, we'll aggregate
+      '1d': '1d',
+      '1wk': '1wk',
+    };
+    return mapping[tf] || '1d';
+  }, []);
 
   useEffect(() => {
     if (!symbol) return;
@@ -228,11 +253,12 @@ export default function TickerStudy() {
           `${normalized}/USD`,
         ];
 
-        // Fetch historical patterns
+        // Fetch historical patterns - filter by timeframe
         const { data: historicalData, error: historicalError } = await supabase
           .from('historical_pattern_occurrences')
           .select('*')
           .in('symbol', symbolVariants)
+          .eq('timeframe', selectedTimeframe)
           .order('detected_at', { ascending: false })
           .limit(100);
 
@@ -274,11 +300,12 @@ export default function TickerStudy() {
           setHistoricalPatterns(mappedHistorical);
         }
 
-        // Fetch live patterns
+        // Fetch live patterns - filter by timeframe
         const { data: liveData, error: liveError } = await supabase
           .from('live_pattern_detections')
           .select('*')
           .in('instrument', symbolVariants)
+          .eq('timeframe', selectedTimeframe)
           .eq('status', 'active')
           .order('first_detected_at', { ascending: false });
 
@@ -311,9 +338,8 @@ export default function TickerStudy() {
           setLivePatterns(mappedLive);
         }
 
-        // Fetch historical price data for chart (limit to 200 bars for speed)
-        // Root cause (FX/crypto/commodities): historical_prices may not be populated for all asset classes.
-        // We try DB first, then fall back to Yahoo OHLC via edge function.
+        // Fetch historical price data for chart (limit varies by timeframe)
+        const barLimit = selectedTimeframe === '1h' ? 500 : selectedTimeframe === '4h' ? 300 : 200;
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData: any[] | null = null;
 
@@ -322,9 +348,9 @@ export default function TickerStudy() {
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
             .eq('symbol', sym)
-            .eq('timeframe', '1d')
+            .eq('timeframe', selectedTimeframe)
             .order('date', { ascending: false })
-            .limit(200);
+            .limit(barLimit);
 
           if (!error && data && data.length > 0) {
             pricesData = data;
@@ -346,8 +372,10 @@ export default function TickerStudy() {
           setPriceData(bars);
         } else {
           // Yahoo fallback (OHLC)
+          // Adjust date range based on timeframe
+          const daysBack = selectedTimeframe === '1h' ? 30 : selectedTimeframe === '4h' ? 90 : 400;
           const endDate = new Date();
-          const startDate = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000);
+          const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
           const startStr = startDate.toISOString().slice(0, 10);
           const endStr = endDate.toISOString().slice(0, 10);
 
@@ -369,7 +397,7 @@ export default function TickerStudy() {
                   symbol: yahooSymbol,
                   startDate: startStr,
                   endDate: endStr,
-                  interval: '1d',
+                  interval: getYahooInterval(selectedTimeframe),
                   includeOhlc: true,
                 },
               }
@@ -382,8 +410,7 @@ export default function TickerStudy() {
 
             const bars = (yfData as any)?.bars as CompressedBar[] | undefined;
             if (Array.isArray(bars) && bars.length > 0) {
-              // Keep the same 200-bar cap as the DB query.
-              setPriceData(bars.slice(-200));
+              setPriceData(bars.slice(-barLimit));
               break;
             }
 
@@ -391,10 +418,6 @@ export default function TickerStudy() {
             const idx = (yfData as any)?.index as string[] | undefined;
             const matrix = (yfData as any)?.data as number[][] | undefined;
             if (Array.isArray(idx) && Array.isArray(matrix) && idx.length > 0 && matrix.length > 0) {
-              // IMPORTANT:
-              // Yahoo can return arrays in either newest→oldest or oldest→newest order.
-              // We must sort chronologically BEFORE synthesizing open values, otherwise
-              // candle direction (green/red) becomes inconsistent across the chart.
               const points = idx
                 .map((d, i) => {
                   const ts = new Date(d).getTime();
@@ -405,17 +428,12 @@ export default function TickerStudy() {
                 .filter((p): p is { ts: number; close: number } => Boolean(p))
                 .sort((a, b) => a.ts - b.ts);
 
-              // Build close-only bars with synthetic open based on previous close
-              // so lightweight-charts always applies our green(up)/red(down) rule.
               const closeBars: CompressedBar[] = [];
               let prevClose: number | null = null;
 
               for (const p of points) {
                 const iso = new Date(p.ts).toISOString();
                 const close = p.close;
-
-                // If we don't have a previous close, create a tiny "up" body so the candle
-                // is not rendered as a neutral/flat/gray pixel.
                 const eps = Math.max(Math.abs(close) * 1e-6, 1e-6);
                 const open = prevClose !== null ? prevClose : close - eps;
 
@@ -431,7 +449,7 @@ export default function TickerStudy() {
                 prevClose = close;
               }
 
-              const limitedBars = closeBars.slice(-200);
+              const limitedBars = closeBars.slice(-barLimit);
 
               if (limitedBars.length > 0) {
                 setPriceData(limitedBars);
@@ -448,7 +466,7 @@ export default function TickerStudy() {
     };
 
     fetchData();
-  }, [symbol]);
+  }, [symbol, selectedTimeframe, getYahooInterval]);
 
   // Filter patterns based on multi-select and outcome
   const filteredHistoricalPatterns = useMemo(() => {
@@ -595,14 +613,21 @@ export default function TickerStudy() {
         />
       </div>
 
-      {/* Price Chart Section */}
+      {/* Price Chart Section with Timeframe Selector */}
       {!loading && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Price Chart (Daily) — {displaySymbol}
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Price Chart ({timeframeLabel}) — {displaySymbol}
+              </CardTitle>
+              <TimeframeSelector
+                value={selectedTimeframe}
+                onChange={setSelectedTimeframe}
+                size="sm"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <StudyChart 
@@ -618,10 +643,17 @@ export default function TickerStudy() {
       {loading && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Price Chart
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Price Chart ({timeframeLabel})
+              </CardTitle>
+              <TimeframeSelector
+                value={selectedTimeframe}
+                onChange={setSelectedTimeframe}
+                size="sm"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-[300px] w-full" />
@@ -634,7 +666,8 @@ export default function TickerStudy() {
       {livePatterns.length > 0 && (
         <ActivePatternsAccordion 
           livePatterns={livePatterns} 
-          onSelectPattern={(pattern) => setSelectedPattern(pattern as any)} 
+          onSelectPattern={(pattern) => setSelectedPattern(pattern as any)}
+          timeframeLabel={timeframeLabel}
         />
       )}
 
@@ -797,10 +830,18 @@ export default function TickerStudy() {
       {/* Historical Patterns Section */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Historical Pattern Occurrences
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Historical Pattern Occurrences
+              <Badge variant="secondary" className="text-xs">
+                {timeframeLabel}
+              </Badge>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {filteredHistoricalPatterns.length} patterns found
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
