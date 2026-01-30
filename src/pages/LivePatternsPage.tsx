@@ -1098,14 +1098,10 @@ export default function LivePatternsPage() {
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help">
                             Win %
-                            <Crown className="h-3 w-3 text-amber-500 opacity-70" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
                           <p className="text-xs">Historical win rate for this pattern based on 5 years of backtested data.</p>
-                          {tier === 'FREE' && (
-                            <p className="text-xs text-amber-500 mt-1">Upgrade to see actual values</p>
-                          )}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1220,24 +1216,7 @@ export default function LivePatternsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="inline-flex items-center gap-1 text-muted-foreground cursor-help">
-                                      <span className="blur-[3px] select-none font-mono text-sm">55%</span>
-                                      <Lock className="h-3 w-3" />
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">
-                                    <div className="flex items-center gap-1">
-                                      <Crown className="h-3 w-3 text-amber-500" />
-                                      <span className="text-xs">Upgrade to see edge metrics</span>
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : setup.historicalPerformance?.winRate != null ? (
+                            {setup.historicalPerformance?.winRate != null ? (
                               <span className={`font-mono text-sm font-medium ${
                                 setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
                               }`}>
@@ -1249,9 +1228,7 @@ export default function LivePatternsPage() {
                           </TableCell>
                           {/* 3M ROI */}
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <span className="blur-[3px] select-none font-mono text-xs text-muted-foreground">+12%</span>
-                            ) : setup.historicalPerformance?.accumulatedRoi?.threeMonth != null ? (
+                            {setup.historicalPerformance?.accumulatedRoi?.threeMonth != null ? (
                               <span className={`font-mono text-xs font-medium ${
                                 setup.historicalPerformance.accumulatedRoi.threeMonth >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
@@ -1263,9 +1240,7 @@ export default function LivePatternsPage() {
                           </TableCell>
                           {/* 6M ROI */}
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <span className="blur-[3px] select-none font-mono text-xs text-muted-foreground">+28%</span>
-                            ) : setup.historicalPerformance?.accumulatedRoi?.sixMonth != null ? (
+                            {setup.historicalPerformance?.accumulatedRoi?.sixMonth != null ? (
                               <span className={`font-mono text-xs font-medium ${
                                 setup.historicalPerformance.accumulatedRoi.sixMonth >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
@@ -1277,9 +1252,7 @@ export default function LivePatternsPage() {
                           </TableCell>
                           {/* 1Y ROI */}
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <span className="blur-[3px] select-none font-mono text-xs text-muted-foreground">+45%</span>
-                            ) : setup.historicalPerformance?.accumulatedRoi?.oneYear != null ? (
+                            {setup.historicalPerformance?.accumulatedRoi?.oneYear != null ? (
                               <span className={`font-mono text-xs font-medium ${
                                 setup.historicalPerformance.accumulatedRoi.oneYear >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
@@ -1291,9 +1264,7 @@ export default function LivePatternsPage() {
                           </TableCell>
                           {/* 3Y ROI */}
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <span className="blur-[3px] select-none font-mono text-xs text-muted-foreground">+89%</span>
-                            ) : setup.historicalPerformance?.accumulatedRoi?.threeYear != null ? (
+                            {setup.historicalPerformance?.accumulatedRoi?.threeYear != null ? (
                               <span className={`font-mono text-xs font-medium ${
                                 setup.historicalPerformance.accumulatedRoi.threeYear >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
@@ -1305,9 +1276,7 @@ export default function LivePatternsPage() {
                           </TableCell>
                           {/* 5Y ROI */}
                           <TableCell className="text-right">
-                            {tier === 'FREE' ? (
-                              <span className="blur-[3px] select-none font-mono text-xs text-muted-foreground">+142%</span>
-                            ) : setup.historicalPerformance?.accumulatedRoi?.fiveYear != null ? (
+                            {setup.historicalPerformance?.accumulatedRoi?.fiveYear != null ? (
                               <span className={`font-mono text-xs font-medium ${
                                 setup.historicalPerformance.accumulatedRoi.fiveYear >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}>
