@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Tag, BarChart3 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
-import { LazyPatternChart } from "@/components/LazyPatternChart";
+import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
@@ -38,15 +39,6 @@ const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'trading-journal': '/learn/trading-journal',
 };
 
-// Pattern types that can be rendered with DynamicPatternChart
-const RENDERABLE_PATTERNS = [
-  'double-top', 'double-bottom', 'head-and-shoulders', 'inverse-head-and-shoulders',
-  'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
-  'bull-flag', 'bear-flag', 'rising-wedge', 'falling-wedge',
-  'cup-and-handle', 'doji', 'hammer', 'shooting-star', 'bullish-engulfing',
-  'bearish-engulfing', 'morning-star', 'evening-star', 'spinning-top'
-];
-
 interface Article {
   id: string;
   title: string;
@@ -64,6 +56,412 @@ interface Article {
   seo_description: string | null;
   view_count: number;
   like_count: number;
+}
+
+interface ParsedSection {
+  title: string;
+  content: string;
+  type: 'overview' | 'execution' | 'entry' | 'exit' | 'risk' | 'practitioners' | 'pros-cons' | 'example' | 'default';
+}
+
+// Parse markdown content into structured sections
+function parseContentSections(content: string): ParsedSection[] {
+  const sections: ParsedSection[] = [];
+  const h2Regex = /^## (.+)$/gm;
+  
+  let lastIndex = 0;
+  let match;
+  const matches: { title: string; start: number; end?: number }[] = [];
+  
+  while ((match = h2Regex.exec(content)) !== null) {
+    if (matches.length > 0) {
+      matches[matches.length - 1].end = match.index;
+    }
+    matches.push({ title: match[1], start: match.index + match[0].length });
+  }
+  
+  if (matches.length > 0) {
+    matches[matches.length - 1].end = content.length;
+  }
+  
+  // Add intro content before first h2
+  const firstH2Match = content.match(/^## /m);
+  if (firstH2Match && firstH2Match.index && firstH2Match.index > 0) {
+    const introContent = content.substring(0, firstH2Match.index).trim();
+    if (introContent) {
+      sections.push({ title: 'Introduction', content: introContent, type: 'overview' });
+    }
+  }
+  
+  for (const m of matches) {
+    const sectionContent = content.substring(m.start, m.end).trim();
+    const titleLower = m.title.toLowerCase();
+    
+    let type: ParsedSection['type'] = 'default';
+    if (titleLower.includes('overview') || titleLower.includes('definition') || titleLower.includes('what is')) {
+      type = 'overview';
+    } else if (titleLower.includes('execution') || titleLower.includes('timeframe') || titleLower.includes('frequency')) {
+      type = 'execution';
+    } else if (titleLower.includes('entry') || titleLower.includes('when to buy') || titleLower.includes('setup')) {
+      type = 'entry';
+    } else if (titleLower.includes('exit') || titleLower.includes('when to sell') || titleLower.includes('take profit')) {
+      type = 'exit';
+    } else if (titleLower.includes('risk') || titleLower.includes('stop loss') || titleLower.includes('management')) {
+      type = 'risk';
+    } else if (titleLower.includes('practitioner') || titleLower.includes('notable') || titleLower.includes('trader')) {
+      type = 'practitioners';
+    } else if (titleLower.includes('pros') || titleLower.includes('cons') || titleLower.includes('advantage') || titleLower.includes('disadvantage')) {
+      type = 'pros-cons';
+    } else if (titleLower.includes('example') || titleLower.includes('case study') || titleLower.includes('sample')) {
+      type = 'example';
+    }
+    
+    sections.push({ title: m.title, content: sectionContent, type });
+  }
+  
+  return sections;
+}
+
+// Extract bullet points from markdown content
+function extractBulletPoints(content: string): string[] {
+  const bulletRegex = /^[-*•]\s+(.+)$/gm;
+  const points: string[] = [];
+  let match;
+  while ((match = bulletRegex.exec(content)) !== null) {
+    points.push(match[1].replace(/\*\*/g, ''));
+  }
+  return points;
+}
+
+// Render a section based on its type
+function renderSection(section: ParsedSection, index: number) {
+  const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
+  
+  switch (section.type) {
+    case 'overview':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Alert className="border-primary/50 bg-primary/5">
+            <Lightbulb className="h-5 w-5 text-primary" />
+            <AlertTitle className="text-lg font-semibold">{section.title}</AlertTitle>
+            <AlertDescription className="mt-2">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-2 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mt-2">{children}</ul>,
+                  li: ({ children }) => <li className="text-muted-foreground text-sm">{children}</li>,
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </AlertDescription>
+          </Alert>
+        </section>
+      );
+    
+    case 'execution':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-blue-500/30 bg-blue-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{children}</span>
+                    </li>
+                  ),
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    case 'entry':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-green-500/30 bg-green-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="h-5 w-5 text-green-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="space-y-2 list-decimal list-inside">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{children}</span>
+                    </li>
+                  ),
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    case 'exit':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-cyan-500/30 bg-cyan-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-cyan-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="space-y-2 list-decimal list-inside">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-cyan-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{children}</span>
+                    </li>
+                  ),
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    case 'risk':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="h-5 w-5 text-amber-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{children}</span>
+                    </li>
+                  ),
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    case 'practitioners':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-purple-500/30 bg-purple-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{children}</span>
+                    </li>
+                  ),
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    case 'pros-cons':
+      const bulletPoints = extractBulletPoints(section.content);
+      const pros = bulletPoints.filter(p => 
+        p.toLowerCase().includes('pro:') || 
+        p.toLowerCase().startsWith('✓') || 
+        section.content.toLowerCase().includes('advantages')
+      );
+      const cons = bulletPoints.filter(p => 
+        p.toLowerCase().includes('con:') || 
+        p.toLowerCase().startsWith('✗') ||
+        section.content.toLowerCase().includes('disadvantages')
+      );
+      
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card className="border-green-500/30 bg-green-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Advantages
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="text-muted-foreground text-sm mb-2">{children}</p>,
+                    ul: ({ children }) => <ul className="space-y-1">{children}</ul>,
+                    li: ({ children }) => (
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-3 w-3 text-green-500 mt-1 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">{children}</span>
+                      </li>
+                    ),
+                  }}
+                >
+                  {section.content.split(/cons|disadvantages/i)[0]}
+                </ReactMarkdown>
+              </CardContent>
+            </Card>
+            <Card className="border-red-500/30 bg-red-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  Disadvantages
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="text-muted-foreground text-sm mb-2">{children}</p>,
+                    ul: ({ children }) => <ul className="space-y-1">{children}</ul>,
+                    li: ({ children }) => (
+                      <li className="flex items-start gap-2">
+                        <XCircle className="h-3 w-3 text-red-500 mt-1 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">{children}</span>
+                      </li>
+                    ),
+                  }}
+                >
+                  {section.content.split(/cons|disadvantages/i)[1] || section.content}
+                </ReactMarkdown>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      );
+    
+    case 'example':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-indigo-500/30 bg-indigo-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-indigo-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="space-y-2 list-decimal list-inside">{children}</ol>,
+                  li: ({ children }) => <li className="text-sm text-muted-foreground ml-4">{children}</li>,
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
+    default:
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <p className="text-muted-foreground leading-relaxed mb-4">{children}</p>,
+              strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+              ul: ({ children }) => <ul className="list-disc list-inside space-y-2 mb-4">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 mb-4">{children}</ol>,
+              li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
+              h3: ({ children }) => <h3 className="text-xl font-semibold mt-6 mb-3">{children}</h3>,
+            }}
+          >
+            {section.content}
+          </ReactMarkdown>
+        </section>
+      );
+  }
+}
+
+// Generate table of contents from sections
+function TableOfContents({ sections }: { sections: ParsedSection[] }) {
+  if (sections.length < 3) return null;
+  
+  return (
+    <Card className="mb-8 bg-muted/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">In This Article</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <nav>
+          <ul className="space-y-2">
+            {sections.map((section, i) => (
+              <li key={i}>
+                <a 
+                  href={`#${section.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                  {section.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </CardContent>
+    </Card>
+  );
 }
 
 const DynamicArticle = () => {
@@ -179,6 +577,9 @@ const DynamicArticle = () => {
     );
   }
 
+  // Parse content into structured sections
+  const sections = parseContentSections(article.content);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-12 max-w-4xl">
@@ -192,7 +593,7 @@ const DynamicArticle = () => {
         </Link>
 
         {/* Article Header */}
-        <article className="prose prose-lg dark:prose-invert max-w-none">
+        <article>
           <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
           
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground mb-8">
@@ -229,35 +630,12 @@ const DynamicArticle = () => {
             </Card>
           )}
 
-          {/* Article Content */}
+          {/* Table of Contents */}
+          <TableOfContents sections={sections} />
+
+          {/* Rendered Sections */}
           <div className="mt-8">
-            <ReactMarkdown
-              components={{
-                h2: ({ children }) => (
-                  <h2 className="text-2xl font-bold mt-12 mb-4">{children}</h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-xl font-semibold mt-8 mb-3">{children}</h3>
-                ),
-                p: ({ children }) => (
-                  <p className="text-muted-foreground leading-relaxed mb-6">{children}</p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside space-y-2 mb-6">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside space-y-2 mb-6">{children}</ol>
-                ),
-                li: ({ children }) => (
-                  <li className="text-muted-foreground">{children}</li>
-                ),
-                code: ({ children }) => (
-                  <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>
-                ),
-              }}
-            >
-              {article.content}
-            </ReactMarkdown>
+            {sections.map((section, index) => renderSection(section, index))}
           </div>
 
           {/* Tags */}
@@ -273,6 +651,22 @@ const DynamicArticle = () => {
               </div>
             </div>
           )}
+
+          {/* CTA */}
+          <div className="mt-12 p-6 bg-muted/30 rounded-lg">
+            <h3 className="text-xl font-bold mb-4">Ready to Apply This Strategy?</h3>
+            <p className="text-muted-foreground mb-4">
+              Put your knowledge into practice with our pattern scanner and strategy tools.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/screener" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                Find Trading Setups
+              </Link>
+              <Link to="/learn" className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors">
+                Explore More Strategies
+              </Link>
+            </div>
+          </div>
         </article>
       </div>
     </div>
