@@ -204,13 +204,15 @@ interface LiveSetup {
   };
 }
 
-type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
+type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   fx: 'Forex',
   crypto: 'Crypto',
   stocks: 'Stocks',
   commodities: 'Commodities',
+  indices: 'Indices',
+  etfs: 'ETFs',
 };
 
 interface ScanResult {
@@ -342,9 +344,10 @@ export default function LivePatternsPage() {
 
       // Retry logic - ALWAYS use cached path for speed; forceRefresh disabled for UI
       // Full scans happen via background cron only to prevent timeout issues
+      // Increased timeouts to handle edge function cold starts gracefully
       const attempts = [
-        { forceRefresh: false, timeout: 15_000 },  // Fast path: read from DB cache
-        { forceRefresh: false, timeout: 20_000 },  // Retry with longer timeout
+        { forceRefresh: false, timeout: 25_000 },  // Fast path: read from DB cache
+        { forceRefresh: false, timeout: 35_000 },  // Retry with longer timeout for cold starts
       ];
 
       for (let i = 0; i < attempts.length; i++) {
@@ -633,6 +636,8 @@ export default function LivePatternsPage() {
               <SelectItem value="crypto">₿ Crypto</SelectItem>
               <SelectItem value="stocks">📈 Stocks</SelectItem>
               <SelectItem value="commodities">🛢️ Commodities</SelectItem>
+              <SelectItem value="indices">📊 Indices</SelectItem>
+              <SelectItem value="etfs">💼 ETFs</SelectItem>
             </SelectContent>
           </Select>
 
