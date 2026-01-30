@@ -23,12 +23,16 @@ export const CHART_THEME = {
 // All colors MUST match for consistent appearance (body, border, wick)
 // borderVisible: false ensures clean solid candles without stroke artifacts
 export const CANDLE_COLORS = {
+  // Body colors
   upColor: '#22c55e',
   downColor: '#ef4444',
+  // Border colors (match body for solid appearance)
   borderUpColor: '#22c55e',
   borderDownColor: '#ef4444',
+  // Wick colors (match body for consistency)
   wickUpColor: '#22c55e',
   wickDownColor: '#ef4444',
+  // Disable borders to avoid stroke artifacts
   borderVisible: false,
 } as const;
 
@@ -48,12 +52,13 @@ export const VOLUME_SCALE_MARGINS = {
 } as const;
 
 // === INDICATOR COLORS ===
+// Using rgba for semi-transparency so indicators don't fully obscure candle wicks
 export const INDICATOR_COLORS = {
-  ema20: '#f97316',    // Orange
-  ema50: '#3b82f6',    // Blue  
-  sma200: '#8b5cf6',   // Purple
-  bollingerBands: 'rgba(156, 163, 175, 0.5)', // Gray translucent
-  vwap: '#06b6d4',     // Cyan
+  ema20: 'rgba(249, 115, 22, 0.8)',    // Orange
+  ema50: 'rgba(59, 130, 246, 0.8)',    // Blue  
+  sma200: 'rgba(139, 92, 246, 0.8)',   // Purple
+  bollingerBands: 'rgba(156, 163, 175, 0.4)', // Gray translucent
+  vwap: 'rgba(6, 182, 212, 0.8)',      // Cyan
 } as const;
 
 // === OVERLAY/PRICE LINE COLORS ===
