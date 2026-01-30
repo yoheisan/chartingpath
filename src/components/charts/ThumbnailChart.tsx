@@ -1,5 +1,5 @@
 import { useEffect, useRef, memo } from 'react';
-import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, HistogramSeries, createSeriesMarkers, SeriesMarkerShape } from 'lightweight-charts';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { CompactQualityScore } from './PatternQualityBadge';
 import { InstrumentLogo } from './InstrumentLogo';
@@ -89,6 +89,33 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       .sort((a, b) => (a.time as number) - (b.time as number));
 
     candleSeries.setData(chartData);
+
+    // Add volume histogram if volume data is available
+    const hasVolume = bars.some(bar => bar.v && bar.v > 0);
+    if (hasVolume) {
+      const volumeSeries = chart.addSeries(HistogramSeries, {
+        color: '#6b7280',
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volume',
+      });
+
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: { top: 0.85, bottom: 0 },
+        borderVisible: false,
+      });
+
+      const volumeData = chartData.map((d, i) => {
+        const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
+        const isUp = bar ? bar.c >= bar.o : true;
+        return {
+          time: d.time,
+          value: bar?.v || 0,
+          color: isUp ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+        };
+      });
+
+      volumeSeries.setData(volumeData);
+    }
 
     // Add price lines for overlays (defensive: check if overlays exist)
     if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
