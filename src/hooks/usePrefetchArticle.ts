@@ -41,6 +41,11 @@ const STATIC_ARTICLE_SLUGS = new Set([
   'strategies/position-trading',
   'strategies/macd-strategy',
   'strategies/bollinger-bands',
+  'strategies/rsi-divergence',
+  'strategies/vwap',
+  'strategies/fibonacci',
+  'strategies/support-resistance',
+  'strategies/gap-trading',
 ]);
 
 /**
@@ -95,6 +100,11 @@ export function usePrefetchArticle() {
         'strategies/position-trading': () => import('@/pages/strategies/PositionTradingStrategy'),
         'strategies/macd-strategy': () => import('@/pages/strategies/MACDStrategy'),
         'strategies/bollinger-bands': () => import('@/pages/strategies/BollingerBandsStrategy'),
+        'strategies/rsi-divergence': () => import('@/pages/strategies/RSIDivergenceStrategy'),
+        'strategies/vwap': () => import('@/pages/strategies/VWAPStrategy'),
+        'strategies/fibonacci': () => import('@/pages/strategies/FibonacciStrategy'),
+        'strategies/support-resistance': () => import('@/pages/strategies/SupportResistanceStrategy'),
+        'strategies/gap-trading': () => import('@/pages/strategies/GapTradingStrategy'),
       };
       
       const prefetchFn = prefetchMap[slug];

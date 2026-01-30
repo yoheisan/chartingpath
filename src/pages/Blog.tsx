@@ -298,6 +298,51 @@ const blogPosts = [
     icon: TrendingUp,
     readTime: "18 min read",
     skillLevels: ["Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/rsi-divergence",
+    title: "RSI Divergence Strategy: Catching Reversals",
+    description: "Identify trend reversals using regular and hidden RSI divergence patterns with confirmation techniques.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "12 min read",
+    skillLevels: ["Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/vwap",
+    title: "VWAP Trading Strategy: Institutional Edge",
+    description: "Trade with the institutional benchmark using VWAP bounces, breakouts, and intraday mean reversion.",
+    category: "Trading Strategies",
+    icon: Target,
+    readTime: "10 min read",
+    skillLevels: ["Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/fibonacci",
+    title: "Fibonacci Retracement Strategy: Natural Levels",
+    description: "Master the Golden Pocket (61.8%) and other Fib levels for high-probability entries and targets.",
+    category: "Trading Strategies",
+    icon: TrendingUp,
+    readTime: "14 min read",
+    skillLevels: ["Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/support-resistance",
+    title: "Support & Resistance Strategy: Key Levels",
+    description: "Trade bounces, breakouts, and role reversals at horizontal support and resistance zones.",
+    category: "Trading Strategies",
+    icon: Target,
+    readTime: "12 min read",
+    skillLevels: ["Novice", "Intermediate", "Advanced"]
+  },
+  {
+    id: "strategies/gap-trading",
+    title: "Gap Trading Strategy: Opening Range Plays",
+    description: "Profit from price gaps using gap fill, gap-and-go, and opening range breakout strategies.",
+    category: "Trading Strategies",
+    icon: BarChart3,
+    readTime: "11 min read",
+    skillLevels: ["Intermediate", "Advanced"]
   }
 ];
 
