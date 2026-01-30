@@ -287,9 +287,9 @@ export default function LivePatternsPage() {
   const screenerCapsResult = useScreenerCaps();
   const { caps, tier, upgradeIncentive, lockedPatterns, loading: capsLoading } = screenerCapsResult;
   
-  // Use default caps immediately for fast initial load, upgrade later if needed
+  // Use full caps immediately for all users - free tier now has full access
   const DEFAULT_CAPS = {
-    maxTickersPerClass: 25,
+    maxTickersPerClass: 100,
     allowedPatterns: [
       'donchian-breakout-long', 'donchian-breakout-short',
       'double-top', 'double-bottom',
