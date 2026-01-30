@@ -204,12 +204,26 @@ export default function FullChartViewer({
     // Using a callback ref (containerEl state) ensures we initialize the chart once the DOM node exists.
     if (!containerEl || !setup || !open) return;
 
+    console.debug('[FullChartViewer] effect', {
+      open,
+      loading,
+      hasContainer: Boolean(containerEl),
+      bars: Array.isArray(setup.bars) ? setup.bars.length : 0,
+      chartVersion,
+    });
+
     setChartError(null);
 
-    if (loading) return;
+    if (loading) {
+      console.debug('[FullChartViewer] waiting for chart details…');
+      return;
+    }
 
     const { bars, visualSpec } = setup;
-    if (!bars || bars.length === 0) return;
+    if (!bars || bars.length === 0) {
+      console.warn('[FullChartViewer] no bars to render');
+      return;
+    }
 
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;

@@ -290,6 +290,20 @@ export default function LivePatternsPage() {
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
   // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
   const chartDetailsRequestIdRef = useRef(0);
+
+  // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
+  // ensure the UI doesn't stay stuck forever.
+  useEffect(() => {
+    if (!loadingChartDetails) return;
+    const requestId = chartDetailsRequestIdRef.current;
+    const timeoutId = window.setTimeout(() => {
+      if (chartDetailsRequestIdRef.current !== requestId) return;
+      console.warn('[LivePatternsPage] Details load watchdog fired; clearing loading state', { requestId });
+      setLoadingChartDetails(false);
+    }, 80_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadingChartDetails]);
   
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
@@ -607,6 +621,13 @@ export default function LivePatternsPage() {
   const handleOpenChart = async (setup: LiveSetup) => {
     const requestId = ++chartDetailsRequestIdRef.current;
 
+    console.debug('[LivePatternsPage] Open chart', {
+      requestId,
+      dbId: setup.dbId,
+      instrument: setup.instrument,
+      patternId: setup.patternId,
+    });
+
     // Open immediately with a loading overlay; then lazy-load full bars/VisualSpec.
     setChartOpen(true);
     setLoadingChartDetails(true);
@@ -619,6 +640,13 @@ export default function LivePatternsPage() {
       const hasOverlays =
         Array.isArray(setup.visualSpec?.overlays) && (setup.visualSpec?.overlays?.length || 0) > 0;
       const needsDetails = !hasBars || !hasOverlays;
+
+      console.debug('[LivePatternsPage] Detail check', {
+        requestId,
+        hasBars,
+        hasOverlays,
+        needsDetails,
+      });
 
       if (!needsDetails) return;
 
@@ -641,6 +669,13 @@ export default function LivePatternsPage() {
             'get-live-pattern-details'
           );
 
+          console.debug('[LivePatternsPage] Details response received', {
+            requestId,
+            attempt: i + 1,
+            ok: !res.error,
+            hasData: Boolean(res.data),
+          });
+
           if (res.error) throw res.error;
 
           if (!res.data?.success || !res.data.pattern) {
@@ -654,6 +689,11 @@ export default function LivePatternsPage() {
           return;
         } catch (err: any) {
           lastErr = err;
+          console.warn('[LivePatternsPage] Details attempt failed', {
+            requestId,
+            attempt: i + 1,
+            message: err?.message || String(err),
+          });
           // Small delay before retry to allow cold start to finish.
           if (i < timeouts.length - 1) {
             await new Promise((r) => setTimeout(r, 750));
@@ -668,6 +708,7 @@ export default function LivePatternsPage() {
     } finally {
       // Only the latest request should be allowed to clear the loading overlay.
       if (chartDetailsRequestIdRef.current === requestId) {
+        console.debug('[LivePatternsPage] Clearing details loading', { requestId });
         setLoadingChartDetails(false);
       }
     }
