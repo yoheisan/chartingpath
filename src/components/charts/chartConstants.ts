@@ -20,7 +20,8 @@ export const CHART_THEME = {
 } as const;
 
 // === CANDLESTICK COLORS ===
-// Border colors MUST match body colors to ensure solid filled appearance
+// All colors MUST match for consistent appearance (body, border, wick)
+// borderVisible: false ensures clean solid candles without stroke artifacts
 export const CANDLE_COLORS = {
   upColor: '#22c55e',
   downColor: '#ef4444',
@@ -28,6 +29,7 @@ export const CANDLE_COLORS = {
   borderDownColor: '#ef4444',
   wickUpColor: '#22c55e',
   wickDownColor: '#ef4444',
+  borderVisible: false,
 } as const;
 
 // === VOLUME HISTOGRAM ===
