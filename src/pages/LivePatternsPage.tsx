@@ -626,21 +626,38 @@ export default function LivePatternsPage() {
     }
 
     try {
-      const res = await withTimeout(
-        supabase.functions.invoke<PatternDetailsResponse>('get-live-pattern-details', {
-          body: { id: setup.dbId },
-        }),
-        20_000,
-        'get-live-pattern-details'
-      );
+      // This function can cold-start; allow one retry with a longer timeout.
+      const timeouts = [25_000, 45_000] as const;
+      let lastErr: any = null;
 
-      if (res.error) throw res.error;
+      for (let i = 0; i < timeouts.length; i++) {
+        try {
+          const res = await withTimeout(
+            supabase.functions.invoke<PatternDetailsResponse>('get-live-pattern-details', {
+              body: { id: setup.dbId },
+            }),
+            timeouts[i],
+            'get-live-pattern-details'
+          );
 
-      if (!res.data?.success || !res.data.pattern) {
-        throw new Error(res.data?.error || 'Failed to load pattern details');
+          if (res.error) throw res.error;
+
+          if (!res.data?.success || !res.data.pattern) {
+            throw new Error(res.data?.error || 'Failed to load pattern details');
+          }
+
+          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+          return;
+        } catch (err: any) {
+          lastErr = err;
+          // Small delay before retry to allow cold start to finish.
+          if (i < timeouts.length - 1) {
+            await new Promise((r) => setTimeout(r, 750));
+          }
+        }
       }
 
-      setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+      throw lastErr;
     } catch (err: any) {
       console.error('[LivePatternsPage] Failed to load chart details:', err?.message || err);
       // Keep the dialog open with a readable fallback state in the viewer.
