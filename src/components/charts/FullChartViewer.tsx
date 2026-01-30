@@ -182,6 +182,11 @@ export default function FullChartViewer({
   const [chartError, setChartError] = useState<string | null>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
+  const indicatorsRef = useRef<IndicatorSettings>(indicators);
+  const [chartVersion, setChartVersion] = useState(0);
+  
+  // Keep ref in sync for use inside effects
+  indicatorsRef.current = indicators;
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -189,6 +194,8 @@ export default function FullChartViewer({
       saveIndicatorSettings(updated);
       return updated;
     });
+    // Increment version to trigger chart recreation
+    setChartVersion(v => v + 1);
   };
 
   useEffect(() => {
@@ -327,9 +334,11 @@ export default function FullChartViewer({
         }
 
         // === ADD TECHNICAL INDICATORS (conditional based on settings) ===
+        // Use ref to get current indicator settings
+        const currentIndicators = indicatorsRef.current;
         
         // EMA 20 (fast) - Orange
-        if (indicators.ema20) {
+        if (currentIndicators.ema20) {
           const ema20Data = calculateEMA(bars, 20);
           if (ema20Data.length > 0) {
             const ema20Series = chart.addSeries(LineSeries, {
@@ -343,7 +352,7 @@ export default function FullChartViewer({
         }
 
         // EMA 50 (slow) - Blue
-        if (indicators.ema50) {
+        if (currentIndicators.ema50) {
           const ema50Data = calculateEMA(bars, 50);
           if (ema50Data.length > 0) {
             const ema50Series = chart.addSeries(LineSeries, {
@@ -357,7 +366,7 @@ export default function FullChartViewer({
         }
 
         // SMA 200 (trend) - Purple
-        if (indicators.sma200) {
+        if (currentIndicators.sma200) {
           const sma200Data = calculateSMA(bars, 200);
           if (sma200Data.length > 0) {
             const sma200Series = chart.addSeries(LineSeries, {
@@ -372,7 +381,7 @@ export default function FullChartViewer({
         }
 
         // Bollinger Bands (20, 2)
-        if (indicators.bollingerBands) {
+        if (currentIndicators.bollingerBands) {
           const bbData = calculateBollingerBands(bars, 20, 2);
           if (bbData.length > 0) {
             // Upper band
@@ -396,7 +405,7 @@ export default function FullChartViewer({
         }
 
         // VWAP - Cyan dashed
-        if (indicators.vwap) {
+        if (currentIndicators.vwap) {
           const vwapData = calculateVWAP(bars);
           if (vwapData.length > 0) {
             const vwapSeries = chart.addSeries(LineSeries, {
@@ -506,7 +515,7 @@ export default function FullChartViewer({
         chartRef.current = null;
       }
     };
-  }, [setup, open, containerEl, loading, indicators]);
+  }, [setup, open, containerEl, loading, chartVersion]);
 
   if (!setup) return null;
 
