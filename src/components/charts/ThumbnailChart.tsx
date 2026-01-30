@@ -3,6 +3,15 @@ import { createChart, IChartApi, CandlestickData, Time, CandlestickSeries, Histo
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 import { CompactQualityScore } from './PatternQualityBadge';
 import { InstrumentLogo } from './InstrumentLogo';
+import { 
+  getThemeColors, 
+  CANDLE_COLORS, 
+  VOLUME_COLORS, 
+  VOLUME_SCALE_MARGINS, 
+  getVolumeColor, 
+  getOverlayColor,
+  PIVOT_COLORS,
+} from './chartConstants';
 
 interface ThumbnailChartProps {
   bars: CompressedBar[];
@@ -20,32 +29,29 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
   useEffect(() => {
     if (!containerRef.current || !bars || bars.length === 0) return;
 
-    // Detect theme
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#1a1a1a' : '#ffffff';
-    const textColor = isDark ? '#888888' : '#666666';
-    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    // Use unified theme colors
+    const theme = getThemeColors();
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height,
       layout: {
-        background: { color: bgColor },
-        textColor,
+        background: { color: theme.background },
+        textColor: theme.text,
       },
       grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
+        vertLines: { color: theme.grid },
+        horzLines: { color: theme.grid },
       },
       rightPriceScale: {
-        visible: true, // Price ruler visible
-        borderColor: gridColor,
+        visible: true,
+        borderColor: theme.grid,
       },
       timeScale: {
-        visible: true, // Time series visible
+        visible: true,
         borderVisible: true,
-        borderColor: gridColor,
-        timeVisible: false, // Hide time labels for compact view
+        borderColor: theme.grid,
+        timeVisible: false, // Compact view
       },
       crosshair: {
         mode: 0, // disabled
@@ -56,15 +62,8 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
 
     chartRef.current = chart;
 
-    // Create candlestick series (v5 API) - solid filled candles with matching border colors
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      borderDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-    });
+    // Use unified candlestick colors
+    const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
 
     // Transform bars to lightweight-charts format (defensive: floor time, filter NaNs, sort)
     const chartData: CandlestickData[] = bars
@@ -94,23 +93,23 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
       const volumeSeries = chart.addSeries(HistogramSeries, {
-        color: '#6b7280',
+        color: VOLUME_COLORS.default,
         priceFormat: { type: 'volume' },
         priceScaleId: 'volume',
       });
 
       chart.priceScale('volume').applyOptions({
-        scaleMargins: { top: 0.85, bottom: 0 },
+        scaleMargins: VOLUME_SCALE_MARGINS.compact,
         borderVisible: false,
       });
 
-      const volumeData = chartData.map((d, i) => {
+      const volumeData = chartData.map((d) => {
         const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
         const isUp = bar ? bar.c >= bar.o : true;
         return {
           time: d.time,
           value: bar?.v || 0,
-          color: isUp ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+          color: getVolumeColor(isUp),
         };
       });
 
@@ -121,18 +120,9 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
     if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
       visualSpec.overlays.forEach((overlay) => {
         if (overlay.type === 'hline') {
-          const color =
-            overlay.style === 'primary'
-              ? '#3b82f6'
-              : overlay.style === 'destructive'
-                ? '#ef4444'
-                : overlay.style === 'positive'
-                  ? '#22c55e'
-                  : '#888888';
-
           candleSeries.createPriceLine({
             price: overlay.price,
-            color,
+            color: getOverlayColor(overlay.style),
             lineWidth: 1,
             lineStyle: 2, // dashed
             axisLabelVisible: false,
@@ -161,7 +151,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
           return {
             time: t as Time,
             position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-            color: isHigh ? '#f97316' : '#8b5cf6',
+            color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
             shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
             text: pivot.label || '',
           };
