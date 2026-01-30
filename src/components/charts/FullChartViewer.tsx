@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   createChart,
   IChartApi,
@@ -605,7 +606,15 @@ export default function FullChartViewer({
                 )}
               </div>
               <div>
-                <DialogTitle className="text-xl">{instrument}</DialogTitle>
+                <DialogTitle className="text-xl">
+                  <Link 
+                    to={`/study/${encodeURIComponent(instrument)}`}
+                    className="hover:text-primary transition-colors hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {instrument}
+                  </Link>
+                </DialogTitle>
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm text-muted-foreground">{patternName} • {visualSpec.timeframe.toUpperCase()}</p>
                   {currentPrice != null && (
