@@ -1,13 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
-import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
+
+// Lazy load heavy chart component
+const DynamicPatternChart = lazy(() => 
+  import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
+);
 
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
@@ -61,7 +66,7 @@ interface Article {
 interface ParsedSection {
   title: string;
   content: string;
-  type: 'overview' | 'execution' | 'entry' | 'exit' | 'risk' | 'practitioners' | 'pros-cons' | 'example' | 'default';
+  type: 'overview' | 'execution' | 'entry' | 'exit' | 'risk' | 'practitioners' | 'pros-cons' | 'example' | 'chart' | 'default';
 }
 
 // Parse markdown content into structured sections
@@ -112,8 +117,10 @@ function parseContentSections(content: string): ParsedSection[] {
       type = 'practitioners';
     } else if (titleLower.includes('pros') || titleLower.includes('cons') || titleLower.includes('advantage') || titleLower.includes('disadvantage')) {
       type = 'pros-cons';
-    } else if (titleLower.includes('example') || titleLower.includes('case study') || titleLower.includes('sample')) {
+    } else if (titleLower.includes('example') || titleLower.includes('case study') || titleLower.includes('sample') || titleLower.includes('practice') || titleLower.includes('trade setup')) {
       type = 'example';
+    } else if (titleLower.includes('chart') || titleLower.includes('visual') || titleLower.includes('pattern illustration')) {
+      type = 'chart';
     }
     
     sections.push({ title: m.title, content: sectionContent, type });
@@ -413,6 +420,30 @@ function renderSection(section: ParsedSection, index: number) {
         </section>
       );
     
+    case 'chart':
+      return (
+        <section key={index} id={sectionId} className="mb-8">
+          <Card className="border-violet-500/30 bg-violet-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <LineChart className="h-5 w-5 text-violet-500" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
+                }}
+              >
+                {section.content}
+              </ReactMarkdown>
+            </CardContent>
+          </Card>
+        </section>
+      );
+    
     default:
       return (
         <section key={index} id={sectionId} className="mb-8">
@@ -432,6 +463,58 @@ function renderSection(section: ParsedSection, index: number) {
         </section>
       );
   }
+}
+
+// Chart visualization component for strategies with associated patterns
+function ChartVisualization({ slug }: { slug: string }) {
+  const charts = getStrategyCharts(slug);
+  
+  if (charts.length === 0) return null;
+  
+  return (
+    <Card className="mb-8 border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-background">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <LineChart className="h-5 w-5 text-violet-500" />
+          Visual Pattern Examples
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {charts.map((chart, idx) => (
+            <div key={idx} className="space-y-3">
+              {chart.title && (
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground">{chart.title}</h4>
+                  {chart.description && (
+                    <span className="text-sm text-muted-foreground">— {chart.description}</span>
+                  )}
+                </div>
+              )}
+              <div className="rounded-lg overflow-hidden border border-border bg-card">
+                <Suspense fallback={
+                  <div className="h-64 flex items-center justify-center bg-muted/20">
+                    <Skeleton className="w-full h-64" />
+                  </div>
+                }>
+                  <DynamicPatternChart 
+                    patternType={chart.patternType} 
+                    width={700} 
+                    height={400}
+                    showTitle={false}
+                  />
+                </Suspense>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
+          <strong>Practice Tip:</strong> Study these patterns on historical charts before trading live. 
+          Look for the key characteristics highlighted and practice identifying entry, stop loss, and target levels.
+        </p>
+      </CardContent>
+    </Card>
+  );
 }
 
 // Generate table of contents from sections
@@ -632,6 +715,11 @@ const DynamicArticle = () => {
 
           {/* Table of Contents */}
           <TableOfContents sections={sections} />
+
+          {/* Chart Visualizations for strategies with patterns */}
+          {slug && hasStrategyCharts(slug) && (
+            <ChartVisualization slug={slug} />
+          )}
 
           {/* Rendered Sections */}
           <div className="mt-8">
