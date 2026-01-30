@@ -71,3 +71,48 @@ export function recalculateTradePlan(
 export function formatRR(rr: number): string {
   return `1:${rr}`;
 }
+
+/**
+ * Calculate projected expectancy (R-multiple) based on win rate and selected R:R
+ * 
+ * Formula: (winRate × selectedRR) - ((1 - winRate) × 1)
+ * Where winning gives selectedRR × risk and losing costs 1 × risk
+ * 
+ * @param winRate - Historical win rate as a decimal (0-1) or percentage (0-100)
+ * @param selectedRR - User-selected R:R tier (2, 3, 4, or 5)
+ * @returns Projected R-multiple (expectancy per trade)
+ */
+export function calculateProjectedExpectancy(winRate: number, selectedRR: RRTier): number {
+  // Normalize winRate to decimal if passed as percentage
+  const wr = winRate > 1 ? winRate / 100 : winRate;
+  
+  // Projected R = (win probability × reward) - (loss probability × risk)
+  // Risk is always 1R, reward is the selected R:R ratio
+  const expectedWin = wr * selectedRR;
+  const expectedLoss = (1 - wr) * 1;
+  
+  return expectedWin - expectedLoss;
+}
+
+/**
+ * Calculate projected accumulated ROI based on win rate, selected R:R, and sample size
+ * 
+ * This estimates what the total ROI would have been if trades used the selected R:R
+ * instead of the baseline 2:1 ratio.
+ * 
+ * @param winRate - Historical win rate as percentage (0-100)
+ * @param sampleSize - Number of historical trades
+ * @param selectedRR - User-selected R:R tier (2, 3, 4, or 5)
+ * @param riskPerTrade - Risk per trade as percentage (default 1%)
+ * @returns Projected accumulated ROI percentage
+ */
+export function calculateProjectedROI(
+  winRate: number, 
+  sampleSize: number, 
+  selectedRR: RRTier,
+  riskPerTrade: number = 1
+): number {
+  const expectancy = calculateProjectedExpectancy(winRate, selectedRR);
+  // Total ROI = expectancy × sampleSize × riskPerTrade
+  return expectancy * sampleSize * riskPerTrade;
+}
