@@ -34,6 +34,13 @@ const EmailPreview = lazy(() => import("./pages/EmailPreview"));
 const PatternGenerator = lazy(() => import("./pages/PatternGenerator"));
 const PatternLibraryPage = lazy(() => import("./pages/PatternLibraryPage"));
 const TradingStrategiesPage = lazy(() => import("./pages/TradingStrategiesPage"));
+
+// Strategy articles
+const ScalpingStrategy = lazy(() => import("./pages/strategies/ScalpingStrategy"));
+const DayTradingStrategy = lazy(() => import("./pages/strategies/DayTradingStrategy"));
+const TrendFollowingStrategy = lazy(() => import("./pages/strategies/TrendFollowingStrategy"));
+const BreakoutStrategy = lazy(() => import("./pages/strategies/BreakoutStrategy"));
+const MeanReversionStrategy = lazy(() => import("./pages/strategies/MeanReversionStrategy"));
 const PatternQuizPage = lazy(() => import("./pages/PatternQuizPage"));
 const PatternIdentificationQuizPage = lazy(() => import("./pages/PatternIdentificationQuizPage"));
 const TradingKnowledgeQuizPage = lazy(() => import("./pages/TradingKnowledgeQuizPage"));
@@ -187,6 +194,11 @@ const App = () => (
           <Route path="/learn/fear-and-greed" element={withSuspense(<FearAndGreed />)} />
           <Route path="/learn/trading-journal" element={withSuspense(<TradingJournal />)} />
           <Route path="/learn/trading-strategies-guide" element={withSuspense(<TradingStrategiesGuide />)} />
+          <Route path="/learn/strategies/scalping" element={withSuspense(<ScalpingStrategy />)} />
+          <Route path="/learn/strategies/day-trading" element={withSuspense(<DayTradingStrategy />)} />
+          <Route path="/learn/strategies/trend-following" element={withSuspense(<TrendFollowingStrategy />)} />
+          <Route path="/learn/strategies/breakout" element={withSuspense(<BreakoutStrategy />)} />
+          <Route path="/learn/strategies/mean-reversion" element={withSuspense(<MeanReversionStrategy />)} />
           <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
           <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
           <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
