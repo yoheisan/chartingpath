@@ -48,7 +48,8 @@ import {
   calculateAgeStats,
   filterByAge,
   recalculateTradePlan,
-  RRTier
+  RRTier,
+  calculateProjectedExpectancy
 } from '@/components/screener/ScreenerFilters';
 
 // Full list of instruments available per asset class
@@ -1120,20 +1121,16 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help text-xs">
-                            3M
+                            Exp.
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Accumulated ROI from this pattern in the last 3 months.</p>
+                          <p className="text-xs">Projected expectancy (R-multiple) per trade based on historical win rate and your selected R:R ratio. Positive values indicate an edge.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="text-right whitespace-nowrap text-xs">6M</TableHead>
-                  <TableHead className="text-right whitespace-nowrap text-xs">1Y</TableHead>
-                  <TableHead className="text-right whitespace-nowrap text-xs">3Y</TableHead>
-                  <TableHead className="text-right whitespace-nowrap text-xs">5Y</TableHead>
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('rr')}
@@ -1159,7 +1156,7 @@ export default function LivePatternsPage() {
                   <>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={11} className="py-2">
+                      <TableCell colSpan={7} className="py-2">
                         <span className="font-semibold text-sm">{patternName}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1235,63 +1232,21 @@ export default function LivePatternsPage() {
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
-                          {/* 3M ROI */}
+                          {/* Projected Expectancy based on selected R:R */}
                           <TableCell className="text-right">
-                            {setup.historicalPerformance?.accumulatedRoi?.threeMonth != null ? (
-                              <span className={`font-mono text-xs font-medium ${
-                                setup.historicalPerformance.accumulatedRoi.threeMonth >= 0 ? 'text-green-500' : 'text-red-500'
-                              }`}>
-                                {setup.historicalPerformance.accumulatedRoi.threeMonth >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.threeMonth.toFixed(0)}%
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* 6M ROI */}
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.accumulatedRoi?.sixMonth != null ? (
-                              <span className={`font-mono text-xs font-medium ${
-                                setup.historicalPerformance.accumulatedRoi.sixMonth >= 0 ? 'text-green-500' : 'text-red-500'
-                              }`}>
-                                {setup.historicalPerformance.accumulatedRoi.sixMonth >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.sixMonth.toFixed(0)}%
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* 1Y ROI */}
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.accumulatedRoi?.oneYear != null ? (
-                              <span className={`font-mono text-xs font-medium ${
-                                setup.historicalPerformance.accumulatedRoi.oneYear >= 0 ? 'text-green-500' : 'text-red-500'
-                              }`}>
-                                {setup.historicalPerformance.accumulatedRoi.oneYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.oneYear.toFixed(0)}%
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* 3Y ROI */}
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.accumulatedRoi?.threeYear != null ? (
-                              <span className={`font-mono text-xs font-medium ${
-                                setup.historicalPerformance.accumulatedRoi.threeYear >= 0 ? 'text-green-500' : 'text-red-500'
-                              }`}>
-                                {setup.historicalPerformance.accumulatedRoi.threeYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.threeYear.toFixed(0)}%
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* 5Y ROI */}
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.accumulatedRoi?.fiveYear != null ? (
-                              <span className={`font-mono text-xs font-medium ${
-                                setup.historicalPerformance.accumulatedRoi.fiveYear >= 0 ? 'text-green-500' : 'text-red-500'
-                              }`}>
-                                {setup.historicalPerformance.accumulatedRoi.fiveYear >= 0 ? '+' : ''}{setup.historicalPerformance.accumulatedRoi.fiveYear.toFixed(0)}%
-                              </span>
-                            ) : (
+                            {setup.historicalPerformance?.winRate != null ? (() => {
+                              const expectancy = calculateProjectedExpectancy(
+                                setup.historicalPerformance.winRate, 
+                                filters.selectedRR
+                              );
+                              return (
+                                <span className={`font-mono text-xs font-medium ${
+                                  expectancy >= 0 ? 'text-green-500' : 'text-red-500'
+                                }`}>
+                                  {expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R
+                                </span>
+                              );
+                            })() : (
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
@@ -1415,14 +1370,17 @@ export default function LivePatternsPage() {
                       </div>
                     </div>
                     <div className="bg-muted/50 rounded px-2 py-1.5 text-center">
-                      <div className="text-muted-foreground mb-0.5">Avg ROI</div>
-                      <div className={`font-medium ${
-                        setup.historicalPerformance?.avgRMultiple != null && setup.historicalPerformance.avgRMultiple >= 0 
-                          ? 'text-green-500' 
-                          : 'text-red-500'
-                      }`}>
-                        {setup.historicalPerformance?.avgRMultiple != null 
-                          ? `${setup.historicalPerformance.avgRMultiple >= 0 ? '+' : ''}${setup.historicalPerformance.avgRMultiple.toFixed(2)}R` 
+                      <div className="text-muted-foreground mb-0.5">Exp.</div>
+                      <div className={`font-medium ${(() => {
+                        if (setup.historicalPerformance?.winRate == null) return 'text-muted-foreground';
+                        const exp = calculateProjectedExpectancy(setup.historicalPerformance.winRate, filters.selectedRR);
+                        return exp >= 0 ? 'text-green-500' : 'text-red-500';
+                      })()}`}>
+                        {setup.historicalPerformance?.winRate != null 
+                          ? `${(() => {
+                              const exp = calculateProjectedExpectancy(setup.historicalPerformance.winRate, filters.selectedRR);
+                              return `${exp >= 0 ? '+' : ''}${exp.toFixed(2)}R`;
+                            })()}` 
                           : '—'}
                       </div>
                     </div>

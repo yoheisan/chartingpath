@@ -410,5 +410,12 @@ export function filterByAge(
 }
 
 // Re-export R:R utilities for convenience
-export { recalculateTradePlan, RR_TIERS, DEFAULT_RR, formatRR } from '@/utils/rrCalculator';
+export { 
+  recalculateTradePlan, 
+  RR_TIERS, 
+  DEFAULT_RR, 
+  formatRR,
+  calculateProjectedExpectancy,
+  calculateProjectedROI 
+} from '@/utils/rrCalculator';
 export type { RRTier } from '@/utils/rrCalculator';
