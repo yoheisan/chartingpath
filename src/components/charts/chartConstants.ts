@@ -51,6 +51,68 @@ export const VOLUME_SCALE_MARGINS = {
   compact: { top: 0.85, bottom: 0 },
 } as const;
 
+// === PRICE SCALE MARGINS ===
+// Rule-based system for dynamic price scaling to prevent flat-looking charts
+// Smaller margins = more vertical space for price action = more dynamic appearance
+export const PRICE_SCALE_MARGINS = {
+  // Ultra-tight for maximum price sensitivity (thumbnails, pattern cards)
+  thumbnail: { top: 0.02, bottom: 0.02 },
+  // Tight for study/detail charts 
+  standard: { top: 0.05, bottom: 0.05 },
+  // With room for overlays (Entry/SL/TP lines)
+  withOverlays: { top: 0.08, bottom: 0.08 },
+} as const;
+
+/**
+ * Calculate optimal price scale margins based on data characteristics.
+ * This ensures charts never look "flat" regardless of actual price volatility.
+ * 
+ * Rules:
+ * 1. For low volatility data (< 2% range), use ultra-tight margins
+ * 2. For medium volatility (2-10%), use standard margins
+ * 3. For high volatility (> 10%), can use slightly more padding
+ * 4. Always ensure at least 90% of chart height is used for price action
+ */
+export function calculateOptimalPriceMargins(
+  bars: { h: number; l: number }[],
+  hasOverlays: boolean = false
+): { top: number; bottom: number } {
+  if (!bars || bars.length === 0) {
+    return hasOverlays ? PRICE_SCALE_MARGINS.withOverlays : PRICE_SCALE_MARGINS.standard;
+  }
+
+  // Find price range
+  const highs = bars.map(b => b.h).filter(Number.isFinite);
+  const lows = bars.map(b => b.l).filter(Number.isFinite);
+  
+  if (highs.length === 0 || lows.length === 0) {
+    return PRICE_SCALE_MARGINS.standard;
+  }
+
+  const maxHigh = Math.max(...highs);
+  const minLow = Math.min(...lows);
+  const midPrice = (maxHigh + minLow) / 2;
+  
+  // Calculate volatility as percentage of price range
+  const priceRange = maxHigh - minLow;
+  const volatilityPercent = midPrice > 0 ? (priceRange / midPrice) * 100 : 0;
+
+  // Rule-based margin selection
+  if (volatilityPercent < 2) {
+    // Very low volatility - use tightest margins to amplify visual movement
+    return { top: 0.01, bottom: 0.01 };
+  } else if (volatilityPercent < 5) {
+    // Low volatility - tight margins
+    return { top: 0.02, bottom: 0.02 };
+  } else if (volatilityPercent < 10) {
+    // Medium volatility - standard tight
+    return hasOverlays ? { top: 0.05, bottom: 0.05 } : { top: 0.03, bottom: 0.03 };
+  } else {
+    // High volatility - can afford slightly more padding
+    return hasOverlays ? { top: 0.08, bottom: 0.08 } : { top: 0.05, bottom: 0.05 };
+  }
+}
+
 // === INDICATOR COLORS ===
 // Using rgba for semi-transparency so indicators don't fully obscure candle wicks
 export const INDICATOR_COLORS = {
