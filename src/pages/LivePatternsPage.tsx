@@ -155,6 +155,8 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
 };
 
 interface LiveSetup {
+  // Optional DB identifier (used for lazy-loading full chart details)
+  dbId?: string;
   instrument: string;
   patternId: string;
   patternName: string;
@@ -224,6 +226,12 @@ interface ScanResult {
   totalInUniverse?: number;
 }
 
+interface PatternDetailsResponse {
+  success: boolean;
+  pattern?: LiveSetup;
+  error?: string;
+}
+
 // Helper to detect asset type from instrument symbol
 function detectAssetTypeFromSymbol(symbol: string): AssetType | null {
   // Commodities end with =F
@@ -279,6 +287,7 @@ export default function LivePatternsPage() {
   // Full chart viewer state
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
+  const [loadingChartDetails, setLoadingChartDetails] = useState(false);
   
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
@@ -298,13 +307,19 @@ export default function LivePatternsPage() {
   };
   const effectiveCaps = capsLoading ? DEFAULT_CAPS : caps;
 
-  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType, selectedTimeframe?: string) => {
+  const fetchLivePatterns = async (
+    isRefresh = false,
+    selectedAssetType?: AssetType,
+    selectedTimeframe?: string,
+    includeDetailsOverride?: boolean,
+  ) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     
     const typeToFetch = selectedAssetType || assetType;
     const tfToFetch = selectedTimeframe || timeframe;
+    const includeDetails = includeDetailsOverride ?? viewMode === 'panel';
     
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
@@ -319,6 +334,7 @@ export default function LivePatternsPage() {
             maxTickers: capsToUse.maxTickersPerClass,
             allowedPatterns: capsToUse.allowedPatterns,
             forceRefresh, // only true when we explicitly want a full rescan
+            includeDetails,
           },
         }),
         timeoutMs,
@@ -333,6 +349,7 @@ export default function LivePatternsPage() {
         maxTickers: capsToUse.maxTickersPerClass,
         allowedPatterns: capsToUse.allowedPatterns?.length,
         isRefresh,
+        includeDetails,
       });
 
       // Fast path returns quickly; forced refresh can be slower.
