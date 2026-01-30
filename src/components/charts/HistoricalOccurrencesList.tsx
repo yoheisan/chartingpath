@@ -67,6 +67,7 @@ interface HistoricalOccurrencesListProps {
   direction?: 'long' | 'short';
   limit?: number;
   className?: string;
+  selectedRR?: number; // User-selected R:R for display consistency
 }
 
 type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
@@ -80,7 +81,8 @@ export function HistoricalOccurrencesList({
   timeframe = '1d',
   direction,
   limit = DEFAULT_LIMIT,
-  className 
+  className,
+  selectedRR = 2
 }: HistoricalOccurrencesListProps) {
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -470,7 +472,7 @@ export function HistoricalOccurrencesList({
           <div className="space-y-2">
             {filteredOccurrences.length > 0 ? (
               filteredOccurrences.map((occurrence) => (
-                <OccurrenceRow key={occurrence.id} occurrence={occurrence} />
+                <OccurrenceRow key={occurrence.id} occurrence={occurrence} selectedRR={selectedRR} />
               ))
             ) : (
               <div className="text-center py-6 text-muted-foreground">
@@ -487,9 +489,10 @@ export function HistoricalOccurrencesList({
 
 interface OccurrenceRowProps {
   occurrence: HistoricalOccurrence;
+  selectedRR?: number;
 }
 
-function OccurrenceRow({ occurrence }: OccurrenceRowProps) {
+function OccurrenceRow({ occurrence, selectedRR = 2 }: OccurrenceRowProps) {
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'win': return 'text-bullish bg-bullish/10 border-bullish/30';
@@ -602,7 +605,7 @@ function OccurrenceRow({ occurrence }: OccurrenceRowProps) {
           </span>
           <span className="flex items-center gap-1">
             <Target className="h-3 w-3" />
-            R:R {occurrence.riskRewardRatio.toFixed(1)}
+            R:R {selectedRR.toFixed(1)}
           </span>
           {occurrence.barsToOutcome && (
             <span className="flex items-center gap-1">
