@@ -61,11 +61,18 @@ const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
 
 // Minimum sample size threshold - below this we consider stats unreliable
 const MIN_SAMPLE_SIZE = 5;
+// Maximum sample size that could reasonably be per-symbol (catches pattern-level fallbacks)
+const MAX_REALISTIC_PER_SYMBOL_SAMPLE = 200;
 
 function isStatsSuspect(hp: any): boolean {
-  // Treat missing or very small samples as stale/placeholder.
+  // Treat missing, very small samples, or suspiciously large samples (pattern-level fallback) as stale.
+  // Pattern-level aggregates typically have 300-500+ samples, while per-symbol rarely exceeds 100-150.
   const n = hp?.sampleSize;
-  return typeof n !== 'number' || n < MIN_SAMPLE_SIZE;
+  if (typeof n !== 'number') return true;
+  if (n < MIN_SAMPLE_SIZE) return true;
+  // Flag large sample sizes as likely pattern-level fallbacks that need re-computing
+  if (n > MAX_REALISTIC_PER_SYMBOL_SAMPLE) return true;
+  return false;
 }
 
 function toHistoricalPerformance(stats: PatternStats) {
@@ -528,18 +535,30 @@ async function readCachedPatternsFromDb(
       console.info(`[scan-live-patterns] Per-asset stats enrichment returned ${stats.size} entries`);
 
       // Track which DB rows should be updated so future fast-path calls are instant.
-      const updatesToPerform: Array<{ id: string; hp: any }> = [];
+      const updatesToPerform: Array<{ id: string; hp: any | null }> = [];
 
       let enrichedCount = 0;
+      let clearedCount = 0;
       patterns = patterns.map((p: any) => {
         const key = getStatsKey(p.patternId, p.instrument);
         const s = stats.get(key);
-        if (!s) return p;
+        
+        // If no per-symbol stats exist but we have suspect (pattern-level) cached stats, clear them
+        if (!s) {
+          if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
+            // Clear the stale pattern-level fallback from DB
+            updatesToPerform.push({ id: p.dbId, hp: null });
+            clearedCount++;
+          }
+          // Return pattern without historicalPerformance (will show "—" in UI)
+          const { historicalPerformance, ...rest } = p;
+          return rest;
+        }
 
         enrichedCount++;
         const hp = toHistoricalPerformance(s);
         
-        // Only backfill DB if stats differ from cached
+        // Only backfill DB if stats differ from cached or cached is suspect
         if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
           updatesToPerform.push({ id: p.dbId, hp });
         }
@@ -547,7 +566,7 @@ async function readCachedPatternsFromDb(
         return { ...p, historicalPerformance: hp };
       });
 
-      // Best-effort DB backfill of corrected stats (keeps future responses fast).
+      // Best-effort DB backfill/clear of stats (keeps future responses fast).
       if (updatesToPerform.length) {
         await Promise.allSettled(
           updatesToPerform.map(({ id, hp }) => 
@@ -559,7 +578,7 @@ async function readCachedPatternsFromDb(
         );
       }
 
-      console.info(`[scan-live-patterns] Enriched ${enrichedCount}/${patterns.length} patterns with per-asset historical stats`);
+      console.info(`[scan-live-patterns] Enriched ${enrichedCount}/${patterns.length} patterns with per-asset stats, cleared ${clearedCount} stale fallbacks`);
     }
     console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
