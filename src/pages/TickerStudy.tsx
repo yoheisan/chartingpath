@@ -213,6 +213,8 @@ export default function TickerStudy() {
 
     const fetchData = async () => {
       setLoading(true);
+      // Prevent stale chart data from a previous symbol while the new one loads.
+      setPriceData([]);
       try {
         const normalized = normalizeSymbol(decodedSymbol);
         
@@ -310,9 +312,11 @@ export default function TickerStudy() {
         }
 
         // Fetch historical price data for chart (limit to 200 bars for speed)
+        // Root cause (FX/crypto/commodities): historical_prices may not be populated for all asset classes.
+        // We try DB first, then fall back to Yahoo OHLC via edge function.
         const priceSymbols = [decodedSymbol, normalized];
-        let pricesData = null;
-        
+        let pricesData: any[] | null = null;
+
         for (const sym of priceSymbols) {
           const { data, error } = await supabase
             .from('historical_prices')
@@ -321,16 +325,16 @@ export default function TickerStudy() {
             .eq('timeframe', '1d')
             .order('date', { ascending: false })
             .limit(200);
-          
+
           if (!error && data && data.length > 0) {
             pricesData = data;
             break;
           }
         }
-        
-        if (pricesData) {
+
+        if (pricesData && pricesData.length > 0) {
           const bars: CompressedBar[] = pricesData
-            .map(p => ({
+            .map((p: any) => ({
               t: new Date(p.date).toISOString(),
               o: Number(p.open),
               h: Number(p.high),
@@ -340,6 +344,69 @@ export default function TickerStudy() {
             }))
             .reverse();
           setPriceData(bars);
+        } else {
+          // Yahoo fallback (OHLC)
+          const endDate = new Date();
+          const startDate = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000);
+          const startStr = startDate.toISOString().slice(0, 10);
+          const endStr = endDate.toISOString().slice(0, 10);
+
+          const yahooCandidates = Array.from(
+            new Set([
+              decodedSymbol,
+              `${normalized}=X`,
+              `${normalized}-USD`,
+              `${normalized}=F`,
+              normalized,
+            ].filter(Boolean))
+          );
+
+          for (const yahooSymbol of yahooCandidates) {
+            const { data: yfData, error: yfError } = await supabase.functions.invoke(
+              'fetch-yahoo-finance',
+              {
+                body: {
+                  symbol: yahooSymbol,
+                  startDate: startStr,
+                  endDate: endStr,
+                  interval: '1d',
+                  includeOhlc: true,
+                },
+              }
+            );
+
+            if (yfError) {
+              // Try next candidate
+              continue;
+            }
+
+            const bars = (yfData as any)?.bars as CompressedBar[] | undefined;
+            if (Array.isArray(bars) && bars.length > 0) {
+              // Keep the same 200-bar cap as the DB query.
+              setPriceData(bars.slice(-200));
+              break;
+            }
+
+            // Some environments/providers may not return OHLC; fall back to close-only series.
+            const idx = (yfData as any)?.index as string[] | undefined;
+            const matrix = (yfData as any)?.data as number[][] | undefined;
+            if (Array.isArray(idx) && Array.isArray(matrix) && idx.length > 0 && matrix.length > 0) {
+              const closeBars: CompressedBar[] = idx
+                .map((d: string, i: number) => {
+                  const close = Number(matrix[i]?.[0]);
+                  if (!Number.isFinite(close) || close === 0) return null;
+                  const iso = new Date(d).toISOString();
+                  return { t: iso, o: close, h: close, l: close, c: close, v: 0 };
+                })
+                .filter(Boolean)
+                .slice(-200) as CompressedBar[];
+
+              if (closeBars.length > 0) {
+                setPriceData(closeBars);
+                break;
+              }
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -497,7 +564,7 @@ export default function TickerStudy() {
       </div>
 
       {/* Price Chart Section */}
-      {priceData.length > 0 && (
+      {!loading && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2">
