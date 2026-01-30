@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -288,6 +288,8 @@ export default function LivePatternsPage() {
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
+  // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
+  const chartDetailsRequestIdRef = useRef(0);
   
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
@@ -603,29 +605,28 @@ export default function LivePatternsPage() {
   };
 
   const handleOpenChart = async (setup: LiveSetup) => {
+    const requestId = ++chartDetailsRequestIdRef.current;
+
     // Open immediately with a loading overlay; then lazy-load full bars/VisualSpec.
     setChartOpen(true);
     setLoadingChartDetails(true);
 
-    // Ensure we have at least a minimal setup so the dialog header renders.
-    setSelectedSetup(toSetupWithVisuals(setup));
-
-    const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
-    const hasOverlays = Array.isArray(setup.visualSpec?.overlays) && setup.visualSpec.overlays.length > 0;
-    const needsDetails = !hasBars || !hasOverlays;
-
-    if (!needsDetails) {
-      setLoadingChartDetails(false);
-      return;
-    }
-
-    if (!setup.dbId) {
-      console.warn('[LivePatternsPage] Missing dbId; cannot load detailed chart data');
-      setLoadingChartDetails(false);
-      return;
-    }
-
     try {
+      // Ensure we have at least a minimal setup so the dialog header renders.
+      setSelectedSetup(toSetupWithVisuals(setup));
+
+      const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
+      const hasOverlays =
+        Array.isArray(setup.visualSpec?.overlays) && (setup.visualSpec?.overlays?.length || 0) > 0;
+      const needsDetails = !hasBars || !hasOverlays;
+
+      if (!needsDetails) return;
+
+      if (!setup.dbId) {
+        console.warn('[LivePatternsPage] Missing dbId; cannot load detailed chart data');
+        return;
+      }
+
       // This function can cold-start; allow one retry with a longer timeout.
       const timeouts = [25_000, 45_000] as const;
       let lastErr: any = null;
@@ -646,6 +647,9 @@ export default function LivePatternsPage() {
             throw new Error(res.data?.error || 'Failed to load pattern details');
           }
 
+          // Ignore stale responses if user opened a different setup while this was in-flight.
+          if (chartDetailsRequestIdRef.current !== requestId) return;
+
           setSelectedSetup(toSetupWithVisuals(res.data.pattern));
           return;
         } catch (err: any) {
@@ -662,7 +666,10 @@ export default function LivePatternsPage() {
       console.error('[LivePatternsPage] Failed to load chart details:', err?.message || err);
       // Keep the dialog open with a readable fallback state in the viewer.
     } finally {
-      setLoadingChartDetails(false);
+      // Only the latest request should be allowed to clear the loading overlay.
+      if (chartDetailsRequestIdRef.current === requestId) {
+        setLoadingChartDetails(false);
+      }
     }
   };
 
@@ -1474,7 +1481,14 @@ export default function LivePatternsPage() {
       {selectedSetup && (
         <FullChartViewer
           open={chartOpen}
-          onOpenChange={setChartOpen}
+          onOpenChange={(nextOpen) => {
+            setChartOpen(nextOpen);
+            if (!nextOpen) {
+              // Cancel any in-flight detail request and ensure we don't reopen stuck in loading.
+              chartDetailsRequestIdRef.current += 1;
+              setLoadingChartDetails(false);
+            }
+          }}
           setup={selectedSetup}
           loading={loadingChartDetails}
           onCopyPlan={() => {
