@@ -391,30 +391,46 @@ export default function TickerStudy() {
             const idx = (yfData as any)?.index as string[] | undefined;
             const matrix = (yfData as any)?.data as number[][] | undefined;
             if (Array.isArray(idx) && Array.isArray(matrix) && idx.length > 0 && matrix.length > 0) {
+              // IMPORTANT:
+              // Yahoo can return arrays in either newest→oldest or oldest→newest order.
+              // We must sort chronologically BEFORE synthesizing open values, otherwise
+              // candle direction (green/red) becomes inconsistent across the chart.
+              const points = idx
+                .map((d, i) => {
+                  const ts = new Date(d).getTime();
+                  const close = Number(matrix[i]?.[0]);
+                  if (!Number.isFinite(ts) || !Number.isFinite(close) || close === 0) return null;
+                  return { ts, close };
+                })
+                .filter((p): p is { ts: number; close: number } => Boolean(p))
+                .sort((a, b) => a.ts - b.ts);
+
               // Build close-only bars with synthetic open based on previous close
-              // This ensures candles get proper up/down coloring
+              // so lightweight-charts always applies our green(up)/red(down) rule.
               const closeBars: CompressedBar[] = [];
               let prevClose: number | null = null;
-              
-              for (let i = 0; i < idx.length; i++) {
-                const close = Number(matrix[i]?.[0]);
-                if (!Number.isFinite(close) || close === 0) continue;
-                
-                const iso = new Date(idx[i]).toISOString();
-                // Use previous close as open to determine candle direction
-                // If no previous close, use current close (will render as neutral but with color)
-                const open = prevClose !== null ? prevClose : close;
-                closeBars.push({ 
-                  t: iso, 
-                  o: open, 
-                  h: Math.max(open, close), 
-                  l: Math.min(open, close), 
-                  c: close, 
-                  v: 0 
+
+              for (const p of points) {
+                const iso = new Date(p.ts).toISOString();
+                const close = p.close;
+
+                // If we don't have a previous close, create a tiny "up" body so the candle
+                // is not rendered as a neutral/flat/gray pixel.
+                const eps = Math.max(Math.abs(close) * 1e-6, 1e-6);
+                const open = prevClose !== null ? prevClose : close - eps;
+
+                closeBars.push({
+                  t: iso,
+                  o: open,
+                  h: Math.max(open, close),
+                  l: Math.min(open, close),
+                  c: close,
+                  v: 0,
                 });
+
                 prevClose = close;
               }
-              
+
               const limitedBars = closeBars.slice(-200);
 
               if (limitedBars.length > 0) {
