@@ -41,6 +41,14 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import { TrendIndicatorSettings, loadTrendConfig, TrendIndicatorConfig } from '@/components/TrendIndicatorSettings';
+import { 
+  ScreenerFilters, 
+  ScreenerFiltersState, 
+  DEFAULT_SCREENER_FILTERS,
+  calculateAgeStats,
+  filterByAge,
+  filterByMinRR
+} from '@/components/screener/ScreenerFilters';
 
 // Full list of instruments available per asset class
 const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> = {
@@ -267,9 +275,7 @@ export default function LivePatternsPage() {
   // Filters - use detected type from highlight or default to 'fx'
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
   const [timeframe, setTimeframe] = useState<'1h' | '4h' | '1d' | '1wk'>('1d');
-  const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
-  const [patternFilter, setPatternFilter] = useState<string>('all');
-  const [trendFilter, setTrendFilter] = useState<'all' | 'with_trend' | 'counter_trend'>('all');
+  const [filters, setFilters] = useState<ScreenerFiltersState>(DEFAULT_SCREENER_FILTERS);
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
   // View mode toggle: 'list' (table) or 'panel' (cards)
@@ -481,24 +487,63 @@ export default function LivePatternsPage() {
     }
   }, [highlightSymbol, patterns]);
 
-  // Get unique pattern types for filter
-  const uniquePatterns = [...new Set(patterns.map(p => p.patternId))];
+  // Get unique pattern types for filter dropdown
+  const patternOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    patterns.forEach(p => {
+      counts.set(p.patternId, (counts.get(p.patternId) || 0) + 1);
+    });
+    return [...new Set(patterns.map(p => p.patternId))].map(id => ({
+      id,
+      name: patterns.find(p => p.patternId === id)?.patternName || id,
+      count: counts.get(id) || 0,
+    }));
+  }, [patterns]);
 
-  // Filter patterns
-  const filteredPatterns = patterns.filter(p => {
-    if (directionFilter !== 'all' && p.direction !== directionFilter) return false;
-    if (patternFilter !== 'all' && p.patternId !== patternFilter) return false;
-    if (trendFilter !== 'all' && p.trendAlignment !== trendFilter) return false;
-    return true;
-  });
-
-  // Calculate trend alignment stats
-  const trendStats = useMemo(() => {
+  // Calculate filter stats
+  const filterStats = useMemo(() => {
+    const longCount = patterns.filter(p => p.direction === 'long').length;
+    const shortCount = patterns.filter(p => p.direction === 'short').length;
     const withTrend = patterns.filter(p => p.trendAlignment === 'with_trend').length;
     const counterTrend = patterns.filter(p => p.trendAlignment === 'counter_trend').length;
     const neutral = patterns.filter(p => p.trendAlignment === 'neutral' || !p.trendAlignment).length;
-    return { withTrend, counterTrend, neutral };
+    const ageStats = calculateAgeStats(patterns);
+    
+    return {
+      total: patterns.length,
+      filtered: 0, // Will be updated after filtering
+      longCount,
+      shortCount,
+      withTrend,
+      counterTrend,
+      neutral,
+      ...ageStats,
+    };
   }, [patterns]);
+
+  // Filter patterns with new filter system
+  const filteredPatterns = useMemo(() => {
+    let result = patterns.filter(p => {
+      if (filters.direction !== 'all' && p.direction !== filters.direction) return false;
+      if (filters.pattern !== 'all' && p.patternId !== filters.pattern) return false;
+      if (filters.trend !== 'all' && p.trendAlignment !== filters.trend) return false;
+      return true;
+    });
+    
+    // Apply R:R filter
+    result = filterByMinRR(result, filters.minRR);
+    
+    // Apply age filter
+    result = filterByAge(result, filters.age) as typeof result;
+    
+    return result;
+  }, [patterns, filters]);
+
+  // Update filtered count in stats
+  const fullFilterStats = useMemo(() => ({
+    ...filterStats,
+    filtered: filteredPatterns.length,
+  }), [filterStats, filteredPatterns.length]);
 
   // Sorting logic for list view
   const handleSort = (key: SortKey) => {
@@ -835,112 +880,6 @@ export default function LivePatternsPage() {
             </Tooltip>
           </TooltipProvider>
 
-          <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as any)}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Direction" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="long">Long</SelectItem>
-              <SelectItem value="short">Short</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={patternFilter} onValueChange={setPatternFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Pattern Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Patterns</SelectItem>
-              {uniquePatterns.map(p => (
-                <SelectItem key={p} value={p}>
-                  {patterns.find(pat => pat.patternId === p)?.patternName || p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Trend Alignment Filter */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center">
-                  <ToggleGroup 
-                    type="single" 
-                    value={trendFilter} 
-                    onValueChange={(v) => v && setTrendFilter(v as 'all' | 'with_trend' | 'counter_trend')}
-                    className="border rounded-md p-0.5"
-                  >
-                    <ToggleGroupItem value="all" className="text-xs px-2 h-7">
-                      All
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="with_trend" className="text-xs px-2 h-7 gap-1">
-                      <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                      Trend
-                      {trendStats.withTrend > 0 && (
-                        <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
-                          {trendStats.withTrend}
-                        </Badge>
-                      )}
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="counter_trend" className="text-xs px-2 h-7 gap-1">
-                      <ArrowDownRight className="h-3 w-3 text-amber-500" />
-                      Counter
-                      {trendStats.counterTrend > 0 && (
-                        <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
-                          {trendStats.counterTrend}
-                        </Badge>
-                      )}
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-sm p-4">
-                <p className="font-semibold mb-2">Trend Alignment Filter</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Each pattern is analyzed against the higher-timeframe trend using MACD, 50/200 EMA, RSI, and ADX indicators.
-                </p>
-                <div className="text-xs space-y-2.5 mb-3">
-                  <div className="flex gap-2">
-                    <ArrowUpRight className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">With Trend</span>
-                      <span className="text-muted-foreground"> ({trendStats.withTrend})</span>
-                      <p className="text-muted-foreground mt-0.5">
-                        Pattern direction aligns with the dominant market trend. Long setups appear in uptrends; short setups in downtrends. Historically higher probability.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <ArrowDownRight className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-amber-600 dark:text-amber-400">Counter Trend</span>
-                      <span className="text-muted-foreground"> ({trendStats.counterTrend})</span>
-                      <p className="text-muted-foreground mt-0.5">
-                        Pattern direction opposes the dominant trend. These reversal trades carry higher risk but may offer larger rewards if the trend changes.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Minus className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">Not Analyzed</span>
-                      <span className="text-muted-foreground"> ({trendStats.neutral})</span>
-                      <p className="text-muted-foreground mt-0.5">
-                        Insufficient data to determine trend alignment or mixed indicator signals.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {trendStats.neutral > 0 && trendStats.withTrend === 0 && trendStats.counterTrend === 0 && (
-                  <p className="text-xs text-amber-500 border-t border-border/50 pt-2">
-                    💡 Click "Refresh" to calculate trend alignment for all patterns.
-                  </p>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
           {/* Trend Indicator Settings */}
           <TrendIndicatorSettings 
             onConfigChange={(config) => {
@@ -953,8 +892,6 @@ export default function LivePatternsPage() {
               </Button>
             }
           />
-          
-          {/* View Toggle */}
           <ToggleGroup 
             type="single" 
             value={viewMode} 
@@ -983,6 +920,17 @@ export default function LivePatternsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Trader-Focused Filters */}
+      <Card className="mb-6 p-4">
+        <ScreenerFilters
+          patterns={patternOptions}
+          filters={filters}
+          stats={fullFilterStats}
+          onChange={(partial) => setFilters(prev => ({ ...prev, ...partial }))}
+          onClear={() => setFilters(DEFAULT_SCREENER_FILTERS)}
+        />
+      </Card>
 
       {/* Collapsible instrument list */}
       <Collapsible open={showInstrumentList} onOpenChange={setShowInstrumentList}>
@@ -1047,13 +995,13 @@ export default function LivePatternsPage() {
           })}
           lockedPatterns={lockedPatterns}
           compact={false}
-          selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
+          selectedPattern={filters.pattern !== 'all' ? filters.pattern : undefined}
           blurEdgeMetrics={false}
           onPatternClick={(patternId) => {
-            if (patternFilter === patternId) {
-              setPatternFilter('all');
+            if (filters.pattern === patternId) {
+              setFilters(prev => ({ ...prev, pattern: 'all' }));
             } else {
-              setPatternFilter(patternId);
+              setFilters(prev => ({ ...prev, pattern: patternId }));
             }
           }}
         />
@@ -1092,7 +1040,7 @@ export default function LivePatternsPage() {
           <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Patterns Found</h3>
           <p className="text-muted-foreground mb-4">
-            {trendFilter !== 'all' && trendStats.withTrend === 0 && trendStats.counterTrend === 0
+            {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0
               ? 'Trend alignment data is being calculated. Click "Refresh" to analyze patterns with trend indicators.'
               : patterns.length > 0 
                 ? 'Try adjusting your filters to see more results.'
@@ -1100,10 +1048,10 @@ export default function LivePatternsPage() {
           </p>
           {patterns.length > 0 && (
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" onClick={() => { setDirectionFilter('all'); setPatternFilter('all'); setTrendFilter('all'); }}>
+              <Button variant="outline" onClick={() => setFilters(DEFAULT_SCREENER_FILTERS)}>
                 Clear Filters
               </Button>
-              {trendFilter !== 'all' && trendStats.withTrend === 0 && trendStats.counterTrend === 0 && (
+              {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0 && (
                 <Button variant="default" onClick={() => fetchLivePatterns(true)} disabled={refreshing}>
                   <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                   Calculate Trend Data
