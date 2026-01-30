@@ -8,19 +8,21 @@ const plans = [
   {
     name: "Free",
     tagline: "Explore",
-    features: ["25 credits/month", "1 active alert", "Basic patterns"],
+    features: ["50 credits/month", "3 active alerts", "Basic patterns"],
   },
   {
-    name: "Plus",
-    tagline: "Active Testing",
-    features: ["150 credits/month", "5 active alerts", "All patterns"],
+    name: "Lite",
+    tagline: "Getting Started",
+    features: ["100 credits/month", "5 active alerts", "4H timeframe"],
     highlighted: false,
+    price: "$12/mo",
   },
   {
     name: "Pro",
-    tagline: "Daily Scanning",
-    features: ["900 credits/month", "25 active alerts", "Priority support"],
+    tagline: "Serious Trading",
+    features: ["900 credits/month", "100 active alerts", "All timeframes"],
     highlighted: true,
+    price: "$79/mo",
   },
 ];
 

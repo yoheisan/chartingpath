@@ -9,9 +9,11 @@
  * 
  * BOTH FILES MUST BE IDENTICAL (except for the header comment).
  * A sync test verifies they match.
+ * 
+ * BETA v3.0: Simplified to credits-only constraint (no daily run caps)
  */
 
-export type PlanTier = 'FREE' | 'PLUS' | 'PRO' | 'TEAM';
+export type PlanTier = 'FREE' | 'LITE' | 'PLUS' | 'PRO' | 'TEAM';
 export type ProjectType = 'setup_finder' | 'pattern_lab' | 'portfolio_checkup' | 'portfolio_sim';
 
 export interface SetupFinderCaps {
@@ -61,7 +63,6 @@ export interface ProjectCaps {
 
 export interface TierConfig {
   monthlyCredits: number;
-  dailyRunCap: number;
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
   screener: ScreenerCaps;
@@ -77,9 +78,8 @@ export const PLANS_CONFIG: PlansConfig = {
   tiers: {
     FREE: {
       monthlyCredits: 50,
-      dailyRunCap: 3, // 3 backtests/scans per day - primary gate at Research stage
       maxConcurrentRuns: 1,
-      maxActiveAlerts: 1, // Secondary gate at Automate stage
+      maxActiveAlerts: 3, // Increased from 1 to let users experience the loop
       screener: {
         maxTickersPerClass: 100, // Unlimited screener access for Discover stage
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
@@ -94,9 +94,26 @@ export const PLANS_CONFIG: PlansConfig = {
         portfolio_sim: { maxHoldings: 10, maxLookbackYears: 3, rebalanceOptions: ['yearly'], allowedTimeframes: ['1d'] }
       }
     },
+    LITE: {
+      monthlyCredits: 100,
+      maxConcurrentRuns: 1,
+      maxActiveAlerts: 5, // Bridge tier with more alerts
+      screener: {
+        maxTickersPerClass: 100,
+        allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders']
+      },
+      study: {
+        allowedTimeframes: ['1d', '4h'] // Lite: daily + 4h
+      },
+      projects: {
+        setup_finder: { maxInstruments: 15, maxLookbackYears: 2, maxPatterns: 4, allowedTimeframes: ['1d', '4h'] },
+        pattern_lab: { enabled: true, maxInstruments: 8, maxLookbackYears: 2, maxPatterns: 4, maxSweeps: 1, allowedTimeframes: ['1d'] },
+        portfolio_checkup: { maxHoldings: 20, maxLookbackYears: 2, allowedTimeframes: ['1d'] },
+        portfolio_sim: { maxHoldings: 15, maxLookbackYears: 5, rebalanceOptions: ['quarterly', 'yearly'], allowedTimeframes: ['1d'] }
+      }
+    },
     PLUS: {
       monthlyCredits: 300,
-      dailyRunCap: 10, // Upgraded: 10 daily scans
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
       screener: {
@@ -115,7 +132,6 @@ export const PLANS_CONFIG: PlansConfig = {
     },
     PRO: {
       monthlyCredits: 900,
-      dailyRunCap: 30, // Upgraded: 30 daily scans
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
       screener: {
@@ -134,7 +150,6 @@ export const PLANS_CONFIG: PlansConfig = {
     },
     TEAM: {
       monthlyCredits: 3000,
-      dailyRunCap: 100, // Upgraded: unlimited for teams
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
       screener: {
@@ -273,7 +288,6 @@ export interface TierDisplayInfo {
   monthlyPrice: number;
   annualPrice: number;
   monthlyCredits: number;
-  dailyRunCap: number;
   maxActiveAlerts: number;
   bestFor: string;
   color: string;
@@ -285,19 +299,26 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 0,
     annualPrice: 0,
     monthlyCredits: 50,
-    dailyRunCap: 3,
-    maxActiveAlerts: 1,
-    bestFor: 'Discover signals, validate 3 per day',
+    maxActiveAlerts: 3,
+    bestFor: 'Explore the platform',
     color: 'text-muted-foreground'
+  },
+  LITE: {
+    name: 'Lite',
+    monthlyPrice: 12,
+    annualPrice: 120,
+    monthlyCredits: 100,
+    maxActiveAlerts: 5,
+    bestFor: 'Hobbyist traders starting out',
+    color: 'text-emerald-500'
   },
   PLUS: {
     name: 'Plus',
     monthlyPrice: 29,
     annualPrice: 290,
     monthlyCredits: 300,
-    dailyRunCap: 10,
     maxActiveAlerts: 25,
-    bestFor: 'Active research with unlimited validation',
+    bestFor: 'Active traders testing ideas',
     color: 'text-blue-500'
   },
   PRO: {
@@ -305,9 +326,8 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 79,
     annualPrice: 790,
     monthlyCredits: 900,
-    dailyRunCap: 30,
     maxActiveAlerts: 100,
-    bestFor: 'Professional traders with diverse portfolios',
+    bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
   },
   TEAM: {
@@ -315,9 +335,8 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
-    dailyRunCap: 100,
     maxActiveAlerts: 500,
-    bestFor: 'Trading teams and prop desks',
+    bestFor: 'Trading teams & portfolio managers',
     color: 'text-amber-500'
   }
 };
@@ -368,35 +387,40 @@ export function validateProjectInputs(
 /**
  * Plans config version for sync verification
  */
-export const PLANS_CONFIG_VERSION = '2.0.0';
+export const PLANS_CONFIG_VERSION = '3.0.0-beta';
 
 // ============= BUSINESS MODEL CONSTANTS =============
 
 /**
- * Business Model: Research-Gate with Daily Scans
+ * Business Model: Credits-Only Gate (Simplified)
+ * 
+ * BETA v3.0 CHANGES:
+ * - Removed daily run caps (simplified to monthly credits only)
+ * - Increased FREE alerts from 1 to 3 (let users experience the loop)
+ * - Added LITE tier at $12/mo (bridge between FREE and PLUS)
  * 
  * Stage 1: DISCOVER (Free & Unlimited)
  *   - Screener access for signal discovery
  *   - No limits on viewing patterns
  * 
  * Stage 2: RESEARCH (Primary Gate)
- *   - 3 backtests/scans per day for FREE
- *   - Unlimited for PLUS+
- *   - Conversion trigger: hitting daily limit
+ *   - Credits consumed per project run
+ *   - FREE: 50 credits/month
+ *   - Conversion trigger: running out of credits
  * 
  * Stage 3: EXECUTE (Full Access)
  *   - TradingView integration
  *   - Trade plans
  * 
  * Stage 4: AUTOMATE (Secondary Gate)
- *   - 1 active alert for FREE
- *   - Unlimited for PLUS+
+ *   - 3 active alerts for FREE (was 1)
+ *   - Scaled alerts for paid tiers
  */
 
 export const BUSINESS_MODEL = {
   primaryGate: 'research' as const,
   secondaryGate: 'automate' as const,
-  retentionMechanism: 'daily_scans' as const,
+  retentionMechanism: 'monthly_credits' as const, // Changed from daily_scans
   coreKpi: 'loop_completion_rate' as const,
   
   // Loop Completion Rate targets
@@ -415,7 +439,7 @@ export const BUSINESS_MODEL = {
   
   // Conversion trigger events
   triggers: {
-    freeToPaywall: 'daily_cap_reached',
+    freeToPaywall: 'credits_exhausted', // Changed from daily_cap_reached
     paywallToCheckout: 'pricing_clicked',
   }
 } as const;
