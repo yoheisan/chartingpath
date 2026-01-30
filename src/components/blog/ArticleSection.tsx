@@ -233,6 +233,21 @@ export function StatisticsBox({ stats, title = 'Pattern Statistics' }: StatBoxPr
   );
 }
 
+interface ArticleSectionProps {
+  title: string;
+  id?: string;
+  children: ReactNode;
+}
+
+export function ArticleSection({ title, id, children }: ArticleSectionProps) {
+  return (
+    <section id={id} className="my-8">
+      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
 interface TableOfContentsProps {
   sections: { id: string; title: string; level?: 'novice' | 'intermediate' | 'advanced' | 'professional' }[];
 }

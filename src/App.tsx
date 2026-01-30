@@ -46,6 +46,11 @@ const SwingTradingStrategy = lazy(() => import("./pages/strategies/SwingTradingS
 const PositionTradingStrategy = lazy(() => import("./pages/strategies/PositionTradingStrategy"));
 const MACDStrategy = lazy(() => import("./pages/strategies/MACDStrategy"));
 const BollingerBandsStrategy = lazy(() => import("./pages/strategies/BollingerBandsStrategy"));
+const RSIDivergenceStrategy = lazy(() => import("./pages/strategies/RSIDivergenceStrategy"));
+const VWAPStrategy = lazy(() => import("./pages/strategies/VWAPStrategy"));
+const FibonacciStrategy = lazy(() => import("./pages/strategies/FibonacciStrategy"));
+const SupportResistanceStrategy = lazy(() => import("./pages/strategies/SupportResistanceStrategy"));
+const GapTradingStrategy = lazy(() => import("./pages/strategies/GapTradingStrategy"));
 const PatternQuizPage = lazy(() => import("./pages/PatternQuizPage"));
 const PatternIdentificationQuizPage = lazy(() => import("./pages/PatternIdentificationQuizPage"));
 const TradingKnowledgeQuizPage = lazy(() => import("./pages/TradingKnowledgeQuizPage"));
@@ -209,6 +214,11 @@ const App = () => (
           <Route path="/learn/strategies/position-trading" element={withSuspense(<PositionTradingStrategy />)} />
           <Route path="/learn/strategies/macd-strategy" element={withSuspense(<MACDStrategy />)} />
           <Route path="/learn/strategies/bollinger-bands" element={withSuspense(<BollingerBandsStrategy />)} />
+          <Route path="/learn/strategies/rsi-divergence" element={withSuspense(<RSIDivergenceStrategy />)} />
+          <Route path="/learn/strategies/vwap" element={withSuspense(<VWAPStrategy />)} />
+          <Route path="/learn/strategies/fibonacci" element={withSuspense(<FibonacciStrategy />)} />
+          <Route path="/learn/strategies/support-resistance" element={withSuspense(<SupportResistanceStrategy />)} />
+          <Route path="/learn/strategies/gap-trading" element={withSuspense(<GapTradingStrategy />)} />
           <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
           <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
           <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
