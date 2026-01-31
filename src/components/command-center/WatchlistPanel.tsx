@@ -207,19 +207,16 @@ export function WatchlistPanel({
               </Badge>
             )}
           </h3>
-          {isPaidUser && (
+          {isPaidUser && searchQuery.trim() && (
             <Button 
               variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={() => {
-                if (searchQuery.trim()) {
-                  addToWatchlist(searchQuery.trim());
-                }
-              }}
-              disabled={!searchQuery.trim() || addingSymbol}
+              size="sm" 
+              className="h-6 px-2 text-xs"
+              onClick={() => addToWatchlist(searchQuery.trim())}
+              disabled={addingSymbol}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           )}
         </div>
