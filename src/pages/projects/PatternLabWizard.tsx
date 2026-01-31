@@ -175,10 +175,25 @@ const PatternLabWizard = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Check if Pattern Lab is enabled for user's tier
   const patternLabCaps = PLANS_CONFIG.tiers[userTier].projects.pattern_lab;
   const isEnabled = patternLabCaps.enabled;
+  
+  // Auth state listener - sync with site-wide auth
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
   
   // Fetch estimate when inputs change
   useEffect(() => {
@@ -243,9 +258,7 @@ const PatternLabWizard = () => {
   };
   
   const handleRun = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
+    if (!isAuthenticated) {
       toast.error('Please sign in to run projects');
       navigate('/auth');
       return;
@@ -259,6 +272,14 @@ const PatternLabWizard = () => {
     
     if (selectedPatterns.length === 0 || selectedInstruments.length === 0) {
       toast.error('Please select at least one instrument and pattern');
+      return;
+    }
+    
+    // Get fresh session for the API call
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('Session expired. Please sign in again.');
+      navigate('/auth');
       return;
     }
     
