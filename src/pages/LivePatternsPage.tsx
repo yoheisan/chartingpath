@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1134,7 +1134,7 @@ export default function LivePatternsPage() {
               </TableHeader>
               <TableBody>
                 {groupedPatterns.map(([patternName, setups]) => (
-                  <>
+                  <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
                       <TableCell colSpan={7} className="py-2">
@@ -1248,7 +1248,7 @@ export default function LivePatternsPage() {
                         </TableRow>
                       );
                     })}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
