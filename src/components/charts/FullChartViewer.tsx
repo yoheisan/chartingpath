@@ -55,6 +55,7 @@ import {
   X,
   History,
   Settings2,
+  RotateCcw,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
@@ -298,6 +299,20 @@ export default function FullChartViewer({
           },
           crosshair: {
             mode: 1,
+          },
+          // Enable vertical scrolling/panning of the chart
+          handleScroll: {
+            vertTouchDrag: true,   // Allow touch vertical drag
+            mouseWheel: true,      // Mouse wheel to zoom
+            pressedMouseMove: true, // Drag to pan
+          },
+          handleScale: {
+            axisPressedMouseMove: {
+              price: true, // Allow dragging price axis to scale
+              time: true,  // Allow dragging time axis to scale
+            },
+            mouseWheel: true,
+            pinch: true,
           },
         });
 
@@ -563,6 +578,21 @@ export default function FullChartViewer({
     };
   }, [setup, open, containerEl, loading, chartVersion]);
 
+  // Reset chart to auto-scale and fit all content
+  const handleResetChart = () => {
+    if (!chartRef.current) return;
+    
+    // Re-enable auto-scale on price axis
+    chartRef.current.priceScale('right').applyOptions({
+      autoScale: true,
+    });
+    
+    // Fit all data in view
+    chartRef.current.timeScale().fitContent();
+    
+    toast.success('Chart reset to fit content');
+  };
+
   if (!setup) return null;
 
   const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
@@ -754,8 +784,24 @@ export default function FullChartViewer({
                   )}
                 </div>
 
-                {/* Indicator Settings Button */}
-                <div className="absolute top-2 right-2 z-20">
+                {/* Chart Controls: Reset + Indicator Settings */}
+                <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                  {/* Reset Chart Button */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 w-7 p-0 bg-background/90 border-border/50 hover:bg-background"
+                        onClick={handleResetChart}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="text-xs">Reset chart view (fit all data)</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
