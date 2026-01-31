@@ -3,9 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Brain, AlertTriangle, Lightbulb, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Brain, AlertTriangle, Lightbulb, Info, BookOpen, Eye, Crosshair, BarChart3, Globe, CheckCircle } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { Card } from "@/components/ui/card";
 
 interface PatternDetailModalProps {
   isOpen: boolean;
@@ -122,6 +123,175 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                 />
               </div>
             </div>
+
+            {/* NEW: What Is It? - Deep Explanation */}
+            {patternDetail.whatIsIt && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    What Is This Pattern?
+                  </h3>
+                  <Card className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                    <p className="text-sm leading-relaxed text-foreground">{patternDetail.whatIsIt}</p>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {/* NEW: Why It Happens - Market Psychology */}
+            {patternDetail.whyItHappens && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-purple-500" />
+                    Why Does This Pattern Form?
+                  </h3>
+                  <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-transparent border-purple-500/20">
+                    <p className="text-sm leading-relaxed text-foreground">{patternDetail.whyItHappens}</p>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {/* NEW: How to Identify - Step-by-Step Guide */}
+            {patternDetail.howToIdentify && patternDetail.howToIdentify.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                    How to Identify This Pattern
+                  </h3>
+                  <Card className="p-4 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
+                    <ol className="space-y-3">
+                      {patternDetail.howToIdentify.map((step, index) => (
+                        <li key={index} className="flex items-start gap-3 text-sm">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="text-foreground pt-0.5">{step.replace(/^STEP \d+:\s*/i, '')}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {/* NEW: How to Trade - Complete Execution Guide */}
+            {patternDetail.howToTrade && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Crosshair className="h-5 w-5 text-bullish" />
+                    How to Trade This Pattern
+                  </h3>
+                  <div className="grid gap-4">
+                    {/* Setup */}
+                    <Card className="p-4 bg-gradient-to-br from-muted/50 to-transparent">
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                        Trade Setup
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{patternDetail.howToTrade.setup}</p>
+                    </Card>
+                    
+                    {/* Entry */}
+                    <Card className="p-4 bg-gradient-to-br from-bullish/10 to-transparent border-bullish/30">
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-bullish">
+                        <TrendingUp className="h-4 w-4" />
+                        Entry Strategy
+                      </h4>
+                      <p className="text-sm text-foreground">{patternDetail.howToTrade.entry}</p>
+                    </Card>
+                    
+                    {/* Stop Loss */}
+                    <Card className="p-4 bg-gradient-to-br from-bearish/10 to-transparent border-bearish/30">
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-bearish">
+                        <Shield className="h-4 w-4" />
+                        Stop Loss Placement
+                      </h4>
+                      <p className="text-sm text-foreground">{patternDetail.howToTrade.stopLoss}</p>
+                    </Card>
+                    
+                    {/* Targets */}
+                    <Card className="p-4 bg-gradient-to-br from-primary/10 to-transparent border-primary/30">
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-primary">
+                        <Target className="h-4 w-4" />
+                        Profit Targets
+                      </h4>
+                      <ul className="space-y-2">
+                        {patternDetail.howToTrade.targets.map((target, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-foreground">{target}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                    
+                    {/* Position Sizing */}
+                    <Card className="p-4 bg-gradient-to-br from-yellow-500/10 to-transparent border-yellow-500/30">
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+                        <BarChart3 className="h-4 w-4" />
+                        Position Sizing
+                      </h4>
+                      <p className="text-sm text-foreground">{patternDetail.howToTrade.positionSizing}</p>
+                    </Card>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Real-World Examples */}
+            {patternDetail.realWorldExamples && patternDetail.realWorldExamples.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-cyan-500" />
+                    Real-World Examples
+                  </h3>
+                  <Card className="p-4 bg-gradient-to-br from-cyan-500/5 to-transparent border-cyan-500/20">
+                    <ul className="space-y-2">
+                      {patternDetail.realWorldExamples.map((example, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-2 flex-shrink-0" />
+                          <span className="text-foreground">{example}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {/* Best Market Conditions */}
+            {patternDetail.bestMarketConditions && patternDetail.bestMarketConditions.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5 text-amber-500" />
+                    Best Market Conditions
+                  </h3>
+                  <Card className="p-4 bg-gradient-to-br from-amber-500/5 to-transparent border-amber-500/20">
+                    <ul className="space-y-2">
+                      {patternDetail.bestMarketConditions.map((condition, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-foreground">{condition}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </div>
+              </>
+            )}
 
             <Separator />
 
