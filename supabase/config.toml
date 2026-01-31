@@ -137,3 +137,12 @@ verify_jwt = false
 
 [functions.schedule-pattern-scans]
 verify_jwt = false
+
+[functions.detect-patterns-ondemand]
+verify_jwt = false
+
+[functions.seed-historical-patterns-mtf]
+verify_jwt = false
+
+[functions.schedule-historical-seeding]
+verify_jwt = false
