@@ -107,6 +107,11 @@ const RiskRewardVisualizer = lazy(() => import('@/components/blog/risk-managemen
 const MartingaleVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MartingaleVisualizer'));
 const DrawdownVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/DrawdownVisualizer'));
 const VaRVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/VaRVisualizer'));
+const RiskParityVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/RiskParityVisualizer'));
+const HedgingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/HedgingVisualizer'));
+const CorrelationVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/CorrelationVisualizer'));
+const ScalingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/ScalingVisualizer'));
+const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MaxLossVisualizer'));
 
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
