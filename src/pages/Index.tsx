@@ -63,13 +63,13 @@ const Index = () => {
   // Activity cards configuration
   const activityCards = [
     {
-      title: "Your Tickers, Analyzed",
-      description: "Track ANY ticker — not limited to our 1,000+ screener universe.",
-      bullets: ["Any symbol worldwide", "Full trade plans", "Saved to Vault"],
+      title: "Research Your Watchlist",
+      description: "Deep-dive on assets you have conviction on. Validate before you trade.",
+      bullets: ["Your custom tickers", "Visual Proof charts", "Saved to Vault"],
       ctaText: "Run Setup Finder",
       ctaLink: "/projects/setup-finder/new",
       icon: Search,
-      bestFor: "Custom watchlists",
+      bestFor: "Pre-trade research",
       slug: "setup_finder",
     },
     {
