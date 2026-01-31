@@ -6,14 +6,15 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock } from 'lucide-react';
+import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { PLANS_CONFIG } from '@/config/plans';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
+import InstrumentLogo from '@/components/charts/InstrumentLogo';
 
 // Pattern options matching server registry
 const PATTERNS = [
@@ -54,7 +55,7 @@ const SetupFinderWizard = () => {
   const [assetClass, setAssetClass] = useState('crypto');
   const [universe, setUniverse] = useState('top10');
   const [timeframe, setTimeframe] = useState('1d');
-  
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   
   
@@ -122,7 +123,7 @@ const SetupFinderWizard = () => {
   // Fetch estimate when inputs change
   useEffect(() => {
     const fetchEstimate = async () => {
-      if (selectedPatterns.length === 0) {
+      if (selectedPatterns.length === 0 || selectedInstruments.length === 0) {
         setEstimate(null);
         return;
       }
@@ -140,8 +141,8 @@ const SetupFinderWizard = () => {
               ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
             },
             body: JSON.stringify({
-              assetClass,
-              universe,
+              projectType: 'setup_finder',
+              instruments: selectedInstruments,
               patterns: selectedPatterns,
               timeframe,
             }),
@@ -159,7 +160,7 @@ const SetupFinderWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [assetClass, universe, selectedPatterns, timeframe]);
+  }, [selectedInstruments, selectedPatterns, timeframe]);
   
   const handlePatternToggle = (patternId: string) => {
     setSelectedPatterns(prev => 
@@ -186,8 +187,13 @@ const SetupFinderWizard = () => {
       return;
     }
     
+    if (selectedInstruments.length === 0) {
+      toast.error('Please select at least one instrument');
+      return;
+    }
+    
     setIsRunning(true);
-    console.log('[SetupFinder] Starting run with:', { assetClass, universe, patterns: selectedPatterns, timeframe });
+    console.log('[SetupFinder] Starting run with:', { instruments: selectedInstruments, patterns: selectedPatterns, timeframe });
     
     try {
       const response = await fetch(
@@ -201,8 +207,7 @@ const SetupFinderWizard = () => {
           body: JSON.stringify({
             projectType: 'setup_finder',
             inputs: {
-              assetClass,
-              universe,
+              instruments: selectedInstruments,
               patterns: selectedPatterns,
               timeframe,
             },
@@ -276,66 +281,94 @@ const SetupFinderWizard = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Asset Class */}
+            {/* Instruments */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Market Selection</CardTitle>
-                <CardDescription>Choose the market and universe to scan</CardDescription>
+                <CardDescription>Search and add instruments to scan</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Asset Class</Label>
-                    <Select value={assetClass} onValueChange={setAssetClass}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                        <SelectItem value="fx">Forex</SelectItem>
-                        <SelectItem value="stocks">Stocks</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Universe</Label>
-                    <Select value={universe} onValueChange={setUniverse}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {UNIVERSES[assetClass]?.map(u => (
-                          <SelectItem key={u.value} value={u.value}>
-                            {u.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                {/* Symbol Search Button */}
+                <UniversalSymbolSearch
+                  onSelect={(symbol, name, category) => {
+                    if (!selectedInstruments.includes(symbol)) {
+                      setSelectedInstruments(prev => [...prev, symbol]);
+                      // Update asset class to match selected category
+                      const categoryMap: Record<string, string> = {
+                        'stocks': 'stocks',
+                        'crypto': 'crypto',
+                        'fx': 'fx',
+                        'commodities': 'commodities',
+                        'indices': 'indices',
+                        'etfs': 'etfs',
+                      };
+                      if (categoryMap[category]) {
+                        setAssetClass(categoryMap[category]);
+                      }
+                    }
+                  }}
+                  trigger={
+                    <Button variant="outline" className="w-full justify-start gap-2 h-11">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Search for instruments...</span>
+                    </Button>
+                  }
+                />
                 
-                <div className="grid gap-4 sm:grid-cols-2">
+                {/* Selected Instruments */}
+                {selectedInstruments.length > 0 ? (
                   <div className="space-y-2">
-                    <Label>Timeframe</Label>
-                    <Select value={timeframe} onValueChange={setTimeframe}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMEFRAMES.map(tf => (
-                          <SelectItem 
-                            key={tf.value} 
-                            value={tf.value}
-                            disabled={estimate?.tierCaps && !estimate.tierCaps.allowedTimeframes.includes(tf.value)}
+                    <Label className="text-xs text-muted-foreground">
+                      Selected ({selectedInstruments.length})
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInstruments.map(symbol => (
+                        <Badge
+                          key={symbol}
+                          variant="secondary"
+                          className="flex items-center gap-1.5 pl-1 pr-1 py-1"
+                        >
+                          <InstrumentLogo instrument={symbol} size="sm" showName={false} />
+                          <span className="font-medium">
+                            {symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0 hover:bg-destructive/20"
+                            onClick={() => setSelectedInstruments(prev => prev.filter(s => s !== symbol))}
                           >
-                            {tf.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                  
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border/50 rounded-lg">
+                    No instruments selected. Use the search above to add instruments.
+                  </div>
+                )}
+                
+                {/* Timeframe */}
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <Label>Timeframe</Label>
+                  <Select value={timeframe} onValueChange={setTimeframe}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEFRAMES.map(tf => (
+                        <SelectItem 
+                          key={tf.value} 
+                          value={tf.value}
+                          disabled={estimate?.tierCaps && !estimate.tierCaps.allowedTimeframes.includes(tf.value)}
+                        >
+                          {tf.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>

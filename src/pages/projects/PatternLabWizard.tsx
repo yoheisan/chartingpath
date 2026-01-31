@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock } from 'lucide-react';
+import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
+import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 
 // Pattern options - matches screener's pattern registry
@@ -374,50 +376,70 @@ const PatternLabWizard = () => {
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Instruments</CardTitle>
-                <CardDescription>Select instruments to backtest</CardDescription>
+                <CardDescription>Search and add instruments to backtest</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Asset Class</Label>
-                  <Select value={assetClass} onValueChange={(v) => {
-                    setAssetClass(v);
-                    setSelectedInstruments([]);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(INSTRUMENTS).map(key => (
-                        <SelectItem key={key} value={key}>
-                          {ASSET_CLASS_LABELS[key] || key}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Symbol Search Button */}
+                <UniversalSymbolSearch
+                  onSelect={(symbol, name, category) => {
+                    if (!selectedInstruments.includes(symbol)) {
+                      setSelectedInstruments(prev => [...prev, symbol]);
+                      // Update asset class to match selected category
+                      const categoryMap: Record<string, string> = {
+                        'stocks': 'stocks',
+                        'crypto': 'crypto',
+                        'fx': 'fx',
+                        'commodities': 'commodities',
+                        'indices': 'indices',
+                        'etfs': 'etfs',
+                      };
+                      if (categoryMap[category]) {
+                        setAssetClass(categoryMap[category]);
+                      }
+                    }
+                  }}
+                  trigger={
+                    <Button variant="outline" className="w-full justify-start gap-2 h-11">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Search for instruments...</span>
+                    </Button>
+                  }
+                />
                 
-                <div className="grid gap-2 sm:grid-cols-2 max-h-[320px] overflow-y-auto pr-2">
-                  {INSTRUMENTS[assetClass]?.map(inst => (
-                    <div
-                      key={inst.yahooSymbol}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedInstruments.includes(inst.yahooSymbol)
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border/50 hover:border-border'
-                      }`}
-                      onClick={() => handleInstrumentToggle(inst.yahooSymbol)}
-                    >
-                      <Checkbox
-                        checked={selectedInstruments.includes(inst.yahooSymbol)}
-                        onCheckedChange={() => handleInstrumentToggle(inst.yahooSymbol)}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-sm truncate">{inst.symbol}</div>
-                        <div className="text-xs text-muted-foreground truncate">{inst.name}</div>
-                      </div>
+                {/* Selected Instruments */}
+                {selectedInstruments.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Selected ({selectedInstruments.length})
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInstruments.map(symbol => (
+                        <Badge
+                          key={symbol}
+                          variant="secondary"
+                          className="flex items-center gap-1.5 pl-1 pr-1 py-1"
+                        >
+                          <InstrumentLogo instrument={symbol} size="sm" showName={false} />
+                          <span className="font-medium">
+                            {symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0 hover:bg-destructive/20"
+                            onClick={() => setSelectedInstruments(prev => prev.filter(s => s !== symbol))}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border/50 rounded-lg">
+                    No instruments selected. Use the search above to add instruments.
+                  </div>
+                )}
               </CardContent>
             </Card>
             
