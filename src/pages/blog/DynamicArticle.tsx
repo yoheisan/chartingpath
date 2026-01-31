@@ -942,6 +942,11 @@ const DynamicArticle = () => {
 
   // Fetch article data
   useEffect(() => {
+    // Reset state when slug changes to ensure fresh loading state
+    setLoading(true);
+    setError(null);
+    setArticle(null);
+
     const fetchArticle = async () => {
       if (!slug) {
         setError("Article not found");
@@ -955,10 +960,16 @@ const DynamicArticle = () => {
       }
 
       try {
-        // Fetch article using RPC function
-        const { data, error: fetchError } = await supabase
+        // Fetch article using RPC function with timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timed out')), 15000)
+        );
+        
+        const fetchPromise = supabase
           .rpc('get_article_by_slug', { p_slug: slug })
           .single();
+
+        const { data, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as Awaited<typeof fetchPromise>;
 
         if (fetchError) throw fetchError;
 
@@ -970,18 +981,19 @@ const DynamicArticle = () => {
 
         setArticle(data as Article);
 
-        // Track view (insert into article_views)
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('article_views').insert({
-            article_id: data.id,
-            user_id: user.id,
-          });
-        }
+        // Track view (insert into article_views) - fire and forget
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) {
+            supabase.from('article_views').insert({
+              article_id: data.id,
+              user_id: user.id,
+            }).then(() => {});
+          }
+        });
 
       } catch (err) {
         console.error('Error fetching article:', err);
-        setError("Failed to load article");
+        setError("Failed to load article. Please try refreshing the page.");
       } finally {
         setLoading(false);
       }
