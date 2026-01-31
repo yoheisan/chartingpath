@@ -201,6 +201,11 @@ export default function FullChartViewer({
   const indicatorsRef = useRef<IndicatorSettings>(indicators);
   const [chartVersion, setChartVersion] = useState(0);
   
+  // Vertical panning state
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef<number | null>(null);
+  const priceRangeOnDragStart = useRef<{ from: number; to: number } | null>(null);
+  
   // Keep ref in sync for use inside effects
   indicatorsRef.current = indicators;
 
@@ -593,6 +598,73 @@ export default function FullChartViewer({
     toast.success('Chart reset to fit content');
   };
 
+  // Vertical panning handlers - allows user to drag the chart up/down
+  const handleChartMouseDown = (e: React.MouseEvent) => {
+    // Only activate on middle mouse button or Shift+left click for vertical pan
+    // This avoids interfering with normal chart interactions
+    if (e.shiftKey || e.button === 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      dragStartY.current = e.clientY;
+      
+      // Capture current price range
+      if (chartRef.current) {
+        const mainSeries = (chartRef.current as any).seriesList?.[0];
+        if (mainSeries) {
+          try {
+            const priceScale = chartRef.current.priceScale('right');
+            // Disable auto-scale to allow manual panning
+            priceScale.applyOptions({ autoScale: false });
+          } catch {
+            // Ignore errors
+          }
+        }
+      }
+    }
+  };
+
+  const handleChartMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStartY.current === null || !chartRef.current || !containerEl) return;
+    
+    const deltaY = e.clientY - dragStartY.current;
+    dragStartY.current = e.clientY;
+    
+    // Calculate price delta based on chart height and visible range
+    const chartHeight = containerEl.clientHeight;
+    if (chartHeight <= 0) return;
+    
+    try {
+      const priceScale = chartRef.current.priceScale('right');
+      const options = priceScale.options();
+      const currentMargins = options.scaleMargins || { top: 0.1, bottom: 0.1 };
+      
+      // Adjust margins based on drag direction (inverted because screen Y is inverted)
+      const marginDelta = deltaY / chartHeight * 0.3; // Sensitivity factor
+      const newTop = Math.max(0, Math.min(0.9, currentMargins.top + marginDelta));
+      const newBottom = Math.max(0, Math.min(0.9, currentMargins.bottom - marginDelta));
+      
+      priceScale.applyOptions({
+        autoScale: false,
+        scaleMargins: { top: newTop, bottom: newBottom },
+      });
+    } catch {
+      // Ignore errors during pan
+    }
+  };
+
+  const handleChartMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      dragStartY.current = null;
+    }
+  };
+
+  const handleChartMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      dragStartY.current = null;
+    }
+  };
   if (!setup) return null;
 
   const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
@@ -749,10 +821,16 @@ export default function FullChartViewer({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left: Chart (2 cols) */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="relative">
+              <div 
+                className="relative"
+                onMouseDown={handleChartMouseDown}
+                onMouseMove={handleChartMouseMove}
+                onMouseUp={handleChartMouseUp}
+                onMouseLeave={handleChartMouseLeave}
+              >
                 <div
                   ref={setContainerEl}
-                  className="w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50"
+                  className={`w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50 ${isDragging ? 'cursor-grabbing' : ''}`}
                 />
                 
                 {/* Indicator Legend */}
@@ -784,8 +862,19 @@ export default function FullChartViewer({
                   )}
                 </div>
 
-                {/* Chart Controls: Reset + Indicator Settings */}
+                {/* Chart Controls: Pan hint + Reset + Indicator Settings */}
                 <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                  {/* Pan hint - shows only when not dragging */}
+                  {!isDragging && (
+                    <span className="text-[9px] text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded hidden lg:inline-block">
+                      Shift+drag to pan
+                    </span>
+                  )}
+                  {isDragging && (
+                    <span className="text-[9px] text-amber-500 bg-background/80 px-1.5 py-0.5 rounded">
+                      Panning...
+                    </span>
+                  )}
                   {/* Reset Chart Button */}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -799,7 +888,7 @@ export default function FullChartViewer({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p className="text-xs">Reset chart view (fit all data)</p>
+                      <p className="text-xs">Reset view &amp; re-enable auto-scale</p>
                     </TooltipContent>
                   </Tooltip>
                   <Popover>
