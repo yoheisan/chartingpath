@@ -61,14 +61,22 @@ const Navigation = () => {
         Screener
       </Link>
       
-      {/* 2. Research - Historical performance */}
+      {/* 2. Research */}
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Research</p>
         <div className="flex flex-col gap-2 pl-2">
           <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground py-1">Pattern Lab</Link>
           <Link to="/projects/setup-finder/new" className="text-sm text-muted-foreground py-1">Setup Finder</Link>
+        </div>
+      </div>
+      
+      {/* 3. Learning */}
+      <div className="border-t pt-4 mt-2">
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Learning</p>
+        <div className="flex flex-col gap-2 pl-2">
           <Link to="/chart-patterns/library" className="text-sm text-muted-foreground py-1">Pattern Library</Link>
           <Link to="/learn" className="text-sm text-muted-foreground py-1">Blog & Articles</Link>
+          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
         </div>
       </div>
       
@@ -133,47 +141,67 @@ const Navigation = () => {
                 Screener
               </Link>
               
-              {/* 2. Research - Historical performance */}
+              {/* 2. Research - Pattern Lab & Setup Finder */}
               <DropdownMenu>
                 <DropdownMenuTrigger 
-                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') || isActive('/projects/pattern-lab') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
-                  onMouseEnter={prefetchArticles}
+                  className={`flex items-center gap-1 ${isActive('/projects/pattern-lab') || isActive('/projects/setup-finder') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <FlaskConical className="h-4 w-4" />
                   Research
                   <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-popover z-50">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Historical Analysis</DropdownMenuLabel>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
-                        <FlaskConical className="h-4 w-4 text-violet-500" />
-                        Pattern Lab
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
-                        <Search className="h-4 w-4 text-emerald-500" />
-                        Setup Finder
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  
+                  <DropdownMenuItem asChild>
+                    <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
+                      <FlaskConical className="h-4 w-4 text-violet-500" />
+                      <div>
+                        <div>Pattern Lab</div>
+                        <div className="text-xs text-muted-foreground">Backtest patterns historically</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-emerald-500" />
+                      <div>
+                        <div>Setup Finder</div>
+                        <div className="text-xs text-muted-foreground">Deep-dive your watchlist</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* 3. Learning - Pattern Library, Blog & Articles */}
+              <DropdownMenu>
+                <DropdownMenuTrigger 
+                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                  onMouseEnter={prefetchArticles}
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Learning
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-popover z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/library" className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-blue-500" />
+                      Pattern Library
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/learn" className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-green-500" />
+                      Blog & Articles
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Learn</DropdownMenuLabel>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/chart-patterns/library">Pattern Library</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/chart-patterns/quiz">Pattern Quizzes</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/learn">Blog & Articles</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-purple-500" />
+                      Pattern Quizzes
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               
