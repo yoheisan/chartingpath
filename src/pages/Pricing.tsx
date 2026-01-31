@@ -80,98 +80,92 @@ const Pricing = () => {
       annualPrice: 0,
       description: "Perfect funnel to get started with ChartingPath",
       features: [
-        "Access to 5 chart patterns",
-        "1 active alert",
+        "Daily timeframe charts only",
+        "Access to 6 chart patterns",
+        "3 active alerts",
+        "50 credits/month for research",
         "Demo-only backtesting (prebuilt examples)",
-        "Algo builder sandbox (no export)",
-        "No community sharing",
         "Basic pattern recognition guides"
       ],
+      limitations: ["Daily (1D) charts only"],
       buttonText: "Get Started Free",
       popular: false,
       icon: Zap
     },
     {
-      name: "Starter",
-      price: 19,
-      annualPrice: 205,
-      description: "For casual traders ready to unlock full features",
+      name: "Lite",
+      price: 12,
+      annualPrice: 120,
+      description: "For hobbyist traders starting their journey",
       features: [
-        "Full chart pattern library",
-        "Save up to 5 strategies",
-        "10 active alerts",
-        "Paper trading with 1-year history",
-        "Basic backtesting: 20 runs/month, up to 1 year of data",
-        "Guided Strategy Builder: Past 30 days backtesting only",
-        "Backtester V2: 5 runs/month (single asset strategies only)",
-        "Basic risk & pip calculators",
+        "Daily + 4-Hour timeframe charts",
+        "Access to 8 chart patterns",
+        "5 active alerts",
+        "100 credits/month for research",
+        "Basic backtesting: up to 2 years of data",
         "Email support"
       ],
-      buttonText: "Start Trading",
+      limitations: [],
+      buttonText: "Get Lite",
       popular: false,
       icon: Zap
     },
     {
+      name: "Plus",
+      price: 29,
+      annualPrice: 290,
+      description: "For active traders testing ideas regularly",
+      features: [
+        "All timeframes (1H, 4H, Daily, Weekly)",
+        "Access to 10 chart patterns (incl. Wedges)",
+        "25 active alerts",
+        "300 credits/month for research",
+        "Full historical backtesting: up to 3 years",
+        "Advanced risk & pip calculators",
+        "Priority email support"
+      ],
+      limitations: [],
+      buttonText: "Get Plus",
+      popular: false,
+      icon: Star
+    },
+    {
       name: "Pro", 
-      price: 39,
-      annualPrice: 421,
+      price: 79,
+      annualPrice: 790,
       description: "The sweet spot for serious traders",
       features: [
-        "Everything in Starter",
-        "Unlimited strategies",
-        "50 active alerts",
-        "Multi-platform script export (TradingView, MT4/MT5, PineScript)",
-        "Full historical backtesting (unlimited runs)",
-        "Advanced Backtest Engine: Custom date ranges & unlimited history",
-        "Backtester V2: 50 runs/month (single + pair trading strategies)",
+        "All timeframes (1H, 4H, Daily, Weekly)",
+        "Full pattern library (12 patterns)",
+        "100 active alerts",
+        "900 credits/month for research",
+        "Multi-platform script export (TradingView, MT4/MT5)",
+        "Full historical backtesting: up to 7 years",
         "Advanced metrics & trade analytics",
-        "Forward testing sandbox with history logs",
-        "Enhanced Alerts Library with outcomes tracking",
         "Priority support"
       ],
+      limitations: [],
       buttonText: "Go Pro",
       popular: true,
       icon: Star
     },
     {
-      name: "Pro+",
-      price: 79,
-      annualPrice: 853,
-      description: "Advanced analytics and community features",
+      name: "Team",
+      price: 199,
+      annualPrice: 1990,
+      description: "For trading teams & portfolio managers",
       features: [
-        "Everything in Pro",
-        "Advanced risk dashboards + performance analytics",
-        "Community strategy sharing",
-        "Portfolio forward testing",
-        "Backtester V2: Unlimited runs (all strategy types: single, pair, basket)", 
-        "Advanced Engine: Unlimited custom periods & tick-level data",
-        "High-frequency data access (tick-level backtesting)",
-        "Advanced portfolio optimization tools",
-        "Better learning progress tracking with milestones",
-        "Advanced backtesting metrics & CSV exports",
-        "Pro+ Discord role with exclusive channels"
+        "All timeframes (1H, 4H, Daily, Weekly)",
+        "Complete pattern library (15+ patterns)",
+        "500 active alerts",
+        "3000 credits/month for research",
+        "Script conversion across ALL platforms",
+        "Full historical backtesting: up to 10 years",
+        "Priority queues & VIP support",
+        "Early access to new features"
       ],
-      buttonText: "Go Pro+",
-      popular: false,
-      icon: Star
-    },
-    {
-      name: "Elite",
-      price: 149,
-      annualPrice: 1609,
-      description: "Ultimate power user experience",
-      features: [
-        "Everything in Pro+",
-        "Script conversion across ALL platforms (TradingView, MT4/MT5, NinjaTrader, QuantConnect, ThinkOrSwim)",
-        "Priority backtesting queues (institutional-grade compute)",
-        "Backtester V2: Custom strategy development & deployment",
-        "Real-time strategy monitoring & alerts",
-        "VIP support & onboarding",
-        "Advanced scenario simulations for strategies",
-        "Early access to new features & alpha testing",
-        "Premium Discord role & private channels"
-      ],
-      buttonText: "Join Elite",
+      limitations: [],
+      buttonText: "Join Team",
       popular: false,
       icon: Crown
     }
@@ -292,12 +286,20 @@ const Pricing = () => {
 
                 <CardContent className="space-y-6">
                   <ul className="space-y-3">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
+                    {plan.features.map((feature, index) => {
+                      // Highlight timeframe feature (first feature) for visibility
+                      const isTimeframeFeature = index === 0 && feature.toLowerCase().includes('timeframe');
+                      const isLimited = feature.toLowerCase().includes('daily') && feature.toLowerCase().includes('only');
+                      
+                      return (
+                        <li key={index} className="flex items-start gap-3">
+                          <Check className={`h-5 w-5 mt-0.5 flex-shrink-0 ${isLimited ? 'text-amber-500' : 'text-primary'}`} />
+                          <span className={`text-sm ${isTimeframeFeature ? 'font-medium text-foreground' : 'text-muted-foreground'} ${isLimited ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                            {feature}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
 
                   <Button 
