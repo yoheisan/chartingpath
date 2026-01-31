@@ -1,4 +1,5 @@
 import { useEffect, useRef, memo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   createChart,
   IChartApi,
@@ -96,6 +97,7 @@ interface StudyChartProps {
  * - VWAP
  */
 const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
+  const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
@@ -140,6 +142,28 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       : 100;
     const { precision, minMove } = calculatePricePrecision(representativePrice);
 
+    // Map i18n language code to locale for chart
+    const getChartLocale = (lang: string): string => {
+      const localeMap: Record<string, string> = {
+        en: 'en-US',
+        es: 'es-ES',
+        pt: 'pt-BR',
+        fr: 'fr-FR',
+        zh: 'zh-CN',
+        de: 'de-DE',
+        hi: 'hi-IN',
+        id: 'id-ID',
+        it: 'it-IT',
+        ja: 'ja-JP',
+        ru: 'ru-RU',
+        ar: 'ar-SA',
+        af: 'af-ZA',
+        ko: 'ko-KR',
+        tr: 'tr-TR',
+      };
+      return localeMap[lang] || 'en-US';
+    };
+
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height,
@@ -162,6 +186,9 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         borderColor: theme.grid,
         timeVisible: true,
         secondsVisible: false,
+      },
+      localization: {
+        locale: getChartLocale(i18n.language),
       },
       crosshair: {
         mode: 1,
@@ -389,7 +416,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         chartRef.current = null;
       }
     };
-  }, [bars, height, indicators]);
+  }, [bars, height, indicators, i18n.language]);
 
   if (!bars || bars.length === 0) {
     return (
