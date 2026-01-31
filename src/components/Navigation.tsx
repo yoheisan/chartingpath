@@ -165,10 +165,12 @@ const Navigation = () => {
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                className={`flex items-center gap-1.5 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                 onMouseEnter={prefetchArticles}
               >
-                <BookOpen className="h-4 w-4" />
+                <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <GraduationCap className="h-3.5 w-3.5 text-white" />
+                </div>
                 Learning
                 <ChevronDown className="h-3 w-3" />
               </DropdownMenuTrigger>
@@ -362,7 +364,10 @@ const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+              <DropdownMenuTrigger className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <GraduationCap className="h-3.5 w-3.5 text-white" />
+                </div>
                 Learning
                 <ChevronDown className="h-4 w-4" />
               </DropdownMenuTrigger>
