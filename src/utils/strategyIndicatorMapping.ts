@@ -129,14 +129,37 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'macd', title: 'Gap Momentum', symbol: 'AAPL' }
   ],
   
-  // ===== ATR & CCI INDICATORS =====
+  // ===== TECHNICAL INDICATOR ARTICLES (Direct indicator visualizations) =====
   'atr-indicator': [
-    { indicator: 'bollinger', title: 'Volatility Measurement', description: 'ATR context via volatility bands', symbol: 'SPY' },
-    { indicator: 'donchian', title: 'Range Context', symbol: 'SPY' }
+    { indicator: 'atr', title: 'ATR - Average True Range', description: 'Measures volatility for position sizing and stop placement', symbol: 'SPY' }
   ],
   'cci-indicator': [
-    { indicator: 'donchian', title: 'Channel Extremes', description: 'CCI identifies channel breakouts', symbol: 'SPY' },
-    { indicator: 'rsi', title: 'Momentum Comparison', symbol: 'SPY' }
+    { indicator: 'cci', title: 'CCI - Commodity Channel Index', description: 'Momentum oscillator identifying cyclical trends', symbol: 'SPY' }
+  ],
+  'adx-indicator': [
+    { indicator: 'adx', title: 'ADX - Average Directional Index', description: 'Measures trend strength regardless of direction', symbol: 'SPY' }
+  ],
+  'stochastic-oscillator': [
+    { indicator: 'stochastic', title: 'Stochastic Oscillator', description: 'Momentum comparing closing price to price range', symbol: 'SPY' }
+  ],
+  'williams-r': [
+    { indicator: 'williams-r', title: 'Williams %R', description: 'Momentum indicator measuring overbought/oversold levels', symbol: 'SPY' }
+  ],
+  'money-flow-index': [
+    { indicator: 'mfi', title: 'Money Flow Index (MFI)', description: 'Volume-weighted RSI for buying/selling pressure', symbol: 'SPY' }
+  ],
+  'obv-indicator': [
+    { indicator: 'obv', title: 'On-Balance Volume', description: 'Volume indicator confirming price trends', symbol: 'SPY' }
+  ],
+  'roc-indicator': [
+    { indicator: 'roc', title: 'Rate of Change', description: 'Percentage price change momentum oscillator', symbol: 'SPY' }
+  ],
+  'parabolic-sar': [
+    { indicator: 'parabolic-sar', title: 'Parabolic SAR', description: 'Trend-following stop and reverse indicator', symbol: 'SPY' }
+  ],
+  'sma-vs-ema': [
+    { indicator: 'ema-crossover', title: 'SMA vs EMA Comparison', description: 'Fast EMA (12) vs Slow EMA (26)', symbol: 'SPY' },
+    { indicator: 'sma-crossover', title: 'SMA Crossover', description: 'SMA 50 vs SMA 200', symbol: 'SPY' }
   ],
 
   // ===== MACD STRATEGY ARTICLES =====
@@ -176,20 +199,11 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   'rsi-complete-strategy': [
     { indicator: 'rsi', title: 'Complete RSI Analysis', symbol: 'AAPL' }
   ],
-  'roc-indicator': [
-    { indicator: 'rsi', title: 'Momentum Oscillator Comparison', description: 'RSI as momentum reference', symbol: 'SPY' }
-  ],
-  'williams-r': [
-    { indicator: 'rsi', title: 'Oscillator Comparison', description: 'RSI vs Williams %R zones', symbol: 'SPY' }
-  ],
 
   // ===== MOVING AVERAGE ARTICLES =====
   'moving-averages': [
     { indicator: 'ema-crossover', title: 'EMA Crossover Example', description: 'Fast and slow EMA interaction', symbol: 'AAPL' },
     { indicator: 'sma-crossover', title: 'SMA 50/200 Example', description: 'Golden cross and death cross signals', symbol: 'SPY' }
-  ],
-  'ema-strategies': [
-    { indicator: 'ema-crossover', title: 'EMA Trading Strategy', description: 'EMA 12/26 crossover signals', symbol: 'AAPL' }
   ],
   'moving-average-crossover-strategy': [
     { 
@@ -527,6 +541,16 @@ export function getIndicatorMappingStats(): { totalArticles: number; indicatorCo
     'bollinger': 0,
     'donchian': 0,
     'ichimoku': 0,
+    'stochastic': 0,
+    'williams-r': 0,
+    'cci': 0,
+    'adx': 0,
+    'atr': 0,
+    'obv': 0,
+    'mfi': 0,
+    'roc': 0,
+    'parabolic-sar': 0,
+    'pivot-points': 0,
   };
   
   let totalArticles = 0;
