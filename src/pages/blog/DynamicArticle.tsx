@@ -37,6 +37,10 @@ const OptionsStrategyPrimer = lazy(() =>
 const StrategyPrimer = lazy(() => 
   import('@/components/blog/StrategyPrimer')
 );
+
+const DojiPatternVisualizer = lazy(() => 
+  import('@/components/blog/DojiPatternVisualizer')
+);
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'head-and-shoulders': '/learn/head-and-shoulders',
@@ -1033,6 +1037,13 @@ const DynamicArticle = () => {
           {/* NON-OPTIONS ARTICLES: Indicator Chart Visualizations after overview */}
           {slug && hasStrategyIndicators(slug) && !hasOptionsPayoffChart(slug) && (
             <IndicatorChartVisualization slug={slug} />
+          )}
+
+          {/* DOJI PATTERNS: Special visualizer for doji candlestick education */}
+          {slug === 'doji-patterns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <DojiPatternVisualizer />
+            </Suspense>
           )}
 
           {/* Pattern Chart Visualizations for strategies with patterns */}

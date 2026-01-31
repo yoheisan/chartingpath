@@ -1386,6 +1386,172 @@ export class PatternCalculator {
     };
   }
 
+  // Dragonfly Doji - Bullish reversal signal at support
+  static generateDragonflyDoji(): PatternData {
+    const basePrice = 100;
+    
+    // Show a downtrend leading into the dragonfly doji
+    const candles: CandlestickData[] = [
+      { open: basePrice + 12, high: basePrice + 14, low: basePrice + 10, close: basePrice + 11, volume: 1000 },
+      { open: basePrice + 11, high: basePrice + 12, low: basePrice + 8, close: basePrice + 9, volume: 1100 },
+      { open: basePrice + 9, high: basePrice + 10, low: basePrice + 5, close: basePrice + 6, volume: 1200 },
+      { open: basePrice + 6, high: basePrice + 7, low: basePrice + 2, close: basePrice + 3, volume: 1400 },
+      // The Dragonfly Doji - open/close at high, long lower shadow
+      { open: basePrice + 3, high: basePrice + 3.2, low: basePrice - 5, close: basePrice + 3, volume: 2000 },
+      // Confirmation candle
+      { open: basePrice + 3.5, high: basePrice + 7, low: basePrice + 3, close: basePrice + 6, volume: 1800 },
+      { open: basePrice + 6, high: basePrice + 9, low: basePrice + 5, close: basePrice + 8, volume: 1500 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice + 5 }],
+        label: 'Dragonfly Doji',
+        color: '#4ECDC4',
+        style: 'solid'
+      },
+      {
+        type: 'support',
+        points: [{ x: 4, y: basePrice - 5 }, { x: 6, y: basePrice - 5 }],
+        label: 'Strong Rejection',
+        color: '#4ECDC4',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 72% historical accuracy | Bullish reversal | Open and close at the high with long lower shadow. Sellers pushed price down aggressively but buyers brought it all the way back. Very bullish when appearing at support levels.",
+      keyLevels: {
+        entry: basePrice + 4,
+        stopLoss: basePrice - 6,
+        target: basePrice + 12
+      }
+    };
+  }
+
+  // Gravestone Doji - Bearish reversal signal at resistance
+  static generateGravestoneDoji(): PatternData {
+    const basePrice = 100;
+    
+    // Show an uptrend leading into the gravestone doji
+    const candles: CandlestickData[] = [
+      { open: basePrice - 12, high: basePrice - 10, low: basePrice - 14, close: basePrice - 11, volume: 1000 },
+      { open: basePrice - 11, high: basePrice - 8, low: basePrice - 12, close: basePrice - 9, volume: 1100 },
+      { open: basePrice - 9, high: basePrice - 5, low: basePrice - 10, close: basePrice - 6, volume: 1200 },
+      { open: basePrice - 6, high: basePrice - 2, low: basePrice - 7, close: basePrice - 3, volume: 1400 },
+      // The Gravestone Doji - open/close at low, long upper shadow
+      { open: basePrice - 3, high: basePrice + 5, low: basePrice - 3.2, close: basePrice - 3, volume: 2000 },
+      // Confirmation candle
+      { open: basePrice - 3.5, high: basePrice - 3, low: basePrice - 7, close: basePrice - 6, volume: 1800 },
+      { open: basePrice - 6, high: basePrice - 5, low: basePrice - 9, close: basePrice - 8, volume: 1500 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice - 1 }],
+        label: 'Gravestone Doji',
+        color: '#FF6B6B',
+        style: 'solid'
+      },
+      {
+        type: 'resistance',
+        points: [{ x: 4, y: basePrice + 5 }, { x: 6, y: basePrice + 5 }],
+        label: 'Strong Rejection',
+        color: '#FF6B6B',
+        style: 'dashed'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 74% historical accuracy | Bearish reversal | Open and close at the low with long upper shadow. Buyers pushed price up aggressively but sellers rejected it completely. Very bearish when appearing at resistance levels.",
+      keyLevels: {
+        entry: basePrice - 4,
+        stopLoss: basePrice + 6,
+        target: basePrice - 12
+      }
+    };
+  }
+
+  // Long-Legged Doji - Maximum indecision
+  static generateLongLeggedDoji(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 3, high: basePrice - 1, low: basePrice - 5, close: basePrice - 2, volume: 1000 },
+      { open: basePrice - 2, high: basePrice + 1, low: basePrice - 3, close: basePrice, volume: 1200 },
+      { open: basePrice, high: basePrice + 2, low: basePrice - 1, close: basePrice + 1, volume: 1400 },
+      // Long-Legged Doji - equal long shadows both sides
+      { open: basePrice + 1, high: basePrice + 8, low: basePrice - 6, close: basePrice + 1.1, volume: 2500 },
+      { open: basePrice + 1, high: basePrice + 3, low: basePrice - 1, close: basePrice + 2, volume: 1200 },
+      { open: basePrice + 2, high: basePrice + 4, low: basePrice, close: basePrice + 3, volume: 1100 },
+      { open: basePrice + 3, high: basePrice + 5, low: basePrice + 1, close: basePrice + 4, volume: 1300 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 3 }],
+        label: 'Long-Legged Doji',
+        color: '#FFD700',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 68% historical accuracy | Maximum indecision | Very long upper AND lower shadows with open/close in the middle. Represents extreme battle between bulls and bears. Often precedes major moves. Wait for confirmation candle.",
+      keyLevels: {
+        entry: basePrice + 4,
+        stopLoss: basePrice - 7,
+        target: basePrice + 12
+      }
+    };
+  }
+
+  // Four-Price Doji - Rare, extreme indecision
+  static generateFourPriceDoji(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 3, high: basePrice - 1, low: basePrice - 5, close: basePrice - 2, volume: 1000 },
+      { open: basePrice - 2, high: basePrice + 1, low: basePrice - 3, close: basePrice, volume: 1200 },
+      { open: basePrice, high: basePrice + 2, low: basePrice - 1, close: basePrice + 1, volume: 1400 },
+      // Four-Price Doji - all prices equal (a horizontal line)
+      { open: basePrice + 1, high: basePrice + 1.1, low: basePrice + 0.9, close: basePrice + 1, volume: 300 },
+      { open: basePrice + 1, high: basePrice + 3, low: basePrice - 1, close: basePrice + 2, volume: 1600 },
+      { open: basePrice + 2, high: basePrice + 5, low: basePrice + 1, close: basePrice + 4, volume: 1400 },
+      { open: basePrice + 4, high: basePrice + 6, low: basePrice + 3, close: basePrice + 5, volume: 1200 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 3 }],
+        label: 'Four-Price Doji',
+        color: '#9b87f5',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Rare pattern | Complete market standstill | Open, high, low, and close are all equal (or nearly). Indicates complete absence of trading activity. Usually seen in illiquid markets or during holidays. Wait for volume to return before trading.",
+      keyLevels: {
+        entry: basePrice + 2,
+        stopLoss: basePrice - 1,
+        target: basePrice + 6
+      }
+    };
+  }
+
   // Spinning Top
   static generateSpinningTop(): PatternData {
     const basePrice = 100;
@@ -1798,7 +1964,16 @@ export class PatternCalculator {
       case 'shooting-star':
         return this.generateShootingStar();
       case 'doji':
+      case 'standard-doji':
         return this.generateDoji();
+      case 'dragonfly-doji':
+        return this.generateDragonflyDoji();
+      case 'gravestone-doji':
+        return this.generateGravestoneDoji();
+      case 'long-legged-doji':
+        return this.generateLongLeggedDoji();
+      case 'four-price-doji':
+        return this.generateFourPriceDoji();
       case 'bullish-harami':
         return this.generateBullishHarami();
       case 'bearish-harami':
