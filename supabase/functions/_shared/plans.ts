@@ -85,7 +85,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
       },
       study: {
-        allowedTimeframes: ['1d'] // Free users: daily only
+        allowedTimeframes: ['1d'] // Free users: daily only (15m requires LITE+)
       },
       projects: {
         setup_finder: { maxInstruments: 10, maxLookbackYears: 1, maxPatterns: 3, allowedTimeframes: ['1d'] },
@@ -103,7 +103,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders']
       },
       study: {
-        allowedTimeframes: ['1d', '4h'] // Lite: daily + 4h
+        allowedTimeframes: ['15m', '1d', '4h'] // Lite: daily + 4h + 15m
       },
       projects: {
         setup_finder: { maxInstruments: 15, maxLookbackYears: 2, maxPatterns: 4, allowedTimeframes: ['1d', '4h'] },
@@ -121,7 +121,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
       },
       study: {
-        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Plus+: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Plus+: all timeframes
       },
       projects: {
         setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
@@ -139,7 +139,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
       },
       study: {
-        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Pro: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Pro: all timeframes
       },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
@@ -157,7 +157,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
       },
       study: {
-        allowedTimeframes: ['1h', '4h', '1d', '1wk'] // Team: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Team: all timeframes
       },
       projects: {
         setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
@@ -178,6 +178,7 @@ export const BARS_PER_YEAR: Record<string, number> = {
   '1d': 365,
   '4h': 2190,  // 365 * 6
   '1h': 8760,  // 365 * 24
+  '15m': 35040, // 365 * 24 * 4
 };
 
 /**

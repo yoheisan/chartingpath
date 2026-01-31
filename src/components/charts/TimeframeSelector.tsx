@@ -19,6 +19,7 @@ export interface TimeframeOption {
 }
 
 export const STUDY_TIMEFRAMES: TimeframeOption[] = [
+  { value: '15m', label: '15 Minutes', shortLabel: '15M' },
   { value: '1h', label: '1 Hour', shortLabel: '1H' },
   { value: '4h', label: '4 Hours', shortLabel: '4H' },
   { value: '1d', label: 'Daily', shortLabel: '1D' },
