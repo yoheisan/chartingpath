@@ -263,7 +263,9 @@ const PatternLabWizard = () => {
   };
   
   const handleRun = async () => {
-    if (!isAuthenticated) {
+    // Get fresh session for the API call - don't rely on state which may have race conditions
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       toast.error('Please sign in to run projects');
       navigate('/auth');
       return;
@@ -277,14 +279,6 @@ const PatternLabWizard = () => {
     
     if (selectedPatterns.length === 0 || selectedInstruments.length === 0) {
       toast.error('Please select at least one instrument and pattern');
-      return;
-    }
-    
-    // Get fresh session for the API call
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error('Session expired. Please sign in again.');
-      navigate('/auth');
       return;
     }
     
