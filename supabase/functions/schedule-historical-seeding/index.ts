@@ -56,7 +56,9 @@ async function seedTimeframe(
           assetTypes,
           maxInstrumentsPerType: 25,
           offset,
-          dryRun: false
+          dryRun: false,
+          incrementalMode: true, // Only fetch new data since last seed
+          forceFullBackfill: false
         }),
       });
       

@@ -518,11 +518,18 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
   return result;
 }
 
-async function fetchYahooData(symbol: string, timeframe: string): Promise<OHLCBar[]> {
+async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
   const limits = TF_DATA_LIMITS[timeframe] || TF_DATA_LIMITS['1d'];
   const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - limits.rangeDays);
+  
+  // Use provided fromTimestamp or calculate from limits
+  let startDate: Date;
+  if (fromTimestamp) {
+    startDate = new Date(fromTimestamp);
+  } else {
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - limits.rangeDays);
+  }
   
   const period1 = Math.floor(startDate.getTime() / 1000);
   const period2 = Math.floor(endDate.getTime() / 1000);
@@ -601,11 +608,12 @@ function runHistoricalBacktest(
   patternId: string,
   pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[]) => PatternDetectionResult },
   timeframe: string,
+  assetType?: string,
   lookback: number = 25,
   maxBarsInTrade: number = 100
 ): HistoricalOccurrence[] {
   const occurrences: HistoricalOccurrence[] = [];
-  const assetType = getAssetType(symbol);
+  const resolvedAssetType = assetType || getAssetType(symbol);
   
   // Adjust max bars in trade based on timeframe
   const tfMaxBars = {
@@ -740,7 +748,7 @@ function runHistoricalBacktest(
     
     occurrences.push({
       symbol,
-      asset_type: assetType,
+      asset_type: resolvedAssetType,
       pattern_id: patternId,
       pattern_name: pattern.displayName,
       direction: pattern.direction,
@@ -772,6 +780,44 @@ function runHistoricalBacktest(
   return occurrences;
 }
 
+// ============= INCREMENTAL MODE HELPERS =============
+
+/**
+ * Get the latest seeded date for a symbol/timeframe combination
+ */
+async function getLastSeededDate(
+  supabase: any,
+  symbol: string,
+  timeframe: string
+): Promise<Date | null> {
+  const { data, error } = await supabase
+    .from('historical_pattern_occurrences')
+    .select('detected_at')
+    .eq('symbol', symbol)
+    .eq('timeframe', timeframe)
+    .order('detected_at', { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+  
+  return new Date(data[0].detected_at);
+}
+
+/**
+ * Calculate lookback days based on timeframe for full backfill
+ */
+function getFullBackfillDays(timeframe: string): number {
+  switch (timeframe) {
+    case '1h': return 730;    // 2 years (Yahoo limit for hourly)
+    case '4h': return 730;    // 2 years (aggregated from 1h)
+    case '1d': return 1825;   // 5 years
+    case '1wk': return 2555;  // 7 years
+    default: return 1825;
+  }
+}
+
 // ============= MAIN HANDLER =============
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -787,14 +833,20 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const {
       timeframe = '1d',         // Target timeframe: 1h, 4h, 1d, 1wk
-      assetTypes = ['stocks', 'crypto', 'fx', 'commodities'],
+      assetTypes = ['stocks', 'crypto', 'fx', 'commodities', 'indices', 'etfs'],
       maxInstrumentsPerType = 25,
       patterns = Object.keys(PATTERN_REGISTRY),
       dryRun = false,
-      offset = 0
+      offset = 0,
+      incrementalMode = true,       // NEW: Default to incremental updates
+      forceFullBackfill = false     // NEW: Override to force full historical fetch
     } = body;
 
-    console.log(`[seed-mtf] Starting ${timeframe} pattern seeding for ${assetTypes.join(', ')}, offset=${offset}`);
+    const useIncremental = incrementalMode && !forceFullBackfill;
+
+    console.log(`[seed-mtf] Starting ${timeframe} pattern seeding`);
+    console.log(`[seed-mtf] Mode: ${useIncremental ? 'INCREMENTAL (only new data)' : 'FULL BACKFILL'}`);
+    console.log(`[seed-mtf] Asset types: ${assetTypes.join(', ')}, offset=${offset}`);
 
     // Collect instruments from each asset type
     const allInstruments: { symbol: string; assetType: string }[] = [];
@@ -818,11 +870,35 @@ serve(async (req) => {
     const allOccurrences: HistoricalOccurrence[] = [];
     const errors: string[] = [];
     let processedCount = 0;
+    let skippedDuplicates = 0;
 
-    for (const { symbol } of instrumentsToProcess) {
+    for (const { symbol, assetType } of instrumentsToProcess) {
       try {
+        // Determine date range based on mode
+        let fromTimestamp: number;
+        const now = Date.now();
+        
+        if (useIncremental) {
+          const lastSeeded = await getLastSeededDate(supabase, symbol, timeframe);
+          if (lastSeeded) {
+            // Fetch from last seeded date minus overlap for pattern context (14 days)
+            const overlapDays = timeframe === '1wk' ? 28 : 14;
+            fromTimestamp = lastSeeded.getTime() - (overlapDays * 24 * 60 * 60 * 1000);
+            console.log(`[seed-mtf] ${symbol}/${timeframe}: Incremental from ${new Date(fromTimestamp).toISOString().split('T')[0]}`);
+          } else {
+            // No existing data - do full backfill
+            const lookbackDays = getFullBackfillDays(timeframe);
+            fromTimestamp = now - (lookbackDays * 24 * 60 * 60 * 1000);
+            console.log(`[seed-mtf] ${symbol}/${timeframe}: Full backfill (no existing data)`);
+          }
+        } else {
+          // Full backfill mode
+          const lookbackDays = getFullBackfillDays(timeframe);
+          fromTimestamp = now - (lookbackDays * 24 * 60 * 60 * 1000);
+        }
+        
         console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe}...`);
-        const bars = await fetchYahooData(symbol, timeframe);
+        const bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
         
         if (bars.length < 50) {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
@@ -834,8 +910,21 @@ serve(async (req) => {
           const patternDef = PATTERN_REGISTRY[patternId];
           if (!patternDef) continue;
           
-          const occurrences = runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe);
-          allOccurrences.push(...occurrences);
+          const occurrences = runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType);
+          
+          // In incremental mode, filter out patterns we already have
+          if (useIncremental) {
+            const lastSeeded = await getLastSeededDate(supabase, symbol, timeframe);
+            if (lastSeeded) {
+              const filtered = occurrences.filter(occ => new Date(occ.detected_at) > lastSeeded);
+              skippedDuplicates += occurrences.length - filtered.length;
+              allOccurrences.push(...filtered);
+            } else {
+              allOccurrences.push(...occurrences);
+            }
+          } else {
+            allOccurrences.push(...occurrences);
+          }
         }
         
         processedCount++;
@@ -849,12 +938,17 @@ serve(async (req) => {
     }
 
     console.log(`[seed-mtf] Detection complete: ${allOccurrences.length} patterns from ${processedCount} instruments`);
+    if (skippedDuplicates > 0) {
+      console.log(`[seed-mtf] Skipped ${skippedDuplicates} already-seeded patterns`);
+    }
 
     if (dryRun) {
       return new Response(JSON.stringify({
         dryRun: true,
         timeframe,
+        mode: useIncremental ? 'incremental' : 'full_backfill',
         totalOccurrences: allOccurrences.length,
+        skippedDuplicates,
         hasMore,
         nextOffset: hasMore ? nextOffset : null,
         sampleOccurrences: allOccurrences.slice(0, 3),
@@ -864,7 +958,7 @@ serve(async (req) => {
       });
     }
 
-    // Insert into database in chunks
+    // Insert into database in chunks (use upsert to avoid duplicates)
     const CHUNK_SIZE = 50;
     let insertedCount = 0;
     
@@ -873,7 +967,7 @@ serve(async (req) => {
       
       const { error: insertError } = await supabase
         .from('historical_pattern_occurrences')
-        .insert(chunk.map(occ => ({
+        .upsert(chunk.map(occ => ({
           symbol: occ.symbol,
           asset_type: occ.asset_type,
           pattern_id: occ.pattern_id,
@@ -898,7 +992,10 @@ serve(async (req) => {
           bars_to_outcome: occ.bars_to_outcome,
           trend_alignment: occ.trend_alignment,
           trend_indicators: occ.trend_indicators
-        })));
+        })), {
+          onConflict: 'pattern_id,symbol,timeframe,pattern_end_date',
+          ignoreDuplicates: true
+        });
       
       if (insertError) {
         console.error(`[seed-mtf] Insert error at chunk ${i / CHUNK_SIZE}:`, insertError);
@@ -917,6 +1014,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       timeframe,
+      mode: useIncremental ? 'incremental' : 'full_backfill',
       hasMore,
       nextOffset: hasMore ? nextOffset : null,
       totalInstruments: allInstruments.length,
@@ -924,6 +1022,7 @@ serve(async (req) => {
         instrumentsProcessed: processedCount,
         totalOccurrences: allOccurrences.length,
         insertedCount,
+        skippedDuplicates,
         winCount,
         lossCount,
         winRate: `${winRate}%`
