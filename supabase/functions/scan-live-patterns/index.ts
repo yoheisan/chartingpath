@@ -285,7 +285,8 @@ async function fetchPatternSymbolStats(
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
-    const yahooInterval = interval === '4h' || interval === '1h' ? '1h' : '1d';
+    // Yahoo supports: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo - 15m is native, 4h needs 1h aggregation
+    const yahooInterval = interval === '4h' ? '1h' : interval;
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${period1}&period2=${period2}&interval=${yahooInterval}`;
@@ -683,12 +684,14 @@ serve(async (req) => {
     const endDate = new Date();
     const startDate = new Date();
     // Use the minimum lookback needed for detection + trend alignment to keep scans under runtime limits.
-    // Intraday only needs ~45d; daily needs ~400d for 200 bars; weekly needs ~5y for 200 bars.
-    const lookbackDays = timeframe === '1h' || timeframe === '4h'
-      ? 45
-      : timeframe === '1wk'
-        ? 365 * 5
-        : 400;
+    // 15m and 1h need ~15d (60 days for 200 bar trend); 4h needs ~45d; daily needs ~400d for 200 bars; weekly needs ~5y for 200 bars.
+    const lookbackDays = timeframe === '15m'
+      ? 15
+      : timeframe === '1h' || timeframe === '4h'
+        ? 45
+        : timeframe === '1wk'
+          ? 365 * 5
+          : 400;
     startDate.setDate(startDate.getDate() - lookbackDays);
     console.log(`[scan-live-patterns] Slow path: fetching data for ${instruments.length} instruments, timeframe=${timeframe}`);
     const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
