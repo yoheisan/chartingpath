@@ -286,6 +286,9 @@ export default function FullChartViewer({
           rightPriceScale: {
             borderColor: theme.grid,
             visible: true,
+            // Enable user to drag/resize the price scale with mouse
+            mode: 0, // Normal mode allows dragging to resize
+            autoScale: true, // Default to auto, but user can override by dragging
           },
           timeScale: {
             borderColor: theme.grid,
@@ -456,42 +459,67 @@ export default function FullChartViewer({
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
         // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
         const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+        const allMarkers: Array<{
+          time: Time;
+          position: 'aboveBar' | 'belowBar' | 'inBar';
+          color: string;
+          shape: SeriesMarkerShape;
+          text: string;
+        }> = [];
 
+        // Add pivot markers
         if (visualSpec.pivots && visualSpec.pivots.length > 0) {
-          const markers = visualSpec.pivots
-            .map((pivot) => {
-              const isHigh = pivot.type === 'high';
+          visualSpec.pivots.forEach((pivot) => {
+            const isHigh = pivot.type === 'high';
 
-              let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+            let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
 
-              if (
-                !timeSet.has(t) &&
-                Number.isInteger(pivot.index) &&
-                pivot.index >= 0 &&
-                pivot.index < bars.length
-              ) {
-                t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
-              }
+            if (
+              !timeSet.has(t) &&
+              Number.isInteger(pivot.index) &&
+              pivot.index >= 0 &&
+              pivot.index < bars.length
+            ) {
+              t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+            }
 
-              if (!timeSet.has(t)) return null;
+            if (!timeSet.has(t)) return;
 
-              return {
-                time: t as Time,
-                position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
-                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
-                shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-                text: pivot.label || (isHigh ? 'H' : 'L'),
-              };
-            })
-            .filter((m): m is any => Boolean(m));
+            allMarkers.push({
+              time: t as Time,
+              position: isHigh ? 'aboveBar' : 'belowBar',
+              color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
+              shape: isHigh ? 'arrowDown' : 'arrowUp',
+              text: pivot.label || (isHigh ? 'H' : 'L'),
+            });
+          });
+        }
 
-          markers.sort((a, b) => (a.time as number) - (b.time as number));
+        // Add Entry Point marker on the last (signal) bar
+        // This makes the entry point visually prominent on the chart
+        if (chartData.length > 0 && tradePlan?.entry) {
+          const lastBar = chartData[chartData.length - 1];
+          const entryMarkerPosition = setup.direction === 'long' ? 'belowBar' : 'aboveBar';
+          const entryMarkerShape: SeriesMarkerShape = setup.direction === 'long' ? 'arrowUp' : 'arrowDown';
+          
+          allMarkers.push({
+            time: lastBar.time,
+            position: entryMarkerPosition,
+            color: '#f59e0b', // Amber/orange for entry - stands out from green/red
+            shape: entryMarkerShape,
+            text: 'Entry',
+          });
+        }
 
+        // Sort markers by time (required by lightweight-charts) and render
+        allMarkers.sort((a, b) => (a.time as number) - (b.time as number));
+
+        if (allMarkers.length > 0) {
           try {
-            createSeriesMarkers(candleSeries, markers);
+            createSeriesMarkers(candleSeries, allMarkers);
           } catch (e) {
             // Never break the chart if markers fail; candles are the priority.
-            console.warn('Failed to render pivot markers:', e);
+            console.warn('Failed to render markers:', e);
           }
         }
         // Calculate optimal price margins based on data volatility
