@@ -61,14 +61,17 @@ const Navigation = () => {
         Screener
       </Link>
       
-      {/* 2. Research */}
-      <div className="border-t pt-4 mt-2">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Research</p>
-        <div className="flex flex-col gap-2 pl-2">
-          <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground py-1">Pattern Lab</Link>
-          <Link to="/projects/setup-finder/new" className="text-sm text-muted-foreground py-1">Setup Finder</Link>
-        </div>
-      </div>
+      {/* 2. Pattern Lab */}
+      <Link to="/projects/pattern-lab/new" className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+        <FlaskConical className="h-5 w-5 text-violet-500" />
+        Pattern Lab
+      </Link>
+      
+      {/* 3. Setup Finder */}
+      <Link to="/projects/setup-finder/new" className="flex items-center gap-2 text-muted-foreground py-2">
+        <Search className="h-5 w-5 text-emerald-500" />
+        Setup Finder
+      </Link>
       
       {/* 3. Learning */}
       <div className="border-t pt-4 mt-2">
@@ -135,42 +138,23 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-6">
-              {/* 1. Screener - Discover signals */}
-              <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
-                <Activity className="h-4 w-4 text-amber-500" />
-                Screener
-              </Link>
-              
-              {/* 2. Research - Pattern Lab & Setup Finder */}
-              <DropdownMenu>
-                <DropdownMenuTrigger 
-                  className={`flex items-center gap-1 ${isActive('/projects/pattern-lab') || isActive('/projects/setup-finder') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
-                >
-                  <FlaskConical className="h-4 w-4" />
-                  Research
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
-                      <FlaskConical className="h-4 w-4 text-violet-500" />
-                      <div>
-                        <div>Pattern Lab</div>
-                        <div className="text-xs text-muted-foreground">Backtest patterns historically</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/projects/setup-finder/new" className="flex items-center gap-2">
-                      <Search className="h-4 w-4 text-emerald-500" />
-                      <div>
-                        <div>Setup Finder</div>
-                        <div className="text-xs text-muted-foreground">Deep-dive your watchlist</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {/* 1. Screener - Discover signals */}
+            <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
+              <Activity className="h-4 w-4 text-amber-500" />
+              Screener
+            </Link>
+            
+            {/* 2. Pattern Lab - Backtest historically */}
+            <Link to="/projects/pattern-lab/new" className={navLinkClass('/projects/pattern-lab')}>
+              <FlaskConical className="h-4 w-4 text-violet-500" />
+              Pattern Lab
+            </Link>
+            
+            {/* 3. Setup Finder - Deep-dive research */}
+            <Link to="/projects/setup-finder/new" className={navLinkClass('/projects/setup-finder')}>
+              <Search className="h-4 w-4 text-emerald-500" />
+              Setup Finder
+            </Link>
               
               {/* 3. Learning - Pattern Library, Blog & Articles */}
               <DropdownMenu>
