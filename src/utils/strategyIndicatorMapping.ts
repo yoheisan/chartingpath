@@ -34,6 +34,86 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   'channel-breakout-strategy': [
     { indicator: 'donchian', title: 'Channel Breakout Visualization', symbol: 'CL=F' }
   ],
+  'donchian-channels': [
+    { indicator: 'donchian', title: 'Donchian Channel Breakouts', description: '20-period high/low bands for trend breakouts', symbol: 'SPY' }
+  ],
+  'high-low-channel-strategy': [
+    { indicator: 'donchian', title: 'High-Low Channel Breakout', description: 'Price channel extremes for entry signals', symbol: 'AAPL' }
+  ],
+  'channel-trading': [
+    { indicator: 'donchian', title: 'Parallel Channel Trading', description: 'Trading within defined price channels', symbol: 'SPY' }
+  ],
+  'channel-patterns': [
+    { indicator: 'donchian', title: 'Channel Pattern Recognition', description: 'Identifying tradeable channel structures', symbol: 'MSFT' }
+  ],
+  
+  // ===== KELTNER CHANNELS (ATR-Based) =====
+  'keltner-channels': [
+    { indicator: 'bollinger', title: 'Keltner vs Bollinger Comparison', description: 'Volatility channel visualization', symbol: 'SPY' },
+    { indicator: 'donchian', title: 'Channel Breakout Context', symbol: 'SPY' }
+  ],
+  'keltner-channel-strategy': [
+    { indicator: 'bollinger', title: 'ATR-Based Volatility Bands', description: 'Keltner-style channel trading', symbol: 'AAPL' },
+    { indicator: 'donchian', title: 'Breakout Channel Reference', symbol: 'AAPL' }
+  ],
+  
+  // ===== BREAKOUT TRADING =====
+  'breakout-trading': [
+    { indicator: 'donchian', title: 'Breakout Channel Levels', description: 'Donchian bands identify breakout zones', symbol: 'AAPL' },
+    { indicator: 'bollinger', title: 'Volatility Squeeze Setup', symbol: 'AAPL' }
+  ],
+  'breakout-trading-complete': [
+    { indicator: 'donchian', title: 'Channel Breakout Detection', description: '20-day high/low for explosive moves', symbol: 'QQQ' },
+    { indicator: 'macd', title: 'Momentum Confirmation', symbol: 'QQQ' }
+  ],
+  
+  // ===== RANGE-BOUND & GRID TRADING =====
+  'range-bound-trading': [
+    { indicator: 'donchian', title: 'Range Boundaries', description: 'Donchian channels define range extremes', symbol: 'SPY' },
+    { indicator: 'rsi', title: 'Overbought/Oversold Zones', symbol: 'SPY' }
+  ],
+  'grid-trading': [
+    { indicator: 'donchian', title: 'Grid Level Reference', description: 'Channel extremes for grid placement', symbol: 'EURUSD=X' }
+  ],
+  'rectangle-pattern': [
+    { indicator: 'donchian', title: 'Rectangle Range Visualization', description: 'Horizontal channel for range trading', symbol: 'AAPL' }
+  ],
+  
+  // ===== SUPPORT & RESISTANCE =====
+  'support-resistance': [
+    { indicator: 'donchian', title: 'Dynamic S/R Levels', description: 'Donchian channels as dynamic support/resistance', symbol: 'SPY' },
+    { indicator: 'ema-crossover', title: 'EMA Dynamic Levels', symbol: 'SPY' }
+  ],
+  'support-resistance-strategy': [
+    { indicator: 'donchian', title: 'Channel-Based S/R', description: 'Price channels define key levels', symbol: 'AAPL' }
+  ],
+  'support-resistance-trading': [
+    { indicator: 'donchian', title: 'Support/Resistance Channels', description: 'Donchian bands visualize key price levels', symbol: 'MSFT' },
+    { indicator: 'ema-crossover', title: 'Moving Average Support', symbol: 'MSFT' }
+  ],
+  'support-and-resistance-basics': [
+    { indicator: 'donchian', title: 'Price Channel Levels', description: 'Channel extremes as support/resistance', symbol: 'SPY' }
+  ],
+  
+  // ===== TRENDLINE & GAP TRADING =====
+  'trendline-trading': [
+    { indicator: 'donchian', title: 'Channel Trendlines', description: 'Donchian visualizes trend boundaries', symbol: 'AAPL' },
+    { indicator: 'ema-crossover', title: 'Trend Direction Confirmation', symbol: 'AAPL' }
+  ],
+  'gap-trading-strategy': [
+    { indicator: 'donchian', title: 'Gap Channel Context', description: 'Channel levels for gap analysis', symbol: 'AAPL' },
+    { indicator: 'macd', title: 'Gap Momentum', symbol: 'AAPL' }
+  ],
+  
+  // ===== ATR & CCI INDICATORS =====
+  'atr-indicator': [
+    { indicator: 'bollinger', title: 'Volatility Measurement', description: 'ATR context via volatility bands', symbol: 'SPY' },
+    { indicator: 'donchian', title: 'Range Context', symbol: 'SPY' }
+  ],
+  'cci-indicator': [
+    { indicator: 'donchian', title: 'Channel Extremes', description: 'CCI identifies channel breakouts', symbol: 'SPY' },
+    { indicator: 'rsi', title: 'Momentum Comparison', symbol: 'SPY' }
+  ],
 
   // ===== MACD STRATEGY ARTICLES =====
   'macd-complete-strategy': [
@@ -125,12 +205,7 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   'bollinger-squeeze': [
     { indicator: 'bollinger', title: 'Bollinger Squeeze Setup', symbol: 'TSLA' }
   ],
-  'keltner-channels': [
-    { indicator: 'bollinger', title: 'Volatility Channel Comparison', description: 'Bollinger vs Keltner concept', symbol: 'SPY' }
-  ],
-  'donchian-channels': [
-    { indicator: 'bollinger', title: 'Channel Breakout Visualization', description: 'Volatility bands for breakout context', symbol: 'SPY' }
-  ],
+  // keltner-channels and donchian-channels moved to DONCHIAN section above
 
   // ===== TREND ANALYSIS ARTICLES =====
   'trend-analysis': [
@@ -210,18 +285,10 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'rsi', title: 'Mean Reversion Signals', symbol: 'SPY' }
   ],
 
-  // ===== BREAKOUT TRADING ARTICLES =====
-  'breakout-trading': [
-    { indicator: 'bollinger', title: 'Breakout with Bollinger', description: 'Band expansion for breakouts', symbol: 'AAPL' },
-    { indicator: 'macd', title: 'MACD Breakout Confirmation', symbol: 'AAPL' }
-  ],
+  // BREAKOUT TRADING moved to DONCHIAN/BREAKOUT section above
   'breakout-trading-strategy': [
-    { indicator: 'bollinger', title: 'Volatility Breakout Setup', symbol: 'SPY' },
-    { indicator: 'macd', title: 'Momentum Confirmation', symbol: 'SPY' }
-  ],
-  'breakout-trading-complete': [
-    { indicator: 'bollinger', title: 'Bollinger Breakout', symbol: 'QQQ' },
-    { indicator: 'rsi', title: 'RSI Breakout Confirmation', symbol: 'QQQ' }
+    { indicator: 'donchian', title: 'Channel Breakout', symbol: 'SPY' },
+    { indicator: 'bollinger', title: 'Volatility Squeeze', symbol: 'SPY' }
   ],
 
   // ===== POSITION TRADING ARTICLES =====
@@ -323,12 +390,9 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'rsi', title: 'Hidden RSI Divergence', symbol: 'SPY' }
   ],
 
-  // ===== GAP TRADING =====
-  'gap-trading-strategy': [
-    { indicator: 'macd', title: 'Gap Momentum Analysis', symbol: 'AAPL' },
-    { indicator: 'rsi', title: 'Gap RSI Levels', symbol: 'AAPL' }
-  ],
+  // gap-trading-strategy moved to channel section above
   'gap-and-go': [
+    { indicator: 'donchian', title: 'Gap Channel Reference', symbol: 'SPY' },
     { indicator: 'ema-crossover', title: 'Gap with EMA Context', symbol: 'SPY' }
   ],
 
@@ -342,12 +406,9 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'rsi', title: 'RSI Extreme Reversal', symbol: 'SPY' }
   ],
 
-  // ===== CHANNEL TRADING =====
-  'channel-patterns': [
-    { indicator: 'bollinger', title: 'Bollinger Channel Trading', symbol: 'AAPL' }
-  ],
+  // channel-patterns moved to DONCHIAN section above
   'range-trading': [
-    { indicator: 'bollinger', title: 'Range with Bollinger', symbol: 'SPY' },
+    { indicator: 'donchian', title: 'Range Channel Extremes', symbol: 'SPY' },
     { indicator: 'rsi', title: 'RSI Range Trading', symbol: 'SPY' }
   ],
 
@@ -359,10 +420,7 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'macd', title: 'MACD Fibonacci Confirmation', symbol: 'SPY' }
   ],
 
-  // ===== SUPPORT/RESISTANCE =====
-  'support-resistance': [
-    { indicator: 'ema-crossover', title: 'EMA Dynamic S/R', description: 'Moving averages as dynamic levels', symbol: 'SPY' }
-  ],
+  // support-resistance moved to DONCHIAN section above
 
   // ===== VOLUME ANALYSIS =====
   'volume-analysis': [
