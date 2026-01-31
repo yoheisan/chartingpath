@@ -9,8 +9,71 @@ interface YahooFinanceRequest {
   symbol: string;
   startDate: string;
   endDate: string;
-  interval?: string; // 1d, 1wk, 1mo, 1h, etc.
+  interval?: string; // 1d, 1wk, 1mo, 1h, 4h, etc.
   includeOhlc?: boolean;
+}
+
+interface OHLCBar {
+  t: string;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+/**
+ * Aggregate 1h bars into 4h bars
+ * Groups by 4-hour windows (0-4, 4-8, 8-12, 12-16, 16-20, 20-24)
+ */
+function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+  if (!bars || bars.length === 0) return [];
+  
+  // Group bars by 4-hour window
+  const groupedBars = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const date = new Date(bar.t);
+    const hour = date.getUTCHours();
+    // Determine 4-hour window: 0, 4, 8, 12, 16, 20
+    const windowStart = Math.floor(hour / 4) * 4;
+    
+    // Create key for this 4-hour window
+    const windowDate = new Date(date);
+    windowDate.setUTCHours(windowStart, 0, 0, 0);
+    const key = windowDate.toISOString();
+    
+    if (!groupedBars.has(key)) {
+      groupedBars.set(key, []);
+    }
+    groupedBars.get(key)!.push(bar);
+  }
+  
+  // Aggregate each group into a single 4h bar
+  const aggregatedBars: OHLCBar[] = [];
+  
+  for (const [windowKey, windowBars] of groupedBars) {
+    if (windowBars.length === 0) continue;
+    
+    // Sort bars by time to ensure correct OHLC
+    windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+    
+    const aggregated: OHLCBar = {
+      t: windowKey, // Use window start time
+      o: windowBars[0].o, // Open of first bar
+      h: Math.max(...windowBars.map(b => b.h)), // Highest high
+      l: Math.min(...windowBars.map(b => b.l)), // Lowest low
+      c: windowBars[windowBars.length - 1].c, // Close of last bar
+      v: windowBars.reduce((sum, b) => sum + b.v, 0), // Sum of volumes
+    };
+    
+    aggregatedBars.push(aggregated);
+  }
+  
+  // Sort by time ascending
+  aggregatedBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+  
+  return aggregatedBars;
 }
 
 serve(async (req) => {
@@ -27,14 +90,18 @@ serve(async (req) => {
       includeOhlc = false,
     }: YahooFinanceRequest = await req.json();
     
-    console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}`);
+    // Determine if we need to aggregate 4h from 1h data
+    const needs4hAggregation = interval === '4h';
+    const yahooInterval = needs4hAggregation ? '1h' : interval;
+    
+    console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}${needs4hAggregation ? ' (fetching 1h for aggregation)' : ''}`);
 
     // Convert dates to Unix timestamps
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
 
-    // Yahoo Finance query URL
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${interval}&events=history`;
+    // Yahoo Finance query URL - use yahooInterval (1h if 4h requested)
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
 
     const response = await fetch(yahooUrl, {
       headers: {
@@ -60,60 +127,64 @@ serve(async (req) => {
       throw new Error('Yahoo Finance returned an empty time series');
     }
 
-    // Optional: OHLC bars for candlestick rendering
-    const ohlcBars = includeOhlc
-      ? timestamps
-          .map((ts: number, idx: number) => {
-            const o = quotes.open?.[idx];
-            const h = quotes.high?.[idx];
-            const l = quotes.low?.[idx];
-            const c = quotes.close?.[idx];
-            const v = quotes.volume?.[idx] ?? 0;
+    // Build OHLC bars
+    let ohlcBars: OHLCBar[] = timestamps
+      .map((ts: number, idx: number) => {
+        const o = quotes.open?.[idx];
+        const h = quotes.high?.[idx];
+        const l = quotes.low?.[idx];
+        const c = quotes.close?.[idx];
+        const v = quotes.volume?.[idx] ?? 0;
 
-            // Filter out null/undefined points
-            if (
-              !Number.isFinite(o) ||
-              !Number.isFinite(h) ||
-              !Number.isFinite(l) ||
-              !Number.isFinite(c)
-            ) {
-              return null;
-            }
+        // Filter out null/undefined points
+        if (
+          !Number.isFinite(o) ||
+          !Number.isFinite(h) ||
+          !Number.isFinite(l) ||
+          !Number.isFinite(c)
+        ) {
+          return null;
+        }
 
-            return {
-              t: new Date(ts * 1000).toISOString(),
-              o: Number(o),
-              h: Number(h),
-              l: Number(l),
-              c: Number(c),
-              v: Number(v) || 0,
-            };
-          })
-          .filter(Boolean)
-      : null;
+        return {
+          t: new Date(ts * 1000).toISOString(),
+          o: Number(o),
+          h: Number(h),
+          l: Number(l),
+          c: Number(c),
+          v: Number(v) || 0,
+        };
+      })
+      .filter((bar): bar is OHLCBar => bar !== null);
+    
+    // Aggregate to 4h if needed
+    if (needs4hAggregation && ohlcBars.length > 0) {
+      console.log(`Aggregating ${ohlcBars.length} 1h bars into 4h bars`);
+      ohlcBars = aggregate1hTo4h(ohlcBars);
+      console.log(`Result: ${ohlcBars.length} 4h bars`);
+    }
     
     // Format data into PriceFrame format
     const priceFrame: Record<string, unknown> = {
-      index: timestamps.map((ts: number) => new Date(ts * 1000).toISOString().split('T')[0]),
+      index: ohlcBars.map(bar => bar.t.split('T')[0]),
       columns: [symbol],
-      data: timestamps.map((ts: number, idx: number) => [
-        quotes.close[idx] || quotes.open[idx] || 0
-      ]),
+      data: ohlcBars.map(bar => [bar.c]),
       meta: {
         provider: 'yahoo_finance',
-        interval: interval,
+        interval: interval, // Return requested interval (4h)
         currency: result.meta.currency,
         exchangeName: result.meta.exchangeName,
         instrumentType: result.meta.instrumentType,
-        dataGranularity: result.meta.dataGranularity
+        dataGranularity: interval, // Use requested granularity
+        aggregated: needs4hAggregation,
       }
     };
 
     if (includeOhlc) {
-      priceFrame.bars = ohlcBars || [];
+      priceFrame.bars = ohlcBars;
     }
 
-    console.log(`Successfully fetched ${priceFrame.index.length} data points for ${symbol}`);
+    console.log(`Successfully fetched ${ohlcBars.length} data points for ${symbol} (${interval})`);
 
     return new Response(
       JSON.stringify(priceFrame),
