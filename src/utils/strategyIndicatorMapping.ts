@@ -318,17 +318,11 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   ],
 
   // ===== VOLATILITY TRADING ARTICLES =====
+  // Note: Options-specific articles (iron-condor, straddle-strangle, butterfly, covered-call, 
+  // delta-neutral, gamma-scalping, time-spread) now use dedicated OptionsPayoffChart 
+  // via optionsStrategyMapping.ts for proper payoff diagram visualizations
   'volatility-trading': [
     { indicator: 'bollinger', title: 'Volatility Band Trading', symbol: 'VIX' }
-  ],
-  'straddle-strangle': [
-    { indicator: 'bollinger', title: 'Volatility for Options', description: 'Bollinger squeeze for volatility plays', symbol: 'SPY' }
-  ],
-  'iron-condor': [
-    { indicator: 'bollinger', title: 'Range Detection', description: 'Bollinger for range-bound markets', symbol: 'SPY' }
-  ],
-  'butterfly-spread': [
-    { indicator: 'bollinger', title: 'Volatility Context', symbol: 'SPY' }
   ],
 
   // ===== MULTI-INDICATOR ARTICLES =====
@@ -431,18 +425,10 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   ],
 
   // ===== OPTIONS WITH INDICATORS =====
-  'covered-call': [
-    { indicator: 'bollinger', title: 'Volatility for Premium', symbol: 'AAPL' }
-  ],
-  'gamma-scalping': [
-    { indicator: 'bollinger', title: 'Volatility Trading Context', symbol: 'SPY' }
-  ],
-  'delta-neutral-hedging': [
-    { indicator: 'bollinger', title: 'Volatility Analysis', symbol: 'SPY' }
-  ],
-  'time-spread': [
-    { indicator: 'bollinger', title: 'Volatility for Calendar Spreads', symbol: 'SPY' }
-  ],
+  // Note: Main options strategy articles now use dedicated OptionsPayoffChart.
+  // These entries are for general options-adjacent content that benefits from price/indicator context.
+  // Primary options strategies (covered-call, iron-condor, straddle-strangle, butterfly-spread, 
+  // time-spread, delta-neutral-hedging, gamma-scalping) are handled by optionsStrategyMapping.ts
 
   // ===== SENTIMENT & NEWS =====
   'sentiment-analysis-trading': [
