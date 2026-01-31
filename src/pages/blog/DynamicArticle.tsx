@@ -1297,6 +1297,78 @@ const DynamicArticle = () => {
               <VaRVisualizer />
             </Suspense>
           )}
+          {slug === 'risk-parity' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <RiskParityVisualizer />
+            </Suspense>
+          )}
+          {slug === 'hedging-strategies' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <HedgingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'correlation-trading' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <CorrelationVisualizer />
+            </Suspense>
+          )}
+          {slug === 'scaling-positions' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ScalingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'maximum-loss-rules' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MaxLossVisualizer />
+            </Suspense>
+          )}
+
+          {/* Algorithmic Trading Visualizers */}
+          {slug === 'sentiment-analysis-trading' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <SentimentAnalysisVisualizer />
+            </Suspense>
+          )}
+          {slug === 'machine-learning-trading' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MachineLearningVisualizer />
+            </Suspense>
+          )}
+          {slug === 'pine-script-development' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <PineScriptVisualizer />
+            </Suspense>
+          )}
+          {(slug === 'algorithmic-trading' || slug === 'algorithmic-trading-basics') && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <AlgorithmicTradingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'statistical-arbitrage' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <StatArbVisualizer />
+            </Suspense>
+          )}
+          {slug === 'quantitative-trading' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <QuantTradingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'high-frequency-trading' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <HFTVisualizer />
+            </Suspense>
+          )}
+          {slug === 'market-making-strategies' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MarketMakingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'ai-signal-optimization' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <AIOptimizationVisualizer />
+            </Suspense>
+          )}
 
           {slug && hasStrategyCharts(slug) && (
             <ChartVisualization slug={slug} />
