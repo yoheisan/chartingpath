@@ -1203,6 +1203,172 @@ export const STRATEGY_PRIMER_MAPPING: Record<string, StrategyPrimerData> = {
     limitations: ['Can stay overbought/oversold in trends', 'Needs confirmation', 'Not a timing tool alone'],
     practicalTips: ['In uptrends, buy RSI pullbacks to 40-50', 'Look for divergences at key levels', 'Combine with support/resistance'],
     commonMistakes: ['Selling every overbought reading', 'Not waiting for confirmation', 'Fighting strong trends']
+  },
+
+  // ===== CRYPTO ARBITRAGE =====
+  'crypto-arbitrage': {
+    strategyName: 'Crypto Arbitrage',
+    category: 'trading-style',
+    difficulty: 'advanced',
+    whatIsIt: 'Crypto arbitrage is a trading strategy that profits from price differences of the same cryptocurrency across different exchanges or trading pairs. Because cryptocurrency markets are fragmented across hundreds of exchanges worldwide, each with different liquidity, user bases, and regional dynamics, the same Bitcoin or Ethereum can trade at different prices simultaneously. Arbitrageurs buy the asset on the cheaper exchange and sell on the more expensive one, capturing the spread as profit.',
+    whyItMatters: 'Unlike directional trading strategies that require predicting price movements, arbitrage is theoretically "risk-free" profit—you\'re not betting on whether Bitcoin goes up or down, only that the price difference between two exchanges will close. In traditional markets, such opportunities are rare and quickly eliminated by professional traders. In crypto, the 24/7 market, hundreds of exchanges, and transfer delays create persistent inefficiencies that can be exploited with the right infrastructure and knowledge.',
+    history: {
+      origin: 'Arbitrage has existed since ancient times when merchants noticed price differences between city-states. The 2017-2018 crypto bull run made crypto arbitrage famous with the "Kimchi Premium" where Bitcoin traded up to 50% higher on South Korean exchanges due to capital controls and local demand.',
+      developer: 'No single inventor - ancient trading practice',
+      yearIntroduced: 'Ancient (crypto-specific: 2013+)'
+    },
+    analogy: 'Imagine you discover that apples cost $1 at the farmer\'s market but $1.50 at the grocery store across the street. You buy 100 apples at the market ($100) and immediately sell them at the grocery store ($150), pocketing $50. In crypto arbitrage, you\'re doing exactly this, but with Bitcoin instead of apples, and exchanges instead of markets. The catch? The "walk across the street" (blockchain transfer) takes time, and prices can change while you\'re walking.',
+    marketContext: {
+      bestMarkets: ['Bitcoin', 'Ethereum', 'Major altcoins', 'Stablecoins'],
+      bestTimeframes: ['Real-time', 'Minutes', 'Seconds'],
+      marketConditions: 'High volatility periods create larger spreads. Lower liquidity exchanges often have bigger price discrepancies. News events and sudden market moves create temporary mispricings.'
+    },
+    prerequisites: [
+      {
+        title: 'Multiple Exchange Accounts',
+        description: 'You need verified accounts on multiple exchanges with funds pre-positioned on each. KYC verification can take days to weeks.',
+        importance: 'essential'
+      },
+      {
+        title: 'Understanding of Blockchain Transfer Times',
+        description: 'Bitcoin confirmations take 10-60 minutes, Ethereum 15 seconds to minutes. This delay is your biggest risk—prices change while you transfer.',
+        importance: 'essential'
+      },
+      {
+        title: 'Fee Structure Knowledge',
+        description: 'You must know all fees: trading fees (0.1-0.5%), withdrawal fees ($5-50), deposit fees, network gas fees. A 1% spread minus 0.8% in fees = 0.2% profit.',
+        importance: 'essential'
+      },
+      {
+        title: 'Capital Requirements',
+        description: 'Arbitrage profits are small percentages. To make meaningful money, you need significant capital ($10,000+) spread across exchanges.',
+        importance: 'essential'
+      },
+      {
+        title: 'API and Automation Skills',
+        description: 'Manual arbitrage is slow and error-prone. Serious arbitrageurs use bots that monitor prices and execute trades in milliseconds.',
+        importance: 'helpful'
+      }
+    ],
+    coreConcepts: [
+      {
+        concept: 'Spatial Arbitrage (Cross-Exchange)',
+        explanation: 'The simplest form: buy Bitcoin at $42,000 on Exchange A, sell at $42,300 on Exchange B. The $300 difference (0.71%) minus fees is your profit.',
+        example: 'BTC is $42,000 on Binance and $42,300 on Kraken. You have $42,000 in USDT on Binance and 1 BTC on Kraken. You buy 1 BTC on Binance while simultaneously selling 1 BTC on Kraken for $42,300. Net gain: $300 minus trading fees (~$84) = $216 profit.'
+      },
+      {
+        concept: 'Triangular Arbitrage',
+        explanation: 'Exploiting price differences between three trading pairs on the SAME exchange. No transfer risk, but opportunities are smaller and faster to disappear.',
+        example: 'On one exchange: BTC/USD = $42,000, ETH/BTC = 0.05, ETH/USD = $2,150. Mathematically: 0.05 BTC × $42,000 = $2,100 (implied ETH price). But ETH/USD shows $2,150! You could buy ETH with BTC, sell ETH for USD, buy BTC with USD, and end up with more BTC than you started.'
+      },
+      {
+        concept: 'Futures-Spot Basis Trade',
+        explanation: 'When Bitcoin futures trade at a premium or discount to spot price, you can lock in the difference. Long spot + short futures captures the premium as it converges to zero at expiry.',
+        example: 'BTC spot is $42,000 but March futures are $43,500 (3.5% premium). Buy 1 BTC spot, short 1 BTC futures. At expiration, futures converge to spot. You keep the $1,500 difference regardless of where BTC ends up.'
+      },
+      {
+        concept: 'DEX-CEX Arbitrage',
+        explanation: 'Decentralized exchanges (Uniswap, SushiSwap) and centralized exchanges often have different prices. DEXs use automated market makers that can deviate from CEX prices.',
+        example: 'ETH is $2,100 on Coinbase but $2,050 on Uniswap due to a large sell order. Buy ETH on Uniswap, transfer to Coinbase, sell for $50 profit per ETH minus gas fees and trading fees.'
+      },
+      {
+        concept: 'The Pre-Positioning Strategy',
+        explanation: 'To avoid transfer delays, keep funds (both crypto and stablecoins) on multiple exchanges simultaneously. This lets you execute both legs instantly without waiting for blockchain confirmations.',
+        example: 'You have $50,000 USDT on Binance and 1.2 BTC on Kraken. When a spread appears, you buy BTC on Binance with USDT while simultaneously selling BTC on Kraken for USDT. No transfers needed—you rebalance later when convenient.'
+      }
+    ],
+    howItWorks: [
+      {
+        step: 'Step 1: Set Up Infrastructure',
+        detail: 'Open and verify accounts on 3-5 major exchanges (Binance, Coinbase, Kraken, Bybit, OKX). Complete KYC verification. Enable API access for faster execution. Pre-fund each exchange with both crypto and stablecoins.'
+      },
+      {
+        step: 'Step 2: Monitor Price Spreads',
+        detail: 'Use aggregator tools or build your own to monitor BTC/USDT prices across all exchanges in real-time. Calculate the spread after ALL fees: (Higher Price - Lower Price) / Lower Price - Trading Fees - Withdrawal Fees - Deposit Fees = Net Profit %.'
+      },
+      {
+        step: 'Step 3: Calculate Profitability Threshold',
+        detail: 'Example: Binance fee 0.1% × 2 legs = 0.2%. Kraken fee 0.16% × 2 legs = 0.32%. Total fees = 0.52%. You need a spread of at least 0.6-0.7% to make the trade worthwhile after accounting for slippage.'
+      },
+      {
+        step: 'Step 4: Execute Simultaneously',
+        detail: 'When a profitable spread appears, you must execute BOTH legs at the same time. If you buy on Exchange A but delay selling on Exchange B, the price could move against you. Use limit orders at the displayed prices, not market orders which may slip.'
+      },
+      {
+        step: 'Step 5: Rebalance Positions',
+        detail: 'After the trade, one exchange has more crypto and the other has more stablecoins. You\'ll need to rebalance by transferring funds. Do this during low-volatility periods to minimize risk during transfer. Some traders only rebalance once per day or week.'
+      },
+      {
+        step: 'Step 6: Track Everything',
+        detail: 'Maintain a spreadsheet or database of every trade: timestamp, exchanges, prices, amounts, fees, profit. This helps you identify which exchange pairs are most profitable and refine your strategy.'
+      }
+    ],
+    signals: [
+      {
+        signal: 'Large Spread (>0.5%)',
+        meaning: 'Price difference between exchanges exceeds typical fees',
+        action: 'buy'
+      },
+      {
+        signal: 'High Volatility Event',
+        meaning: 'News causes rapid price moves, creating temporary mispricings',
+        action: 'buy'
+      },
+      {
+        signal: 'Regional Premium (Kimchi, Grayscale)',
+        meaning: 'Geographic or structural factors create persistent spreads',
+        action: 'buy'
+      },
+      {
+        signal: 'Futures Premium >3%',
+        meaning: 'Futures trading at significant premium to spot',
+        action: 'buy'
+      },
+      {
+        signal: 'DEX Pool Imbalance',
+        meaning: 'Large trade pushed DEX price away from market',
+        action: 'buy'
+      }
+    ],
+    strengths: [
+      'Direction-neutral: profit regardless of whether market goes up or down',
+      'Relatively low risk when executed correctly with pre-positioned funds',
+      'Can be automated with bots for 24/7 operation',
+      'Crypto markets have more opportunities than traditional markets due to fragmentation',
+      'Profits are predictable per trade (unlike directional trading)'
+    ],
+    limitations: [
+      'Requires significant capital spread across multiple exchanges',
+      'Exchange risk: if an exchange is hacked or goes bankrupt, you lose funds',
+      'Transfer time risk: prices can move while crypto is in transit',
+      'Competition: professional firms with faster systems capture most opportunities',
+      'Spreads have narrowed significantly since 2017-2018 as markets mature',
+      'Regulatory risk: some arbitrage between regions may have legal implications'
+    ],
+    practicalTips: [
+      'Start with stablecoin pairs (USDT/USDC) to learn without price volatility risk',
+      'Never transfer 100% of funds—always keep enough on each exchange to capture the next opportunity',
+      'Use VIP fee tiers: higher trading volume = lower fees = more profitable arbitrage',
+      'Focus on 2-3 exchange pairs rather than trying to monitor 20 exchanges',
+      'Set alerts for spreads above your profitability threshold',
+      'Consider tax implications: frequent trading creates many taxable events',
+      'Keep detailed records for tax purposes—every trade is a taxable event in most jurisdictions'
+    ],
+    commonMistakes: [
+      'Forgetting to include ALL fees in profit calculations (network fees, deposit fees, withdrawal fees)',
+      'Using market orders instead of limit orders, causing slippage',
+      'Not pre-positioning funds and trying to transfer during the arbitrage window',
+      'Underestimating transfer time: that "10-minute" Bitcoin transfer can take an hour during network congestion',
+      'Concentrating too much capital on a single exchange (counterparty risk)',
+      'Chasing small spreads that don\'t cover fees after slippage',
+      'Not accounting for order book depth—large orders can\'t be filled at the displayed price'
+    ],
+    relatedStrategies: [
+      { name: 'Statistical Arbitrage', relationship: 'Uses statistics to find mean-reverting pairs' },
+      { name: 'Triangular Arbitrage', relationship: 'Same-exchange, multi-pair arbitrage' },
+      { name: 'Futures Basis Trading', relationship: 'Exploits spot-futures price differences' },
+      { name: 'Market Making', relationship: 'Profits from bid-ask spread instead of cross-exchange spread' }
+    ]
   }
 };
 
