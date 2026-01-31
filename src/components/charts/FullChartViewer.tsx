@@ -74,6 +74,7 @@ import {
   PIVOT_COLORS,
   normalizeBarsForConsistentColoring,
   calculateOptimalPriceMargins,
+  calculatePricePrecision,
 } from './chartConstants';
 
 // Indicator settings interface
@@ -323,11 +324,22 @@ export default function FullChartViewer({
 
         chartRef.current = chart;
 
-        // Use unified candlestick colors
-        const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
-
         // Normalize bars for consistent day-to-day coloring (green = up, red = down)
         const normalizedBars = normalizeBarsForConsistentColoring(bars);
+
+        // Calculate dynamic precision based on price magnitude (crucial for micro-cap assets like BONK)
+        const representativePrice = normalizedBars.length > 0 ? normalizedBars[normalizedBars.length - 1].c : 1;
+        const { precision, minMove } = calculatePricePrecision(representativePrice);
+
+        // Use unified candlestick colors with dynamic price format
+        const candleSeries = chart.addSeries(CandlestickSeries, {
+          ...CANDLE_COLORS,
+          priceFormat: {
+            type: 'price',
+            precision: precision,
+            minMove: minMove,
+          },
+        });
 
         const chartData: CandlestickData[] = normalizedBars
           .map((bar) => {
