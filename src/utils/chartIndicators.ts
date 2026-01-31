@@ -875,3 +875,64 @@ export function calculatePivotPoints(
     s3: pivot - (2 * range),
   };
 }
+
+/**
+ * Generate synthetic demonstration OHLCV data for indicator visualization
+ * Creates realistic-looking price data with natural price movements
+ */
+export function generateDemoBars(count: number = 200): CompressedBar[] {
+  const bars: CompressedBar[] = [];
+  let price = 150 + Math.random() * 50; // Start between 150-200
+  const baseVolume = 1000000 + Math.random() * 500000;
+  
+  // Create some trending phases
+  let trend = Math.random() > 0.5 ? 1 : -1;
+  let trendStrength = 0.1 + Math.random() * 0.2;
+  let trendDuration = Math.floor(20 + Math.random() * 30);
+  let barsInTrend = 0;
+  
+  for (let i = 0; i < count; i++) {
+    // Change trend occasionally
+    barsInTrend++;
+    if (barsInTrend > trendDuration) {
+      trend = Math.random() > 0.5 ? 1 : -1;
+      trendStrength = 0.1 + Math.random() * 0.2;
+      trendDuration = Math.floor(20 + Math.random() * 30);
+      barsInTrend = 0;
+    }
+    
+    // Daily movement with trend bias
+    const volatility = price * 0.02; // 2% typical daily volatility
+    const trendMove = trend * trendStrength * volatility * (0.5 + Math.random());
+    const randomMove = (Math.random() - 0.5) * volatility * 2;
+    
+    const open = price;
+    const change = trendMove + randomMove;
+    const close = Math.max(1, price + change);
+    
+    // High and low with realistic wicks
+    const wickSize = volatility * (0.5 + Math.random());
+    const high = Math.max(open, close) + wickSize * Math.random();
+    const low = Math.min(open, close) - wickSize * Math.random();
+    
+    // Volume varies inversely with stability
+    const volumeMultiplier = 0.5 + Math.random() + Math.abs(change) / volatility * 0.5;
+    const volume = Math.floor(baseVolume * volumeMultiplier);
+    
+    const date = new Date();
+    date.setDate(date.getDate() - (count - i));
+    
+    bars.push({
+      t: date.toISOString(),
+      o: Number(open.toFixed(2)),
+      h: Number(high.toFixed(2)),
+      l: Number(Math.max(0.01, low).toFixed(2)),
+      c: Number(close.toFixed(2)),
+      v: volume,
+    });
+    
+    price = close;
+  }
+  
+  return bars;
+}
