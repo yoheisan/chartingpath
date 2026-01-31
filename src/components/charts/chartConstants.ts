@@ -113,6 +113,38 @@ export function calculateOptimalPriceMargins(
   }
 }
 
+/**
+ * Calculate appropriate price precision (decimal places) based on price magnitude.
+ * Essential for micro-cap assets like BONK, SHIB, PEPE that trade at fractions of a cent.
+ * 
+ * Rules:
+ * - Price >= 1000: 2 decimals (BTC, SPY)
+ * - Price >= 1: 2-4 decimals (ETH, most stocks)
+ * - Price >= 0.01: 4 decimals (small cap stocks)
+ * - Price >= 0.0001: 6 decimals (low-cap crypto)
+ * - Price < 0.0001: 8 decimals (micro-cap meme coins like BONK, SHIB)
+ */
+export function calculatePricePrecision(price: number): { precision: number; minMove: number } {
+  const absPrice = Math.abs(price);
+  
+  if (absPrice >= 1000) {
+    return { precision: 2, minMove: 0.01 };
+  } else if (absPrice >= 100) {
+    return { precision: 2, minMove: 0.01 };
+  } else if (absPrice >= 1) {
+    return { precision: 4, minMove: 0.0001 };
+  } else if (absPrice >= 0.01) {
+    return { precision: 4, minMove: 0.0001 };
+  } else if (absPrice >= 0.0001) {
+    return { precision: 6, minMove: 0.000001 };
+  } else if (absPrice >= 0.00000001) {
+    return { precision: 8, minMove: 0.00000001 };
+  } else {
+    // Ultra-micro prices
+    return { precision: 10, minMove: 0.0000000001 };
+  }
+}
+
 // === INDICATOR COLORS ===
 // Using rgba for semi-transparency so indicators don't fully obscure candle wicks
 export const INDICATOR_COLORS = {
