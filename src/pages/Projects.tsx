@@ -40,15 +40,15 @@ const projectTemplates: ProjectTemplate[] = [
   {
     id: 'setup_finder',
     type: 'setup_finder',
-    name: 'Weekly Setup Finder',
-    description: 'Scan markets for high-probability pattern setups with automated trade plans',
+    name: 'Setup Finder',
+    description: 'Validate specific tickers before you trade — get full trade plans with Visual Proof',
     icon: Search,
     color: 'text-emerald-500',
     gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent',
     estimatedCredits: '5-15',
     estimatedTime: '30-60s',
-    features: ['Pattern scanning', 'Trade plans with SL/TP', 'Alert creation'],
-    badge: 'Popular',
+    features: ['Custom watchlists', 'Visual Proof charts', 'Vault artifacts'],
+    badge: 'Validate',
     badgeVariant: 'default'
   },
   {

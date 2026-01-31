@@ -63,13 +63,13 @@ const Index = () => {
   // Activity cards configuration
   const activityCards = [
     {
-      title: "Find Setups",
-      description: "Scan a universe for pattern-based setups with entries + SL/TP.",
-      bullets: ["Multi-market scan", "Repeatable rules", "Fast run time"],
+      title: "Validate Before Trading",
+      description: "Deep-dive on YOUR tickers with full trade plans and Visual Proof.",
+      bullets: ["Custom instruments", "Vault artifacts", "Pre-trade conviction"],
       ctaText: "Run Setup Finder",
       ctaLink: "/projects/setup-finder/new",
       icon: Search,
-      bestFor: "Daily scanners",
+      bestFor: "Pre-trade validation",
       slug: "setup_finder",
     },
     {
