@@ -38,8 +38,51 @@ const StrategyPrimer = lazy(() =>
   import('@/components/blog/StrategyPrimer')
 );
 
+// Candlestick Pattern Visualizers
 const DojiPatternVisualizer = lazy(() => 
   import('@/components/blog/DojiPatternVisualizer')
+);
+const EngulfingPatternVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/EngulfingPatternVisualizer')
+);
+const HammerPatternVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/HammerPatternVisualizer')
+);
+const ShootingStarVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/ShootingStarVisualizer')
+);
+const HaramiPatternVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/HaramiPatternVisualizer')
+);
+const MorningEveningStarVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/MorningEveningStarVisualizer')
+);
+const ThreeSoldiersAndCrowsVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/ThreeSoldiersAndCrowsVisualizer').then(mod => ({ default: mod.ThreeWhiteSoldiersVisualizer }))
+);
+const ThreeBlackCrowsVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/ThreeSoldiersAndCrowsVisualizer').then(mod => ({ default: mod.ThreeBlackCrowsVisualizer }))
+);
+const PiercingLineVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/PiercingDarkCloudVisualizer').then(mod => ({ default: mod.PiercingLineVisualizer }))
+);
+const DarkCloudCoverVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/PiercingDarkCloudVisualizer').then(mod => ({ default: mod.DarkCloudCoverVisualizer }))
+);
+const TweezerPatternVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/TweezerPatternVisualizer')
+);
+const SpinningTopVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/SpinningTopVisualizer')
+);
+const MarubozuVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/MarubozuVisualizer')
+);
+const KickerPatternVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/KickerPatternVisualizer')
+);
+const AbandonedBabyVisualizer = lazy(() => 
+  import('@/components/blog/candlestick-visualizers/AbandonedBabyVisualizer')
 );
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
@@ -1039,10 +1082,80 @@ const DynamicArticle = () => {
             <IndicatorChartVisualization slug={slug} />
           )}
 
-          {/* DOJI PATTERNS: Special visualizer for doji candlestick education */}
+          {/* CANDLESTICK PATTERN VISUALIZERS - Matching database slugs */}
           {slug === 'doji-patterns' && (
             <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
               <DojiPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'engulfing-patterns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <EngulfingPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'hammer-patterns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <HammerPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'shooting-star' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ShootingStarVisualizer />
+            </Suspense>
+          )}
+          {slug === 'harami-patterns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <HaramiPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'morning-evening-star' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MorningEveningStarVisualizer />
+            </Suspense>
+          )}
+          {slug === 'three-white-soldiers' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ThreeSoldiersAndCrowsVisualizer />
+            </Suspense>
+          )}
+          {slug === 'three-black-crows' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ThreeBlackCrowsVisualizer />
+            </Suspense>
+          )}
+          {slug === 'piercing-pattern' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <PiercingLineVisualizer />
+            </Suspense>
+          )}
+          {slug === 'dark-cloud-cover' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <DarkCloudCoverVisualizer />
+            </Suspense>
+          )}
+          {slug === 'tweezer-patterns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <TweezerPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'spinning-top' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <SpinningTopVisualizer />
+            </Suspense>
+          )}
+          {slug === 'marubozu-candles' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MarubozuVisualizer />
+            </Suspense>
+          )}
+          {slug === 'kicker-pattern' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <KickerPatternVisualizer />
+            </Suspense>
+          )}
+          {slug === 'abandoned-baby' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <AbandonedBabyVisualizer />
             </Suspense>
           )}
 

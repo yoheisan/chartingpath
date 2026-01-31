@@ -50,6 +50,20 @@ const PATTERN_TYPES: Record<string, { name: string; type: "reversal" | "continua
   "bullish-engulfing": { name: "Bullish Engulfing", type: "candlestick" },
   "bearish-engulfing": { name: "Bearish Engulfing", type: "candlestick" },
   "spinning-top": { name: "Spinning Top", type: "candlestick" },
+  "morning-star": { name: "Morning Star", type: "candlestick" },
+  "evening-star": { name: "Evening Star", type: "candlestick" },
+  "three-white-soldiers": { name: "Three White Soldiers", type: "candlestick" },
+  "three-black-crows": { name: "Three Black Crows", type: "candlestick" },
+  "piercing-line": { name: "Piercing Line", type: "candlestick" },
+  "dark-cloud-cover": { name: "Dark Cloud Cover", type: "candlestick" },
+  "tweezer-top": { name: "Tweezer Top", type: "candlestick" },
+  "tweezer-bottom": { name: "Tweezer Bottom", type: "candlestick" },
+  "kicker-bullish": { name: "Bullish Kicker", type: "candlestick" },
+  "kicker-bearish": { name: "Bearish Kicker", type: "candlestick" },
+  "marubozu-bullish": { name: "Bullish Marubozu", type: "candlestick" },
+  "marubozu-bearish": { name: "Bearish Marubozu", type: "candlestick" },
+  "abandoned-baby-bullish": { name: "Abandoned Baby Bullish", type: "candlestick" },
+  "abandoned-baby-bearish": { name: "Abandoned Baby Bearish", type: "candlestick" },
 };
 
 export const DynamicPatternChart = ({ 
