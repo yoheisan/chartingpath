@@ -264,7 +264,67 @@ export default function TickerStudy() {
 
         if (historicalError) {
           console.error('Error fetching historical patterns:', historicalError);
-        } else if (historicalData) {
+        }
+        
+        // If no cached patterns exist for this timeframe, run on-demand detection
+        if (!historicalData || historicalData.length === 0) {
+          console.log(`No cached patterns for ${decodedSymbol} on ${selectedTimeframe}, running on-demand detection...`);
+          
+          try {
+            const { data: onDemandData, error: onDemandError } = await supabase.functions.invoke(
+              'detect-patterns-ondemand',
+              {
+                body: {
+                  symbol: decodedSymbol,
+                  timeframe: selectedTimeframe,
+                  lookbackDays: selectedTimeframe === '1h' ? 30 : selectedTimeframe === '4h' ? 60 : 120,
+                },
+              }
+            );
+            
+            if (onDemandError) {
+              console.error('On-demand detection error:', onDemandError);
+            } else if (onDemandData?.patterns && Array.isArray(onDemandData.patterns)) {
+              console.log(`On-demand detection found ${onDemandData.patterns.length} patterns`);
+              
+              const mappedOnDemand: HistoricalPattern[] = onDemandData.patterns.map((p: any) => ({
+                id: p.id,
+                symbol: decodedSymbol,
+                asset_type: 'forex',
+                pattern_id: p.pattern_id,
+                pattern_name: p.pattern_name,
+                direction: p.direction as 'bullish' | 'bearish',
+                timeframe: selectedTimeframe,
+                detected_at: p.detected_at,
+                pattern_start_date: p.detected_at,
+                pattern_end_date: p.detected_at,
+                entry_price: p.entry_price,
+                stop_loss_price: p.stop_loss_price,
+                take_profit_price: p.take_profit_price,
+                risk_reward_ratio: p.risk_reward_ratio,
+                quality_score: p.quality_score || 'B',
+                quality_reasons: p.quality_reasons || [],
+                outcome: p.outcome,
+                outcome_price: null,
+                outcome_date: null,
+                outcome_pnl_percent: p.outcome_pnl_percent,
+                bars_to_outcome: null,
+                visual_spec: p.visual_spec as VisualSpec,
+                bars: (p.bars || []).map((b: any) => ({
+                  t: b.t || b.date,
+                  o: b.o ?? b.open,
+                  h: b.h ?? b.high,
+                  l: b.l ?? b.low,
+                  c: b.c ?? b.close,
+                  v: b.v ?? b.volume ?? 0,
+                })),
+              }));
+              setHistoricalPatterns(mappedOnDemand);
+            }
+          } catch (onDemandErr) {
+            console.error('On-demand detection failed:', onDemandErr);
+          }
+        } else {
           const mappedHistorical: HistoricalPattern[] = historicalData.map((p: any) => ({
             id: p.id,
             symbol: p.symbol,
