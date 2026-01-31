@@ -47,6 +47,30 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'donchian', title: 'Channel Pattern Recognition', description: 'Identifying tradeable channel structures', symbol: 'MSFT' }
   ],
   
+  // ===== ICHIMOKU CLOUD =====
+  'ichimoku-strategy': [
+    { 
+      indicator: 'ichimoku', 
+      title: 'Ichimoku Cloud (Ichimoku Kinko Hyo)',
+      description: 'Complete trading system: Tenkan-sen (blue), Kijun-sen (red), Cloud (Kumo), and Chikou Span',
+      symbol: 'SPY'
+    }
+  ],
+  'ichimoku-cloud': [
+    { 
+      indicator: 'ichimoku', 
+      title: 'Ichimoku Cloud Analysis',
+      description: 'Five-line indicator system for trend, momentum, and support/resistance',
+      symbol: 'AAPL'
+    }
+  ],
+  'ichimoku-trading': [
+    { indicator: 'ichimoku', title: 'Ichimoku Trading System', symbol: 'MSFT' }
+  ],
+  'ichimoku-complete': [
+    { indicator: 'ichimoku', title: 'Complete Ichimoku Guide', symbol: 'SPY' }
+  ],
+  
   // ===== KELTNER CHANNELS (ATR-Based) =====
   'keltner-channels': [
     { indicator: 'bollinger', title: 'Keltner vs Bollinger Comparison', description: 'Volatility channel visualization', symbol: 'SPY' },
@@ -502,6 +526,7 @@ export function getIndicatorMappingStats(): { totalArticles: number; indicatorCo
     'sma-crossover': 0,
     'bollinger': 0,
     'donchian': 0,
+    'ichimoku': 0,
   };
   
   let totalArticles = 0;

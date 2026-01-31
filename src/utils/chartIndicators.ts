@@ -309,3 +309,81 @@ export function calculateDonchianChannels(
   
   return result;
 }
+
+export interface IchimokuPoint {
+  time: number;
+  tenkan: number;      // Conversion Line (9-period)
+  kijun: number;       // Base Line (26-period)
+  senkouA: number;     // Leading Span A
+  senkouB: number;     // Leading Span B
+  chikou: number;      // Lagging Span
+}
+
+/**
+ * Ichimoku Cloud (Ichimoku Kinko Hyo)
+ * 
+ * Components:
+ * - Tenkan-sen (Conversion Line): (9-period high + 9-period low) / 2
+ * - Kijun-sen (Base Line): (26-period high + 26-period low) / 2
+ * - Senkou Span A (Leading Span A): (Tenkan + Kijun) / 2, plotted 26 periods ahead
+ * - Senkou Span B (Leading Span B): (52-period high + 52-period low) / 2, plotted 26 periods ahead
+ * - Chikou Span (Lagging Span): Close plotted 26 periods behind
+ */
+export function calculateIchimoku(
+  bars: CompressedBar[],
+  tenkanPeriod: number = 9,
+  kijunPeriod: number = 26,
+  senkouBPeriod: number = 52,
+  displacement: number = 26
+): { current: IchimokuPoint[], cloud: { time: number; senkouA: number; senkouB: number }[] } {
+  if (bars.length < senkouBPeriod) return { current: [], cloud: [] };
+  
+  const current: IchimokuPoint[] = [];
+  const cloud: { time: number; senkouA: number; senkouB: number }[] = [];
+  
+  // Helper to get highest high and lowest low over a period
+  const getHighLow = (endIndex: number, period: number) => {
+    const start = Math.max(0, endIndex - period + 1);
+    const slice = bars.slice(start, endIndex + 1);
+    return {
+      high: Math.max(...slice.map(b => b.h)),
+      low: Math.min(...slice.map(b => b.l)),
+    };
+  };
+  
+  for (let i = senkouBPeriod - 1; i < bars.length; i++) {
+    const tenkanHL = getHighLow(i, tenkanPeriod);
+    const kijunHL = getHighLow(i, kijunPeriod);
+    const senkouBHL = getHighLow(i, senkouBPeriod);
+    
+    const tenkan = (tenkanHL.high + tenkanHL.low) / 2;
+    const kijun = (kijunHL.high + kijunHL.low) / 2;
+    const senkouA = (tenkan + kijun) / 2;
+    const senkouB = (senkouBHL.high + senkouBHL.low) / 2;
+    
+    // Chikou is current close (will be plotted displaced back)
+    const chikou = bars[i].c;
+    
+    const time = Math.floor(new Date(bars[i].t).getTime() / 1000);
+    
+    current.push({
+      time,
+      tenkan,
+      kijun,
+      senkouA,
+      senkouB,
+      chikou,
+    });
+    
+    // Cloud data (displaced forward by 26 periods)
+    // We store it with the future time for rendering
+    const futureTime = time + (displacement * 24 * 60 * 60); // Approximate daily displacement
+    cloud.push({
+      time: futureTime,
+      senkouA,
+      senkouB,
+    });
+  }
+  
+  return { current, cloud };
+}
