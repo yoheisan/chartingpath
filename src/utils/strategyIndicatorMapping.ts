@@ -316,10 +316,8 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'bollinger', title: 'Mean Reversion Bands', symbol: 'SPY' },
     { indicator: 'rsi', title: 'RSI Extremes for Mean Reversion', symbol: 'SPY' }
   ],
-  'statistical-arbitrage': [
-    { indicator: 'bollinger', title: 'Statistical Bands', description: 'Bollinger Bands for deviation analysis', symbol: 'SPY' },
-    { indicator: 'rsi', title: 'Mean Reversion Signals', symbol: 'SPY' }
-  ],
+  // NOTE: statistical-arbitrage uses StatArbVisualizer with cointegration concepts,
+  // pairs trading math, and Z-Score signal simulator - much more relevant than generic indicators
 
   // BREAKOUT TRADING moved to DONCHIAN/BREAKOUT section above
   'breakout-trading-strategy': [
@@ -340,18 +338,11 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   ],
 
   // ===== QUANTITATIVE & ALGORITHMIC ARTICLES =====
-  'quantitative-trading': [
-    { indicator: 'macd', title: 'Systematic MACD Signals', symbol: 'SPY' },
-    { indicator: 'rsi', title: 'Quantitative RSI Strategy', symbol: 'SPY' }
-  ],
-  'algorithmic-trading': [
-    { indicator: 'ema-crossover', title: 'Automated EMA Crossover', symbol: 'SPY' },
-    { indicator: 'macd', title: 'Algorithmic MACD Signals', symbol: 'SPY' }
-  ],
-  'machine-learning-trading': [
-    { indicator: 'macd', title: 'Feature: MACD Signals', symbol: 'AAPL' },
-    { indicator: 'rsi', title: 'Feature: RSI Levels', symbol: 'AAPL' }
-  ],
+  // NOTE: These articles now use purpose-built visualizers (QuantTradingVisualizer, 
+  // AlgorithmicTradingVisualizer, MachineLearningVisualizer, etc.) that provide
+  // much more relevant educational content than generic price indicator charts.
+  // The focus of these articles is on system architecture, factor models, and ML pipelines,
+  // NOT traditional technical indicators.
 
   // ===== VOLATILITY TRADING ARTICLES =====
   // Note: Options-specific articles (iron-condor, straddle-strangle, butterfly, covered-call, 
@@ -467,10 +458,8 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   // time-spread, delta-neutral-hedging, gamma-scalping) are handled by optionsStrategyMapping.ts
 
   // ===== SENTIMENT & NEWS =====
-  'sentiment-analysis-trading': [
-    { indicator: 'rsi', title: 'RSI Sentiment Confirmation', symbol: 'SPY' },
-    { indicator: 'macd', title: 'MACD Momentum Context', symbol: 'SPY' }
-  ],
+  // NOTE: sentiment-analysis-trading uses SentimentAnalysisVisualizer which covers
+  // NLP pipelines, sentiment scoring, and signal integration - more relevant than price charts
 
   // ===== CRYPTO SPECIFIC =====
   'crypto-trading-strategy': [
@@ -491,12 +480,9 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   ],
 
   // ===== MARKET MAKING & HFT =====
-  'market-making': [
-    { indicator: 'bollinger', title: 'Spread Volatility Analysis', symbol: 'SPY' }
-  ],
-  'high-frequency-trading': [
-    { indicator: 'ema-crossover', title: 'Fast Signal Generation', symbol: 'SPY' }
-  ],
+  // NOTE: market-making and high-frequency-trading articles use purpose-built visualizers
+  // (MarketMakingVisualizer, HFTVisualizer) that cover bid-ask spreads, latency, and 
+  // infrastructure - generic price indicator charts are not relevant to these topics
 
   // ===== ARBITRAGE =====
   'arbitrage-trading': [
