@@ -298,6 +298,14 @@ const Projects = () => {
 
     const target = routes[templateId] || '/projects';
 
+    // Wait for profile loading to complete before deciding on auth redirect
+    // This prevents redirecting to /auth while session is still being checked
+    if (profileLoading) {
+      // Still loading - navigate directly, let the target page handle auth if needed
+      navigate(target);
+      return;
+    }
+
     // Keep CTAs clickable; if not signed in, route to auth with a redirect back here.
     if (!user) {
       navigate(`/auth?redirect=${encodeURIComponent(target)}`);
