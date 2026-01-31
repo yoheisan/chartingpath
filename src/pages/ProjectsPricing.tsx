@@ -79,19 +79,47 @@ const ProjectsPricing = () => {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             {t('projects.pricing.subheadline', 'Credits scale with symbols × history × patterns. Start free, upgrade as you grow.')}
           </p>
-          <div className="text-sm text-muted-foreground max-w-3xl mx-auto mb-4 space-y-1">
-            <p>
-              <span className="text-foreground font-medium">Screener:</span> 1,100+ instruments monitored by default 
-              (S&P 500 • 100+ Crypto • 50+ Forex • 30+ Commodities)
-            </p>
-            <p>
-              <span className="text-foreground font-medium">Research:</span> Analyze ANY of 8,000+ US stocks via Setup Finder
-            </p>
+          {/* Core Value Props */}
+          <div className="grid gap-4 sm:grid-cols-2 max-w-4xl mx-auto mb-6">
+            {/* FREE - Default Screener */}
+            <div className="bg-muted/30 border border-border/50 rounded-lg p-4 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="text-xs">FREE</Badge>
+                <span className="font-semibold text-foreground">Default Screener</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Monitor <span className="text-foreground font-medium">1,100+ instruments</span> scanned every 4 hours
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• S&P 500 stocks</li>
+                <li>• 100+ Cryptocurrencies</li>
+                <li>• 50+ Forex pairs</li>
+                <li>• 30+ Commodities</li>
+              </ul>
+            </div>
+            
+            {/* PAID - Custom Watchlist */}
+            <div className="bg-emerald-500/5 border border-emerald-500/30 rounded-lg p-4 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-xs">PAID</Badge>
+                <span className="font-semibold text-foreground">Custom Watchlist Monitoring</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Add <span className="text-emerald-600 font-medium">ANY US stock</span> from 8,000+ to your personal screener
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Small-caps, mid-caps, OTC stocks</li>
+                <li>• Scanned at the same 4-hour cadence</li>
+                <li>• Pattern alerts on YOUR watchlist</li>
+                <li>• Up to 300 custom slots (Pro)</li>
+              </ul>
+            </div>
           </div>
+          
           <div className="flex flex-wrap justify-center gap-2 text-xs">
             <Badge variant="outline" className="bg-background/50">Pattern Screener: Free for all</Badge>
             <Badge variant="outline" className="bg-background/50">20+ Chart Patterns</Badge>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">Custom Watchlist Monitoring (Paid)</Badge>
+            <Badge variant="outline" className="bg-background/50">Research: 8,000+ US Stocks</Badge>
           </div>
         </div>
 
