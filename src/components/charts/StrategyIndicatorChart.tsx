@@ -29,6 +29,7 @@ import {
   calculateRSI,
   calculateBollingerBands,
   calculateDonchianChannels,
+  calculateIchimoku,
 } from '@/utils/chartIndicators';
 import {
   getThemeColors,
@@ -42,7 +43,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 
-export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover' | 'donchian';
+export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover' | 'donchian' | 'ichimoku';
 
 export interface StrategyIndicatorChartProps {
   bars: CompressedBar[];
@@ -79,6 +80,14 @@ const INDICATOR_CHART_COLORS = {
   donchianUpper: '#22c55e',    // Green - breakout above
   donchianLower: '#ef4444',    // Red - breakout below
   donchianMiddle: '#3b82f6',   // Blue - middle line
+  // Ichimoku Cloud colors
+  tenkanSen: '#3b82f6',        // Blue - Conversion Line
+  kijunSen: '#ef4444',         // Red - Base Line
+  senkouSpanA: 'rgba(34, 197, 94, 0.4)',  // Green - Leading Span A
+  senkouSpanB: 'rgba(239, 68, 68, 0.4)',  // Red - Leading Span B
+  chikouSpan: '#a855f7',       // Purple - Lagging Span
+  cloudBullish: 'rgba(34, 197, 94, 0.15)',
+  cloudBearish: 'rgba(239, 68, 68, 0.15)',
 };
 
 const StrategyIndicatorChart = memo(({
@@ -96,9 +105,10 @@ const StrategyIndicatorChart = memo(({
   const indicatorChartRef = useRef<IChartApi | null>(null);
   const [currentSignal, setCurrentSignal] = useState<{ type: 'bullish' | 'bearish' | 'neutral'; text: string } | null>(null);
 
-  // Calculate chart heights - Donchian and Bollinger are overlay-only (no separate pane)
-  const mainHeight = (indicator === 'bollinger' || indicator === 'donchian') ? height : Math.floor(height * 0.65);
-  const indicatorHeight = indicator === 'bollinger' ? 0 : Math.floor(height * 0.35);
+  // Calculate chart heights - Donchian, Bollinger, and Ichimoku are overlay-only (no separate pane)
+  const isOverlayOnly = indicator === 'bollinger' || indicator === 'donchian' || indicator === 'ichimoku';
+  const mainHeight = isOverlayOnly ? height : Math.floor(height * 0.65);
+  const indicatorHeight = isOverlayOnly ? 0 : Math.floor(height * 0.35);
 
   useEffect(() => {
     if (!mainContainerRef.current || !bars || bars.length === 0) return;
@@ -132,7 +142,7 @@ const StrategyIndicatorChart = memo(({
         borderColor: theme.grid,
       },
       timeScale: {
-        visible: indicator === 'bollinger' || indicator === 'donchian', // Only show time on main if no indicator pane
+        visible: isOverlayOnly, // Only show time on main if no indicator pane
         borderVisible: true,
         borderColor: theme.grid,
         timeVisible: true,
@@ -334,6 +344,90 @@ const StrategyIndicatorChart = memo(({
           setCurrentSignal({ type: 'bullish', text: 'Above Middle Line (Bullish Bias)' });
         } else {
           setCurrentSignal({ type: 'bearish', text: 'Below Middle Line (Bearish Bias)' });
+        }
+      }
+    }
+
+    // === ICHIMOKU CLOUD ===
+    if (indicator === 'ichimoku') {
+      const ichimokuData = calculateIchimoku(bars);
+      
+      if (ichimokuData.current.length > 0) {
+        // Tenkan-sen (Conversion Line - fast, blue)
+        const tenkanSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.tenkanSen,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        tenkanSeries.setData(ichimokuData.current.map(p => ({ time: p.time as Time, value: p.tenkan })));
+
+        // Kijun-sen (Base Line - slow, red)
+        const kijunSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.kijunSen,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        kijunSeries.setData(ichimokuData.current.map(p => ({ time: p.time as Time, value: p.kijun })));
+
+        // Senkou Span A (Leading Span A - green tint)
+        const senkouASeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.senkouSpanA,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        senkouASeries.setData(ichimokuData.cloud.map(p => ({ time: p.time as Time, value: p.senkouA })));
+
+        // Senkou Span B (Leading Span B - red tint)
+        const senkouBSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.senkouSpanB,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        senkouBSeries.setData(ichimokuData.cloud.map(p => ({ time: p.time as Time, value: p.senkouB })));
+
+        // Chikou Span (Lagging Span - purple, displaced back 26 periods)
+        // For display, we shift the time back
+        const chikouData = ichimokuData.current.slice(26).map((p, i) => ({
+          time: ichimokuData.current[i].time as Time,
+          value: p.chikou,
+        }));
+        if (chikouData.length > 0) {
+          const chikouSeries = mainChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.chikouSpan,
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          chikouSeries.setData(chikouData);
+        }
+
+        // Detect Ichimoku signals
+        const last = ichimokuData.current[ichimokuData.current.length - 1];
+        const prev = ichimokuData.current[ichimokuData.current.length - 2];
+        const lastClose = bars[bars.length - 1].c;
+        
+        // TK Cross (Tenkan crosses Kijun)
+        if (prev && prev.tenkan < prev.kijun && last.tenkan > last.kijun) {
+          setCurrentSignal({ type: 'bullish', text: 'Bullish TK Cross (Tenkan > Kijun)' });
+        } else if (prev && prev.tenkan > prev.kijun && last.tenkan < last.kijun) {
+          setCurrentSignal({ type: 'bearish', text: 'Bearish TK Cross (Tenkan < Kijun)' });
+        } else if (lastClose > last.senkouA && lastClose > last.senkouB) {
+          // Price above cloud
+          if (last.senkouA > last.senkouB) {
+            setCurrentSignal({ type: 'bullish', text: 'Price Above Bullish Cloud' });
+          } else {
+            setCurrentSignal({ type: 'bullish', text: 'Price Above Cloud (Bullish)' });
+          }
+        } else if (lastClose < last.senkouA && lastClose < last.senkouB) {
+          // Price below cloud
+          setCurrentSignal({ type: 'bearish', text: 'Price Below Cloud (Bearish)' });
+        } else {
+          // Price inside cloud
+          setCurrentSignal({ type: 'neutral', text: 'Price Inside Cloud (Consolidation)' });
         }
       }
     }
