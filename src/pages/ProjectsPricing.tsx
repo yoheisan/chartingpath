@@ -76,9 +76,17 @@ const ProjectsPricing = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
             {t('projects.pricing.headline', 'Simple, Credit-Based Pricing')}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             {t('projects.pricing.subheadline', 'Credits scale with symbols × history × patterns. Start free, upgrade as you grow.')}
           </p>
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto mb-4">
+            All plans include access to <span className="text-foreground font-medium">1,100+ financial instruments</span>: 
+            500+ US Stocks (S&P 500) • 100+ Cryptocurrencies • 50+ Forex Pairs • 30+ Commodities
+          </p>
+          <div className="flex flex-wrap justify-center gap-2 text-xs">
+            <Badge variant="outline" className="bg-background/50">Pattern Screener: Free for all</Badge>
+            <Badge variant="outline" className="bg-background/50">20+ Chart Patterns</Badge>
+          </div>
         </div>
 
         {/* Pricing Cards - 5 columns on large screens */}
@@ -118,7 +126,7 @@ const ProjectsPricing = () => {
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col">
-                {/* Key Limits - Simplified to credits only */}
+                {/* Key Limits */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Credits</span>
@@ -131,13 +139,21 @@ const ProjectsPricing = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Instruments</span>
                     <span className="font-semibold text-foreground">
-                      {tier.config.projects.setup_finder.maxInstruments}
+                      {tier.config.projects.setup_finder.maxInstruments}/run
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Lookback</span>
                     <span className="font-semibold text-foreground">
                       {tier.config.projects.setup_finder.maxLookbackYears}y
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Timeframes</span>
+                    <span className="font-semibold text-foreground text-right text-xs">
+                      {tier.key === 'FREE' ? '1D' : 
+                       tier.key === 'LITE' ? '15m, 4H, 1D' : 
+                       '15m, 1H, 4H, 1D, 1W'}
                     </span>
                   </div>
                 </div>
