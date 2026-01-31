@@ -65,6 +65,7 @@ export interface TierConfig {
   monthlyCredits: number;
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
+  maxWatchlistSlots: number;
   screener: ScreenerCaps;
   study: StudyCaps;
   projects: ProjectCaps;
@@ -79,13 +80,14 @@ export const PLANS_CONFIG: PlansConfig = {
     FREE: {
       monthlyCredits: 50,
       maxConcurrentRuns: 1,
-      maxActiveAlerts: 3, // Increased from 1 to let users experience the loop
+      maxActiveAlerts: 3,
+      maxWatchlistSlots: 0,
       screener: {
-        maxTickersPerClass: 100, // Unlimited screener access for Discover stage
+        maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
       },
       study: {
-        allowedTimeframes: ['1d'] // Free users: daily only (15m requires LITE+)
+        allowedTimeframes: ['1d']
       },
       projects: {
         setup_finder: { maxInstruments: 10, maxLookbackYears: 1, maxPatterns: 3, allowedTimeframes: ['1d'] },
@@ -97,13 +99,14 @@ export const PLANS_CONFIG: PlansConfig = {
     LITE: {
       monthlyCredits: 100,
       maxConcurrentRuns: 1,
-      maxActiveAlerts: 5, // Bridge tier with more alerts
+      maxActiveAlerts: 5,
+      maxWatchlistSlots: 20,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders']
       },
       study: {
-        allowedTimeframes: ['15m', '1d', '4h'] // Lite: daily + 4h + 15m
+        allowedTimeframes: ['15m', '1d', '4h']
       },
       projects: {
         setup_finder: { maxInstruments: 15, maxLookbackYears: 2, maxPatterns: 4, allowedTimeframes: ['1d', '4h'] },
@@ -116,12 +119,13 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyCredits: 300,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
+      maxWatchlistSlots: 100,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Plus+: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
@@ -134,12 +138,13 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyCredits: 900,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
+      maxWatchlistSlots: 300,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Pro: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
@@ -152,12 +157,13 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyCredits: 3000,
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
+      maxWatchlistSlots: 9999,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk'] // Team: all timeframes
+        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
