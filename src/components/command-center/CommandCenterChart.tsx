@@ -56,9 +56,28 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       if (dbError) throw dbError;
 
       if (!data || data.length === 0) {
-        // Fallback to edge function
+        // Fallback to edge function with proper date parameters
+        // Intraday intervals (15m, 1h, 4h) are limited to ~30 days by Yahoo Finance
+        const isIntraday = ['15m', '1h', '4h'].includes(timeframe);
+        const endDate = new Date();
+        const startDate = new Date();
+        
+        if (isIntraday) {
+          // Yahoo limits intraday to ~30 days
+          startDate.setDate(endDate.getDate() - 30);
+        } else {
+          // Daily/weekly can go back 1 year
+          startDate.setFullYear(endDate.getFullYear() - 1);
+        }
+
         const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
-          body: { symbol, range: '1y', interval: timeframe === '1d' ? '1d' : timeframe },
+          body: { 
+            symbol, 
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            interval: timeframe,
+            includeOhlc: true,
+          },
         });
 
         if (fnError) throw fnError;
