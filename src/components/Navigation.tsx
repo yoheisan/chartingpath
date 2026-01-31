@@ -260,33 +260,6 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* Account dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1 ${isActive('/members') || isActive('/vault') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}>
-                  <User className="h-4 w-4" />
-                  Account
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/vault" className="flex items-center gap-2">
-                      <Database className="h-4 w-4" />
-                      My Results
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/downloads">Downloads</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/members/account">Settings</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
               <AuthButton />
             </nav>
 
