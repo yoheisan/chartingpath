@@ -41,14 +41,14 @@ const projectTemplates: ProjectTemplate[] = [
     id: 'setup_finder',
     type: 'setup_finder',
     name: 'Setup Finder',
-    description: 'Validate specific tickers before you trade — get full trade plans with Visual Proof',
+    description: 'Analyze ANY ticker you want — not just the screener universe. Your watchlist, your rules.',
     icon: Search,
     color: 'text-emerald-500',
     gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent',
     estimatedCredits: '5-15',
     estimatedTime: '30-60s',
-    features: ['Custom watchlists', 'Visual Proof charts', 'Vault artifacts'],
-    badge: 'Validate',
+    features: ['Any ticker worldwide', 'Visual Proof charts', 'Saved to Vault'],
+    badge: 'Your Tickers',
     badgeVariant: 'default'
   },
   {
