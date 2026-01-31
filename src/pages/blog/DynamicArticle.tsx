@@ -113,6 +113,17 @@ const CorrelationVisualizer = lazy(() => import('@/components/blog/risk-manageme
 const ScalingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/ScalingVisualizer'));
 const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MaxLossVisualizer'));
 
+// Algorithmic Trading Visualizers
+const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
+const MachineLearningVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MachineLearningVisualizer'));
+const PineScriptVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/PineScriptVisualizer'));
+const AlgorithmicTradingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/AlgorithmicTradingVisualizer'));
+const StatArbVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/StatArbVisualizer'));
+const QuantTradingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/QuantTradingVisualizer'));
+const HFTVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/HFTVisualizer'));
+const MarketMakingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MarketMakingVisualizer'));
+const AIOptimizationVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/AIOptimizationVisualizer'));
+
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'head-and-shoulders': '/learn/head-and-shoulders',
