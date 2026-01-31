@@ -12,7 +12,7 @@ import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig }
 import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
 import { CompressedBar } from "@/types/VisualSpec";
 
-// Lazy load heavy chart components
+// Lazy load heavy chart components and primer
 const DynamicPatternChart = lazy(() => 
   import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
 );
@@ -27,6 +27,10 @@ const OptionsPayoffChart = lazy(() =>
 
 const OptionsGreeksTable = lazy(() => 
   import('@/components/charts/OptionsGreeksTable')
+);
+
+const OptionsStrategyPrimer = lazy(() => 
+  import('@/components/blog/OptionsStrategyPrimer')
 );
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
@@ -698,6 +702,19 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
   );
 }
 
+// Options Strategy Primer - Beginner-friendly educational content
+function OptionsStrategyPrimerSection({ slug }: { slug: string }) {
+  const config = getOptionsStrategyConfig(slug);
+  
+  if (!config?.primer) return null;
+  
+  return (
+    <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+      <OptionsStrategyPrimer data={config.primer} />
+    </Suspense>
+  );
+}
+
 // Options Payoff Diagram visualization for options strategy articles
 function OptionsPayoffVisualization({ slug }: { slug: string }) {
   const config = getOptionsStrategyConfig(slug);
@@ -709,10 +726,10 @@ function OptionsPayoffVisualization({ slug }: { slug: string }) {
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-purple-500" />
-          Options Strategy Visualization
+          Payoff Diagram & Greeks
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
-          Interactive payoff diagrams showing profit/loss at different price points
+          Visual representation of profit/loss at different stock prices
         </p>
       </CardHeader>
       <CardContent>
@@ -752,7 +769,7 @@ function OptionsPayoffVisualization({ slug }: { slug: string }) {
             <div className="bg-muted/30 rounded-lg p-4">
               <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Lightbulb className="h-4 w-4 text-amber-500" />
-                Key Points to Remember
+                Quick Reference
               </h4>
               <ul className="space-y-2">
                 {config.educationalNotes.map((note, i) => (
@@ -767,7 +784,7 @@ function OptionsPayoffVisualization({ slug }: { slug: string }) {
         </div>
         
         <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
-          <strong>Note:</strong> The white line shows P/L at expiration. The dashed line shows current P/L with remaining time value. Strike prices and break-even points are marked on the chart.
+          <strong>Reading the diagram:</strong> The solid line shows P/L at expiration. The dashed line shows current P/L with remaining time value. Vertical markers indicate strike prices and break-even points.
         </p>
       </CardContent>
     </Card>
@@ -973,12 +990,24 @@ const DynamicArticle = () => {
           {/* Table of Contents */}
           <TableOfContents sections={sections} />
 
-          {/* Options Payoff Diagrams for options strategy articles */}
+          {/* OPTIONS ARTICLES: Primer First (comprehensive beginner education) */}
+          {slug && hasOptionsPayoffChart(slug) && (
+            <OptionsStrategyPrimerSection slug={slug} />
+          )}
+
+          {/* Render Overview sections first */}
+          <div className="mt-8">
+            {sections
+              .filter(section => section.type === 'overview')
+              .map((section, index) => renderSection(section, index))}
+          </div>
+
+          {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsPayoffVisualization slug={slug} />
           )}
 
-          {/* Indicator Chart Visualizations for strategies with MACD, RSI, etc. */}
+          {/* NON-OPTIONS ARTICLES: Indicator Chart Visualizations after overview */}
           {slug && hasStrategyIndicators(slug) && !hasOptionsPayoffChart(slug) && (
             <IndicatorChartVisualization slug={slug} />
           )}
@@ -988,9 +1017,11 @@ const DynamicArticle = () => {
             <ChartVisualization slug={slug} />
           )}
 
-          {/* Rendered Sections */}
+          {/* Remaining Sections (non-overview) */}
           <div className="mt-8">
-            {sections.map((section, index) => renderSection(section, index))}
+            {sections
+              .filter(section => section.type !== 'overview')
+              .map((section, index) => renderSection(section, index))}
           </div>
 
           {/* Tags */}
