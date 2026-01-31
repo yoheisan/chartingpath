@@ -1,22 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye, AlertCircle } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Pattern to strategy mapping for deep-linking from Screener/PatternLab
+const PATTERN_TO_STRATEGY_MAP: Record<string, string> = {
+  'double-top': 'Reversal',
+  'double-bottom': 'Reversal',
+  'head-shoulders': 'Reversal',
+  'inverse-head-shoulders': 'Reversal',
+  'rising-wedge': 'Reversal',
+  'falling-wedge': 'Reversal',
+  'ascending-triangle': 'Breakout',
+  'descending-triangle': 'Breakout',
+  'symmetric-triangle': 'Breakout',
+  'bull-flag': 'Trend Following',
+  'bear-flag': 'Trend Following',
+  'bullish-pennant': 'Trend Following',
+  'bearish-pennant': 'Trend Following',
+  'cup-handle': 'Breakout',
+  'rectangle': 'Breakout',
+  'channel-up': 'Trend Following',
+  'channel-down': 'Trend Following',
+};
 
 const MemberScripts = () => {
+  const [searchParams] = useSearchParams();
+  const patternParam = searchParams.get('pattern');
+  const symbolParam = searchParams.get('symbol');
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [selectedStrategy, setSelectedStrategy] = useState("all");
   const [previewScript, setPreviewScript] = useState<typeof scripts[0] | null>(null);
+  const [contextMessage, setContextMessage] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Apply pattern-based filtering when navigating from Screener/PatternLab
+  useEffect(() => {
+    if (patternParam) {
+      const mappedStrategy = PATTERN_TO_STRATEGY_MAP[patternParam];
+      if (mappedStrategy) {
+        setSelectedStrategy(mappedStrategy);
+        const patternName = patternParam.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        setContextMessage(`Showing scripts relevant to "${patternName}" pattern${symbolParam ? ` for ${symbolParam}` : ''}`);
+      }
+    }
+  }, [patternParam, symbolParam]);
 
   const scripts = [
     {
@@ -293,6 +332,26 @@ if shortCondition
             Back to Home
           </Link>
         </div>
+
+        {/* Context Message - shows when navigating from Screener/PatternLab */}
+        {contextMessage && (
+          <Alert className="mb-6 border-primary/30 bg-primary/5">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{contextMessage}</span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setContextMessage(null);
+                  setSelectedStrategy("all");
+                }}
+              >
+                Clear Filter
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Header */}
         <div className="text-center mb-8">
