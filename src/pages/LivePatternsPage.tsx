@@ -318,13 +318,10 @@ export default function LivePatternsPage() {
   const { caps, tier, upgradeIncentive, lockedPatterns, loading: capsLoading } = screenerCapsResult;
   
   // Use full caps immediately for all users - free tier now has full access
+  // IMPORTANT: Default to ALL patterns so we don't filter out results during caps loading
   const DEFAULT_CAPS = {
     maxTickersPerClass: 100,
-    allowedPatterns: [
-      'donchian-breakout-long', 'donchian-breakout-short',
-      'double-top', 'double-bottom',
-      'ascending-triangle', 'descending-triangle'
-    ]
+    allowedPatterns: ALL_PATTERN_IDS // Use all patterns to avoid filtering during loading
   };
   const effectiveCaps = capsLoading ? DEFAULT_CAPS : caps;
 
@@ -442,11 +439,15 @@ export default function LivePatternsPage() {
 
   const handleAssetTypeChange = (newType: AssetType) => {
     setAssetType(newType);
+    setPatterns([]); // Clear patterns immediately for visual feedback
+    setError(null);  // Clear any previous errors
     fetchLivePatterns(false, newType, timeframe);
   };
 
   const handleTimeframeChange = (newTf: '1h' | '4h' | '1d' | '1wk') => {
     setTimeframe(newTf);
+    setPatterns([]); // Clear patterns immediately for visual feedback
+    setError(null);  // Clear any previous errors
     fetchLivePatterns(false, assetType, newTf);
   };
 
