@@ -31,9 +31,9 @@ const Footer = () => {
               </p>
             </div>
 
-            {/* Discover & Research - matches header journey */}
+            {/* Research */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Discover</h3>
+              <h3 className="font-semibold mb-4 text-foreground">Research</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/patterns/live" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Screener
@@ -53,18 +53,18 @@ const Footer = () => {
               </nav>
             </div>
 
-            {/* Learn - matches header Research dropdown */}
+            {/* Learning */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Learn</h3>
+              <h3 className="font-semibold mb-4 text-foreground">Learning</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pattern Library
                 </Link>
-                <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pattern Quizzes
-                </Link>
                 <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Blog & Articles
+                </Link>
+                <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pattern Quizzes
                 </Link>
               </nav>
             </div>
