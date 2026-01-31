@@ -98,6 +98,16 @@ const ROCVisualizer = lazy(() => import('@/components/blog/indicator-visualizers
 const ParabolicSARVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/ParabolicSARVisualizer'));
 const DonchianVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/DonchianVisualizer'));
 const EMAVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/EMAVisualizer'));
+
+// Risk Management Visualizers
+const PositionSizingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/PositionSizingVisualizer'));
+const KellyCriterionVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/KellyCriterionVisualizer'));
+const StopLossVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/StopLossVisualizer'));
+const RiskRewardVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/RiskRewardVisualizer'));
+const MartingaleVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MartingaleVisualizer'));
+const DrawdownVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/DrawdownVisualizer'));
+const VaRVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/VaRVisualizer'));
+
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'head-and-shoulders': '/learn/head-and-shoulders',
@@ -1234,6 +1244,44 @@ const DynamicArticle = () => {
               <EMAVisualizer />
             </Suspense>
           )}
+
+          {/* RISK MANAGEMENT VISUALIZERS */}
+          {(slug === 'position-sizing-fundamentals' || slug === 'position-sizing-key' || slug === 'position-sizing') && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <PositionSizingVisualizer />
+            </Suspense>
+          )}
+          {slug === 'kelly-criterion' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <KellyCriterionVisualizer />
+            </Suspense>
+          )}
+          {(slug === 'stop-loss-strategies' || slug === 'dynamic-stop-loss' || slug === 'atr-stop-loss') && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <StopLossVisualizer />
+            </Suspense>
+          )}
+          {(slug === 'risk-reward-ratio' || slug === 'risk-reward-optimization') && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <RiskRewardVisualizer />
+            </Suspense>
+          )}
+          {(slug === 'martingale-strategy' || slug === 'anti-martingale') && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MartingaleVisualizer />
+            </Suspense>
+          )}
+          {slug === 'managing-drawdowns' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <DrawdownVisualizer />
+            </Suspense>
+          )}
+          {slug === 'value-at-risk' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <VaRVisualizer />
+            </Suspense>
+          )}
+
           {slug && hasStrategyCharts(slug) && (
             <ChartVisualization slug={slug} />
           )}
