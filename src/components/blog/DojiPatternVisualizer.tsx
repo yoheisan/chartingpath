@@ -50,33 +50,46 @@ const DOJI_VARIANTS: DojiVariant[] = [
     patternKey: 'standard-doji',
     bias: 'neutral',
     accuracy: '65%',
-    description: 'The classic Doji with open and close at the same price, and roughly equal upper and lower shadows. Represents perfect market indecision.',
+    description: 'The Standard Doji is the classic indecision candle where open and close are virtually identical with moderate shadows on both sides. The word "doji" comes from Japanese, meaning "the same thing"—referring to the open and close being at the same price. While rare, this pattern signals a potential equilibrium between buyers and sellers that often precedes trend changes. Studies show 60-70% reliability when appearing at key levels with confirmation.',
     anatomy: {
-      body: 'Virtually none (open = close)',
-      upperShadow: 'Moderate length',
-      lowerShadow: 'Moderate length (similar to upper)'
+      body: 'Virtually none—open and close at same or nearly same price',
+      upperShadow: 'Moderate length (neither very long nor very short)',
+      lowerShadow: 'Moderate length (approximately equal to upper shadow)'
     },
     keyCharacteristics: [
-      'Open and close are identical or nearly identical',
-      'Upper and lower shadows are roughly equal',
-      'Looks like a plus sign (+) or cross',
-      'Volume often decreases during formation'
+      'Open and close are identical or within 0.1% of each other',
+      'Upper and lower shadows are roughly equal length',
+      'Appears as a plus sign (+) or cross on the chart',
+      'Volume often decreases during formation (indecision)',
+      'More meaningful after extended trends (5+ candles)',
+      'Signals potential reversal OR continuation—needs confirmation',
+      'Rarity increases significance when it does appear',
+      'Part of many compound patterns (morning star, harami cross)'
     ],
     tradingRules: {
-      entry: 'Enter on close of confirmation candle in the breakout direction',
-      stopLoss: 'Place beyond the opposite shadow of the Doji',
-      target: 'Previous swing high/low or 2:1 risk/reward'
+      entry: 'Wait for confirmation candle in the breakout direction. Bullish: enter if next candle closes above doji high. Bearish: enter if next candle closes below doji low. Never trade doji in isolation.',
+      stopLoss: 'Place stop beyond the opposite shadow of the Doji. For bullish setup: stop below doji low. For bearish: stop above doji high.',
+      target: 'Previous swing high/low or 2:1 risk/reward minimum. Adjust position size given the pattern\'s moderate accuracy.'
     },
     bestContext: [
       'After extended trends (5+ candles in one direction)',
-      'At key support/resistance levels',
-      'Near Fibonacci retracement levels',
-      'At psychological round numbers'
+      'At key horizontal support/resistance levels',
+      'Near Fibonacci retracement levels (50%, 61.8%)',
+      'At psychological round numbers ($100, $50)',
+      'When RSI shows divergence from price',
+      'Following high-volume moves (exhaustion sign)',
+      'At major moving average confluence',
+      'Before significant news or earnings'
     ],
     commonMistakes: [
       'Trading the Doji without waiting for confirmation',
-      'Ignoring the context (trend, S/R levels)',
-      'Using Dojis in choppy sideways markets'
+      'Ignoring the context (trend, support/resistance levels)',
+      'Using Dojis in choppy sideways markets (low signal value)',
+      'Expecting immediate direction (doji signals pause)',
+      'Treating all dojis equally (location matters enormously)',
+      'Ignoring volume profile (low volume = less significance)',
+      'Not adjusting expectations for moderate accuracy',
+      'Confusing doji with small-body candles (body must be near-zero)'
     ]
   },
   {
@@ -85,33 +98,46 @@ const DOJI_VARIANTS: DojiVariant[] = [
     patternKey: 'dragonfly-doji',
     bias: 'bullish',
     accuracy: '72%',
-    description: 'A powerful bullish reversal signal. Open and close are at the high of the session with a long lower shadow. Shows that sellers pushed price down aggressively, but buyers brought it all the way back.',
+    description: 'The Dragonfly Doji is a powerful bullish reversal signal characterized by open and close at the session\'s high with a very long lower shadow. Named for its resemblance to a dragonfly, this pattern shows that sellers pushed prices down aggressively during the session, but buyers absorbed all selling and rallied prices back to the open. In Japanese, this concept represents complete rejection of lower prices. Studies show 68-76% reliability at support levels.',
     anatomy: {
-      body: 'None or tiny at the TOP of the range',
-      upperShadow: 'None or very small',
-      lowerShadow: 'Very long (at least 2x the body)'
+      body: 'Virtually none—positioned at the TOP of the trading range',
+      upperShadow: 'None or very small (price didn\'t exceed open/close)',
+      lowerShadow: 'Very long—at least 2-3x the body length'
     },
     keyCharacteristics: [
-      'Looks like a "T" shape',
+      'Forms a "T" shape on the chart',
       'Open, high, and close are all at the same level',
-      'Long lower shadow shows strong buying pressure',
-      'Most bullish when appearing at support levels'
+      'Long lower shadow shows aggressive buying at lows (2x+ body)',
+      'Most bullish when appearing at support levels',
+      'More reliable after established downtrends',
+      'Volume spike on the dragonfly adds confirmation',
+      'The longer the lower shadow, the stronger the rejection',
+      'Similar psychology to hammer but more extreme'
     ],
     tradingRules: {
-      entry: 'Enter long on close of bullish confirmation candle',
-      stopLoss: 'Below the low of the Dragonfly\'s shadow',
-      target: 'Previous resistance or 2:1 R/R minimum'
+      entry: 'Wait for bullish confirmation candle that closes above dragonfly high. Entry: at confirmation close or next bar open. Given higher accuracy, can enter aggressively if at major support with volume.',
+      stopLoss: 'Below the low of the Dragonfly\'s shadow—this represents the rejection level where buyers stepped in forcefully.',
+      target: 'Previous resistance or 2:1 R/R minimum. Target 2: 50% retracement of prior downtrend. Strong dragonflies at support often start significant rallies.'
     },
     bestContext: [
-      'At established support levels',
-      'After a downtrend (reversal signal)',
-      'Near moving average support (20/50/200 EMA)',
-      'At oversold RSI levels (<30)'
+      'At established horizontal support levels',
+      'After a downtrend (reversal signal context)',
+      'Near major moving average support (20/50/200 EMA)',
+      'At oversold RSI levels (<30) with divergence',
+      'At Fibonacci retracement levels (61.8%, 78.6%)',
+      'Following capitulation or panic selling',
+      'At prior significant lows',
+      'When volume spikes on the rejection'
     ],
     commonMistakes: [
       'Going long immediately without confirmation candle',
       'Ignoring the downtrend context requirement',
-      'Setting stop loss too tight (below shadow is key)'
+      'Setting stop loss too tight (below shadow is key level)',
+      'Trading dragonfly in sideways markets (needs trend)',
+      'Confusing with small-shadow doji (shadow must be long)',
+      'Ignoring volume (high volume rejection is more meaningful)',
+      'Expecting pattern in all market conditions (relatively rare)',
+      'Not adjusting for the pattern\'s higher accuracy'
     ]
   },
   {
@@ -120,33 +146,46 @@ const DOJI_VARIANTS: DojiVariant[] = [
     patternKey: 'gravestone-doji',
     bias: 'bearish',
     accuracy: '74%',
-    description: 'A powerful bearish reversal signal. Open and close are at the low of the session with a long upper shadow. Shows that buyers pushed price up aggressively, but sellers rejected it completely.',
+    description: 'The Gravestone Doji is a powerful bearish reversal signal with open and close at the session\'s low and a very long upper shadow. The pattern resembles a gravestone or tombstone—an ominous visual that Japanese traders associated with the "death" of an uptrend. Buyers pushed prices up aggressively but sellers rejected the advance completely, driving price back to the open. At 70-78% reliability at resistance, it\'s among the more dependable bearish signals.',
     anatomy: {
-      body: 'None or tiny at the BOTTOM of the range',
-      upperShadow: 'Very long (at least 2x the body)',
-      lowerShadow: 'None or very small'
+      body: 'Virtually none—positioned at the BOTTOM of the trading range',
+      upperShadow: 'Very long—at least 2-3x the body length',
+      lowerShadow: 'None or very small (price didn\'t fall below open/close)'
     },
     keyCharacteristics: [
-      'Looks like an inverted "T" or tombstone',
+      'Forms an inverted "T" or tombstone shape',
       'Open, low, and close are all at the same level',
-      'Long upper shadow shows strong selling pressure',
-      'Most bearish when appearing at resistance levels'
+      'Long upper shadow shows aggressive selling at highs (2x+ body)',
+      'Most bearish when appearing at resistance levels',
+      'More reliable after established uptrends',
+      'Volume spike on the gravestone suggests distribution',
+      'The longer the upper shadow, the stronger the rejection',
+      'Similar psychology to shooting star but more extreme'
     ],
     tradingRules: {
-      entry: 'Enter short on close of bearish confirmation candle',
-      stopLoss: 'Above the high of the Gravestone\'s shadow',
-      target: 'Previous support or 2:1 R/R minimum'
+      entry: 'Wait for bearish confirmation candle that closes below gravestone low. Entry: at confirmation close or next bar open. At major resistance with volume, can enter more aggressively.',
+      stopLoss: 'Above the high of the Gravestone\'s shadow—this represents the rejection level where sellers stepped in forcefully.',
+      target: 'Previous support or 2:1 R/R minimum. Target 2: 50% retracement of prior uptrend. Strong gravestones at resistance often start significant declines.'
     },
     bestContext: [
       'At established resistance levels',
-      'After an uptrend (reversal signal)',
-      'Near moving average resistance',
-      'At overbought RSI levels (>70)'
+      'After an uptrend (reversal signal context)',
+      'Near major moving average resistance',
+      'At overbought RSI levels (>70) with divergence',
+      'At Fibonacci extension levels (127.2%, 161.8%)',
+      'Following blow-off tops or parabolic moves',
+      'At prior all-time highs or significant peaks',
+      'When volume spikes on the rejection'
     ],
     commonMistakes: [
-      'Shorting immediately without confirmation',
+      'Shorting immediately without confirmation candle',
       'Ignoring the uptrend context requirement',
-      'Trading against strong momentum without patience'
+      'Trading against strong momentum without patience',
+      'Setting stops too tight (above shadow is key)',
+      'Confusing with regular small-shadow doji',
+      'Ignoring volume profile on the rejection',
+      'Fighting strong uptrends without clear resistance',
+      'Expecting the pattern too frequently'
     ]
   },
   {
@@ -155,33 +194,46 @@ const DOJI_VARIANTS: DojiVariant[] = [
     patternKey: 'long-legged-doji',
     bias: 'neutral',
     accuracy: '68%',
-    description: 'Represents maximum indecision and volatility. Both upper and lower shadows are very long, showing extreme battle between bulls and bears. Often precedes major moves.',
+    description: 'The Long-Legged Doji represents maximum indecision and volatility—both upper and lower shadows are very long, showing an extreme battle between bulls and bears that ended in a draw. The open and close are near the middle of the range. This pattern often appears at major turning points and frequently precedes significant moves in either direction. Japanese traders called this "juji" (cross) and treated it as a major warning signal.',
     anatomy: {
-      body: 'None or tiny in the MIDDLE of the range',
-      upperShadow: 'Very long',
-      lowerShadow: 'Very long (similar to upper)'
+      body: 'Virtually none—positioned in the MIDDLE of the trading range',
+      upperShadow: 'Very long (3x+ body length)',
+      lowerShadow: 'Very long (similar to upper shadow—3x+ body)'
     },
     keyCharacteristics: [
-      'Very long shadows in both directions',
-      'Open and close near the middle of the range',
+      'Very long shadows extending in both directions',
+      'Open and close near the middle of the range (cross shape)',
       'High volume often accompanies this pattern',
-      'Shows intense volatility and indecision'
+      'Shows intense volatility and complete indecision',
+      'More significant than standard or dragonfly/gravestone doji',
+      'Often appears at major market turning points',
+      'Represents maximum uncertainty—market at crossroads',
+      'Frequently precedes major moves in either direction'
     ],
     tradingRules: {
-      entry: 'Wait for breakout above high or below low, then enter with confirmation',
-      stopLoss: 'Opposite extreme of the Long-Legged Doji',
-      target: 'Measured move equal to the Doji\'s range'
+      entry: 'Wait for breakout above high or below low with confirmation candle. Enter with the breakout direction. Do NOT predict direction—let price resolve first.',
+      stopLoss: 'Opposite extreme of the Long-Legged Doji. Accept wide stops and adjust position size accordingly. This pattern requires more risk tolerance.',
+      target: 'Measured move equal to the Doji\'s full range. These setups can produce significant moves given the preceding volatility and indecision resolution.'
     },
     bestContext: [
       'After extended trends showing exhaustion',
-      'Before major news events or earnings',
-      'At major confluence zones (multiple S/R levels)',
-      'During market uncertainty (Fed meetings, elections)'
+      'Before major news events or earnings announcements',
+      'At major confluence zones (multiple S/R levels meeting)',
+      'During market uncertainty periods (Fed decisions, elections)',
+      'At all-time highs or multi-year lows',
+      'When volume is significantly elevated',
+      'At psychological round number levels',
+      'Following gap moves (showing indecision after gap)'
     ],
     commonMistakes: [
-      'Picking a direction without confirmation',
-      'Underestimating the volatility that follows',
-      'Not widening stops for the increased range'
+      'Picking a direction without waiting for confirmation',
+      'Underestimating the volatility that often follows',
+      'Not widening stops for the increased range',
+      'Using normal position sizes (reduce for wide stops)',
+      'Trading the pattern too aggressively before resolution',
+      'Ignoring that resolution may take multiple sessions',
+      'Expecting immediate directional clarity',
+      'Not recognizing the pattern\'s significance at turning points'
     ]
   },
   {
@@ -190,32 +242,46 @@ const DOJI_VARIANTS: DojiVariant[] = [
     patternKey: 'four-price-doji',
     bias: 'neutral',
     accuracy: 'N/A',
-    description: 'A rare pattern where open, high, low, and close are all the same price. Represents complete market standstill, typically seen in illiquid markets or during holidays.',
+    description: 'The Four-Price Doji is a rare anomaly where open, high, low, and close are all the same price—representing complete market standstill. This pattern appears as a single horizontal dash with no shadows whatsoever. It typically occurs in illiquid markets, during holidays, or after trading halts. While technically a doji, it signals absence of trading activity rather than indecision between active participants. Professional traders generally do NOT trade this pattern.',
     anatomy: {
-      body: 'A single horizontal line',
-      upperShadow: 'None',
-      lowerShadow: 'None'
+      body: 'A single horizontal line (dash)',
+      upperShadow: 'None whatsoever',
+      lowerShadow: 'None whatsoever'
     },
     keyCharacteristics: [
-      'Appears as a simple horizontal dash (—)',
-      'Open = High = Low = Close',
-      'Very low or no volume',
-      'Rare in liquid markets'
+      'Appears as a simple horizontal dash (—) on the chart',
+      'Open = High = Low = Close (all four prices equal)',
+      'Very low or no trading volume',
+      'Rare in liquid, actively traded markets',
+      'NOT a tradeable pattern—signals market absence',
+      'Often seen in extended hours or holidays',
+      'May appear during trading halts or circuit breakers',
+      'Should be excluded from pattern analysis'
     ],
     tradingRules: {
-      entry: 'Do not trade this pattern directly',
-      stopLoss: 'Wait for normal market activity to resume',
-      target: 'Use subsequent candles for trading decisions'
+      entry: 'Do NOT trade this pattern directly. Wait for normal market activity to resume before making any trading decisions.',
+      stopLoss: 'N/A—pattern is not tradeable. Wait for subsequent candles with normal activity.',
+      target: 'Use following candles for analysis once volume and activity return to normal levels.'
     },
     bestContext: [
       'Holiday sessions with thin trading',
       'Pre-market or after-hours on illiquid stocks',
-      'During market halts or circuit breakers'
+      'During market halts or circuit breakers',
+      'In very thinly traded instruments',
+      'Following trading suspensions',
+      'During market closures or partial sessions',
+      'In newly listed or delisted securities',
+      'During extreme market stress (halts)'
     ],
     commonMistakes: [
-      'Trying to derive meaning from lack of activity',
-      'Trading in illiquid conditions',
-      'Not waiting for volume to return'
+      'Trying to derive meaning from complete lack of activity',
+      'Trading in illiquid conditions based on this "pattern"',
+      'Not recognizing it as a sign of no market participation',
+      'Confusing with other doji types that ARE meaningful',
+      'Trading immediately after four-price doji appears',
+      'Using standard pattern analysis on non-liquid periods',
+      'Not waiting for volume and activity to normalize',
+      'Including in backtests or pattern statistics'
     ]
   }
 ];
