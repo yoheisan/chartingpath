@@ -866,12 +866,21 @@ export default function FullChartViewer({
                 <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
                   {/* Pan hint - shows only when not dragging */}
                   {!isDragging && (
-                    <span className="text-[9px] text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded hidden lg:inline-block">
-                      Shift+drag to pan
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] text-muted-foreground bg-background/90 border border-border/40 px-2 py-1 rounded cursor-help hidden lg:inline-flex items-center gap-1.5">
+                          <kbd className="px-1 py-0.5 text-[9px] bg-muted rounded font-mono">Shift</kbd>
+                          <span>+ drag to pan</span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[200px]">
+                        <p className="text-xs">Hold <kbd className="px-1 py-0.5 bg-muted rounded font-mono text-[10px]">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {isDragging && (
-                    <span className="text-[9px] text-amber-500 bg-background/80 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] text-amber-500 bg-background/90 border border-amber-500/30 px-2 py-1 rounded inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                       Panning...
                     </span>
                   )}
