@@ -59,8 +59,9 @@ const SetupFinderWizard = () => {
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   
   
-  // Auth state
+  // Auth state - start with loading to avoid flash of "not signed in"
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   
   // UI state
@@ -87,8 +88,8 @@ const SetupFinderWizard = () => {
   useEffect(() => {
     // Set up auth state listener FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[SetupFinder] Auth state changed:', event, !!session?.user);
       setIsAuthenticated(!!session?.user);
+      setIsAuthLoading(false);
       if (session?.user) {
         setTimeout(() => {
           supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
@@ -102,8 +103,8 @@ const SetupFinderWizard = () => {
     
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[SetupFinder] Initial session check:', !!session?.user);
       setIsAuthenticated(!!session?.user);
+      setIsAuthLoading(false);
       if (session?.user) {
         supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
           setIsAdmin(data === true);
@@ -269,7 +270,7 @@ const SetupFinderWizard = () => {
                   Admin
                 </Badge>
               )}
-              {!isAuthenticated && (
+              {!isAuthLoading && !isAuthenticated && (
                 <Badge variant="outline" className="text-orange-500 border-orange-500">
                   Not signed in
                 </Badge>
@@ -491,7 +492,7 @@ const SetupFinderWizard = () => {
                 )}
                 
                 {/* Sign in prompt for unauthenticated users */}
-                {!isAuthenticated && (
+                {!isAuthLoading && !isAuthenticated && (
                   <Alert className="mt-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -509,7 +510,7 @@ const SetupFinderWizard = () => {
                 
                 <Button
                   onClick={handleRun}
-                  disabled={isRunning || selectedPatterns.length === 0 || (!isAdmin && estimate && !estimate.allowed)}
+                  disabled={isRunning || isAuthLoading || selectedPatterns.length === 0 || (!isAdmin && estimate && !estimate.allowed)}
                   className="w-full mt-4"
                   size="lg"
                 >
@@ -517,6 +518,11 @@ const SetupFinderWizard = () => {
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Running...
+                    </>
+                  ) : isAuthLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Checking...
                     </>
                   ) : !isAuthenticated ? (
                     <>

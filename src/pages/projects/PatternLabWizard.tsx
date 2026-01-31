@@ -178,6 +178,7 @@ const PatternLabWizard = () => {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   
   // Check if Pattern Lab is enabled for user's tier
   const patternLabCaps = PLANS_CONFIG.tiers[userTier].projects.pattern_lab;
@@ -187,11 +188,13 @@ const PatternLabWizard = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user);
+      setIsAuthLoading(false);
     });
     
     // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session?.user);
+      setIsAuthLoading(false);
     });
     
     return () => subscription.unsubscribe();
@@ -622,6 +625,7 @@ const PatternLabWizard = () => {
                   onClick={handleRun}
                   disabled={
                     isRunning || 
+                    isAuthLoading ||
                     !isEnabled ||
                     selectedInstruments.length === 0 || 
                     selectedPatterns.length === 0 ||
@@ -632,6 +636,16 @@ const PatternLabWizard = () => {
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Starting...
+                    </>
+                  ) : isAuthLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Checking...
+                    </>
+                  ) : !isAuthenticated ? (
+                    <>
+                      <FlaskConical className="h-4 w-4 mr-2" />
+                      Sign in to Run
                     </>
                   ) : !isEnabled ? (
                     <>
