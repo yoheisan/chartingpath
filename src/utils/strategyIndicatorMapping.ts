@@ -19,6 +19,22 @@ export interface StrategyIndicatorConfig {
  * Articles matching these slugs will display the relevant indicator chart.
  */
 export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[]> = {
+  // ===== DONCHIAN CHANNEL / TURTLE TRADING =====
+  'donchian-channel': [
+    { 
+      indicator: 'donchian', 
+      title: 'Donchian Channels (20-Period)',
+      description: 'Turtle Trading breakout system - Green = 20-day high, Red = 20-day low',
+      symbol: 'SPY'
+    }
+  ],
+  'turtle-trading': [
+    { indicator: 'donchian', title: 'Turtle Trading Breakout System', symbol: 'GC=F' }
+  ],
+  'channel-breakout-strategy': [
+    { indicator: 'donchian', title: 'Channel Breakout Visualization', symbol: 'CL=F' }
+  ],
+
   // ===== MACD STRATEGY ARTICLES =====
   'macd-complete-strategy': [
     { 
@@ -441,6 +457,7 @@ export function getIndicatorMappingStats(): { totalArticles: number; indicatorCo
     'ema-crossover': 0,
     'sma-crossover': 0,
     'bollinger': 0,
+    'donchian': 0,
   };
   
   let totalArticles = 0;

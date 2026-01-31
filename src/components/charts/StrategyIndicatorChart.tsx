@@ -28,6 +28,7 @@ import {
   calculateMACD,
   calculateRSI,
   calculateBollingerBands,
+  calculateDonchianChannels,
 } from '@/utils/chartIndicators';
 import {
   getThemeColors,
@@ -41,7 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 
-export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover';
+export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover' | 'donchian';
 
 export interface StrategyIndicatorChartProps {
   bars: CompressedBar[];
@@ -75,6 +76,9 @@ const INDICATOR_CHART_COLORS = {
   sma200: '#8b5cf6',
   bollingerBand: 'rgba(156, 163, 175, 0.5)',
   bollingerMiddle: 'rgba(156, 163, 175, 0.8)',
+  donchianUpper: '#22c55e',    // Green - breakout above
+  donchianLower: '#ef4444',    // Red - breakout below
+  donchianMiddle: '#3b82f6',   // Blue - middle line
 };
 
 const StrategyIndicatorChart = memo(({
@@ -92,8 +96,8 @@ const StrategyIndicatorChart = memo(({
   const indicatorChartRef = useRef<IChartApi | null>(null);
   const [currentSignal, setCurrentSignal] = useState<{ type: 'bullish' | 'bearish' | 'neutral'; text: string } | null>(null);
 
-  // Calculate chart heights
-  const mainHeight = indicator === 'bollinger' ? height : Math.floor(height * 0.65);
+  // Calculate chart heights - Donchian and Bollinger are overlay-only (no separate pane)
+  const mainHeight = (indicator === 'bollinger' || indicator === 'donchian') ? height : Math.floor(height * 0.65);
   const indicatorHeight = indicator === 'bollinger' ? 0 : Math.floor(height * 0.35);
 
   useEffect(() => {
@@ -128,7 +132,7 @@ const StrategyIndicatorChart = memo(({
         borderColor: theme.grid,
       },
       timeScale: {
-        visible: indicator === 'bollinger', // Only show time on main if no indicator pane
+        visible: indicator === 'bollinger' || indicator === 'donchian', // Only show time on main if no indicator pane
         borderVisible: true,
         borderColor: theme.grid,
         timeVisible: true,
@@ -280,6 +284,56 @@ const StrategyIndicatorChart = memo(({
           setCurrentSignal({ type: 'bearish', text: 'Breakdown Below Lower Band' });
         } else if (bandwidth < 0.1) {
           setCurrentSignal({ type: 'neutral', text: 'Squeeze Forming' });
+        }
+      }
+    }
+
+    // === DONCHIAN CHANNELS (Turtle Trading) ===
+    if (indicator === 'donchian') {
+      const donchianData = calculateDonchianChannels(bars, 20);
+      
+      if (donchianData.length > 0) {
+        // Upper channel (highest high)
+        const upperSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.donchianUpper,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        upperSeries.setData(donchianData.map(p => ({ time: p.time as Time, value: p.upper })));
+
+        // Middle line
+        const middleSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.donchianMiddle,
+          lineWidth: 1,
+          lineStyle: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        middleSeries.setData(donchianData.map(p => ({ time: p.time as Time, value: p.middle })));
+
+        // Lower channel (lowest low)
+        const lowerSeries = mainChart.addSeries(LineSeries, {
+          color: INDICATOR_CHART_COLORS.donchianLower,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        lowerSeries.setData(donchianData.map(p => ({ time: p.time as Time, value: p.lower })));
+
+        // Detect breakout signals (Turtle Trading entry rules)
+        const lastDC = donchianData[donchianData.length - 1];
+        const lastClose = bars[bars.length - 1].c;
+        const prevClose = bars.length > 1 ? bars[bars.length - 2].c : lastClose;
+
+        if (lastClose >= lastDC.upper && prevClose < donchianData[donchianData.length - 2]?.upper) {
+          setCurrentSignal({ type: 'bullish', text: '20-Day High Breakout (Long Entry)' });
+        } else if (lastClose <= lastDC.lower && prevClose > donchianData[donchianData.length - 2]?.lower) {
+          setCurrentSignal({ type: 'bearish', text: '20-Day Low Breakout (Short Entry)' });
+        } else if (lastClose > lastDC.middle) {
+          setCurrentSignal({ type: 'bullish', text: 'Above Middle Line (Bullish Bias)' });
+        } else {
+          setCurrentSignal({ type: 'bearish', text: 'Below Middle Line (Bearish Bias)' });
         }
       }
     }
@@ -490,6 +544,7 @@ const StrategyIndicatorChart = memo(({
       case 'ema-crossover': return 'EMA Crossover (12/26)';
       case 'sma-crossover': return 'SMA Crossover (50/200)';
       case 'bollinger': return 'Bollinger Bands (20, 2)';
+      case 'donchian': return 'Donchian Channels (20)';
       default: return indicator;
     }
   };
@@ -549,7 +604,7 @@ const StrategyIndicatorChart = memo(({
         )}
 
         {/* Legend for overlay indicators */}
-        {(indicator === 'ema-crossover' || indicator === 'sma-crossover' || indicator === 'bollinger') && (
+        {(indicator === 'ema-crossover' || indicator === 'sma-crossover' || indicator === 'bollinger' || indicator === 'donchian') && (
           <div className="px-3 py-2 bg-muted/20 flex items-center gap-4 text-xs border-t border-border/30">
             {indicator === 'ema-crossover' && (
               <>
@@ -584,6 +639,22 @@ const StrategyIndicatorChart = memo(({
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-0.5 bg-gray-500 rounded" style={{ borderStyle: 'dashed' }} />
                   SMA 20 (Middle)
+                </span>
+              </>
+            )}
+            {indicator === 'donchian' && (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-green-500 rounded" />
+                  20-Day High
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-blue-500 rounded" style={{ borderStyle: 'dashed' }} />
+                  Middle
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-red-500 rounded" />
+                  20-Day Low
                 </span>
               </>
             )}

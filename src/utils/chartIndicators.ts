@@ -270,3 +270,42 @@ export function calculateVolumeSMA(bars: CompressedBar[], period: number = 20): 
   
   return result;
 }
+
+export interface DonchianChannelPoint {
+  time: number;
+  upper: number;
+  middle: number;
+  lower: number;
+}
+
+/**
+ * Donchian Channels (Turtle Trading System)
+ * Upper = Highest High over period
+ * Lower = Lowest Low over period
+ * Middle = (Upper + Lower) / 2
+ */
+export function calculateDonchianChannels(
+  bars: CompressedBar[],
+  period: number = 20
+): DonchianChannelPoint[] {
+  if (bars.length < period) return [];
+  
+  const result: DonchianChannelPoint[] = [];
+  
+  for (let i = period - 1; i < bars.length; i++) {
+    const slice = bars.slice(i - period + 1, i + 1);
+    
+    const highestHigh = Math.max(...slice.map(b => b.h));
+    const lowestLow = Math.min(...slice.map(b => b.l));
+    const middle = (highestHigh + lowestLow) / 2;
+    
+    result.push({
+      time: Math.floor(new Date(bars[i].t).getTime() / 1000),
+      upper: highestHigh,
+      middle,
+      lower: lowestLow,
+    });
+  }
+  
+  return result;
+}
