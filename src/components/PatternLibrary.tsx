@@ -3,9 +3,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrendingUp, TrendingDown, RotateCcw, Info } from "lucide-react";
-import { useState } from "react";
+import { useState, lazy, Suspense, memo } from "react";
 import { Link } from "react-router-dom";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load the chart component for performance
+const DynamicPatternChart = lazy(() => 
+  import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
+);
+
+const ChartThumbnailSkeleton = memo(() => (
+  <div className="h-32 bg-muted/30 flex items-center justify-center">
+    <Skeleton className="w-full h-full" />
+  </div>
+));
+ChartThumbnailSkeleton.displayName = 'ChartThumbnailSkeleton';
 
 interface Pattern {
   name: string;
@@ -309,14 +322,23 @@ export const PatternLibrary = () => {
                 className="overflow-hidden hover:border-primary/50 transition-colors border-border/50 cursor-pointer group"
                 onClick={() => setSelectedPatternForDetails(getPatternKey(pattern.name))}
               >
-                {/* Pattern Type Badge Header */}
-                <div className="relative h-24 bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
-                  <div className="text-4xl opacity-20">
-                    {pattern.type === "reversal" ? "↩" : pattern.type === "continuation" ? "→" : "🕯"}
-                  </div>
+                {/* Pattern Chart Thumbnail */}
+                <div className="relative h-36 bg-gradient-to-br from-muted/30 to-background overflow-hidden">
+                  {pattern.chartKey && (
+                    <Suspense fallback={<ChartThumbnailSkeleton />}>
+                      <div className="absolute inset-0 scale-[0.35] origin-top-left" style={{ width: '285%', height: '285%' }}>
+                        <DynamicPatternChart 
+                          patternType={pattern.chartKey} 
+                          width={400} 
+                          height={280}
+                          showTitle={false}
+                        />
+                      </div>
+                    </Suspense>
+                  )}
                   <Badge 
                     variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                    className="absolute top-2 right-2 text-xs"
+                    className="absolute top-2 right-2 text-xs z-10"
                   >
                     {pattern.type}
                   </Badge>
