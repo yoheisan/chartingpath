@@ -79,13 +79,19 @@ const ProjectsPricing = () => {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             {t('projects.pricing.subheadline', 'Credits scale with symbols × history × patterns. Start free, upgrade as you grow.')}
           </p>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto mb-4">
-            All plans include access to <span className="text-foreground font-medium">1,100+ financial instruments</span>: 
-            500+ US Stocks (S&P 500) • 100+ Cryptocurrencies • 50+ Forex Pairs • 30+ Commodities
-          </p>
+          <div className="text-sm text-muted-foreground max-w-3xl mx-auto mb-4 space-y-1">
+            <p>
+              <span className="text-foreground font-medium">Screener:</span> 1,100+ instruments monitored by default 
+              (S&P 500 • 100+ Crypto • 50+ Forex • 30+ Commodities)
+            </p>
+            <p>
+              <span className="text-foreground font-medium">Research:</span> Analyze ANY of 8,000+ US stocks via Setup Finder
+            </p>
+          </div>
           <div className="flex flex-wrap justify-center gap-2 text-xs">
             <Badge variant="outline" className="bg-background/50">Pattern Screener: Free for all</Badge>
             <Badge variant="outline" className="bg-background/50">20+ Chart Patterns</Badge>
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">Custom Watchlist Monitoring (Paid)</Badge>
           </div>
         </div>
 
@@ -154,6 +160,14 @@ const ProjectsPricing = () => {
                       {tier.key === 'FREE' ? '1D' : 
                        tier.key === 'LITE' ? '15m, 4H, 1D' : 
                        '15m, 1H, 4H, 1D, 1W'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Watchlist Slots</span>
+                    <span className={`font-semibold ${tier.config.maxWatchlistSlots === 0 ? 'text-muted-foreground' : 'text-emerald-600'}`}>
+                      {tier.config.maxWatchlistSlots === 0 ? '—' : 
+                       tier.config.maxWatchlistSlots >= 9999 ? 'Unlimited' : 
+                       tier.config.maxWatchlistSlots}
                     </span>
                   </div>
                 </div>

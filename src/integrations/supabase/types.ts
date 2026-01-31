@@ -3314,6 +3314,7 @@ export type Database = {
           max_active_alerts: number
           max_instruments_per_run: number
           max_lookback_years: number
+          max_watchlist_slots: number
           plan_tier: Database["public"]["Enums"]["plan_tier"]
           updated_at: string
           user_id: string
@@ -3326,6 +3327,7 @@ export type Database = {
           max_active_alerts?: number
           max_instruments_per_run?: number
           max_lookback_years?: number
+          max_watchlist_slots?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
           updated_at?: string
           user_id: string
@@ -3338,6 +3340,7 @@ export type Database = {
           max_active_alerts?: number
           max_instruments_per_run?: number
           max_lookback_years?: number
+          max_watchlist_slots?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
           updated_at?: string
           user_id?: string
@@ -3491,6 +3494,39 @@ export type Database = {
           name?: string
           strategy_code?: string
           strategy_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watchlist_monitors: {
+        Row: {
+          asset_type: string
+          created_at: string
+          display_name: string | null
+          id: string
+          is_active: boolean
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          symbol?: string
           updated_at?: string
           user_id?: string
         }
