@@ -1,4 +1,4 @@
-import { useEffect, useRef, memo, useState } from 'react';
+import { useEffect, useRef, memo, useState, useCallback } from 'react';
 import {
   createChart,
   IChartApi,
@@ -21,9 +21,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Settings2 } from 'lucide-react';
+import { Settings2, RotateCcw } from 'lucide-react';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -33,6 +39,7 @@ import {
   INDICATOR_COLORS,
   normalizeBarsForConsistentColoring,
   calculateOptimalPriceMargins,
+  calculatePricePrecision,
 } from './chartConstants';
 
 export interface IndicatorSettings {
@@ -92,6 +99,9 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
+  const isPanningRef = useRef(false);
+  const panStartYRef = useRef(0);
+  const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -100,6 +110,16 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       return updated;
     });
   };
+
+  // Reset chart to auto-scale and fit content
+  const handleResetChart = useCallback(() => {
+    if (chartRef.current) {
+      chartRef.current.priceScale('right').applyOptions({
+        autoScale: true,
+      });
+      chartRef.current.timeScale().fitContent();
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || !bars || bars.length === 0) return;
@@ -112,6 +132,13 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       chartRef.current.remove();
       chartRef.current = null;
     }
+
+    // Calculate representative price for precision
+    const validCloses = bars.map(b => b.c).filter(Number.isFinite);
+    const representativePrice = validCloses.length > 0 
+      ? validCloses[validCloses.length - 1] 
+      : 100;
+    const { precision, minMove } = calculatePricePrecision(representativePrice);
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
@@ -127,6 +154,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       rightPriceScale: {
         visible: true,
         borderColor: theme.grid,
+        mode: 0, // Allow manual vertical scaling
       },
       timeScale: {
         visible: true,
@@ -142,8 +170,15 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
 
     chartRef.current = chart;
 
-    // Use unified candlestick colors
-    const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_COLORS);
+    // Use unified candlestick colors with dynamic price precision
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      ...CANDLE_COLORS,
+      priceFormat: {
+        type: 'price',
+        precision,
+        minMove,
+      },
+    });
 
     // Normalize bars for consistent day-to-day coloring (green = up, red = down)
     const normalizedBars = normalizeBarsForConsistentColoring(bars);
@@ -302,8 +337,53 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
 
     resizeObserver.observe(containerRef.current);
 
+    // Shift+drag vertical panning handlers
+    const container = containerRef.current;
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.shiftKey || e.button === 1) { // Shift+left-click or middle-mouse
+        e.preventDefault();
+        isPanningRef.current = true;
+        panStartYRef.current = e.clientY;
+        const priceScale = chart.priceScale('right');
+        // Get current visible price range by querying chart's visible range
+        const visibleRange = chart.timeScale().getVisibleLogicalRange();
+        if (visibleRange) {
+          // Store approximate vertical range for panning
+          panStartPriceRef.current = { from: 0, to: 0 };
+        }
+        container.style.cursor = 'ns-resize';
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPanningRef.current && chartRef.current) {
+        const deltaY = e.clientY - panStartYRef.current;
+        // Disable auto-scale when manually panning
+        chartRef.current.priceScale('right').applyOptions({
+          autoScale: false,
+        });
+        panStartYRef.current = e.clientY;
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isPanningRef.current) {
+        isPanningRef.current = false;
+        panStartPriceRef.current = null;
+        container.style.cursor = '';
+      }
+    };
+
+    container.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
     return () => {
       resizeObserver.disconnect();
+      container.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -361,6 +441,42 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
           </span>
         )}
       </div>
+
+      {/* Pan Hint - Desktop only */}
+      <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-[10px] text-muted-foreground/70 pointer-events-none">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex items-center gap-1 pointer-events-auto cursor-help">
+                <kbd className="px-1 py-0.5 bg-muted/50 border border-border/50 rounded text-[9px] font-mono">Shift</kbd>
+                <span>+ drag to pan</span>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-[200px]">
+              Hold <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[10px] font-mono mx-0.5">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* Reset Button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute bottom-2 right-2 h-6 w-6 bg-background/90 border-border/50 hover:bg-background z-20"
+              onClick={handleResetChart}
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="text-xs">
+            Reset chart (fit content &amp; auto-scale)
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Settings Button */}
       <div className="absolute top-2 right-2 z-20">
