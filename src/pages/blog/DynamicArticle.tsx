@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart, Activity } from "lucide-react";
+import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart, Activity, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
 import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
+import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
 import { CompressedBar } from "@/types/VisualSpec";
 
 // Lazy load heavy chart components
@@ -20,6 +21,13 @@ const StrategyIndicatorChart = lazy(() =>
   import('@/components/charts/StrategyIndicatorChart')
 );
 
+const OptionsPayoffChart = lazy(() => 
+  import('@/components/charts/OptionsPayoffChart')
+);
+
+const OptionsGreeksTable = lazy(() => 
+  import('@/components/charts/OptionsGreeksTable')
+);
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'head-and-shoulders': '/learn/head-and-shoulders',
@@ -690,6 +698,82 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
   );
 }
 
+// Options Payoff Diagram visualization for options strategy articles
+function OptionsPayoffVisualization({ slug }: { slug: string }) {
+  const config = getOptionsStrategyConfig(slug);
+  
+  if (!config) return null;
+  
+  return (
+    <Card className="mb-8 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-background">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-purple-500" />
+          Options Strategy Visualization
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          Interactive payoff diagrams showing profit/loss at different price points
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {/* Payoff Diagrams */}
+          {config.configs.map((payoffConfig, idx) => (
+            <Suspense 
+              key={idx}
+              fallback={
+                <div className="h-[400px] flex items-center justify-center bg-muted/20 rounded-lg">
+                  <Skeleton className="w-full h-[400px]" />
+                </div>
+              }
+            >
+              <OptionsPayoffChart
+                config={payoffConfig}
+                height={400}
+                showMetrics={true}
+              />
+            </Suspense>
+          ))}
+          
+          {/* Greeks Table */}
+          {config.greeksTable && (
+            <Suspense 
+              fallback={<Skeleton className="w-full h-[200px]" />}
+            >
+              <OptionsGreeksTable 
+                data={config.greeksTable} 
+                strategyName={config.configs[0]?.title?.replace(' Payoff Diagram', '') || 'This Strategy'}
+              />
+            </Suspense>
+          )}
+          
+          {/* Educational Notes */}
+          {config.educationalNotes && config.educationalNotes.length > 0 && (
+            <div className="bg-muted/30 rounded-lg p-4">
+              <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                Key Points to Remember
+              </h4>
+              <ul className="space-y-2">
+                {config.educationalNotes.map((note, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="text-primary mt-0.5">•</span>
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        
+        <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
+          <strong>Note:</strong> The white line shows P/L at expiration. The dashed line shows current P/L with remaining time value. Strike prices and break-even points are marked on the chart.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Generate table of contents from sections
 function TableOfContents({ sections }: { sections: ParsedSection[] }) {
   if (sections.length < 3) return null;
@@ -889,8 +973,13 @@ const DynamicArticle = () => {
           {/* Table of Contents */}
           <TableOfContents sections={sections} />
 
+          {/* Options Payoff Diagrams for options strategy articles */}
+          {slug && hasOptionsPayoffChart(slug) && (
+            <OptionsPayoffVisualization slug={slug} />
+          )}
+
           {/* Indicator Chart Visualizations for strategies with MACD, RSI, etc. */}
-          {slug && hasStrategyIndicators(slug) && (
+          {slug && hasStrategyIndicators(slug) && !hasOptionsPayoffChart(slug) && (
             <IndicatorChartVisualization slug={slug} />
           )}
 
