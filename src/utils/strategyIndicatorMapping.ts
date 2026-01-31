@@ -258,9 +258,7 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
     { indicator: 'macd', title: 'MACD Trend Confirmation', symbol: 'SPY' },
     { indicator: 'ema-crossover', title: 'EMA Trend Filter', symbol: 'SPY' }
   ],
-  'parabolic-sar': [
-    { indicator: 'ema-crossover', title: 'Trend Following Context', description: 'EMA for trend direction reference', symbol: 'AAPL' }
-  ],
+  // parabolic-sar already defined in indicator articles section above
 
   // ===== MOMENTUM STRATEGY ARTICLES =====
   'momentum-trading-strategy': [
