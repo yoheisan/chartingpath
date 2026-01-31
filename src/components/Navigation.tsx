@@ -73,7 +73,13 @@ const Navigation = () => {
         Setup Finder
       </Link>
       
-      {/* 3. Learning */}
+      {/* 4. Scripts - Automate */}
+      <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+        <FileCode className="h-5 w-5 text-cyan-500" />
+        Scripts
+      </Link>
+      
+      {/* 5. Learning */}
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Learning</p>
         <div className="flex flex-col gap-2 pl-2">
@@ -82,12 +88,6 @@ const Navigation = () => {
           <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
         </div>
       </div>
-      
-      {/* 3. Scripts - Automate */}
-      <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2">
-        <FileCode className="h-5 w-5 text-cyan-500" />
-        Scripts
-      </Link>
       
       {/* 4. Pricing */}
       <Link to="/projects/pricing" className="flex items-center gap-2 text-muted-foreground py-2">
@@ -156,50 +156,50 @@ const Navigation = () => {
               Setup Finder
             </Link>
               
-              {/* 3. Learning - Pattern Library, Blog & Articles */}
-              <DropdownMenu>
-                <DropdownMenuTrigger 
-                  className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
-                  onMouseEnter={prefetchArticles}
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Learning
-                  <ChevronDown className="h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-popover z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/library" className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-blue-500" />
-                      Pattern Library
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/learn" className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-green-500" />
-                      Blog & Articles
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4 text-purple-500" />
-                      Pattern Quizzes
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* 3. Scripts - Automate trading */}
-              <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
-                <FileCode className="h-4 w-4 text-cyan-500" />
-                Scripts
-              </Link>
-              
-              {/* 4. Pricing */}
-              <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>
-                <DollarSign className="h-4 w-4" />
-                {t('navigation.pricing', 'Pricing')}
-              </Link>
+            {/* 4. Scripts - Automate trading */}
+            <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
+              <FileCode className="h-4 w-4 text-cyan-500" />
+              Scripts
+            </Link>
+            
+            {/* 5. Learning - Pattern Library, Blog & Articles */}
+            <DropdownMenu>
+              <DropdownMenuTrigger 
+                className={`flex items-center gap-1 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                onMouseEnter={prefetchArticles}
+              >
+                <BookOpen className="h-4 w-4" />
+                Learning
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-popover z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/library" className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-blue-500" />
+                    Pattern Library
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/learn" className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-green-500" />
+                    Blog & Articles
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-purple-500" />
+                    Pattern Quizzes
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* 6. Pricing */}
+            <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>
+              <DollarSign className="h-4 w-4" />
+              {t('navigation.pricing', 'Pricing')}
+            </Link>
               
               {/* 6. More - Tools & Company */}
               <DropdownMenu>
