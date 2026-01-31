@@ -523,6 +523,42 @@ function ChartVisualization({ slug }: { slug: string }) {
   );
 }
 
+// Generate synthetic demonstration data when no real data is available
+function generateDemoBars(count: number = 200): CompressedBar[] {
+  const bars: CompressedBar[] = [];
+  let price = 150 + Math.random() * 50; // Start between 150-200
+  const now = new Date();
+  
+  for (let i = count - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    
+    // Add some trending behavior and volatility
+    const trend = Math.sin(i / 30) * 0.5; // Longer-term trend
+    const noise = (Math.random() - 0.5) * 3; // Daily noise
+    const change = trend + noise;
+    
+    const open = price;
+    price = Math.max(50, price + change); // Ensure price stays positive
+    const close = price;
+    
+    const high = Math.max(open, close) + Math.random() * 2;
+    const low = Math.min(open, close) - Math.random() * 2;
+    const volume = Math.floor(1000000 + Math.random() * 5000000);
+    
+    bars.push({
+      t: date.toISOString().split('T')[0],
+      o: parseFloat(open.toFixed(2)),
+      h: parseFloat(high.toFixed(2)),
+      l: parseFloat(low.toFixed(2)),
+      c: parseFloat(close.toFixed(2)),
+      v: volume,
+    });
+  }
+  
+  return bars;
+}
+
 // Indicator chart visualization for strategies with MACD, RSI, etc.
 function IndicatorChartVisualization({ slug }: { slug: string }) {
   const [barsData, setBarsData] = useState<Record<string, CompressedBar[]>>({});
@@ -540,7 +576,6 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
       const symbols = [...new Set(indicatorConfigs.map(c => c.symbol).filter((s): s is string => !!s))];
       
       if (symbols.length === 0) {
-        // Use default symbol
         symbols.push('SPY');
       }
       
@@ -548,7 +583,7 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
       
       for (const symbol of symbols) {
         try {
-          // Fetch from historical_prices cache (200 bars for good indicator visibility)
+          // Try to fetch from historical_prices cache
           const { data, error } = await supabase
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
@@ -557,12 +592,11 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
             .order('date', { ascending: true })
             .limit(200);
           
-          if (error) {
-            console.warn(`Failed to fetch data for ${symbol}:`, error);
-            continue;
-          }
-          
-          if (data && data.length > 0) {
+          if (error || !data || data.length < 50) {
+            // Use synthetic demo data when no real data is available
+            console.info(`Using demo data for ${symbol} (no historical data available)`);
+            newBarsData[symbol] = generateDemoBars(200);
+          } else {
             newBarsData[symbol] = data.map(d => ({
               t: d.date,
               o: d.open,
@@ -573,7 +607,8 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
             }));
           }
         } catch (err) {
-          console.warn(`Error fetching ${symbol}:`, err);
+          console.warn(`Error fetching ${symbol}, using demo data:`, err);
+          newBarsData[symbol] = generateDemoBars(200);
         }
       }
       
@@ -618,7 +653,7 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
           Technical Indicator Examples
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
-          Interactive charts showing how these indicators work in real market conditions
+          Interactive charts demonstrating how these indicators work
         </p>
       </CardHeader>
       <CardContent>
@@ -638,7 +673,7 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
                     bars={bars}
                     indicator={config.indicator}
                     title={config.title}
-                    description={config.description ? `${config.description} (${symbol})` : `${symbol} Daily Chart`}
+                    description={config.description || 'Demonstration Chart'}
                     height={400}
                     showVolume={true}
                   />
@@ -648,8 +683,7 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
           })}
         </div>
         <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
-          <strong>Tip:</strong> These indicators are calculated in real-time on actual market data. 
-          The signal badges show the current indicator state based on the most recent price action.
+          <strong>Tip:</strong> The signal badges show the current indicator state based on the most recent price action.
         </p>
       </CardContent>
     </Card>
