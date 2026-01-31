@@ -1588,6 +1588,536 @@ export class PatternCalculator {
     };
   }
 
+  // Morning Star - Bullish 3-candle reversal
+  static generateMorningStar(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 12, high: basePrice + 14, low: basePrice + 10, close: basePrice + 11, volume: 1000 },
+      { open: basePrice + 11, high: basePrice + 12, low: basePrice + 6, close: basePrice + 7, volume: 1400 },
+      { open: basePrice + 7, high: basePrice + 8, low: basePrice + 2, close: basePrice + 3, volume: 1600 },
+      // First candle: Large bearish
+      { open: basePrice + 3, high: basePrice + 4, low: basePrice - 4, close: basePrice - 3, volume: 2000 },
+      // Second candle: Small body (star) - gaps down
+      { open: basePrice - 5, high: basePrice - 4, low: basePrice - 7, close: basePrice - 5.5, volume: 800 },
+      // Third candle: Large bullish - gaps up and closes above midpoint of first
+      { open: basePrice - 4, high: basePrice + 2, low: basePrice - 5, close: basePrice + 1, volume: 2200 },
+      { open: basePrice + 1, high: basePrice + 5, low: basePrice, close: basePrice + 4, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice - 3 }],
+        label: 'Morning Star',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 78% historical accuracy | Bullish reversal | Three-candle pattern: large bearish, small body (star), large bullish. Third candle should close above midpoint of first. Gap between candles increases reliability. Average rise: 15%",
+      keyLevels: {
+        entry: basePrice - 3,
+        stopLoss: basePrice - 8,
+        target: basePrice + 8
+      }
+    };
+  }
+
+  // Evening Star - Bearish 3-candle reversal
+  static generateEveningStar(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 12, high: basePrice - 10, low: basePrice - 14, close: basePrice - 11, volume: 1000 },
+      { open: basePrice - 11, high: basePrice - 6, low: basePrice - 12, close: basePrice - 7, volume: 1400 },
+      { open: basePrice - 7, high: basePrice - 2, low: basePrice - 8, close: basePrice - 3, volume: 1600 },
+      // First candle: Large bullish
+      { open: basePrice - 3, high: basePrice + 4, low: basePrice - 4, close: basePrice + 3, volume: 2000 },
+      // Second candle: Small body (star) - gaps up
+      { open: basePrice + 5, high: basePrice + 7, low: basePrice + 4, close: basePrice + 5.5, volume: 800 },
+      // Third candle: Large bearish - gaps down and closes below midpoint of first
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice - 2, close: basePrice - 1, volume: 2200 },
+      { open: basePrice - 1, high: basePrice, low: basePrice - 5, close: basePrice - 4, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice + 5 }],
+        label: 'Evening Star',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 72% historical accuracy | Bearish reversal | Three-candle pattern: large bullish, small body (star), large bearish. Third candle should close below midpoint of first. Gap between candles increases reliability. Average decline: 14%",
+      keyLevels: {
+        entry: basePrice + 3,
+        stopLoss: basePrice + 8,
+        target: basePrice - 8
+      }
+    };
+  }
+
+  // Three White Soldiers - Strong bullish continuation/reversal
+  static generateThreeWhiteSoldiers(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 8, high: basePrice - 5, low: basePrice - 10, close: basePrice - 6, volume: 1000 },
+      { open: basePrice - 6, high: basePrice - 3, low: basePrice - 7, close: basePrice - 4, volume: 1100 },
+      { open: basePrice - 4, high: basePrice - 1, low: basePrice - 5, close: basePrice - 2, volume: 1200 },
+      // First soldier
+      { open: basePrice - 2, high: basePrice + 3, low: basePrice - 3, close: basePrice + 2, volume: 1800 },
+      // Second soldier - opens within body of first, closes higher
+      { open: basePrice + 1, high: basePrice + 6, low: basePrice, close: basePrice + 5, volume: 2000 },
+      // Third soldier - opens within body of second, closes higher
+      { open: basePrice + 4, high: basePrice + 9, low: basePrice + 3, close: basePrice + 8, volume: 2200 },
+      { open: basePrice + 8, high: basePrice + 12, low: basePrice + 7, close: basePrice + 11, volume: 1900 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 4 }],
+        label: 'Three White Soldiers',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 82% historical accuracy | Strong bullish signal | Three consecutive long-bodied bullish candles. Each opens within previous body and closes at new high. Small/no upper wicks. Average rise: 20%",
+      keyLevels: {
+        entry: basePrice + 3,
+        stopLoss: basePrice - 4,
+        target: basePrice + 15
+      }
+    };
+  }
+
+  // Three Black Crows - Strong bearish continuation/reversal
+  static generateThreeBlackCrows(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 8, high: basePrice + 10, low: basePrice + 5, close: basePrice + 6, volume: 1000 },
+      { open: basePrice + 6, high: basePrice + 7, low: basePrice + 3, close: basePrice + 4, volume: 1100 },
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice + 1, close: basePrice + 2, volume: 1200 },
+      // First crow
+      { open: basePrice + 2, high: basePrice + 3, low: basePrice - 3, close: basePrice - 2, volume: 1800 },
+      // Second crow - opens within body of first, closes lower
+      { open: basePrice - 1, high: basePrice, low: basePrice - 6, close: basePrice - 5, volume: 2000 },
+      // Third crow - opens within body of second, closes lower
+      { open: basePrice - 4, high: basePrice - 3, low: basePrice - 9, close: basePrice - 8, volume: 2200 },
+      { open: basePrice - 8, high: basePrice - 7, low: basePrice - 12, close: basePrice - 11, volume: 1900 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice - 4 }],
+        label: 'Three Black Crows',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 78% historical accuracy | Strong bearish signal | Three consecutive long-bodied bearish candles. Each opens within previous body and closes at new low. Small/no lower wicks. Average decline: 18%",
+      keyLevels: {
+        entry: basePrice - 3,
+        stopLoss: basePrice + 4,
+        target: basePrice - 15
+      }
+    };
+  }
+
+  // Piercing Line - Bullish reversal after downtrend
+  static generatePiercingLine(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 10, high: basePrice + 12, low: basePrice + 7, close: basePrice + 8, volume: 1000 },
+      { open: basePrice + 8, high: basePrice + 9, low: basePrice + 4, close: basePrice + 5, volume: 1200 },
+      { open: basePrice + 5, high: basePrice + 6, low: basePrice + 1, close: basePrice + 2, volume: 1400 },
+      // First candle: Large bearish
+      { open: basePrice + 2, high: basePrice + 3, low: basePrice - 5, close: basePrice - 4, volume: 1800 },
+      // Second candle: Opens below low of first, closes above midpoint
+      { open: basePrice - 6, high: basePrice + 1, low: basePrice - 7, close: basePrice, volume: 2200 },
+      { open: basePrice, high: basePrice + 4, low: basePrice - 1, close: basePrice + 3, volume: 1600 },
+      { open: basePrice + 3, high: basePrice + 7, low: basePrice + 2, close: basePrice + 6, volume: 1400 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice - 2 }],
+        label: 'Piercing Line',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 64% historical accuracy | Bullish reversal | Two-candle pattern after downtrend. Second candle opens below first's low and closes above its midpoint. The deeper the penetration (50%+), the stronger the signal. Average rise: 12%",
+      keyLevels: {
+        entry: basePrice - 3,
+        stopLoss: basePrice - 8,
+        target: basePrice + 6
+      }
+    };
+  }
+
+  // Dark Cloud Cover - Bearish reversal after uptrend
+  static generateDarkCloudCover(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 10, high: basePrice - 7, low: basePrice - 12, close: basePrice - 8, volume: 1000 },
+      { open: basePrice - 8, high: basePrice - 4, low: basePrice - 9, close: basePrice - 5, volume: 1200 },
+      { open: basePrice - 5, high: basePrice - 1, low: basePrice - 6, close: basePrice - 2, volume: 1400 },
+      // First candle: Large bullish
+      { open: basePrice - 2, high: basePrice + 5, low: basePrice - 3, close: basePrice + 4, volume: 1800 },
+      // Second candle: Opens above high of first, closes below midpoint
+      { open: basePrice + 6, high: basePrice + 7, low: basePrice - 1, close: basePrice, volume: 2200 },
+      { open: basePrice, high: basePrice + 1, low: basePrice - 4, close: basePrice - 3, volume: 1600 },
+      { open: basePrice - 3, high: basePrice - 2, low: basePrice - 7, close: basePrice - 6, volume: 1400 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 4, y: basePrice + 3 }],
+        label: 'Dark Cloud Cover',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 60% historical accuracy | Bearish reversal | Two-candle pattern after uptrend. Second candle opens above first's high and closes below its midpoint. The deeper the penetration (50%+), the stronger the signal. Average decline: 11%",
+      keyLevels: {
+        entry: basePrice + 3,
+        stopLoss: basePrice + 8,
+        target: basePrice - 6
+      }
+    };
+  }
+
+  // Tweezer Top - Bearish reversal at resistance
+  static generateTweezerTop(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 8, high: basePrice - 5, low: basePrice - 10, close: basePrice - 6, volume: 1000 },
+      { open: basePrice - 6, high: basePrice - 3, low: basePrice - 7, close: basePrice - 4, volume: 1200 },
+      { open: basePrice - 4, high: basePrice, low: basePrice - 5, close: basePrice - 1, volume: 1400 },
+      // First candle: Bullish reaching the high
+      { open: basePrice - 1, high: basePrice + 5, low: basePrice - 2, close: basePrice + 4, volume: 1800 },
+      // Second candle: Bearish with same high (the "tweezer")
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice, close: basePrice + 1, volume: 2000 },
+      { open: basePrice + 1, high: basePrice + 2, low: basePrice - 3, close: basePrice - 2, volume: 1600 },
+      { open: basePrice - 2, high: basePrice - 1, low: basePrice - 6, close: basePrice - 5, volume: 1400 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'resistance',
+        points: [{ x: 3, y: basePrice + 5 }, { x: 4, y: basePrice + 5 }],
+        label: 'Tweezer Top',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 66% historical accuracy | Bearish reversal | Two candles with matching highs forming resistance. First typically bullish, second bearish. Shows failed attempt to break higher. Stronger at known resistance levels. Average decline: 10%",
+      keyLevels: {
+        entry: basePrice + 3,
+        stopLoss: basePrice + 6,
+        target: basePrice - 4
+      }
+    };
+  }
+
+  // Tweezer Bottom - Bullish reversal at support
+  static generateTweezerBottom(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 8, high: basePrice + 10, low: basePrice + 5, close: basePrice + 6, volume: 1000 },
+      { open: basePrice + 6, high: basePrice + 7, low: basePrice + 3, close: basePrice + 4, volume: 1200 },
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice, close: basePrice + 1, volume: 1400 },
+      // First candle: Bearish reaching the low
+      { open: basePrice + 1, high: basePrice + 2, low: basePrice - 5, close: basePrice - 4, volume: 1800 },
+      // Second candle: Bullish with same low (the "tweezer")
+      { open: basePrice - 4, high: basePrice, low: basePrice - 5, close: basePrice - 1, volume: 2000 },
+      { open: basePrice - 1, high: basePrice + 3, low: basePrice - 2, close: basePrice + 2, volume: 1600 },
+      { open: basePrice + 2, high: basePrice + 6, low: basePrice + 1, close: basePrice + 5, volume: 1400 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'support',
+        points: [{ x: 3, y: basePrice - 5 }, { x: 4, y: basePrice - 5 }],
+        label: 'Tweezer Bottom',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 66% historical accuracy | Bullish reversal | Two candles with matching lows forming support. First typically bearish, second bullish. Shows failed attempt to break lower. Stronger at known support levels. Average rise: 11%",
+      keyLevels: {
+        entry: basePrice - 3,
+        stopLoss: basePrice - 6,
+        target: basePrice + 4
+      }
+    };
+  }
+
+  // Kicker Bullish - Powerful gap reversal
+  static generateKickerBullish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 6, high: basePrice + 8, low: basePrice + 3, close: basePrice + 4, volume: 1200 },
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice, close: basePrice + 1, volume: 1400 },
+      // First candle: Strong bearish
+      { open: basePrice + 1, high: basePrice + 2, low: basePrice - 6, close: basePrice - 5, volume: 2000 },
+      // Second candle: Gap up and strong bullish (the "kicker")
+      { open: basePrice + 2, high: basePrice + 10, low: basePrice + 1, close: basePrice + 9, volume: 3000 },
+      { open: basePrice + 9, high: basePrice + 14, low: basePrice + 8, close: basePrice + 13, volume: 2200 },
+      { open: basePrice + 13, high: basePrice + 16, low: basePrice + 11, close: basePrice + 15, volume: 1800 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 5 }],
+        label: 'Bullish Kicker',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 87% historical accuracy | Extremely bullish | Two-candle pattern with gap. Bearish candle followed by bullish candle that gaps above the previous open. One of the most reliable reversal signals. Average rise: 25%",
+      keyLevels: {
+        entry: basePrice + 5,
+        stopLoss: basePrice - 6,
+        target: basePrice + 20
+      }
+    };
+  }
+
+  // Kicker Bearish - Powerful gap reversal
+  static generateKickerBearish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 6, high: basePrice - 3, low: basePrice - 8, close: basePrice - 4, volume: 1200 },
+      { open: basePrice - 4, high: basePrice, low: basePrice - 5, close: basePrice - 1, volume: 1400 },
+      // First candle: Strong bullish
+      { open: basePrice - 1, high: basePrice + 6, low: basePrice - 2, close: basePrice + 5, volume: 2000 },
+      // Second candle: Gap down and strong bearish (the "kicker")
+      { open: basePrice - 2, high: basePrice - 1, low: basePrice - 10, close: basePrice - 9, volume: 3000 },
+      { open: basePrice - 9, high: basePrice - 8, low: basePrice - 14, close: basePrice - 13, volume: 2200 },
+      { open: basePrice - 13, high: basePrice - 11, low: basePrice - 16, close: basePrice - 15, volume: 1800 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice - 5 }],
+        label: 'Bearish Kicker',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 87% historical accuracy | Extremely bearish | Two-candle pattern with gap. Bullish candle followed by bearish candle that gaps below the previous open. One of the most reliable reversal signals. Average decline: 23%",
+      keyLevels: {
+        entry: basePrice - 5,
+        stopLoss: basePrice + 6,
+        target: basePrice - 20
+      }
+    };
+  }
+
+  // Marubozu Bullish - Full body, no wicks
+  static generateMarubozuBullish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 6, high: basePrice - 3, low: basePrice - 8, close: basePrice - 4, volume: 1000 },
+      { open: basePrice - 4, high: basePrice - 1, low: basePrice - 5, close: basePrice - 2, volume: 1200 },
+      { open: basePrice - 2, high: basePrice + 1, low: basePrice - 3, close: basePrice, volume: 1400 },
+      // The Marubozu - no wicks, full body
+      { open: basePrice, high: basePrice + 8, low: basePrice, close: basePrice + 8, volume: 2500 },
+      { open: basePrice + 8, high: basePrice + 12, low: basePrice + 7, close: basePrice + 11, volume: 1800 },
+      { open: basePrice + 11, high: basePrice + 14, low: basePrice + 9, close: basePrice + 13, volume: 1500 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 4 }],
+        label: 'Bullish Marubozu',
+        color: '#4ECDC4',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 74% historical accuracy | Strong bullish conviction | Full-bodied candle with no upper or lower wicks. Open = Low, Close = High. Shows complete buyer dominance. Often continues in the same direction. Average continuation: 8%",
+      keyLevels: {
+        entry: basePrice + 4,
+        stopLoss: basePrice - 1,
+        target: basePrice + 15
+      }
+    };
+  }
+
+  // Marubozu Bearish - Full body, no wicks
+  static generateMarubozuBearish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 6, high: basePrice + 8, low: basePrice + 3, close: basePrice + 4, volume: 1000 },
+      { open: basePrice + 4, high: basePrice + 5, low: basePrice + 1, close: basePrice + 2, volume: 1200 },
+      { open: basePrice + 2, high: basePrice + 3, low: basePrice - 1, close: basePrice, volume: 1400 },
+      // The Marubozu - no wicks, full body
+      { open: basePrice, high: basePrice, low: basePrice - 8, close: basePrice - 8, volume: 2500 },
+      { open: basePrice - 8, high: basePrice - 7, low: basePrice - 12, close: basePrice - 11, volume: 1800 },
+      { open: basePrice - 11, high: basePrice - 9, low: basePrice - 14, close: basePrice - 13, volume: 1500 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice - 4 }],
+        label: 'Bearish Marubozu',
+        color: '#FF6B6B',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 74% historical accuracy | Strong bearish conviction | Full-bodied candle with no upper or lower wicks. Open = High, Close = Low. Shows complete seller dominance. Often continues in the same direction. Average continuation: 7%",
+      keyLevels: {
+        entry: basePrice - 4,
+        stopLoss: basePrice + 1,
+        target: basePrice - 15
+      }
+    };
+  }
+
+  // Abandoned Baby Bullish - Rare gap reversal
+  static generateAbandonedBabyBullish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice + 10, high: basePrice + 12, low: basePrice + 7, close: basePrice + 8, volume: 1200 },
+      { open: basePrice + 8, high: basePrice + 9, low: basePrice + 4, close: basePrice + 5, volume: 1400 },
+      // First candle: Strong bearish
+      { open: basePrice + 5, high: basePrice + 6, low: basePrice - 2, close: basePrice - 1, volume: 1800 },
+      // Second candle: Doji that gaps down (the "baby")
+      { open: basePrice - 5, high: basePrice - 4, low: basePrice - 6, close: basePrice - 5, volume: 600 },
+      // Third candle: Strong bullish that gaps up
+      { open: basePrice - 3, high: basePrice + 4, low: basePrice - 4, close: basePrice + 3, volume: 2400 },
+      { open: basePrice + 3, high: basePrice + 7, low: basePrice + 2, close: basePrice + 6, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice - 3 }],
+        label: 'Abandoned Baby',
+        color: '#9b87f5',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 84% historical accuracy | Rare bullish reversal | Three-candle pattern with gaps. Large bearish, then isolated doji (gaps both ways), then large bullish. Very rare but highly reliable. Average rise: 22%",
+      keyLevels: {
+        entry: basePrice - 2,
+        stopLoss: basePrice - 7,
+        target: basePrice + 10
+      }
+    };
+  }
+
+  // Abandoned Baby Bearish - Rare gap reversal
+  static generateAbandonedBabyBearish(): PatternData {
+    const basePrice = 100;
+    
+    const candles: CandlestickData[] = [
+      { open: basePrice - 10, high: basePrice - 7, low: basePrice - 12, close: basePrice - 8, volume: 1200 },
+      { open: basePrice - 8, high: basePrice - 4, low: basePrice - 9, close: basePrice - 5, volume: 1400 },
+      // First candle: Strong bullish
+      { open: basePrice - 5, high: basePrice + 2, low: basePrice - 6, close: basePrice + 1, volume: 1800 },
+      // Second candle: Doji that gaps up (the "baby")
+      { open: basePrice + 5, high: basePrice + 6, low: basePrice + 4, close: basePrice + 5, volume: 600 },
+      // Third candle: Strong bearish that gaps down
+      { open: basePrice + 3, high: basePrice + 4, low: basePrice - 4, close: basePrice - 3, volume: 2400 },
+      { open: basePrice - 3, high: basePrice - 2, low: basePrice - 7, close: basePrice - 6, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      {
+        type: 'peak',
+        points: [{ x: 3, y: basePrice + 3 }],
+        label: 'Abandoned Baby',
+        color: '#9b87f5',
+        style: 'solid'
+      }
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: "Thomas Bulkowski: 84% historical accuracy | Rare bearish reversal | Three-candle pattern with gaps. Large bullish, then isolated doji (gaps both ways), then large bearish. Very rare but highly reliable. Average decline: 20%",
+      keyLevels: {
+        entry: basePrice + 2,
+        stopLoss: basePrice + 7,
+        target: basePrice - 10
+      }
+    };
+  }
+
   // Hammer - Based on Thomas N. Bulkowski (70% historical accuracy as reversal)
   static generateHammer(): PatternData {
     const basePrice = 100;
@@ -1984,6 +2514,34 @@ export class PatternCalculator {
         return this.generateBearishEngulfing();
       case 'spinning-top':
         return this.generateSpinningTop();
+      case 'morning-star':
+        return this.generateMorningStar();
+      case 'evening-star':
+        return this.generateEveningStar();
+      case 'three-white-soldiers':
+        return this.generateThreeWhiteSoldiers();
+      case 'three-black-crows':
+        return this.generateThreeBlackCrows();
+      case 'piercing-line':
+        return this.generatePiercingLine();
+      case 'dark-cloud-cover':
+        return this.generateDarkCloudCover();
+      case 'tweezer-top':
+        return this.generateTweezerTop();
+      case 'tweezer-bottom':
+        return this.generateTweezerBottom();
+      case 'kicker-bullish':
+        return this.generateKickerBullish();
+      case 'kicker-bearish':
+        return this.generateKickerBearish();
+      case 'marubozu-bullish':
+        return this.generateMarubozuBullish();
+      case 'marubozu-bearish':
+        return this.generateMarubozuBearish();
+      case 'abandoned-baby-bullish':
+        return this.generateAbandonedBabyBullish();
+      case 'abandoned-baby-bearish':
+        return this.generateAbandonedBabyBearish();
       default:
         return this.generateHeadAndShoulders();
     }
