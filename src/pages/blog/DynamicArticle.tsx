@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart } from "lucide-react";
+import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,10 +8,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
+import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
+import { CompressedBar } from "@/types/VisualSpec";
 
-// Lazy load heavy chart component
+// Lazy load heavy chart components
 const DynamicPatternChart = lazy(() => 
   import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
+);
+
+const StrategyIndicatorChart = lazy(() => 
+  import('@/components/charts/StrategyIndicatorChart')
 );
 
 // Slugs that have comprehensive static pages - redirect to them
@@ -517,6 +523,139 @@ function ChartVisualization({ slug }: { slug: string }) {
   );
 }
 
+// Indicator chart visualization for strategies with MACD, RSI, etc.
+function IndicatorChartVisualization({ slug }: { slug: string }) {
+  const [barsData, setBarsData] = useState<Record<string, CompressedBar[]>>({});
+  const [loading, setLoading] = useState(true);
+  const indicatorConfigs = getStrategyIndicators(slug);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (indicatorConfigs.length === 0) {
+        setLoading(false);
+        return;
+      }
+      
+      // Get unique symbols
+      const symbols = [...new Set(indicatorConfigs.map(c => c.symbol).filter((s): s is string => !!s))];
+      
+      if (symbols.length === 0) {
+        // Use default symbol
+        symbols.push('SPY');
+      }
+      
+      const newBarsData: Record<string, CompressedBar[]> = {};
+      
+      for (const symbol of symbols) {
+        try {
+          // Fetch from historical_prices cache (200 bars for good indicator visibility)
+          const { data, error } = await supabase
+            .from('historical_prices')
+            .select('date, open, high, low, close, volume')
+            .eq('symbol', symbol)
+            .eq('timeframe', '1D')
+            .order('date', { ascending: true })
+            .limit(200);
+          
+          if (error) {
+            console.warn(`Failed to fetch data for ${symbol}:`, error);
+            continue;
+          }
+          
+          if (data && data.length > 0) {
+            newBarsData[symbol] = data.map(d => ({
+              t: d.date,
+              o: d.open,
+              h: d.high,
+              l: d.low,
+              c: d.close,
+              v: d.volume || 0,
+            }));
+          }
+        } catch (err) {
+          console.warn(`Error fetching ${symbol}:`, err);
+        }
+      }
+      
+      setBarsData(newBarsData);
+      setLoading(false);
+    };
+    
+    fetchData();
+  }, [slug]);
+  
+  if (indicatorConfigs.length === 0) return null;
+  
+  if (loading) {
+    return (
+      <Card className="mb-8 border-blue-500/30">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-500" />
+            Technical Indicator Examples
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[400px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Filter configs that have data
+  const validConfigs = indicatorConfigs.filter(config => {
+    const symbol = config.symbol || 'SPY';
+    return barsData[symbol] && barsData[symbol].length > 50;
+  });
+  
+  if (validConfigs.length === 0) return null;
+  
+  return (
+    <Card className="mb-8 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-background">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Activity className="h-5 w-5 text-blue-500" />
+          Technical Indicator Examples
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          Interactive charts showing how these indicators work in real market conditions
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {validConfigs.map((config, idx) => {
+            const symbol = config.symbol || 'SPY';
+            const bars = barsData[symbol];
+            
+            return (
+              <div key={idx}>
+                <Suspense fallback={
+                  <div className="h-[400px] flex items-center justify-center bg-muted/20 rounded-lg">
+                    <Skeleton className="w-full h-[400px]" />
+                  </div>
+                }>
+                  <StrategyIndicatorChart
+                    bars={bars}
+                    indicator={config.indicator}
+                    title={config.title}
+                    description={config.description ? `${config.description} (${symbol})` : `${symbol} Daily Chart`}
+                    height={400}
+                    showVolume={true}
+                  />
+                </Suspense>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
+          <strong>Tip:</strong> These indicators are calculated in real-time on actual market data. 
+          The signal badges show the current indicator state based on the most recent price action.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Generate table of contents from sections
 function TableOfContents({ sections }: { sections: ParsedSection[] }) {
   if (sections.length < 3) return null;
@@ -716,7 +855,12 @@ const DynamicArticle = () => {
           {/* Table of Contents */}
           <TableOfContents sections={sections} />
 
-          {/* Chart Visualizations for strategies with patterns */}
+          {/* Indicator Chart Visualizations for strategies with MACD, RSI, etc. */}
+          {slug && hasStrategyIndicators(slug) && (
+            <IndicatorChartVisualization slug={slug} />
+          )}
+
+          {/* Pattern Chart Visualizations for strategies with patterns */}
           {slug && hasStrategyCharts(slug) && (
             <ChartVisualization slug={slug} />
           )}
