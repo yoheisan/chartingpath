@@ -84,6 +84,20 @@ const KickerPatternVisualizer = lazy(() =>
 const AbandonedBabyVisualizer = lazy(() => 
   import('@/components/blog/candlestick-visualizers/AbandonedBabyVisualizer')
 );
+
+// Technical Indicator Visualizers
+const IchimokuVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/IchimokuVisualizer'));
+const StochasticVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/StochasticVisualizer'));
+const ATRVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/ATRVisualizer'));
+const ADXVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/ADXVisualizer'));
+const OBVVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/OBVVisualizer'));
+const MFIVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/MFIVisualizer'));
+const WilliamsRVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/WilliamsRVisualizer'));
+const CCIVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/CCIVisualizer'));
+const ROCVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/ROCVisualizer'));
+const ParabolicSARVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/ParabolicSARVisualizer'));
+const DonchianVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/DonchianVisualizer'));
+const EMAVisualizer = lazy(() => import('@/components/blog/indicator-visualizers/EMAVisualizer'));
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
   'head-and-shoulders': '/learn/head-and-shoulders',
@@ -1159,7 +1173,67 @@ const DynamicArticle = () => {
             </Suspense>
           )}
 
-          {/* Pattern Chart Visualizations for strategies with patterns */}
+          {/* TECHNICAL INDICATOR VISUALIZERS */}
+          {slug === 'ichimoku-complete' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <IchimokuVisualizer />
+            </Suspense>
+          )}
+          {slug === 'stochastic-oscillator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <StochasticVisualizer />
+            </Suspense>
+          )}
+          {slug === 'atr-indicator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ATRVisualizer />
+            </Suspense>
+          )}
+          {slug === 'adx-indicator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ADXVisualizer />
+            </Suspense>
+          )}
+          {slug === 'obv-indicator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <OBVVisualizer />
+            </Suspense>
+          )}
+          {slug === 'money-flow-index' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <MFIVisualizer />
+            </Suspense>
+          )}
+          {slug === 'williams-r' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <WilliamsRVisualizer />
+            </Suspense>
+          )}
+          {slug === 'cci-indicator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <CCIVisualizer />
+            </Suspense>
+          )}
+          {slug === 'roc-indicator' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ROCVisualizer />
+            </Suspense>
+          )}
+          {slug === 'parabolic-sar' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ParabolicSARVisualizer />
+            </Suspense>
+          )}
+          {slug === 'donchian-channels' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <DonchianVisualizer />
+            </Suspense>
+          )}
+          {slug === 'sma-vs-ema' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <EMAVisualizer />
+            </Suspense>
+          )}
           {slug && hasStrategyCharts(slug) && (
             <ChartVisualization slug={slug} />
           )}
