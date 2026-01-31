@@ -3499,6 +3499,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_watchlist: {
+        Row: {
+          added_at: string
+          asset_type: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          asset_type?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          asset_type?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_watchlist_monitors: {
         Row: {
           asset_type: string

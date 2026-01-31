@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,15 @@ import {
   Star,
   Search,
   Activity,
+  X,
+  Lock,
+  Crown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { toast } from 'sonner';
 
 interface WatchlistPanelProps {
   userId?: string;
@@ -35,25 +40,16 @@ interface LivePattern {
 }
 
 interface WatchlistItem {
+  id?: string;
   symbol: string;
   name?: string;
-  price?: number;
-  change?: number;
-  hasPattern?: boolean;
+  asset_type?: string;
 }
 
-// Default watchlist for demo
-const DEFAULT_WATCHLIST: WatchlistItem[] = [
-  { symbol: 'AAPL', name: 'Apple Inc.' },
-  { symbol: 'MSFT', name: 'Microsoft' },
-  { symbol: 'GOOGL', name: 'Alphabet' },
-  { symbol: 'AMZN', name: 'Amazon' },
-  { symbol: 'TSLA', name: 'Tesla' },
-  { symbol: 'NVDA', name: 'NVIDIA' },
-  { symbol: 'BTC-USD', name: 'Bitcoin' },
-  { symbol: 'ETH-USD', name: 'Ethereum' },
-  { symbol: 'EURUSD=X', name: 'EUR/USD' },
-  { symbol: 'GC=F', name: 'Gold Futures' },
+// Default universe for FREE users (sample of popular instruments)
+const DEFAULT_UNIVERSE_SAMPLES = [
+  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'NFLX',
+  'BTC-USD', 'ETH-USD', 'EURUSD=X', 'GC=F'
 ];
 
 export function WatchlistPanel({
@@ -61,38 +57,135 @@ export function WatchlistPanel({
   selectedSymbol,
   onSymbolSelect,
 }: WatchlistPanelProps) {
+  const { profile } = useUserProfile();
   const [searchQuery, setSearchQuery] = useState('');
-  const [watchlist] = useState<WatchlistItem[]>(DEFAULT_WATCHLIST);
+  const [userWatchlist, setUserWatchlist] = useState<WatchlistItem[]>([]);
   const [activePatterns, setActivePatterns] = useState<LivePattern[]>([]);
   const [loading, setLoading] = useState(false);
+  const [addingSymbol, setAddingSymbol] = useState(false);
 
-  useEffect(() => {
-    fetchActivePatterns();
-  }, []);
+  // Determine if user is on a paid plan
+  const isPaidUser = profile?.subscription_plan && 
+    !['free', 'starter'].includes(profile.subscription_plan);
 
-  const fetchActivePatterns = async () => {
-    setLoading(true);
+  // Fetch user's personal watchlist (paid users only)
+  const fetchUserWatchlist = useCallback(async () => {
+    if (!userId || !isPaidUser) return;
+    
     try {
       const { data, error } = await supabase
+        .from('user_watchlist')
+        .select('id, symbol, name, asset_type')
+        .eq('user_id', userId)
+        .order('added_at', { ascending: false });
+
+      if (error) throw error;
+      setUserWatchlist(data || []);
+    } catch (err) {
+      console.error('[WatchlistPanel] fetch watchlist error:', err);
+    }
+  }, [userId, isPaidUser]);
+
+  // Fetch active patterns
+  const fetchActivePatterns = useCallback(async () => {
+    setLoading(true);
+    try {
+      let query = supabase
         .from('live_pattern_detections')
         .select('id, instrument, pattern_name, direction, quality_score, current_price, change_percent, timeframe')
         .eq('status', 'active')
-        .order('last_confirmed_at', { ascending: false })
-        .limit(20);
+        .order('last_confirmed_at', { ascending: false });
+
+      // For paid users with a watchlist, filter to their symbols
+      if (isPaidUser && userWatchlist.length > 0) {
+        const watchlistSymbols = userWatchlist.map(w => w.symbol);
+        query = query.in('instrument', watchlistSymbols);
+      } else {
+        // For free users, show patterns from default universe
+        query = query.in('instrument', DEFAULT_UNIVERSE_SAMPLES).limit(20);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setActivePatterns(data || []);
     } catch (err) {
-      console.error('[WatchlistPanel] fetch error:', err);
+      console.error('[WatchlistPanel] fetch patterns error:', err);
     } finally {
       setLoading(false);
     }
+  }, [isPaidUser, userWatchlist]);
+
+  useEffect(() => {
+    fetchUserWatchlist();
+  }, [fetchUserWatchlist]);
+
+  useEffect(() => {
+    fetchActivePatterns();
+  }, [fetchActivePatterns]);
+
+  // Add symbol to watchlist
+  const addToWatchlist = async (symbol: string) => {
+    if (!userId || !isPaidUser) {
+      toast.error('Upgrade to add custom symbols to your watchlist');
+      return;
+    }
+
+    setAddingSymbol(true);
+    try {
+      const { error } = await supabase
+        .from('user_watchlist')
+        .insert({
+          user_id: userId,
+          symbol: symbol.toUpperCase(),
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Symbol already in watchlist');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(`${symbol} added to watchlist`);
+        setSearchQuery('');
+        fetchUserWatchlist();
+      }
+    } catch (err) {
+      console.error('[WatchlistPanel] add error:', err);
+      toast.error('Failed to add symbol');
+    } finally {
+      setAddingSymbol(false);
+    }
   };
 
-  const filteredWatchlist = watchlist.filter(
-    (item) =>
-      item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Remove symbol from watchlist
+  const removeFromWatchlist = async (symbol: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_watchlist')
+        .delete()
+        .eq('user_id', userId)
+        .eq('symbol', symbol);
+
+      if (error) throw error;
+      toast.success(`${symbol} removed from watchlist`);
+      fetchUserWatchlist();
+    } catch (err) {
+      console.error('[WatchlistPanel] remove error:', err);
+      toast.error('Failed to remove symbol');
+    }
+  };
+
+  // Display list based on tier
+  const displayList = isPaidUser 
+    ? userWatchlist 
+    : DEFAULT_UNIVERSE_SAMPLES.map(s => ({ symbol: s }));
+
+  const filteredWatchlist = displayList.filter(
+    (item) => item.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatPatternName = (name: string) => {
@@ -107,17 +200,40 @@ export function WatchlistPanel({
           <h3 className="font-semibold text-sm flex items-center gap-1.5">
             <Eye className="h-4 w-4" />
             Watchlist
+            {isPaidUser && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
+                <Crown className="h-2.5 w-2.5 mr-0.5" />
+                Custom
+              </Badge>
+            )}
           </h3>
-          <Button variant="ghost" size="icon" className="h-6 w-6">
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+          {isPaidUser && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6"
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  addToWatchlist(searchQuery.trim());
+                }
+              }}
+              disabled={!searchQuery.trim() || addingSymbol}
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search symbols..."
+            placeholder={isPaidUser ? "Add symbol..." : "Search symbols..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && isPaidUser && searchQuery.trim()) {
+                addToWatchlist(searchQuery.trim());
+              }
+            }}
             className="h-7 pl-7 text-xs"
           />
         </div>
@@ -128,11 +244,16 @@ export function WatchlistPanel({
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
           <TabsTrigger value="watchlist" className="text-xs h-6 px-2">
             <Star className="h-3 w-3 mr-1" />
-            My List
+            {isPaidUser ? 'My List' : 'Universe'}
           </TabsTrigger>
           <TabsTrigger value="patterns" className="text-xs h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
-            Active Patterns
+            Active
+            {activePatterns.length > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[9px] px-1 py-0">
+                {activePatterns.length}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -140,32 +261,53 @@ export function WatchlistPanel({
         <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-1">
+              {!isPaidUser && (
+                <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <Lock className="h-3 w-3" />
+                    <span>Upgrade to monitor your own symbols</span>
+                  </div>
+                </div>
+              )}
               {filteredWatchlist.map((item) => (
-                <button
+                <div
                   key={item.symbol}
-                  onClick={() => onSymbolSelect(item.symbol)}
                   className={cn(
-                    'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-muted/50 transition-colors',
+                    'group w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-muted/50 transition-colors',
                     selectedSymbol === item.symbol && 'bg-muted'
                   )}
                 >
-                  <InstrumentLogo instrument={item.symbol} size="sm" showName={false} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium truncate">{item.symbol}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">{item.name}</div>
-                  </div>
-                  {item.change !== undefined && (
-                    <span
-                      className={cn(
-                        'text-xs',
-                        item.change >= 0 ? 'text-emerald-500' : 'text-red-500'
+                  <button
+                    onClick={() => onSymbolSelect(item.symbol)}
+                    className="flex items-center gap-2 flex-1 min-w-0"
+                  >
+                    <InstrumentLogo instrument={item.symbol} size="sm" showName={false} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">{item.symbol}</div>
+                      {'name' in item && item.name && (
+                        <div className="text-[10px] text-muted-foreground truncate">{String(item.name)}</div>
                       )}
+                    </div>
+                  </button>
+                  {isPaidUser && 'id' in item && item.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFromWatchlist(item.symbol)}
                     >
-                      {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
-                    </span>
+                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                    </Button>
                   )}
-                </button>
+                </div>
               ))}
+              {filteredWatchlist.length === 0 && (
+                <div className="text-center py-4 text-xs text-muted-foreground">
+                  {isPaidUser 
+                    ? 'No symbols yet. Add one above!' 
+                    : 'No matches found'}
+                </div>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -174,13 +316,23 @@ export function WatchlistPanel({
         <TabsContent value="patterns" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-1">
+              {!isPaidUser && (
+                <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <Activity className="h-3 w-3" />
+                    <span>Showing patterns from default universe</span>
+                  </div>
+                </div>
+              )}
               {loading ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
                   Loading patterns...
                 </div>
               ) : activePatterns.length === 0 ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
-                  No active patterns detected
+                  {isPaidUser && userWatchlist.length === 0
+                    ? 'Add symbols to your watchlist first'
+                    : 'No active patterns detected'}
                 </div>
               ) : (
                 activePatterns.map((pattern) => (
