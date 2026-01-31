@@ -78,14 +78,15 @@ const Pricing = () => {
       name: "Free",
       price: 0,
       annualPrice: 0,
-      description: "Perfect funnel to get started with ChartingPath",
+      description: "Explore pattern detection on 1,100+ instruments",
       features: [
-        "Daily timeframe charts only",
-        "Access to 6 chart patterns",
-        "3 active alerts",
-        "50 credits/month for research",
+        "Daily (1D) timeframe charts only",
+        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
+        "6 classic chart patterns (Double Top/Bottom, H&S, Triangles)",
+        "3 active pattern alerts",
+        "50 credits/month for Setup Finder research",
         "Demo-only backtesting (prebuilt examples)",
-        "Basic pattern recognition guides"
+        "Basic pattern recognition learning guides"
       ],
       limitations: ["Daily (1D) charts only"],
       buttonText: "Get Started Free",
@@ -96,13 +97,14 @@ const Pricing = () => {
       name: "Lite",
       price: 12,
       annualPrice: 120,
-      description: "For hobbyist traders starting their journey",
+      description: "Unlock intraday timeframes for active trading",
       features: [
-        "Daily + 4-Hour timeframe charts",
-        "Access to 8 chart patterns",
-        "5 active alerts",
-        "100 credits/month for research",
-        "Basic backtesting: up to 2 years of data",
+        "Daily + 4H + 15-minute timeframe charts",
+        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
+        "8 chart patterns (incl. Channels, Flags)",
+        "5 active pattern alerts",
+        "100 credits/month for Setup Finder & Pattern Lab",
+        "Basic backtesting: up to 2 years of historical data",
         "Email support"
       ],
       limitations: [],
@@ -114,13 +116,14 @@ const Pricing = () => {
       name: "Plus",
       price: 29,
       annualPrice: 290,
-      description: "For active traders testing ideas regularly",
+      description: "All timeframes for serious pattern research",
       features: [
-        "All timeframes (1H, 4H, Daily, Weekly)",
-        "Access to 10 chart patterns (incl. Wedges)",
-        "25 active alerts",
-        "300 credits/month for research",
-        "Full historical backtesting: up to 3 years",
+        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
+        "10 chart patterns (incl. Wedges, Cup & Handle)",
+        "25 active pattern alerts",
+        "300 credits/month for deep research",
+        "Full backtesting: up to 3 years of data",
         "Advanced risk & pip calculators",
         "Priority email support"
       ],
@@ -133,14 +136,15 @@ const Pricing = () => {
       name: "Pro", 
       price: 79,
       annualPrice: 790,
-      description: "The sweet spot for serious traders",
+      description: "Complete toolkit for professional traders",
       features: [
-        "All timeframes (1H, 4H, Daily, Weekly)",
-        "Full pattern library (12 patterns)",
-        "100 active alerts",
-        "900 credits/month for research",
+        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
+        "Full pattern library (12 patterns incl. premium)",
+        "100 active pattern alerts",
+        "900 credits/month for unlimited research",
         "Multi-platform script export (TradingView, MT4/MT5)",
-        "Full historical backtesting: up to 7 years",
+        "Full backtesting: up to 7 years of data",
         "Advanced metrics & trade analytics",
         "Priority support"
       ],
@@ -153,14 +157,15 @@ const Pricing = () => {
       name: "Team",
       price: 199,
       annualPrice: 1990,
-      description: "For trading teams & portfolio managers",
+      description: "Enterprise features for trading teams",
       features: [
-        "All timeframes (1H, 4H, Daily, Weekly)",
+        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "Complete pattern library (15+ patterns)",
-        "500 active alerts",
-        "3000 credits/month for research",
+        "500 active pattern alerts",
+        "3000 credits/month for team research",
         "Script conversion across ALL platforms",
-        "Full historical backtesting: up to 10 years",
+        "Full backtesting: up to 10 years of data",
         "Priority queues & VIP support",
         "Early access to new features"
       ],
@@ -187,9 +192,15 @@ const Pricing = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
             Plans for every level of ambition
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Start free with our tools, upgrade when you're ready to go pro.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
+            Scan 1,100+ instruments across S&P 500, Crypto, Forex & Commodities. Start free, upgrade when you're ready.
           </p>
+          <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground mb-8">
+            <span className="px-3 py-1 bg-muted rounded-full">📊 500+ US Stocks</span>
+            <span className="px-3 py-1 bg-muted rounded-full">₿ 100+ Cryptocurrencies</span>
+            <span className="px-3 py-1 bg-muted rounded-full">💱 50+ Forex Pairs</span>
+            <span className="px-3 py-1 bg-muted rounded-full">🛢️ 30+ Commodities</span>
+          </div>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-2">
