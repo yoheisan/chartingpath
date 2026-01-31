@@ -137,7 +137,7 @@ const Navigation = () => {
               </Link>
             </div>
             
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-6 ml-8">
             {/* 1. Screener - Discover signals */}
             <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
               <Activity className="h-4 w-4 text-amber-500" />
@@ -330,7 +330,7 @@ const Navigation = () => {
             </Link>
           </div>
           
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-6 ml-8">
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                 Tools
