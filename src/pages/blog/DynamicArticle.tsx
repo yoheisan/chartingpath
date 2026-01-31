@@ -10,9 +10,10 @@ import ReactMarkdown from "react-markdown";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
 import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
 import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
+import { getStrategyPrimer, hasStrategyPrimer } from "@/utils/strategyPrimerMapping";
 import { CompressedBar } from "@/types/VisualSpec";
 
-// Lazy load heavy chart components and primer
+// Lazy load heavy chart components and primers
 const DynamicPatternChart = lazy(() => 
   import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
 );
@@ -31,6 +32,10 @@ const OptionsGreeksTable = lazy(() =>
 
 const OptionsStrategyPrimer = lazy(() => 
   import('@/components/blog/OptionsStrategyPrimer')
+);
+
+const StrategyPrimer = lazy(() => 
+  import('@/components/blog/StrategyPrimer')
 );
 // Slugs that have comprehensive static pages - redirect to them
 const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
@@ -715,6 +720,19 @@ function OptionsStrategyPrimerSection({ slug }: { slug: string }) {
   );
 }
 
+// Strategy Primer - Beginner-friendly educational content for non-options articles
+function StrategyPrimerSection({ slug }: { slug: string }) {
+  const primer = getStrategyPrimer(slug);
+  
+  if (!primer) return null;
+  
+  return (
+    <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+      <StrategyPrimer data={primer} />
+    </Suspense>
+  );
+}
+
 // Options Payoff Diagram visualization for options strategy articles
 function OptionsPayoffVisualization({ slug }: { slug: string }) {
   const config = getOptionsStrategyConfig(slug);
@@ -993,6 +1011,11 @@ const DynamicArticle = () => {
           {/* OPTIONS ARTICLES: Primer First (comprehensive beginner education) */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsStrategyPrimerSection slug={slug} />
+          )}
+
+          {/* NON-OPTIONS ARTICLES: Strategy Primer First (comprehensive beginner education) */}
+          {slug && !hasOptionsPayoffChart(slug) && hasStrategyPrimer(slug) && (
+            <StrategyPrimerSection slug={slug} />
           )}
 
           {/* Render Overview sections first */}
