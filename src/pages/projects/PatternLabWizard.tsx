@@ -549,9 +549,9 @@ const PatternLabWizard = () => {
             </Card>
           </div>
           
-          {/* Sidebar - Credits & Run */}
-          <div className="space-y-6">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm sticky top-4">
+          {/* Sidebar - Credits & Run - Clean inline layout (no sticky floating) */}
+          <div className="space-y-4">
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="h-5 w-5 text-primary" />
@@ -595,14 +595,14 @@ const PatternLabWizard = () => {
                     
                     {/* Cache indicator */}
                     {estimate.cacheHitRatio > 0 && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2 mt-3">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                         <Database className="h-3 w-3" />
                         <span>{Math.round(estimate.cacheHitRatio * 100)}% data cached</span>
                       </div>
                     )}
                     
                     {!estimate.allowed && (
-                      <Alert variant="destructive" className="mt-4">
+                      <Alert variant="destructive" className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
                           {estimate.errors?.[0] || estimate.reason || 'Cannot run this configuration'}
@@ -617,7 +617,7 @@ const PatternLabWizard = () => {
                 )}
                 
                 <Button
-                  className="w-full mt-4"
+                  className="w-full"
                   size="lg"
                   onClick={handleRun}
                   disabled={
@@ -649,34 +649,32 @@ const PatternLabWizard = () => {
                 <p className="text-xs text-muted-foreground text-center">
                   Estimated runtime: 1-3 minutes
                 </p>
-              </CardContent>
-            </Card>
-            
-            {/* What you get */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">What You'll Get</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>Win rate & expectancy per pattern</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>Regime breakdown (trend + volatility)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>Do-not-trade rules (low-edge regimes)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>Full trade log with R-multiples</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>Equity curve & drawdown chart</span>
+                
+                {/* What you'll get - integrated inline */}
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-3">What You'll Get</p>
+                  <div className="grid grid-cols-1 gap-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
+                      <span>Win rate & expectancy per pattern</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
+                      <span>Regime breakdown (trend + volatility)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
+                      <span>Do-not-trade rules (low-edge regimes)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
+                      <span>Full trade log with R-multiples</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
+                      <span>Equity curve & drawdown chart</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
