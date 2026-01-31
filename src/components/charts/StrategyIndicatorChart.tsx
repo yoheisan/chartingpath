@@ -30,6 +30,15 @@ import {
   calculateBollingerBands,
   calculateDonchianChannels,
   calculateIchimoku,
+  calculateStochastic,
+  calculateWilliamsR,
+  calculateCCI,
+  calculateADX,
+  calculateATR,
+  calculateOBV,
+  calculateMFI,
+  calculateROC,
+  calculateParabolicSAR,
 } from '@/utils/chartIndicators';
 import {
   getThemeColors,
@@ -43,7 +52,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 
-export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover' | 'donchian' | 'ichimoku';
+export type IndicatorType = 'macd' | 'rsi' | 'ema-crossover' | 'bollinger' | 'sma-crossover' | 'donchian' | 'ichimoku' | 'stochastic' | 'williams-r' | 'cci' | 'adx' | 'atr' | 'obv' | 'mfi' | 'roc' | 'parabolic-sar' | 'pivot-points';
 
 export interface StrategyIndicatorChartProps {
   bars: CompressedBar[];
@@ -88,6 +97,20 @@ const INDICATOR_CHART_COLORS = {
   chikouSpan: '#a855f7',       // Purple - Lagging Span
   cloudBullish: 'rgba(34, 197, 94, 0.15)',
   cloudBearish: 'rgba(239, 68, 68, 0.15)',
+  // New indicator colors
+  stochasticK: '#3b82f6',      // Blue
+  stochasticD: '#f97316',      // Orange
+  williamsR: '#8b5cf6',        // Purple
+  cci: '#06b6d4',              // Cyan
+  adxLine: '#8b5cf6',          // Purple
+  plusDI: '#22c55e',           // Green
+  minusDI: '#ef4444',          // Red
+  atr: '#f97316',              // Orange
+  obv: '#3b82f6',              // Blue
+  mfi: '#8b5cf6',              // Purple
+  roc: '#06b6d4',              // Cyan
+  sarBullish: '#22c55e',       // Green
+  sarBearish: '#ef4444',       // Red
 };
 
 const StrategyIndicatorChart = memo(({
@@ -105,10 +128,13 @@ const StrategyIndicatorChart = memo(({
   const indicatorChartRef = useRef<IChartApi | null>(null);
   const [currentSignal, setCurrentSignal] = useState<{ type: 'bullish' | 'bearish' | 'neutral'; text: string } | null>(null);
 
-  // Calculate chart heights - Donchian, Bollinger, and Ichimoku are overlay-only (no separate pane)
-  const isOverlayOnly = indicator === 'bollinger' || indicator === 'donchian' || indicator === 'ichimoku';
+  // Calculate chart heights - Overlay-only indicators don't need separate pane
+  const overlayOnlyIndicators = ['bollinger', 'donchian', 'ichimoku', 'parabolic-sar', 'pivot-points'];
+  const separatePaneIndicators = ['macd', 'rsi', 'stochastic', 'williams-r', 'cci', 'adx', 'atr', 'obv', 'mfi', 'roc'];
+  const isOverlayOnly = overlayOnlyIndicators.includes(indicator);
+  const hasSeparatePane = separatePaneIndicators.includes(indicator);
   const mainHeight = isOverlayOnly ? height : Math.floor(height * 0.65);
-  const indicatorHeight = isOverlayOnly ? 0 : Math.floor(height * 0.35);
+  const indicatorHeight = hasSeparatePane ? Math.floor(height * 0.35) : 0;
 
   useEffect(() => {
     if (!mainContainerRef.current || !bars || bars.length === 0) return;
@@ -432,6 +458,42 @@ const StrategyIndicatorChart = memo(({
       }
     }
 
+    // === PARABOLIC SAR (overlay on main chart) ===
+    if (indicator === 'parabolic-sar') {
+      const sarData = calculateParabolicSAR(bars);
+      
+      if (sarData.length > 0) {
+        // Plot SAR dots as a line series with small width
+        const sarSeries = mainChart.addSeries(LineSeries, {
+          lineWidth: 1,
+          lineStyle: 3, // Dotted
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        // Color based on trend
+        sarSeries.setData(sarData.map(p => ({
+          time: p.time as Time,
+          value: p.sar,
+          color: p.isUptrend ? INDICATOR_CHART_COLORS.sarBullish : INDICATOR_CHART_COLORS.sarBearish,
+        })));
+
+        // Detect signal
+        const last = sarData[sarData.length - 1];
+        const prev = sarData.length > 1 ? sarData[sarData.length - 2] : null;
+        
+        if (prev && !prev.isUptrend && last.isUptrend) {
+          setCurrentSignal({ type: 'bullish', text: 'SAR Flip to Bullish (Buy Signal)' });
+        } else if (prev && prev.isUptrend && !last.isUptrend) {
+          setCurrentSignal({ type: 'bearish', text: 'SAR Flip to Bearish (Sell Signal)' });
+        } else if (last.isUptrend) {
+          setCurrentSignal({ type: 'bullish', text: 'Uptrend Active (SAR Below Price)' });
+        } else {
+          setCurrentSignal({ type: 'bearish', text: 'Downtrend Active (SAR Above Price)' });
+        }
+      }
+    }
+
     // Set optimal margins
     const optimalMargins = calculateOptimalPriceMargins(bars, true);
     mainChart.priceScale('right').applyOptions({
@@ -441,8 +503,8 @@ const StrategyIndicatorChart = memo(({
 
     mainChart.timeScale().fitContent();
 
-    // === INDICATOR PANE (for MACD/RSI) ===
-    if (indicatorContainerRef.current && (indicator === 'macd' || indicator === 'rsi')) {
+    // === INDICATOR PANE (for oscillators and separate-pane indicators) ===
+    if (indicatorContainerRef.current && hasSeparatePane) {
       const indicatorChart = createChart(indicatorContainerRef.current, {
         width: indicatorContainerRef.current.clientWidth,
         height: indicatorHeight,
@@ -576,6 +638,380 @@ const StrategyIndicatorChart = memo(({
         });
       }
 
+      // === STOCHASTIC OSCILLATOR ===
+      if (indicator === 'stochastic') {
+        const stochData = calculateStochastic(bars, 14, 3);
+        
+        if (stochData.length > 0) {
+          // Overbought line (80)
+          const overboughtSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(239, 68, 68, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          overboughtSeries.setData(stochData.map(p => ({ time: p.time as Time, value: 80 })));
+
+          // Oversold line (20)
+          const oversoldSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(34, 197, 94, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          oversoldSeries.setData(stochData.map(p => ({ time: p.time as Time, value: 20 })));
+
+          // %K Line (fast)
+          const kSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.stochasticK,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          kSeries.setData(stochData.map(p => ({ time: p.time as Time, value: p.k })));
+
+          // %D Line (slow/signal)
+          const dSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.stochasticD,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          dSeries.setData(stochData.map(p => ({ time: p.time as Time, value: p.d })));
+
+          // Detect signals
+          const last = stochData[stochData.length - 1];
+          const prev = stochData.length > 1 ? stochData[stochData.length - 2] : null;
+          
+          if (prev && prev.k < prev.d && last.k > last.d && last.k < 20) {
+            setCurrentSignal({ type: 'bullish', text: 'Bullish Crossover in Oversold Zone' });
+          } else if (prev && prev.k > prev.d && last.k < last.d && last.k > 80) {
+            setCurrentSignal({ type: 'bearish', text: 'Bearish Crossover in Overbought Zone' });
+          } else if (last.k > 80) {
+            setCurrentSignal({ type: 'bearish', text: `Overbought (%K: ${last.k.toFixed(1)})` });
+          } else if (last.k < 20) {
+            setCurrentSignal({ type: 'bullish', text: `Oversold (%K: ${last.k.toFixed(1)})` });
+          }
+        }
+
+        indicatorChart.priceScale('right').applyOptions({
+          autoScale: false,
+          scaleMargins: { top: 0.1, bottom: 0.1 },
+        });
+      }
+
+      // === WILLIAMS %R ===
+      if (indicator === 'williams-r') {
+        const williamsData = calculateWilliamsR(bars, 14);
+        
+        if (williamsData.length > 0) {
+          // Overbought line (-20)
+          const overboughtSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(239, 68, 68, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          overboughtSeries.setData(williamsData.map(p => ({ time: p.time as Time, value: -20 })));
+
+          // Oversold line (-80)
+          const oversoldSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(34, 197, 94, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          oversoldSeries.setData(williamsData.map(p => ({ time: p.time as Time, value: -80 })));
+
+          // Williams %R Line
+          const wrSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.williamsR,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          wrSeries.setData(williamsData.map(p => ({ time: p.time as Time, value: p.value })));
+
+          const lastWR = williamsData[williamsData.length - 1].value;
+          if (lastWR > -20) {
+            setCurrentSignal({ type: 'bearish', text: `Overbought (%R: ${lastWR.toFixed(1)})` });
+          } else if (lastWR < -80) {
+            setCurrentSignal({ type: 'bullish', text: `Oversold (%R: ${lastWR.toFixed(1)})` });
+          }
+        }
+
+        indicatorChart.priceScale('right').applyOptions({
+          autoScale: false,
+          scaleMargins: { top: 0.1, bottom: 0.1 },
+        });
+      }
+
+      // === CCI (Commodity Channel Index) ===
+      if (indicator === 'cci') {
+        const cciData = calculateCCI(bars, 20);
+        
+        if (cciData.length > 0) {
+          // +100 line
+          const upperSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(239, 68, 68, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          upperSeries.setData(cciData.map(p => ({ time: p.time as Time, value: 100 })));
+
+          // -100 line
+          const lowerSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(34, 197, 94, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          lowerSeries.setData(cciData.map(p => ({ time: p.time as Time, value: -100 })));
+
+          // Zero line
+          const zeroSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(156, 163, 175, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          zeroSeries.setData(cciData.map(p => ({ time: p.time as Time, value: 0 })));
+
+          // CCI Line
+          const cciSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.cci,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          cciSeries.setData(cciData.map(p => ({ time: p.time as Time, value: p.value })));
+
+          const lastCCI = cciData[cciData.length - 1].value;
+          if (lastCCI > 100) {
+            setCurrentSignal({ type: 'bullish', text: `Strong Uptrend (CCI: ${lastCCI.toFixed(0)})` });
+          } else if (lastCCI < -100) {
+            setCurrentSignal({ type: 'bearish', text: `Strong Downtrend (CCI: ${lastCCI.toFixed(0)})` });
+          } else if (lastCCI > 0) {
+            setCurrentSignal({ type: 'bullish', text: `Bullish (CCI: ${lastCCI.toFixed(0)})` });
+          } else {
+            setCurrentSignal({ type: 'bearish', text: `Bearish (CCI: ${lastCCI.toFixed(0)})` });
+          }
+        }
+      }
+
+      // === ADX (Average Directional Index) ===
+      if (indicator === 'adx') {
+        const adxData = calculateADX(bars, 14);
+        
+        if (adxData.length > 0) {
+          // Trend threshold line (25)
+          const thresholdSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(156, 163, 175, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          thresholdSeries.setData(adxData.map(p => ({ time: p.time as Time, value: 25 })));
+
+          // +DI Line
+          const plusDISeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.plusDI,
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          plusDISeries.setData(adxData.map(p => ({ time: p.time as Time, value: p.plusDI })));
+
+          // -DI Line
+          const minusDISeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.minusDI,
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          minusDISeries.setData(adxData.map(p => ({ time: p.time as Time, value: p.minusDI })));
+
+          // ADX Line
+          const adxSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.adxLine,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          adxSeries.setData(adxData.map(p => ({ time: p.time as Time, value: p.adx })));
+
+          const last = adxData[adxData.length - 1];
+          if (last.adx > 25 && last.plusDI > last.minusDI) {
+            setCurrentSignal({ type: 'bullish', text: `Strong Bullish Trend (ADX: ${last.adx.toFixed(0)})` });
+          } else if (last.adx > 25 && last.minusDI > last.plusDI) {
+            setCurrentSignal({ type: 'bearish', text: `Strong Bearish Trend (ADX: ${last.adx.toFixed(0)})` });
+          } else {
+            setCurrentSignal({ type: 'neutral', text: `Weak/No Trend (ADX: ${last.adx.toFixed(0)})` });
+          }
+        }
+      }
+
+      // === ATR (Average True Range) ===
+      if (indicator === 'atr') {
+        const atrData = calculateATR(bars, 14);
+        
+        if (atrData.length > 0) {
+          const atrSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.atr,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          atrSeries.setData(atrData.map(p => ({ time: p.time as Time, value: p.value })));
+
+          // Calculate ATR percentile for signal
+          const recentATR = atrData.slice(-20);
+          const avgATR = recentATR.reduce((sum, p) => sum + p.value, 0) / recentATR.length;
+          const lastATR = atrData[atrData.length - 1].value;
+          
+          if (lastATR > avgATR * 1.5) {
+            setCurrentSignal({ type: 'neutral', text: `High Volatility (ATR: ${lastATR.toFixed(2)})` });
+          } else if (lastATR < avgATR * 0.5) {
+            setCurrentSignal({ type: 'neutral', text: `Low Volatility - Squeeze (ATR: ${lastATR.toFixed(2)})` });
+          } else {
+            setCurrentSignal({ type: 'neutral', text: `Normal Volatility (ATR: ${lastATR.toFixed(2)})` });
+          }
+        }
+      }
+
+      // === OBV (On-Balance Volume) ===
+      if (indicator === 'obv') {
+        const obvData = calculateOBV(bars);
+        
+        if (obvData.length > 0) {
+          const obvSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.obv,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          obvSeries.setData(obvData.map(p => ({ time: p.time as Time, value: p.value })));
+
+          // Compare OBV trend to price trend
+          const recentOBV = obvData.slice(-10);
+          const obvTrend = recentOBV[recentOBV.length - 1].value > recentOBV[0].value;
+          const recentBars = bars.slice(-10);
+          const priceTrend = recentBars[recentBars.length - 1].c > recentBars[0].c;
+          
+          if (obvTrend && priceTrend) {
+            setCurrentSignal({ type: 'bullish', text: 'OBV Confirms Uptrend' });
+          } else if (!obvTrend && !priceTrend) {
+            setCurrentSignal({ type: 'bearish', text: 'OBV Confirms Downtrend' });
+          } else if (obvTrend && !priceTrend) {
+            setCurrentSignal({ type: 'bullish', text: 'Bullish Divergence (OBV Rising, Price Falling)' });
+          } else {
+            setCurrentSignal({ type: 'bearish', text: 'Bearish Divergence (OBV Falling, Price Rising)' });
+          }
+        }
+      }
+
+      // === MFI (Money Flow Index) ===
+      if (indicator === 'mfi') {
+        const mfiData = calculateMFI(bars, 14);
+        
+        if (mfiData.length > 0) {
+          // Overbought line (80)
+          const overboughtSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(239, 68, 68, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          overboughtSeries.setData(mfiData.map(p => ({ time: p.time as Time, value: 80 })));
+
+          // Oversold line (20)
+          const oversoldSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(34, 197, 94, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          oversoldSeries.setData(mfiData.map(p => ({ time: p.time as Time, value: 20 })));
+
+          // MFI Line
+          const mfiSeries = indicatorChart.addSeries(LineSeries, {
+            color: INDICATOR_CHART_COLORS.mfi,
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true,
+          });
+          mfiSeries.setData(mfiData.map(p => ({ time: p.time as Time, value: p.value })));
+
+          const lastMFI = mfiData[mfiData.length - 1].value;
+          if (lastMFI > 80) {
+            setCurrentSignal({ type: 'bearish', text: `Overbought - Heavy Buying (MFI: ${lastMFI.toFixed(0)})` });
+          } else if (lastMFI < 20) {
+            setCurrentSignal({ type: 'bullish', text: `Oversold - Heavy Selling (MFI: ${lastMFI.toFixed(0)})` });
+          } else if (lastMFI > 50) {
+            setCurrentSignal({ type: 'bullish', text: `Buying Pressure (MFI: ${lastMFI.toFixed(0)})` });
+          } else {
+            setCurrentSignal({ type: 'bearish', text: `Selling Pressure (MFI: ${lastMFI.toFixed(0)})` });
+          }
+        }
+
+        indicatorChart.priceScale('right').applyOptions({
+          autoScale: false,
+          scaleMargins: { top: 0.1, bottom: 0.1 },
+        });
+      }
+
+      // === ROC (Rate of Change) ===
+      if (indicator === 'roc') {
+        const rocData = calculateROC(bars, 12);
+        
+        if (rocData.length > 0) {
+          // Zero line
+          const zeroSeries = indicatorChart.addSeries(LineSeries, {
+            color: 'rgba(156, 163, 175, 0.5)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          zeroSeries.setData(rocData.map(p => ({ time: p.time as Time, value: 0 })));
+
+          // ROC as histogram
+          const rocSeries = indicatorChart.addSeries(HistogramSeries, {
+            priceFormat: { type: 'price', precision: 2 },
+            priceLineVisible: false,
+          });
+          rocSeries.setData(rocData.map(p => ({
+            time: p.time as Time,
+            value: p.value,
+            color: p.value >= 0 ? INDICATOR_CHART_COLORS.histogramUp : INDICATOR_CHART_COLORS.histogramDown,
+          })));
+
+          const lastROC = rocData[rocData.length - 1].value;
+          const prevROC = rocData.length > 1 ? rocData[rocData.length - 2].value : 0;
+          
+          if (lastROC > 0 && lastROC > prevROC) {
+            setCurrentSignal({ type: 'bullish', text: `Accelerating Momentum (ROC: ${lastROC.toFixed(1)}%)` });
+          } else if (lastROC > 0) {
+            setCurrentSignal({ type: 'bullish', text: `Positive Momentum (ROC: ${lastROC.toFixed(1)}%)` });
+          } else if (lastROC < 0 && lastROC < prevROC) {
+            setCurrentSignal({ type: 'bearish', text: `Accelerating Decline (ROC: ${lastROC.toFixed(1)}%)` });
+          } else {
+            setCurrentSignal({ type: 'bearish', text: `Negative Momentum (ROC: ${lastROC.toFixed(1)}%)` });
+          }
+        }
+      }
+
       indicatorChart.timeScale().fitContent();
 
       // Sync time scales
@@ -639,6 +1075,17 @@ const StrategyIndicatorChart = memo(({
       case 'sma-crossover': return 'SMA Crossover (50/200)';
       case 'bollinger': return 'Bollinger Bands (20, 2)';
       case 'donchian': return 'Donchian Channels (20)';
+      case 'ichimoku': return 'Ichimoku Cloud';
+      case 'stochastic': return 'Stochastic Oscillator (14, 3)';
+      case 'williams-r': return 'Williams %R (14)';
+      case 'cci': return 'CCI (20)';
+      case 'adx': return 'ADX (14)';
+      case 'atr': return 'ATR (14)';
+      case 'obv': return 'On-Balance Volume';
+      case 'mfi': return 'Money Flow Index (14)';
+      case 'roc': return 'Rate of Change (12)';
+      case 'parabolic-sar': return 'Parabolic SAR';
+      case 'pivot-points': return 'Pivot Points';
       default: return indicator;
     }
   };
