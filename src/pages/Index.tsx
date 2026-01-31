@@ -109,7 +109,7 @@ const Index = () => {
       description: "Learn chart patterns with examples and executable rules.",
       bullets: ["Pattern library", "Practical rules", "TradingView-friendly"],
       ctaText: "Explore Learn",
-      ctaLink: "/pattern-library",
+      ctaLink: "/chart-patterns/library",
       icon: BookOpen,
       bestFor: "Beginners",
       slug: "learn",

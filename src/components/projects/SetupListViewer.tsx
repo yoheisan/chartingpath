@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
+import {
   Copy, 
   Bell, 
   TrendingUp, 
@@ -15,7 +16,9 @@ import {
   Loader2,
   BarChart3,
   Expand,
-  AlertTriangle
+  AlertTriangle,
+  Code,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -281,6 +284,7 @@ const SetupCard = ({
 };
 
 const SetupListViewer = ({ artifact, runId, isLoading = false }: SetupListViewerProps) => {
+  const navigate = useNavigate();
   const [creatingAlertFor, setCreatingAlertFor] = useState<string | null>(null);
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -571,6 +575,44 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
             <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">No setups found for the selected criteria</p>
             <p className="text-sm text-muted-foreground mt-1">Try adjusting your patterns or universe selection</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Automate CTA - Journey Stage Handoff */}
+      {artifact.setups.length > 0 && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardContent className="py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Code className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Ready to Automate?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Export these patterns to trading scripts for TradingView, Python, or MT5
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => {
+                  // Find the most common pattern for context handoff
+                  const patternCounts = artifact.setups.reduce((acc, s) => {
+                    acc[s.patternId] = (acc[s.patternId] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+                  const topPattern = Object.entries(patternCounts)
+                    .sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+                  navigate(`/members/scripts?pattern=${topPattern}`);
+                }}
+                className="gap-2"
+              >
+                <Code className="h-4 w-4" />
+                Browse Related Scripts
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
