@@ -14,42 +14,128 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 
-// Pattern options
+// Pattern options - matches screener's pattern registry
 const PATTERNS = [
+  // Base Patterns
+  { id: 'double-bottom', name: 'Double Bottom', direction: 'bullish' },
+  { id: 'double-top', name: 'Double Top', direction: 'bearish' },
+  { id: 'triple-bottom', name: 'Triple Bottom', direction: 'bullish' },
+  { id: 'triple-top', name: 'Triple Top', direction: 'bearish' },
+  { id: 'ascending-triangle', name: 'Ascending Triangle', direction: 'bullish' },
+  { id: 'descending-triangle', name: 'Descending Triangle', direction: 'bearish' },
+  { id: 'symmetrical-triangle', name: 'Symmetrical Triangle', direction: 'neutral' },
+  // Extended Patterns
+  { id: 'head-and-shoulders', name: 'Head & Shoulders', direction: 'bearish' },
+  { id: 'inverse-head-and-shoulders', name: 'Inverse Head & Shoulders', direction: 'bullish' },
+  { id: 'rising-wedge', name: 'Rising Wedge', direction: 'bearish' },
+  { id: 'falling-wedge', name: 'Falling Wedge', direction: 'bullish' },
+  // Premium Patterns
+  { id: 'bullish-flag', name: 'Bull Flag', direction: 'bullish' },
+  { id: 'bearish-flag', name: 'Bear Flag', direction: 'bearish' },
+  { id: 'cup-and-handle', name: 'Cup & Handle', direction: 'bullish' },
+  { id: 'inverse-cup-and-handle', name: 'Inverse Cup & Handle', direction: 'bearish' },
   { id: 'donchian-breakout-long', name: 'Donchian Breakout (Long)', direction: 'bullish' },
   { id: 'donchian-breakout-short', name: 'Donchian Breakout (Short)', direction: 'bearish' },
-  { id: 'double-top', name: 'Double Top (Short)', direction: 'bearish' },
-  { id: 'double-bottom', name: 'Double Bottom (Long)', direction: 'bullish' },
-  { id: 'ascending-triangle', name: 'Ascending Triangle (Long)', direction: 'bullish' },
-  { id: 'descending-triangle', name: 'Descending Triangle (Short)', direction: 'bearish' },
 ];
 
-const INSTRUMENTS: Record<string, { symbol: string; name: string }[]> = {
+// Instrument universe - synced with screenerInstruments.ts
+const INSTRUMENTS: Record<string, { symbol: string; yahooSymbol: string; name: string }[]> = {
+  fx: [
+    { symbol: 'EUR/USD', yahooSymbol: 'EURUSD=X', name: 'Euro / US Dollar' },
+    { symbol: 'GBP/USD', yahooSymbol: 'GBPUSD=X', name: 'British Pound / US Dollar' },
+    { symbol: 'USD/JPY', yahooSymbol: 'USDJPY=X', name: 'US Dollar / Japanese Yen' },
+    { symbol: 'USD/CHF', yahooSymbol: 'USDCHF=X', name: 'US Dollar / Swiss Franc' },
+    { symbol: 'AUD/USD', yahooSymbol: 'AUDUSD=X', name: 'Australian Dollar / US Dollar' },
+    { symbol: 'USD/CAD', yahooSymbol: 'USDCAD=X', name: 'US Dollar / Canadian Dollar' },
+    { symbol: 'NZD/USD', yahooSymbol: 'NZDUSD=X', name: 'New Zealand Dollar / US Dollar' },
+    { symbol: 'EUR/GBP', yahooSymbol: 'EURGBP=X', name: 'Euro / British Pound' },
+    { symbol: 'EUR/JPY', yahooSymbol: 'EURJPY=X', name: 'Euro / Japanese Yen' },
+    { symbol: 'GBP/JPY', yahooSymbol: 'GBPJPY=X', name: 'British Pound / Japanese Yen' },
+    { symbol: 'AUD/JPY', yahooSymbol: 'AUDJPY=X', name: 'Australian Dollar / Japanese Yen' },
+    { symbol: 'EUR/AUD', yahooSymbol: 'EURAUD=X', name: 'Euro / Australian Dollar' },
+  ],
   crypto: [
-    { symbol: 'BTCUSDT', name: 'Bitcoin' },
-    { symbol: 'ETHUSDT', name: 'Ethereum' },
-    { symbol: 'SOLUSDT', name: 'Solana' },
-    { symbol: 'BNBUSDT', name: 'BNB' },
-    { symbol: 'XRPUSDT', name: 'XRP' },
+    { symbol: 'BTC/USD', yahooSymbol: 'BTC-USD', name: 'Bitcoin' },
+    { symbol: 'ETH/USD', yahooSymbol: 'ETH-USD', name: 'Ethereum' },
+    { symbol: 'BNB/USD', yahooSymbol: 'BNB-USD', name: 'BNB' },
+    { symbol: 'XRP/USD', yahooSymbol: 'XRP-USD', name: 'XRP' },
+    { symbol: 'SOL/USD', yahooSymbol: 'SOL-USD', name: 'Solana' },
+    { symbol: 'ADA/USD', yahooSymbol: 'ADA-USD', name: 'Cardano' },
+    { symbol: 'DOGE/USD', yahooSymbol: 'DOGE-USD', name: 'Dogecoin' },
+    { symbol: 'AVAX/USD', yahooSymbol: 'AVAX-USD', name: 'Avalanche' },
+    { symbol: 'LINK/USD', yahooSymbol: 'LINK-USD', name: 'Chainlink' },
+    { symbol: 'DOT/USD', yahooSymbol: 'DOT-USD', name: 'Polkadot' },
+    { symbol: 'MATIC/USD', yahooSymbol: 'MATIC-USD', name: 'Polygon' },
+    { symbol: 'LTC/USD', yahooSymbol: 'LTC-USD', name: 'Litecoin' },
   ],
   stocks: [
-    { symbol: 'AAPL', name: 'Apple' },
-    { symbol: 'MSFT', name: 'Microsoft' },
-    { symbol: 'GOOGL', name: 'Google' },
-    { symbol: 'NVDA', name: 'NVIDIA' },
-    { symbol: 'TSLA', name: 'Tesla' },
+    { symbol: 'AAPL', yahooSymbol: 'AAPL', name: 'Apple Inc.' },
+    { symbol: 'MSFT', yahooSymbol: 'MSFT', name: 'Microsoft Corporation' },
+    { symbol: 'GOOGL', yahooSymbol: 'GOOGL', name: 'Alphabet Inc.' },
+    { symbol: 'AMZN', yahooSymbol: 'AMZN', name: 'Amazon.com Inc.' },
+    { symbol: 'NVDA', yahooSymbol: 'NVDA', name: 'NVIDIA Corporation' },
+    { symbol: 'META', yahooSymbol: 'META', name: 'Meta Platforms Inc.' },
+    { symbol: 'TSLA', yahooSymbol: 'TSLA', name: 'Tesla Inc.' },
+    { symbol: 'JPM', yahooSymbol: 'JPM', name: 'JPMorgan Chase' },
+    { symbol: 'V', yahooSymbol: 'V', name: 'Visa Inc.' },
+    { symbol: 'UNH', yahooSymbol: 'UNH', name: 'UnitedHealth Group' },
+    { symbol: 'HD', yahooSymbol: 'HD', name: 'Home Depot' },
+    { symbol: 'PG', yahooSymbol: 'PG', name: 'Procter & Gamble' },
   ],
-  fx: [
-    { symbol: 'EURUSD=X', name: 'EUR/USD' },
-    { symbol: 'GBPUSD=X', name: 'GBP/USD' },
-    { symbol: 'USDJPY=X', name: 'USD/JPY' },
-    { symbol: 'AUDUSD=X', name: 'AUD/USD' },
+  commodities: [
+    { symbol: 'GC=F', yahooSymbol: 'GC=F', name: 'Gold Futures' },
+    { symbol: 'SI=F', yahooSymbol: 'SI=F', name: 'Silver Futures' },
+    { symbol: 'CL=F', yahooSymbol: 'CL=F', name: 'Crude Oil WTI' },
+    { symbol: 'NG=F', yahooSymbol: 'NG=F', name: 'Natural Gas' },
+    { symbol: 'HG=F', yahooSymbol: 'HG=F', name: 'Copper' },
+    { symbol: 'PL=F', yahooSymbol: 'PL=F', name: 'Platinum' },
+    { symbol: 'PA=F', yahooSymbol: 'PA=F', name: 'Palladium' },
+    { symbol: 'ZC=F', yahooSymbol: 'ZC=F', name: 'Corn Futures' },
+    { symbol: 'ZW=F', yahooSymbol: 'ZW=F', name: 'Wheat Futures' },
+    { symbol: 'ZS=F', yahooSymbol: 'ZS=F', name: 'Soybean Futures' },
+  ],
+  indices: [
+    { symbol: '^GSPC', yahooSymbol: '^GSPC', name: 'S&P 500' },
+    { symbol: '^DJI', yahooSymbol: '^DJI', name: 'Dow Jones Industrial' },
+    { symbol: '^IXIC', yahooSymbol: '^IXIC', name: 'NASDAQ Composite' },
+    { symbol: '^RUT', yahooSymbol: '^RUT', name: 'Russell 2000' },
+    { symbol: '^VIX', yahooSymbol: '^VIX', name: 'VIX Volatility' },
+    { symbol: '^FTSE', yahooSymbol: '^FTSE', name: 'FTSE 100' },
+    { symbol: '^GDAXI', yahooSymbol: '^GDAXI', name: 'DAX 40' },
+    { symbol: '^N225', yahooSymbol: '^N225', name: 'Nikkei 225' },
+    { symbol: '^HSI', yahooSymbol: '^HSI', name: 'Hang Seng' },
+  ],
+  etfs: [
+    { symbol: 'SPY', yahooSymbol: 'SPY', name: 'SPDR S&P 500 ETF' },
+    { symbol: 'QQQ', yahooSymbol: 'QQQ', name: 'Invesco QQQ Trust' },
+    { symbol: 'IWM', yahooSymbol: 'IWM', name: 'iShares Russell 2000' },
+    { symbol: 'DIA', yahooSymbol: 'DIA', name: 'SPDR Dow Jones ETF' },
+    { symbol: 'GLD', yahooSymbol: 'GLD', name: 'SPDR Gold Shares' },
+    { symbol: 'SLV', yahooSymbol: 'SLV', name: 'iShares Silver Trust' },
+    { symbol: 'USO', yahooSymbol: 'USO', name: 'United States Oil Fund' },
+    { symbol: 'TLT', yahooSymbol: 'TLT', name: 'iShares 20+ Year Treasury' },
+    { symbol: 'XLF', yahooSymbol: 'XLF', name: 'Financial Select Sector' },
+    { symbol: 'XLE', yahooSymbol: 'XLE', name: 'Energy Select Sector' },
+    { symbol: 'ARKK', yahooSymbol: 'ARKK', name: 'ARK Innovation ETF' },
   ],
 };
 
+// Asset class display names
+const ASSET_CLASS_LABELS: Record<string, string> = {
+  fx: 'Forex',
+  crypto: 'Cryptocurrency',
+  stocks: 'Stocks',
+  commodities: 'Commodities',
+  indices: 'Indices',
+  etfs: 'ETFs',
+};
+
+// Timeframes - synced with screener (1h, 4h, 1d, 1wk)
 const TIMEFRAMES = [
-  { value: '1d', label: 'Daily' },
-  { value: '4h', label: '4 Hour' },
+  { value: '1h', label: '1 Hour', intradayLimit: '30 days' },
+  { value: '4h', label: '4 Hour', intradayLimit: '30 days' },
+  { value: '1d', label: 'Daily', intradayLimit: null },
+  { value: '1wk', label: 'Weekly', intradayLimit: null },
 ];
 
 const LOOKBACK_OPTIONS = [
@@ -58,6 +144,7 @@ const LOOKBACK_OPTIONS = [
   { value: 3, label: '3 Years' },
   { value: 5, label: '5 Years' },
   { value: 7, label: '7 Years' },
+  { value: 10, label: '10 Years' },
 ];
 
 interface EstimateResult {
@@ -76,12 +163,12 @@ const PatternLabWizard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  // Form state
-  const [assetClass, setAssetClass] = useState('crypto');
-  const [selectedInstruments, setSelectedInstruments] = useState<string[]>(['BTCUSDT']);
+  // Form state - defaults synced with screener
+  const [assetClass, setAssetClass] = useState('fx');
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>(['EURUSD=X']);
   const [timeframe, setTimeframe] = useState('1d');
   const [lookbackYears, setLookbackYears] = useState(3);
-  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['double-bottom']);
   
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
@@ -279,31 +366,33 @@ const PatternLabWizard = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                      <SelectItem value="stocks">Stocks</SelectItem>
-                      <SelectItem value="fx">Forex</SelectItem>
+                      {Object.keys(INSTRUMENTS).map(key => (
+                        <SelectItem key={key} value={key}>
+                          {ASSET_CLASS_LABELS[key] || key}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2 max-h-[320px] overflow-y-auto pr-2">
                   {INSTRUMENTS[assetClass]?.map(inst => (
                     <div
-                      key={inst.symbol}
+                      key={inst.yahooSymbol}
                       className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedInstruments.includes(inst.symbol)
+                        selectedInstruments.includes(inst.yahooSymbol)
                           ? 'border-primary bg-primary/5'
                           : 'border-border/50 hover:border-border'
                       }`}
-                      onClick={() => handleInstrumentToggle(inst.symbol)}
+                      onClick={() => handleInstrumentToggle(inst.yahooSymbol)}
                     >
                       <Checkbox
-                        checked={selectedInstruments.includes(inst.symbol)}
-                        onCheckedChange={() => handleInstrumentToggle(inst.symbol)}
+                        checked={selectedInstruments.includes(inst.yahooSymbol)}
+                        onCheckedChange={() => handleInstrumentToggle(inst.yahooSymbol)}
                       />
-                      <div>
-                        <div className="font-medium text-sm">{inst.symbol}</div>
-                        <div className="text-xs text-muted-foreground">{inst.name}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm truncate">{inst.symbol}</div>
+                        <div className="text-xs text-muted-foreground truncate">{inst.name}</div>
                       </div>
                     </div>
                   ))}
@@ -317,7 +406,7 @@ const PatternLabWizard = () => {
                 <CardTitle className="text-lg">Backtest Parameters</CardTitle>
                 <CardDescription>Configure timeframe and data range</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Timeframe</Label>
@@ -329,6 +418,9 @@ const PatternLabWizard = () => {
                         {TIMEFRAMES.map(tf => (
                           <SelectItem key={tf.value} value={tf.value}>
                             {tf.label}
+                            {tf.intradayLimit && (
+                              <span className="text-muted-foreground ml-2">({tf.intradayLimit} max)</span>
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -337,24 +429,43 @@ const PatternLabWizard = () => {
                   
                   <div className="space-y-2">
                     <Label>Lookback Period</Label>
-                    <Select value={String(lookbackYears)} onValueChange={(v) => setLookbackYears(Number(v))}>
+                    <Select 
+                      value={String(lookbackYears)} 
+                      onValueChange={(v) => setLookbackYears(Number(v))}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {LOOKBACK_OPTIONS.map(lb => (
-                          <SelectItem 
-                            key={lb.value} 
-                            value={String(lb.value)}
-                            disabled={patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears}
-                          >
-                            {lb.label}
-                          </SelectItem>
-                        ))}
+                        {LOOKBACK_OPTIONS.map(lb => {
+                          // Intraday timeframes are limited to 30 days
+                          const isIntraday = timeframe === '1h' || timeframe === '4h';
+                          const disabled = isIntraday || 
+                            (patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears);
+                          return (
+                            <SelectItem 
+                              key={lb.value} 
+                              value={String(lb.value)}
+                              disabled={disabled && lb.value > 1}
+                            >
+                              {lb.label}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
+                
+                {/* Intraday limitation notice */}
+                {(timeframe === '1h' || timeframe === '4h') && (
+                  <Alert className="border-amber-500/30 bg-amber-500/5">
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                    <AlertDescription className="text-sm">
+                      Intraday data ({timeframe}) is limited to 30 days history due to data provider constraints.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
             
