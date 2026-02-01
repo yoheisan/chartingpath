@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -10,7 +9,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   Star,
-  Search,
   Activity,
   X,
   Lock,
@@ -18,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
@@ -58,7 +57,7 @@ export function WatchlistPanel({
   onSymbolSelect,
 }: WatchlistPanelProps) {
   const { profile } = useUserProfile();
-  const [searchQuery, setSearchQuery] = useState('');
+  
   const [userWatchlist, setUserWatchlist] = useState<WatchlistItem[]>([]);
   const [activePatterns, setActivePatterns] = useState<LivePattern[]>([]);
   const [loading, setLoading] = useState(false);
@@ -148,7 +147,6 @@ export function WatchlistPanel({
         }
       } else {
         toast.success(`${symbol} added to watchlist`);
-        setSearchQuery('');
         fetchUserWatchlist();
       }
     } catch (err) {
@@ -184,9 +182,6 @@ export function WatchlistPanel({
     ? userWatchlist 
     : DEFAULT_UNIVERSE_SAMPLES.map(s => ({ symbol: s }));
 
-  const filteredWatchlist = displayList.filter(
-    (item) => item.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const formatPatternName = (name: string) => {
     return name.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
@@ -207,33 +202,28 @@ export function WatchlistPanel({
               </Badge>
             )}
           </h3>
-          {isPaidUser && searchQuery.trim() && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 px-2 text-xs"
-              onClick={() => addToWatchlist(searchQuery.trim())}
-              disabled={addingSymbol}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Add
-            </Button>
-          )}
         </div>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder={isPaidUser ? "Add symbol..." : "Search symbols..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && isPaidUser && searchQuery.trim()) {
-                addToWatchlist(searchQuery.trim());
-              }
-            }}
-            className="h-7 pl-7 text-xs"
+        {isPaidUser ? (
+          <UniversalSymbolSearch
+            onSelect={(symbol) => addToWatchlist(symbol)}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 justify-start text-xs text-muted-foreground"
+                disabled={addingSymbol}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add symbol...
+              </Button>
+            }
           />
-        </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
+            <Lock className="h-3 w-3" />
+            <span>Upgrade to add custom symbols</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -266,7 +256,7 @@ export function WatchlistPanel({
                   </div>
                 </div>
               )}
-              {filteredWatchlist.map((item) => (
+              {displayList.map((item) => (
                 <div
                   key={item.symbol}
                   className={cn(
@@ -298,11 +288,11 @@ export function WatchlistPanel({
                   )}
                 </div>
               ))}
-              {filteredWatchlist.length === 0 && (
+              {displayList.length === 0 && (
                 <div className="text-center py-4 text-xs text-muted-foreground">
                   {isPaidUser 
                     ? 'No symbols yet. Add one above!' 
-                    : 'No matches found'}
+                    : 'No instruments available'}
                 </div>
               )}
             </div>
