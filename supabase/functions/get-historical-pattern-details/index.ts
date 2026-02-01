@@ -32,13 +32,13 @@ serve(async (req) => {
     );
 
     const { data, error } = await supabase
-      .from('live_pattern_detections')
+      .from('historical_pattern_occurrences')
       .select('*')
       .eq('id', id)
       .maybeSingle();
 
     if (error) {
-      console.error('[get-live-pattern-details] DB error:', error.message);
+      console.error('[get-historical-pattern-details] DB error:', error.message);
       throw error;
     }
 
@@ -49,10 +49,24 @@ serve(async (req) => {
       });
     }
 
+    // Normalize bars to compressed format (t, o, h, l, c, v) expected by frontend
+    const normalizedBars = (data.bars || []).map((bar: any) => {
+      // Handle both formats: already compressed or full names
+      if ('t' in bar) return bar;
+      return {
+        t: bar.date || bar.timestamp,
+        o: bar.open ?? bar.o,
+        h: bar.high ?? bar.h,
+        l: bar.low ?? bar.l,
+        c: bar.close ?? bar.c,
+        v: bar.volume ?? bar.v ?? 0,
+      };
+    });
+
     // Match the response structure expected by the frontend (snake_case)
     const pattern = {
       id: data.id,
-      instrument: data.instrument,
+      instrument: data.symbol,
       pattern_name: data.pattern_name,
       direction: data.direction,
       quality_score: data.quality_score,
@@ -61,22 +75,25 @@ serve(async (req) => {
       take_profit_price: data.take_profit_price,
       risk_reward_ratio: data.risk_reward_ratio,
       timeframe: data.timeframe,
-      first_detected_at: data.first_detected_at,
-      bars: data.bars || [],
+      first_detected_at: data.detected_at,
+      bars: normalizedBars,
       visual_spec: data.visual_spec || {},
-      current_price: data.current_price,
-      prev_close: data.prev_close,
-      change_percent: data.change_percent,
+      // Historical-specific fields
+      outcome: data.outcome,
+      outcome_pnl_percent: data.outcome_pnl_percent,
+      outcome_date: data.outcome_date,
+      outcome_price: data.outcome_price,
+      bars_to_outcome: data.bars_to_outcome,
       trend_alignment: data.trend_alignment,
       trend_indicators: data.trend_indicators,
     };
 
     return new Response(JSON.stringify({ success: true, pattern }), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' },
     });
   } catch (err: any) {
-    console.error('[get-live-pattern-details] Error:', err?.message || err);
+    console.error('[get-historical-pattern-details] Error:', err?.message || err);
     return new Response(JSON.stringify({ success: false, error: err?.message || 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

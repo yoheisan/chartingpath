@@ -24,7 +24,7 @@ interface CommandCenterLayoutProps {
   userId?: string;
 }
 
-// Response shape from edge function
+// Response shape from edge functions (live and historical)
 interface PatternDetailsResponse {
   success: boolean;
   pattern?: {
@@ -46,6 +46,10 @@ interface PatternDetailsResponse {
     change_percent?: number;
     trend_alignment?: string;
     trend_indicators?: Record<string, unknown>;
+    // Historical-specific fields
+    outcome?: string;
+    outcome_pnl_percent?: number;
+    outcome_date?: string;
   };
   error?: string;
 }

@@ -3780,6 +3780,21 @@ export type Database = {
         | "ema_cross_bearish"
         | "rsi_divergence_bullish"
         | "rsi_divergence_bearish"
+        | "donchian-breakout-long"
+        | "donchian-breakout-short"
+        | "double-top"
+        | "double-bottom"
+        | "ascending-triangle"
+        | "descending-triangle"
+        | "head-and-shoulders"
+        | "inverse-head-and-shoulders"
+        | "rising-wedge"
+        | "falling-wedge"
+        | "bull-flag"
+        | "bear-flag"
+        | "cup-and-handle"
+        | "triple-top"
+        | "triple-bottom"
       content_status: "draft" | "published" | "archived" | "scheduled"
       content_type:
         | "article"
@@ -3966,6 +3981,21 @@ export const Constants = {
         "ema_cross_bearish",
         "rsi_divergence_bullish",
         "rsi_divergence_bearish",
+        "donchian-breakout-long",
+        "donchian-breakout-short",
+        "double-top",
+        "double-bottom",
+        "ascending-triangle",
+        "descending-triangle",
+        "head-and-shoulders",
+        "inverse-head-and-shoulders",
+        "rising-wedge",
+        "falling-wedge",
+        "bull-flag",
+        "bear-flag",
+        "cup-and-handle",
+        "triple-top",
+        "triple-bottom",
       ],
       content_status: ["draft", "published", "archived", "scheduled"],
       content_type: [
