@@ -101,7 +101,9 @@ serve(async (req) => {
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
 
     // Yahoo Finance query URL - use yahooInterval (1h if 4h requested)
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+    // IMPORTANT: symbol must be URL-encoded because index tickers include special chars (e.g. ^GSPC)
+    const encodedSymbol = encodeURIComponent(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
 
     const response = await fetch(yahooUrl, {
       headers: {

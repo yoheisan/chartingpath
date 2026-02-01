@@ -80,7 +80,7 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
       }
 
       // For indices not in live_pattern_detections, fetch latest from historical_prices
-      const missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
+      let missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
       if (missingIndices.length > 0) {
         const { data: historicalData } = await supabase
           .from('historical_prices')
@@ -88,7 +88,7 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
           .in('symbol', missingIndices)
           .eq('timeframe', '1d')
           .order('date', { ascending: false })
-          .limit(missingIndices.length * 2);
+          .limit(missingIndices.length * 3);
 
         if (historicalData) {
           // Get most recent price per symbol
@@ -97,10 +97,62 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
               const change = h.open > 0 ? ((h.close - h.open) / h.open) * 100 : 0;
               indicesMap[h.symbol] = {
                 price: h.close,
-                change: change,
+                change,
               };
             }
           }
+        }
+
+        // If the DB has no rows (common for ^GSPC/^DJI/^IXIC in some environments),
+        // fall back to Yahoo Finance via edge function.
+        missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
+        if (missingIndices.length > 0) {
+          const endDate = new Date();
+          const startDate = new Date();
+          startDate.setDate(endDate.getDate() - 10);
+
+          const startStr = startDate.toISOString().slice(0, 10);
+          const endStr = endDate.toISOString().slice(0, 10);
+
+          const results = await Promise.allSettled(
+            missingIndices.map((symbol) =>
+              supabase.functions.invoke('fetch-yahoo-finance', {
+                body: {
+                  symbol,
+                  startDate: startStr,
+                  endDate: endStr,
+                  interval: '1d',
+                  includeOhlc: true,
+                },
+              })
+            )
+          );
+
+          results.forEach((res, idx) => {
+            const symbol = missingIndices[idx];
+            if (res.status !== 'fulfilled') return;
+
+            const { data, error } = res.value as any;
+            if (error) return;
+
+            const bars = (data as any)?.bars as Array<{ c: number }> | undefined;
+            if (!Array.isArray(bars) || bars.length < 1) return;
+
+            const last = bars[bars.length - 1];
+            const prev = bars.length >= 2 ? bars[bars.length - 2] : null;
+            const price = Number(last?.c);
+            const prevClose = prev ? Number(prev?.c) : NaN;
+            if (!Number.isFinite(price) || price === 0) return;
+
+            const changePct = Number.isFinite(prevClose) && prevClose !== 0
+              ? ((price - prevClose) / prevClose) * 100
+              : 0;
+
+            indicesMap[symbol] = {
+              price,
+              change: changePct,
+            };
+          });
         }
       }
 
