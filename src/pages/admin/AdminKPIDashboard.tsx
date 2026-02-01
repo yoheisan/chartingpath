@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchKPIData, TimeWindow, KPIData } from "@/services/adminKpiService";
+import { DataScalingCard } from "@/components/admin/DataScalingCard";
 
 const AdminKPIDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ const AdminKPIDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
+  const [planCounts, setPlanCounts] = useState({ free: 0, lite: 0, plus: 0, pro: 0, team: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -69,6 +71,24 @@ const AdminKPIDashboard = () => {
     try {
       const data = await fetchKPIData(timeWindow);
       setKpiData(data);
+      
+      // Fetch subscription plan counts for scaling card
+      const { data: planData } = await supabase
+        .from('profiles')
+        .select('subscription_plan');
+      
+      if (planData) {
+        const counts = { free: 0, lite: 0, plus: 0, pro: 0, team: 0 };
+        planData.forEach((p: { subscription_plan: string | null }) => {
+          const plan = (p.subscription_plan || 'free').toLowerCase();
+          if (plan === 'starter' || plan === 'free') counts.free++;
+          else if (plan === 'lite') counts.lite++;
+          else if (plan === 'plus') counts.plus++;
+          else if (plan === 'pro') counts.pro++;
+          else if (plan === 'elite' || plan === 'team') counts.team++;
+        });
+        setPlanCounts(counts);
+      }
     } catch (error) {
       console.error('Error loading KPI data:', error);
       toast({
@@ -238,6 +258,9 @@ const AdminKPIDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Data Scaling Widget */}
+        <DataScalingCard planCounts={planCounts} />
 
         {/* Funnel + Activation */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
