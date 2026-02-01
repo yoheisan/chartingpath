@@ -288,32 +288,30 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             <ResizableHandle withHandle />
 
-            {/* Bottom Panels - Quick Research + Market Overview */}
+            {/* Bottom Panel - Quick Research */}
             <ResizablePanel defaultSize={30} minSize={15} maxSize={50}>
-              <ResizablePanelGroup direction="horizontal" className="h-full">
-                {/* Quick Research */}
-                <ResizablePanel defaultSize={50} minSize={30}>
-                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* Market Overview */}
-                <ResizablePanel defaultSize={50} minSize={30}>
-                  <MarketOverviewPanel onSymbolSelect={handleSymbolSelect} />
-                </ResizablePanel>
-              </ResizablePanelGroup>
+              <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Right Sidebar - Alerts History */}
+        {/* Right Sidebar - Alerts History + Market Overview stacked */}
         <ResizablePanel defaultSize={25} minSize={15} maxSize={35}>
-          <div className="h-full border-l border-border">
-            <AlertsHistoryPanel userId={userId} />
-          </div>
+          <ResizablePanelGroup direction="vertical" className="h-full border-l border-border">
+            {/* Alerts History */}
+            <ResizablePanel defaultSize={50} minSize={20}>
+              <AlertsHistoryPanel userId={userId} />
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Market Overview */}
+            <ResizablePanel defaultSize={50} minSize={20}>
+              <MarketOverviewPanel onSymbolSelect={handleSymbolSelect} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
 
