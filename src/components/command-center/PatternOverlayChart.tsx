@@ -152,6 +152,12 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               bars={bars} 
               symbol={instrument} 
               height={undefined}
+              tradePlan={{
+                entry: tradePlan.entry,
+                stopLoss: tradePlan.stopLoss,
+                takeProfit: tradePlan.takeProfit,
+                direction: direction as 'long' | 'short',
+              }}
             />
           </div>
         ) : (

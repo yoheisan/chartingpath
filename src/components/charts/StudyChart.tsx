@@ -8,6 +8,8 @@ import {
   CandlestickSeries,
   LineSeries,
   HistogramSeries,
+  createSeriesMarkers,
+  SeriesMarkerShape,
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
 import {
@@ -82,10 +84,19 @@ function saveIndicatorSettings(settings: IndicatorSettings) {
   }
 }
 
+interface TradePlanOverlay {
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  direction?: 'long' | 'short';
+}
+
 interface StudyChartProps {
   bars: CompressedBar[];
   symbol: string;
   height?: number;
+  /** Optional trade plan to render Entry/SL/TP price lines */
+  tradePlan?: TradePlanOverlay;
 }
 
 /**
@@ -96,7 +107,7 @@ interface StudyChartProps {
  * - Bollinger Bands
  * - VWAP
  */
-const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
+const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -342,9 +353,61 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
       }
     }
 
+    // === TRADE PLAN OVERLAYS (Entry/SL/TP) ===
+    if (tradePlan) {
+      // Entry line (amber/primary)
+      candleSeries.createPriceLine({
+        price: tradePlan.entry,
+        color: '#f59e0b', // Amber for entry
+        lineWidth: 2,
+        lineStyle: 0, // Solid
+        axisLabelVisible: true,
+        title: 'Entry',
+      });
+
+      // Stop Loss line (red/destructive)
+      candleSeries.createPriceLine({
+        price: tradePlan.stopLoss,
+        color: '#ef4444', // Red for SL
+        lineWidth: 2,
+        lineStyle: 2, // Dashed
+        axisLabelVisible: true,
+        title: 'SL',
+      });
+
+      // Take Profit line (green/positive)
+      candleSeries.createPriceLine({
+        price: tradePlan.takeProfit,
+        color: '#22c55e', // Green for TP
+        lineWidth: 2,
+        lineStyle: 2, // Dashed
+        axisLabelVisible: true,
+        title: 'TP',
+      });
+
+      // Add Entry marker on the last bar
+      if (chartData.length > 0) {
+        const lastBar = chartData[chartData.length - 1];
+        const isLong = tradePlan.direction === 'long';
+        const markerShape: SeriesMarkerShape = isLong ? 'arrowUp' : 'arrowDown';
+        try {
+          createSeriesMarkers(candleSeries, [{
+            time: lastBar.time,
+            position: isLong ? 'belowBar' : 'aboveBar',
+            color: '#f59e0b',
+            shape: markerShape,
+            text: 'Entry',
+          }]);
+        } catch {
+          // Ignore marker errors
+        }
+      }
+    }
+
     // Calculate optimal price margins based on data volatility
     // Ensures charts never look "flat" regardless of actual price movement
-    const optimalMargins = calculateOptimalPriceMargins(bars, false);
+    const hasOverlays = !!tradePlan;
+    const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
     chart.priceScale('right').applyOptions({
       autoScale: true,
       scaleMargins: optimalMargins,
@@ -416,7 +479,7 @@ const StudyChart = memo(({ bars, symbol, height = 350 }: StudyChartProps) => {
         chartRef.current = null;
       }
     };
-  }, [bars, height, indicators, i18n.language]);
+  }, [bars, height, indicators, i18n.language, tradePlan]);
 
   if (!bars || bars.length === 0) {
     return (
