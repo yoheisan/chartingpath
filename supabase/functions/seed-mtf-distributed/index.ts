@@ -29,6 +29,8 @@ interface PartitionConfig {
   assetTypes: string[];
   stockLetterFilter?: { start: string; end: string };
   batchSize: number;
+  isPremium?: boolean;
+  maxInstruments?: number;
 }
 
 const PARTITIONS: Record<string, PartitionConfig> = {
@@ -66,10 +68,18 @@ const PARTITIONS: Record<string, PartitionConfig> = {
   'etfs': {
     assetTypes: ['etfs'],
     batchSize: 30
+  },
+  // Premium partition: Top 300 most-traded instruments for 15m scanning
+  'premium_15m': {
+    assetTypes: ['stocks', 'etfs', 'crypto', 'fx'],
+    batchSize: 25,
+    isPremium: true,
+    maxInstruments: 300
   }
 };
 
 const TIMEFRAMES = ['1h', '4h', '1d', '1wk'];
+const PREMIUM_TIMEFRAMES = ['15m', '1h', '4h'];
 
 async function runPartitionSeeding(
   supabaseUrl: string,
@@ -90,11 +100,12 @@ async function runPartitionSeeding(
       const body: Record<string, unknown> = {
         timeframe,
         assetTypes: config.assetTypes,
-        maxInstrumentsPerType: config.batchSize,
+        maxInstrumentsPerType: config.isPremium ? config.maxInstruments : config.batchSize,
         offset,
         dryRun: false,
         incrementalMode: true,
-        forceFullBackfill: false
+        forceFullBackfill: false,
+        premiumOnly: config.isPremium || false
       };
 
       // Add stock letter filter if applicable
@@ -178,7 +189,7 @@ serve(async (req) => {
 
     // Determine which partitions to process
     const partitionsToProcess = partition === 'all' 
-      ? Object.keys(PARTITIONS)
+      ? Object.keys(PARTITIONS).filter(p => !PARTITIONS[p].isPremium) // Exclude premium from 'all'
       : [partition];
 
     console.log(`[seed-distributed] Starting distributed seeding`);
