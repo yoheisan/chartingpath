@@ -25,9 +25,10 @@ interface WatchlistPanelProps {
   userId?: string;
   selectedSymbol: string;
   onSymbolSelect: (symbol: string) => void;
+  onPatternSelect?: (pattern: LivePattern) => void;
 }
 
-interface LivePattern {
+export interface LivePattern {
   id: string;
   instrument: string;
   pattern_name: string;
@@ -55,6 +56,7 @@ export function WatchlistPanel({
   userId,
   selectedSymbol,
   onSymbolSelect,
+  onPatternSelect,
 }: WatchlistPanelProps) {
   const { profile } = useUserProfile();
   
@@ -325,7 +327,7 @@ export function WatchlistPanel({
                 activePatterns.map((pattern) => (
                   <button
                     key={pattern.id}
-                    onClick={() => onSymbolSelect(pattern.instrument)}
+                    onClick={() => onPatternSelect ? onPatternSelect(pattern) : onSymbolSelect(pattern.instrument)}
                     className={cn(
                       'w-full flex flex-col gap-1 px-2 py-2 rounded-md text-left hover:bg-muted/50 transition-colors border-b border-border/50 last:border-0',
                       selectedSymbol === pattern.instrument && 'bg-muted'
