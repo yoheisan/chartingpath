@@ -1,119 +1,138 @@
-import { supabase } from "@/integrations/supabase/client";
-import { PriceFrame } from "../../engine/backtester-v2/data/types";
-import { createProvider, getRecommendedProvider, PROVIDER_CAPABILITIES } from "../../engine/backtester-v2/data/providerFactory";
+/**
+ * Market Data Provider Adapter (Frontend)
+ * 
+ * This is the frontend-facing adapter that uses the new DataService.
+ * It maintains backward compatibility while leveraging the modular provider system.
+ */
+
+import { DataService, DataServiceConfig, PriceFrame } from "../../engine/backtester-v2/data";
 
 const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
 
 /**
- * Multi-Provider Market Data Service
+ * Market Data Provider using the new modular DataService
  * 
- * Supports multiple data providers with automatic fallback:
- * 1. Yahoo Finance (default) - Free, unlimited, best for stocks
- * 2. Dukascopy - Free, excellent for forex
- * 3. Alpha Vantage, EODHD, Twelve Data - Premium options
+ * Switching providers is now as simple as:
+ *   marketDataProvider.setProvider('eodhd');
  * 
- * Provider selection is automatic based on:
- * - Instrument type (stock, forex, crypto)
- * - User subscription plan
- * - Data requirements
+ * Or for a specific request:
+ *   await marketDataProvider.loadEOD(['AAPL'], start, end, { provider: 'eodhd' });
  */
-export class SupabaseMarketDataProvider {
-  private currentProvider: string = 'yahoo';
-  private userPlan: 'free' | 'starter' | 'pro' | 'elite' = 'starter';
+export class MarketDataProvider {
+  private dataService: DataService;
 
-  constructor(userPlan?: 'free' | 'starter' | 'pro' | 'elite') {
-    if (userPlan) {
-      this.userPlan = userPlan;
-    }
+  constructor(config?: Partial<DataServiceConfig>) {
+    this.dataService = new DataService({
+      defaultProvider: 'yahoo',
+      supabaseUrl: SUPABASE_URL,
+      supabaseKey: SUPABASE_ANON_KEY,
+      enableFallback: true,
+      fallbackOrder: ['yahoo', 'eodhd'],
+      ...config
+    });
   }
 
   /**
    * Set the active data provider
    */
-  setProvider(provider: 'yahoo' | 'dukascopy' | 'eodhd' | 'twelve' | 'alphavantage' | 'finnhub') {
-    this.currentProvider = provider;
-    console.log(`[DataProvider] Switched to ${provider}`);
+  setProvider(provider: 'yahoo' | 'eodhd' | 'twelveData' | 'alphaVantage' | 'polygon'): void {
+    this.dataService.setDefaultProvider(provider);
   }
 
   /**
-   * Get provider based on instrument type and user plan
+   * Get the current default provider
    */
-  private getProviderForInstrument(symbol: string): string {
-    // Auto-detect instrument type from symbol
-    let instrumentType: 'stock' | 'forex' | 'crypto' | 'etf' = 'stock';
-    
-    if (symbol.includes('USD') || symbol.includes('EUR') || symbol.includes('GBP') || symbol.includes('JPY')) {
-      instrumentType = 'forex';
-    } else if (symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('USDT')) {
-      instrumentType = 'crypto';
-    } else if (symbol.includes('SPY') || symbol.includes('QQQ') || symbol.includes('IWM')) {
-      instrumentType = 'etf';
-    }
-
-    // Get recommended provider
-    const recommended = getRecommendedProvider(instrumentType, this.userPlan);
-    
-    console.log(`[DataProvider] Recommended provider for ${symbol} (${instrumentType}): ${recommended}`);
-    
-    return recommended;
+  getCurrentProvider(): string {
+    return this.dataService.listProviders()[0] || 'yahoo';
   }
 
   /**
-   * Load end-of-day data with automatic provider selection
+   * List all available providers
    */
-  async loadEOD(symbols: string[], start: string, end: string): Promise<PriceFrame> {
-    console.log(`[DataProvider] Loading EOD data for ${symbols.join(', ')}`);
-    
-    // Determine best provider for first symbol (assume all same type)
-    const providerType = this.currentProvider === 'yahoo' 
-      ? this.getProviderForInstrument(symbols[0])
-      : this.currentProvider;
-
-    try {
-      const provider = createProvider({
-        type: providerType as any,
-        supabaseUrl: SUPABASE_URL,
-        supabaseKey: SUPABASE_ANON_KEY
-      });
-
-      const data = await provider.loadEOD(symbols, start, end);
-      console.log(`[DataProvider] Successfully loaded ${data.index.length} days of data via ${providerType}`);
-      return data;
-      
-    } catch (error) {
-      console.error(`[DataProvider] Error with ${providerType}, trying fallback:`, error);
-      
-      // Fallback to Yahoo Finance if primary fails
-      if (providerType !== 'yahoo') {
-        try {
-          console.log('[DataProvider] Falling back to Yahoo Finance');
-          const yahooProvider = createProvider({
-            type: 'yahoo',
-            supabaseUrl: SUPABASE_URL,
-            supabaseKey: SUPABASE_ANON_KEY
-          });
-          return await yahooProvider.loadEOD(symbols, start, end);
-        } catch (yahooError) {
-          console.error('[DataProvider] Yahoo Finance fallback failed:', yahooError);
-        }
-      }
-      
-      // No fallback - throw error so users know data fetch failed
-      throw new Error(`Failed to fetch real market data for ${symbols.join(', ')}. Please try again or contact support.`);
-    }
+  listAvailableProviders(): string[] {
+    return this.dataService.listProviders();
   }
 
-
-  async loadIntraday(symbol: string, start: string, end: string, interval: "1m"|"5m"): Promise<PriceFrame> {
-    // For now, EODHD doesn't support intraday in our setup
-    throw new Error("Intraday data not supported with EODHD provider");
+  /**
+   * Get capabilities for a provider
+   */
+  getProviderCapabilities(providerId: string) {
+    return this.dataService.getProviderCapabilities(providerId);
   }
 
-  async loadFX(pair: string, start: string, end: string, interval: "1m"|"5m"|"1h" = "1h"): Promise<PriceFrame> {
-    // FX pairs would need different handling
-    return this.loadEOD([pair], start, end);
+  /**
+   * Load end-of-day data
+   */
+  async loadEOD(
+    symbols: string[], 
+    start: string, 
+    end: string,
+    options?: { provider?: string }
+  ): Promise<PriceFrame> {
+    console.log(`[MarketDataProvider] Loading EOD for ${symbols.join(', ')}`);
+    return this.dataService.getEOD(symbols, start, end, options);
+  }
+
+  /**
+   * Load intraday data
+   */
+  async loadIntraday(
+    symbol: string, 
+    start: string, 
+    end: string, 
+    interval: "1m" | "5m" | "15m" | "30m" | "1h" | "4h",
+    options?: { provider?: string }
+  ): Promise<PriceFrame> {
+    console.log(`[MarketDataProvider] Loading intraday ${interval} for ${symbol}`);
+    return this.dataService.getIntraday(symbol, start, end, interval, options);
+  }
+
+  /**
+   * Load FX data
+   */
+  async loadFX(
+    pair: string, 
+    start: string, 
+    end: string, 
+    interval: "1m" | "5m" | "1h" | "1d" = "1h",
+    options?: { provider?: string }
+  ): Promise<PriceFrame> {
+    console.log(`[MarketDataProvider] Loading FX for ${pair}`);
+    return this.dataService.getFX(pair, start, end, interval, options);
+  }
+
+  /**
+   * Health check all providers
+   */
+  async healthCheck(): Promise<Record<string, { ok: boolean; latencyMs: number; error?: string }>> {
+    return this.dataService.healthCheckAll();
+  }
+
+  /**
+   * Find best provider for a use case
+   */
+  findBestProvider(criteria: {
+    instrument?: 'stock' | 'etf' | 'forex' | 'crypto' | 'index';
+    timeframe?: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1wk' | '1mo';
+    preferFree?: boolean;
+    requireCommercialLicense?: boolean;
+  }): string | null {
+    return this.dataService.findBestProvider(criteria);
   }
 }
 
-export const marketDataProvider = new SupabaseMarketDataProvider();
+// Legacy class name for backward compatibility
+export class SupabaseMarketDataProvider extends MarketDataProvider {
+  constructor(userPlan?: 'free' | 'starter' | 'pro' | 'elite') {
+    super();
+    // User plan could influence default provider selection
+    if (userPlan === 'pro' || userPlan === 'elite') {
+      // Pro/elite users might prefer paid providers
+      console.log(`[MarketDataProvider] User plan: ${userPlan}`);
+    }
+  }
+}
+
+// Singleton instance for easy import
+export const marketDataProvider = new MarketDataProvider();
