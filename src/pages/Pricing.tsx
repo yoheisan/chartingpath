@@ -88,6 +88,7 @@ const Pricing = () => {
         "Demo-only backtesting (prebuilt examples)",
         "Basic pattern recognition learning guides"
       ],
+      dataRefresh: "Daily scans updated every 24h",
       limitations: ["Daily (1D) charts only"],
       buttonText: "Get Started Free",
       popular: false,
@@ -107,6 +108,7 @@ const Pricing = () => {
         "Basic backtesting: up to 2 years of historical data",
         "Email support"
       ],
+      dataRefresh: "4H: Every 4h • 15m: Top 300 every 15m",
       limitations: [],
       buttonText: "Get Lite",
       popular: false,
@@ -127,6 +129,7 @@ const Pricing = () => {
         "Advanced risk & pip calculators",
         "Priority email support"
       ],
+      dataRefresh: "1H: Core 1,100 hourly • 4H: All 8,500+ every 4h",
       limitations: [],
       buttonText: "Get Plus",
       popular: false,
@@ -148,6 +151,7 @@ const Pricing = () => {
         "Advanced metrics & trade analytics",
         "Priority support"
       ],
+      dataRefresh: "1H: Core 1,100 hourly • 4H/Daily: Full 8,500+ real-time",
       limitations: [],
       buttonText: "Go Pro",
       popular: true,
@@ -169,6 +173,7 @@ const Pricing = () => {
         "Priority queues & VIP support",
         "Early access to new features"
       ],
+      dataRefresh: "All timeframes: Full 8,500+ instruments, fastest refresh rates",
       limitations: [],
       buttonText: "Join Team",
       popular: false,
@@ -296,6 +301,16 @@ const Pricing = () => {
                 </CardHeader>
 
                 <CardContent className="space-y-6">
+                  {/* Data Refresh Badge */}
+                  {plan.dataRefresh && (
+                    <div className="p-2 bg-muted/50 rounded-lg border border-border/50">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="font-medium">{plan.dataRefresh}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <ul className="space-y-3">
                     {plan.features.map((feature, index) => {
                       // Highlight timeframe feature (first feature) for visibility
@@ -432,6 +447,28 @@ const Pricing = () => {
                 <p className="text-muted-foreground">
                   When you upgrade to a higher tier, we automatically calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly, and you'll see the updated next payment date in your account.
                 </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="data-refresh-rates">
+              <AccordionTrigger className="text-left">
+                How often is pattern data refreshed?
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="text-muted-foreground space-y-3">
+                  <p>
+                    Data refresh rates depend on your plan tier and the timeframe you're analyzing:
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li><strong>Daily (1D) & Weekly (1W):</strong> Updated every 24 hours for all 8,500+ instruments</li>
+                    <li><strong>4-Hour (4H):</strong> Updated every 4 hours for all 8,500+ instruments</li>
+                    <li><strong>Hourly (1H):</strong> Updated hourly for Core 1,100 instruments; every 8h for extended universe</li>
+                    <li><strong>15-Minute (15m):</strong> Updated every 15 minutes for Top 300 most liquid instruments</li>
+                  </ul>
+                  <p className="text-xs italic">
+                    Higher refresh rates for intraday data require significant API resources. Premium tiers get priority access during high-traffic periods.
+                  </p>
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

@@ -155,3 +155,6 @@ verify_jwt = false
 
 [functions.get-historical-pattern-details]
 verify_jwt = false
+
+[functions.fetch-eodhd]
+verify_jwt = false

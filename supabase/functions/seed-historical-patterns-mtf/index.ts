@@ -483,20 +483,27 @@ function getAssetType(symbol: string): string {
   return 'stocks';
 }
 
-// Timeframe to Yahoo Finance interval mapping
+// Timeframe to EODHD/Yahoo interval mapping
+const TF_TO_EODHD_INTERVAL: Record<string, string> = {
+  '1h': '1h',
+  '4h': '1h', // Aggregate from 1h
+  '1d': 'd',
+  '1wk': 'w'
+};
+
 const TF_TO_YAHOO_INTERVAL: Record<string, string> = {
   '1h': '1h',
-  '4h': '1h', // Yahoo doesn't have 4h, we'll aggregate from 1h
+  '4h': '1h',
   '1d': '1d',
   '1wk': '1wk'
 };
 
-// Data retention limits by timeframe (Yahoo Finance limitations)
+// Data retention limits by timeframe (EODHD has much higher limits than Yahoo)
 const TF_DATA_LIMITS: Record<string, { rangeDays: number; maxBars: number }> = {
-  '1h': { rangeDays: 30, maxBars: 500 },      // 1h: 30 days of data
-  '4h': { rangeDays: 60, maxBars: 360 },      // 4h: ~60 days
-  '1d': { rangeDays: 365 * 5, maxBars: 1300 }, // 5 years
-  '1wk': { rangeDays: 365 * 5, maxBars: 260 }  // 5 years
+  '1h': { rangeDays: 120, maxBars: 2000 },      // EODHD: up to 120 days intraday
+  '4h': { rangeDays: 120, maxBars: 500 },       // 4h: ~120 days
+  '1d': { rangeDays: 365 * 10, maxBars: 2600 }, // 10+ years
+  '1wk': { rangeDays: 365 * 10, maxBars: 520 }  // 10+ years
 };
 
 // Aggregate 1h bars to 4h bars
@@ -518,11 +525,126 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
   return result;
 }
 
-async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+/**
+ * Convert symbol to EODHD format
+ */
+function toEODHDSymbol(symbol: string): string {
+  if (symbol.includes('-USD')) {
+    const crypto = symbol.replace('-USD', '');
+    return `${crypto}-USD.CC`;
+  }
+  if (symbol.includes('=X')) {
+    const pair = symbol.replace('=X', '');
+    return `${pair}.FOREX`;
+  }
+  if (symbol.includes('=F')) {
+    const commodity = symbol.replace('=F', '');
+    return `${commodity}.COMM`;
+  }
+  if (symbol.startsWith('^')) {
+    const index = symbol.replace('^', '');
+    return `${index}.INDX`;
+  }
+  return `${symbol}.US`;
+}
+
+/**
+ * Fetch data from EODHD (primary provider - 100k calls/day)
+ */
+async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) {
+    console.log('[EODHD] API key not configured, falling back to Yahoo');
+    return [];
+  }
+  
   const limits = TF_DATA_LIMITS[timeframe] || TF_DATA_LIMITS['1d'];
   const endDate = new Date();
   
-  // Use provided fromTimestamp or calculate from limits
+  let startDate: Date;
+  if (fromTimestamp) {
+    startDate = new Date(fromTimestamp);
+  } else {
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - limits.rangeDays);
+  }
+  
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+  
+  const eodhSymbol = toEODHDSymbol(symbol);
+  const isIntraday = ['1h', '4h'].includes(timeframe);
+  const eodhInterval = timeframe === '4h' ? '1h' : TF_TO_EODHD_INTERVAL[timeframe];
+  
+  let url: string;
+  if (isIntraday) {
+    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${startStr}&to=${endStr}&fmt=json`;
+  } else {
+    url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startStr}&to=${endStr}&period=${eodhInterval}&fmt=json`;
+  }
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.log(`[EODHD] Error for ${symbol}: ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) return [];
+    
+    let bars: OHLCBar[];
+    if (isIntraday) {
+      bars = data
+        .filter((bar: any) => bar.close && Number.isFinite(bar.close))
+        .map((bar: any) => ({
+          date: bar.datetime || new Date(bar.timestamp * 1000).toISOString(),
+          open: Number(bar.open),
+          high: Number(bar.high),
+          low: Number(bar.low),
+          close: Number(bar.close),
+          volume: Number(bar.volume) || 0,
+        }));
+    } else {
+      bars = data
+        .filter((bar: any) => bar.close && Number.isFinite(bar.close))
+        .map((bar: any) => ({
+          date: new Date(bar.date).toISOString(),
+          open: Number(bar.open),
+          high: Number(bar.high),
+          low: Number(bar.low),
+          close: Number(bar.adjusted_close || bar.close),
+          volume: Number(bar.volume) || 0,
+        }));
+    }
+    
+    if (timeframe === '4h') {
+      bars = aggregate1hTo4h(bars);
+    }
+    
+    console.log(`[EODHD] Fetched ${bars.length} bars for ${symbol}@${timeframe}`);
+    return bars;
+  } catch (error) {
+    console.error(`[EODHD] Error fetching ${symbol}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Fetch data from Yahoo Finance (fallback provider)
+ */
+async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+  // Yahoo has stricter limits for intraday
+  const yahooLimits: Record<string, { rangeDays: number }> = {
+    '1h': { rangeDays: 30 },
+    '4h': { rangeDays: 60 },
+    '1d': { rangeDays: 365 * 5 },
+    '1wk': { rangeDays: 365 * 5 }
+  };
+  
+  const limits = yahooLimits[timeframe] || yahooLimits['1d'];
+  const endDate = new Date();
+  
   let startDate: Date;
   if (fromTimestamp) {
     startDate = new Date(fromTimestamp);
@@ -534,10 +656,9 @@ async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?:
   const period1 = Math.floor(startDate.getTime() / 1000);
   const period2 = Math.floor(endDate.getTime() / 1000);
   
-  // For 4h, we fetch 1h and aggregate
   const yahooInterval = timeframe === '4h' ? '1h' : TF_TO_YAHOO_INTERVAL[timeframe];
-  
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+  const encodedSymbol = encodeURIComponent(symbol);
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
   
   try {
     const response = await fetch(yahooUrl, {
@@ -562,16 +683,32 @@ async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?:
       volume: quotes.volume?.[idx] || 0,
     })).filter((b: OHLCBar) => b.close > 0);
     
-    // For 4h timeframe, aggregate from 1h
     if (timeframe === '4h') {
       bars = aggregate1hTo4h(bars);
     }
     
+    console.log(`[Yahoo] Fetched ${bars.length} bars for ${symbol}@${timeframe}`);
     return bars;
   } catch (error) {
-    console.error(`Error fetching ${symbol} at ${timeframe}:`, error);
+    console.error(`[Yahoo] Error fetching ${symbol}:`, error);
     return [];
   }
+}
+
+/**
+ * Fetch data with EODHD as primary, Yahoo as fallback
+ */
+async function fetchMarketData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+  // Try EODHD first (100k calls/day limit)
+  let bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+  
+  // Fallback to Yahoo if EODHD fails
+  if (bars.length === 0) {
+    console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
+    bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+  }
+  
+  return bars;
 }
 
 // ============= BACKTEST WITH OUTCOME TRACKING =============
@@ -912,8 +1049,8 @@ serve(async (req) => {
           fromTimestamp = now - (lookbackDays * 24 * 60 * 60 * 1000);
         }
         
-        console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe}...`);
-        const bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+        console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (EODHD primary, Yahoo fallback)...`);
+        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp);
         
         if (bars.length < 50) {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
