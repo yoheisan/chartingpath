@@ -64,11 +64,11 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
 
       if (error) throw error;
 
+      // Build indices data map from patterns that match our MARKET_INDICES
+      const indicesSymbols = MARKET_INDICES.map((i) => i.symbol);
+      const indicesMap: Record<string, { price: number; change: number }> = {};
+      
       if (patterns && patterns.length > 0) {
-        // Build indices data map from patterns that match our MARKET_INDICES
-        const indicesSymbols = MARKET_INDICES.map((i) => i.symbol);
-        const indicesMap: Record<string, { price: number; change: number }> = {};
-        
         for (const p of patterns) {
           if (indicesSymbols.includes(p.instrument) && !indicesMap[p.instrument]) {
             indicesMap[p.instrument] = {
@@ -77,9 +77,37 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
             };
           }
         }
-        setIndicesData(indicesMap);
+      }
 
-        // Top gainers (unique symbols)
+      // For indices not in live_pattern_detections, fetch latest from historical_prices
+      const missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
+      if (missingIndices.length > 0) {
+        const { data: historicalData } = await supabase
+          .from('historical_prices')
+          .select('symbol, close, open')
+          .in('symbol', missingIndices)
+          .eq('timeframe', '1d')
+          .order('date', { ascending: false })
+          .limit(missingIndices.length * 2);
+
+        if (historicalData) {
+          // Get most recent price per symbol
+          for (const h of historicalData) {
+            if (!indicesMap[h.symbol]) {
+              const change = h.open > 0 ? ((h.close - h.open) / h.open) * 100 : 0;
+              indicesMap[h.symbol] = {
+                price: h.close,
+                change: change,
+              };
+            }
+          }
+        }
+      }
+
+      setIndicesData(indicesMap);
+
+      // Top gainers (unique symbols)
+      if (patterns && patterns.length > 0) {
         const seen = new Set<string>();
         const gainers = patterns
           .filter((p) => {
