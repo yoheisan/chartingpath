@@ -146,3 +146,12 @@ verify_jwt = false
 
 [functions.schedule-historical-seeding]
 verify_jwt = false
+
+[functions.seed-mtf-distributed]
+verify_jwt = false
+
+[functions.get-live-pattern-details]
+verify_jwt = false
+
+[functions.get-historical-pattern-details]
+verify_jwt = false

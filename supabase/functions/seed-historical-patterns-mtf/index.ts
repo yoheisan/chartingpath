@@ -838,8 +838,9 @@ serve(async (req) => {
       patterns = Object.keys(PATTERN_REGISTRY),
       dryRun = false,
       offset = 0,
-      incrementalMode = true,       // NEW: Default to incremental updates
-      forceFullBackfill = false     // NEW: Override to force full historical fetch
+      incrementalMode = true,       // Default to incremental updates
+      forceFullBackfill = false,    // Override to force full historical fetch
+      stockLetterFilter = null      // NEW: Filter stocks by first letter range { start: 'A', end: 'G' }
     } = body;
 
     const useIncremental = incrementalMode && !forceFullBackfill;
@@ -847,12 +848,26 @@ serve(async (req) => {
     console.log(`[seed-mtf] Starting ${timeframe} pattern seeding`);
     console.log(`[seed-mtf] Mode: ${useIncremental ? 'INCREMENTAL (only new data)' : 'FULL BACKFILL'}`);
     console.log(`[seed-mtf] Asset types: ${assetTypes.join(', ')}, offset=${offset}`);
+    if (stockLetterFilter) {
+      console.log(`[seed-mtf] Stock letter filter: ${stockLetterFilter.start}-${stockLetterFilter.end}`);
+    }
 
     // Collect instruments from each asset type
     const allInstruments: { symbol: string; assetType: string }[] = [];
     
     for (const assetType of assetTypes) {
-      const instruments = ALL_INSTRUMENTS[assetType as keyof typeof ALL_INSTRUMENTS] || [];
+      let instruments = ALL_INSTRUMENTS[assetType as keyof typeof ALL_INSTRUMENTS] || [];
+      
+      // Apply stock letter filter if provided (for distributed seeding)
+      if (assetType === 'stocks' && stockLetterFilter) {
+        const { start, end } = stockLetterFilter;
+        instruments = instruments.filter(inst => {
+          const firstLetter = inst.symbol.charAt(0).toUpperCase();
+          return firstLetter >= start.toUpperCase() && firstLetter <= end.toUpperCase();
+        });
+        console.log(`[seed-mtf] Filtered stocks ${start}-${end}: ${instruments.length} symbols`);
+      }
+      
       const limited = instruments.slice(0, maxInstrumentsPerType);
       limited.forEach(inst => {
         allInstruments.push({ symbol: inst.yahooSymbol, assetType });
