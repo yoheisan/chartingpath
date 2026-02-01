@@ -5,18 +5,20 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { CommandCenterChart } from './CommandCenterChart';
+import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { QuickResearchPanel } from './QuickResearchPanel';
-import { PatternOccurrencesPanel } from './PatternOccurrencesPanel';
+import { PatternOccurrencesPanel, PatternOccurrence } from './PatternOccurrencesPanel';
 import { MarketOverviewPanel } from './MarketOverviewPanel';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
-import { FlaskConical, History } from 'lucide-react';
+import { FlaskConical, History, X, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface CommandCenterLayoutProps {
   userId?: string;
@@ -58,6 +60,12 @@ export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const chartDetailsRequestIdRef = useRef(0);
+  
+  // Pattern overlay chart state (inline view, not modal)
+  const [selectedOccurrence, setSelectedOccurrence] = useState<PatternOccurrence | null>(null);
+  const [occurrenceSetup, setOccurrenceSetup] = useState<SetupWithVisuals | null>(null);
+  const [loadingOccurrence, setLoadingOccurrence] = useState(false);
+  const occurrenceRequestIdRef = useRef(0);
 
   const handleSymbolSelect = useCallback((symbol: string) => {
     setSelectedSymbol(symbol);
@@ -232,6 +240,69 @@ export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
     }
   }, []);
 
+  // Handle pattern occurrence selection from the bottom panel
+  const handleOccurrenceSelect = useCallback(async (occurrence: PatternOccurrence) => {
+    const requestId = ++occurrenceRequestIdRef.current;
+    
+    console.debug('[CommandCenter] Selected occurrence for inline view', {
+      requestId,
+      id: occurrence.id,
+      pattern_name: occurrence.pattern_name,
+      isActive: occurrence.isActive,
+    });
+
+    setSelectedOccurrence(occurrence);
+    setLoadingOccurrence(true);
+    setOccurrenceSetup(null);
+
+    try {
+      // Fetch pattern details based on whether it's active or historical
+      const endpoint = occurrence.isActive 
+        ? 'get-live-pattern-details' 
+        : 'get-historical-pattern-details';
+      
+      const res = await withTimeout(
+        supabase.functions.invoke<PatternDetailsResponse>(endpoint, {
+          body: { id: occurrence.id },
+        }),
+        25_000,
+        endpoint
+      );
+
+      if (res.error) throw res.error;
+      
+      if (!res.data?.success || !res.data.pattern) {
+        throw new Error(res.data?.error || 'Failed to load pattern details');
+      }
+
+      // Ignore stale responses
+      if (occurrenceRequestIdRef.current !== requestId) return;
+
+      setOccurrenceSetup(toSetupWithVisuals(res.data.pattern));
+    } catch (err: any) {
+      console.error('[CommandCenter] Failed to load occurrence details:', err?.message || err);
+      toast.error('Failed to load pattern details');
+      // Clear selection on error
+      setSelectedOccurrence(null);
+    } finally {
+      if (occurrenceRequestIdRef.current === requestId) {
+        setLoadingOccurrence(false);
+      }
+    }
+  }, []);
+
+  const handleCloseOccurrence = useCallback(() => {
+    setSelectedOccurrence(null);
+    setOccurrenceSetup(null);
+  }, []);
+
+  const handleOpenFullChartFromOccurrence = useCallback(() => {
+    if (occurrenceSetup) {
+      setSelectedSetup(occurrenceSetup);
+      setChartOpen(true);
+    }
+  }, [occurrenceSetup]);
+
   const handleCopyPlan = useCallback(() => {
     if (!selectedSetup) return;
     const { tradePlan, instrument, patternName, direction } = selectedSetup;
@@ -280,13 +351,22 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         {/* Main Content Area */}
         <ResizablePanel defaultSize={55} minSize={40}>
           <ResizablePanelGroup direction="vertical" className="h-full">
-            {/* Main Chart */}
+            {/* Main Chart - shows pattern overlay or default study chart */}
             <ResizablePanel defaultSize={70} minSize={50}>
-              <CommandCenterChart
-                symbol={selectedSymbol}
-                timeframe={selectedTimeframe}
-                onTimeframeChange={setSelectedTimeframe}
-              />
+              {selectedOccurrence ? (
+                <PatternOverlayChart
+                  setup={occurrenceSetup}
+                  loading={loadingOccurrence}
+                  onClose={handleCloseOccurrence}
+                  onOpenFullChart={handleOpenFullChartFromOccurrence}
+                />
+              ) : (
+                <CommandCenterChart
+                  symbol={selectedSymbol}
+                  timeframe={selectedTimeframe}
+                  onTimeframeChange={setSelectedTimeframe}
+                />
+              )}
             </ResizablePanel>
 
             <ResizableHandle withHandle />
@@ -307,7 +387,12 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   </TabsList>
                 </div>
                 <TabsContent value="patterns" className="flex-1 m-0 overflow-hidden">
-                  <PatternOccurrencesPanel symbol={selectedSymbol} timeframe={selectedTimeframe} />
+                  <PatternOccurrencesPanel 
+                    symbol={selectedSymbol} 
+                    timeframe={selectedTimeframe}
+                    onPatternSelect={handleOccurrenceSelect}
+                    selectedPatternId={selectedOccurrence?.id}
+                  />
                 </TabsContent>
                 <TabsContent value="research" className="flex-1 m-0 overflow-hidden">
                   <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />

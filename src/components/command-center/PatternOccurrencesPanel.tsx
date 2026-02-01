@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, TrendingDown, Clock, Target } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Clock, Target, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface PatternOccurrence {
+export interface PatternOccurrence {
   id: string;
   pattern_name: string;
   direction: string;
@@ -24,9 +25,16 @@ interface PatternOccurrence {
 interface PatternOccurrencesPanelProps {
   symbol: string;
   timeframe: string;
+  onPatternSelect?: (pattern: PatternOccurrence) => void;
+  selectedPatternId?: string | null;
 }
 
-export function PatternOccurrencesPanel({ symbol, timeframe }: PatternOccurrencesPanelProps) {
+export function PatternOccurrencesPanel({ 
+  symbol, 
+  timeframe, 
+  onPatternSelect,
+  selectedPatternId,
+}: PatternOccurrencesPanelProps) {
   const [patterns, setPatterns] = useState<PatternOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -132,59 +140,81 @@ export function PatternOccurrencesPanel({ symbol, timeframe }: PatternOccurrence
   return (
     <ScrollArea className="h-full">
       <div className="p-2 space-y-1">
-        {patterns.map((p) => (
-          <div
-            key={p.id}
-            className={cn(
-              'flex items-center justify-between p-2 rounded-md border text-xs',
-              p.isActive ? 'bg-primary/5 border-primary/20' : 'bg-card border-border'
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {p.direction === 'long' ? (
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              ) : (
-                <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
+        {patterns.map((p) => {
+          const isSelected = selectedPatternId === p.id;
+          const isClickable = Boolean(onPatternSelect);
+          
+          return (
+            <div
+              key={p.id}
+              onClick={() => onPatternSelect?.(p)}
+              className={cn(
+                'flex items-center justify-between p-2 rounded-md border text-xs transition-colors',
+                p.isActive ? 'bg-primary/5 border-primary/20' : 'bg-card border-border',
+                isClickable && 'cursor-pointer hover:bg-accent/50',
+                isSelected && 'ring-2 ring-primary bg-primary/10'
               )}
-              <div className="min-w-0">
-                <div className="font-medium truncate">{p.pattern_name}</div>
-                <div className="text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-2.5 w-2.5" />
-                  {format(new Date(p.detected_at), 'MMM d, yyyy')}
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {p.direction === 'long' ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.pattern_name}</div>
+                  <div className="text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-2.5 w-2.5" />
+                    {format(new Date(p.detected_at), 'MMM d, yyyy')}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {p.quality_score && (
+              <div className="flex items-center gap-2 shrink-0">
+                {p.quality_score && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                    {p.quality_score}
+                  </Badge>
+                )}
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                  {p.quality_score}
+                  {p.risk_reward_ratio.toFixed(1)}R
                 </Badge>
-              )}
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                {p.risk_reward_ratio.toFixed(1)}R
-              </Badge>
-              {p.isActive ? (
-                <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">
-                  Active
-                </Badge>
-              ) : p.outcome ? (
-                <Badge
-                  className={cn(
-                    'text-[10px] px-1.5 py-0',
-                    p.outcome === 'win'
-                      ? 'bg-emerald-500/20 text-emerald-600'
-                      : p.outcome === 'loss'
-                      ? 'bg-red-500/20 text-red-600'
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {p.outcome === 'win' ? `+${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome === 'loss' ? `${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome}
-                </Badge>
-              ) : null}
+                {p.isActive ? (
+                  <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">
+                    Active
+                  </Badge>
+                ) : p.outcome ? (
+                  <Badge
+                    className={cn(
+                      'text-[10px] px-1.5 py-0',
+                      p.outcome === 'win'
+                        ? 'bg-emerald-500/20 text-emerald-600'
+                        : p.outcome === 'loss'
+                        ? 'bg-red-500/20 text-red-600'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {p.outcome === 'win' ? `+${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome === 'loss' ? `${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome}
+                  </Badge>
+                ) : null}
+                
+                {isClickable && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Eye className={cn(
+                        "h-3.5 w-3.5 shrink-0",
+                        isSelected ? "text-primary" : "text-muted-foreground"
+                      )} />
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>View pattern on chart</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </ScrollArea>
   );
