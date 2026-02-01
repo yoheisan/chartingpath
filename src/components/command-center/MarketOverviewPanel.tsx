@@ -65,9 +65,28 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
       if (error) throw error;
 
       if (patterns && patterns.length > 0) {
-        // Top gainers
+        // Build indices data map from patterns that match our MARKET_INDICES
+        const indicesSymbols = MARKET_INDICES.map((i) => i.symbol);
+        const indicesMap: Record<string, { price: number; change: number }> = {};
+        
+        for (const p of patterns) {
+          if (indicesSymbols.includes(p.instrument) && !indicesMap[p.instrument]) {
+            indicesMap[p.instrument] = {
+              price: p.current_price || 0,
+              change: p.change_percent || 0,
+            };
+          }
+        }
+        setIndicesData(indicesMap);
+
+        // Top gainers (unique symbols)
+        const seen = new Set<string>();
         const gainers = patterns
-          .filter((p) => (p.change_percent || 0) > 0)
+          .filter((p) => {
+            if (seen.has(p.instrument) || (p.change_percent || 0) <= 0) return false;
+            seen.add(p.instrument);
+            return true;
+          })
           .slice(0, 5)
           .map((p) => ({
             symbol: p.instrument,
@@ -78,11 +97,16 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
           }));
         setTopGainers(gainers);
 
-        // Top losers
-        const losers = patterns
-          .filter((p) => (p.change_percent || 0) < 0)
-          .slice(-5)
-          .reverse()
+        // Top losers (unique symbols)
+        const seenLosers = new Set<string>();
+        const sortedLosers = [...patterns].sort((a, b) => (a.change_percent || 0) - (b.change_percent || 0));
+        const losers = sortedLosers
+          .filter((p) => {
+            if (seenLosers.has(p.instrument) || (p.change_percent || 0) >= 0) return false;
+            seenLosers.add(p.instrument);
+            return true;
+          })
+          .slice(0, 5)
           .map((p) => ({
             symbol: p.instrument,
             name: p.instrument,
