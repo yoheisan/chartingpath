@@ -288,19 +288,19 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             <ResizableHandle withHandle />
 
-            {/* Bottom Panels - Alerts + Quick Research */}
+            {/* Bottom Panels - Quick Research + Market Overview */}
             <ResizablePanel defaultSize={30} minSize={15} maxSize={50}>
               <ResizablePanelGroup direction="horizontal" className="h-full">
-                {/* Alerts History */}
+                {/* Quick Research */}
                 <ResizablePanel defaultSize={50} minSize={30}>
-                  <AlertsHistoryPanel userId={userId} />
+                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
                 </ResizablePanel>
 
                 <ResizableHandle withHandle />
 
-                {/* Quick Research */}
+                {/* Market Overview */}
                 <ResizablePanel defaultSize={50} minSize={30}>
-                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+                  <MarketOverviewPanel onSymbolSelect={handleSymbolSelect} />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>
@@ -309,10 +309,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
         <ResizableHandle withHandle />
 
-        {/* Right Sidebar - Market Overview */}
+        {/* Right Sidebar - Alerts History */}
         <ResizablePanel defaultSize={25} minSize={15} maxSize={35}>
           <div className="h-full border-l border-border">
-            <MarketOverviewPanel onSymbolSelect={handleSymbolSelect} />
+            <AlertsHistoryPanel userId={userId} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
