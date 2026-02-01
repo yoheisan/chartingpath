@@ -4,16 +4,19 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommandCenterChart } from './CommandCenterChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { QuickResearchPanel } from './QuickResearchPanel';
+import { PatternOccurrencesPanel } from './PatternOccurrencesPanel';
 import { MarketOverviewPanel } from './MarketOverviewPanel';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
+import { FlaskConical, History } from 'lucide-react';
 
 interface CommandCenterLayoutProps {
   userId?: string;
@@ -288,9 +291,28 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             <ResizableHandle withHandle />
 
-            {/* Bottom Panel - Quick Research */}
+            {/* Bottom Panel - Tabbed Quick Research + Pattern Occurrences */}
             <ResizablePanel defaultSize={30} minSize={15} maxSize={50}>
-              <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+              <Tabs defaultValue="patterns" className="h-full flex flex-col">
+                <div className="border-t border-l border-border bg-muted/30 px-2 pt-1">
+                  <TabsList className="h-7 bg-transparent p-0 gap-1">
+                    <TabsTrigger value="patterns" className="h-6 px-2 text-xs data-[state=active]:bg-background">
+                      <History className="h-3 w-3 mr-1" />
+                      Patterns
+                    </TabsTrigger>
+                    <TabsTrigger value="research" className="h-6 px-2 text-xs data-[state=active]:bg-background">
+                      <FlaskConical className="h-3 w-3 mr-1" />
+                      Research
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent value="patterns" className="flex-1 m-0 overflow-hidden">
+                  <PatternOccurrencesPanel symbol={selectedSymbol} timeframe={selectedTimeframe} />
+                </TabsContent>
+                <TabsContent value="research" className="flex-1 m-0 overflow-hidden">
+                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+                </TabsContent>
+              </Tabs>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
