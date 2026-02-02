@@ -8,6 +8,43 @@ import {
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Compact grade badge for table display
+function GradeBadge({ grade }: { grade?: 'A' | 'B' | 'C' | 'D' | 'F' }) {
+  const displayGrade = grade || 'C';
+  
+  const config = {
+    A: { bg: 'bg-emerald-500/15', text: 'text-emerald-500', border: 'border-emerald-500/30' },
+    B: { bg: 'bg-green-500/15', text: 'text-green-500', border: 'border-green-500/30' },
+    C: { bg: 'bg-yellow-500/15', text: 'text-yellow-500', border: 'border-yellow-500/30' },
+    D: { bg: 'bg-orange-500/15', text: 'text-orange-500', border: 'border-orange-500/30' },
+    F: { bg: 'bg-red-500/15', text: 'text-red-500', border: 'border-red-500/30' },
+  }[displayGrade] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span 
+            className={cn(
+              'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold border',
+              config.bg, config.text, config.border
+            )}
+          >
+            {displayGrade}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p className="text-xs font-medium mb-1">Pattern Grade: {displayGrade}</p>
+          <p className="text-xs text-muted-foreground">
+            Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 import {
   Tooltip,
   TooltipContent,
@@ -1075,6 +1112,21 @@ export default function LivePatternsPage() {
                     </div>
                   </TableHead>
                   <TableHead className="whitespace-nowrap">Pattern</TableHead>
+                  <TableHead className="text-center whitespace-nowrap">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center justify-center gap-1 cursor-help">
+                            Grade
+                            <Info className="h-3 w-3 opacity-50" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Pattern quality grade (A-F) based on trend alignment, R:R structure, volume, and more.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
                   <TableHead 
                     className="cursor-pointer select-none whitespace-nowrap"
                     onClick={() => handleSort('direction')}
@@ -1138,7 +1190,7 @@ export default function LivePatternsPage() {
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={7} className="py-2">
+                      <TableCell colSpan={8} className="py-2">
                         <span className="font-semibold text-sm">{patternName}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1165,6 +1217,9 @@ export default function LivePatternsPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
                             {setup.patternName}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <GradeBadge grade={setup.quality?.grade} />
                           </TableCell>
                           <TableCell>
                             <Badge 
