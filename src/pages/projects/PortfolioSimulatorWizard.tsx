@@ -14,6 +14,12 @@ import { ArrowLeft, TrendingUp, AlertCircle, Loader2, Coins, Plus, X, RefreshCw,
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PLANS_CONFIG, type PlanTier } from '@/config/plans';
+import { 
+  DATA_COVERAGE, 
+  getValidLookbackOptions, 
+  getCoverageInfo,
+  type Timeframe 
+} from '@/config/dataCoverageContract';
 
 const POPULAR_ETFS = [
   { symbol: 'SPY', name: 'S&P 500' },
@@ -33,11 +39,11 @@ const REBALANCE_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
 ];
 
+// LOOKBACK_OPTIONS - Portfolio Sim uses daily data (5 years max from provider)
+// But for simulations, we can use available historical data up to 5 years reliably
 const LOOKBACK_OPTIONS = [
   { value: 3, label: '3 Years' },
   { value: 5, label: '5 Years' },
-  { value: 10, label: '10 Years' },
-  { value: 15, label: '15 Years' },
 ];
 
 interface Holding {

@@ -12,6 +12,14 @@ import { ArrowLeft, PieChart, AlertCircle, Loader2, Coins, Plus, X, TrendingUp }
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PLANS_CONFIG, type PlanTier } from '@/config/plans';
+import { 
+  DATA_COVERAGE, 
+  getValidLookbackOptions, 
+  getDefaultLookback, 
+  getCoverageInfo,
+  clampLookback,
+  type Timeframe 
+} from '@/config/dataCoverageContract';
 
 const POPULAR_HOLDINGS = [
   { symbol: 'AAPL', name: 'Apple' },
@@ -31,11 +39,7 @@ const TIMEFRAMES = [
   { value: '4h', label: '4 Hour' },
 ];
 
-const LOOKBACK_OPTIONS = [
-  { value: 1, label: '1 Year' },
-  { value: 2, label: '2 Years' },
-  { value: 3, label: '3 Years' },
-];
+// LOOKBACK_OPTIONS now derived from dataCoverageContract
 
 interface EstimateResult {
   creditsEstimated: number;
@@ -280,7 +284,7 @@ const PortfolioCheckupWizard = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {LOOKBACK_OPTIONS.map(lb => (
+                        {getValidLookbackOptions(timeframe as Timeframe).map(lb => (
                           <SelectItem 
                             key={lb.value} 
                             value={String(lb.value)}
@@ -291,6 +295,9 @@ const PortfolioCheckupWizard = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Data coverage: {getCoverageInfo(timeframe as Timeframe)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
