@@ -17,6 +17,14 @@ import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/GradeBadge';
+import { 
+  DATA_COVERAGE, 
+  getValidLookbackOptions, 
+  getDefaultLookback, 
+  getCoverageInfo,
+  clampLookback,
+  type Timeframe 
+} from '@/config/dataCoverageContract';
 import {
   Tooltip,
   TooltipContent,
@@ -148,14 +156,7 @@ const TIMEFRAMES = [
   { value: '1wk', label: 'Weekly', intradayLimit: null },
 ];
 
-const LOOKBACK_OPTIONS = [
-  { value: 1, label: '1 Year' },
-  { value: 2, label: '2 Years' },
-  { value: 3, label: '3 Years' },
-  { value: 5, label: '5 Years' },
-  { value: 7, label: '7 Years' },
-  { value: 10, label: '10 Years' },
-];
+// LOOKBACK_OPTIONS now derived from dataCoverageContract - removed static array
 
 // Grade filter presets for risk appetite
 type GradePreset = 'conservative' | 'moderate' | 'aggressive' | 'custom';
@@ -241,6 +242,20 @@ const PatternLabWizard = () => {
     
     return () => subscription.unsubscribe();
   }, []);
+  
+  // Auto-adjust lookback when timeframe changes to respect data coverage
+  useEffect(() => {
+    const maxLookback = DATA_COVERAGE[timeframe as Timeframe]?.maxLookbackYears ?? 5;
+    const defaultLookback = getDefaultLookback(timeframe as Timeframe);
+    
+    if (lookbackYears > maxLookback) {
+      // Clamp to maximum allowed for this timeframe
+      setLookbackYears(clampLookback(timeframe as Timeframe, lookbackYears));
+    } else if (lookbackYears === 0 || !lookbackYears) {
+      // Set sensible default
+      setLookbackYears(defaultLookback);
+    }
+  }, [timeframe]);
   
   // Fetch estimate when inputs change
   useEffect(() => {
@@ -526,32 +541,34 @@ const PatternLabWizard = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {LOOKBACK_OPTIONS.map(lb => {
-                          // Intraday timeframes are limited to 30 days
-                          const isIntraday = timeframe === '1h' || timeframe === '4h';
-                          const disabled = isIntraday || 
-                            (patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears);
+                        {getValidLookbackOptions(timeframe as Timeframe).map(lb => {
+                          // Also respect tier caps if they exist
+                          const tierCapped = patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears;
                           return (
                             <SelectItem 
                               key={lb.value} 
                               value={String(lb.value)}
-                              disabled={disabled && lb.value > 1}
+                              disabled={tierCapped}
                             >
                               {lb.label}
+                              {tierCapped && <span className="text-muted-foreground ml-1">(upgrade)</span>}
                             </SelectItem>
                           );
                         })}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Data coverage: {getCoverageInfo(timeframe as Timeframe)}
+                    </p>
                   </div>
                 </div>
                 
-                {/* Intraday limitation notice */}
-                {(timeframe === '1h' || timeframe === '4h') && (
-                  <Alert className="border-amber-500/30 bg-amber-500/5">
+                {/* Data coverage notice */}
+                {DATA_COVERAGE[timeframe as Timeframe]?.isIntraday && (
+                  <Alert className="border-amber-500/30 bg-amber-500/5 mt-4">
                     <AlertCircle className="h-4 w-4 text-amber-500" />
                     <AlertDescription className="text-sm">
-                      Intraday data ({timeframe}) is limited to 30 days history due to data provider constraints.
+                      {timeframe} data is limited to {getCoverageInfo(timeframe as Timeframe)} due to data provider constraints.
                     </AlertDescription>
                   </Alert>
                 )}

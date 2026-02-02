@@ -10,6 +10,11 @@ import {
   type EstimateCreditsInput,
   type ProjectType
 } from "../_shared/plans.ts";
+import { 
+  validateLookback, 
+  clampLookback, 
+  type Timeframe 
+} from "../_shared/dataCoverageContract.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1505,9 +1510,19 @@ serve(async (req) => {
         .eq('id', run.id);
       
       try {
+        // Validate and clamp lookback against data coverage contract
+        const lookbackValidation = validateLookback(timeframe as Timeframe, lookbackYears);
+        const effectiveLookbackYears = lookbackValidation.valid 
+          ? lookbackYears 
+          : clampLookback(timeframe as Timeframe, lookbackYears);
+        
+        if (!lookbackValidation.valid) {
+          console.log(`[DataCoverage] Clamped lookback from ${lookbackYears}y to ${effectiveLookbackYears}y for ${timeframe}: ${lookbackValidation.message}`);
+        }
+        
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setFullYear(startDate.getFullYear() - lookbackYears);
+        startDate.setFullYear(startDate.getFullYear() - effectiveLookbackYears);
         
         let artifactJson: any = null;
         let artifactType = 'setup_list';
