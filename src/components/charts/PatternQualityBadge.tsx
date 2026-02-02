@@ -131,7 +131,7 @@ export function PatternQualityBadge({
         <TooltipTrigger asChild>
           {badgeContent}
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="w-72 p-0">
+        <TooltipContent side="bottom" className="w-80 p-0">
           <div className="p-3 space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -158,6 +158,27 @@ export function PatternQualityBadge({
                 value={quality.score * 10} 
                 className="h-2"
               />
+            </div>
+            
+            {/* How scoring works - transparency section */}
+            <div className="pt-2 border-t border-border/50">
+              <div className="flex items-start gap-1.5 text-xs">
+                <Info className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground/80">How we grade patterns:</span>
+                  <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                    <li>Trend alignment with higher timeframes</li>
+                    <li>Risk/reward target structure</li>
+                    <li>Volume confirmation signals</li>
+                    <li>Pattern symmetry & clarity</li>
+                    <li>Historical win rate for this setup</li>
+                    <li>ADX trend strength & volatility regime</li>
+                  </ul>
+                  <p className="mt-1.5 text-muted-foreground/80 italic">
+                    A+ setups score ≥8.0 across multiple factors
+                  </p>
+                </div>
+              </div>
             </div>
             
             {/* Factors breakdown */}
