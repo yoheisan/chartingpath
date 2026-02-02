@@ -121,13 +121,12 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   const formatR = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
 
-  // Get expectancy for selected R:R tier from rrComparison data
+  // Get expectancy for selected R:R tier from rrComparison data (overall)
   const getSelectedTierExpectancy = () => {
     if (!artifact.rrComparison || artifact.rrComparison.length === 0) {
       return artifact.summary.overallExpectancy;
     }
     const tierData = artifact.rrComparison.find(rr => {
-      // Handle both formats: rrTier (number) or tier (string like '1:3')
       if ('rrTier' in rr && rr.rrTier === selectedRRTier) return true;
       if ('tier' in rr && rr.tier === `1:${selectedRRTier}`) return true;
       return false;
@@ -135,7 +134,23 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return tierData?.expectancy ?? artifact.summary.overallExpectancy;
   };
 
-  const selectedExpectancy = getSelectedTierExpectancy();
+  // Find best and worst patterns based on their individual expectancy
+  const getBestWorstPatterns = () => {
+    if (artifact.patterns.length === 0) {
+      return { best: null, worst: null };
+    }
+    
+    // Sort patterns by expectancy
+    const sorted = [...artifact.patterns].sort((a, b) => b.expectancy - a.expectancy);
+    const best = sorted[0];
+    const worst = sorted[sorted.length - 1];
+    
+    // If only one pattern, best and worst are the same
+    return { best, worst: sorted.length > 1 ? worst : null };
+  };
+
+  const { best: bestPattern, worst: worstPattern } = getBestWorstPatterns();
+  const selectedTierExpectancy = getSelectedTierExpectancy();
 
   const getRecommendationBadge = (rec: 'trade' | 'caution' | 'avoid') => {
     switch (rec) {
@@ -219,43 +234,63 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               </div>
             )}
 
-            {/* Best & Worst Pattern Cards */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="border-green-500/20 bg-green-500/5">
+            {/* Best & Worst Pattern Cards - only show if more than 1 pattern */}
+            {artifact.patterns.length > 1 && bestPattern && worstPattern ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card className="border-green-500/20 bg-green-500/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Award className="h-4 w-4 text-green-500" />
+                      Best Performing Pattern
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold">{bestPattern.patternName}</div>
+                    <div className={`text-2xl font-bold ${bestPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatR(bestPattern.expectancy)}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {formatPercent(bestPattern.winRate)} win rate • {bestPattern.totalTrades} trades
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-red-500/20 bg-red-500/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      Worst Performing Pattern
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold">{worstPattern.patternName}</div>
+                    <div className={`text-2xl font-bold ${worstPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatR(worstPattern.expectancy)}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {formatPercent(worstPattern.winRate)} win rate • {worstPattern.totalTrades} trades
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : bestPattern && (
+              <Card className="border-border/50 bg-card/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Award className="h-4 w-4 text-green-500" />
-                    Best Performing Pattern
-                    <Badge variant="outline" className="ml-auto font-mono text-xs">
-                      @ 1:{selectedRRTier}
-                    </Badge>
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    Pattern Performance
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-lg font-semibold">{artifact.summary.bestPattern.name}</div>
-                  <div className="text-2xl font-bold text-green-500">
-                    {formatR(selectedExpectancy)}
+                  <div className="text-lg font-semibold">{bestPattern.patternName}</div>
+                  <div className={`text-2xl font-bold ${bestPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {formatR(bestPattern.expectancy)}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {formatPercent(bestPattern.winRate)} win rate • {bestPattern.totalTrades} trades
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-red-500/20 bg-red-500/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                    Worst Performing Pattern
-                    <Badge variant="outline" className="ml-auto font-mono text-xs">
-                      @ 1:{selectedRRTier}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-lg font-semibold">{artifact.summary.worstPattern.name}</div>
-                  <div className="text-2xl font-bold text-red-500">
-                    {formatR(selectedExpectancy)}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            )}
           </div>
 
           {/* R:R Scenario Comparison */}
