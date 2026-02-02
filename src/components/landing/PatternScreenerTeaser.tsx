@@ -2,15 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ArrowRight, TrendingUp, TrendingDown, Zap, Clock, Info
+  ArrowRight, TrendingUp, TrendingDown, Zap
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +46,15 @@ interface LiveSetup {
   };
 }
 
+type AssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
+
+const ASSET_TABS: { value: AssetType; label: string }[] = [
+  { value: 'stocks', label: 'Stocks' },
+  { value: 'fx', label: 'Forex' },
+  { value: 'crypto', label: 'Crypto' },
+  { value: 'commodities', label: 'Commodities' },
+];
+
 // Grade ordering for sorting (A=1, B=2, etc.)
 const GRADE_ORDER: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, F: 5 };
 
@@ -62,27 +66,39 @@ const MAX_TEASER_ITEMS = 10;
 
 /**
  * Homepage teaser version of the screener.
- * Shows top 10 signals sorted by grade + win rate.
+ * Shows top 10 signals per asset class sorted by grade + win rate.
  * No filters, minimal UI, strong CTA to full screener.
  */
 export function PatternScreenerTeaser() {
-  const [patterns, setPatterns] = useState<LiveSetup[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [patternsByAsset, setPatternsByAsset] = useState<Record<AssetType, LiveSetup[]>>({
+    stocks: [],
+    fx: [],
+    crypto: [],
+    commodities: [],
+  });
+  const [totalCounts, setTotalCounts] = useState<Record<AssetType, number>>({
+    stocks: 0,
+    fx: 0,
+    crypto: 0,
+    commodities: 0,
+  });
+  const [loading, setLoading] = useState<Record<AssetType, boolean>>({
+    stocks: true,
+    fx: true,
+    crypto: true,
+    commodities: true,
+  });
+  const [activeTab, setActiveTab] = useState<AssetType>('stocks');
   const [lastScanned, setLastScanned] = useState<string | null>(null);
 
-  // Fetch patterns on mount
+  // Fetch patterns for all asset types on mount
   useEffect(() => {
-    const fetchPatterns = async () => {
-      setLoading(true);
-      setError(null);
-      
+    const fetchPatternsForAsset = async (assetType: AssetType) => {
       try {
         const { data, error: fnError } = await withTimeout(
           supabase.functions.invoke('scan-live-patterns', {
             body: { 
-              assetType: 'stocks',
+              assetType,
               timeframe: '1d',
               forceRefresh: false,
             },
@@ -94,11 +110,9 @@ export function PatternScreenerTeaser() {
         if (!data?.success) throw new Error(data?.error || 'Failed to fetch patterns');
 
         const allPatterns = data.patterns || [];
-        setTotalCount(allPatterns.length);
-        setLastScanned(data.scannedAt || new Date().toISOString());
         
         // Sort by grade (A first) then by win rate (highest first)
-        const sorted = [...allPatterns].sort((a, b) => {
+        const sorted = [...allPatterns].sort((a: LiveSetup, b: LiveSetup) => {
           const gradeA = GRADE_ORDER[getPatternGrade(a)] || 3;
           const gradeB = GRADE_ORDER[getPatternGrade(b)] || 3;
           if (gradeA !== gradeB) return gradeA - gradeB;
@@ -108,20 +122,32 @@ export function PatternScreenerTeaser() {
           return winB - winA;
         });
         
-        setPatterns(sorted.slice(0, MAX_TEASER_ITEMS));
+        setPatternsByAsset(prev => ({
+          ...prev,
+          [assetType]: sorted.slice(0, MAX_TEASER_ITEMS),
+        }));
+        setTotalCounts(prev => ({
+          ...prev,
+          [assetType]: allPatterns.length,
+        }));
+        
+        if (assetType === 'stocks') {
+          setLastScanned(data.scannedAt || new Date().toISOString());
+        }
       } catch (err) {
-        console.error('Failed to fetch patterns:', err);
-        setError('Unable to load patterns');
+        console.error(`Failed to fetch ${assetType} patterns:`, err);
       } finally {
-        setLoading(false);
+        setLoading(prev => ({ ...prev, [assetType]: false }));
       }
     };
 
-    fetchPatterns();
+    // Fetch all asset types in parallel
+    ASSET_TABS.forEach(tab => fetchPatternsForAsset(tab.value));
   }, []);
 
-  // Top patterns for display
-  const topPatterns = useMemo(() => patterns, [patterns]);
+  const currentPatterns = patternsByAsset[activeTab];
+  const currentLoading = loading[activeTab];
+  const currentTotal = totalCounts[activeTab];
 
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -136,42 +162,76 @@ export function PatternScreenerTeaser() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <section className="py-12 px-6 bg-muted/20">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-8">
-            <Badge variant="outline" className="text-primary border-primary/50 animate-pulse mb-3">
-              <Zap className="h-3 w-3 mr-1" />
-              Loading...
-            </Badge>
-            <h2 className="text-2xl font-bold">Top Pattern Signals</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Scanning for high-quality setups...
-            </p>
-          </div>
-          <LoadingSkeleton />
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="py-12 px-6 bg-muted/20">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-2xl font-bold mb-2">Pattern Screener</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Link to="/patterns/live">
-            <Button>
-              View Full Screener
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  const SignalsTable = ({ patterns }: { patterns: LiveSetup[] }) => (
+    <Table>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="whitespace-nowrap">Symbol</TableHead>
+          <TableHead className="whitespace-nowrap">Pattern</TableHead>
+          <TableHead className="text-center whitespace-nowrap">Grade</TableHead>
+          <TableHead className="whitespace-nowrap">Signal</TableHead>
+          <TableHead className="text-right whitespace-nowrap">Win Rate</TableHead>
+          <TableHead className="text-right whitespace-nowrap">Age</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {patterns.map((setup, idx) => {
+          const isLong = setup.direction === 'long';
+          const signalAge = formatSignalAgeSimple(setup.signalTs);
+          const winRate = setup.historicalPerformance?.winRate;
+          
+          return (
+            <TableRow 
+              key={`${setup.instrument}-${setup.patternId}-${idx}`}
+              className="hover:bg-muted/50 transition-colors"
+            >
+              <TableCell>
+                <InstrumentLogo instrument={setup.instrument} />
+              </TableCell>
+              <TableCell className="text-muted-foreground text-sm">
+                {setup.patternName}
+              </TableCell>
+              <TableCell className="text-center">
+                <GradeBadge quality={setup.quality} />
+              </TableCell>
+              <TableCell>
+                <Badge 
+                  variant={isLong ? 'default' : 'destructive'}
+                  className={cn(
+                    'text-xs',
+                    isLong 
+                      ? 'bg-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/30' 
+                      : 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30'
+                  )}
+                >
+                  {isLong ? (
+                    <><TrendingUp className="h-3 w-3 mr-1" /> Long</>
+                  ) : (
+                    <><TrendingDown className="h-3 w-3 mr-1" /> Short</>
+                  )}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                {winRate != null ? (
+                  <span className={cn(
+                    'font-mono font-medium',
+                    winRate >= 50 ? 'text-green-500' : winRate >= 40 ? 'text-yellow-500' : 'text-muted-foreground'
+                  )}>
+                    {winRate.toFixed(0)}%
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right text-muted-foreground text-sm">
+                {signalAge}
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <section className="py-12 px-6 bg-muted/20">
@@ -189,94 +249,48 @@ export function PatternScreenerTeaser() {
           </div>
           <h2 className="text-2xl font-bold">Top Pattern Signals</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Highest-graded setups from {totalCount > 0 ? totalCount : 'our'} active patterns
+            Highest-graded setups across markets
           </p>
         </div>
 
-        {/* Signals Table */}
-        {topPatterns.length > 0 ? (
-          <div className="rounded-lg border bg-card overflow-hidden mb-6">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="whitespace-nowrap">Symbol</TableHead>
-                  <TableHead className="whitespace-nowrap">Pattern</TableHead>
-                  <TableHead className="text-center whitespace-nowrap">Grade</TableHead>
-                  <TableHead className="whitespace-nowrap">Signal</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Win Rate</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Age</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topPatterns.map((setup, idx) => {
-                  const isLong = setup.direction === 'long';
-                  const signalAge = formatSignalAgeSimple(setup.signalTs);
-                  const winRate = setup.historicalPerformance?.winRate;
-                  
-                  return (
-                    <TableRow 
-                      key={`${setup.instrument}-${setup.patternId}-${idx}`}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <InstrumentLogo instrument={setup.instrument} />
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {setup.patternName}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <GradeBadge quality={setup.quality} />
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={isLong ? 'default' : 'destructive'}
-                          className={cn(
-                            'text-xs',
-                            isLong 
-                              ? 'bg-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/30' 
-                              : 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30'
-                          )}
-                        >
-                          {isLong ? (
-                            <><TrendingUp className="h-3 w-3 mr-1" /> Long</>
-                          ) : (
-                            <><TrendingDown className="h-3 w-3 mr-1" /> Short</>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {winRate != null ? (
-                          <span className={cn(
-                            'font-mono font-medium',
-                            winRate >= 50 ? 'text-green-500' : winRate >= 40 ? 'text-yellow-500' : 'text-muted-foreground'
-                          )}>
-                            {winRate.toFixed(0)}%
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-sm">
-                        {signalAge}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="rounded-lg border bg-card p-8 text-center mb-6">
-            <p className="text-muted-foreground">No active patterns detected right now.</p>
-          </div>
-        )}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AssetType)} className="mb-6">
+          <TabsList className="grid w-full grid-cols-4">
+            {ASSET_TABS.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value} className="text-sm">
+                {tab.label}
+                {!loading[tab.value] && totalCounts[tab.value] > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                    {totalCounts[tab.value]}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {ASSET_TABS.map(tab => (
+            <TabsContent key={tab.value} value={tab.value} className="mt-4">
+              {loading[tab.value] ? (
+                <LoadingSkeleton />
+              ) : patternsByAsset[tab.value].length > 0 ? (
+                <div className="rounded-lg border bg-card overflow-hidden">
+                  <SignalsTable patterns={patternsByAsset[tab.value]} />
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-card p-8 text-center">
+                  <p className="text-muted-foreground">No active patterns in {tab.label} right now.</p>
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
 
         {/* CTA */}
         <div className="text-center">
           <Link to="/patterns/live">
             <Button size="lg" className="px-8">
-              {totalCount > MAX_TEASER_ITEMS 
-                ? `View All ${totalCount} Signals` 
+              {currentTotal > MAX_TEASER_ITEMS 
+                ? `View All ${currentTotal} ${ASSET_TABS.find(t => t.value === activeTab)?.label} Signals` 
                 : 'Open Full Screener'
               }
               <ArrowRight className="h-4 w-4 ml-2" />
