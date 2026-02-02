@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.fetch-eodhd]
 verify_jwt = false
+
+[functions.compute-multi-rr-outcomes]
+verify_jwt = false
