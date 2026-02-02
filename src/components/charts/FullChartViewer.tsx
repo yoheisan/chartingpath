@@ -63,6 +63,8 @@ import { getTradingViewUrl } from '@/utils/tradingViewLinks';
 import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
 import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
+import { GradeBadge } from '@/components/ui/GradeBadge';
+import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -809,20 +811,20 @@ export default function FullChartViewer({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge 
-                variant="outline"
-                className={`${
-                  qualityGrade === 'A' 
-                    ? 'border-green-500/50 text-green-500' 
-                    : qualityGrade === 'B'
-                      ? 'border-yellow-500/50 text-yellow-500'
-                      : 'border-muted-foreground/50'
-                }`}
-              >
-                {typeof (quality as any)?.score === 'number'
-                  ? `${(quality as any).score.toFixed(1)}/10`
-                  : `Grade ${qualityGrade || (quality as any)?.score || '-'}`}
-              </Badge>
+              {typeof (quality as any)?.score === 'number' && typeof (quality as any)?.grade === 'string' ? (
+                <PatternQualityBadge
+                  quality={quality as any}
+                  size="sm"
+                  showTooltip={false}
+                />
+              ) : (
+                <GradeBadge
+                  grade={qualityGrade || (quality as any)?.score || 'C'}
+                  variant="pill"
+                  size="sm"
+                  showTooltip={false}
+                />
+              )}
               <Badge variant={isLong ? 'default' : 'destructive'}>
                 {isLong ? 'LONG' : 'SHORT'}
               </Badge>

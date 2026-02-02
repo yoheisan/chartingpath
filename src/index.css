@@ -36,6 +36,13 @@
     --bearish: 0 84% 60%;
     --bearish-foreground: 210 40% 98%;
 
+    /* Pattern Quality Grade Colors (A-F) */
+    --grade-a: 152 72% 45%; /* emerald */
+    --grade-b: 142 76% 36%; /* green */
+    --grade-c: 45 93% 47%;  /* yellow */
+    --grade-d: 24 100% 50%; /* orange */
+    --grade-f: 0 84% 60%;   /* red */
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
@@ -106,6 +113,13 @@
     --bullish-foreground: 210 40% 98%;
     --bearish: 0 84% 60%;
     --bearish-foreground: 210 40% 98%;
+
+    /* Pattern Quality Grade Colors (A-F) */
+    --grade-a: 152 72% 45%; /* emerald */
+    --grade-b: 142 76% 36%; /* green */
+    --grade-c: 45 93% 47%;  /* yellow */
+    --grade-d: 24 100% 50%; /* orange */
+    --grade-f: 0 84% 60%;   /* red */
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;

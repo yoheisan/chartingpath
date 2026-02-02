@@ -31,6 +31,7 @@ import { SetupWithVisuals, CompressedBar, VisualSpec, PatternQuality } from '@/t
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 import { formatSignalAge } from '@/utils/formatSignalAge';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 
 // Legacy interface support for backward compatibility
 interface LegacySetup {
@@ -190,18 +191,12 @@ const SetupCard = ({
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <Badge 
-              variant="outline"
-              className={`text-xs font-semibold ${
-                quality.score === 'A' 
-                  ? 'border-green-500/50 text-green-500' 
-                  : quality.score === 'B'
-                    ? 'border-yellow-500/50 text-yellow-500'
-                    : 'border-muted-foreground/50'
-              }`}
-            >
-              {quality.score}
-            </Badge>
+            <GradeBadge
+              grade={String(quality.score)}
+              variant="pill"
+              size="sm"
+              showTooltip={false}
+            />
             <span 
               className={`text-[10px] ${
                 signalAge.isFresh 

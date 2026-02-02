@@ -68,6 +68,14 @@ export default {
 					DEFAULT: 'hsl(var(--bearish))',
 					foreground: 'hsl(var(--bearish-foreground))'
 				},
+				// Pattern quality grade colors (A-F)
+				grade: {
+					a: 'hsl(var(--grade-a) / <alpha-value>)',
+					b: 'hsl(var(--grade-b) / <alpha-value>)',
+					c: 'hsl(var(--grade-c) / <alpha-value>)',
+					d: 'hsl(var(--grade-d) / <alpha-value>)',
+					f: 'hsl(var(--grade-f) / <alpha-value>)',
+				},
 				chart: {
 					grid: 'hsl(var(--chart-grid))',
 					background: 'hsl(var(--chart-background))',

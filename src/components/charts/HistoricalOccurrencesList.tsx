@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import type { SetupWithVisuals } from '@/types/VisualSpec';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 
 interface HistoricalOccurrence {
   id: string;
@@ -600,9 +601,7 @@ function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart }: OccurrenceRo
             )}
             {occurrence.direction}
           </Badge>
-          <Badge variant="outline" className="text-xs px-1.5 py-0 text-muted-foreground">
-            {occurrence.qualityScore}
-          </Badge>
+          <GradeBadge grade={occurrence.qualityScore} variant="pill" size="sm" showTooltip={false} className="text-xs px-1.5 py-0" />
           {/* NEW: Trend Alignment Badge */}
           {getTrendAlignmentBadge(occurrence.trendAlignment)}
         </div>
