@@ -1176,15 +1176,6 @@ export default function LivePatternsPage() {
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('rr')}
-                  >
-                    <div className="flex items-center justify-end">
-                      R:R
-                      <SortIcon columnKey="rr" />
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('signal')}
                   >
                     <div className="flex items-center justify-end">
@@ -1199,7 +1190,7 @@ export default function LivePatternsPage() {
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={8} className="py-2">
+                      <TableCell colSpan={7} className="py-2">
                         <span className="font-semibold text-sm">{patternName}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1304,11 +1295,6 @@ export default function LivePatternsPage() {
                             })() : (
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="font-semibold text-green-500">
-                              {DEFAULT_RR.toFixed(1)}
-                            </span>
                           </TableCell>
                           <TableCell className="text-right">
                             <span className={`text-xs ${
