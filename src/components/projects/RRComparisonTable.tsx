@@ -12,11 +12,28 @@ import { Target, TrendingUp, Clock, Zap } from 'lucide-react';
 import { RR_TIERS, formatRR, type RRTier } from '@/utils/rrCalculator';
 
 export interface RRTierStats {
-  rrTier: RRTier;
+  /** Numeric tier (2, 3, 4, 5) - preferred format */
+  rrTier?: RRTier;
+  /** String tier format from backend ('1:2', '1:3', etc.) */
+  tier?: string;
   winRate: number;
   avgHoldBars: number;
   expectancy: number;
   sampleSize: number;
+}
+
+/** Extract numeric R:R tier from either format */
+function extractRRTier(stat: RRTierStats): number {
+  if (stat.rrTier !== undefined) return stat.rrTier;
+  if (stat.tier) {
+    // Parse '1:3' -> 3
+    const parts = stat.tier.split(':');
+    if (parts.length === 2) {
+      const parsed = parseInt(parts[1], 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+  }
+  return 2; // fallback
 }
 
 interface RRComparisonTableProps {
@@ -37,9 +54,10 @@ export const RRComparisonTable = ({
   if (!stats || stats.length === 0) return null;
 
   // Find the tier with highest expectancy
-  const optimalTier = stats.reduce((best, current) => 
-    current.expectancy > best.expectancy ? current : best
+  const optimalTierIndex = stats.reduce((bestIdx, current, idx, arr) => 
+    current.expectancy > arr[bestIdx].expectancy ? idx : bestIdx, 0
   );
+  const optimalRRValue = extractRRTier(stats[optimalTierIndex]);
 
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   const formatExpectancy = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
@@ -86,16 +104,17 @@ export const RRComparisonTable = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {stats.map((tier) => {
-                const isOptimal = tier.rrTier === optimalTier.rrTier;
+              {stats.map((stat, idx) => {
+                const rrValue = extractRRTier(stat);
+                const isOptimal = rrValue === optimalRRValue;
                 return (
                   <TableRow 
-                    key={tier.rrTier}
+                    key={stat.tier || stat.rrTier || idx}
                     className={isOptimal ? 'bg-primary/5 border-primary/20' : ''}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono">{formatRR(tier.rrTier)}</span>
+                        <span className="font-mono">{formatRR(rrValue)}</span>
                         {isOptimal && (
                           <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
                             Optimal
@@ -104,18 +123,18 @@ export const RRComparisonTable = ({
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {formatPercent(tier.winRate)}
+                      {formatPercent(stat.winRate)}
                     </TableCell>
                     <TableCell className="text-right font-mono text-muted-foreground">
-                      {tier.avgHoldBars.toFixed(0)} bars
+                      {stat.avgHoldBars.toFixed(0)} bars
                     </TableCell>
                     <TableCell className={`text-right font-semibold font-mono ${
-                      tier.expectancy >= 0 ? 'text-green-500' : 'text-red-500'
+                      stat.expectancy >= 0 ? 'text-green-500' : 'text-red-500'
                     }`}>
-                      {formatExpectancy(tier.expectancy)}
+                      {formatExpectancy(stat.expectancy)}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {tier.sampleSize}
+                      {stat.sampleSize}
                     </TableCell>
                   </TableRow>
                 );
@@ -125,15 +144,15 @@ export const RRComparisonTable = ({
         </div>
         
         {/* Insight callout */}
-        {optimalTier.expectancy > 0 && (
+        {stats[optimalTierIndex].expectancy > 0 && (
           <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
             <p className="text-sm">
-              <span className="font-semibold text-primary">{formatRR(optimalTier.rrTier)}</span>
+              <span className="font-semibold text-primary">{formatRR(optimalRRValue)}</span>
               {' '}shows the highest expectancy at{' '}
-              <span className="font-semibold">{formatExpectancy(optimalTier.expectancy)}</span>
+              <span className="font-semibold">{formatExpectancy(stats[optimalTierIndex].expectancy)}</span>
               {' '}with a{' '}
-              <span className="font-semibold">{formatPercent(optimalTier.winRate)}</span>
-              {' '}win rate over {optimalTier.sampleSize} trades.
+              <span className="font-semibold">{formatPercent(stats[optimalTierIndex].winRate)}</span>
+              {' '}win rate over {stats[optimalTierIndex].sampleSize} trades.
             </p>
           </div>
         )}
