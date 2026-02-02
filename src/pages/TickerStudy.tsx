@@ -42,6 +42,7 @@ import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import StudyChart from '@/components/charts/StudyChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 import { TimeframeSelector, useStudyTimeframes, STUDY_TIMEFRAMES } from '@/components/charts/TimeframeSelector';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
@@ -163,7 +164,7 @@ function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel
                         )}
                         {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
                       </Badge>
-                      <Badge variant="outline">{pattern.quality_score}</Badge>
+                      <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} />
                     </div>
                     <div className="h-24">
                       <ThumbnailChart 
@@ -943,9 +944,7 @@ export default function TickerStudy() {
                           <span className="font-medium">
                             {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
                           </span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {pattern.quality_score}
-                          </Badge>
+                          <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-[10px]" />
                         </div>
                       </TableCell>
                       <TableCell className="py-2">

@@ -12,38 +12,38 @@ import {
  */
 export const GRADE_CONFIG = {
   A: { 
-    bg: 'bg-emerald-500/15', 
-    text: 'text-emerald-500', 
-    border: 'border-emerald-500/30',
-    solid: 'bg-emerald-500 text-white',
+    bg: 'bg-grade-a/15', 
+    text: 'text-grade-a', 
+    border: 'border-grade-a/30',
+    solid: 'bg-grade-a text-primary-foreground',
     label: 'Excellent'
   },
   B: { 
-    bg: 'bg-green-500/15', 
-    text: 'text-green-500', 
-    border: 'border-green-500/30',
-    solid: 'bg-green-500 text-white',
+    bg: 'bg-grade-b/15', 
+    text: 'text-grade-b', 
+    border: 'border-grade-b/30',
+    solid: 'bg-grade-b text-primary-foreground',
     label: 'Good'
   },
   C: { 
-    bg: 'bg-yellow-500/15', 
-    text: 'text-yellow-500', 
-    border: 'border-yellow-500/30',
-    solid: 'bg-yellow-500 text-white',
+    bg: 'bg-grade-c/15', 
+    text: 'text-grade-c', 
+    border: 'border-grade-c/30',
+    solid: 'bg-grade-c text-primary-foreground',
     label: 'Fair'
   },
   D: { 
-    bg: 'bg-orange-500/15', 
-    text: 'text-orange-500', 
-    border: 'border-orange-500/30',
-    solid: 'bg-orange-500 text-white',
+    bg: 'bg-grade-d/15', 
+    text: 'text-grade-d', 
+    border: 'border-grade-d/30',
+    solid: 'bg-grade-d text-primary-foreground',
     label: 'Weak'
   },
   F: { 
-    bg: 'bg-red-500/15', 
-    text: 'text-red-500', 
-    border: 'border-red-500/30',
-    solid: 'bg-red-500 text-white',
+    bg: 'bg-grade-f/15', 
+    text: 'text-grade-f', 
+    border: 'border-grade-f/30',
+    solid: 'bg-grade-f text-primary-foreground',
     label: 'Poor'
   },
 } as const;
@@ -97,6 +97,8 @@ interface GradeBadgeProps {
   quality?: { grade?: string; score?: string | number };
   /** Size variant */
   size?: 'sm' | 'md' | 'lg';
+  /** Visual style variant */
+  variant?: 'circle' | 'pill';
   /** Use solid background instead of translucent */
   solid?: boolean;
   /** Show tooltip with explanation */
@@ -116,6 +118,7 @@ export function GradeBadge({
   grade, 
   quality, 
   size = 'md',
+  variant = 'circle',
   solid = false,
   showTooltip = true,
   className 
@@ -127,22 +130,29 @@ export function GradeBadge({
   
   const config = getGradeConfig(displayGrade);
   
-  const sizeClasses = {
+  const circleSizeClasses = {
     sm: 'w-5 h-5 text-[10px]',
     md: 'w-7 h-7 text-xs',
     lg: 'w-9 h-9 text-sm',
   };
+
+  const pillSizeClasses = {
+    sm: 'px-2 py-0.5 text-[11px]',
+    md: 'px-2.5 py-0.5 text-xs',
+    lg: 'px-3 py-1 text-sm',
+  };
   
   const badgeContent = (
-    <span 
+    <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-bold border',
-        sizeClasses[size],
+        'inline-flex items-center justify-center border',
+        variant === 'circle' ? 'rounded-full font-bold' : 'rounded-full font-semibold',
+        variant === 'circle' ? circleSizeClasses[size] : pillSizeClasses[size],
         solid ? config.solid : [config.bg, config.text, config.border],
         className
       )}
     >
-      {displayGrade}
+      {variant === 'pill' ? `Grade ${displayGrade}` : displayGrade}
     </span>
   );
   
