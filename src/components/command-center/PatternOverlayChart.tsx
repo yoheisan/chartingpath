@@ -18,8 +18,12 @@ import {
   Target,
   ShieldAlert,
   Maximize2,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import { SetupWithVisuals, CompressedBar } from '@/types/VisualSpec';
+import { TradePlaybackChart } from '@/components/charts/TradePlaybackChart';
 import StudyChart from '@/components/charts/StudyChart';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
@@ -47,14 +51,53 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
 }: PatternOverlayChartProps) {
   if (!setup) return null;
 
-  const { instrument, patternName, direction, tradePlan, bars, visualSpec } = setup;
+  const { instrument, patternName, direction, tradePlan, bars, visualSpec, outcome, barsToOutcome, entryBarIndex } = setup;
   const timeframe = visualSpec?.timeframe || '1d';
+  
+  // Check if this is a historical pattern with outcome data
+  const isHistoricalPattern = outcome != null || barsToOutcome != null;
+  
+  // Calculate entry bar index from visualSpec or setup
+  const computedEntryBarIndex = entryBarIndex ?? visualSpec?.entryBarIndex ?? undefined;
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
     return price.toFixed(6);
   };
+
+  const getOutcomeInfo = () => {
+    switch (outcome) {
+      case 'hit_tp': 
+        return { 
+          label: 'TP Hit', 
+          color: 'border-emerald-500/50 text-emerald-600 bg-emerald-500/10',
+          Icon: CheckCircle2
+        };
+      case 'hit_sl': 
+        return { 
+          label: 'SL Hit', 
+          color: 'border-red-500/50 text-red-600 bg-red-500/10',
+          Icon: XCircle
+        };
+      case 'timeout': 
+        return { 
+          label: 'Timeout', 
+          color: 'border-amber-500/50 text-amber-600 bg-amber-500/10',
+          Icon: Clock
+        };
+      case 'pending': 
+        return { 
+          label: 'Pending', 
+          color: 'border-border text-muted-foreground bg-muted',
+          Icon: Clock
+        };
+      default: 
+        return null;
+    }
+  };
+
+  const outcomeInfo = getOutcomeInfo();
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -81,11 +124,24 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
                 )}
                 {direction.toUpperCase()}
               </Badge>
+              {/* Outcome badge for historical patterns */}
+              {outcomeInfo && (
+                <Badge variant="outline" className={cn("text-xs", outcomeInfo.color)}>
+                  <outcomeInfo.Icon className="h-3 w-3 mr-1" />
+                  {outcomeInfo.label}
+                </Badge>
+              )}
             </div>
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <span className="font-medium">{patternName}</span>
               <span>•</span>
               <span>{timeframe}</span>
+              {isHistoricalPattern && (
+                <>
+                  <span>•</span>
+                  <span className="text-xs">Historical</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -148,17 +204,36 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
           </div>
         ) : bars && bars.length > 0 ? (
           <div className="h-full p-2">
-            <StudyChart 
-              bars={bars} 
-              symbol={instrument} 
-              height={undefined}
-              tradePlan={{
-                entry: tradePlan.entry,
-                stopLoss: tradePlan.stopLoss,
-                takeProfit: tradePlan.takeProfit,
-                direction: direction as 'long' | 'short',
-              }}
-            />
+            {isHistoricalPattern && barsToOutcome != null ? (
+              // Use playback chart for historical patterns with outcome
+              <TradePlaybackChart
+                bars={bars}
+                symbol={instrument}
+                tradePlan={{
+                  entry: tradePlan.entry,
+                  stopLoss: tradePlan.stopLoss,
+                  takeProfit: tradePlan.takeProfit,
+                  direction: direction as 'long' | 'short',
+                }}
+                entryBarIndex={computedEntryBarIndex}
+                barsToOutcome={barsToOutcome}
+                outcome={outcome}
+                enablePlayback={true}
+              />
+            ) : (
+              // Use standard chart for live patterns
+              <StudyChart 
+                bars={bars} 
+                symbol={instrument} 
+                height={undefined}
+                tradePlan={{
+                  entry: tradePlan.entry,
+                  stopLoss: tradePlan.stopLoss,
+                  takeProfit: tradePlan.takeProfit,
+                  direction: direction as 'long' | 'short',
+                }}
+              />
+            )}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">

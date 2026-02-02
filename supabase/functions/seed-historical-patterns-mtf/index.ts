@@ -857,12 +857,17 @@ function runHistoricalBacktest(
     
     const qualityResult = calculatePatternQualityScore(qualityInput);
     
-    // Build visual spec
+    // Build visual spec with trade lifecycle info
+    // entryBarIndex will be calculated after we know startIdx
     const visualSpec = {
       timeframe,
       entryPrice,
       stopLoss,
       takeProfit,
+      outcome,
+      outcomePrice,
+      outcomeDate,
+      barsToOutcome,
       pivots: detectionResult.pivots.map(p => ({
         ...p,
         timestamp: window[p.index]?.date || entryBar.date
@@ -874,8 +879,17 @@ function runHistoricalBacktest(
       ]
     };
     
-    // Store pattern bars (last 50)
-    const patternBars = bars.slice(Math.max(0, i - 49), i + 1);
+    // Store pattern bars (last 30 before entry) + bars through outcome (or max 50 after entry)
+    // This ensures the chart shows the complete trade lifecycle from entry to exit
+    const lookbackBars = 30;
+    const startIdx = Math.max(0, i - lookbackBars);
+    const endIdx = barsToOutcome 
+      ? Math.min(i + barsToOutcome + 1, bars.length) // Include up to outcome bar
+      : Math.min(i + 50, bars.length); // Default 50 bars forward if no outcome
+    const patternBars = bars.slice(startIdx, endIdx);
+    
+    // Calculate entry bar index within the stored bars array
+    const entryBarIndex = i - startIdx;
     
     // Trend analysis (needs 200+ bars for 200 EMA)
     const trendBars = bars.slice(Math.max(0, i - 250), i + 1);
@@ -898,7 +912,7 @@ function runHistoricalBacktest(
       take_profit_price: takeProfit,
       risk_reward_ratio: riskReward,
       bars: patternBars,
-      visual_spec: visualSpec,
+      visual_spec: { ...visualSpec, entryBarIndex },
       quality_score: qualityResult.grade,
       quality_reasons: qualityResult.factors.filter(f => f.passed).map(f => f.description),
       outcome,
