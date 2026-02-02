@@ -33,6 +33,17 @@ import { RR_TIERS, RRTier, DEFAULT_RR, formatRR } from '@/utils/rrCalculator';
 export type DirectionFilter = 'all' | 'long' | 'short';
 export type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
 export type AgeFilter = 'all' | 'fresh' | 'recent' | 'aging';
+export type GradeFilter = 'all' | 'A' | 'B' | 'C' | 'D' | 'F';
+
+// Grade labels for display
+const GRADE_LABELS: Record<GradeFilter, string> = {
+  all: 'All Grades',
+  A: 'Grade A',
+  B: 'Grade B', 
+  C: 'Grade C',
+  D: 'Grade D',
+  F: 'Grade F',
+};
 
 // Age filter thresholds (in hours)
 const AGE_THRESHOLDS = {
@@ -47,6 +58,7 @@ export interface ScreenerFiltersState {
   trend: TrendFilter;
   selectedRR: RRTier;  // User-selected R:R tier for TP calculation
   age: AgeFilter;
+  grade: GradeFilter;
 }
 
 interface ScreenerFiltersProps {
@@ -64,6 +76,11 @@ interface ScreenerFiltersProps {
     shortCount: number;
     withTrend: number;
     counterTrend: number;
+    gradeA: number;
+    gradeB: number;
+    gradeC: number;
+    gradeD: number;
+    gradeF: number;
     neutral: number;
     freshCount: number;
     recentCount: number;
@@ -81,6 +98,7 @@ export const DEFAULT_SCREENER_FILTERS: ScreenerFiltersState = {
   trend: 'all',
   selectedRR: DEFAULT_RR,
   age: 'all',
+  grade: 'all',
 };
 
 export function ScreenerFilters({
@@ -95,7 +113,8 @@ export function ScreenerFilters({
            filters.pattern !== 'all' ||
            filters.trend !== 'all' ||
            filters.selectedRR !== DEFAULT_RR ||
-           filters.age !== 'all';
+           filters.age !== 'all' ||
+           filters.grade !== 'all';
   }, [filters]);
 
   return (
@@ -230,6 +249,51 @@ export function ScreenerFilters({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        {/* Grade Filter */}
+        <Select value={filters.grade} onValueChange={(v) => onChange({ grade: v as GradeFilter })}>
+          <SelectTrigger className="h-9 w-32 text-xs">
+            <SelectValue placeholder="All Grades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Grades</SelectItem>
+            <SelectItem value="A">
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-grade-a/15 text-grade-a border border-grade-a/30 flex items-center justify-center text-[10px] font-bold">A</span>
+                <span>Grade A</span>
+                {stats.gradeA > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeA}</Badge>}
+              </span>
+            </SelectItem>
+            <SelectItem value="B">
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-grade-b/15 text-grade-b border border-grade-b/30 flex items-center justify-center text-[10px] font-bold">B</span>
+                <span>Grade B</span>
+                {stats.gradeB > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeB}</Badge>}
+              </span>
+            </SelectItem>
+            <SelectItem value="C">
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-grade-c/15 text-grade-c border border-grade-c/30 flex items-center justify-center text-[10px] font-bold">C</span>
+                <span>Grade C</span>
+                {stats.gradeC > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeC}</Badge>}
+              </span>
+            </SelectItem>
+            <SelectItem value="D">
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-grade-d/15 text-grade-d border border-grade-d/30 flex items-center justify-center text-[10px] font-bold">D</span>
+                <span>Grade D</span>
+                {stats.gradeD > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeD}</Badge>}
+              </span>
+            </SelectItem>
+            <SelectItem value="F">
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-grade-f/15 text-grade-f border border-grade-f/30 flex items-center justify-center text-[10px] font-bold">F</span>
+                <span>Grade F</span>
+                {stats.gradeF > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeF}</Badge>}
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Clear Filters */}
         {hasActiveFilters && (
