@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 
 export interface PatternOccurrence {
   id: string;
@@ -172,9 +173,7 @@ export function PatternOccurrencesPanel({
 
               <div className="flex items-center gap-2 shrink-0">
                 {p.quality_score && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                    {p.quality_score}
-                  </Badge>
+                  <GradeBadge grade={p.quality_score} size="sm" showTooltip={false} />
                 )}
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                   {p.risk_reward_ratio.toFixed(1)}R
