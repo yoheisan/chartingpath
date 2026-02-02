@@ -13,7 +13,10 @@ import {
   isMarketOpen,
   getDbSymbol,
 } from "../_shared/patternDetectors.ts";
-
+import {
+  calculatePatternQualityScore,
+  type PatternQualityScorerInput,
+} from "../_shared/patternQualityScorer.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -740,7 +743,59 @@ serve(async (req) => {
           trendIndicators = computed.trendIndicators;
         }
         
-        detectedPatterns.push({ instrument, patternId, patternName: pattern.displayName, direction: pattern.direction, quality: { score: 'B', reasons: ['Pattern detected'] }, tradePlan: { entryType: 'bar_close', entry: lastBar.close, stopLoss: bracketLevels.stopLossPrice, takeProfit: bracketLevels.takeProfitPrice, rr: bracketLevels.riskRewardRatio }, bars: compressedBars, visualSpec, currentPrice: lastBar.close, prevClose: prevBar?.close, changePercent: changePercent != null ? +changePercent.toFixed(2) : null, trendAlignment, trendIndicators });
+        // Calculate professional-grade quality score using Phase 1 enhanced scorer
+        const qualityScorerInput: PatternQualityScorerInput = {
+          bars: bars.map(b => ({
+            date: b.date,
+            open: b.open,
+            high: b.high,
+            low: b.low,
+            close: b.close,
+            volume: b.volume || 0
+          })),
+          patternType: patternId,
+          patternStartIndex: Math.max(0, bars.length - 20),
+          patternEndIndex: bars.length - 1,
+          direction: pattern.direction,
+          entryPrice: lastBar.close,
+          stopLoss: bracketLevels.stopLossPrice,
+          takeProfit: bracketLevels.takeProfitPrice,
+          atr,
+          trendIndicators: trendIndicators || undefined,
+          // historicalPerformance will be added after stats enrichment
+        };
+        
+        const qualityResult = calculatePatternQualityScore(qualityScorerInput);
+        
+        detectedPatterns.push({ 
+          instrument, 
+          patternId, 
+          patternName: pattern.displayName, 
+          direction: pattern.direction, 
+          quality: { 
+            score: qualityResult.grade, 
+            numericScore: qualityResult.score,
+            confidence: qualityResult.confidence,
+            reasons: qualityResult.factors.filter(f => f.passed).map(f => f.description),
+            warnings: qualityResult.warnings,
+            tradeable: qualityResult.tradeable,
+            factors: qualityResult.factors
+          }, 
+          tradePlan: { 
+            entryType: 'bar_close', 
+            entry: lastBar.close, 
+            stopLoss: bracketLevels.stopLossPrice, 
+            takeProfit: bracketLevels.takeProfitPrice, 
+            rr: bracketLevels.riskRewardRatio 
+          }, 
+          bars: compressedBars, 
+          visualSpec, 
+          currentPrice: lastBar.close, 
+          prevClose: prevBar?.close, 
+          changePercent: changePercent != null ? +changePercent.toFixed(2) : null, 
+          trendAlignment, 
+          trendIndicators 
+        });
       }
     }
     
