@@ -1258,15 +1258,25 @@ export type Database = {
           asset_type: string
           bars: Json
           bars_to_outcome: number | null
+          bars_to_outcome_rr3: number | null
+          bars_to_outcome_rr4: number | null
+          bars_to_outcome_rr5: number | null
           created_at: string
           detected_at: string
           direction: string
           entry_price: number
           id: string
+          multi_rr_computed_at: string | null
           outcome: string | null
           outcome_date: string | null
           outcome_pnl_percent: number | null
+          outcome_pnl_percent_rr3: number | null
+          outcome_pnl_percent_rr4: number | null
+          outcome_pnl_percent_rr5: number | null
           outcome_price: number | null
+          outcome_rr3: string | null
+          outcome_rr4: string | null
+          outcome_rr5: string | null
           pattern_end_date: string
           pattern_id: string
           pattern_name: string
@@ -1287,15 +1297,25 @@ export type Database = {
           asset_type: string
           bars?: Json
           bars_to_outcome?: number | null
+          bars_to_outcome_rr3?: number | null
+          bars_to_outcome_rr4?: number | null
+          bars_to_outcome_rr5?: number | null
           created_at?: string
           detected_at: string
           direction: string
           entry_price: number
           id?: string
+          multi_rr_computed_at?: string | null
           outcome?: string | null
           outcome_date?: string | null
           outcome_pnl_percent?: number | null
+          outcome_pnl_percent_rr3?: number | null
+          outcome_pnl_percent_rr4?: number | null
+          outcome_pnl_percent_rr5?: number | null
           outcome_price?: number | null
+          outcome_rr3?: string | null
+          outcome_rr4?: string | null
+          outcome_rr5?: string | null
           pattern_end_date: string
           pattern_id: string
           pattern_name: string
@@ -1316,15 +1336,25 @@ export type Database = {
           asset_type?: string
           bars?: Json
           bars_to_outcome?: number | null
+          bars_to_outcome_rr3?: number | null
+          bars_to_outcome_rr4?: number | null
+          bars_to_outcome_rr5?: number | null
           created_at?: string
           detected_at?: string
           direction?: string
           entry_price?: number
           id?: string
+          multi_rr_computed_at?: string | null
           outcome?: string | null
           outcome_date?: string | null
           outcome_pnl_percent?: number | null
+          outcome_pnl_percent_rr3?: number | null
+          outcome_pnl_percent_rr4?: number | null
+          outcome_pnl_percent_rr5?: number | null
           outcome_price?: number | null
+          outcome_rr3?: string | null
+          outcome_rr4?: string | null
+          outcome_rr5?: string | null
           pattern_end_date?: string
           pattern_id?: string
           pattern_name?: string

@@ -57,8 +57,12 @@ interface PatternStats {
   };
 }
 
+// Supported R:R tiers (2 is baseline stored in 'outcome', 3-5 are in outcome_rr3, etc.)
+type RRTier = 2 | 3 | 4 | 5;
+const DEFAULT_RR_TIER: RRTier = 2;
+
 // Cache computed historical stats in-memory to keep the DB-cache fast path responsive.
-// Key is now "patternId|symbol" for per-asset stats.
+// Key is now "patternId|symbol|rrTier" for per-asset, per-tier stats.
 const patternSymbolStatsCache = new Map<string, { stats: PatternStats; ts: number }>();
 const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
 
@@ -88,9 +92,9 @@ function toHistoricalPerformance(stats: PatternStats) {
   };
 }
 
-// Build a cache key for pattern+symbol combination
-function getStatsKey(patternId: string, symbol: string): string {
-  return `${patternId}|${symbol}`;
+// Build a cache key for pattern+symbol+rrTier combination
+function getStatsKey(patternId: string, symbol: string, rrTier: RRTier = 2): string {
+  return `${patternId}|${symbol}|${rrTier}`;
 }
 
 // Normalize symbol for DB lookup (Yahoo symbol -> DB symbol)
@@ -137,10 +141,11 @@ async function loadFromDbCache(
   } catch { return results; }
 }
 
-// Fetch stats per (pattern_id, symbol) combination - returns Map keyed by "patternId|symbol"
+// Fetch stats per (pattern_id, symbol, rrTier) combination - returns Map keyed by "patternId|symbol|rrTier"
 async function fetchPatternSymbolStats(
   supabase: any, 
-  patternSymbolPairs: Array<{ patternId: string; symbol: string }>
+  patternSymbolPairs: Array<{ patternId: string; symbol: string }>,
+  rrTier: RRTier = DEFAULT_RR_TIER
 ): Promise<Map<string, PatternStats>> {
   const statsMap = new Map<string, PatternStats>();
   if (!patternSymbolPairs.length) {
@@ -151,9 +156,9 @@ async function fetchPatternSymbolStats(
   const now = Date.now();
   const toFetch: Array<{ patternId: string; symbol: string }> = [];
   
-  // Check cache first
+  // Check cache first (now includes rrTier in key)
   for (const pair of patternSymbolPairs) {
-    const key = getStatsKey(pair.patternId, pair.symbol);
+    const key = getStatsKey(pair.patternId, pair.symbol, rrTier);
     const cached = patternSymbolStatsCache.get(key);
     if (cached && now - cached.ts < PATTERN_STATS_TTL_MS) {
       statsMap.set(key, cached.stats);
@@ -163,7 +168,7 @@ async function fetchPatternSymbolStats(
   }
   
   if (!toFetch.length) {
-    console.info(`[fetchPatternSymbolStats] All ${patternSymbolPairs.length} stats served from cache`);
+    console.info(`[fetchPatternSymbolStats] All ${patternSymbolPairs.length} stats served from cache (rrTier=${rrTier})`);
     return statsMap;
   }
   
@@ -171,7 +176,12 @@ async function fetchPatternSymbolStats(
     const uniquePatternIds = [...new Set(toFetch.map(p => p.patternId))];
     const uniqueSymbols = [...new Set(toFetch.map(p => normalizeSymbolForStats(p.symbol)))];
     
-    console.info(`[fetchPatternSymbolStats] Fetching from DB: ${toFetch.length} pairs, ${uniquePatternIds.length} patterns, ${uniqueSymbols.length} symbols`);
+    console.info(`[fetchPatternSymbolStats] Fetching from DB: ${toFetch.length} pairs, rrTier=${rrTier}`);
+    
+    // Determine which columns to select based on R:R tier
+    const outcomeCol = rrTier === 2 ? 'outcome' : `outcome_rr${rrTier}`;
+    const pnlCol = rrTier === 2 ? 'outcome_pnl_percent' : `outcome_pnl_percent_rr${rrTier}`;
+    const barsCol = rrTier === 2 ? 'bars_to_outcome' : `bars_to_outcome_rr${rrTier}`;
     
     // Fetch ALL records with pagination
     const PAGE_SIZE = 5000;
@@ -182,10 +192,10 @@ async function fetchPatternSymbolStats(
     while (hasMore) {
       const { data: pageData, error } = await supabase
         .from('historical_pattern_occurrences')
-        .select('pattern_id, symbol, outcome, outcome_pnl_percent, bars_to_outcome, detected_at')
+        .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, detected_at`)
         .in('pattern_id', uniquePatternIds)
         .in('symbol', uniqueSymbols)
-        .not('outcome', 'is', null)
+        .not(outcomeCol, 'is', null)
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
       
       if (error) {
@@ -203,11 +213,11 @@ async function fetchPatternSymbolStats(
     }
     
     if (!allData.length) {
-      console.warn(`[fetchPatternSymbolStats] No historical data found`);
+      console.warn(`[fetchPatternSymbolStats] No historical data found for rrTier=${rrTier}`);
       return statsMap;
     }
     
-    console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences (fetched ${page} pages)`);
+    console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences for rrTier=${rrTier}`);
     
     const nowDate = new Date();
     const threeMonthsAgo = new Date(nowDate); threeMonthsAgo.setMonth(nowDate.getMonth() - 3);
@@ -226,12 +236,17 @@ async function fetchPatternSymbolStats(
           count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0 });
       }
       const e = grouped.get(key)!;
-      if (row.outcome === 'hit_tp' || row.outcome === 'hit_sl') {
+      
+      // Access the dynamically named columns
+      const outcome = row[outcomeCol];
+      const pnl = row[pnlCol] ?? 0;
+      const bars = row[barsCol];
+      
+      if (outcome === 'hit_tp' || outcome === 'hit_sl') {
         e.total++;
-        if (row.outcome === 'hit_tp') e.wins++;
-        const pnl = row.outcome_pnl_percent ?? 0;
+        if (outcome === 'hit_tp') e.wins++;
         e.pnlSum += pnl;
-        if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
+        if (bars != null) { e.durationSum += bars; e.durationCount++; }
         const d = new Date(row.detected_at);
         if (d >= threeMonthsAgo) { e.roi3m += pnl; e.count3m++; }
         if (d >= sixMonthsAgo) { e.roi6m += pnl; e.count6m++; }
@@ -241,8 +256,8 @@ async function fetchPatternSymbolStats(
       }
     }
     
-    // Build stats for each pair
-    for (const [key, e] of grouped) {
+    // Build stats for each pair (key now includes rrTier)
+    for (const [baseKey, e] of grouped) {
       if (e.total > 0) {
         const stats: PatternStats = {
           winRate: Math.round((e.wins / e.total) * 1000) / 10,
@@ -257,19 +272,20 @@ async function fetchPatternSymbolStats(
             fiveYear: e.count5y > 0 ? Math.round(e.roi5y * 10) / 10 : null,
           },
         };
-        statsMap.set(key, stats);
-        patternSymbolStatsCache.set(key, { stats, ts: now });
+        const fullKey = `${baseKey}|${rrTier}`;
+        statsMap.set(fullKey, stats);
+        patternSymbolStatsCache.set(fullKey, { stats, ts: now });
       }
     }
     
     // For requested pairs that didn't get stats, check if we need to map Yahoo symbols
     for (const pair of toFetch) {
-      const yahooKey = getStatsKey(pair.patternId, pair.symbol);
+      const yahooKey = getStatsKey(pair.patternId, pair.symbol, rrTier);
       if (statsMap.has(yahooKey)) continue;
       
       // Try with normalized symbol
       const normalizedSymbol = normalizeSymbolForStats(pair.symbol);
-      const normalizedKey = `${pair.patternId}|${normalizedSymbol}`;
+      const normalizedKey = `${pair.patternId}|${normalizedSymbol}|${rrTier}`;
       const normalizedStats = statsMap.get(normalizedKey);
       if (normalizedStats) {
         statsMap.set(yahooKey, normalizedStats);
@@ -277,7 +293,7 @@ async function fetchPatternSymbolStats(
       }
     }
     
-    console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs`);
+    console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at rrTier=${rrTier}`);
     return statsMap;
   } catch (err: any) {
     console.error('[fetchPatternSymbolStats] Exception:', err.message);
@@ -427,7 +443,8 @@ async function readCachedPatternsFromDb(
   limit: number,
   maxTickers: number,
   includeDetails: boolean,
-  topNWithBars: number = 0, // NEW: Include full bars/visual_spec for top N patterns
+  topNWithBars: number = 0,
+  rrTier: RRTier = DEFAULT_RR_TIER, // R:R tier for stats aggregation
 ) {
   try {
     const instruments = getInstrumentsForTier(assetType, maxTickers);
@@ -567,8 +584,8 @@ async function readCachedPatternsFromDb(
     console.info(`[scan-live-patterns] Enriching ${pairsToEnrich.length} patterns with per-asset stats`);
 
     if (pairsToEnrich.length) {
-      const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich);
-      console.info(`[scan-live-patterns] Per-asset stats enrichment returned ${stats.size} entries`);
+      const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich, rrTier);
+      console.info(`[scan-live-patterns] Per-asset stats enrichment returned ${stats.size} entries (rrTier=${rrTier})`);
 
       // Track which DB rows should be updated so future fast-path calls are instant.
       const updatesToPerform: Array<{ id: string; hp: any | null }> = [];
@@ -576,7 +593,7 @@ async function readCachedPatternsFromDb(
       let enrichedCount = 0;
       let clearedCount = 0;
       patterns = patterns.map((p: any) => {
-        const key = getStatsKey(p.patternId, p.instrument);
+        const key = getStatsKey(p.patternId, p.instrument, rrTier);
         const s = stats.get(key);
         
         // If no per-symbol stats exist but we have suspect (pattern-level) cached stats, clear them
@@ -637,7 +654,8 @@ serve(async (req) => {
     let allowedPatterns: string[] = BASE_PATTERNS;
     let forceRefresh = false;
     let includeDetails = true;
-    let topNWithBars = 0; // NEW: Embed bars for first N patterns for instant chart loading
+    let topNWithBars = 0; // Embed bars for first N patterns for instant chart loading
+    let rrTier: RRTier = DEFAULT_RR_TIER; // R:R tier for stats aggregation
     
     if (req.method === 'POST') {
       try {
@@ -649,8 +667,14 @@ serve(async (req) => {
         if (body.allowedPatterns?.length) allowedPatterns = body.allowedPatterns;
         if (body.forceRefresh) forceRefresh = true;
         if (typeof body.includeDetails === 'boolean') includeDetails = body.includeDetails;
-        if (typeof body.topNWithBars === 'number') topNWithBars = Math.min(body.topNWithBars, 15); // Cap at 15 to keep response size manageable
+        if (typeof body.topNWithBars === 'number') topNWithBars = Math.min(body.topNWithBars, 15);
+        if (body.rrTier && [2, 3, 4, 5].includes(body.rrTier)) rrTier = body.rrTier as RRTier;
       } catch {}
+    }
+    // Also check query params for rrTier
+    const rrTierParam = url.searchParams.get('rrTier');
+    if (rrTierParam && [2, 3, 4, 5].includes(parseInt(rrTierParam))) {
+      rrTier = parseInt(rrTierParam) as RRTier;
     }
     
     const instruments = getInstrumentsForTier(assetType, maxTickers);
@@ -670,7 +694,8 @@ serve(async (req) => {
         limit,
         maxTickers,
         includeDetails,
-        topNWithBars, // NEW: Embed bars for top N patterns
+        topNWithBars,
+        rrTier, // Pass R:R tier for stats
       );
       if (dbCached) {
         console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);
@@ -849,14 +874,14 @@ serve(async (req) => {
     
     // Fetch per-(pattern, symbol) stats for unique ROI per asset
     const patternSymbolPairs = detectedPatterns.map(p => ({ patternId: p.patternId, symbol: p.instrument }));
-    const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs);
-    console.info(`[scan-live-patterns] Slow path: per-asset patternStats size=${patternStats.size}, detected=${detectedPatterns.length}`);
+    const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs, rrTier);
+    console.info(`[scan-live-patterns] Slow path: per-asset patternStats size=${patternStats.size}, detected=${detectedPatterns.length}, rrTier=${rrTier}`);
     
     let statsAttachedCount = 0;
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
-      const statsKey = getStatsKey(pattern.patternId, pattern.instrument);
+      const statsKey = getStatsKey(pattern.patternId, pattern.instrument, rrTier);
       const stats = patternStats.get(statsKey);
       if (stats) statsAttachedCount++;
       return { 
