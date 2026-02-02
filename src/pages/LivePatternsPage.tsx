@@ -285,9 +285,12 @@ export default function LivePatternsPage() {
   
   
   // Sorting for list view
-  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
+  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(true);
+  
+  // Grade order for sorting (A is highest, F is lowest)
+  const GRADE_ORDER: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5 };
   
   // Retry counter for refresh
   const [retryCount, setRetryCount] = useState(0);
@@ -578,6 +581,11 @@ export default function LivePatternsPage() {
           break;
         case 'signal':
           cmp = new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
+          break;
+        case 'grade':
+          const gradeA = GRADE_ORDER[a.quality?.grade || a.quality?.score || 'C'] || 3;
+          const gradeB = GRADE_ORDER[b.quality?.grade || b.quality?.score || 'C'] || 3;
+          cmp = gradeA - gradeB; // Lower number = higher grade (A=1, F=5)
           break;
       }
       return sortAsc ? cmp : -cmp;
@@ -1078,13 +1086,16 @@ export default function LivePatternsPage() {
                     </div>
                   </TableHead>
                   <TableHead className="whitespace-nowrap">Pattern</TableHead>
-                  <TableHead className="text-center whitespace-nowrap">
+                  <TableHead 
+                    className="cursor-pointer select-none text-center whitespace-nowrap"
+                    onClick={() => handleSort('grade')}
+                  >
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex items-center justify-center gap-1 cursor-help">
+                          <span className="flex items-center justify-center gap-1">
                             Grade
-                            <Info className="h-3 w-3 opacity-50" />
+                            <SortIcon columnKey="grade" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-sm">
