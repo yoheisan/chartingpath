@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +75,12 @@ interface TradeEntry {
   isWin: boolean;
   regime: string;
   exitReason: 'tp' | 'sl' | 'time_stop';
+  rrOutcomes?: {
+    rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
+    rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
+    rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
+    rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
+  };
 }
 
 interface EquityPoint {
@@ -109,6 +115,10 @@ interface PatternLabArtifact {
   /** Multi-RR comparison stats from historical simulations */
   rrComparison?: RRTierStats[];
   optimalTier?: string;
+  /** Tier-aware computed stats (preferred when present) */
+  patternsByTier?: Record<string, PatternResult[]>;
+  equityByTier?: Record<string, EquityPoint[]>;
+  maxDrawdownByTier?: Record<string, number>; // percentage (0-100)
 }
 
 interface PatternLabViewerProps {
@@ -125,6 +135,19 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   const formatR = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
 
+  const tierLabel = `1:${selectedRRTier}`;
+
+  const selectedTierData = useMemo(() => {
+    if (!artifact.rrComparison || artifact.rrComparison.length === 0) return null;
+    return (
+      artifact.rrComparison.find(rr => ('rrTier' in rr && rr.rrTier === selectedRRTier)) ||
+      artifact.rrComparison.find(rr => ('tier' in rr && rr.tier === `1:${selectedRRTier}`)) ||
+      null
+    );
+  }, [artifact.rrComparison, selectedRRTier]);
+
+  const selectedTierWinRate = selectedTierData?.winRate ?? artifact.summary.overallWinRate;
+
   // Get expectancy for selected R:R tier from rrComparison data (overall)
   const getSelectedTierExpectancy = () => {
     if (!artifact.rrComparison || artifact.rrComparison.length === 0) {
@@ -138,7 +161,28 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return tierData?.expectancy ?? artifact.summary.overallExpectancy;
   };
 
+  // Prefer tier-aware backend outputs when present
+  const effectivePatterns: PatternResult[] = useMemo(() => {
+    return artifact.patternsByTier?.[tierLabel] ?? artifact.patterns;
+  }, [artifact.patternsByTier, artifact.patterns, tierLabel]);
+
+  const effectiveEquity: EquityPoint[] = useMemo(() => {
+    return artifact.equityByTier?.[tierLabel] ?? artifact.equity;
+  }, [artifact.equityByTier, artifact.equity, tierLabel]);
+
+  const selectedTierMaxDrawdownPercent = useMemo(() => {
+    // Prefer explicit backend max DD by tier
+    if (artifact.maxDrawdownByTier?.[tierLabel] !== undefined) {
+      return artifact.maxDrawdownByTier[tierLabel];
+    }
+    // Fallback: compute from equity points (drawdown is 0..1)
+    if (!effectiveEquity || effectiveEquity.length === 0) return artifact.summary.overallMaxDrawdown;
+    const maxDD = Math.max(...effectiveEquity.map(p => p.drawdown ?? 0));
+    return Math.min(maxDD * 100, 100);
+  }, [artifact.maxDrawdownByTier, tierLabel, effectiveEquity, artifact.summary.overallMaxDrawdown]);
+
   // Calculate per-pattern stats for selected R:R tier
+  // NOTE: This is now a fallback only. Preferred path is backend-provided patternsByTier.
   const getPatternStatsForTier = (patternId: string, tier: number) => {
     const baselinePattern = artifact.patterns.find(p => p.patternId === patternId);
     if (!baselinePattern) return { winRate: 0, expectancy: 0, totalTrades: 0 };
@@ -197,8 +241,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   // Find best and worst patterns based on selected R:R tier
   const getBestWorstPatterns = () => {
-    if (artifact.patterns.length === 0) {
+    if (effectivePatterns.length === 0) {
       return { best: null, worst: null };
+    }
+
+    // If tier-aware pattern stats are present, use them directly (accurate)
+    if (artifact.patternsByTier?.[tierLabel]) {
+      const sorted = [...effectivePatterns].sort((a, b) => b.expectancy - a.expectancy);
+      const best = sorted[0];
+      const worst = sorted[sorted.length - 1];
+      return { best, worst: sorted.length > 1 ? worst : null };
     }
     
     // Calculate stats for each pattern at the selected tier
@@ -237,8 +289,52 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return `${trendDesc}, ${volDesc}`;
   };
 
+  const hasMultiRR = (artifact.rrComparison && artifact.rrComparison.length > 0);
+
+  const displayedTrades = useMemo(() => {
+    const tierKey = `rr${selectedRRTier}` as 'rr2' | 'rr3' | 'rr4' | 'rr5';
+    return artifact.trades.map(t => {
+      const outcome = t.rrOutcomes?.[tierKey];
+      if (!outcome) return { ...t, tierOutcome: null as null | typeof outcome };
+      return {
+        ...t,
+        // Prefer per-tier exit date when present (backend may provide)
+        exitDate: outcome.exitDate ?? t.exitDate,
+        rMultiple: outcome.rMultiple,
+        isWin: outcome.rMultiple > 0,
+        exitReason: outcome.outcome === 'hit_tp' ? 'tp' : outcome.outcome === 'hit_sl' ? 'sl' : 'time_stop',
+        tierOutcome: outcome,
+      };
+    });
+  }, [artifact.trades, selectedRRTier]);
+
   return (
     <div className="space-y-6">
+      {/* R:R Tier Selector (global for all tabs) */}
+      {hasMultiRR && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">R:R Target:</span>
+            <div className="flex gap-1">
+              {[2, 3, 4, 5].map(tier => (
+                <Button
+                  key={tier}
+                  variant={selectedRRTier === tier ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRRTier(tier)}
+                  className="font-mono"
+                >
+                  1:{tier}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Metrics update across Overview / Patterns / Trades / Equity
+          </div>
+        </div>
+      )}
+
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -259,7 +355,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatPercent(artifact.summary.overallWinRate)}</div>
+                <div className="text-2xl font-bold">{formatPercent(selectedTierWinRate)}</div>
                 <p className="text-sm text-muted-foreground">Win Rate</p>
               </CardContent>
             </Card>
@@ -273,11 +369,11 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 </p>
               </CardContent>
             </Card>
-            {artifact.summary.overallMaxDrawdown !== undefined && (
+            {selectedTierMaxDrawdownPercent !== undefined && (
               <Card className="border-border/50 bg-card/50">
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-red-500">
-                    {artifact.summary.overallMaxDrawdown.toFixed(1)}%
+                    {selectedTierMaxDrawdownPercent.toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground">Max Drawdown</p>
                 </CardContent>
@@ -291,30 +387,10 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </Card>
           </div>
 
-          {/* R:R Tier Selector + Best & Worst Pattern */}
+          {/* Best & Worst Pattern */}
           <div className="space-y-4">
-            {/* R:R Tier Selector */}
-            {artifact.rrComparison && artifact.rrComparison.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">R:R Target:</span>
-                <div className="flex gap-1">
-                  {[2, 3, 4, 5].map(tier => (
-                    <Button
-                      key={tier}
-                      variant={selectedRRTier === tier ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedRRTier(tier)}
-                      className="font-mono"
-                    >
-                      1:{tier}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Best & Worst Pattern Cards - only show if more than 1 pattern */}
-            {artifact.patterns.length > 1 && bestPattern && worstPattern ? (
+            {effectivePatterns.length > 1 && bestPattern && worstPattern ? (
               <div className="grid gap-4 md:grid-cols-2">
                 <Card className="border-green-500/20 bg-green-500/5">
                   <CardHeader className="pb-2">
@@ -420,7 +496,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
         {/* Patterns Tab */}
         <TabsContent value="patterns" className="space-y-4">
-          {artifact.patterns.map(pattern => (
+          {effectivePatterns.map(pattern => (
             <Card key={pattern.patternId} className="border-border/50 bg-card/50">
               <CardHeader 
                 className="cursor-pointer"
@@ -473,8 +549,8 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <div className="font-semibold">{formatR(pattern.avgRMultiple)}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Max Drawdown</div>
-                      <div className="font-semibold text-red-500">{formatPercent(pattern.maxDrawdown)}</div>
+                      <div className="text-sm text-muted-foreground">Max Drawdown (R)</div>
+                      <div className="font-semibold text-red-500">{formatR(-Math.abs(pattern.maxDrawdown))}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Sharpe Ratio</div>
@@ -550,7 +626,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             <CardHeader>
               <CardTitle className="text-lg">Trade Log</CardTitle>
               <CardDescription>
-                All {artifact.trades.length} simulated trades
+                Showing {Math.min(displayedTrades.length, 100)} of {displayedTrades.length} simulated trades (tier {tierLabel})
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -562,15 +638,14 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <TableHead>Instrument</TableHead>
                       <TableHead>Pattern</TableHead>
                       <TableHead>Direction</TableHead>
-                      <TableHead className="text-right">Entry</TableHead>
-                      <TableHead className="text-right">Exit</TableHead>
                       <TableHead className="text-right">R-Multiple</TableHead>
+                      <TableHead className="text-right">Bars</TableHead>
                       <TableHead>Regime</TableHead>
-                      <TableHead>Exit</TableHead>
+                      <TableHead>Outcome</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {artifact.trades.slice(0, 100).map((trade, idx) => (
+                    {displayedTrades.slice(0, 100).map((trade, idx) => (
                       <TableRow key={idx}>
                         <TableCell className="font-mono text-xs">
                           {new Date(trade.entryDate).toLocaleDateString()}
@@ -584,24 +659,25 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             <Badge variant="outline" className="text-red-500 border-red-500/30">Short</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-mono">{trade.entryPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono">{trade.exitPrice.toFixed(2)}</TableCell>
                         <TableCell className={`text-right font-semibold ${trade.rMultiple >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {formatR(trade.rMultiple)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-muted-foreground">
+                          {trade.tierOutcome?.bars ?? '-'}
                         </TableCell>
                         <TableCell className="text-xs">{getRegimeDescription(trade.regime)}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
-                            {trade.exitReason === 'tp' ? 'TP' : trade.exitReason === 'sl' ? 'SL' : 'Time'}
+                            {trade.tierOutcome?.outcome === 'hit_tp' ? 'TP' : trade.tierOutcome?.outcome === 'hit_sl' ? 'SL' : 'Time'}
                           </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-                {artifact.trades.length > 100 && (
+                {displayedTrades.length > 100 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    Showing first 100 of {artifact.trades.length} trades
+                    Showing first 100 of {displayedTrades.length} trades
                   </p>
                 )}
               </div>
@@ -622,7 +698,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart data={artifact.equity}>
+                  <RechartsLineChart data={effectiveEquity}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis 
                       dataKey="date" 
@@ -637,7 +713,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       labelFormatter={(val) => new Date(val).toLocaleDateString()}
                       formatter={(val: number) => [`$${val.toFixed(2)}`, 'Equity']}
                     />
-                    <ReferenceLine y={100000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                    <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
                     <Line 
                       type="monotone" 
                       dataKey="value" 
@@ -659,7 +735,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             <CardContent>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={artifact.equity}>
+                  <AreaChart data={effectiveEquity}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis 
                       dataKey="date" 

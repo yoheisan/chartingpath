@@ -773,10 +773,10 @@ interface BacktestTrade {
   grade: string;
   // Multi-R:R outcomes
   rrOutcomes: {
-    rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
-    rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
-    rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
-    rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
+    rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate: string; exitPrice: number };
+    rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate: string; exitPrice: number };
+    rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate: string; exitPrice: number };
+    rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate: string; exitPrice: number };
   };
 }
 
@@ -858,7 +858,7 @@ function simulateRROutcome(
   rrTier: number,
   isLong: boolean,
   maxBars: number
-): { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number } {
+): { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate: string; exitPrice: number } {
   const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
   const tpDistance = stopDistance * rrTier;
   const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
@@ -868,21 +868,22 @@ function simulateRROutcome(
     const barsElapsed = j - startIndex;
     
     if (isLong) {
-      if (bar.low <= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1 };
-      if (bar.high >= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier };
+      if (bar.low <= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+      if (bar.high >= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier, exitDate: bar.date, exitPrice: takeProfit };
     } else {
-      if (bar.high >= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1 };
-      if (bar.low <= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier };
+      if (bar.high >= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+      if (bar.low <= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier, exitDate: bar.date, exitPrice: takeProfit };
     }
   }
   
   // Timeout: calculate actual R-multiple at exit close
   const lastBarIndex = Math.min(startIndex + maxBars - 1, bars.length - 1);
   const exitPrice = bars[lastBarIndex]?.close ?? entryPrice;
+  const exitDate = bars[lastBarIndex]?.date ?? bars[bars.length - 1]?.date ?? new Date().toISOString();
   const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
   const timeoutRMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
   
-  return { outcome: 'timeout', bars: Math.min(maxBars, bars.length - startIndex - 1), rMultiple: timeoutRMultiple };
+  return { outcome: 'timeout', bars: Math.min(maxBars, bars.length - startIndex - 1), rMultiple: timeoutRMultiple, exitDate, exitPrice };
 }
 
 function runPatternBacktest(
@@ -923,55 +924,14 @@ function runPatternBacktest(
       rr5: simulateRROutcome(bars, i, entryPrice, stopDistance, 5, isLong, maxBarsInTrade),
     };
     
-    // Use RR2 as the primary result for backward compatibility
-    const tpDistance = stopDistance * 2;
-    const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
-    const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
-    
-    let exitDate = entryBar.date;
-    let exitPrice = entryPrice;
-    let exitReason: 'tp' | 'sl' | 'time_stop' = 'time_stop';
-    
-    for (let j = i + 1; j < Math.min(i + maxBarsInTrade, bars.length); j++) {
-      const bar = bars[j];
-      
-      if (isLong) {
-        if (bar.low <= stopLoss) {
-          exitPrice = stopLoss;
-          exitDate = bar.date;
-          exitReason = 'sl';
-          break;
-        }
-        if (bar.high >= takeProfit) {
-          exitPrice = takeProfit;
-          exitDate = bar.date;
-          exitReason = 'tp';
-          break;
-        }
-      } else {
-        if (bar.high >= stopLoss) {
-          exitPrice = stopLoss;
-          exitDate = bar.date;
-          exitReason = 'sl';
-          break;
-        }
-        if (bar.low <= takeProfit) {
-          exitPrice = takeProfit;
-          exitDate = bar.date;
-          exitReason = 'tp';
-          break;
-        }
-      }
-      
-      if (j === Math.min(i + maxBarsInTrade, bars.length) - 1) {
-        exitPrice = bar.close;
-        exitDate = bar.date;
-        exitReason = 'time_stop';
-      }
-    }
-    
+    // Use RR2 as the primary result for backward compatibility (and guaranteed consistency)
+    const primary = rrOutcomes.rr2;
+    const exitDate = primary.exitDate;
+    const exitPrice = primary.exitPrice;
+    const exitReason: 'tp' | 'sl' | 'time_stop' =
+      primary.outcome === 'hit_tp' ? 'tp' : primary.outcome === 'hit_sl' ? 'sl' : 'time_stop';
+    const rMultiple = primary.rMultiple;
     const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
-    const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
     
     const regime = classifyRegime(bars.slice(0, i + 1));
     
@@ -1792,26 +1752,138 @@ serve(async (req) => {
               doNotTradeRules
             });
           }
-          
-          // Build equity curve with proper percentage-based calculation
-          let cumulativeR = 0;
-          let peakValue = 10000;
-          let maxDrawdownPercent = 0;
+
+          // ============= Tier-aware pattern + equity outputs =============
+          const tierKeys = ['rr2', 'rr3', 'rr4', 'rr5'] as const;
+          const tierLabels = { rr2: '1:2', rr3: '1:3', rr4: '1:4', rr5: '1:5' } as const;
+
+          // Build patternsByTier (small payload, accurate across tiers)
+          const patternsByTier: Record<string, any[]> = {
+            '1:2': patternResults,
+          };
+
+          const computePatternResultsForTier = (tierKey: typeof tierKeys[number]) => {
+            const results: any[] = [];
+            for (const patternId of patterns) {
+              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+              if (!pattern) continue;
+
+              const patternTrades = allTrades.filter(t => t.patternId === patternId);
+              const tierR = (t: BacktestTrade) => t.rrOutcomes?.[tierKey]?.rMultiple ?? t.rMultiple;
+              const isWinTier = (t: BacktestTrade) => tierR(t) > 0;
+
+              const wins = patternTrades.filter(isWinTier);
+              const losses = patternTrades.filter(t => !isWinTier(t));
+
+              const winRate = patternTrades.length > 0 ? wins.length / patternTrades.length : 0;
+              const avgR = patternTrades.length > 0 ? patternTrades.reduce((s, t) => s + tierR(t), 0) / patternTrades.length : 0;
+              const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + tierR(t), 0) / wins.length : 0;
+              const avgLossR = losses.length > 0 ? Math.abs(losses.reduce((s, t) => s + tierR(t), 0) / losses.length) : 1;
+              const expectancy = (winRate * avgWinR) - ((1 - winRate) * avgLossR);
+
+              const grossProfit = wins.reduce((s, t) => s + tierR(t), 0);
+              const grossLoss = Math.abs(losses.reduce((s, t) => s + tierR(t), 0));
+              const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
+
+              // Regime breakdown
+              const regimes = ['UP_HIGH', 'UP_MED', 'UP_LOW', 'DOWN_HIGH', 'DOWN_MED', 'DOWN_LOW', 'SIDEWAYS_HIGH', 'SIDEWAYS_MED', 'SIDEWAYS_LOW'];
+              const regimeBreakdown = regimes.map(regimeKey => {
+                const regimeTrades = patternTrades.filter(t => t.regime === regimeKey);
+                const regimeWins = regimeTrades.filter(isWinTier);
+                const regimeAvgR = regimeTrades.length > 0 ? regimeTrades.reduce((s, t) => s + tierR(t), 0) / regimeTrades.length : 0;
+                return {
+                  regimeKey,
+                  n: regimeTrades.length,
+                  winRate: regimeTrades.length > 0 ? regimeWins.length / regimeTrades.length : 0,
+                  avgR: regimeAvgR,
+                  isReliable: regimeTrades.length >= 10,
+                  recommendation: regimeAvgR >= 0.3 ? 'trade' : regimeAvgR >= 0 ? 'caution' : 'avoid'
+                };
+              }).filter(r => r.n > 0);
+
+              // Do-not-trade rules
+              const doNotTradeRules: string[] = [];
+              regimeBreakdown.forEach(r => {
+                if (r.avgR < -0.5 && r.n >= 5) {
+                  const [trend, vol] = r.regimeKey.split('_');
+                  doNotTradeRules.push(`Avoid in ${trend.toLowerCase()} trend with ${vol.toLowerCase()} volatility (${r.n} trades, ${(r.avgR).toFixed(2)}R avg)`);
+                }
+              });
+
+              // Drawdown calculation in R units
+              let runningR = 0;
+              let peakR = 0;
+              let maxDD = 0;
+              for (const trade of patternTrades.sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
+                runningR += tierR(trade);
+                peakR = Math.max(peakR, runningR);
+                maxDD = Math.max(maxDD, (peakR - runningR));
+              }
+
+              // Sharpe (R units, naive)
+              const variance = patternTrades.length > 0
+                ? (patternTrades.reduce((s, t) => {
+                    const r = tierR(t);
+                    return s + (r - avgR) * (r - avgR);
+                  }, 0) / patternTrades.length)
+                : 0;
+              const std = Math.sqrt(variance);
+              const sharpeRatio = std > 0 ? (avgR / std) : 0;
+
+              results.push({
+                patternId,
+                patternName: pattern.displayName,
+                direction: pattern.direction,
+                totalTrades: patternTrades.length,
+                winRate,
+                avgRMultiple: avgR,
+                expectancy,
+                profitFactor,
+                maxDrawdown: maxDD,
+                sharpeRatio,
+                regimeBreakdown,
+                doNotTradeRules,
+              });
+            }
+            return results;
+          };
+
+          patternsByTier['1:3'] = computePatternResultsForTier('rr3');
+          patternsByTier['1:4'] = computePatternResultsForTier('rr4');
+          patternsByTier['1:5'] = computePatternResultsForTier('rr5');
+
+          // Build equity curves by tier from all trades (accurate even though trade log is capped)
           const sortedTrades = [...allTrades].sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime());
-          
-          for (const trade of sortedTrades) {
-            cumulativeR += trade.rMultiple;
-            // Risk 1% per trade, so value = initial * (1 + cumulative_R * 0.01)
-            const value = 10000 * (1 + cumulativeR * 0.01);
-            peakValue = Math.max(peakValue, value);
-            const currentDrawdown = peakValue > 0 ? (peakValue - value) / peakValue : 0;
-            maxDrawdownPercent = Math.max(maxDrawdownPercent, currentDrawdown);
-            equity.push({
-              date: trade.exitDate,
-              value: Math.max(0, value), // Prevent negative equity display
-              drawdown: currentDrawdown
-            });
+          const buildEquityForTier = (tierKey: typeof tierKeys[number]) => {
+            const points: { date: string; value: number; drawdown: number }[] = [];
+            let cumulativeR = 0;
+            let peakValue = 10000;
+            let maxDD = 0;
+            for (const trade of sortedTrades) {
+              const r = trade.rrOutcomes?.[tierKey]?.rMultiple ?? (tierKey === 'rr2' ? trade.rMultiple : 0);
+              const d = trade.rrOutcomes?.[tierKey]?.exitDate ?? trade.exitDate;
+              cumulativeR += r;
+              const value = 10000 * (1 + cumulativeR * 0.01);
+              peakValue = Math.max(peakValue, value);
+              const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
+              maxDD = Math.max(maxDD, dd);
+              points.push({ date: d, value: Math.max(0, value), drawdown: dd });
+            }
+            return { points, maxDrawdownPercent: Math.min(maxDD * 100, 100) };
+          };
+
+          const equityByTier: Record<string, { date: string; value: number; drawdown: number }[]> = {};
+          const maxDrawdownByTier: Record<string, number> = {};
+          for (const tk of tierKeys) {
+            const { points, maxDrawdownPercent } = buildEquityForTier(tk);
+            const label = tierLabels[tk];
+            equityByTier[label] = points;
+            maxDrawdownByTier[label] = maxDrawdownPercent;
           }
+
+          // Maintain backward compatibility: equity + patternResults represent the baseline (1:2)
+          const baselineEquity = equityByTier['1:2'] ?? [];
+          equity.push(...baselineEquity);
           
           // Summary - use avgR as expectancy (simple average R-multiple per trade)
           const overallWinRate = allTrades.length > 0 ? allTrades.filter(t => t.isWin).length / allTrades.length : 0;
@@ -1858,7 +1930,7 @@ serve(async (req) => {
             curr.expectancy > best.expectancy ? curr : best, rrComparison[0]);
           
           // Calculate overall max drawdown as percentage (capped at 100%)
-          const overallMaxDrawdown = Math.min(maxDrawdownPercent * 100, 100);
+          const overallMaxDrawdown = maxDrawdownByTier['1:2'] ?? 0;
           
           artifactJson = {
             projectType: 'pattern_lab',
@@ -1883,8 +1955,11 @@ serve(async (req) => {
             rrComparison,
             optimalTier: optimalTier?.tier || '1:2',
             patterns: patternResults,
+            patternsByTier,
             trades: allTrades.slice(0, 500), // Cap for size
-            equity,
+            equity: baselineEquity,
+            equityByTier,
+            maxDrawdownByTier,
           };
           artifactType = 'backtest_report';
         }
