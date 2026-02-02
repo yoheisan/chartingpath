@@ -138,14 +138,66 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return tierData?.expectancy ?? artifact.summary.overallExpectancy;
   };
 
-  // Find best and worst patterns based on their individual expectancy
+  // Calculate per-pattern stats for selected R:R tier from trades
+  const getPatternStatsForTier = (patternId: string, tier: number) => {
+    const patternTrades = artifact.trades.filter(t => t.patternId === patternId);
+    if (patternTrades.length === 0) return { winRate: 0, expectancy: 0, totalTrades: 0 };
+    
+    // For the selected tier, recalculate win/loss:
+    // - Win (tp hit): if exitReason === 'tp' at baseline (1:2), higher tiers are less likely to hit TP
+    // - We approximate by scaling: higher R:R = fewer wins but larger payoff
+    // - Without actual per-tier simulation data, we estimate based on the rrComparison ratio
+    
+    // Get the overall win rate ratio between baseline and selected tier
+    const baselineTierData = artifact.rrComparison?.find(rr => 
+      (rr.rrTier === 2) || (rr.tier === '1:2')
+    );
+    const selectedTierData = artifact.rrComparison?.find(rr => 
+      (rr.rrTier === tier) || (rr.tier === `1:${tier}`)
+    );
+    
+    if (!baselineTierData || !selectedTierData || baselineTierData.winRate === 0) {
+      // Fallback to static pattern data
+      const pattern = artifact.patterns.find(p => p.patternId === patternId);
+      return {
+        winRate: pattern?.winRate ?? 0,
+        expectancy: pattern?.expectancy ?? 0,
+        totalTrades: pattern?.totalTrades ?? 0
+      };
+    }
+    
+    // Scale the pattern's baseline win rate by the same ratio as overall
+    const winRateScaleFactor = selectedTierData.winRate / baselineTierData.winRate;
+    const baselinePattern = artifact.patterns.find(p => p.patternId === patternId);
+    if (!baselinePattern) return { winRate: 0, expectancy: 0, totalTrades: 0 };
+    
+    const adjustedWinRate = Math.min(1, Math.max(0, baselinePattern.winRate * winRateScaleFactor));
+    // Expectancy = (WinRate * R:R) - (LossRate * 1)
+    const adjustedExpectancy = (adjustedWinRate * tier) - ((1 - adjustedWinRate) * 1);
+    
+    return {
+      winRate: adjustedWinRate,
+      expectancy: adjustedExpectancy,
+      totalTrades: baselinePattern.totalTrades,
+      patternName: baselinePattern.patternName,
+      direction: baselinePattern.direction
+    };
+  };
+
+  // Find best and worst patterns based on selected R:R tier
   const getBestWorstPatterns = () => {
     if (artifact.patterns.length === 0) {
       return { best: null, worst: null };
     }
     
+    // Calculate stats for each pattern at the selected tier
+    const patternsWithTierStats = artifact.patterns.map(p => ({
+      ...p,
+      ...getPatternStatsForTier(p.patternId, selectedRRTier)
+    }));
+    
     // Sort patterns by expectancy
-    const sorted = [...artifact.patterns].sort((a, b) => b.expectancy - a.expectancy);
+    const sorted = [...patternsWithTierStats].sort((a, b) => b.expectancy - a.expectancy);
     const best = sorted[0];
     const worst = sorted[sorted.length - 1];
     
@@ -258,10 +310,13 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Award className="h-4 w-4 text-green-500" />
                       Best Performing Pattern
+                      {artifact.rrComparison && artifact.rrComparison.length > 0 && (
+                        <span className="text-xs text-muted-foreground font-normal">(1:{selectedRRTier})</span>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg font-semibold">{bestPattern.patternName}</div>
+                    <div className="text-lg font-semibold">{bestPattern.patternName} ({bestPattern.direction === 'long' ? 'Long' : 'Short'})</div>
                     <div className={`text-2xl font-bold ${bestPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {formatR(bestPattern.expectancy)}
                     </div>
@@ -275,10 +330,13 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     <CardTitle className="text-sm flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-red-500" />
                       Worst Performing Pattern
+                      {artifact.rrComparison && artifact.rrComparison.length > 0 && (
+                        <span className="text-xs text-muted-foreground font-normal">(1:{selectedRRTier})</span>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg font-semibold">{worstPattern.patternName}</div>
+                    <div className="text-lg font-semibold">{worstPattern.patternName} ({worstPattern.direction === 'long' ? 'Long' : 'Short'})</div>
                     <div className={`text-2xl font-bold ${worstPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {formatR(worstPattern.expectancy)}
                     </div>
@@ -294,6 +352,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                   <CardTitle className="text-sm flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-primary" />
                     Pattern Performance
+                    {artifact.rrComparison && artifact.rrComparison.length > 0 && (
+                      <span className="text-xs text-muted-foreground font-normal">(1:{selectedRRTier})</span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
