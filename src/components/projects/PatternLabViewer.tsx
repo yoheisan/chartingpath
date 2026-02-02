@@ -116,9 +116,26 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const navigate = useNavigate();
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState('overview');
+  const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
 
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   const formatR = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
+
+  // Get expectancy for selected R:R tier from rrComparison data
+  const getSelectedTierExpectancy = () => {
+    if (!artifact.rrComparison || artifact.rrComparison.length === 0) {
+      return artifact.summary.overallExpectancy;
+    }
+    const tierData = artifact.rrComparison.find(rr => {
+      // Handle both formats: rrTier (number) or tier (string like '1:3')
+      if ('rrTier' in rr && rr.rrTier === selectedRRTier) return true;
+      if ('tier' in rr && rr.tier === `1:${selectedRRTier}`) return true;
+      return false;
+    });
+    return tierData?.expectancy ?? artifact.summary.overallExpectancy;
+  };
+
+  const selectedExpectancy = getSelectedTierExpectancy();
 
   const getRecommendationBadge = (rec: 'trade' | 'caution' | 'avoid') => {
     switch (rec) {
@@ -180,36 +197,65 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </Card>
           </div>
 
-          {/* Best & Worst Pattern */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="border-green-500/20 bg-green-500/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Award className="h-4 w-4 text-green-500" />
-                  Best Performing Pattern
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">{artifact.summary.bestPattern.name}</div>
-                <div className="text-2xl font-bold text-green-500">
-                  {formatR(artifact.summary.bestPattern.expectancy)}
+          {/* R:R Tier Selector + Best & Worst Pattern */}
+          <div className="space-y-4">
+            {/* R:R Tier Selector */}
+            {artifact.rrComparison && artifact.rrComparison.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">R:R Target:</span>
+                <div className="flex gap-1">
+                  {[2, 3, 4, 5].map(tier => (
+                    <Button
+                      key={tier}
+                      variant={selectedRRTier === tier ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedRRTier(tier)}
+                      className="font-mono"
+                    >
+                      1:{tier}
+                    </Button>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="border-red-500/20 bg-red-500/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  Worst Performing Pattern
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">{artifact.summary.worstPattern.name}</div>
-                <div className="text-2xl font-bold text-red-500">
-                  {formatR(artifact.summary.worstPattern.expectancy)}
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
+
+            {/* Best & Worst Pattern Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="border-green-500/20 bg-green-500/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Award className="h-4 w-4 text-green-500" />
+                    Best Performing Pattern
+                    <Badge variant="outline" className="ml-auto font-mono text-xs">
+                      @ 1:{selectedRRTier}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-semibold">{artifact.summary.bestPattern.name}</div>
+                  <div className="text-2xl font-bold text-green-500">
+                    {formatR(selectedExpectancy)}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-red-500/20 bg-red-500/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                    Worst Performing Pattern
+                    <Badge variant="outline" className="ml-auto font-mono text-xs">
+                      @ 1:{selectedRRTier}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-semibold">{artifact.summary.worstPattern.name}</div>
+                  <div className="text-2xl font-bold text-red-500">
+                    {formatR(selectedExpectancy)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* R:R Scenario Comparison */}
