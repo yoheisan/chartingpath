@@ -132,8 +132,10 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
 
-  const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
-  const formatR = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
+  const formatPercent = (value: number | undefined | null) => 
+    value != null ? `${(value * 100).toFixed(1)}%` : '0.0%';
+  const formatR = (value: number | undefined | null) => 
+    value != null ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}R` : '+0.00R';
 
   const tierLabel = `1:${selectedRRTier}`;
 
@@ -176,7 +178,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
       return artifact.maxDrawdownByTier[tierLabel];
     }
     // Fallback: compute from equity points (drawdown is 0..1)
-    if (!effectiveEquity || effectiveEquity.length === 0) return artifact.summary.overallMaxDrawdown;
+    if (!effectiveEquity || effectiveEquity.length === 0) return artifact.summary.overallMaxDrawdown ?? 0;
     const maxDD = Math.max(...effectiveEquity.map(p => p.drawdown ?? 0));
     return Math.min(maxDD * 100, 100);
   }, [artifact.maxDrawdownByTier, tierLabel, effectiveEquity, artifact.summary.overallMaxDrawdown]);
@@ -373,7 +375,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               <Card className="border-border/50 bg-card/50">
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-red-500">
-                    {selectedTierMaxDrawdownPercent.toFixed(1)}%
+                    {(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground">Max Drawdown</p>
                 </CardContent>
@@ -542,7 +544,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                   <div className="grid gap-4 md:grid-cols-4 py-4">
                     <div>
                       <div className="text-sm text-muted-foreground">Profit Factor</div>
-                      <div className="font-semibold">{pattern.profitFactor.toFixed(2)}</div>
+                      <div className="font-semibold">{pattern.profitFactor?.toFixed(2) ?? '-'}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Avg R</div>
@@ -550,11 +552,11 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Max Drawdown (R)</div>
-                      <div className="font-semibold text-red-500">{formatR(-Math.abs(pattern.maxDrawdown))}</div>
+                      <div className="font-semibold text-red-500">{pattern.maxDrawdown != null ? formatR(-Math.abs(pattern.maxDrawdown)) : '-'}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Sharpe Ratio</div>
-                      <div className="font-semibold">{pattern.sharpeRatio.toFixed(2)}</div>
+                      <div className="font-semibold">{pattern.sharpeRatio?.toFixed(2) ?? '-'}</div>
                     </div>
                   </div>
 
@@ -659,8 +661,8 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             <Badge variant="outline" className="text-red-500 border-red-500/30">Short</Badge>
                           )}
                         </TableCell>
-                        <TableCell className={`text-right font-semibold ${trade.rMultiple >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {formatR(trade.rMultiple)}
+                        <TableCell className={`text-right font-semibold ${(trade.rMultiple ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {formatR(trade.rMultiple ?? 0)}
                         </TableCell>
                         <TableCell className="text-right font-mono text-muted-foreground">
                           {trade.tierOutcome?.bars ?? '-'}
