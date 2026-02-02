@@ -91,20 +91,24 @@ interface PatternLabArtifact {
   executionAssumptions: {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
+    maxBarsInTrade?: number;
+    fillRule?: string;
   };
   summary: {
     totalPatterns: number;
     totalTrades: number;
     overallWinRate: number;
     overallExpectancy: number;
-    bestPattern: { id: string; name: string; expectancy: number };
-    worstPattern: { id: string; name: string; expectancy: number };
+    overallMaxDrawdown?: number; // Now properly calculated as percentage
+    bestPattern: { id: string; name: string; expectancy: number; winRate?: number; totalTrades?: number };
+    worstPattern: { id: string; name: string; expectancy: number; winRate?: number; totalTrades?: number };
   };
   patterns: PatternResult[];
   trades: TradeEntry[];
   equity: EquityPoint[];
   /** Multi-RR comparison stats from historical simulations */
   rrComparison?: RRTierStats[];
+  optimalTier?: string;
 }
 
 interface PatternLabViewerProps {
@@ -183,7 +187,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">{artifact.summary.totalTrades}</div>
@@ -204,6 +208,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 <p className="text-sm text-muted-foreground">Expectancy</p>
               </CardContent>
             </Card>
+            {artifact.summary.overallMaxDrawdown !== undefined && (
+              <Card className="border-border/50 bg-card/50">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold text-red-500">
+                    {artifact.summary.overallMaxDrawdown.toFixed(1)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground">Max Drawdown</p>
+                </CardContent>
+              </Card>
+            )}
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">{artifact.summary.totalPatterns}</div>
