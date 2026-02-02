@@ -13,7 +13,7 @@ import { track } from '@/services/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
-import PatternScreenerTable from '@/components/landing/PatternScreenerTable';
+import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 
 const Index = () => {
@@ -196,7 +196,7 @@ const Index = () => {
       </section>
 
       {/* Pattern Screener Table - TradingView-style */}
-      <PatternScreenerTable />
+      <PatternScreenerTeaser />
 
       {/* Choose Your Action Section */}
       <section className="py-16 px-6 bg-muted/30">
