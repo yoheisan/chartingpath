@@ -42,6 +42,14 @@ import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { SupportedPatternsList } from '@/components/screener/SupportedPatternsList';
 import { EdgeMetricsInline, EdgeMetrics } from '@/components/screener/EdgeMetricsBadge';
 import { cn } from '@/lib/utils';
+import { 
+  ScreenerFilters, 
+  ScreenerFiltersState, 
+  DEFAULT_SCREENER_FILTERS,
+  calculateAgeStats,
+  filterByAge,
+  recalculateTradePlan
+} from '@/components/screener/ScreenerFilters';
 
 interface LiveSetup {
   instrument: string;
@@ -84,8 +92,7 @@ interface ScanResult {
 }
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
-type DirectionFilter = 'all' | 'long' | 'short';
-type SortKey = 'instrument' | 'direction' | 'rr' | 'signal';
+type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   fx: 'Forex',
@@ -520,13 +527,15 @@ export default function PatternScreenerTable() {
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<AssetType>('fx');
-  const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
-  const [patternFilter, setPatternFilter] = useState<string>('all');
+  const [filters, setFilters] = useState<ScreenerFiltersState>(DEFAULT_SCREENER_FILTERS);
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(false);
   const [marketOpen, setMarketOpen] = useState<boolean>(true);
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   const navigate = useNavigate();
+  
+  // Grade order for sorting (A is highest, F is lowest)
+  const GRADE_ORDER: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5 };
   
   // Client-side cache for instant asset type switching
   const [cache, setCache] = useState<Record<AssetType, { patterns: LiveSetup[]; scannedAt: string; marketOpen: boolean } | null>>({
@@ -628,19 +637,82 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Filter by direction and pattern, then group by pattern, then sort within groups
-  const groupedPatterns = useMemo(() => {
-    // Apply direction filter
-    let filtered = directionFilter === 'all' 
-      ? patterns 
-      : patterns.filter(p => p.direction === directionFilter);
-    
-    // Apply pattern filter
-    if (patternFilter !== 'all') {
-      filtered = filtered.filter(p => p.patternId === patternFilter);
-    }
+  // Helper to extract grade from pattern
+  const getPatternGrade = (p: LiveSetup): string => {
+    return p.quality?.grade || p.quality?.score?.toString() || 'C';
+  };
 
-    const grouped = filtered.reduce((acc, setup) => {
+  // Get unique pattern types for filter dropdown
+  const patternOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    patterns.forEach(p => {
+      counts.set(p.patternId, (counts.get(p.patternId) || 0) + 1);
+    });
+    return [...new Set(patterns.map(p => p.patternId))].map(id => ({
+      id,
+      name: patterns.find(p => p.patternId === id)?.patternName || id,
+      count: counts.get(id) || 0,
+    }));
+  }, [patterns]);
+
+  // Calculate filter stats
+  const filterStats = useMemo(() => {
+    const longCount = patterns.filter(p => p.direction === 'long').length;
+    const shortCount = patterns.filter(p => p.direction === 'short').length;
+    const withTrend = patterns.filter(p => (p as any).trendAlignment === 'with_trend').length;
+    const counterTrend = patterns.filter(p => (p as any).trendAlignment === 'counter_trend').length;
+    const neutral = patterns.filter(p => (p as any).trendAlignment === 'neutral' || !(p as any).trendAlignment).length;
+    const ageStats = calculateAgeStats(patterns);
+    
+    // Calculate grade counts
+    const gradeA = patterns.filter(p => getPatternGrade(p) === 'A').length;
+    const gradeB = patterns.filter(p => getPatternGrade(p) === 'B').length;
+    const gradeC = patterns.filter(p => getPatternGrade(p) === 'C').length;
+    const gradeD = patterns.filter(p => getPatternGrade(p) === 'D').length;
+    const gradeF = patterns.filter(p => getPatternGrade(p) === 'F').length;
+    
+    return {
+      total: patterns.length,
+      filtered: 0, // Will be updated after filtering
+      longCount,
+      shortCount,
+      withTrend,
+      counterTrend,
+      neutral,
+      gradeA,
+      gradeB,
+      gradeC,
+      gradeD,
+      gradeF,
+      ...ageStats,
+    };
+  }, [patterns]);
+
+  // Filter patterns with advanced filter system
+  const filteredPatterns = useMemo(() => {
+    let result = patterns.filter(p => {
+      if (filters.direction !== 'all' && p.direction !== filters.direction) return false;
+      if (filters.pattern !== 'all' && p.patternId !== filters.pattern) return false;
+      if (filters.trend !== 'all' && (p as any).trendAlignment !== filters.trend) return false;
+      if (filters.grade !== 'all' && getPatternGrade(p) !== filters.grade) return false;
+      return true;
+    });
+    
+    // Apply age filter
+    result = filterByAge(result, filters.age) as typeof result;
+    
+    return result;
+  }, [patterns, filters]);
+
+  // Update filtered count in stats
+  const fullFilterStats = useMemo(() => ({
+    ...filterStats,
+    filtered: filteredPatterns.length,
+  }), [filterStats, filteredPatterns.length]);
+
+  // Group patterns and sort within groups
+  const groupedPatterns = useMemo(() => {
+    const grouped = filteredPatterns.reduce((acc, setup) => {
       const key = setup.patternName;
       if (!acc[key]) acc[key] = [];
       acc[key].push(setup);
@@ -664,15 +736,18 @@ export default function PatternScreenerTable() {
           case 'signal':
             cmp = new Date(b.signalTs).getTime() - new Date(a.signalTs).getTime();
             break;
-          default:
-            cmp = 0;
+          case 'grade':
+            const gradeA = GRADE_ORDER[getPatternGrade(a)] || 3;
+            const gradeB = GRADE_ORDER[getPatternGrade(b)] || 3;
+            cmp = gradeA - gradeB;
+            break;
         }
         return sortAsc ? cmp : -cmp;
       });
     });
 
     return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [patterns, directionFilter, patternFilter, sortKey, sortAsc]);
+  }, [filteredPatterns, sortKey, sortAsc, GRADE_ORDER]);
 
   const handleRowClick = (setup: LiveSetup) => {
     navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`);
@@ -819,26 +894,6 @@ export default function PatternScreenerTable() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as DirectionFilter)}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="long">
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3 text-green-500" />
-                    Long
-                  </span>
-                </SelectItem>
-                <SelectItem value="short">
-                  <span className="flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                    Short
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={assetType} onValueChange={(v) => setAssetType(v as AssetType)}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue />
@@ -866,6 +921,17 @@ export default function PatternScreenerTable() {
               </Button>
             </Link>
           </div>
+        </div>
+
+        {/* Advanced Filters */}
+        <div className="mb-6">
+          <ScreenerFilters
+            patterns={patternOptions}
+            filters={filters}
+            stats={fullFilterStats}
+            onChange={(partial) => setFilters(prev => ({ ...prev, ...partial }))}
+            onClear={() => setFilters(DEFAULT_SCREENER_FILTERS)}
+          />
         </div>
 
         {/* Collapsible instrument list */}
@@ -931,13 +997,13 @@ export default function PatternScreenerTable() {
             })}
             lockedPatterns={lockedPatterns}
             compact={true}
-            selectedPattern={patternFilter !== 'all' ? patternFilter : undefined}
+            selectedPattern={filters.pattern !== 'all' ? filters.pattern : undefined}
             blurEdgeMetrics={false}
             onPatternClick={(patternId) => {
-              if (patternFilter === patternId) {
-                setPatternFilter('all');
+              if (filters.pattern === patternId) {
+                setFilters(prev => ({ ...prev, pattern: 'all' }));
               } else {
-                setPatternFilter(patternId);
+                setFilters(prev => ({ ...prev, pattern: patternId }));
               }
             }}
           />
@@ -956,14 +1022,14 @@ export default function PatternScreenerTable() {
         {!error && groupedPatterns.length === 0 && (
           <div className="rounded-lg border bg-card p-8 text-center">
             <p className="text-muted-foreground mb-4">
-              {patternFilter !== 'all' 
-                ? `No active ${PATTERN_DISPLAY_NAMES[patternFilter] || patternFilter} signals for ${ASSET_TYPE_LABELS[assetType]} at this time.`
+              {filters.pattern !== 'all' 
+                ? `No active ${PATTERN_DISPLAY_NAMES[filters.pattern] || filters.pattern} signals for ${ASSET_TYPE_LABELS[assetType]} at this time.`
                 : `No patterns detected for ${ASSET_TYPE_LABELS[assetType]} at this time.`}
               {!marketOpen && assetType !== 'crypto' && ' (Market currently closed)'}
             </p>
             <div className="flex items-center justify-center gap-3">
-              {patternFilter !== 'all' && (
-                <Button variant="outline" onClick={() => setPatternFilter('all')}>
+              {filters.pattern !== 'all' && (
+                <Button variant="outline" onClick={() => setFilters(prev => ({ ...prev, pattern: 'all' }))}>
                   Clear Filter
                 </Button>
               )}
