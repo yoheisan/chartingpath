@@ -773,10 +773,10 @@ interface BacktestTrade {
   grade: string;
   // Multi-R:R outcomes
   rrOutcomes: {
-    rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
-    rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
-    rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
-    rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
+    rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
+    rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
+    rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
+    rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number };
   };
 }
 
@@ -858,7 +858,7 @@ function simulateRROutcome(
   rrTier: number,
   isLong: boolean,
   maxBars: number
-): { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number } {
+): { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number } {
   const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
   const tpDistance = stopDistance * rrTier;
   const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
@@ -868,15 +868,21 @@ function simulateRROutcome(
     const barsElapsed = j - startIndex;
     
     if (isLong) {
-      if (bar.low <= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed };
-      if (bar.high >= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed };
+      if (bar.low <= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1 };
+      if (bar.high >= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier };
     } else {
-      if (bar.high >= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed };
-      if (bar.low <= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed };
+      if (bar.high >= stopLoss) return { outcome: 'hit_sl', bars: barsElapsed, rMultiple: -1 };
+      if (bar.low <= takeProfit) return { outcome: 'hit_tp', bars: barsElapsed, rMultiple: rrTier };
     }
   }
   
-  return { outcome: 'timeout', bars: Math.min(maxBars, bars.length - startIndex - 1) };
+  // Timeout: calculate actual R-multiple at exit close
+  const lastBarIndex = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastBarIndex]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  const timeoutRMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+  
+  return { outcome: 'timeout', bars: Math.min(maxBars, bars.length - startIndex - 1), rMultiple: timeoutRMultiple };
 }
 
 function runPatternBacktest(
@@ -1828,19 +1834,11 @@ serve(async (req) => {
               ? rrTrades.reduce((sum, t) => sum + t.rrOutcomes[tier].bars, 0) / rrTrades.length 
               : 0;
             
-            // Calculate actual R-multiple for timeout trades (use main trade's actual exit R)
-            // Timeouts should use their actual exit price, not assume -1R
+            // Calculate total R-multiple using the per-tier rMultiple from simulation
             let totalR = 0;
             for (const trade of rrTrades) {
-              const outcome = trade.rrOutcomes[tier].outcome;
-              if (outcome === 'hit_tp') {
-                totalR += rrTier; // Win = +R:R
-              } else if (outcome === 'hit_sl') {
-                totalR += -1; // Loss = -1R
-              } else {
-                // Timeout: use actual R-multiple from trade (proportional to original)
-                totalR += trade.rMultiple;
-              }
+              // Use the pre-computed rMultiple for this tier (already includes proper timeout handling)
+              totalR += trade.rrOutcomes[tier].rMultiple;
             }
             const expectancy = rrTrades.length > 0 ? totalR / rrTrades.length : 0;
             
