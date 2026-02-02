@@ -506,6 +506,11 @@ export default function LivePatternsPage() {
     }));
   }, [patterns]);
 
+  // Helper to extract grade from pattern
+  const getPatternGrade = (p: LiveSetup): string => {
+    return p.quality?.grade || p.quality?.score?.toString() || 'C';
+  };
+
   // Calculate filter stats
   const filterStats = useMemo(() => {
     const longCount = patterns.filter(p => p.direction === 'long').length;
@@ -515,6 +520,13 @@ export default function LivePatternsPage() {
     const neutral = patterns.filter(p => p.trendAlignment === 'neutral' || !p.trendAlignment).length;
     const ageStats = calculateAgeStats(patterns);
     
+    // Calculate grade counts
+    const gradeA = patterns.filter(p => getPatternGrade(p) === 'A').length;
+    const gradeB = patterns.filter(p => getPatternGrade(p) === 'B').length;
+    const gradeC = patterns.filter(p => getPatternGrade(p) === 'C').length;
+    const gradeD = patterns.filter(p => getPatternGrade(p) === 'D').length;
+    const gradeF = patterns.filter(p => getPatternGrade(p) === 'F').length;
+    
     return {
       total: patterns.length,
       filtered: 0, // Will be updated after filtering
@@ -523,6 +535,11 @@ export default function LivePatternsPage() {
       withTrend,
       counterTrend,
       neutral,
+      gradeA,
+      gradeB,
+      gradeC,
+      gradeD,
+      gradeF,
       ...ageStats,
     };
   }, [patterns]);
@@ -533,6 +550,7 @@ export default function LivePatternsPage() {
       if (filters.direction !== 'all' && p.direction !== filters.direction) return false;
       if (filters.pattern !== 'all' && p.patternId !== filters.pattern) return false;
       if (filters.trend !== 'all' && p.trendAlignment !== filters.trend) return false;
+      if (filters.grade !== 'all' && getPatternGrade(p) !== filters.grade) return false;
       return true;
     });
     
