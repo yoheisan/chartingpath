@@ -50,6 +50,7 @@ interface PatternDetailsResponse {
     outcome?: string;
     outcome_pnl_percent?: number;
     outcome_date?: string;
+    bars_to_outcome?: number | null;
   };
   error?: string;
 }
@@ -100,6 +101,16 @@ export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
     const stopLoss = pattern.stop_loss_price;
     const takeProfit = pattern.take_profit_price;
     
+    // Map outcome string to typed outcome
+    const mapOutcome = (o?: string): 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | null => {
+      if (!o) return null;
+      if (o === 'hit_tp' || o === 'win') return 'hit_tp';
+      if (o === 'hit_sl' || o === 'loss') return 'hit_sl';
+      if (o === 'timeout') return 'timeout';
+      if (o === 'pending') return 'pending';
+      return null;
+    };
+    
     return {
       instrument: pattern.instrument,
       patternId: pattern.pattern_name.replace(/\s+/g, '-').toLowerCase(),
@@ -130,6 +141,11 @@ export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
         yDomain: { min: entry, max: entry },
         overlays: [],
       },
+      // Historical outcome data
+      outcome: mapOutcome(pattern.outcome),
+      outcomePnlPercent: pattern.outcome_pnl_percent ?? null,
+      barsToOutcome: pattern.bars_to_outcome ?? null,
+      entryBarIndex: pattern.visual_spec?.entryBarIndex,
     };
   };
 

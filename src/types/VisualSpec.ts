@@ -78,6 +78,15 @@ export interface VisualSpec {
   };
   overlays: Overlay[];
   pivots?: ZigZagPivot[]; // ZigZag pivots for pattern explainability
+  // Trade lifecycle info (for historical occurrences)
+  entryBarIndex?: number;
+  entryPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+  outcome?: 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | null;
+  outcomePrice?: number | null;
+  outcomeDate?: string | null;
+  barsToOutcome?: number | null;
 }
 
 export interface SetupWithVisuals {
@@ -101,6 +110,11 @@ export interface SetupWithVisuals {
   };
   bars: CompressedBar[];
   visualSpec: VisualSpec;
+  // Trade outcome info (for historical occurrences)
+  outcome?: 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | null;
+  outcomePnlPercent?: number | null;
+  barsToOutcome?: number | null;
+  entryBarIndex?: number;
   // Historical hit rate (populated from pattern_hit_rates table)
   historicalPerformance?: {
     winRate: number;
