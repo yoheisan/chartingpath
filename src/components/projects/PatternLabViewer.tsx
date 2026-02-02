@@ -202,10 +202,12 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className={`text-2xl font-bold ${artifact.summary.overallExpectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {formatR(artifact.summary.overallExpectancy)}
+                <div className={`text-2xl font-bold ${selectedTierExpectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatR(selectedTierExpectancy)}
                 </div>
-                <p className="text-sm text-muted-foreground">Expectancy</p>
+                <p className="text-sm text-muted-foreground">
+                  Expectancy {artifact.rrComparison && artifact.rrComparison.length > 0 && <span className="text-xs opacity-70">(1:{selectedRRTier})</span>}
+                </p>
               </CardContent>
             </Card>
             {artifact.summary.overallMaxDrawdown !== undefined && (
