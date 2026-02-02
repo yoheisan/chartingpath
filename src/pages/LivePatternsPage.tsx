@@ -340,6 +340,7 @@ export default function LivePatternsPage() {
     selectedAssetType?: AssetType,
     selectedTimeframe?: string,
     includeDetailsOverride?: boolean,
+    selectedRRTier?: RRTier,
   ) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -348,11 +349,12 @@ export default function LivePatternsPage() {
     const typeToFetch = selectedAssetType || assetType;
     const tfToFetch = selectedTimeframe || timeframe;
     const includeDetails = includeDetailsOverride ?? false;
+    const rrTierToFetch = selectedRRTier ?? filters.selectedRR;
     
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
     
-    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string) => {
+    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string, rrTier: RRTier) => {
       return await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
@@ -364,6 +366,7 @@ export default function LivePatternsPage() {
             forceRefresh, // only true when we explicitly want a full rescan
             includeDetails,
             topNWithBars: 10, // Embed bars for first 10 patterns for instant chart loading
+            rrTier, // Pass selected R:R tier for historical stats calculation
           },
         }),
         timeoutMs,
@@ -400,7 +403,7 @@ export default function LivePatternsPage() {
         const { forceRefresh: fr, timeout } = attempts[i];
         try {
           console.info(`[LivePatternsPage] Attempt ${i + 1}/${attempts.length}`, { forceRefresh: fr, timeout });
-          const res = await invokeScan(fr, timeout, tfToFetch);
+          const res = await invokeScan(fr, timeout, tfToFetch, rrTierToFetch);
           data = res.data ?? null;
           fnError = res.error ?? null;
           if (data?.patterns) {
@@ -488,7 +491,14 @@ export default function LivePatternsPage() {
     }
   }, [capsLoading, tier]);
 
-  // Auto-open chart when highlight param is present and matching pattern is found
+  // Re-fetch when R:R tier changes to get updated historical stats
+  useEffect(() => {
+    if (hasFetchedInitial && patterns.length > 0) {
+      console.info('[LivePatternsPage] R:R tier changed, re-fetching stats', { selectedRR: filters.selectedRR });
+      fetchLivePatterns(false, assetType, timeframe, false, filters.selectedRR);
+    }
+  }, [filters.selectedRR]);
+
   useEffect(() => {
     if (highlightSymbol && patterns.length > 0 && !chartOpen) {
       const matchingSetup = patterns.find(p => 
