@@ -427,6 +427,7 @@ async function readCachedPatternsFromDb(
   limit: number,
   maxTickers: number,
   includeDetails: boolean,
+  topNWithBars: number = 0, // NEW: Include full bars/visual_spec for top N patterns
 ) {
   try {
     const instruments = getInstrumentsForTier(assetType, maxTickers);
@@ -435,6 +436,7 @@ async function readCachedPatternsFromDb(
     
     // IMPORTANT: Large JSON payloads (bars, visual_spec) can cause client timeouts.
     // For the screener list we allow a lightweight response to keep loads <1s.
+    // However, we now support embedding bars for topNWithBars patterns for instant chart loading.
     const selectColumns = includeDetails
       ? '*'
       : [
@@ -482,9 +484,37 @@ async function readCachedPatternsFromDb(
       return { patterns: [], instrumentsScanned: instruments.length, isFresh: true, needsBackgroundScan: true };
     }
     
+    // If we need bars for top N patterns AND not including details for all, fetch them separately
+    // This is a targeted query for just the IDs we need, much faster than fetching all
+    let topPatternBars: Map<string, { bars: any[]; visualSpec: any }> = new Map();
+    if (!includeDetails && topNWithBars > 0) {
+      const topIds = cachedPatterns.slice(0, topNWithBars).map((r: any) => r.id);
+      if (topIds.length > 0) {
+        const { data: topData } = await supabase
+          .from('live_pattern_detections')
+          .select('id, bars, visual_spec')
+          .in('id', topIds);
+        
+        if (topData) {
+          for (const row of topData) {
+            topPatternBars.set(row.id, {
+              bars: row.bars || [],
+              visualSpec: row.visual_spec || {},
+            });
+          }
+          console.info(`[scan-live-patterns] Fetched bars for top ${topPatternBars.size} patterns (instant chart load)`);
+        }
+      }
+    }
+    
     const nowIso = new Date().toISOString();
-    let patterns = cachedPatterns.map((r: any) => {
+    let patterns = cachedPatterns.map((r: any, index: number) => {
       const signalTs = r.first_detected_at || nowIso;
+      
+      // Check if this pattern is in the top N that got pre-fetched bars
+      const preloadedData = topPatternBars.get(r.id);
+      const hasBars = preloadedData || includeDetails;
+      
       return {
         // Stable DB identifier for lazy-detail fetching
         dbId: r.id,
@@ -501,10 +531,12 @@ async function readCachedPatternsFromDb(
           takeProfit: r.take_profit_price,
           rr: r.risk_reward_ratio,
         },
-        // When includeDetails=false we intentionally omit large JSON fields
-        bars: includeDetails ? (r.bars || []) : [],
-        visualSpec: includeDetails
-          ? (r.visual_spec || {})
+        // Include bars if: includeDetails=true OR this is a top N pattern with preloaded data
+        bars: hasBars 
+          ? (preloadedData?.bars || r.bars || [])
+          : [],
+        visualSpec: hasBars
+          ? (preloadedData?.visualSpec || r.visual_spec || {})
           : {
               version: '2.0.0',
               symbol: r.instrument,
@@ -605,6 +637,7 @@ serve(async (req) => {
     let allowedPatterns: string[] = BASE_PATTERNS;
     let forceRefresh = false;
     let includeDetails = true;
+    let topNWithBars = 0; // NEW: Embed bars for first N patterns for instant chart loading
     
     if (req.method === 'POST') {
       try {
@@ -616,6 +649,7 @@ serve(async (req) => {
         if (body.allowedPatterns?.length) allowedPatterns = body.allowedPatterns;
         if (body.forceRefresh) forceRefresh = true;
         if (typeof body.includeDetails === 'boolean') includeDetails = body.includeDetails;
+        if (typeof body.topNWithBars === 'number') topNWithBars = Math.min(body.topNWithBars, 15); // Cap at 15 to keep response size manageable
       } catch {}
     }
     
@@ -636,6 +670,7 @@ serve(async (req) => {
         limit,
         maxTickers,
         includeDetails,
+        topNWithBars, // NEW: Embed bars for top N patterns
       );
       if (dbCached) {
         console.info(`[scan-live-patterns] Fast path success: ${dbCached.patterns.length} patterns`);

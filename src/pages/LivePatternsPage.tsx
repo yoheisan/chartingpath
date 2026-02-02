@@ -32,6 +32,7 @@ import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
 import { SupportedPatternsList } from '@/components/screener/SupportedPatternsList';
 import { withTimeout } from '@/utils/withTimeout';
+import { usePatternPrefetch, clearPrefetchCache } from '@/hooks/usePatternPrefetch';
 import {
   Table,
   TableBody,
@@ -301,6 +302,9 @@ export default function LivePatternsPage() {
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
   // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
   const chartDetailsRequestIdRef = useRef(0);
+  
+  // Hover prefetch hook for instant chart loading
+  const { onRowHover, cancelPrefetch, getAndConsume, getCached } = usePatternPrefetch();
 
   // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
   // ensure the UI doesn't stay stuck forever.
@@ -359,6 +363,7 @@ export default function LivePatternsPage() {
             allowedPatterns: capsToUse.allowedPatterns,
             forceRefresh, // only true when we explicitly want a full rescan
             includeDetails,
+            topNWithBars: 10, // Embed bars for first 10 patterns for instant chart loading
           },
         }),
         timeoutMs,
@@ -447,6 +452,7 @@ export default function LivePatternsPage() {
     setAssetType(newType);
     setPatterns([]); // Clear patterns immediately for visual feedback
     setError(null);  // Clear any previous errors
+    clearPrefetchCache(); // Clear prefetch cache on asset type change
     fetchLivePatterns(false, newType, timeframe);
   };
 
@@ -454,6 +460,7 @@ export default function LivePatternsPage() {
     setTimeframe(newTf);
     setPatterns([]); // Clear patterns immediately for visual feedback
     setError(null);  // Clear any previous errors
+    clearPrefetchCache(); // Clear prefetch cache on timeframe change
     fetchLivePatterns(false, assetType, newTf);
   };
 
@@ -722,7 +729,7 @@ export default function LivePatternsPage() {
       const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
       const hasOverlays =
         Array.isArray(setup.visualSpec?.overlays) && (setup.visualSpec?.overlays?.length || 0) > 0;
-      const needsDetails = !hasBars || !hasOverlays;
+      let needsDetails = !hasBars || !hasOverlays;
 
       console.debug('[LivePatternsPage] Detail check', {
         requestId,
@@ -730,6 +737,16 @@ export default function LivePatternsPage() {
         hasOverlays,
         needsDetails,
       });
+
+      // Check prefetch cache first (instant if user hovered)
+      if (needsDetails && setup.dbId) {
+        const cached = getAndConsume(setup.dbId);
+        if (cached) {
+          console.debug('[LivePatternsPage] Using prefetched data', { requestId, dbId: setup.dbId });
+          setSelectedSetup(toSetupWithVisuals(cached, filters.selectedRR));
+          return; // Done! No network request needed
+        }
+      }
 
       if (!needsDetails) return;
 
@@ -1198,6 +1215,8 @@ export default function LivePatternsPage() {
                       const signalAge = formatSignalAgeSimple(setup.signalTs);
                       const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
                       const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
+                      // Check if this pattern has bars embedded (instant load) or is prefetched
+                      const hasBarsReady = (setup.bars?.length ?? 0) > 0 || (setup.dbId && getCached(setup.dbId));
                       
                       return (
                         <TableRow 
@@ -1206,6 +1225,13 @@ export default function LivePatternsPage() {
                             isHighlighted ? 'bg-primary/5' : ''
                           }`}
                           onClick={() => handleOpenChart(setup)}
+                          onMouseEnter={() => {
+                            // Prefetch pattern details on hover for instant chart loading
+                            if (!hasBarsReady && setup.dbId) {
+                              onRowHover(setup.dbId);
+                            }
+                          }}
+                          onMouseLeave={cancelPrefetch}
                         >
                           <TableCell>
                             <InstrumentLogo instrument={setup.instrument} />
