@@ -8,7 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Target, TrendingUp, Clock, Zap } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Target, TrendingUp, Clock, Zap, Info } from 'lucide-react';
 import { RR_TIERS, formatRR, type RRTier } from '@/utils/rrCalculator';
 
 export interface RRTierStats {
@@ -95,10 +101,31 @@ export const RRComparisonTable = ({
                   </div>
                 </TableHead>
                 <TableHead className="text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <Zap className="h-3.5 w-3.5" />
-                    Expectancy
-                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center justify-end gap-1.5 cursor-help">
+                          <Zap className="h-3.5 w-3.5" />
+                          Expectancy
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-left">
+                        <p className="font-semibold mb-1">Expectancy (R-multiple)</p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Average profit/loss per trade measured in risk units (R).
+                        </p>
+                        <div className="text-xs space-y-1">
+                          <p><span className="text-green-500 font-mono">+0.50R</span> = Gain 0.50× risk per trade</p>
+                          <p><span className="text-muted-foreground font-mono">0.00R</span> = Break-even</p>
+                          <p><span className="text-red-500 font-mono">-0.76R</span> = Lose 0.76× risk per trade</p>
+                        </div>
+                        <p className="text-xs mt-2 text-muted-foreground">
+                          Formula: (Win% × R:R) - (Loss% × 1)
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableHead>
                 <TableHead className="text-right">Sample</TableHead>
               </TableRow>

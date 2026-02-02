@@ -8,13 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
+import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/GradeBadge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Pattern options - matches screener's pattern registry
 const PATTERNS = [
@@ -149,6 +157,36 @@ const LOOKBACK_OPTIONS = [
   { value: 10, label: '10 Years' },
 ];
 
+// Grade filter presets for risk appetite
+type GradePreset = 'conservative' | 'moderate' | 'aggressive' | 'custom';
+
+const GRADE_PRESETS: Record<GradePreset, { grades: GradeLetter[]; label: string; description: string; icon: React.ElementType }> = {
+  conservative: {
+    grades: ['A', 'B'],
+    label: 'Conservative',
+    description: 'Only high-quality setups (A-B grades)',
+    icon: Shield,
+  },
+  moderate: {
+    grades: ['A', 'B', 'C'],
+    label: 'Moderate',
+    description: 'Good and fair setups (A-C grades)',
+    icon: Target,
+  },
+  aggressive: {
+    grades: ['A', 'B', 'C', 'D', 'F'],
+    label: 'Aggressive',
+    description: 'All setups including weak ones',
+    icon: Flame,
+  },
+  custom: {
+    grades: [],
+    label: 'Custom',
+    description: 'Select specific grades',
+    icon: Target,
+  },
+};
+
 interface EstimateResult {
   creditsEstimated: number;
   instrumentCount: number;
@@ -171,6 +209,10 @@ const PatternLabWizard = () => {
   const [timeframe, setTimeframe] = useState('1d');
   const [lookbackYears, setLookbackYears] = useState(3);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['double-bottom']);
+  
+  // Grade filter state
+  const [gradePreset, setGradePreset] = useState<GradePreset>('moderate');
+  const [selectedGrades, setSelectedGrades] = useState<GradeLetter[]>(['A', 'B', 'C']);
   
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
@@ -203,7 +245,7 @@ const PatternLabWizard = () => {
   // Fetch estimate when inputs change
   useEffect(() => {
     const fetchEstimate = async () => {
-      if (selectedPatterns.length === 0 || selectedInstruments.length === 0) {
+      if (selectedPatterns.length === 0 || selectedInstruments.length === 0 || selectedGrades.length === 0) {
         setEstimate(null);
         return;
       }
@@ -226,6 +268,7 @@ const PatternLabWizard = () => {
               patterns: selectedPatterns,
               timeframe,
               lookbackYears,
+              gradeFilter: selectedGrades,
             }),
           }
         );
@@ -244,7 +287,7 @@ const PatternLabWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears]);
+  }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades]);
   
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
@@ -282,6 +325,11 @@ const PatternLabWizard = () => {
       return;
     }
     
+    if (selectedGrades.length === 0) {
+      toast.error('Please select at least one quality grade');
+      return;
+    }
+    
     setIsRunning(true);
     try {
       const response = await fetch(
@@ -299,6 +347,7 @@ const PatternLabWizard = () => {
               patterns: selectedPatterns,
               timeframe,
               lookbackYears,
+              gradeFilter: selectedGrades,
             },
           }),
         }
@@ -544,6 +593,110 @@ const PatternLabWizard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Quality Grade Filter */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Quality Filter
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-sm">
+                          Filter setups by quality grade. Conservative traders may want only A-B setups, 
+                          while aggressive traders can include all grades to maximize sample size.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
+                <CardDescription>Set your risk appetite for pattern quality</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Preset Buttons */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {(['conservative', 'moderate', 'aggressive'] as const).map(preset => {
+                    const config = GRADE_PRESETS[preset];
+                    const Icon = config.icon;
+                    const isSelected = gradePreset === preset;
+                    return (
+                      <div
+                        key={preset}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-lg border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                            : 'border-border/50 hover:border-border hover:bg-muted/30'
+                        }`}
+                        onClick={() => {
+                          setGradePreset(preset);
+                          setSelectedGrades(config.grades);
+                        }}
+                      >
+                        <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`font-medium text-sm ${isSelected ? 'text-primary' : ''}`}>
+                          {config.label}
+                        </span>
+                        <div className="flex gap-1">
+                          {config.grades.map(grade => (
+                            <GradeBadge key={grade} grade={grade} size="sm" showTooltip={false} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Grade Selection */}
+                <div className="pt-2 border-t border-border/50">
+                  <Label className="text-xs text-muted-foreground mb-2 block">
+                    Or customize grade selection:
+                  </Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['A', 'B', 'C', 'D', 'F'] as GradeLetter[]).map(grade => {
+                      const isSelected = selectedGrades.includes(grade);
+                      const config = GRADE_CONFIG[grade];
+                      return (
+                        <button
+                          key={grade}
+                          type="button"
+                          onClick={() => {
+                            setGradePreset('custom');
+                            setSelectedGrades(prev => 
+                              prev.includes(grade) 
+                                ? prev.filter(g => g !== grade)
+                                : [...prev, grade]
+                            );
+                          }}
+                          className={`px-3 py-2 rounded-md border text-sm font-medium transition-all ${
+                            isSelected
+                              ? `${config.bg} ${config.text} ${config.border} border`
+                              : 'border-border/50 text-muted-foreground hover:border-border'
+                          }`}
+                        >
+                          Grade {grade}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedGrades.length === 0 && (
+                    <p className="text-xs text-destructive mt-2">
+                      Select at least one grade
+                    </p>
+                  )}
+                </div>
+
+                {/* Selected Summary */}
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{selectedGrades.length}</span> grade{selectedGrades.length !== 1 ? 's' : ''} selected
+                  {gradePreset !== 'custom' && (
+                    <span className="ml-2">• {GRADE_PRESETS[gradePreset].description}</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
           {/* Sidebar - Credits & Run - Clean inline layout (no sticky floating) */}
@@ -583,6 +736,14 @@ const PatternLabWizard = () => {
                       <div className="flex justify-between">
                         <span>Lookback</span>
                         <span className="font-medium text-foreground">{lookbackYears} year{lookbackYears > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Quality Filter</span>
+                        <div className="flex gap-1">
+                          {selectedGrades.map(g => (
+                            <span key={g} className={`text-xs font-medium ${GRADE_CONFIG[g].text}`}>{g}</span>
+                          ))}
+                        </div>
                       </div>
                       <div className="flex justify-between border-t border-border/50 pt-2 mt-2">
                         <span>Your Balance</span>
