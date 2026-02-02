@@ -1112,15 +1112,6 @@ export default function PatternScreenerTable() {
                         </Tooltip>
                       </TooltipProvider>
                     </TableHead>
-                    <TableHead 
-                      className="cursor-pointer select-none text-right whitespace-nowrap"
-                      onClick={() => handleSort('rr')}
-                    >
-                      <div className="flex items-center justify-end">
-                        R:R
-                        <SortIcon columnKey="rr" />
-                      </div>
-                    </TableHead>
                     <TableHead className="text-right whitespace-nowrap">
                       <TooltipProvider>
                         <Tooltip>
@@ -1152,7 +1143,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={9} className="py-2">
+                        <TableCell colSpan={8} className="py-2">
                           <span className="font-semibold text-sm">{patternName}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -1225,13 +1216,6 @@ export default function PatternScreenerTable() {
                               ) : (
                                 <span className="text-muted-foreground">-</span>
                               )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className={`font-semibold ${
-                                recalculatedPlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
-                              }`}>
-                                {recalculatedPlan.rr.toFixed(1)}
-                              </span>
                             </TableCell>
                             <TableCell className="text-right">
                               <EdgeMetricsInline
