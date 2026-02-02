@@ -1117,7 +1117,7 @@ export default function PatternScreenerTable() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="flex items-center justify-end gap-1 cursor-help">
-                              Edge
+                              Win Rate
                               <Crown className="h-3 w-3 text-amber-500 opacity-70" />
                             </span>
                           </TooltipTrigger>
