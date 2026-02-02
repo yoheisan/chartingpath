@@ -39,6 +39,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import { RRComparisonTable, type RRTierStats } from './RRComparisonTable';
 
 interface PatternResult {
   patternId: string;
@@ -102,6 +103,8 @@ interface PatternLabArtifact {
   patterns: PatternResult[];
   trades: TradeEntry[];
   equity: EquityPoint[];
+  /** Multi-RR comparison stats from historical simulations */
+  rrComparison?: RRTierStats[];
 }
 
 interface PatternLabViewerProps {
@@ -208,6 +211,15 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               </CardContent>
             </Card>
           </div>
+
+          {/* R:R Scenario Comparison */}
+          {artifact.rrComparison && artifact.rrComparison.length > 0 && (
+            <RRComparisonTable 
+              stats={artifact.rrComparison}
+              title="R:R Scenario Comparison"
+              description="Optimize your target based on historical win rates and expectancy per R:R tier"
+            />
+          )}
 
           {/* Do Not Trade Rules */}
           {artifact.patterns.some(p => p.doNotTradeRules.length > 0) && (
