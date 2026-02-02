@@ -19,16 +19,13 @@ import {
 import { 
   TrendingUp, 
   TrendingDown, 
-  Target, 
   Clock, 
   ArrowUpRight, 
   ArrowDownRight,
-  Minus,
   X,
   Filter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RR_TIERS, RRTier, DEFAULT_RR, formatRR } from '@/utils/rrCalculator';
 
 export type DirectionFilter = 'all' | 'long' | 'short';
 export type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
@@ -56,7 +53,6 @@ export interface ScreenerFiltersState {
   direction: DirectionFilter;
   pattern: string;
   trend: TrendFilter;
-  selectedRR: RRTier;  // User-selected R:R tier for TP calculation
   age: AgeFilter;
   grade: GradeFilter;
 }
@@ -96,7 +92,6 @@ export const DEFAULT_SCREENER_FILTERS: ScreenerFiltersState = {
   direction: 'all',
   pattern: 'all',
   trend: 'all',
-  selectedRR: DEFAULT_RR,
   age: 'all',
   grade: 'all',
 };
@@ -112,7 +107,6 @@ export function ScreenerFilters({
     return filters.direction !== 'all' ||
            filters.pattern !== 'all' ||
            filters.trend !== 'all' ||
-           filters.selectedRR !== DEFAULT_RR ||
            filters.age !== 'all' ||
            filters.grade !== 'all';
   }, [filters]);
@@ -319,46 +313,8 @@ export function ScreenerFilters({
         </div>
       </div>
 
-      {/* Secondary Filter Row: R:R Tier Selector + Age Filter */}
+      {/* Secondary Filter Row: Age Filter */}
       <div className="flex flex-wrap items-center gap-4">
-        {/* R:R Tier Selector - Recalculates TP based on selection */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 p-1">
-                <Target className="h-3.5 w-3.5 text-muted-foreground ml-2" />
-                <span className="text-xs text-muted-foreground whitespace-nowrap mr-1">R:R</span>
-                {RR_TIERS.map((tier) => (
-                  <Button
-                    key={tier}
-                    variant={filters.selectedRR === tier ? 'default' : 'ghost'}
-                    size="sm"
-                    className={cn(
-                      "h-7 px-2.5 text-xs font-mono",
-                      filters.selectedRR === tier && "bg-primary"
-                    )}
-                    onClick={() => onChange({ selectedRR: tier })}
-                  >
-                    {formatRR(tier)}
-                  </Button>
-                ))}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="font-medium mb-2">Target Risk:Reward Ratio</p>
-              <div className="text-xs space-y-1.5 text-muted-foreground">
-                <div><strong className="font-mono">1:2</strong> — Risk $1 to potentially gain $2 (default)</div>
-                <div><strong className="font-mono">1:3</strong> — Risk $1 to potentially gain $3</div>
-                <div><strong className="font-mono">1:4</strong> — Risk $1 to potentially gain $4</div>
-                <div><strong className="font-mono">1:5</strong> — Risk $1 to potentially gain $5</div>
-                <div className="pt-1.5 border-t border-border/50 text-muted-foreground/80">
-                  Take Profit is recalculated based on your selection
-                </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
         {/* Age Presets */}
         <TooltipProvider>
           <Tooltip>
@@ -473,7 +429,7 @@ export function filterByAge(
   });
 }
 
-// Re-export R:R utilities for convenience
+// Re-export R:R utilities for convenience (used in Pattern Lab / historical views)
 export { 
   recalculateTradePlan, 
   RR_TIERS, 
