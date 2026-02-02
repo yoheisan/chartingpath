@@ -11,8 +11,11 @@ import {
 import { cn } from '@/lib/utils';
 
 // Compact grade badge for table display
-function GradeBadge({ grade }: { grade?: 'A' | 'B' | 'C' | 'D' | 'F' }) {
-  const displayGrade = grade || 'C';
+// Note: Backend currently sends grade letter in 'score' field due to a mapping issue
+function GradeBadge({ quality }: { quality?: { grade?: string; score?: string | number } }) {
+  // Handle backend field mismatch: grade may be in 'score' if it's a string letter
+  const gradeFromScore = typeof quality?.score === 'string' && /^[A-F]$/.test(quality.score) ? quality.score : undefined;
+  const displayGrade = (quality?.grade || gradeFromScore || 'C') as 'A' | 'B' | 'C' | 'D' | 'F';
   
   const config = {
     A: { bg: 'bg-emerald-500/15', text: 'text-emerald-500', border: 'border-emerald-500/30' },
@@ -1219,7 +1222,7 @@ export default function LivePatternsPage() {
                             {setup.patternName}
                           </TableCell>
                           <TableCell className="text-center">
-                            <GradeBadge grade={setup.quality?.grade} />
+                            <GradeBadge quality={setup.quality} />
                           </TableCell>
                           <TableCell>
                             <Badge 
