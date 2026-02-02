@@ -52,7 +52,7 @@ import {
   calculateAgeStats,
   filterByAge,
   recalculateTradePlan,
-  RRTier,
+  DEFAULT_RR,
   calculateProjectedExpectancy
 } from '@/components/screener/ScreenerFilters';
 
@@ -340,7 +340,6 @@ export default function LivePatternsPage() {
     selectedAssetType?: AssetType,
     selectedTimeframe?: string,
     includeDetailsOverride?: boolean,
-    selectedRRTier?: RRTier,
   ) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -349,12 +348,11 @@ export default function LivePatternsPage() {
     const typeToFetch = selectedAssetType || assetType;
     const tfToFetch = selectedTimeframe || timeframe;
     const includeDetails = includeDetailsOverride ?? false;
-    const rrTierToFetch = selectedRRTier ?? filters.selectedRR;
     
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
     
-    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string, rrTier: RRTier) => {
+    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string) => {
       return await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
@@ -366,7 +364,6 @@ export default function LivePatternsPage() {
             forceRefresh, // only true when we explicitly want a full rescan
             includeDetails,
             topNWithBars: 10, // Embed bars for first 10 patterns for instant chart loading
-            rrTier, // Pass selected R:R tier for historical stats calculation
           },
         }),
         timeoutMs,
@@ -403,7 +400,7 @@ export default function LivePatternsPage() {
         const { forceRefresh: fr, timeout } = attempts[i];
         try {
           console.info(`[LivePatternsPage] Attempt ${i + 1}/${attempts.length}`, { forceRefresh: fr, timeout });
-          const res = await invokeScan(fr, timeout, tfToFetch, rrTierToFetch);
+          const res = await invokeScan(fr, timeout, tfToFetch);
           data = res.data ?? null;
           fnError = res.error ?? null;
           if (data?.patterns) {
@@ -490,14 +487,6 @@ export default function LivePatternsPage() {
       }
     }
   }, [capsLoading, tier]);
-
-  // Re-fetch when R:R tier changes to get updated historical stats
-  useEffect(() => {
-    if (hasFetchedInitial && patterns.length > 0) {
-      console.info('[LivePatternsPage] R:R tier changed, re-fetching stats', { selectedRR: filters.selectedRR });
-      fetchLivePatterns(false, assetType, timeframe, false, filters.selectedRR);
-    }
-  }, [filters.selectedRR]);
 
   useEffect(() => {
     if (highlightSymbol && patterns.length > 0 && !chartOpen) {
@@ -664,7 +653,7 @@ export default function LivePatternsPage() {
     };
   };
 
-  const toSetupWithVisuals = (setup: LiveSetup, selectedRR?: RRTier): SetupWithVisuals & {
+  const toSetupWithVisuals = (setup: LiveSetup): SetupWithVisuals & {
     currentPrice?: number;
     prevClose?: number;
     changePercent?: number | null;
@@ -673,7 +662,7 @@ export default function LivePatternsPage() {
   } => {
     const visualSpec = setup.visualSpec || buildFallbackVisualSpec(setup);
     
-    // Recalculate trade plan based on user-selected R:R tier
+    // Use default R:R tier for trade plan calculation
     const baseTradePlan = {
       entry: setup.tradePlan.entry,
       stopLoss: setup.tradePlan.stopLoss,
@@ -683,10 +672,8 @@ export default function LivePatternsPage() {
       tpDistance: setup.tradePlan.tpDistance || Math.abs(setup.tradePlan.takeProfit - setup.tradePlan.entry),
     };
     
-    // Apply R:R recalculation if a tier is selected
-    const recalculated = selectedRR 
-      ? recalculateTradePlan(baseTradePlan, setup.direction, selectedRR)
-      : baseTradePlan;
+    // Apply default R:R recalculation
+    const recalculated = recalculateTradePlan(baseTradePlan, setup.direction, DEFAULT_RR);
 
     return {
       instrument: setup.instrument,
@@ -734,7 +721,7 @@ export default function LivePatternsPage() {
 
     try {
       // Ensure we have at least a minimal setup so the dialog header renders.
-      setSelectedSetup(toSetupWithVisuals(setup, filters.selectedRR));
+      setSelectedSetup(toSetupWithVisuals(setup));
 
       const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
       const hasOverlays =
@@ -753,7 +740,7 @@ export default function LivePatternsPage() {
         const cached = getAndConsume(setup.dbId);
         if (cached) {
           console.debug('[LivePatternsPage] Using prefetched data', { requestId, dbId: setup.dbId });
-          setSelectedSetup(toSetupWithVisuals(cached, filters.selectedRR));
+          setSelectedSetup(toSetupWithVisuals(cached));
           return; // Done! No network request needed
         }
       }
@@ -795,7 +782,7 @@ export default function LivePatternsPage() {
           // Ignore stale responses if user opened a different setup while this was in-flight.
           if (chartDetailsRequestIdRef.current !== requestId) return;
 
-          setSelectedSetup(toSetupWithVisuals(res.data.pattern, filters.selectedRR));
+          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
           return;
         } catch (err: any) {
           lastErr = err;
@@ -1300,12 +1287,12 @@ export default function LivePatternsPage() {
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
-                          {/* Projected Expectancy based on selected R:R */}
+                          {/* Projected Expectancy based on default R:R */}
                           <TableCell className="text-right">
                             {setup.historicalPerformance?.winRate != null ? (() => {
                               const expectancy = calculateProjectedExpectancy(
                                 setup.historicalPerformance.winRate, 
-                                filters.selectedRR
+                                DEFAULT_RR
                               );
                               return (
                                 <span className={`font-mono text-xs font-medium ${
@@ -1319,10 +1306,8 @@ export default function LivePatternsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className={`font-semibold ${
-                              filters.selectedRR >= 2 ? 'text-green-500' : 'text-muted-foreground'
-                            }`}>
-                              {filters.selectedRR.toFixed(1)}
+                            <span className="font-semibold text-green-500">
+                              {DEFAULT_RR.toFixed(1)}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
@@ -1386,10 +1371,10 @@ export default function LivePatternsPage() {
           }}
           setup={selectedSetup}
           loading={loadingChartDetails}
-          selectedRR={filters.selectedRR}
+          selectedRR={DEFAULT_RR}
           onCopyPlan={() => {
             navigator.clipboard.writeText(
-              `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${filters.selectedRR.toFixed(1)}`
+              `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${DEFAULT_RR.toFixed(1)}`
             );
           }}
           onCreateAlert={() => {

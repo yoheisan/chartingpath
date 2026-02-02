@@ -49,7 +49,7 @@ import {
   calculateAgeStats,
   filterByAge,
   recalculateTradePlan,
-  RRTier,
+  DEFAULT_RR,
 } from '@/components/screener/ScreenerFilters';
 
 interface LiveSetup {
@@ -549,9 +549,8 @@ export default function PatternScreenerTable() {
   // Get tier-based screener caps
   const { caps, tier, upgradeIncentive, lockedPatterns } = useScreenerCaps();
 
-  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType, selectedRRTier?: RRTier) => {
+  const fetchLivePatterns = async (isRefresh = false, selectedAssetType?: AssetType) => {
     const typeToFetch = selectedAssetType ?? assetType;
-    const rrTierToFetch = selectedRRTier ?? filters.selectedRR;
     
     // Show cached data immediately (optimistic)
     const cachedResult = cache[typeToFetch];
@@ -575,7 +574,6 @@ export default function PatternScreenerTable() {
         maxTickers: caps.maxTickersPerClass,
         allowedPatterns: caps.allowedPatterns?.length,
         isRefresh,
-        rrTier: rrTierToFetch,
       });
 
       // Increase timeout - cold starts can take 15s+, but cached responses are <1s
@@ -586,7 +584,6 @@ export default function PatternScreenerTable() {
             limit: 50,
             maxTickers: caps.maxTickersPerClass,
             allowedPatterns: caps.allowedPatterns,
-            rrTier: rrTierToFetch, // Pass selected R:R tier for historical stats
           },
         }),
         25_000,
@@ -631,14 +628,6 @@ export default function PatternScreenerTable() {
   useEffect(() => {
     fetchLivePatterns(false, assetType);
   }, [assetType]);
-
-  // Re-fetch when R:R tier changes to get updated historical stats
-  useEffect(() => {
-    if (patterns.length > 0) {
-      console.info('[PatternScreenerTable] R:R tier changed, re-fetching stats', { selectedRR: filters.selectedRR });
-      fetchLivePatterns(false, assetType, filters.selectedRR);
-    }
-  }, [filters.selectedRR]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -1177,11 +1166,11 @@ export default function PatternScreenerTable() {
                         // Fresh if less than 2 days old
                         const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
                         
-                        // Recalculate trade plan based on selected R:R tier
+                        // Recalculate trade plan based on default R:R tier
                         const recalculatedPlan = recalculateTradePlan(
                           setup.tradePlan,
                           setup.direction,
-                          filters.selectedRR
+                          DEFAULT_RR
                         );
                         
                         return (
