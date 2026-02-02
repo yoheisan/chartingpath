@@ -42,12 +42,15 @@ interface PatternRankingTableProps {
   className?: string;
 }
 
+import { GRADE_CONFIG, GradeLetter, getGradeConfig } from '@/components/ui/GradeBadge';
+
+// Use unified grade config - map to solid variant for this table's design
 const GRADE_COLORS: Record<string, string> = {
-  A: 'bg-emerald-500 text-white',
-  B: 'bg-emerald-400 text-white',
-  C: 'bg-amber-500 text-white',
-  D: 'bg-orange-500 text-white',
-  F: 'bg-red-500 text-white',
+  A: GRADE_CONFIG.A.solid,
+  B: GRADE_CONFIG.B.solid,
+  C: GRADE_CONFIG.C.solid,
+  D: GRADE_CONFIG.D.solid,
+  F: GRADE_CONFIG.F.solid,
   INSUFFICIENT: 'bg-muted text-muted-foreground',
 };
 

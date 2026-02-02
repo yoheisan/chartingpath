@@ -10,44 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Compact grade badge for table display
-// Note: Backend currently sends grade letter in 'score' field due to a mapping issue
-function GradeBadge({ quality }: { quality?: { grade?: string; score?: string | number } }) {
-  // Handle backend field mismatch: grade may be in 'score' if it's a string letter
-  const gradeFromScore = typeof quality?.score === 'string' && /^[A-F]$/.test(quality.score) ? quality.score : undefined;
-  const displayGrade = (quality?.grade || gradeFromScore || 'C') as 'A' | 'B' | 'C' | 'D' | 'F';
-  
-  const config = {
-    A: { bg: 'bg-emerald-500/15', text: 'text-emerald-500', border: 'border-emerald-500/30' },
-    B: { bg: 'bg-green-500/15', text: 'text-green-500', border: 'border-green-500/30' },
-    C: { bg: 'bg-yellow-500/15', text: 'text-yellow-500', border: 'border-yellow-500/30' },
-    D: { bg: 'bg-orange-500/15', text: 'text-orange-500', border: 'border-orange-500/30' },
-    F: { bg: 'bg-red-500/15', text: 'text-red-500', border: 'border-red-500/30' },
-  }[displayGrade] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
-  
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span 
-            className={cn(
-              'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold border',
-              config.bg, config.text, config.border
-            )}
-          >
-            {displayGrade}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <p className="text-xs font-medium mb-1">Pattern Grade: {displayGrade}</p>
-          <p className="text-xs text-muted-foreground">
-            Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
+import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
   Tooltip,
   TooltipContent,

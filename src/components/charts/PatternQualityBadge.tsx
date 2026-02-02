@@ -29,49 +29,34 @@ interface PatternQualityBadgeProps {
   className?: string;
 }
 
+import { GRADE_CONFIG, GradeLetter } from '@/components/ui/GradeBadge';
+
+// Map scores to grades for unified styling
+const getGradeFromScore = (grade: string, score: number): GradeLetter => {
+  if (score >= 8 || grade === 'A') return 'A';
+  if (score >= 6.5 || grade === 'B') return 'B';
+  if (score >= 5 || grade === 'C') return 'C';
+  if (score >= 3.5 || grade === 'D') return 'D';
+  return 'F';
+};
+
 const getGradeConfig = (grade: string, score: number) => {
-  if (score >= 8 || grade === 'A') {
-    return {
-      bgClass: 'bg-emerald-500/10 border-emerald-500/30',
-      textClass: 'text-emerald-500',
-      progressClass: 'bg-emerald-500',
-      label: 'Excellent',
-      icon: CheckCircle2
-    };
-  }
-  if (score >= 6.5 || grade === 'B') {
-    return {
-      bgClass: 'bg-green-500/10 border-green-500/30',
-      textClass: 'text-green-500',
-      progressClass: 'bg-green-500',
-      label: 'Good',
-      icon: CheckCircle2
-    };
-  }
-  if (score >= 5 || grade === 'C') {
-    return {
-      bgClass: 'bg-yellow-500/10 border-yellow-500/30',
-      textClass: 'text-yellow-500',
-      progressClass: 'bg-yellow-500',
-      label: 'Fair',
-      icon: AlertTriangle
-    };
-  }
-  if (score >= 3.5 || grade === 'D') {
-    return {
-      bgClass: 'bg-orange-500/10 border-orange-500/30',
-      textClass: 'text-orange-500',
-      progressClass: 'bg-orange-500',
-      label: 'Weak',
-      icon: AlertTriangle
-    };
-  }
+  const letterGrade = getGradeFromScore(grade, score);
+  const config = GRADE_CONFIG[letterGrade];
+  
+  // Map icon based on grade
+  const icon = letterGrade === 'A' || letterGrade === 'B' 
+    ? CheckCircle2 
+    : letterGrade === 'C' || letterGrade === 'D'
+    ? AlertTriangle 
+    : XCircle;
+  
   return {
-    bgClass: 'bg-red-500/10 border-red-500/30',
-    textClass: 'text-red-500',
-    progressClass: 'bg-red-500',
-    label: 'Poor',
-    icon: XCircle
+    bgClass: `${config.bg.replace('/15', '/10')} ${config.border}`,
+    textClass: config.text,
+    progressClass: config.text.replace('text-', 'bg-'),
+    label: config.label,
+    icon
   };
 };
 
