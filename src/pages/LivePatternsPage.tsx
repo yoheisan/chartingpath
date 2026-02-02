@@ -1121,8 +1121,8 @@ export default function LivePatternsPage() {
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Pattern quality grade (A-F) based on trend alignment, R:R structure, volume, and more.</p>
+                        <TooltipContent side="top" className="max-w-sm">
+                          <p className="text-xs">Pattern quality grade (A-F) based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
