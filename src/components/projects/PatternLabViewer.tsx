@@ -138,16 +138,28 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return tierData?.expectancy ?? artifact.summary.overallExpectancy;
   };
 
-  // Calculate per-pattern stats for selected R:R tier from trades
+  // Calculate per-pattern stats for selected R:R tier
   const getPatternStatsForTier = (patternId: string, tier: number) => {
-    const patternTrades = artifact.trades.filter(t => t.patternId === patternId);
-    if (patternTrades.length === 0) return { winRate: 0, expectancy: 0, totalTrades: 0 };
+    const baselinePattern = artifact.patterns.find(p => p.patternId === patternId);
+    if (!baselinePattern) return { winRate: 0, expectancy: 0, totalTrades: 0 };
     
-    // For the selected tier, recalculate win/loss:
-    // - Win (tp hit): if exitReason === 'tp' at baseline (1:2), higher tiers are less likely to hit TP
-    // - We approximate by scaling: higher R:R = fewer wins but larger payoff
-    // - Without actual per-tier simulation data, we estimate based on the rrComparison ratio
+    // For single-pattern runs, rrComparison IS the pattern's data - use it directly
+    if (artifact.patterns.length === 1 && artifact.rrComparison && artifact.rrComparison.length > 0) {
+      const tierData = artifact.rrComparison.find(rr => 
+        (rr.rrTier === tier) || (rr.tier === `1:${tier}`)
+      );
+      if (tierData) {
+        return {
+          winRate: tierData.winRate,
+          expectancy: tierData.expectancy,
+          totalTrades: tierData.sampleSize,
+          patternName: baselinePattern.patternName,
+          direction: baselinePattern.direction
+        };
+      }
+    }
     
+    // For multi-pattern runs, we need to approximate since rrComparison is aggregate
     // Get the overall win rate ratio between baseline and selected tier
     const baselineTierData = artifact.rrComparison?.find(rr => 
       (rr.rrTier === 2) || (rr.tier === '1:2')
@@ -158,19 +170,18 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     
     if (!baselineTierData || !selectedTierData || baselineTierData.winRate === 0) {
       // Fallback to static pattern data
-      const pattern = artifact.patterns.find(p => p.patternId === patternId);
       return {
-        winRate: pattern?.winRate ?? 0,
-        expectancy: pattern?.expectancy ?? 0,
-        totalTrades: pattern?.totalTrades ?? 0
+        winRate: baselinePattern.winRate,
+        expectancy: baselinePattern.expectancy,
+        totalTrades: baselinePattern.totalTrades,
+        patternName: baselinePattern.patternName,
+        direction: baselinePattern.direction
       };
     }
     
-    // Scale the pattern's baseline win rate by the same ratio as overall
+    // For multi-pattern: scale pattern's baseline win rate by the same ratio as overall
+    // This is an approximation - ideally backend would provide per-pattern per-tier data
     const winRateScaleFactor = selectedTierData.winRate / baselineTierData.winRate;
-    const baselinePattern = artifact.patterns.find(p => p.patternId === patternId);
-    if (!baselinePattern) return { winRate: 0, expectancy: 0, totalTrades: 0 };
-    
     const adjustedWinRate = Math.min(1, Math.max(0, baselinePattern.winRate * winRateScaleFactor));
     // Expectancy = (WinRate * R:R) - (LossRate * 1)
     const adjustedExpectancy = (adjustedWinRate * tier) - ((1 - adjustedWinRate) * 1);
