@@ -374,6 +374,214 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       };
     },
     displayName: 'Falling Wedge (Long)'
+  },
+  // === TRIPLE TOP/BOTTOM ===
+  'triple-top': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const peaks = findPeaks(highs);
+      if (peaks.length < 3) return { detected: false, pivots: [] };
+      
+      const lastThreeIdx = peaks.slice(-3);
+      const lastThree = lastThreeIdx.map(i => highs[i]);
+      const maxPeak = Math.max(...lastThree);
+      const minPeak = Math.min(...lastThree);
+      const tolerance = maxPeak * 0.03;
+      
+      const detected = (maxPeak - minPeak) < tolerance;
+      const pivots: PatternPivot[] = detected ? lastThreeIdx.map((idx, i) => ({
+        index: idx,
+        price: lastThree[i],
+        type: 'high' as const,
+        label: `Top ${i + 1}`
+      })) : [];
+      
+      return { detected, pivots };
+    },
+    displayName: 'Triple Top (Short)'
+  },
+  'triple-bottom': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const lows = window.map(d => d.low);
+      const troughs = findTroughs(lows);
+      if (troughs.length < 3) return { detected: false, pivots: [] };
+      
+      const lastThreeIdx = troughs.slice(-3);
+      const lastThree = lastThreeIdx.map(i => lows[i]);
+      const maxTrough = Math.max(...lastThree);
+      const minTrough = Math.min(...lastThree);
+      const tolerance = minTrough * 0.03;
+      
+      const detected = (maxTrough - minTrough) < tolerance;
+      const pivots: PatternPivot[] = detected ? lastThreeIdx.map((idx, i) => ({
+        index: idx,
+        price: lastThree[i],
+        type: 'low' as const,
+        label: `Bottom ${i + 1}`
+      })) : [];
+      
+      return { detected, pivots };
+    },
+    displayName: 'Triple Bottom (Long)'
+  },
+  // === SYMMETRICAL TRIANGLE ===
+  'symmetrical-triangle': {
+    direction: 'long', // Default to long, can break either way
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      const highTrend = calculateTrend(highs.slice(-15));
+      const lowTrend = calculateTrend(lows.slice(-15));
+      
+      // Symmetrical: highs descending, lows ascending (converging)
+      const detected = highTrend < -0.003 && lowTrend > 0.003;
+      const pivots: PatternPivot[] = [];
+      
+      if (detected) {
+        const peaks = findPeaks(highs);
+        const troughs = findTroughs(lows);
+        peaks.slice(-2).forEach((idx, i) => {
+          pivots.push({ index: idx, price: highs[idx], type: 'high', label: `R${i + 1}` });
+        });
+        troughs.slice(-2).forEach((idx, i) => {
+          pivots.push({ index: idx, price: lows[idx], type: 'low', label: `S${i + 1}` });
+        });
+      }
+      
+      return { detected, pivots };
+    },
+    displayName: 'Symmetrical Triangle'
+  },
+  // === FLAGS ===
+  'bullish-flag': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      
+      // Look for strong move followed by consolidation
+      const pole = window.slice(0, 8);
+      const flag = window.slice(8);
+      
+      const poleMove = (pole[pole.length - 1].close - pole[0].close) / pole[0].close;
+      const flagHighs = flag.map(d => d.high);
+      const flagLows = flag.map(d => d.low);
+      const flagHighTrend = calculateTrend(flagHighs);
+      const flagLowTrend = calculateTrend(flagLows);
+      
+      // Pole must be strong up (>3%), flag should drift down slightly
+      const detected = poleMove > 0.03 && flagHighTrend < 0 && flagLowTrend < 0;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: pole[0].low, type: 'low', label: 'Pole Start' },
+          { index: 7, price: pole[pole.length - 1].high, type: 'high', label: 'Pole End' },
+          { index: window.length - 1, price: closes[closes.length - 1], type: 'low', label: 'Flag End' }
+        ] : []
+      };
+    },
+    displayName: 'Bull Flag (Long)'
+  },
+  'bearish-flag': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 15) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      
+      const pole = window.slice(0, 8);
+      const flag = window.slice(8);
+      
+      const poleMove = (pole[pole.length - 1].close - pole[0].close) / pole[0].close;
+      const flagHighs = flag.map(d => d.high);
+      const flagLows = flag.map(d => d.low);
+      const flagHighTrend = calculateTrend(flagHighs);
+      const flagLowTrend = calculateTrend(flagLows);
+      
+      // Pole must be strong down (<-3%), flag should drift up slightly
+      const detected = poleMove < -0.03 && flagHighTrend > 0 && flagLowTrend > 0;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: pole[0].high, type: 'high', label: 'Pole Start' },
+          { index: 7, price: pole[pole.length - 1].low, type: 'low', label: 'Pole End' },
+          { index: window.length - 1, price: closes[closes.length - 1], type: 'high', label: 'Flag End' }
+        ] : []
+      };
+    },
+    displayName: 'Bear Flag (Short)'
+  },
+  // === CUP & HANDLE ===
+  'cup-and-handle': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Cup: U-shape - starts high, goes down, comes back up
+      const firstThird = window.slice(0, 8);
+      const middleThird = window.slice(8, 17);
+      const lastThird = window.slice(17);
+      
+      const firstAvgHigh = firstThird.reduce((s, d) => s + d.high, 0) / firstThird.length;
+      const middleAvgLow = middleThird.reduce((s, d) => s + d.low, 0) / middleThird.length;
+      const lastAvgHigh = lastThird.reduce((s, d) => s + d.high, 0) / lastThird.length;
+      
+      // Cup rim should be at similar levels
+      const rimSimilar = Math.abs(firstAvgHigh - lastAvgHigh) / firstAvgHigh < 0.05;
+      // Bottom should be at least 10% below rims
+      const cupDepth = ((firstAvgHigh + lastAvgHigh) / 2 - middleAvgLow) / firstAvgHigh;
+      
+      const detected = rimSimilar && cupDepth > 0.10 && cupDepth < 0.35;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: firstAvgHigh, type: 'high', label: 'Left Rim' },
+          { index: 12, price: middleAvgLow, type: 'low', label: 'Cup Bottom' },
+          { index: window.length - 1, price: lastAvgHigh, type: 'high', label: 'Right Rim' }
+        ] : []
+      };
+    },
+    displayName: 'Cup & Handle (Long)'
+  },
+  'inverse-cup-and-handle': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      
+      const firstThird = window.slice(0, 8);
+      const middleThird = window.slice(8, 17);
+      const lastThird = window.slice(17);
+      
+      const firstAvgLow = firstThird.reduce((s, d) => s + d.low, 0) / firstThird.length;
+      const middleAvgHigh = middleThird.reduce((s, d) => s + d.high, 0) / middleThird.length;
+      const lastAvgLow = lastThird.reduce((s, d) => s + d.low, 0) / lastThird.length;
+      
+      // Inverted: lows form the rim, peak in middle
+      const rimSimilar = Math.abs(firstAvgLow - lastAvgLow) / firstAvgLow < 0.05;
+      const cupHeight = (middleAvgHigh - (firstAvgLow + lastAvgLow) / 2) / firstAvgLow;
+      
+      const detected = rimSimilar && cupHeight > 0.10 && cupHeight < 0.35;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: firstAvgLow, type: 'low', label: 'Left Rim' },
+          { index: 12, price: middleAvgHigh, type: 'high', label: 'Cup Top' },
+          { index: window.length - 1, price: lastAvgLow, type: 'low', label: 'Right Rim' }
+        ] : []
+      };
+    },
+    displayName: 'Inverse Cup & Handle (Short)'
   }
 };
 
@@ -557,6 +765,7 @@ interface BacktestTrade {
   isWin: boolean;
   regime: string;
   exitReason: 'tp' | 'sl' | 'time_stop';
+  grade: string;
   // Multi-R:R outcomes
   rrOutcomes: {
     rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
@@ -564,6 +773,75 @@ interface BacktestTrade {
     rr4: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
     rr5: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number };
   };
+}
+
+// Quality scoring function - simplified 9-factor model
+function calculatePatternGrade(
+  bars: any[],
+  entryIndex: number,
+  direction: 'long' | 'short'
+): { grade: string; score: number } {
+  const lookback = Math.min(50, entryIndex);
+  const historicalBars = bars.slice(entryIndex - lookback, entryIndex + 1);
+  
+  if (historicalBars.length < 20) return { grade: 'C', score: 5 };
+  
+  let score = 0;
+  
+  // 1. Trend alignment (weight: 2 points)
+  const regime = classifyRegime(historicalBars);
+  if ((direction === 'long' && regime.trend === 'UP') || 
+      (direction === 'short' && regime.trend === 'DOWN')) {
+    score += 2;
+  } else if (regime.trend === 'SIDEWAYS') {
+    score += 1;
+  }
+  
+  // 2. Volume confirmation (weight: 1.5 points)
+  const recentVolumes = historicalBars.slice(-5).map(b => b.volume || 0);
+  const avgRecentVol = recentVolumes.reduce((a, b) => a + b, 0) / recentVolumes.length;
+  const olderVolumes = historicalBars.slice(-20, -5).map(b => b.volume || 0);
+  const avgOlderVol = olderVolumes.reduce((a, b) => a + b, 0) / Math.max(olderVolumes.length, 1);
+  if (avgRecentVol > avgOlderVol * 1.2) score += 1.5;
+  else if (avgRecentVol > avgOlderVol * 0.8) score += 0.75;
+  
+  // 3. ATR/Volatility suitability (weight: 1.5 points)
+  const atr = calculateATR(historicalBars, 14);
+  const avgPrice = historicalBars[historicalBars.length - 1].close;
+  const atrPercent = (atr / avgPrice) * 100;
+  if (atrPercent >= 0.5 && atrPercent <= 3) score += 1.5; // Sweet spot
+  else if (atrPercent >= 0.3 && atrPercent <= 5) score += 0.75;
+  
+  // 4. Price action clarity (weight: 1.5 points)
+  const closes = historicalBars.slice(-10).map(b => b.close);
+  const trend = calculateTrend(closes);
+  const trendStrength = Math.abs(trend) / avgPrice;
+  if (trendStrength > 0.002) score += 1.5; // Clear directional move
+  else if (trendStrength > 0.001) score += 0.75;
+  
+  // 5. Regime volatility (weight: 1 point)
+  if (regime.volatility === 'MED') score += 1;
+  else if (regime.volatility === 'LOW') score += 0.5;
+  
+  // 6. Structure quality - proximity to S/R (weight: 1.5 points)
+  const highs = historicalBars.map(b => b.high);
+  const lows = historicalBars.map(b => b.low);
+  const recentHigh = Math.max(...highs.slice(-10));
+  const recentLow = Math.min(...lows.slice(-10));
+  const currentPrice = historicalBars[historicalBars.length - 1].close;
+  const range = recentHigh - recentLow;
+  if (direction === 'long' && currentPrice < recentLow + range * 0.3) score += 1.5;
+  else if (direction === 'short' && currentPrice > recentHigh - range * 0.3) score += 1.5;
+  else score += 0.5;
+  
+  // Convert score (0-10) to grade
+  let grade = 'F';
+  if (score >= 8) grade = 'A';
+  else if (score >= 6.5) grade = 'B';
+  else if (score >= 5) grade = 'C';
+  else if (score >= 3) grade = 'D';
+  
+  return { grade, score };
 }
 
 // Simulate outcome for a specific R:R tier
@@ -600,7 +878,8 @@ function runPatternBacktest(
   bars: any[],
   patternId: string,
   pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult },
-  instrument: string
+  instrument: string,
+  gradeFilter: string[] = ['A', 'B', 'C', 'D', 'F']
 ): BacktestTrade[] {
   const trades: BacktestTrade[] = [];
   const lookback = 20;
@@ -615,6 +894,12 @@ function runPatternBacktest(
     const entryBar = bars[i];
     const entryPrice = entryBar.close;
     const atr = calculateATR(bars.slice(0, i + 1), 14);
+    
+    // Calculate grade and apply filter
+    const { grade, score } = calculatePatternGrade(bars, i, pattern.direction);
+    if (!gradeFilter.includes(grade)) {
+      continue; // Skip trades that don't meet grade filter
+    }
     
     const stopDistance = atr * 2;
     const isLong = pattern.direction === 'long';
@@ -691,6 +976,7 @@ function runPatternBacktest(
       isWin: pnl > 0,
       regime: `${regime.trend}_${regime.volatility}`,
       exitReason,
+      grade,
       rrOutcomes
     });
     
@@ -1077,7 +1363,8 @@ serve(async (req) => {
         rebalanceFrequency = 'quarterly',
         dcaAmount = 0,
         dcaFrequency = 'monthly',
-        initialValue = 10000
+        initialValue = 10000,
+        gradeFilter = ['A', 'B', 'C', 'D', 'F'] // Default: all grades
       } = inputs || {};
       
       const instruments =
@@ -1403,14 +1690,17 @@ serve(async (req) => {
             
             for (const patternId of patterns) {
               const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-              if (!pattern) continue;
+              if (!pattern) {
+                console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
+                continue;
+              }
               
-              const trades = runPatternBacktest(bars, patternId, pattern, instrument);
+              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
               allTrades.push(...trades);
             }
           }
           
-          console.log(`[PatternLab] Total trades: ${allTrades.length}`);
+          console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
           
           // Calculate pattern-level stats
           for (const patternId of patterns) {
@@ -1482,43 +1772,68 @@ serve(async (req) => {
             });
           }
           
-          // Build equity curve
+          // Build equity curve with proper percentage-based calculation
           let cumulativeR = 0;
           let peakValue = 10000;
+          let maxDrawdownPercent = 0;
           const sortedTrades = [...allTrades].sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime());
           
           for (const trade of sortedTrades) {
             cumulativeR += trade.rMultiple;
+            // Risk 1% per trade, so value = initial * (1 + cumulative_R * 0.01)
             const value = 10000 * (1 + cumulativeR * 0.01);
             peakValue = Math.max(peakValue, value);
+            const currentDrawdown = peakValue > 0 ? (peakValue - value) / peakValue : 0;
+            maxDrawdownPercent = Math.max(maxDrawdownPercent, currentDrawdown);
             equity.push({
               date: trade.exitDate,
-              value,
-              drawdown: (peakValue - value) / peakValue
+              value: Math.max(0, value), // Prevent negative equity display
+              drawdown: currentDrawdown
             });
           }
           
-          // Summary
+          // Summary - use avgR as expectancy (simple average R-multiple per trade)
           const overallWinRate = allTrades.length > 0 ? allTrades.filter(t => t.isWin).length / allTrades.length : 0;
+          // Expectancy = average R-multiple per trade (unified formula across platform)
           const overallExpectancy = allTrades.length > 0 ? allTrades.reduce((s, t) => s + t.rMultiple, 0) / allTrades.length : 0;
           const bestPattern = patternResults.reduce((best, p) => p.expectancy > best.expectancy ? p : best, patternResults[0] || { id: '', name: '', expectancy: 0 });
           const worstPattern = patternResults.reduce((worst, p) => p.expectancy < worst.expectancy ? p : worst, patternResults[0] || { id: '', name: '', expectancy: 0 });
           
-          // Compute R:R comparison stats from all trades
+          // Compute R:R comparison stats from all trades with proper timeout handling
           const rrComparison = (['rr2', 'rr3', 'rr4', 'rr5'] as const).map((tier, idx) => {
             const rrTier = idx + 2; // 2, 3, 4, 5
             const rrTrades = allTrades.filter(t => t.rrOutcomes?.[tier]);
             const wins = rrTrades.filter(t => t.rrOutcomes[tier].outcome === 'hit_tp');
             const losses = rrTrades.filter(t => t.rrOutcomes[tier].outcome === 'hit_sl');
+            const timeouts = rrTrades.filter(t => t.rrOutcomes[tier].outcome === 'timeout');
+            
             const winRate = rrTrades.length > 0 ? wins.length / rrTrades.length : 0;
+            const lossRate = rrTrades.length > 0 ? losses.length / rrTrades.length : 0;
             const avgHoldBars = rrTrades.length > 0 
               ? rrTrades.reduce((sum, t) => sum + t.rrOutcomes[tier].bars, 0) / rrTrades.length 
               : 0;
-            // Expectancy: win% * R:R - loss% * 1
-            const expectancy = winRate * rrTier - (1 - winRate) * 1;
+            
+            // Calculate actual R-multiple for timeout trades (use main trade's actual exit R)
+            // Timeouts should use their actual exit price, not assume -1R
+            let totalR = 0;
+            for (const trade of rrTrades) {
+              const outcome = trade.rrOutcomes[tier].outcome;
+              if (outcome === 'hit_tp') {
+                totalR += rrTier; // Win = +R:R
+              } else if (outcome === 'hit_sl') {
+                totalR += -1; // Loss = -1R
+              } else {
+                // Timeout: use actual R-multiple from trade (proportional to original)
+                totalR += trade.rMultiple;
+              }
+            }
+            const expectancy = rrTrades.length > 0 ? totalR / rrTrades.length : 0;
+            
             return {
               tier: `1:${rrTier}`,
               winRate,
+              lossRate,
+              timeoutRate: rrTrades.length > 0 ? timeouts.length / rrTrades.length : 0,
               avgHoldBars: Math.round(avgHoldBars),
               expectancy,
               sampleSize: rrTrades.length,
@@ -1529,6 +1844,9 @@ serve(async (req) => {
           const optimalTier = rrComparison.reduce((best, curr) => 
             curr.expectancy > best.expectancy ? curr : best, rrComparison[0]);
           
+          // Calculate overall max drawdown as percentage (capped at 100%)
+          const overallMaxDrawdown = Math.min(maxDrawdownPercent * 100, 100);
+          
           artifactJson = {
             projectType: 'pattern_lab',
             timeframe,
@@ -1537,14 +1855,17 @@ serve(async (req) => {
             executionAssumptions: {
               bracketLevelsVersion: BRACKET_LEVELS_VERSION,
               priceRounding: ROUNDING_CONFIG,
+              maxBarsInTrade: 50,
+              fillRule: 'bar_close',
             },
             summary: {
               totalPatterns: patternResults.length,
               totalTrades: allTrades.length,
               overallWinRate,
               overallExpectancy,
-              bestPattern: { id: bestPattern?.patternId || '', name: bestPattern?.patternName || '', expectancy: bestPattern?.expectancy || 0 },
-              worstPattern: { id: worstPattern?.patternId || '', name: worstPattern?.patternName || '', expectancy: worstPattern?.expectancy || 0 },
+              overallMaxDrawdown, // Now properly calculated as percentage
+              bestPattern: { id: bestPattern?.patternId || '', name: bestPattern?.patternName || '', expectancy: bestPattern?.expectancy || 0, winRate: bestPattern?.winRate || 0, totalTrades: bestPattern?.totalTrades || 0 },
+              worstPattern: { id: worstPattern?.patternId || '', name: worstPattern?.patternName || '', expectancy: worstPattern?.expectancy || 0, winRate: worstPattern?.winRate || 0, totalTrades: worstPattern?.totalTrades || 0 },
             },
             rrComparison,
             optimalTier: optimalTier?.tier || '1:2',
