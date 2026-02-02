@@ -1165,6 +1165,13 @@ export default function PatternScreenerTable() {
                         // Fresh if less than 2 days old
                         const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
                         
+                        // Recalculate trade plan based on selected R:R tier
+                        const recalculatedPlan = recalculateTradePlan(
+                          setup.tradePlan,
+                          setup.direction,
+                          filters.selectedRR
+                        );
+                        
                         return (
                           <TableRow 
                             key={`${setup.instrument}-${setup.patternId}-${idx}`}
@@ -1220,9 +1227,9 @@ export default function PatternScreenerTable() {
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`font-semibold ${
-                                setup.tradePlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
+                                recalculatedPlan.rr >= 2 ? 'text-green-500' : 'text-muted-foreground'
                               }`}>
-                                {setup.tradePlan.rr.toFixed(1)}
+                                {recalculatedPlan.rr.toFixed(1)}
                               </span>
                             </TableCell>
                             <TableCell className="text-right">
