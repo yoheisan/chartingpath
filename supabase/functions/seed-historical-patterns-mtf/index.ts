@@ -550,37 +550,48 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Cup & Handle',
     detector: (window) => {
-      if (window.length < 30) return { detected: false, pivots: [] };
+      // Relaxed: 20 bars minimum (was 30)
+      if (window.length < 20) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
-      // Cup: Find U-shaped formation (rims at similar levels, bottom 10-30% below rims)
-      const leftRim = Math.max(...highs.slice(0, 5));
-      const rightRimArea = highs.slice(18, 25);
+      // Dynamic window sizing for flexibility
+      const cupEnd = Math.floor(window.length * 0.7);
+      const handleStart = Math.floor(window.length * 0.75);
+      
+      // Cup: Find U-shaped formation (rims at similar levels, bottom 7-40% below rims)
+      const leftRim = Math.max(...highs.slice(0, 4));
+      const rightRimArea = highs.slice(Math.floor(cupEnd * 0.8), cupEnd);
       const rightRim = rightRimArea.length > 0 ? Math.max(...rightRimArea) : 0;
-      const cupBottom = Math.min(...lows.slice(5, 18));
+      const cupMiddle = lows.slice(3, cupEnd - 2);
+      const cupBottom = cupMiddle.length > 0 ? Math.min(...cupMiddle) : 0;
+      
+      if (cupBottom === 0) return { detected: false, pivots: [] };
       
       const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
       const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
       
-      if (rimDiff > 0.05 || cupDepth < 0.10 || cupDepth > 0.35) return { detected: false, pivots: [] };
+      // Relaxed: rimDiff 8% (was 5%), cupDepth 7-40% (was 10-35%)
+      if (rimDiff > 0.08 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
       
-      // Handle: Small pullback after right rim (5-15% of cup depth, bars 25-28)
-      const handleLows = lows.slice(25, 29);
+      // Handle: Small pullback after right rim (relaxed: 3-60% of cup depth)
+      const handleLows = lows.slice(handleStart, window.length - 1);
       if (handleLows.length === 0) return { detected: false, pivots: [] };
       const handleLow = Math.min(...handleLows);
       const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
       
-      if (handleDepth < 0.05 || handleDepth > 0.50) return { detected: false, pivots: [] };
+      // Relaxed handle depth range
+      if (handleDepth < 0.03 || handleDepth > 0.60) return { detected: false, pivots: [] };
       
-      // Breakout: Last close breaks above right rim
+      // Breakout: Last close breaks above right rim (relaxed: 0.1% vs 0.2%)
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose > rightRim * 1.002;
+      const detected = lastClose > rightRim * 1.001;
       
-      const leftRimIdx = highs.slice(0, 5).indexOf(leftRim);
-      const cupBottomIdx = 5 + lows.slice(5, 18).indexOf(cupBottom);
-      const rightRimIdx = 18 + rightRimArea.indexOf(rightRim);
+      const leftRimIdx = highs.slice(0, 4).indexOf(leftRim);
+      const cupBottomIdx = 3 + cupMiddle.indexOf(cupBottom);
+      const rightRimStartIdx = Math.floor(cupEnd * 0.8);
+      const rightRimIdx = rightRimStartIdx + rightRimArea.indexOf(rightRim);
       
       return {
         detected,
@@ -590,7 +601,7 @@ const PATTERN_REGISTRY: Record<string, {
           { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
           { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
           { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
-          { index: 25 + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
+          { index: handleStart + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
           { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
       };
