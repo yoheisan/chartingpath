@@ -59,11 +59,20 @@ const BenchmarkSelector = ({
     setLoading(prev => new Set(prev).add(symbol));
     
     try {
+      // Calculate date range - extend slightly beyond equity curve dates
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Extend start date back a bit to ensure we capture first equity point
+      start.setDate(start.getDate() - 7);
+      
       const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
         body: {
           symbol,
           interval: '1d',
-          range: '10y', // Get plenty of data
+          startDate: start.toISOString().split('T')[0],
+          endDate: end.toISOString().split('T')[0],
+          includeOhlc: true,
         }
       });
 
@@ -77,8 +86,10 @@ const BenchmarkSelector = ({
       const startTs = new Date(startDate).getTime();
       const endTs = new Date(endDate).getTime();
       
+      // Bars from edge function use 't' for timestamp and 'c' for close
       const filteredBars = data.bars.filter((bar: any) => {
-        const barTs = new Date(bar.date || bar.timestamp).getTime();
+        const barDate = bar.t || bar.date || bar.timestamp;
+        const barTs = new Date(barDate).getTime();
         return barTs >= startTs && barTs <= endTs;
       });
 
@@ -89,10 +100,11 @@ const BenchmarkSelector = ({
       }
 
       // Normalize: start at initialCapital, scale proportionally
-      const firstClose = filteredBars[0].close;
+      // Bars use 'c' for close price
+      const firstClose = filteredBars[0].c ?? filteredBars[0].close;
       const normalizedData = filteredBars.map((bar: any) => ({
-        date: bar.date || bar.timestamp,
-        value: (bar.close / firstClose) * initialCapital,
+        date: bar.t || bar.date || bar.timestamp,
+        value: ((bar.c ?? bar.close) / firstClose) * initialCapital,
       }));
 
       const lastValue = normalizedData[normalizedData.length - 1].value;
