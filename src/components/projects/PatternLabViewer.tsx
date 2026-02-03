@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,9 +37,19 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   AreaChart,
-  Area
+  Area,
+  Legend
 } from 'recharts';
 import { RRComparisonTable, type RRTierStats } from './RRComparisonTable';
+import BenchmarkSelector from './BenchmarkSelector';
+
+interface BenchmarkData {
+  symbol: string;
+  displayName: string;
+  data: { date: string; value: number }[];
+  color: string;
+  returnPercent: number;
+}
 
 interface PatternResult {
   patternId: string;
@@ -131,6 +141,11 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState('overview');
   const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
+
+  const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
+    setBenchmarks(newBenchmarks);
+  }, []);
 
   const formatPercent = (value: number | undefined | null) => 
     value != null ? `${(value * 100).toFixed(1)}%` : '0.0%';
@@ -689,18 +704,106 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
         {/* Equity Tab */}
         <TabsContent value="equity" className="space-y-6">
-          {/* Equity Curve */}
+          {/* Benchmark Selector */}
+          {effectiveEquity.length > 0 && (
+            <BenchmarkSelector
+              startDate={effectiveEquity[0]?.date}
+              endDate={effectiveEquity[effectiveEquity.length - 1]?.date}
+              initialCapital={10000}
+              onBenchmarkChange={handleBenchmarkChange}
+            />
+          )}
+
+          {/* Equity Curve with Benchmarks */}
           <Card className="border-border/50 bg-card/50">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <LineChart className="h-5 w-5" />
                 Equity Curve
+                {benchmarks.length > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    vs. {benchmarks.map(b => b.symbol).join(', ')}
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Performance summary when benchmarks are active */}
+              {benchmarks.length > 0 && effectiveEquity.length > 0 && (
+                <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Strategy:</span>{' '}
+                      <span className={`font-semibold ${
+                        ((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) >= 0 
+                          ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {(((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) / 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    {benchmarks.map(b => (
+                      <div key={b.symbol}>
+                        <span className="text-muted-foreground">{b.symbol}:</span>{' '}
+                        <span className={`font-semibold ${b.returnPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {b.returnPercent >= 0 ? '+' : ''}{b.returnPercent.toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                    {/* Alpha calculation */}
+                    {benchmarks.length === 1 && (
+                      <div className="border-l border-border pl-4">
+                        <span className="text-muted-foreground">Alpha:</span>{' '}
+                        {(() => {
+                          const strategyReturn = ((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) / 100;
+                          const alpha = strategyReturn - benchmarks[0].returnPercent;
+                          return (
+                            <span className={`font-semibold ${alpha >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              {alpha >= 0 ? '+' : ''}{alpha.toFixed(1)}%
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart data={effectiveEquity}>
+                  <RechartsLineChart 
+                    data={(() => {
+                      // Merge equity data with benchmark data by date
+                      if (benchmarks.length === 0) return effectiveEquity;
+                      
+                      // Create a map of all dates to values
+                      const dateMap = new Map<string, any>();
+                      
+                      // Add strategy equity
+                      effectiveEquity.forEach(point => {
+                        const dateKey = point.date.split('T')[0];
+                        dateMap.set(dateKey, { 
+                          date: point.date, 
+                          strategy: point.value,
+                          drawdown: point.drawdown 
+                        });
+                      });
+                      
+                      // Add benchmark values
+                      benchmarks.forEach(benchmark => {
+                        benchmark.data.forEach(point => {
+                          const dateKey = point.date.split('T')[0];
+                          const existing = dateMap.get(dateKey);
+                          if (existing) {
+                            existing[benchmark.symbol] = point.value;
+                          }
+                        });
+                      });
+                      
+                      // Convert back to array and sort
+                      return Array.from(dateMap.values())
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    })()}
+                  >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis 
                       dataKey="date" 
@@ -713,16 +816,37 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     />
                     <Tooltip 
                       labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                      formatter={(val: number) => [`$${val.toFixed(2)}`, 'Equity']}
+                      formatter={(val: number, name: string) => [
+                        `$${val.toFixed(2)}`, 
+                        name === 'strategy' ? 'Strategy' : name
+                      ]}
                     />
+                    {benchmarks.length > 0 && <Legend />}
                     <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                    
+                    {/* Strategy line */}
                     <Line 
                       type="monotone" 
-                      dataKey="value" 
+                      dataKey={benchmarks.length > 0 ? "strategy" : "value"}
+                      name="Strategy"
                       stroke="hsl(var(--primary))" 
                       strokeWidth={2}
                       dot={false}
                     />
+                    
+                    {/* Benchmark lines */}
+                    {benchmarks.map(benchmark => (
+                      <Line
+                        key={benchmark.symbol}
+                        type="monotone"
+                        dataKey={benchmark.symbol}
+                        name={benchmark.symbol}
+                        stroke={benchmark.color}
+                        strokeWidth={1.5}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+                    ))}
                   </RechartsLineChart>
                 </ResponsiveContainer>
               </div>
