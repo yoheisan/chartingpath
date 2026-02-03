@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.fetch-yahoo-finance]
 verify_jwt = false
 
+[functions.fetch-alpha-vantage]
+verify_jwt = false
+
 [functions.generate-market-report]
 verify_jwt = false
 
