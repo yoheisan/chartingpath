@@ -31,6 +31,7 @@ export type DirectionFilter = 'all' | 'long' | 'short';
 export type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
 export type AgeFilter = 'all' | 'fresh' | 'recent' | 'aging';
 export type GradeFilter = 'all' | 'A' | 'B' | 'C' | 'D' | 'F';
+export type { FXPairCategory } from '@/utils/fxPairCategories';
 
 // Grade labels for display
 const GRADE_LABELS: Record<GradeFilter, string> = {
@@ -55,6 +56,7 @@ export interface ScreenerFiltersState {
   trend: TrendFilter;
   age: AgeFilter;
   grade: GradeFilter;
+  fxCategory?: 'all' | 'major' | 'minor' | 'exotic';
 }
 
 interface ScreenerFiltersProps {
@@ -81,7 +83,14 @@ interface ScreenerFiltersProps {
     freshCount: number;
     recentCount: number;
     agingCount: number;
+    // FX category counts (only populated for FX asset type)
+    fxMajor?: number;
+    fxMinor?: number;
+    fxExotic?: number;
   };
+  
+  // Whether to show FX-specific filters
+  showFXFilters?: boolean;
   
   // Callbacks
   onChange: (filters: Partial<ScreenerFiltersState>) => void;
@@ -94,12 +103,14 @@ export const DEFAULT_SCREENER_FILTERS: ScreenerFiltersState = {
   trend: 'all',
   age: 'all',
   grade: 'all',
+  fxCategory: 'all',
 };
 
 export function ScreenerFilters({
   patterns,
   filters,
   stats,
+  showFXFilters = false,
   onChange,
   onClear,
 }: ScreenerFiltersProps) {
@@ -108,8 +119,9 @@ export function ScreenerFilters({
            filters.pattern !== 'all' ||
            filters.trend !== 'all' ||
            filters.age !== 'all' ||
-           filters.grade !== 'all';
-  }, [filters]);
+           filters.grade !== 'all' ||
+           (showFXFilters && filters.fxCategory !== 'all');
+  }, [filters, showFXFilters]);
 
   return (
     <div className="space-y-3">
@@ -313,8 +325,93 @@ export function ScreenerFilters({
         </div>
       </div>
 
-      {/* Secondary Filter Row: Age Filter */}
+      {/* Secondary Filter Row: Age Filter + FX Category */}
       <div className="flex flex-wrap items-center gap-4">
+        {/* FX Category Filter - Only shown for FX asset type */}
+        {showFXFilters && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background p-1">
+                  <Button
+                    variant={filters.fxCategory === 'all' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => onChange({ fxCategory: 'all' })}
+                  >
+                    All Pairs
+                  </Button>
+                  <Button
+                    variant={filters.fxCategory === 'major' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      "h-7 px-2.5 text-xs gap-1",
+                      filters.fxCategory === 'major' && "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                    onClick={() => onChange({ fxCategory: 'major' })}
+                  >
+                    Major
+                    {(stats.fxMajor ?? 0) > 0 && (
+                      <Badge variant="outline" className={cn(
+                        "h-4 text-[10px] px-1",
+                        filters.fxCategory === 'major' ? "bg-blue-700/50 border-blue-500/50" : "bg-background"
+                      )}>
+                        {stats.fxMajor}
+                      </Badge>
+                    )}
+                  </Button>
+                  <Button
+                    variant={filters.fxCategory === 'minor' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      "h-7 px-2.5 text-xs gap-1",
+                      filters.fxCategory === 'minor' && "bg-purple-600 hover:bg-purple-700 text-white"
+                    )}
+                    onClick={() => onChange({ fxCategory: 'minor' })}
+                  >
+                    Minor
+                    {(stats.fxMinor ?? 0) > 0 && (
+                      <Badge variant="outline" className={cn(
+                        "h-4 text-[10px] px-1",
+                        filters.fxCategory === 'minor' ? "bg-purple-700/50 border-purple-500/50" : "bg-background"
+                      )}>
+                        {stats.fxMinor}
+                      </Badge>
+                    )}
+                  </Button>
+                  <Button
+                    variant={filters.fxCategory === 'exotic' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      "h-7 px-2.5 text-xs gap-1",
+                      filters.fxCategory === 'exotic' && "bg-amber-600 hover:bg-amber-700 text-white"
+                    )}
+                    onClick={() => onChange({ fxCategory: 'exotic' })}
+                  >
+                    Exotic
+                    {(stats.fxExotic ?? 0) > 0 && (
+                      <Badge variant="outline" className={cn(
+                        "h-4 text-[10px] px-1",
+                        filters.fxCategory === 'exotic' ? "bg-amber-700/50 border-amber-500/50" : "bg-background"
+                      )}>
+                        {stats.fxExotic}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm p-4">
+                <p className="font-semibold mb-2">FX Pair Categories</p>
+                <div className="text-xs space-y-2 text-muted-foreground">
+                  <div><strong className="text-blue-500">Major:</strong> USD paired with EUR, GBP, JPY, CHF, CAD, AUD, NZD. Most liquid, tightest spreads.</div>
+                  <div><strong className="text-purple-500">Minor:</strong> Major currencies without USD (crosses). Good liquidity, slightly wider spreads.</div>
+                  <div><strong className="text-amber-500">Exotic:</strong> Major currency + emerging market. Higher volatility, wider spreads, less historical data.</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         {/* Age Presets */}
         <TooltipProvider>
           <Tooltip>
@@ -439,3 +536,11 @@ export {
   calculateProjectedROI 
 } from '@/utils/rrCalculator';
 export type { RRTier } from '@/utils/rrCalculator';
+
+// Re-export FX category utilities
+export { 
+  classifyFXPair, 
+  filterByFXCategory, 
+  getFXCategoryCounts,
+  FX_CATEGORY_LABELS 
+} from '@/utils/fxPairCategories';

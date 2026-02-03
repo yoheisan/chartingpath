@@ -53,7 +53,9 @@ import {
   filterByAge,
   recalculateTradePlan,
   DEFAULT_RR,
-  calculateProjectedExpectancy
+  calculateProjectedExpectancy,
+  filterByFXCategory,
+  getFXCategoryCounts
 } from '@/components/screener/ScreenerFilters';
 
 // Full list of instruments available per asset class
@@ -533,6 +535,9 @@ export default function LivePatternsPage() {
     const gradeD = patterns.filter(p => getPatternGrade(p) === 'D').length;
     const gradeF = patterns.filter(p => getPatternGrade(p) === 'F').length;
     
+    // Calculate FX category counts (only relevant for FX asset type)
+    const fxCounts = assetType === 'fx' ? getFXCategoryCounts(patterns) : { major: 0, minor: 0, exotic: 0 };
+    
     return {
       total: patterns.length,
       filtered: 0, // Will be updated after filtering
@@ -546,9 +551,12 @@ export default function LivePatternsPage() {
       gradeC,
       gradeD,
       gradeF,
+      fxMajor: fxCounts.major,
+      fxMinor: fxCounts.minor,
+      fxExotic: fxCounts.exotic,
       ...ageStats,
     };
-  }, [patterns]);
+  }, [patterns, assetType]);
 
   // Filter patterns with new filter system
   const filteredPatterns = useMemo(() => {
@@ -563,8 +571,13 @@ export default function LivePatternsPage() {
     // Apply age filter
     result = filterByAge(result, filters.age) as typeof result;
     
+    // Apply FX category filter (only for FX asset type)
+    if (assetType === 'fx' && filters.fxCategory && filters.fxCategory !== 'all') {
+      result = filterByFXCategory(result, filters.fxCategory) as typeof result;
+    }
+    
     return result;
-  }, [patterns, filters]);
+  }, [patterns, filters, assetType]);
 
   // Update filtered count in stats
   const fullFilterStats = useMemo(() => ({
@@ -966,6 +979,7 @@ export default function LivePatternsPage() {
           patterns={patternOptions}
           filters={filters}
           stats={fullFilterStats}
+          showFXFilters={assetType === 'fx'}
           onChange={(partial) => setFilters(prev => ({ ...prev, ...partial }))}
           onClear={() => setFilters(DEFAULT_SCREENER_FILTERS)}
         />
