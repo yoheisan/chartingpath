@@ -62,7 +62,7 @@ type RRTier = 2 | 3 | 4 | 5;
 const DEFAULT_RR_TIER: RRTier = 2;
 
 // Cache computed historical stats in-memory to keep the DB-cache fast path responsive.
-// Key is now "patternId|symbol|rrTier" for per-asset, per-tier stats.
+// Key: "patternId|symbol|timeframe|rrTier" for per-asset, per-timeframe, per-tier stats.
 const patternSymbolStatsCache = new Map<string, { stats: PatternStats; ts: number }>();
 const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
 
@@ -92,9 +92,9 @@ function toHistoricalPerformance(stats: PatternStats) {
   };
 }
 
-// Build a cache key for pattern+symbol+rrTier combination
-function getStatsKey(patternId: string, symbol: string, rrTier: RRTier = 2): string {
-  return `${patternId}|${symbol}|${rrTier}`;
+// Build a cache key for pattern+symbol+timeframe+rrTier combination
+function getStatsKey(patternId: string, symbol: string, timeframe: string, rrTier: RRTier = 2): string {
+  return `${patternId}|${symbol}|${timeframe}|${rrTier}`;
 }
 
 // Normalize symbol for DB lookup (Yahoo symbol -> DB symbol)
@@ -145,6 +145,7 @@ async function loadFromDbCache(
 async function fetchPatternSymbolStats(
   supabase: any, 
   patternSymbolPairs: Array<{ patternId: string; symbol: string }>,
+  timeframe: string,
   rrTier: RRTier = DEFAULT_RR_TIER
 ): Promise<Map<string, PatternStats>> {
   const statsMap = new Map<string, PatternStats>();
@@ -156,9 +157,9 @@ async function fetchPatternSymbolStats(
   const now = Date.now();
   const toFetch: Array<{ patternId: string; symbol: string }> = [];
   
-  // Check cache first (now includes rrTier in key)
+  // Check cache first (now includes timeframe + rrTier in key)
   for (const pair of patternSymbolPairs) {
-    const key = getStatsKey(pair.patternId, pair.symbol, rrTier);
+    const key = getStatsKey(pair.patternId, pair.symbol, timeframe, rrTier);
     const cached = patternSymbolStatsCache.get(key);
     if (cached && now - cached.ts < PATTERN_STATS_TTL_MS) {
       statsMap.set(key, cached.stats);
@@ -176,15 +177,17 @@ async function fetchPatternSymbolStats(
     const uniquePatternIds = [...new Set(toFetch.map(p => p.patternId))];
     const uniqueSymbols = [...new Set(toFetch.map(p => normalizeSymbolForStats(p.symbol)))];
     
-    console.info(`[fetchPatternSymbolStats] Fetching from DB: ${toFetch.length} pairs, rrTier=${rrTier}`);
+    console.info(`[fetchPatternSymbolStats] Fetching from DB: ${toFetch.length} pairs, timeframe=${timeframe}, rrTier=${rrTier}`);
     
     // Determine which columns to select based on R:R tier
     const outcomeCol = rrTier === 2 ? 'outcome' : `outcome_rr${rrTier}`;
     const pnlCol = rrTier === 2 ? 'outcome_pnl_percent' : `outcome_pnl_percent_rr${rrTier}`;
     const barsCol = rrTier === 2 ? 'bars_to_outcome' : `bars_to_outcome_rr${rrTier}`;
     
-    // Fetch ALL records with pagination
-    const PAGE_SIZE = 5000;
+    // Fetch ALL records with pagination.
+    // NOTE: PostgREST/Supabase often enforces a server-side max rows limit (commonly 1000).
+    // Using a larger page size can cause us to incorrectly think there are no more pages.
+    const PAGE_SIZE = 1000;
     let allData: any[] = [];
     let page = 0;
     let hasMore = true;
@@ -195,6 +198,7 @@ async function fetchPatternSymbolStats(
         .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, detected_at`)
         .in('pattern_id', uniquePatternIds)
         .in('symbol', uniqueSymbols)
+        .eq('timeframe', timeframe)
         .not(outcomeCol, 'is', null)
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
       
@@ -256,7 +260,7 @@ async function fetchPatternSymbolStats(
       }
     }
     
-    // Build stats for each pair (key now includes rrTier)
+    // Build stats for each pair (key now includes timeframe + rrTier)
     for (const [baseKey, e] of grouped) {
       if (e.total > 0) {
         const stats: PatternStats = {
@@ -272,7 +276,7 @@ async function fetchPatternSymbolStats(
             fiveYear: e.count5y > 0 ? Math.round(e.roi5y * 10) / 10 : null,
           },
         };
-        const fullKey = `${baseKey}|${rrTier}`;
+        const fullKey = `${baseKey}|${timeframe}|${rrTier}`;
         statsMap.set(fullKey, stats);
         patternSymbolStatsCache.set(fullKey, { stats, ts: now });
       }
@@ -280,12 +284,12 @@ async function fetchPatternSymbolStats(
     
     // For requested pairs that didn't get stats, check if we need to map Yahoo symbols
     for (const pair of toFetch) {
-      const yahooKey = getStatsKey(pair.patternId, pair.symbol, rrTier);
+      const yahooKey = getStatsKey(pair.patternId, pair.symbol, timeframe, rrTier);
       if (statsMap.has(yahooKey)) continue;
       
       // Try with normalized symbol
       const normalizedSymbol = normalizeSymbolForStats(pair.symbol);
-      const normalizedKey = `${pair.patternId}|${normalizedSymbol}|${rrTier}`;
+      const normalizedKey = `${pair.patternId}|${normalizedSymbol}|${timeframe}|${rrTier}`;
       const normalizedStats = statsMap.get(normalizedKey);
       if (normalizedStats) {
         statsMap.set(yahooKey, normalizedStats);
@@ -293,7 +297,7 @@ async function fetchPatternSymbolStats(
       }
     }
     
-    console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at rrTier=${rrTier}`);
+    console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at timeframe=${timeframe}, rrTier=${rrTier}`);
     return statsMap;
   } catch (err: any) {
     console.error('[fetchPatternSymbolStats] Exception:', err.message);
@@ -584,7 +588,7 @@ async function readCachedPatternsFromDb(
     console.info(`[scan-live-patterns] Enriching ${pairsToEnrich.length} patterns with per-asset stats`);
 
     if (pairsToEnrich.length) {
-      const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich, rrTier);
+      const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich, timeframe, rrTier);
       console.info(`[scan-live-patterns] Per-asset stats enrichment returned ${stats.size} entries (rrTier=${rrTier})`);
 
       // Track which DB rows should be updated so future fast-path calls are instant.
@@ -593,11 +597,17 @@ async function readCachedPatternsFromDb(
       let enrichedCount = 0;
       let clearedCount = 0;
       patterns = patterns.map((p: any) => {
-        const key = getStatsKey(p.patternId, p.instrument, rrTier);
+        const key = getStatsKey(p.patternId, p.instrument, timeframe, rrTier);
         const s = stats.get(key);
         
-        // If no per-symbol stats exist but we have suspect (pattern-level) cached stats, clear them
+        // If we couldn't compute fresh per-symbol stats:
+        // - Keep a non-suspect cached value (prevents Win% from showing as "—")
+        // - Otherwise clear suspect fallbacks and omit
         if (!s) {
+          if (p.historicalPerformance && !isStatsSuspect(p.historicalPerformance)) {
+            return p;
+          }
+
           if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
             // Clear the stale pattern-level fallback from DB
             updatesToPerform.push({ id: p.dbId, hp: null });
@@ -611,9 +621,17 @@ async function readCachedPatternsFromDb(
         enrichedCount++;
         const hp = toHistoricalPerformance(s);
         
-        // Only backfill DB if stats differ from cached or cached is suspect
-        if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
-          updatesToPerform.push({ id: p.dbId, hp });
+        // Backfill DB if cached is suspect OR differs from computed.
+        if (p.dbId) {
+          const cached = p.historicalPerformance;
+          const differs =
+            !cached ||
+            cached?.sampleSize !== hp.sampleSize ||
+            cached?.winRate !== hp.winRate ||
+            cached?.avgRMultiple !== hp.avgRMultiple;
+          if (isStatsSuspect(cached) || differs) {
+            updatesToPerform.push({ id: p.dbId, hp });
+          }
         }
 
         return { ...p, historicalPerformance: hp };
@@ -874,14 +892,14 @@ serve(async (req) => {
     
     // Fetch per-(pattern, symbol) stats for unique ROI per asset
     const patternSymbolPairs = detectedPatterns.map(p => ({ patternId: p.patternId, symbol: p.instrument }));
-    const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs, rrTier);
+    const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs, timeframe, rrTier);
     console.info(`[scan-live-patterns] Slow path: per-asset patternStats size=${patternStats.size}, detected=${detectedPatterns.length}, rrTier=${rrTier}`);
     
     let statsAttachedCount = 0;
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
-      const statsKey = getStatsKey(pattern.patternId, pattern.instrument, rrTier);
+      const statsKey = getStatsKey(pattern.patternId, pattern.instrument, timeframe, rrTier);
       const stats = patternStats.get(statsKey);
       if (stats) statsAttachedCount++;
       return { 
