@@ -459,6 +459,250 @@ const PATTERN_REGISTRY: Record<string, {
         ] : []
       };
     }
+  },
+  'bull-flag': {
+    direction: 'long',
+    displayName: 'Bull Flag',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Flagpole: Strong uptrend in first 8 bars (at least 5% gain)
+      const poleStart = 0;
+      const poleEnd = 7;
+      const poleGain = (closes[poleEnd] - closes[poleStart]) / closes[poleStart];
+      if (poleGain < 0.05) return { detected: false, pivots: [] };
+      
+      // Flag: Consolidation/pullback in bars 8-18 (range < 4% and slight downward drift)
+      const flagBars = closes.slice(8, 18);
+      const flagHighs = highs.slice(8, 18);
+      const flagLows = lows.slice(8, 18);
+      const flagHigh = Math.max(...flagHighs);
+      const flagLow = Math.min(...flagLows);
+      const flagRange = (flagHigh - flagLow) / flagLow;
+      const flagDrift = (flagBars[flagBars.length - 1] - flagBars[0]) / flagBars[0];
+      
+      if (flagRange > 0.04 || flagDrift > 0.02) return { detected: false, pivots: [] };
+      
+      // Breakout: Last close breaks above flag high
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > flagHigh * 1.005;
+      
+      return {
+        detected,
+        patternStartIndex: poleStart,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: poleStart, price: closes[poleStart], type: 'low', label: 'Pole Start' },
+          { index: poleEnd, price: closes[poleEnd], type: 'high', label: 'Pole End' },
+          { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+        ] : []
+      };
+    }
+  },
+  'bear-flag': {
+    direction: 'short',
+    displayName: 'Bear Flag',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Flagpole: Strong downtrend in first 8 bars (at least 5% drop)
+      const poleStart = 0;
+      const poleEnd = 7;
+      const poleDrop = (closes[poleStart] - closes[poleEnd]) / closes[poleStart];
+      if (poleDrop < 0.05) return { detected: false, pivots: [] };
+      
+      // Flag: Consolidation/bounce in bars 8-18 (range < 4% and slight upward drift)
+      const flagBars = closes.slice(8, 18);
+      const flagHighs = highs.slice(8, 18);
+      const flagLows = lows.slice(8, 18);
+      const flagHigh = Math.max(...flagHighs);
+      const flagLow = Math.min(...flagLows);
+      const flagRange = (flagHigh - flagLow) / flagLow;
+      const flagDrift = (flagBars[flagBars.length - 1] - flagBars[0]) / flagBars[0];
+      
+      if (flagRange > 0.04 || flagDrift < -0.02) return { detected: false, pivots: [] };
+      
+      // Breakdown: Last close breaks below flag low
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < flagLow * 0.995;
+      
+      return {
+        detected,
+        patternStartIndex: poleStart,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: poleStart, price: closes[poleStart], type: 'high', label: 'Pole Start' },
+          { index: poleEnd, price: closes[poleEnd], type: 'low', label: 'Pole End' },
+          { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+        ] : []
+      };
+    }
+  },
+  'cup-and-handle': {
+    direction: 'long',
+    displayName: 'Cup & Handle',
+    detector: (window) => {
+      if (window.length < 30) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Cup: Find U-shaped formation (rims at similar levels, bottom 10-30% below rims)
+      const leftRim = Math.max(...highs.slice(0, 5));
+      const rightRimArea = highs.slice(18, 25);
+      const rightRim = rightRimArea.length > 0 ? Math.max(...rightRimArea) : 0;
+      const cupBottom = Math.min(...lows.slice(5, 18));
+      
+      const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
+      const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
+      
+      if (rimDiff > 0.05 || cupDepth < 0.10 || cupDepth > 0.35) return { detected: false, pivots: [] };
+      
+      // Handle: Small pullback after right rim (5-15% of cup depth, bars 25-28)
+      const handleLows = lows.slice(25, 29);
+      if (handleLows.length === 0) return { detected: false, pivots: [] };
+      const handleLow = Math.min(...handleLows);
+      const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+      
+      if (handleDepth < 0.05 || handleDepth > 0.50) return { detected: false, pivots: [] };
+      
+      // Breakout: Last close breaks above right rim
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > rightRim * 1.002;
+      
+      const leftRimIdx = highs.slice(0, 5).indexOf(leftRim);
+      const cupBottomIdx = 5 + lows.slice(5, 18).indexOf(cupBottom);
+      const rightRimIdx = 18 + rightRimArea.indexOf(rightRim);
+      
+      return {
+        detected,
+        patternStartIndex: leftRimIdx,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
+          { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
+          { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
+          { index: 25 + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+        ] : []
+      };
+    }
+  },
+  'triple-top': {
+    direction: 'short',
+    displayName: 'Triple Top',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find 3 significant peaks
+      const peaks: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+      }
+      
+      if (peaks.length < 3) return { detected: false, pivots: [] };
+      
+      // Check last 3 peaks are at similar levels (within 3% range)
+      const lastThreePeaks = peaks.slice(-3);
+      const avgPeak = lastThreePeaks.reduce((a, p) => a + p.value, 0) / 3;
+      const allSimilar = lastThreePeaks.every(p => Math.abs(p.value - avgPeak) / avgPeak < 0.03);
+      
+      if (!allSimilar) return { detected: false, pivots: [] };
+      
+      // Find neckline (lowest low between first and last peak)
+      let neckline = Infinity;
+      let necklineIdx = lastThreePeaks[0].index;
+      for (let i = lastThreePeaks[0].index; i <= lastThreePeaks[2].index; i++) {
+        if (lows[i] < neckline) {
+          neckline = lows[i];
+          necklineIdx = i;
+        }
+      }
+      
+      // Breakdown confirmation
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < neckline * 0.998;
+      
+      return {
+        detected,
+        patternStartIndex: lastThreePeaks[0].index - 2,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: lastThreePeaks[0].index, price: lastThreePeaks[0].value, type: 'high', label: 'Top 1' },
+          { index: lastThreePeaks[1].index, price: lastThreePeaks[1].value, type: 'high', label: 'Top 2' },
+          { index: lastThreePeaks[2].index, price: lastThreePeaks[2].value, type: 'high', label: 'Top 3' },
+          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
+        ] : []
+      };
+    }
+  },
+  'triple-bottom': {
+    direction: 'long',
+    displayName: 'Triple Bottom',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      // Find 3 significant troughs
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      
+      if (troughs.length < 3) return { detected: false, pivots: [] };
+      
+      // Check last 3 troughs are at similar levels (within 3% range)
+      const lastThreeTroughs = troughs.slice(-3);
+      const avgTrough = lastThreeTroughs.reduce((a, t) => a + t.value, 0) / 3;
+      const allSimilar = lastThreeTroughs.every(t => Math.abs(t.value - avgTrough) / avgTrough < 0.03);
+      
+      if (!allSimilar) return { detected: false, pivots: [] };
+      
+      // Find neckline (highest high between first and last trough)
+      let neckline = -Infinity;
+      let necklineIdx = lastThreeTroughs[0].index;
+      for (let i = lastThreeTroughs[0].index; i <= lastThreeTroughs[2].index; i++) {
+        if (highs[i] > neckline) {
+          neckline = highs[i];
+          necklineIdx = i;
+        }
+      }
+      
+      // Breakout confirmation
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > neckline * 1.002;
+      
+      return {
+        detected,
+        patternStartIndex: lastThreeTroughs[0].index - 2,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: lastThreeTroughs[0].index, price: lastThreeTroughs[0].value, type: 'low', label: 'Bottom 1' },
+          { index: lastThreeTroughs[1].index, price: lastThreeTroughs[1].value, type: 'low', label: 'Bottom 2' },
+          { index: lastThreeTroughs[2].index, price: lastThreeTroughs[2].value, type: 'low', label: 'Bottom 3' },
+          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
+        ] : []
+      };
+    }
   }
 };
 
