@@ -161,3 +161,6 @@ verify_jwt = false
 
 [functions.compute-multi-rr-outcomes]
 verify_jwt = false
+
+[functions.trigger-backfill]
+verify_jwt = false
