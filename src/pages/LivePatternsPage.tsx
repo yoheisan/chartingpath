@@ -666,6 +666,63 @@ export default function LivePatternsPage() {
     };
   };
 
+  // Map snake_case API response (from get-live-pattern-details edge function) to camelCase LiveSetup
+  const mapApiResponseToLiveSetup = (apiPattern: any): LiveSetup => {
+    // Check if we need to convert (snake_case) or if it's already camelCase
+    const needsConversion = apiPattern.pattern_name || apiPattern.entry_price;
+    
+    if (!needsConversion) {
+      // Already in camelCase format (from scan-live-patterns)
+      return apiPattern as LiveSetup;
+    }
+    
+    // Map letter grade to numeric score
+    const gradeToScore: Record<string, number> = { A: 9, B: 7, C: 5, D: 3, F: 1 };
+    const rawGrade = (apiPattern.quality_score || 'C').toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'F';
+    const numericScore = gradeToScore[rawGrade] ?? 5;
+    
+    // Convert snake_case to camelCase
+    return {
+      dbId: apiPattern.id,
+      instrument: apiPattern.instrument,
+      patternId: apiPattern.pattern_id || apiPattern.visual_spec?.patternId || 'unknown',
+      patternName: apiPattern.pattern_name,
+      direction: apiPattern.direction === 'bullish' ? 'long' : apiPattern.direction === 'bearish' ? 'short' : apiPattern.direction,
+      signalTs: apiPattern.first_detected_at,
+      quality: {
+        score: numericScore,
+        grade: rawGrade,
+        confidence: numericScore * 10,
+        reasons: apiPattern.quality_reasons || ['Pattern detected'],
+        warnings: [],
+        tradeable: numericScore >= 3,
+      },
+      tradePlan: {
+        entry: apiPattern.entry_price,
+        stopLoss: apiPattern.stop_loss_price,
+        takeProfit: apiPattern.take_profit_price,
+        rr: apiPattern.risk_reward_ratio || 2,
+        entryType: 'bar_close',
+        stopDistance: Math.abs(apiPattern.entry_price - apiPattern.stop_loss_price),
+        tpDistance: Math.abs(apiPattern.take_profit_price - apiPattern.entry_price),
+      },
+      bars: (apiPattern.bars || []).map((b: any) => ({
+        t: b.t || b.date,
+        o: b.o || b.open,
+        h: b.h || b.high,
+        l: b.l || b.low,
+        c: b.c || b.close,
+        v: b.v || b.volume || 0,
+      })),
+      visualSpec: apiPattern.visual_spec,
+      currentPrice: apiPattern.current_price,
+      prevClose: apiPattern.prev_close,
+      changePercent: apiPattern.change_percent,
+      trendAlignment: apiPattern.trend_alignment,
+      trendIndicators: apiPattern.trend_indicators,
+    };
+  };
+
   const toSetupWithVisuals = (setup: LiveSetup): SetupWithVisuals & {
     currentPrice?: number;
     prevClose?: number;
@@ -753,7 +810,7 @@ export default function LivePatternsPage() {
         const cached = getAndConsume(setup.dbId);
         if (cached) {
           console.debug('[LivePatternsPage] Using prefetched data', { requestId, dbId: setup.dbId });
-          setSelectedSetup(toSetupWithVisuals(cached));
+          setSelectedSetup(toSetupWithVisuals(mapApiResponseToLiveSetup(cached)));
           return; // Done! No network request needed
         }
       }
@@ -795,7 +852,7 @@ export default function LivePatternsPage() {
           // Ignore stale responses if user opened a different setup while this was in-flight.
           if (chartDetailsRequestIdRef.current !== requestId) return;
 
-          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+          setSelectedSetup(toSetupWithVisuals(mapApiResponseToLiveSetup(res.data.pattern)));
           return;
         } catch (err: any) {
           lastErr = err;
