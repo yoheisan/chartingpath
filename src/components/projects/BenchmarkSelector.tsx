@@ -66,18 +66,18 @@ const BenchmarkSelector = ({
       // Extend start date back a bit to ensure we capture first equity point
       start.setDate(start.getDate() - 7);
       
-      const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
+      // Use Alpha Vantage for more reliable benchmark data
+      const { data, error } = await supabase.functions.invoke('fetch-alpha-vantage', {
         body: {
           symbol,
-          interval: '1d',
           startDate: start.toISOString().split('T')[0],
           endDate: end.toISOString().split('T')[0],
-          includeOhlc: true,
+          outputSize: 'full', // Get full history
         }
       });
 
       if (error || !data?.bars?.length) {
-        console.error('Failed to fetch benchmark:', symbol, error);
+        console.error('Failed to fetch benchmark:', symbol, error, data);
         setSelectedBenchmarks(prev => prev.filter(s => s !== symbol));
         return;
       }
