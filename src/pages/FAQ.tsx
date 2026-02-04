@@ -1786,6 +1786,386 @@ const FAQ = () => {
           ]
         }
       ]
+    },
+    "script-export": {
+      title: "Script Export",
+      icon: <Code2 className="h-5 w-5" />,
+      description: "Exporting pattern trades to TradingView, MetaTrader, and other platforms",
+      sections: [
+        {
+          category: "Pattern-to-Script Workflow",
+          questions: [
+            {
+              question: "How do I export a detected pattern as an executable script?",
+              answer: (
+                <div className="space-y-4">
+                  <p>When you find an active pattern in the Screener or Pattern Lab, you can export it as a ready-to-deploy trading script for TradingView, MT4, or MT5.</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Export Workflow</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">1</Badge>
+                        <div>
+                          <strong>Find Pattern:</strong> Identify an active pattern in the Screener or Pattern Lab results
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">2</Badge>
+                        <div>
+                          <strong>Click Export:</strong> Select "Export Script" and choose your platform (Pine Script, MT4, or MT5)
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">3</Badge>
+                        <div>
+                          <strong>Deploy Script:</strong> Paste the code into TradingView's Pine Editor or MetaEditor
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">4</Badge>
+                        <div>
+                          <strong>Execute Trade:</strong> Script auto-enters at current market price with calculated SL/TP
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Supported Platforms:</strong> TradingView Pine Script v5, MetaTrader 4 (MQL4), MetaTrader 5 (MQL5)</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What happens if the price has moved since the pattern was detected?",
+              answer: (
+                <div className="space-y-4">
+                  <p>This is a common scenario in trading. Our exported scripts use <strong>Dynamic Entry Logic</strong> to handle stale entries intelligently.</p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-bullish/20 border border-bullish/30 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="h-4 w-4 text-bullish" />
+                        </div>
+                        <h4 className="font-semibold">Market Entry + Recalculated Brackets</h4>
+                      </div>
+                      <div className="text-sm space-y-2">
+                        <p>When deployed, the script enters at the <strong>current market price</strong> (not the original detection price).</p>
+                        <p>Stop Loss and Take Profit are <strong>recalculated dynamically</strong> to maintain the same Risk:Reward ratio.</p>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Example</h4>
+                      <div className="text-xs space-y-2 font-mono">
+                        <div><span className="text-muted-foreground">Original Detection:</span></div>
+                        <div>Entry: 1.0850 | SL: 1.0800 | TP: 1.1000</div>
+                        <div className="pt-2"><span className="text-muted-foreground">At Deployment (price moved to 1.0900):</span></div>
+                        <div>Entry: 1.0900 | SL: 1.0845 | TP: 1.1065</div>
+                        <div className="pt-2 text-bullish">R:R Ratio: Preserved at 1:3</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">How SL/TP Recalculation Works:</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Script uses ATR (Average True Range) × 2 for stop distance</li>
+                      <li>• Take Profit = Stop Distance × Your Target R:R</li>
+                      <li>• This maintains consistent risk per trade regardless of entry price</li>
+                    </ul>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What if the Stop Loss was already hit before I deployed the script?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The exported script includes an <strong>SL Breach Detection</strong> system that warns you if the original stop loss level was already violated.</p>
+                  <div className="border-l-4 border-orange-500 pl-4 py-2 bg-orange-50 dark:bg-orange-950/20 rounded-r-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                      <h4 className="font-semibold text-orange-700 dark:text-orange-400">Warning Behavior</h4>
+                    </div>
+                    <p className="text-sm text-orange-700 dark:text-orange-300">If the original SL was breached, you'll see a visual warning label on the chart:</p>
+                    <div className="mt-2 bg-orange-100 dark:bg-orange-900/30 p-2 rounded text-xs font-mono">
+                      ⚠️ SL BREACHED<br/>
+                      Original SL: 1.0800<br/>
+                      Proceed with caution
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">Your Options When SL is Breached:</h4>
+                    <div className="grid md:grid-cols-2 gap-3 text-sm">
+                      <div className="border rounded p-3">
+                        <strong className="text-green-600">✓ Proceed Anyway</strong>
+                        <p className="text-xs text-muted-foreground mt-1">The trade still executes. You believe the pattern remains valid despite the breach.</p>
+                      </div>
+                      <div className="border rounded p-3">
+                        <strong className="text-red-600">✗ Cancel Trade</strong>
+                        <p className="text-xs text-muted-foreground mt-1">Remove the script. The pattern thesis is invalidated—look for fresh setups.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> If SL was breached, the pattern's original thesis may be invalid. Consider the breach a signal to re-evaluate rather than force the trade.</p>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: "Platform Deployment",
+          questions: [
+            {
+              question: "How do I deploy a script to TradingView?",
+              answer: (
+                <div className="space-y-4">
+                  <p>TradingView deployment is straightforward with our exported Pine Script v5 code.</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Step-by-Step Deployment</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">1</Badge>
+                        <div>
+                          <strong>Open Pine Editor:</strong> In TradingView, click "Pine Editor" tab at the bottom of the chart
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">2</Badge>
+                        <div>
+                          <strong>Paste Code:</strong> Delete any existing code and paste the exported script
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">3</Badge>
+                        <div>
+                          <strong>Add to Chart:</strong> Click "Add to Chart" button. The strategy appears on your chart
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">4</Badge>
+                        <div>
+                          <strong>Verify Timeframe:</strong> Ensure your chart timeframe matches the pattern's timeframe (e.g., 1D, 4H)
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">5</Badge>
+                        <div>
+                          <strong>Configure Inputs:</strong> Click the settings gear to adjust Risk %, R:R ratio, and other parameters
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">For Backtesting</h4>
+                      <p className="text-xs text-muted-foreground">The script runs as a "strategy" so you can see historical performance in the Strategy Tester tab.</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">For Live Alerts</h4>
+                      <p className="text-xs text-muted-foreground">Right-click the strategy on chart → "Add Alert" to receive notifications when signals trigger.</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "How do I deploy a script to MetaTrader 4 or 5?",
+              answer: (
+                <div className="space-y-4">
+                  <p>MetaTrader deployment requires compiling the EA (Expert Advisor) code in MetaEditor.</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Step-by-Step Deployment</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">1</Badge>
+                        <div>
+                          <strong>Open MetaEditor:</strong> In MT4/MT5, press F4 or click Tools → MetaQuotes Language Editor
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">2</Badge>
+                        <div>
+                          <strong>Create New EA:</strong> File → New → Expert Advisor → Enter a name → Next → Finish
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">3</Badge>
+                        <div>
+                          <strong>Paste Code:</strong> Replace all generated code with the exported MQ4/MQ5 script
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">4</Badge>
+                        <div>
+                          <strong>Compile:</strong> Press F7 or click Compile. Check for 0 errors in the log
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">5</Badge>
+                        <div>
+                          <strong>Attach to Chart:</strong> In MT4/MT5, find the EA in Navigator → Expert Advisors → Drag onto chart
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline" className="mt-0.5">6</Badge>
+                        <div>
+                          <strong>Enable Auto Trading:</strong> Click "AutoTrading" button in toolbar (must show green)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                      <strong className="text-sm text-orange-700 dark:text-orange-400">Important Settings</strong>
+                    </div>
+                    <ul className="text-xs text-orange-700 dark:text-orange-300 space-y-1">
+                      <li>• In EA Properties: Enable "Allow live trading"</li>
+                      <li>• In Tools → Options → Expert Advisors: Check "Allow automated trading"</li>
+                      <li>• Test on demo account first before live trading</li>
+                    </ul>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: "Script Behavior",
+          questions: [
+            {
+              question: "How does the script calculate position size?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The exported scripts use <strong>Risk-Based Position Sizing</strong> to automatically calculate lot size based on your account and risk parameters.</p>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-3">Position Size Formula</h4>
+                    <div className="bg-card border border-border rounded p-3 font-mono text-sm">
+                      <div>Risk Amount = Account Balance × (Risk % / 100)</div>
+                      <div className="mt-2">Stop Distance = ATR(14) × 2</div>
+                      <div className="mt-2">Position Size = Risk Amount / Stop Distance</div>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">Example Calculation</h4>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <strong>Inputs:</strong>
+                        <ul className="text-xs mt-1 space-y-1">
+                          <li>• Account Balance: $10,000</li>
+                          <li>• Risk Per Trade: 1%</li>
+                          <li>• ATR(14): 0.0050</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <strong>Calculation:</strong>
+                        <ul className="text-xs mt-1 space-y-1">
+                          <li>• Risk Amount: $100</li>
+                          <li>• Stop Distance: 0.0100 (100 pips)</li>
+                          <li>• Position Size: 0.10 lots</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Adjustable:</strong> You can change the Risk % in the script's input parameters to control position size. Lower risk = smaller positions.</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the fill model used by the exported scripts?",
+              answer: (
+                <div className="space-y-4">
+                  <p>All exported scripts use the <strong>Bar-Close Signal, Next-Bar-Open Fill</strong> model to match our backtest engine.</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Execution Model</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center font-semibold">1</div>
+                        <div>
+                          <strong>Signal Evaluation:</strong> Entry conditions checked only when bar closes (confirmed)
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center font-semibold">2</div>
+                        <div>
+                          <strong>Order Placement:</strong> If conditions met, order queued for next bar
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center font-semibold">3</div>
+                        <div>
+                          <strong>Fill Price:</strong> Trade executed at next bar's open price
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-700 dark:text-green-400 mb-2">Why This Matters</h4>
+                    <p className="text-sm text-green-700 dark:text-green-300">This model ensures <strong>backtest ↔ live parity</strong>. Your script's real performance should closely match the backtest results, avoiding the common "looks good in backtest, fails live" problem.</p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-1">TradingView</h4>
+                      <code className="text-xs text-muted-foreground">process_orders_on_close=false</code>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-1">MetaTrader</h4>
+                      <code className="text-xs text-muted-foreground">IsNewBar() + iATR(..., 1)</code>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "Can I customize the script after export?",
+              answer: (
+                <div className="space-y-4">
+                  <p>Absolutely! The exported code is fully editable and documented for customization.</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Commonly Customized Parameters</h4>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-2">
+                        <div className="border rounded p-2">
+                          <strong>Risk Per Trade %</strong>
+                          <p className="text-xs text-muted-foreground">Default: 1%. Adjust for your risk appetite.</p>
+                        </div>
+                        <div className="border rounded p-2">
+                          <strong>R:R Ratio</strong>
+                          <p className="text-xs text-muted-foreground">Default: Pattern's original ratio. Override to 2:1, 3:1, etc.</p>
+                        </div>
+                        <div className="border rounded p-2">
+                          <strong>ATR Multiplier</strong>
+                          <p className="text-xs text-muted-foreground">Default: 2×. Use 1.5× for tighter stops, 3× for wider.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="border rounded p-2">
+                          <strong>Entry Mode</strong>
+                          <p className="text-xs text-muted-foreground">Market entry (default) or use original detection price.</p>
+                        </div>
+                        <div className="border rounded p-2">
+                          <strong>SL Breach Warning</strong>
+                          <p className="text-xs text-muted-foreground">Enable/disable the warning label display.</p>
+                        </div>
+                        <div className="border rounded p-2">
+                          <strong>Magic Number (MT4/5)</strong>
+                          <p className="text-xs text-muted-foreground">Unique ID to track this EA's trades.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Advanced Users:</strong> The code includes clear section comments (=== INDICATORS ===, === EXECUTION ===) so you can easily find and modify specific logic blocks.</p>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
     }
   };
 
@@ -1835,7 +2215,7 @@ const FAQ = () => {
 
         {/* FAQ Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             {Object.entries(faqData).map(([key, data]) => (
               <TabsTrigger key={key} value={key} className="flex items-center gap-2">
                 {data.icon}
