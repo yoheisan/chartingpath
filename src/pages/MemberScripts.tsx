@@ -11,6 +11,7 @@ import MemberNavigation from "@/components/MemberNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PlatformImportGuide } from "@/components/scripts/PlatformImportGuide";
 
 // Pattern to strategy mapping for deep-linking from Screener/PatternLab
 const PATTERN_TO_STRATEGY_MAP: Record<string, string> = {
@@ -517,6 +518,9 @@ if shortCondition
             </div>
           </CardContent>
         </Card>
+
+        {/* Platform Import Guide */}
+        <PlatformImportGuide />
 
       {/* Preview Dialog */}
       <Dialog open={!!previewScript} onOpenChange={() => setPreviewScript(null)}>
