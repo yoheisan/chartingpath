@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,7 +25,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  Filter
+  Filter,
+  Play
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -71,6 +73,8 @@ interface HistoricalOccurrencesListProps {
   selectedRR?: number; // User-selected R:R for display consistency
   /** Callback when an occurrence is selected for viewing */
   onSelectOccurrence?: (setup: SetupWithVisuals) => void;
+  /** Enable "View in Dashboard" navigation for playback (default: true if onSelectOccurrence not provided) */
+  enableDashboardNavigation?: boolean;
 }
 
 type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
@@ -87,7 +91,12 @@ export function HistoricalOccurrencesList({
   className,
   selectedRR = 2,
   onSelectOccurrence,
+  enableDashboardNavigation,
 }: HistoricalOccurrencesListProps) {
+  const navigate = useNavigate();
+  
+  // Enable dashboard navigation if no callback provided (or explicitly enabled)
+  const shouldNavigateToDashboard = enableDashboardNavigation ?? !onSelectOccurrence;
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
   const [trendFilter, setTrendFilter] = useState<TrendFilter>('all');
@@ -324,10 +333,8 @@ export function HistoricalOccurrencesList({
     .filter(o => o.outcomePnlPercent !== null)
     .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
 
-  // Handler to convert occurrence to SetupWithVisuals and open chart
+  // Handler to convert occurrence to SetupWithVisuals and open chart (or navigate to dashboard)
   const handleOpenChart = (occurrence: HistoricalOccurrence) => {
-    if (!onSelectOccurrence) return;
-    
     // Map outcome back to the database format
     const outcomeMap: Record<string, 'hit_tp' | 'hit_sl' | 'timeout' | 'pending'> = {
       'win': 'hit_tp',
@@ -338,6 +345,9 @@ export function HistoricalOccurrencesList({
     // Calculate entryBarIndex from visualSpec or default to 30 bars before end
     const entryBarIndex = occurrence.visualSpec?.entryBarIndex ?? 
       Math.max(0, occurrence.bars.length - (occurrence.barsToOutcome ?? 1) - 1);
+    
+    // Check if this occurrence has playback data
+    const hasPlaybackData = occurrence.barsToOutcome != null && occurrence.bars?.length > 0;
     
     const setup: SetupWithVisuals = {
       instrument: occurrence.symbol,
@@ -384,7 +394,26 @@ export function HistoricalOccurrencesList({
       entryBarIndex,
     };
     
-    onSelectOccurrence(setup);
+    // If callback provided, use it; otherwise navigate to dashboard with playback context
+    if (onSelectOccurrence) {
+      onSelectOccurrence(setup);
+    } else if (shouldNavigateToDashboard && hasPlaybackData) {
+      // Navigate to dashboard with pattern context for playback
+      navigate('/members/dashboard', {
+        state: {
+          playbackPattern: {
+            occurrenceId: occurrence.id,
+            symbol: occurrence.symbol,
+            timeframe: timeframe,
+            patternId: patternId,
+            patternName: occurrence.patternName,
+            direction: occurrence.direction,
+            setup,
+            enablePlayback: true,
+          }
+        }
+      });
+    }
   };
 
   return (
@@ -542,7 +571,13 @@ export function HistoricalOccurrencesList({
           <div className="space-y-2">
             {filteredOccurrences.length > 0 ? (
               filteredOccurrences.map((occurrence) => (
-                <OccurrenceRow key={occurrence.id} occurrence={occurrence} selectedRR={selectedRR} onOpenChart={handleOpenChart} />
+                <OccurrenceRow 
+                  key={occurrence.id} 
+                  occurrence={occurrence} 
+                  selectedRR={selectedRR} 
+                  onOpenChart={handleOpenChart}
+                  showPlaybackHint={shouldNavigateToDashboard && occurrence.barsToOutcome != null}
+                />
               ))
             ) : (
               <div className="text-center py-6 text-muted-foreground">
@@ -561,9 +596,11 @@ interface OccurrenceRowProps {
   occurrence: HistoricalOccurrence;
   selectedRR?: number;
   onOpenChart?: (occurrence: HistoricalOccurrence) => void;
+  /** Show playback hint (navigates to dashboard) */
+  showPlaybackHint?: boolean;
 }
 
-function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart }: OccurrenceRowProps) {
+function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart, showPlaybackHint }: OccurrenceRowProps) {
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'win': return 'text-bullish bg-bullish/10 border-bullish/30';
@@ -705,7 +742,15 @@ function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart }: OccurrenceRo
         </Badge>
       </div>
       
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+      {/* Playback indicator or chevron */}
+      {showPlaybackHint ? (
+        <div className="flex items-center gap-1 text-primary">
+          <Play className="h-3.5 w-3.5 fill-current" />
+          <span className="text-xs font-medium hidden sm:inline">Replay</span>
+        </div>
+      ) : (
+        <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+      )}
     </div>
   );
 }

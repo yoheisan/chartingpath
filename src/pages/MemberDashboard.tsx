@@ -1,9 +1,27 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useLocation } from "react-router-dom";
 import { CommandCenterLayout } from "@/components/command-center";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { SetupWithVisuals } from "@/types/VisualSpec";
+
+/** Route state passed when navigating from Historical Occurrences for playback */
+interface PlaybackPatternState {
+  playbackPattern?: {
+    occurrenceId: string;
+    symbol: string;
+    timeframe: string;
+    patternId: string;
+    patternName: string;
+    direction: 'long' | 'short';
+    setup: SetupWithVisuals;
+    enablePlayback: boolean;
+  };
+}
 
 const MemberDashboard = () => {
   const { user, loading: authLoading } = useRequireAuth();
+  const location = useLocation();
+  const routeState = location.state as PlaybackPatternState | null;
 
   // Loading state - auth check
   if (authLoading) {
@@ -22,7 +40,12 @@ const MemberDashboard = () => {
     return null;
   }
 
-  return <CommandCenterLayout userId={user.id} />;
+  return (
+    <CommandCenterLayout 
+      userId={user.id} 
+      initialPlaybackPattern={routeState?.playbackPattern}
+    />
+  );
 };
 
 export default MemberDashboard;
