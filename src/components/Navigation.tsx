@@ -37,6 +37,7 @@ import {
   DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Navigation = () => {
   const { t } = useTranslation();
@@ -264,11 +265,13 @@ const Navigation = () => {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72">
-                  <MobileNavContent />
-                  <div className="mt-6">
-                    <AuthButton />
-                  </div>
+                <SheetContent side="right" className="w-72 flex flex-col p-0">
+                  <ScrollArea className="flex-1 px-6">
+                    <MobileNavContent />
+                    <div className="mt-6 pb-6">
+                      <AuthButton />
+                    </div>
+                  </ScrollArea>
                 </SheetContent>
               </Sheet>
             </div>
