@@ -67,11 +67,6 @@ const Navigation = () => {
         Pattern Lab
       </Link>
       
-      {/* 3. Setup Finder */}
-      <Link to="/projects/setup-finder/new" className="flex items-center gap-2 text-muted-foreground py-2">
-        <Search className="h-5 w-5 text-emerald-500" />
-        Setup Finder
-      </Link>
       
       {/* 4. Scripts - Automate */}
       <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
@@ -150,11 +145,6 @@ const Navigation = () => {
               Pattern Lab
             </Link>
             
-            {/* 3. Setup Finder - Deep-dive research */}
-            <Link to="/projects/setup-finder/new" className={navLinkClass('/projects/setup-finder')}>
-              <Search className="h-4 w-4 text-emerald-500" />
-              Setup Finder
-            </Link>
               
             {/* 4. Scripts - Automate trading */}
             <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>

@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
-  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity
+  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -1190,7 +1190,7 @@ export default function LivePatternsPage() {
                 <span className="font-medium text-foreground">Data Coverage:</span>{' '}
                 Historical Win% is available for ~5,000 core instruments (S&P 500, Russell 2000, NASDAQ, major FX/Crypto). 
                 Extended pairs showing "—" can be analyzed on-demand via{' '}
-                <Link to="/projects/setup-finder" className="text-primary hover:underline">Setup Finder</Link>.
+                <Link to="/projects/pattern-lab/new" className="text-primary hover:underline">Pattern Lab</Link>.
               </div>
             </div>
           </div>
@@ -1417,13 +1417,13 @@ export default function LivePatternsPage() {
           <div>
             <h3 className="text-xl font-bold mb-2">Want Deeper Analysis?</h3>
             <p className="text-muted-foreground">
-              Run Setup Finder to get historical performance data, quality scores, and more patterns.
+              Run Pattern Lab to backtest historical performance, optimize R:R targets, and compare equity curves.
             </p>
           </div>
-          <Link to="/projects/setup-finder/new">
+          <Link to="/projects/pattern-lab/new">
             <Button size="lg" className="bg-gradient-to-r from-primary to-accent">
-              <Target className="h-5 w-5 mr-2" />
-              Run Setup Finder
+              <FlaskConical className="h-5 w-5 mr-2" />
+              Open Pattern Lab
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>

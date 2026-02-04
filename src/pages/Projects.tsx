@@ -38,20 +38,6 @@ interface ProjectTemplate {
 
 const projectTemplates: ProjectTemplate[] = [
   {
-    id: 'setup_finder',
-    type: 'setup_finder',
-    name: 'Setup Finder',
-    description: 'Deep-dive research on assets you have conviction on. Validate setups before you trade.',
-    icon: Search,
-    color: 'text-emerald-500',
-    gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent',
-    estimatedCredits: '5-15',
-    estimatedTime: '30-60s',
-    features: ['Your watchlist', 'Visual Proof', 'Pre-trade validation'],
-    badge: 'Research',
-    badgeVariant: 'default'
-  },
-  {
     id: 'pattern_lab',
     type: 'pattern_lab',
     name: 'Pattern Lab',
@@ -290,7 +276,6 @@ const Projects = () => {
   
   const handleStartProject = (templateId: string) => {
     const routes: Record<string, string> = {
-      setup_finder: '/projects/setup-finder/new',
       pattern_lab: '/projects/pattern-lab/new',
       portfolio_checkup: '/projects/portfolio-checkup/new',
       portfolio_sim: '/projects/portfolio-sim/new',
