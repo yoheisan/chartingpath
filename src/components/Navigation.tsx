@@ -63,24 +63,27 @@ const Navigation = () => {
         : 'text-muted-foreground hover:text-foreground'
     }`;
 
+  // Close mobile menu helper
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   // Mobile nav content - journey-aligned structure (Discover → Research → Execute → Automate)
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
       {/* 1. Screener - Discover signals */}
-      <Link to="/patterns/live" className="flex items-center gap-2 text-foreground font-medium py-2">
+      <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
         <Activity className="h-5 w-5 text-amber-500" />
         Screener
       </Link>
       
       {/* 2. Pattern Lab */}
-      <Link to="/projects/pattern-lab/new" className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+      <Link to="/projects/pattern-lab/new" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <FlaskConical className="h-5 w-5 text-violet-500" />
         Pattern Lab
       </Link>
       
       
       {/* 4. Scripts - Automate */}
-      <Link to="/members/scripts" className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+      <Link to="/members/scripts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <FileCode className="h-5 w-5 text-cyan-500" />
         Scripts
       </Link>
@@ -89,14 +92,14 @@ const Navigation = () => {
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Learning</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/chart-patterns/library" className="text-sm text-muted-foreground py-1">Pattern Library</Link>
-          <Link to="/learn" className="text-sm text-muted-foreground py-1">Blog & Articles</Link>
-          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
+          <Link to="/chart-patterns/library" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Library</Link>
+          <Link to="/learn" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Blog & Articles</Link>
+          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
         </div>
       </div>
       
       {/* 4. Pricing */}
-      <Link to="/projects/pricing" className="flex items-center gap-2 text-muted-foreground py-2">
+      <Link to="/projects/pricing" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
         Pricing
       </Link>
@@ -105,20 +108,20 @@ const Navigation = () => {
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Account</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/members/dashboard" className="text-sm text-muted-foreground py-1">Dashboard</Link>
-          <Link to="/vault" className="text-sm text-muted-foreground py-1">My Results</Link>
-          <Link to="/members/downloads" className="text-sm text-muted-foreground py-1">Downloads</Link>
-          <Link to="/members/account" className="text-sm text-muted-foreground py-1">Settings</Link>
+          <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Dashboard</Link>
+          <Link to="/vault" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">My Results</Link>
+          <Link to="/members/downloads" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Downloads</Link>
+          <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Settings</Link>
         </div>
       </div>
       
       <div className="border-t pt-4">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Tools</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground py-1">Pip Calculator</Link>
-          <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
-          <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
-          <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
+          <Link to="/tools/pip-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pip Calculator</Link>
+          <Link to="/tools/risk-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
+          <Link to="/tools/economic-calendar" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
+          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
         </div>
       </div>
     </div>
