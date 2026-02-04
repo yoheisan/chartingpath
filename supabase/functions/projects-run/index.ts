@@ -886,6 +886,450 @@ function simulateRROutcome(
   return { outcome: 'timeout', bars: Math.min(maxBars, bars.length - startIndex - 1), rMultiple: timeoutRMultiple, exitDate, exitPrice };
 }
 
+// ============= EXIT STRATEGY SIMULATORS =============
+interface ExitStrategyResult {
+  outcome: 'tp' | 'sl' | 'indicator' | 'timeout';
+  bars: number;
+  rMultiple: number;
+  exitDate: string;
+  exitPrice: number;
+}
+
+/**
+ * ATR Trailing Stop: Trail stop at N x ATR below (long) or above (short) price
+ */
+function simulateATRTrail(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  atrMultiplier: number,
+  isLong: boolean,
+  maxBars: number
+): ExitStrategyResult {
+  const atrPeriod = 14;
+  let trailStop = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+  
+  for (let j = startIndex + 1; j < Math.min(startIndex + maxBars, bars.length); j++) {
+    const bar = bars[j];
+    const barsElapsed = j - startIndex;
+    
+    // Calculate current ATR
+    const atrBars = bars.slice(Math.max(0, j - atrPeriod), j + 1);
+    let atr = 0;
+    for (let k = 1; k < atrBars.length; k++) {
+      const tr = Math.max(
+        atrBars[k].high - atrBars[k].low,
+        Math.abs(atrBars[k].high - atrBars[k - 1].close),
+        Math.abs(atrBars[k].low - atrBars[k - 1].close)
+      );
+      atr += tr;
+    }
+    atr = atr / Math.max(atrBars.length - 1, 1);
+    
+    // Update trailing stop
+    const trailDist = atr * atrMultiplier;
+    if (isLong) {
+      const newStop = bar.close - trailDist;
+      trailStop = Math.max(trailStop, newStop);
+      if (bar.low <= trailStop) {
+        const exitPrice = trailStop;
+        const pnl = exitPrice - entryPrice;
+        const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+        return { outcome: 'sl', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+      }
+    } else {
+      const newStop = bar.close + trailDist;
+      trailStop = Math.min(trailStop, newStop);
+      if (bar.high >= trailStop) {
+        const exitPrice = trailStop;
+        const pnl = entryPrice - exitPrice;
+        const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+        return { outcome: 'sl', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+      }
+    }
+  }
+  
+  // Timeout
+  const lastIdx = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastIdx]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  return { outcome: 'timeout', bars: maxBars, rMultiple: stopDistance > 0 ? pnl / stopDistance : 0, exitDate: bars[lastIdx]?.date, exitPrice };
+}
+
+/**
+ * Partial Scale-Out: Exit half at first target, trail remainder
+ */
+function simulatePartialScaleOut(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  firstTargetR: number,
+  finalTargetR: number,
+  isLong: boolean,
+  maxBars: number
+): ExitStrategyResult {
+  const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+  const firstTP = isLong ? entryPrice + stopDistance * firstTargetR : entryPrice - stopDistance * firstTargetR;
+  const finalTP = isLong ? entryPrice + stopDistance * finalTargetR : entryPrice - stopDistance * finalTargetR;
+  
+  let firstHit = false;
+  let breakEvenStop = stopLoss;
+  let totalR = 0;
+  
+  for (let j = startIndex + 1; j < Math.min(startIndex + maxBars, bars.length); j++) {
+    const bar = bars[j];
+    const barsElapsed = j - startIndex;
+    
+    // Check stop first
+    if (isLong) {
+      if (bar.low <= (firstHit ? breakEvenStop : stopLoss)) {
+        const exitPrice = firstHit ? breakEvenStop : stopLoss;
+        // If first target hit, we've banked firstTargetR/2, and lose remaining half
+        const secondHalfR = firstHit ? 0 : -1;
+        totalR = firstHit ? (firstTargetR * 0.5 + secondHalfR * 0.5) : -1;
+        return { outcome: 'sl', bars: barsElapsed, rMultiple: totalR, exitDate: bar.date, exitPrice };
+      }
+      
+      // Check first target
+      if (!firstHit && bar.high >= firstTP) {
+        firstHit = true;
+        breakEvenStop = entryPrice; // Move stop to breakeven for remainder
+      }
+      
+      // Check final target (only if first hit)
+      if (firstHit && bar.high >= finalTP) {
+        totalR = (firstTargetR * 0.5) + (finalTargetR * 0.5);
+        return { outcome: 'tp', bars: barsElapsed, rMultiple: totalR, exitDate: bar.date, exitPrice: finalTP };
+      }
+    } else {
+      if (bar.high >= (firstHit ? breakEvenStop : stopLoss)) {
+        const exitPrice = firstHit ? breakEvenStop : stopLoss;
+        const secondHalfR = firstHit ? 0 : -1;
+        totalR = firstHit ? (firstTargetR * 0.5 + secondHalfR * 0.5) : -1;
+        return { outcome: 'sl', bars: barsElapsed, rMultiple: totalR, exitDate: bar.date, exitPrice };
+      }
+      
+      if (!firstHit && bar.low <= firstTP) {
+        firstHit = true;
+        breakEvenStop = entryPrice;
+      }
+      
+      if (firstHit && bar.low <= finalTP) {
+        totalR = (firstTargetR * 0.5) + (finalTargetR * 0.5);
+        return { outcome: 'tp', bars: barsElapsed, rMultiple: totalR, exitDate: bar.date, exitPrice: finalTP };
+      }
+    }
+  }
+  
+  // Timeout
+  const lastIdx = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastIdx]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  const remainderR = stopDistance > 0 ? pnl / stopDistance : 0;
+  totalR = firstHit ? (firstTargetR * 0.5 + remainderR * 0.5) : remainderR;
+  return { outcome: 'timeout', bars: maxBars, rMultiple: totalR, exitDate: bars[lastIdx]?.date, exitPrice };
+}
+
+/**
+ * RSI Exhaustion Exit: Exit when RSI reaches overbought/oversold
+ */
+function simulateRSIExit(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  isLong: boolean,
+  maxBars: number,
+  rsiPeriod: number = 14,
+  rsiThreshold: number = 70
+): ExitStrategyResult {
+  const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+  
+  // Calculate RSI
+  const calcRSI = (closes: number[]): number => {
+    if (closes.length < rsiPeriod + 1) return 50;
+    let gains = 0, losses = 0;
+    for (let i = closes.length - rsiPeriod; i < closes.length; i++) {
+      const change = closes[i] - closes[i - 1];
+      if (change > 0) gains += change;
+      else losses -= change;
+    }
+    const avgGain = gains / rsiPeriod;
+    const avgLoss = losses / rsiPeriod;
+    if (avgLoss === 0) return 100;
+    const rs = avgGain / avgLoss;
+    return 100 - (100 / (1 + rs));
+  };
+  
+  for (let j = startIndex + 1; j < Math.min(startIndex + maxBars, bars.length); j++) {
+    const bar = bars[j];
+    const barsElapsed = j - startIndex;
+    
+    // Check stop
+    if (isLong && bar.low <= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    if (!isLong && bar.high >= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    
+    // Calculate RSI and check exit condition
+    const closes = bars.slice(Math.max(0, j - rsiPeriod - 5), j + 1).map(b => b.close);
+    const rsi = calcRSI(closes);
+    
+    if (isLong && rsi >= rsiThreshold) {
+      const exitPrice = bar.close;
+      const pnl = exitPrice - entryPrice;
+      const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+      return { outcome: 'indicator', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+    }
+    if (!isLong && rsi <= (100 - rsiThreshold)) {
+      const exitPrice = bar.close;
+      const pnl = entryPrice - exitPrice;
+      const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+      return { outcome: 'indicator', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+    }
+  }
+  
+  // Timeout
+  const lastIdx = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastIdx]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  return { outcome: 'timeout', bars: maxBars, rMultiple: stopDistance > 0 ? pnl / stopDistance : 0, exitDate: bars[lastIdx]?.date, exitPrice };
+}
+
+/**
+ * Fibonacci Extension Exit: Exit at 1.618 or 2.618 extension
+ */
+function simulateFibExit(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  fibLevel: number,
+  isLong: boolean,
+  maxBars: number
+): ExitStrategyResult {
+  const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+  const fibTarget = isLong 
+    ? entryPrice + stopDistance * fibLevel 
+    : entryPrice - stopDistance * fibLevel;
+  
+  for (let j = startIndex + 1; j < Math.min(startIndex + maxBars, bars.length); j++) {
+    const bar = bars[j];
+    const barsElapsed = j - startIndex;
+    
+    // Check stop
+    if (isLong && bar.low <= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    if (!isLong && bar.high >= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    
+    // Check fib target
+    if (isLong && bar.high >= fibTarget) {
+      return { outcome: 'tp', bars: barsElapsed, rMultiple: fibLevel, exitDate: bar.date, exitPrice: fibTarget };
+    }
+    if (!isLong && bar.low <= fibTarget) {
+      return { outcome: 'tp', bars: barsElapsed, rMultiple: fibLevel, exitDate: bar.date, exitPrice: fibTarget };
+    }
+  }
+  
+  // Timeout
+  const lastIdx = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastIdx]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  return { outcome: 'timeout', bars: maxBars, rMultiple: stopDistance > 0 ? pnl / stopDistance : 0, exitDate: bars[lastIdx]?.date, exitPrice };
+}
+
+/**
+ * MACD Crossover Exit: Exit when MACD crosses against position
+ */
+function simulateMACDExit(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  isLong: boolean,
+  maxBars: number
+): ExitStrategyResult {
+  const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
+  const fastPeriod = 12, slowPeriod = 26, signalPeriod = 9;
+  
+  // Calculate EMA
+  const calcEMA = (prices: number[], period: number): number[] => {
+    const k = 2 / (period + 1);
+    const emas: number[] = [prices[0]];
+    for (let i = 1; i < prices.length; i++) {
+      emas.push(prices[i] * k + emas[i - 1] * (1 - k));
+    }
+    return emas;
+  };
+  
+  for (let j = startIndex + 1; j < Math.min(startIndex + maxBars, bars.length); j++) {
+    const bar = bars[j];
+    const barsElapsed = j - startIndex;
+    
+    // Check stop
+    if (isLong && bar.low <= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    if (!isLong && bar.high >= stopLoss) {
+      return { outcome: 'sl', bars: barsElapsed, rMultiple: -1, exitDate: bar.date, exitPrice: stopLoss };
+    }
+    
+    // Need enough bars for MACD calculation
+    if (j < slowPeriod + signalPeriod) continue;
+    
+    const closes = bars.slice(0, j + 1).map(b => b.close);
+    const fastEMA = calcEMA(closes, fastPeriod);
+    const slowEMA = calcEMA(closes, slowPeriod);
+    const macdLine = fastEMA.map((f, i) => f - slowEMA[i]);
+    const signalLine = calcEMA(macdLine.slice(slowPeriod), signalPeriod);
+    
+    const currentMACD = macdLine[macdLine.length - 1];
+    const prevMACD = macdLine[macdLine.length - 2];
+    const currentSignal = signalLine[signalLine.length - 1];
+    const prevSignal = signalLine[signalLine.length - 2];
+    
+    // Check for crossover against position
+    const bullishCross = prevMACD <= prevSignal && currentMACD > currentSignal;
+    const bearishCross = prevMACD >= prevSignal && currentMACD < currentSignal;
+    
+    if (isLong && bearishCross) {
+      const exitPrice = bar.close;
+      const pnl = exitPrice - entryPrice;
+      const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+      return { outcome: 'indicator', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+    }
+    if (!isLong && bullishCross) {
+      const exitPrice = bar.close;
+      const pnl = entryPrice - exitPrice;
+      const rMultiple = stopDistance > 0 ? pnl / stopDistance : 0;
+      return { outcome: 'indicator', bars: barsElapsed, rMultiple, exitDate: bar.date, exitPrice };
+    }
+  }
+  
+  // Timeout
+  const lastIdx = Math.min(startIndex + maxBars - 1, bars.length - 1);
+  const exitPrice = bars[lastIdx]?.close ?? entryPrice;
+  const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+  return { outcome: 'timeout', bars: maxBars, rMultiple: stopDistance > 0 ? pnl / stopDistance : 0, exitDate: bars[lastIdx]?.date, exitPrice };
+}
+
+// Master function to run all exit strategies on a trade
+interface ExitStrategyDefinition {
+  id: string;
+  name: string;
+  description: string;
+  simulate: (bars: any[], startIndex: number, entryPrice: number, stopDistance: number, isLong: boolean, maxBars: number) => ExitStrategyResult;
+}
+
+const EXIT_STRATEGIES: ExitStrategyDefinition[] = [
+  {
+    id: 'fixed_2r',
+    name: 'Fixed 1:2',
+    description: 'Fixed 2R target',
+    simulate: (bars, start, entry, stop, isLong, max) => {
+      const result = simulateRROutcome(bars, start, entry, stop, 2, isLong, max);
+      return { ...result, outcome: result.outcome === 'hit_tp' ? 'tp' : result.outcome === 'hit_sl' ? 'sl' : 'timeout' };
+    }
+  },
+  {
+    id: 'fixed_3r',
+    name: 'Fixed 1:3',
+    description: 'Fixed 3R target',
+    simulate: (bars, start, entry, stop, isLong, max) => {
+      const result = simulateRROutcome(bars, start, entry, stop, 3, isLong, max);
+      return { ...result, outcome: result.outcome === 'hit_tp' ? 'tp' : result.outcome === 'hit_sl' ? 'sl' : 'timeout' };
+    }
+  },
+  {
+    id: 'atr_trail_2x',
+    name: 'ATR Trail 2×',
+    description: '2× ATR trailing stop',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateATRTrail(bars, start, entry, stop, 2, isLong, max)
+  },
+  {
+    id: 'atr_trail_3x',
+    name: 'ATR Trail 3×',
+    description: '3× ATR trailing stop',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateATRTrail(bars, start, entry, stop, 3, isLong, max)
+  },
+  {
+    id: 'scale_out_2_4',
+    name: 'Scale-Out 2R/4R',
+    description: '50% at 2R, 50% at 4R',
+    simulate: (bars, start, entry, stop, isLong, max) => simulatePartialScaleOut(bars, start, entry, stop, 2, 4, isLong, max)
+  },
+  {
+    id: 'scale_out_1_3',
+    name: 'Scale-Out 1R/3R',
+    description: '50% at 1R, 50% at 3R',
+    simulate: (bars, start, entry, stop, isLong, max) => simulatePartialScaleOut(bars, start, entry, stop, 1, 3, isLong, max)
+  },
+  {
+    id: 'rsi_70',
+    name: 'RSI Exhaustion 70',
+    description: 'Exit at RSI 70/30',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateRSIExit(bars, start, entry, stop, isLong, max, 14, 70)
+  },
+  {
+    id: 'rsi_80',
+    name: 'RSI Exhaustion 80',
+    description: 'Exit at RSI 80/20',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateRSIExit(bars, start, entry, stop, isLong, max, 14, 80)
+  },
+  {
+    id: 'fib_1618',
+    name: 'Fib 1.618',
+    description: '1.618 extension target',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateFibExit(bars, start, entry, stop, 1.618, isLong, max)
+  },
+  {
+    id: 'fib_2618',
+    name: 'Fib 2.618',
+    description: '2.618 extension target',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateFibExit(bars, start, entry, stop, 2.618, isLong, max)
+  },
+  {
+    id: 'macd_cross',
+    name: 'MACD Crossover',
+    description: 'Exit on MACD signal cross',
+    simulate: (bars, start, entry, stop, isLong, max) => simulateMACDExit(bars, start, entry, stop, isLong, max)
+  }
+];
+
+// Store exit outcomes per trade
+interface TradeExitOutcomes {
+  [strategyId: string]: ExitStrategyResult;
+}
+
+// Extended BacktestTrade with exit strategy outcomes (add to existing interface)
+interface BacktestTradeWithExits extends BacktestTrade {
+  exitOutcomes?: TradeExitOutcomes;
+  entryBarIndex?: number; // For exit strategy simulation
+}
+
+// Run all exit strategies for a trade and return outcomes
+function computeExitOutcomes(
+  bars: any[],
+  startIndex: number,
+  entryPrice: number,
+  stopDistance: number,
+  isLong: boolean,
+  maxBars: number
+): TradeExitOutcomes {
+  const outcomes: TradeExitOutcomes = {};
+  for (const strategy of EXIT_STRATEGIES) {
+    outcomes[strategy.id] = strategy.simulate(bars, startIndex, entryPrice, stopDistance, isLong, maxBars);
+  }
+  return outcomes;
+}
+
 function runPatternBacktest(
   bars: any[],
   patternId: string,
@@ -924,6 +1368,9 @@ function runPatternBacktest(
       rr5: simulateRROutcome(bars, i, entryPrice, stopDistance, 5, isLong, maxBarsInTrade),
     };
     
+    // Compute exit strategy outcomes
+    const exitOutcomes = computeExitOutcomes(bars, i, entryPrice, stopDistance, isLong, maxBarsInTrade);
+    
     // Use RR2 as the primary result for backward compatibility (and guaranteed consistency)
     const primary = rrOutcomes.rr2;
     const exitDate = primary.exitDate;
@@ -948,8 +1395,10 @@ function runPatternBacktest(
       regime: `${regime.trend}_${regime.volatility}`,
       exitReason,
       grade,
-      rrOutcomes
-    });
+      rrOutcomes,
+      exitOutcomes, // Add exit strategy outcomes
+      entryBarIndex: i, // Store for potential future use
+    } as any);
     
     // Skip ahead to avoid overlapping trades
     i += 5;
@@ -1932,6 +2381,96 @@ serve(async (req) => {
           // Calculate overall max drawdown as percentage (capped at 100%)
           const overallMaxDrawdown = maxDrawdownByTier['1:2'] ?? 0;
           
+          // ============= EXIT STRATEGY COMPARISON =============
+          console.log(`[PatternLab] Computing exit strategy comparison...`);
+          
+          const exitComparison = EXIT_STRATEGIES.map(strategy => {
+            const trades = allTrades.filter((t: any) => t.exitOutcomes?.[strategy.id]);
+            if (trades.length === 0) {
+              return {
+                strategyId: strategy.id,
+                strategyName: strategy.name,
+                description: strategy.description,
+                winRate: 0,
+                avgHoldBars: 0,
+                expectancy: 0,
+                maxDrawdown: 0,
+                sampleSize: 0,
+                avgWinR: 0,
+                avgLossR: 0,
+              };
+            }
+            
+            const outcomes = trades.map((t: any) => t.exitOutcomes[strategy.id]);
+            const wins = outcomes.filter((o: ExitStrategyResult) => o.rMultiple > 0);
+            const losses = outcomes.filter((o: ExitStrategyResult) => o.rMultiple <= 0);
+            
+            const winRate = wins.length / outcomes.length;
+            const avgHoldBars = outcomes.reduce((s: number, o: ExitStrategyResult) => s + o.bars, 0) / outcomes.length;
+            const totalR = outcomes.reduce((s: number, o: ExitStrategyResult) => s + o.rMultiple, 0);
+            const expectancy = totalR / outcomes.length;
+            
+            const avgWinR = wins.length > 0 
+              ? wins.reduce((s: number, o: ExitStrategyResult) => s + o.rMultiple, 0) / wins.length 
+              : 0;
+            const avgLossR = losses.length > 0 
+              ? Math.abs(losses.reduce((s: number, o: ExitStrategyResult) => s + o.rMultiple, 0) / losses.length) 
+              : 1;
+            
+            // Calculate drawdown for this strategy
+            let cumulativeR = 0;
+            let peakR = 0;
+            let maxDD = 0;
+            for (const trade of trades.sort((a: any, b: any) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
+              const outcome = trade.exitOutcomes[strategy.id];
+              cumulativeR += outcome.rMultiple;
+              peakR = Math.max(peakR, cumulativeR);
+              const dd = peakR - cumulativeR;
+              maxDD = Math.max(maxDD, dd);
+            }
+            // Convert R drawdown to approximate percentage (assuming 1% risk per trade)
+            const maxDrawdownPercent = maxDD * 1; // 1R = 1% of capital risked
+            
+            return {
+              strategyId: strategy.id,
+              strategyName: strategy.name,
+              description: strategy.description,
+              winRate,
+              avgHoldBars: Math.round(avgHoldBars),
+              expectancy,
+              maxDrawdown: maxDrawdownPercent,
+              sampleSize: trades.length,
+              avgWinR,
+              avgLossR,
+            };
+          });
+          
+          // Find optimal exit strategy
+          const optimalExitStrategy = exitComparison.reduce((best, curr) => 
+            curr.expectancy > best.expectancy ? curr : best, exitComparison[0]);
+          
+          console.log(`[PatternLab] Optimal exit strategy: ${optimalExitStrategy.strategyName} (${optimalExitStrategy.expectancy.toFixed(2)}R)`);
+          
+          // Build equity curves per exit strategy
+          const exitEquityByStrategy: Record<string, { date: string; value: number; drawdown: number }[]> = {};
+          for (const strategy of EXIT_STRATEGIES) {
+            const points: { date: string; value: number; drawdown: number }[] = [];
+            let cumulativeR = 0;
+            let peakValue = 10000;
+            
+            for (const trade of allTrades.sort((a: any, b: any) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
+              const outcome = trade.exitOutcomes?.[strategy.id];
+              if (!outcome) continue;
+              
+              cumulativeR += outcome.rMultiple;
+              const value = 10000 * (1 + cumulativeR * 0.01);
+              peakValue = Math.max(peakValue, value);
+              const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
+              points.push({ date: outcome.exitDate, value: Math.max(0, value), drawdown: dd });
+            }
+            exitEquityByStrategy[strategy.id] = points;
+          }
+          
           artifactJson = {
             projectType: 'pattern_lab',
             timeframe,
@@ -1956,10 +2495,18 @@ serve(async (req) => {
             optimalTier: optimalTier?.tier || '1:2',
             patterns: patternResults,
             patternsByTier,
-            trades: allTrades.slice(0, 500), // Cap for size
+            trades: allTrades.slice(0, 500).map((t: any) => {
+              // Remove exitOutcomes from trades to reduce payload size
+              const { exitOutcomes, entryBarIndex, ...rest } = t;
+              return rest;
+            }),
             equity: baselineEquity,
             equityByTier,
             maxDrawdownByTier,
+            // Exit Optimizer data
+            exitComparison,
+            optimalExitStrategy: optimalExitStrategy.strategyId,
+            exitEquityByStrategy,
           };
           artifactType = 'backtest_report';
         }
