@@ -92,9 +92,13 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Copyright */}
-          <div className="pt-6 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ChartingPath. All rights reserved.
+          {/* Copyright and Legal */}
+          <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <p>© {new Date().getFullYear()} ChartingPath. Market Leap Partners Inc. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            </div>
           </div>
         </div>
       </footer>
@@ -202,9 +206,13 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="pt-8 border-t text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} ChartingPath. All rights reserved.
+        {/* Copyright and Legal */}
+        <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} ChartingPath. Market Leap Partners Inc. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          </div>
         </div>
       </div>
     </footer>

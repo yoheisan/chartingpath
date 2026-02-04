@@ -15,9 +15,9 @@ const Terms = () => {
 
         <div className="prose prose-gray dark:prose-invert max-w-none">
           <h1>📑 Terms and Conditions</h1>
-          <p><strong>Last updated:</strong> August 23, 2025</p>
+          <p><strong>Last updated:</strong> February 4, 2026</p>
 
-          <p>These Terms and Conditions ("Terms") govern the use of services provided by Market Leap Partners, Inc., registered in Tokyo, Japan ("Company", "we", "us", or "our"). By accessing or using our website, services, or purchasing any subscription plan, you agree to be bound by these Terms.</p>
+          <p>These Terms and Conditions ("Terms") govern the use of services provided by Market Leap Partners Inc., registered in Tokyo, Japan ("Company", "we", "us", or "our"). By accessing or using our website, services, or purchasing any subscription plan, you agree to be bound by these Terms.</p>
 
           <h2>1. Educational Purpose Only</h2>
           <p><strong>1.1</strong> All scripts, indicators, calculators, alerts, tutorials, and materials provided are for educational and informational purposes only.</p>
@@ -59,12 +59,12 @@ const Terms = () => {
           <p><strong>6.3</strong> Accounts found in violation may be suspended or terminated without refund.</p>
 
           <h2>7. Intellectual Property</h2>
-          <p><strong>7.1</strong> All content on the Site (including text, videos, tutorials, software, and designs) is the property of Market Leap Partners, Inc. or its licensors.</p>
+          <p><strong>7.1</strong> All content on the Site (including text, videos, tutorials, software, and designs) is the property of Market Leap Partners Inc. or its licensors.</p>
           <p><strong>7.2</strong> You are granted a limited, non-exclusive, non-transferable license to access and use the Site for personal educational purposes.</p>
 
           <h2>8. Limitation of Liability</h2>
           <p><strong>8.1</strong> We make no warranties regarding accuracy, reliability, or completeness of content.</p>
-          <p><strong>8.2</strong> To the fullest extent permitted by law, Market Leap Partners, Inc. shall not be liable for any damages, direct or indirect, resulting from the use of the Site.</p>
+          <p><strong>8.2</strong> To the fullest extent permitted by law, Market Leap Partners Inc. shall not be liable for any damages, direct or indirect, resulting from the use of the Site.</p>
 
           <h2>9. Termination</h2>
           <p>We reserve the right to suspend or terminate access if a user violates these Terms or engages in abuse.</p>
