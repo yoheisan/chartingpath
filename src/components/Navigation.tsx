@@ -43,6 +43,9 @@ const Navigation = () => {
   const location = useLocation();
   const { prefetchArticles } = usePrefetchArticles();
   
+  // Check if on dashboard route - use full width layout
+  const isDashboard = location.pathname === '/members/dashboard';
+  
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
   const navLinkClass = (path: string) => 
@@ -117,7 +120,7 @@ const Navigation = () => {
   if (wedgeConfig.wedgeEnabled) {
     return (
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-6 py-4 max-w-6xl">
+        <div className={`mx-auto px-6 py-4 ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
@@ -278,7 +281,7 @@ const Navigation = () => {
   // Original full navigation (when wedge mode is disabled)
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-      <div className="container mx-auto px-6 py-4 max-w-6xl">
+      <div className={`mx-auto px-6 py-4 ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
