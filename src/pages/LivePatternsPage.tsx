@@ -288,7 +288,7 @@ export default function LivePatternsPage() {
   
   
   // Sorting for list view
-  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
+  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(true);
   
@@ -623,6 +623,12 @@ export default function LivePatternsPage() {
           const gradeA = GRADE_ORDER[a.quality?.grade || a.quality?.score || 'C'] || 3;
           const gradeB = GRADE_ORDER[b.quality?.grade || b.quality?.score || 'C'] || 3;
           cmp = gradeA - gradeB; // Lower number = higher grade (A=1, F=5)
+          break;
+        case 'winRate':
+          // Patterns without win rate go to bottom
+          const winA = a.historicalPerformance?.winRate ?? -1;
+          const winB = b.historicalPerformance?.winRate ?? -1;
+          cmp = winB - winA; // Higher win rate first by default
           break;
       }
       return sortAsc ? cmp : -cmp;
@@ -1230,16 +1236,20 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="direction" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-right whitespace-nowrap">
+                  <TableHead 
+                    className="cursor-pointer select-none text-right whitespace-nowrap"
+                    onClick={() => handleSort('winRate')}
+                  >
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1 cursor-help">
+                          <span className="flex items-center justify-end gap-1">
                             Win %
+                            <SortIcon columnKey="winRate" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Historical win rate for this pattern based on 5 years of backtested data.</p>
+                          <p className="text-xs">Historical win rate for this pattern based on 5 years of backtested data. Click to sort.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
