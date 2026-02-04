@@ -830,10 +830,14 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     />
                     <Tooltip 
                       labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                      formatter={(val: number, name: string) => [
-                        `$${val.toFixed(2)}`, 
-                        name === 'strategy' ? 'Strategy' : name
-                      ]}
+                      formatter={(val: number, name: string) => {
+                        const roi = ((val - 10000) / 10000) * 100;
+                        const roiSign = roi >= 0 ? '+' : '';
+                        return [
+                          `$${val.toFixed(2)} (${roiSign}${roi.toFixed(1)}%)`, 
+                          name === 'strategy' ? 'Strategy' : name
+                        ];
+                      }}
                     />
                     {benchmarks.length > 0 && <Legend />}
                     <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
