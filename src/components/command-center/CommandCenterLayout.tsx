@@ -500,11 +500,11 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
         <ResizableHandle withHandle />
 
-        {/* Main Content Area */}
+        {/* Main Content Area - Chart + Bottom Tab Bar */}
         <ResizablePanel defaultSize={settings.mainPanelSize} minSize={40}>
-          <ResizablePanelGroup direction="vertical" className="h-full" onLayout={handleVerticalResize}>
-            {/* Main Chart - shows pattern overlay or default study chart */}
-            <ResizablePanel defaultSize={settings.topChartSize} minSize={50}>
+          <div className="h-full flex flex-col">
+            {/* Main Chart - fills available space */}
+            <div className="flex-1 min-h-0">
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -520,76 +520,65 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   onWatchlistChange={handleWatchlistChange}
                 />
               )}
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Bottom Panel - TradingView-style ribbon with horizontal tabs */}
-            <ResizablePanel 
-              defaultSize={bottomPanelExpanded ? settings.bottomPanelSize : 5} 
-              minSize={5} 
-              maxSize={50}
-            >
-              <div className="h-full border-t border-border flex flex-col">
-                {/* Tab Ribbon - always visible */}
-                <div className="flex items-center justify-between px-2 border-b border-border bg-muted/30">
-                  <div className="flex items-center">
-                    <button
-                      onClick={() => handleTabClick('pattern-history')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${
-                        bottomPanelTab === 'pattern-history' && bottomPanelExpanded
-                          ? 'border-primary text-foreground'
-                          : 'border-transparent text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <History className="h-3.5 w-3.5" />
-                      Pattern History
-                    </button>
-                    <button
-                      onClick={() => handleTabClick('research')}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${
-                        bottomPanelTab === 'research' && bottomPanelExpanded
-                          ? 'border-primary text-foreground'
-                          : 'border-transparent text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <FlaskConical className="h-3.5 w-3.5" />
-                      Research
-                    </button>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setBottomPanelExpanded(!bottomPanelExpanded)}
-                  >
-                    {bottomPanelExpanded ? (
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    ) : (
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </div>
-                
-                {/* Panel Content - collapsible */}
-                {bottomPanelExpanded && (
-                  <div className="flex-1 overflow-auto">
-                    {bottomPanelTab === 'pattern-history' && (
-                      <PatternOccurrencesPanel 
-                        symbol={selectedSymbol} 
-                        timeframe={selectedTimeframe}
-                        onPatternSelect={handleOccurrenceSelect}
-                        selectedPatternId={selectedOccurrence?.id}
-                      />
-                    )}
-                    {bottomPanelTab === 'research' && (
-                      <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                    )}
-                  </div>
+            </div>
+            
+            {/* Bottom Panel Content - expands when active */}
+            {bottomPanelExpanded && (
+              <div className="h-[33vh] border-t border-border overflow-auto">
+                {bottomPanelTab === 'pattern-history' && (
+                  <PatternOccurrencesPanel 
+                    symbol={selectedSymbol} 
+                    timeframe={selectedTimeframe}
+                    onPatternSelect={handleOccurrenceSelect}
+                    selectedPatternId={selectedOccurrence?.id}
+                  />
+                )}
+                {bottomPanelTab === 'research' && (
+                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
                 )}
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            )}
+            
+            {/* Tab Bar - fixed at bottom */}
+            <div className="flex items-center justify-between px-2 h-8 border-t border-border bg-background shrink-0">
+              <div className="flex items-center">
+                <button
+                  onClick={() => handleTabClick('pattern-history')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                    bottomPanelTab === 'pattern-history' && bottomPanelExpanded
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Pattern History
+                </button>
+                <button
+                  onClick={() => handleTabClick('research')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                    bottomPanelTab === 'research' && bottomPanelExpanded
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  Research
+                </button>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setBottomPanelExpanded(!bottomPanelExpanded)}
+              >
+                {bottomPanelExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronUp className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
+          </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
