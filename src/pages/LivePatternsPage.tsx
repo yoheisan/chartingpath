@@ -1175,7 +1175,20 @@ export default function LivePatternsPage() {
 
       {/* Patterns - List View */}
       {sortedPatterns.length > 0 && (
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <>
+          {/* Data Coverage Notice */}
+          <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <Info className="h-4 w-4 mt-0.5 shrink-0" />
+              <div>
+                <span className="font-medium text-foreground">Data Coverage:</span>{' '}
+                Historical Win% is available for ~5,000 core instruments (S&P 500, Russell 2000, NASDAQ, major FX/Crypto). 
+                Extended pairs showing "—" can be analyzed on-demand via{' '}
+                <Link to="/projects/setup-finder" className="text-primary hover:underline">Setup Finder</Link>.
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -1384,6 +1397,7 @@ export default function LivePatternsPage() {
             </Table>
           </div>
         </div>
+        </>
       )}
 
 
