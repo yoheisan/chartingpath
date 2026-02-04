@@ -333,6 +333,28 @@ export function HistoricalOccurrencesList({
     .filter(o => o.outcomePnlPercent !== null)
     .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
 
+  // Transform database bar format to CompressedBar format
+  const transformBarsToCompressed = (bars: any[]): import('@/types/VisualSpec').CompressedBar[] => {
+    if (!bars || !Array.isArray(bars)) return [];
+    
+    return bars.map(bar => {
+      // Check if already in compressed format
+      if (bar.t !== undefined && bar.c !== undefined) {
+        return bar as import('@/types/VisualSpec').CompressedBar;
+      }
+      
+      // Transform from database format (close, date, high, low, open, volume)
+      return {
+        t: bar.date || bar.t || '',
+        o: bar.open ?? bar.o ?? 0,
+        h: bar.high ?? bar.h ?? 0,
+        l: bar.low ?? bar.l ?? 0,
+        c: bar.close ?? bar.c ?? 0,
+        v: bar.volume ?? bar.v ?? 0,
+      };
+    });
+  };
+
   // Handler to convert occurrence to SetupWithVisuals and open chart (or navigate to dashboard)
   const handleOpenChart = (occurrence: HistoricalOccurrence) => {
     // Map outcome back to the database format
@@ -342,12 +364,15 @@ export function HistoricalOccurrencesList({
       'pending': 'pending',
     };
     
+    // Transform bars to compressed format
+    const compressedBars = transformBarsToCompressed(occurrence.bars);
+    
     // Calculate entryBarIndex from visualSpec or default to 30 bars before end
     const entryBarIndex = occurrence.visualSpec?.entryBarIndex ?? 
-      Math.max(0, occurrence.bars.length - (occurrence.barsToOutcome ?? 1) - 1);
+      Math.max(0, compressedBars.length - (occurrence.barsToOutcome ?? 1) - 1);
     
     // Check if this occurrence has playback data
-    const hasPlaybackData = occurrence.barsToOutcome != null && occurrence.bars?.length > 0;
+    const hasPlaybackData = occurrence.barsToOutcome != null && compressedBars.length > 0;
     
     const setup: SetupWithVisuals = {
       instrument: occurrence.symbol,
@@ -375,7 +400,7 @@ export function HistoricalOccurrencesList({
         bracketLevelsVersion: '2.0.0',
         priceRounding: { priceDecimals: 5, rrDecimals: 2 },
       },
-      bars: occurrence.bars,
+      bars: compressedBars,
       visualSpec: occurrence.visualSpec || {
         version: '2.0.0',
         symbol: occurrence.symbol,
