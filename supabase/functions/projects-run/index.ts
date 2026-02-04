@@ -2473,6 +2473,12 @@ serve(async (req) => {
           
           artifactJson = {
             projectType: 'pattern_lab',
+            // Include inputs for reproducing/editing the run
+            inputs: {
+              instruments,
+              patterns,
+              gradeFilter,
+            },
             timeframe,
             lookbackYears,
             generatedAt: new Date().toISOString(),

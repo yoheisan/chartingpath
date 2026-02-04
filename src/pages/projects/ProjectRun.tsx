@@ -32,7 +32,13 @@ interface Project {
 interface SetupArtifact {
   projectType: string;
   timeframe: string;
+  lookbackYears?: number;
   generatedAt: string;
+  inputs?: {
+    instruments: string[];
+    patterns: string[];
+    gradeFilter: string[];
+  };
   executionAssumptions: {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
@@ -207,7 +213,19 @@ const ProjectRun = () => {
         <div className="mb-8">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/projects/pattern-lab/new')}
+            onClick={() => {
+              // Pass artifact inputs to pre-fill the form for easy re-runs
+              const inputs = artifact?.inputs;
+              navigate('/projects/pattern-lab/new', {
+                state: inputs ? {
+                  instruments: inputs.instruments,
+                  patterns: inputs.patterns,
+                  gradeFilter: inputs.gradeFilter,
+                  timeframe: artifact?.timeframe,
+                  lookbackYears: artifact?.lookbackYears,
+                } : undefined
+              });
+            }}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
