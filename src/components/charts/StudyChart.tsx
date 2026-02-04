@@ -44,6 +44,7 @@ import {
   calculateOptimalPriceMargins,
   calculatePricePrecision,
 } from './chartConstants';
+import { cn } from '@/lib/utils';
 
 export interface IndicatorSettings {
   ema20: boolean;
@@ -95,6 +96,8 @@ interface StudyChartProps {
   bars: CompressedBar[];
   symbol: string;
   height?: number;
+  /** If true, the chart will fill its parent container height and resize dynamically. */
+  autoHeight?: boolean;
   /** Optional trade plan to render Entry/SL/TP price lines */
   tradePlan?: TradePlanOverlay;
 }
@@ -107,7 +110,7 @@ interface StudyChartProps {
  * - Bollinger Bands
  * - VWAP
  */
-const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartProps) => {
+const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -115,6 +118,8 @@ const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartPr
   const isPanningRef = useRef(false);
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
+
+  const fixedHeight = height ?? 350;
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -175,9 +180,15 @@ const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartPr
       return localeMap[lang] || 'en-US';
     };
 
+    const measuredHeight = autoHeight
+      ? Math.floor(containerRef.current.getBoundingClientRect().height || 0)
+      : fixedHeight;
+
+    const initialHeight = Math.max(measuredHeight || fixedHeight, 250);
+
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height,
+      height: initialHeight,
       layout: {
         background: { color: theme.background },
         textColor: theme.text,
@@ -418,11 +429,18 @@ const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartPr
 
     // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0] && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: entries[0].contentRect.width,
-        });
-      }
+      const entry = entries[0];
+      if (!entry || !chartRef.current) return;
+
+      const nextWidth = Math.floor(entry.contentRect.width);
+      const nextHeight = Math.floor(entry.contentRect.height);
+
+      chartRef.current.applyOptions({
+        width: nextWidth,
+        ...(autoHeight
+          ? { height: Math.max(nextHeight || initialHeight, 250) }
+          : {}),
+      });
     });
 
     resizeObserver.observe(containerRef.current);
@@ -479,13 +497,13 @@ const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartPr
         chartRef.current = null;
       }
     };
-  }, [bars, height, indicators, i18n.language, tradePlan]);
+  }, [bars, fixedHeight, autoHeight, indicators, i18n.language, tradePlan]);
 
   if (!bars || bars.length === 0) {
     return (
       <div
         className="w-full bg-muted/30 rounded flex items-center justify-center text-muted-foreground text-sm"
-        style={{ height }}
+        style={autoHeight ? undefined : { height: fixedHeight }}
       >
         No price data available
       </div>
@@ -496,11 +514,14 @@ const StudyChart = memo(({ bars, symbol, height = 350, tradePlan }: StudyChartPr
   const activeIndicators = Object.entries(indicators).filter(([, v]) => v);
 
   return (
-    <div className="relative">
+    <div className={cn('relative', autoHeight && 'h-full')}>
       <div
         ref={containerRef}
-        className="w-full rounded overflow-hidden border border-border/50"
-        style={{ height }}
+        className={cn(
+          'w-full rounded overflow-hidden border border-border/50',
+          autoHeight ? 'h-full' : ''
+        )}
+        style={autoHeight ? undefined : { height: fixedHeight }}
       />
 
       {/* Indicator Legend - only show active ones */}

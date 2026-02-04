@@ -363,7 +363,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         ) : bars.length > 0 ? (
           <div className="h-full p-2">
-            <StudyChart bars={bars} symbol={symbol} height={undefined} />
+            <StudyChart bars={bars} symbol={symbol} autoHeight />
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
