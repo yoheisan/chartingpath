@@ -78,6 +78,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
   );
   
   // Pattern detail modal state
+  const [watchlistVersion, setWatchlistVersion] = useState(0);
+  
+  // Callback to refresh watchlist when chart adds/removes symbols
+  const handleWatchlistChange = useCallback(() => {
+    setWatchlistVersion(v => v + 1);
+  }, []);
   const [chartOpen, setChartOpen] = useState(false);
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
@@ -423,6 +429,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               selectedSymbol={selectedSymbol}
               onSymbolSelect={handleSymbolSelect}
               onPatternSelect={handlePatternSelect}
+              refreshTrigger={watchlistVersion}
             />
           </div>
         </ResizablePanel>
@@ -446,6 +453,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   symbol={selectedSymbol}
                   timeframe={selectedTimeframe}
                   onTimeframeChange={setSelectedTimeframe}
+                  onWatchlistChange={handleWatchlistChange}
                 />
               )}
             </ResizablePanel>

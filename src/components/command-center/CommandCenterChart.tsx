@@ -9,16 +9,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import StudyChart from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { toast } from 'sonner';
 
 interface CommandCenterChartProps {
   symbol: string;
   timeframe: string;
   onTimeframeChange: (tf: string) => void;
+  onWatchlistChange?: () => void;
 }
 
 const TIMEFRAMES = [
@@ -33,11 +37,109 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   symbol,
   timeframe,
   onTimeframeChange,
+  onWatchlistChange,
 }: CommandCenterChartProps) {
+  const { profile, user } = useUserProfile();
+  const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [priceData, setPriceData] = useState<{ current: number; change: number; changePct: number } | null>(null);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  // Check if user is on a paid plan
+  const isPaidUser = profile?.subscription_plan && 
+    !['free', 'starter'].includes(profile.subscription_plan);
+
+  // Check if symbol is in user's watchlist
+  const checkWatchlistStatus = useCallback(async () => {
+    if (!userId || !isPaidUser) {
+      setIsInWatchlist(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_watchlist')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('symbol', symbol.toUpperCase())
+        .maybeSingle();
+
+      if (error) throw error;
+      setIsInWatchlist(!!data);
+    } catch (err) {
+      console.error('[CommandCenterChart] watchlist check error:', err);
+    }
+  }, [userId, isPaidUser, symbol]);
+
+  useEffect(() => {
+    checkWatchlistStatus();
+  }, [checkWatchlistStatus]);
+
+  // Add to watchlist
+  const addToWatchlist = async () => {
+    if (!userId) {
+      toast.error('Please sign in to add to watchlist');
+      return;
+    }
+    if (!isPaidUser) {
+      toast.error('Upgrade to a paid plan to create custom watchlists');
+      return;
+    }
+
+    setWatchlistLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_watchlist')
+        .insert({
+          user_id: userId,
+          symbol: symbol.toUpperCase(),
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Symbol already in watchlist');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(`${symbol} added to watchlist`);
+        setIsInWatchlist(true);
+        onWatchlistChange?.();
+      }
+    } catch (err) {
+      console.error('[CommandCenterChart] add to watchlist error:', err);
+      toast.error('Failed to add to watchlist');
+    } finally {
+      setWatchlistLoading(false);
+    }
+  };
+
+  // Remove from watchlist
+  const removeFromWatchlist = async () => {
+    if (!userId) return;
+
+    setWatchlistLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_watchlist')
+        .delete()
+        .eq('user_id', userId)
+        .eq('symbol', symbol.toUpperCase());
+
+      if (error) throw error;
+      toast.success(`${symbol} removed from watchlist`);
+      setIsInWatchlist(false);
+      onWatchlistChange?.();
+    } catch (err) {
+      console.error('[CommandCenterChart] remove from watchlist error:', err);
+      toast.error('Failed to remove from watchlist');
+    } finally {
+      setWatchlistLoading(false);
+    }
+  };
 
   const fetchChartData = useCallback(async () => {
     setLoading(true);
@@ -174,6 +276,30 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Add to Watchlist Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={isInWatchlist ? "secondary" : "outline"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={isInWatchlist ? removeFromWatchlist : addToWatchlist}
+                disabled={watchlistLoading}
+              >
+                {watchlistLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isInWatchlist ? (
+                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                ) : (
+                  <StarOff className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Timeframe Selector */}
           <Select value={timeframe} onValueChange={onTimeframeChange}>
             <SelectTrigger className="w-20 h-8">
