@@ -407,12 +407,15 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
     };
   }, [playback.visibleBars, playback.isAfterEntry, playback.isAtExit, playback.exitBarIndex, indicators, tradePlan, direction, entryBarIndex, outcome]);
 
+  // Use dynamic height if not specified
+  const chartHeight = height || 'calc(100% - 48px)';
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       <div
         ref={containerRef}
-        className="w-full rounded-t-lg overflow-hidden border border-border/50"
-        style={{ height }}
+        className="flex-1 min-h-[250px] w-full rounded-t-lg overflow-hidden border border-border/50"
+        style={height ? { height } : undefined}
       />
       <TradePlaybackControls
         isPlaying={playback.isPlaying}
