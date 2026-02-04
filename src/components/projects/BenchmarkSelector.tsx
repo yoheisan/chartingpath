@@ -66,18 +66,46 @@ const BenchmarkSelector = ({
       // Extend start date back a bit to ensure we capture first equity point
       start.setDate(start.getDate() - 7);
       
-      // Use Alpha Vantage for more reliable benchmark data
-      const { data, error } = await supabase.functions.invoke('fetch-alpha-vantage', {
-        body: {
-          symbol,
-          startDate: start.toISOString().split('T')[0],
-          endDate: end.toISOString().split('T')[0],
-          outputSize: 'full', // Get full history
+      let bars: any[] = [];
+      
+      // Try Alpha Vantage first, then fallback to Yahoo Finance
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-alpha-vantage', {
+          body: {
+            symbol,
+            startDate: start.toISOString().split('T')[0],
+            endDate: end.toISOString().split('T')[0],
+            outputSize: 'full',
+          }
+        });
+        
+        if (!error && data?.bars?.length) {
+          bars = data.bars;
+        } else {
+          throw new Error('Alpha Vantage failed, trying Yahoo Finance');
         }
-      });
+      } catch (avError) {
+        console.warn('Alpha Vantage failed, falling back to Yahoo Finance:', avError);
+        
+        // Fallback to Yahoo Finance
+        const { data: yahooData, error: yahooError } = await supabase.functions.invoke('fetch-yahoo-finance', {
+          body: {
+            symbol,
+            interval: '1d',
+            range: '10y', // Get max history
+          }
+        });
+        
+        if (yahooError || !yahooData?.bars?.length) {
+          console.error('Yahoo Finance also failed:', yahooError);
+          throw new Error('Both data providers failed');
+        }
+        
+        bars = yahooData.bars;
+      }
 
-      if (error || !data?.bars?.length) {
-        console.error('Failed to fetch benchmark:', symbol, error, data);
+      if (!bars.length) {
+        console.error('No data returned for benchmark:', symbol);
         setSelectedBenchmarks(prev => prev.filter(s => s !== symbol));
         return;
       }
@@ -87,7 +115,7 @@ const BenchmarkSelector = ({
       const endTs = new Date(endDate).getTime();
       
       // Bars from edge function use 't' for timestamp and 'c' for close
-      const filteredBars = data.bars.filter((bar: any) => {
+      const filteredBars = bars.filter((bar: any) => {
         const barDate = bar.t || bar.date || bar.timestamp;
         const barTs = new Date(barDate).getTime();
         return barTs >= startTs && barTs <= endTs;
