@@ -341,14 +341,14 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* Guarantee Section */}
+        {/* Billing Info Section */}
         <Card className="mb-8">
           <CardContent className="p-6 text-center">
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              30-Day Money-Back Guarantee
+              Flexible Billing, Cancel Anytime
             </h3>
             <p className="text-muted-foreground">
-              Cancel anytime, no hidden fees. If you're not satisfied within 30 days, get a full refund.
+              All subscriptions auto-renew. Cancel anytime from your account settings—access continues until the end of your billing period. Annual plans are refundable within 14 days of payment.
             </p>
           </CardContent>
         </Card>
