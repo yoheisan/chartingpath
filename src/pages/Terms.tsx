@@ -42,11 +42,13 @@ const Terms = () => {
           <p><strong>3.4</strong> Annual plans offer up to 17% savings compared to monthly billing and are billed once every 12 months on the signup date.</p>
 
           <h2>4. Refunds and Cancellations</h2>
-          <p><strong>4.1</strong> Monthly plans: Non-refundable. Cancellation stops future billing, and access continues until the end of the paid month.</p>
-          <p><strong>4.2</strong> Annual plans: If canceled before the end of the 12-month term, a prorated refund will be issued on a monthly basis for unused months.</p>
-          <p><strong>Example:</strong> If you cancel 4 months into a Lite Annual plan ($120/year), you keep 4 months of access and receive a refund for 8 months = $80.</p>
-          <p>Refunds are calculated by dividing the annual fee by 12 and multiplying by the unused full months. Partial months are not refundable.</p>
-          <p><strong>4.3</strong> 30-Day Money-Back Guarantee: If you're not satisfied within 30 days of your initial subscription, you may request a full refund.</p>
+          <p><strong>4.1</strong> All billing is recurring. You are solely responsible for properly canceling your subscription through your account settings. Email requests or support tickets are not considered valid cancellation.</p>
+          <p><strong>4.2</strong> Monthly plans are non-refundable under any circumstances, even if canceled on the same day payment is processed.</p>
+          <p><strong>4.3</strong> Annual plans: Refunds are available only if requested within 14 calendar days of payment. After 14 days, annual subscriptions are non-refundable. To request a refund, you must contact our support team.</p>
+          <p><strong>4.4</strong> There are no refunds for upgrades to a more expensive plan, add-on features, or market data packages, even if canceled on the same day as payment.</p>
+          <p><strong>4.5</strong> If you cancel before your current paid period ends, your subscription remains active until the next billing date. After that date, if no payment is received, your subscription will be stopped.</p>
+          <p><strong>4.6</strong> Free trials: If a trial is not canceled before expiration, it automatically converts to a paid subscription based on the billing cycle selected. Users charged after a trial may request a refund within 14 days of the charge.</p>
+          <p><strong>4.7</strong> Users who file a chargeback, dispute, or claim with their payment provider are not eligible for any refund and may have their account suspended.</p>
 
           <h2>5. Use of Scripts and Tools</h2>
           <p><strong>5.1</strong> Scripts, indicators, calculators, and alerts are for personal educational use only.</p>
