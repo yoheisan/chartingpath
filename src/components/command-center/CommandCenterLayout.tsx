@@ -4,7 +4,12 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
@@ -460,33 +465,46 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             <ResizableHandle withHandle />
 
-            {/* Bottom Panel - Tabbed Quick Research + Pattern Occurrences */}
+            {/* Bottom Panel - Accordion Research + Pattern History */}
             <ResizablePanel defaultSize={30} minSize={15} maxSize={50}>
-              <Tabs defaultValue="patterns" className="h-full flex flex-col">
-                <div className="border-t border-l border-border bg-muted/30 px-2 pt-1">
-                  <TabsList className="h-7 bg-transparent p-0 gap-1">
-                    <TabsTrigger value="patterns" className="h-6 px-2 text-xs data-[state=active]:bg-background">
-                      <History className="h-3 w-3 mr-1" />
-                      Patterns
-                    </TabsTrigger>
-                    <TabsTrigger value="research" className="h-6 px-2 text-xs data-[state=active]:bg-background">
-                      <FlaskConical className="h-3 w-3 mr-1" />
-                      Research
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent value="patterns" className="flex-1 m-0 overflow-hidden">
-                  <PatternOccurrencesPanel 
-                    symbol={selectedSymbol} 
-                    timeframe={selectedTimeframe}
-                    onPatternSelect={handleOccurrenceSelect}
-                    selectedPatternId={selectedOccurrence?.id}
-                  />
-                </TabsContent>
-                <TabsContent value="research" className="flex-1 m-0 overflow-hidden">
-                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                </TabsContent>
-              </Tabs>
+              <div className="h-full border-t border-l border-border overflow-auto">
+                <Accordion type="single" defaultValue="pattern-history" collapsible className="h-full">
+                  {/* Pattern History Section */}
+                  <AccordionItem value="pattern-history" className="border-b">
+                    <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                      <span className="flex items-center gap-1.5">
+                        <History className="h-3.5 w-3.5" />
+                        Pattern History
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0">
+                      <div className="max-h-[250px] overflow-auto">
+                        <PatternOccurrencesPanel 
+                          symbol={selectedSymbol} 
+                          timeframe={selectedTimeframe}
+                          onPatternSelect={handleOccurrenceSelect}
+                          selectedPatternId={selectedOccurrence?.id}
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Research Section */}
+                  <AccordionItem value="research" className="border-b-0">
+                    <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                      <span className="flex items-center gap-1.5">
+                        <FlaskConical className="h-3.5 w-3.5" />
+                        Research
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0">
+                      <div className="max-h-[250px] overflow-auto">
+                        <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
