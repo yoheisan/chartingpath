@@ -69,28 +69,47 @@ export const ExitEquityOverlay = ({
     });
   };
 
-  // Merge all series data by date
+  // Merge all series data by date and forward-fill missing values
   const chartData = useMemo(() => {
-    const dateMap = new Map<string, Record<string, number>>();
-    
+    // Collect all unique dates across all series
+    const allDates = new Set<string>();
     series.forEach(s => {
       s.data.forEach(point => {
-        const dateKey = point.date.split('T')[0];
-        if (!dateMap.has(dateKey)) {
-          dateMap.set(dateKey, { date: new Date(point.date).getTime() });
-        }
-        const entry = dateMap.get(dateKey)!;
-        entry[s.strategyId] = point.value;
+        allDates.add(point.date.split('T')[0]);
       });
     });
     
-    return Array.from(dateMap.values())
-      .sort((a, b) => (a.date as number) - (b.date as number))
-      .map(entry => ({
-        ...entry,
-        date: new Date(entry.date as number).toISOString(),
-      }));
-  }, [series]);
+    // Sort dates chronologically
+    const sortedDates = Array.from(allDates).sort();
+    
+    // Build data with forward-fill for missing values
+    const result: Array<Record<string, number | string>> = [];
+    const lastValues: Record<string, number> = {};
+    
+    // Initialize with initial capital
+    series.forEach(s => {
+      lastValues[s.strategyId] = s.data[0]?.value ?? initialCapital;
+    });
+    
+    sortedDates.forEach(dateKey => {
+      const entry: Record<string, number | string> = { 
+        date: new Date(dateKey).toISOString() 
+      };
+      
+      // For each strategy, use the value if available, otherwise forward-fill
+      series.forEach(s => {
+        const point = s.data.find(p => p.date.split('T')[0] === dateKey);
+        if (point) {
+          lastValues[s.strategyId] = point.value;
+        }
+        entry[s.strategyId] = lastValues[s.strategyId];
+      });
+      
+      result.push(entry);
+    });
+    
+    return result;
+  }, [series, initialCapital]);
 
   // Sort series by final return for legend ordering
   const sortedSeries = useMemo(() => 
