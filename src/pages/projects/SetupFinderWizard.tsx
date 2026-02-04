@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Zap, TrendingUp, AlertCircle, Loader2, Coins, Database, Clock, Search, X } from 'lucide-react';
+import { ArrowLeft, Zap, AlertCircle, Loader2, Coins, Database, Clock, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -252,8 +252,8 @@ const SetupFinderWizard = () => {
           
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/10">
-                <TrendingUp className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-xl bg-emerald-500/10">
+                <Search className="h-6 w-6 text-emerald-500" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Setup Finder</h1>

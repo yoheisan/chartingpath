@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye, AlertCircle } from "lucide-react";
+import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye, AlertCircle, FileCode } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -356,11 +356,11 @@ if shortCondition
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
-              <Code className="h-6 w-6 text-white" />
+            <div className="p-3 rounded-xl bg-cyan-500/10">
+              <FileCode className="h-6 w-6 text-cyan-500" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Script Library
+            <h1 className="text-3xl font-bold">
+              Scripts
             </h1>
             <Lock className="h-5 w-5 text-primary" />
           </div>
