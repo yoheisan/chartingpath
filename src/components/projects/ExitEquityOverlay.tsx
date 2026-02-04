@@ -229,7 +229,9 @@ export const ExitEquityOverlay = ({
                 labelFormatter={(val) => new Date(val).toLocaleDateString()}
                 formatter={(val: number, name: string) => {
                   const strategy = series.find(s => s.strategyId === name);
-                  return [`$${val.toFixed(2)}`, strategy?.strategyName || name];
+                  const roi = ((val - initialCapital) / initialCapital) * 100;
+                  const roiSign = roi >= 0 ? '+' : '';
+                  return [`$${val.toFixed(2)} (${roiSign}${roi.toFixed(1)}%)`, strategy?.strategyName || name];
                 }}
               />
               <Legend 
