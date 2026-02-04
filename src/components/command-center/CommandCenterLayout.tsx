@@ -480,28 +480,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
     }
   }, [updateSettings]);
 
+  // Right panel tab state
+  const [rightPanelTab, setRightPanelTab] = useState<string>(
+    settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
+  );
+
   return (
     <div className="h-[calc(100vh-4rem)] w-full">
       <ResizablePanelGroup direction="horizontal" className="h-full" onLayout={handleHorizontalResize}>
-        {/* Left Sidebar - Watchlist + Active Patterns */}
-        <ResizablePanel defaultSize={settings.leftPanelSize} minSize={15} maxSize={30}>
-          <div className="h-full flex flex-col border-r border-border">
-            <WatchlistPanel
-              userId={userId}
-              selectedSymbol={selectedSymbol}
-              onSymbolSelect={handleSymbolSelect}
-              onPatternSelect={handlePatternSelect}
-              refreshTrigger={watchlistVersion}
-              defaultTab={settings.watchlistTab}
-              onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
-            />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
         {/* Main Content Area - Chart + Bottom Tab Bar */}
-        <ResizablePanel defaultSize={settings.mainPanelSize} minSize={40}>
+        <ResizablePanel defaultSize={settings.mainPanelSize} minSize={50}>
           <div className="h-full flex flex-col">
             {/* Main Chart - fills available space */}
             <div className="flex-1 min-h-0">
@@ -583,12 +571,38 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
         <ResizableHandle withHandle />
 
-        {/* Right Sidebar - Alerts History + Market Overview stacked */}
-        <ResizablePanel defaultSize={settings.rightPanelSize} minSize={15} maxSize={35}>
+        {/* Right Sidebar - Watchlist/Alerts tabs + Market Overview stacked */}
+        <ResizablePanel defaultSize={settings.rightPanelSize} minSize={18} maxSize={40}>
           <ResizablePanelGroup direction="vertical" className="h-full border-l border-border" onLayout={handleRightPanelResize}>
-            {/* Alerts History */}
-            <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={20}>
-              <AlertsHistoryPanel userId={userId} />
+            {/* Watchlist & Alerts - Tabbed */}
+            <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={30}>
+              <Tabs value={rightPanelTab} onValueChange={(tab) => {
+                setRightPanelTab(tab);
+                updateSettings({ watchlistTab: tab });
+              }} className="h-full flex flex-col">
+                <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2">
+                  <TabsTrigger value="watchlist" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                    Watchlist
+                  </TabsTrigger>
+                  <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                    Alerts
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
+                  <WatchlistPanel
+                    userId={userId}
+                    selectedSymbol={selectedSymbol}
+                    onSymbolSelect={handleSymbolSelect}
+                    onPatternSelect={handlePatternSelect}
+                    refreshTrigger={watchlistVersion}
+                    defaultTab={settings.watchlistTab}
+                    onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
+                  />
+                </TabsContent>
+                <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
+                  <AlertsHistoryPanel userId={userId} />
+                </TabsContent>
+              </Tabs>
             </ResizablePanel>
 
             <ResizableHandle withHandle />
