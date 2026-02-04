@@ -420,7 +420,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg font-semibold">{bestPattern.patternName} ({bestPattern.direction === 'long' ? 'Long' : 'Short'})</div>
+                    <div className="text-lg font-semibold">{bestPattern.patternName}</div>
                     <div className={`text-2xl font-bold ${bestPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {formatR(bestPattern.expectancy)}
                     </div>
@@ -440,7 +440,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg font-semibold">{worstPattern.patternName} ({worstPattern.direction === 'long' ? 'Long' : 'Short'})</div>
+                    <div className="text-lg font-semibold">{worstPattern.patternName}</div>
                     <div className={`text-2xl font-bold ${worstPattern.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {formatR(worstPattern.expectancy)}
                     </div>
