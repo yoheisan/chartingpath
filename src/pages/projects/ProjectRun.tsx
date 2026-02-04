@@ -183,11 +183,11 @@ const ProjectRun = () => {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/projects/pattern-lab')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to Pattern Lab
           </Button>
           
           <Alert variant="destructive">
@@ -207,11 +207,11 @@ const ProjectRun = () => {
         <div className="mb-8">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/projects/pattern-lab')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
+            Back to Pattern Lab
           </Button>
           
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -229,9 +229,6 @@ const ProjectRun = () => {
                    project?.name || 'Project Run'}
                 </h1>
               </div>
-              <p className="text-muted-foreground text-sm mt-1">
-                Run ID: {runId?.slice(0, 8)}...
-              </p>
             </div>
             {run && getStatusBadge(run.status)}
           </div>
