@@ -25,7 +25,9 @@ import {
   BarChart3,
   LineChart,
   Code,
-  ArrowRight
+  ArrowRight,
+  Zap,
+  Star,
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
@@ -41,6 +43,8 @@ import {
   Legend
 } from 'recharts';
 import { RRComparisonTable, type RRTierStats } from './RRComparisonTable';
+import { ExitComparisonTable, type ExitStrategyStats } from './ExitComparisonTable';
+import ExitEquityOverlay, { type ExitEquitySeries } from './ExitEquityOverlay';
 import BenchmarkSelector from './BenchmarkSelector';
 
 interface BenchmarkData {
@@ -129,6 +133,10 @@ interface PatternLabArtifact {
   patternsByTier?: Record<string, PatternResult[]>;
   equityByTier?: Record<string, EquityPoint[]>;
   maxDrawdownByTier?: Record<string, number>; // percentage (0-100)
+  /** Exit Strategy Optimizer data */
+  exitComparison?: ExitStrategyStats[];
+  optimalExitStrategy?: string;
+  exitEquityByStrategy?: Record<string, EquityPoint[]>;
 }
 
 interface PatternLabViewerProps {
@@ -353,11 +361,15 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
       )}
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="patterns">Patterns</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="equity">Equity</TabsTrigger>
+          <TabsTrigger value="exits" className="gap-1">
+            <Zap className="h-3 w-3" />
+            Exit Optimizer
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -887,6 +899,149 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Exit Optimizer Tab */}
+        <TabsContent value="exits" className="space-y-6">
+          {artifact.exitComparison && artifact.exitComparison.length > 0 ? (
+            <>
+              {/* Optimal Strategy Highlight */}
+              {artifact.optimalExitStrategy && (
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardContent className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Star className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Optimal Exit Strategy</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {artifact.exitComparison.find(e => e.strategyId === artifact.optimalExitStrategy)?.strategyName || artifact.optimalExitStrategy}
+                          {' '}delivers the highest expectancy for your pattern selection
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Exit Comparison Table */}
+              <ExitComparisonTable 
+                stats={artifact.exitComparison}
+                title="Exit Strategy Comparison"
+                description="Compare performance metrics across different exit methods to optimize your trading system"
+              />
+
+              {/* Exit Equity Overlay Chart */}
+              {artifact.exitEquityByStrategy && Object.keys(artifact.exitEquityByStrategy).length > 0 && (
+                <ExitEquityOverlay
+                  series={artifact.exitComparison
+                    .filter(e => artifact.exitEquityByStrategy?.[e.strategyId]?.length)
+                    .map((e, idx) => ({
+                      strategyId: e.strategyId,
+                      strategyName: e.strategyName,
+                      color: [
+                        'hsl(var(--primary))',
+                        'hsl(142, 76%, 36%)',
+                        'hsl(221, 83%, 53%)',
+                        'hsl(45, 93%, 47%)',
+                        'hsl(280, 67%, 50%)',
+                        'hsl(12, 76%, 61%)',
+                        'hsl(173, 80%, 40%)',
+                        'hsl(340, 82%, 52%)',
+                      ][idx % 8],
+                      data: artifact.exitEquityByStrategy![e.strategyId] || [],
+                      finalValue: artifact.exitEquityByStrategy![e.strategyId]?.slice(-1)[0]?.value || 10000,
+                      returnPercent: ((artifact.exitEquityByStrategy![e.strategyId]?.slice(-1)[0]?.value || 10000) - 10000) / 100,
+                    }))
+                    .filter(s => s.data.length > 0)
+                  }
+                />
+              )}
+
+              {/* Strategy Breakdown */}
+              <Card className="border-border/50 bg-card/50">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Strategy Categories
+                  </CardTitle>
+                  <CardDescription>
+                    Exit strategies grouped by type
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {/* Fixed Targets */}
+                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+                      <h4 className="font-semibold mb-2">Fixed R:R Targets</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Simple profit targets at fixed risk multiples
+                      </p>
+                      {artifact.exitComparison
+                        .filter(e => e.strategyId.startsWith('fixed'))
+                        .map(e => (
+                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
+                            <span>{e.strategyName}</span>
+                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
+                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+
+                    {/* Trailing Stops */}
+                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+                      <h4 className="font-semibold mb-2">Trailing Stops</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Dynamic stops that follow price movement
+                      </p>
+                      {artifact.exitComparison
+                        .filter(e => e.strategyId.includes('atr') || e.strategyId.includes('scale'))
+                        .map(e => (
+                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
+                            <span>{e.strategyName}</span>
+                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
+                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+
+                    {/* Indicator-Based */}
+                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+                      <h4 className="font-semibold mb-2">Indicator Exits</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Exits based on technical indicators
+                      </p>
+                      {artifact.exitComparison
+                        .filter(e => e.strategyId.includes('rsi') || e.strategyId.includes('macd') || e.strategyId.includes('fib'))
+                        .map(e => (
+                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
+                            <span>{e.strategyName}</span>
+                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
+                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="border-border/50 bg-card/50">
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Exit Optimizer Coming Soon</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Run a new Pattern Lab analysis to see exit strategy comparisons.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
       
