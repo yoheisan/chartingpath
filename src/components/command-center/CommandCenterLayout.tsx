@@ -23,6 +23,7 @@ import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec'
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
+import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { FlaskConical, History, X, TrendingUp, TrendingDown } from 'lucide-react';
 
 /** Playback pattern passed from route state */
@@ -75,12 +76,22 @@ interface PatternDetailsResponse {
 }
 
 export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandCenterLayoutProps) {
+  // Persisted dashboard settings
+  const { settings, updateSettings } = useDashboardSettings();
+  
   const [selectedSymbol, setSelectedSymbol] = useState<string>(
-    initialPlaybackPattern?.symbol || 'AAPL'
+    initialPlaybackPattern?.symbol || settings.selectedSymbol
   );
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>(
-    initialPlaybackPattern?.timeframe || '1d'
+    initialPlaybackPattern?.timeframe || settings.selectedTimeframe
   );
+  
+  // Persist symbol/timeframe changes
+  useEffect(() => {
+    if (!initialPlaybackPattern) {
+      updateSettings({ selectedSymbol, selectedTimeframe });
+    }
+  }, [selectedSymbol, selectedTimeframe, updateSettings, initialPlaybackPattern]);
   
   // Pattern detail modal state
   const [watchlistVersion, setWatchlistVersion] = useState(0);
@@ -103,6 +114,16 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
   
   // Track if we've processed the initial playback pattern
   const hasProcessedInitialPlayback = useRef(false);
+  
+  // Accordion state for bottom panel
+  const [bottomAccordionValue, setBottomAccordionValue] = useState<string>(
+    settings.bottomPanelAccordion || 'pattern-history'
+  );
+  
+  // Persist accordion state
+  useEffect(() => {
+    updateSettings({ bottomPanelAccordion: bottomAccordionValue || null });
+  }, [bottomAccordionValue, updateSettings]);
 
   // Handle initial playback pattern from route state - loads directly into inline chart (not modal)
   useEffect(() => {
@@ -423,11 +444,40 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
     }
   }, [selectedSetup, userId]);
 
+  // Panel resize handlers
+  const handleHorizontalResize = useCallback((sizes: number[]) => {
+    if (sizes.length === 3) {
+      updateSettings({
+        leftPanelSize: sizes[0],
+        mainPanelSize: sizes[1],
+        rightPanelSize: sizes[2],
+      });
+    }
+  }, [updateSettings]);
+
+  const handleVerticalResize = useCallback((sizes: number[]) => {
+    if (sizes.length === 2) {
+      updateSettings({
+        topChartSize: sizes[0],
+        bottomPanelSize: sizes[1],
+      });
+    }
+  }, [updateSettings]);
+
+  const handleRightPanelResize = useCallback((sizes: number[]) => {
+    if (sizes.length === 2) {
+      updateSettings({
+        alertsPanelSize: sizes[0],
+        marketOverviewSize: sizes[1],
+      });
+    }
+  }, [updateSettings]);
+
   return (
     <div className="h-[calc(100vh-4rem)] w-full">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
+      <ResizablePanelGroup direction="horizontal" className="h-full" onLayout={handleHorizontalResize}>
         {/* Left Sidebar - Watchlist + Active Patterns */}
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+        <ResizablePanel defaultSize={settings.leftPanelSize} minSize={15} maxSize={30}>
           <div className="h-full flex flex-col border-r border-border">
             <WatchlistPanel
               userId={userId}
@@ -435,6 +485,8 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               onSymbolSelect={handleSymbolSelect}
               onPatternSelect={handlePatternSelect}
               refreshTrigger={watchlistVersion}
+              defaultTab={settings.watchlistTab}
+              onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
             />
           </div>
         </ResizablePanel>
@@ -442,10 +494,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         <ResizableHandle withHandle />
 
         {/* Main Content Area */}
-        <ResizablePanel defaultSize={55} minSize={40}>
-          <ResizablePanelGroup direction="vertical" className="h-full">
+        <ResizablePanel defaultSize={settings.mainPanelSize} minSize={40}>
+          <ResizablePanelGroup direction="vertical" className="h-full" onLayout={handleVerticalResize}>
             {/* Main Chart - shows pattern overlay or default study chart */}
-            <ResizablePanel defaultSize={70} minSize={50}>
+            <ResizablePanel defaultSize={settings.topChartSize} minSize={50}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -466,9 +518,15 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
             <ResizableHandle withHandle />
 
             {/* Bottom Panel - Accordion Research + Pattern History */}
-            <ResizablePanel defaultSize={30} minSize={15} maxSize={50}>
+            <ResizablePanel defaultSize={settings.bottomPanelSize} minSize={15} maxSize={50}>
               <div className="h-full border-t border-l border-border overflow-auto">
-                <Accordion type="single" defaultValue="pattern-history" collapsible className="h-full">
+                <Accordion 
+                  type="single" 
+                  value={bottomAccordionValue} 
+                  onValueChange={setBottomAccordionValue}
+                  collapsible 
+                  className="h-full"
+                >
                   {/* Pattern History Section */}
                   <AccordionItem value="pattern-history" className="border-b">
                     <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
@@ -512,18 +570,22 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         <ResizableHandle withHandle />
 
         {/* Right Sidebar - Alerts History + Market Overview stacked */}
-        <ResizablePanel defaultSize={25} minSize={15} maxSize={35}>
-          <ResizablePanelGroup direction="vertical" className="h-full border-l border-border">
+        <ResizablePanel defaultSize={settings.rightPanelSize} minSize={15} maxSize={35}>
+          <ResizablePanelGroup direction="vertical" className="h-full border-l border-border" onLayout={handleRightPanelResize}>
             {/* Alerts History */}
-            <ResizablePanel defaultSize={50} minSize={20}>
+            <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={20}>
               <AlertsHistoryPanel userId={userId} />
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
             {/* Market Overview */}
-            <ResizablePanel defaultSize={50} minSize={20}>
-              <MarketOverviewPanel onSymbolSelect={handleSymbolSelect} />
+            <ResizablePanel defaultSize={settings.marketOverviewSize} minSize={20}>
+              <MarketOverviewPanel 
+                onSymbolSelect={handleSymbolSelect} 
+                defaultTab={settings.marketOverviewTab}
+                onTabChange={(tab) => updateSettings({ marketOverviewTab: tab })}
+              />
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
