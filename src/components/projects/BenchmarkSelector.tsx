@@ -66,50 +66,24 @@ const BenchmarkSelector = ({
       // Extend start date back a bit to ensure we capture first equity point
       start.setDate(start.getDate() - 7);
       
-      let bars: any[] = [];
+      // Use Yahoo Finance for benchmark data (free, reliable, includes adjusted close)
+      const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
+        body: {
+          symbol,
+          startDate: start.toISOString().split('T')[0],
+          endDate: end.toISOString().split('T')[0],
+          interval: '1d',
+          includeOhlc: true,
+        }
+      });
       
-      // Try Alpha Vantage first, then fallback to Yahoo Finance
-      try {
-        const { data, error } = await supabase.functions.invoke('fetch-alpha-vantage', {
-          body: {
-            symbol,
-            startDate: start.toISOString().split('T')[0],
-            endDate: end.toISOString().split('T')[0],
-            outputSize: 'full',
-          }
-        });
-        
-        if (!error && data?.bars?.length) {
-          bars = data.bars;
-        } else {
-          throw new Error('Alpha Vantage failed, trying Yahoo Finance');
-        }
-      } catch (avError) {
-        console.warn('Alpha Vantage failed, falling back to Yahoo Finance:', avError);
-        
-        // Fallback to Yahoo Finance
-        const { data: yahooData, error: yahooError } = await supabase.functions.invoke('fetch-yahoo-finance', {
-          body: {
-            symbol,
-            startDate: start.toISOString().split('T')[0],
-            endDate: end.toISOString().split('T')[0],
-            interval: '1d',
-            includeOhlc: true,
-          }
-        });
-        if (yahooError || !yahooData?.bars?.length) {
-          console.error('Yahoo Finance also failed:', yahooError);
-          throw new Error('Both data providers failed');
-        }
-        
-        bars = yahooData.bars;
-      }
-
-      if (!bars.length) {
-        console.error('No data returned for benchmark:', symbol);
+      if (error || !data?.bars?.length) {
+        console.error('Failed to fetch benchmark:', symbol, error);
         setSelectedBenchmarks(prev => prev.filter(s => s !== symbol));
         return;
       }
+      
+      const bars = data.bars;
 
       // Filter to date range and normalize to initial capital
       const startTs = new Date(startDate).getTime();
