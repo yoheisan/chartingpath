@@ -37,17 +37,17 @@ const PARTITIONS: Record<string, PartitionConfig> = {
   'stocks_ag': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'A', end: 'G' },
-    batchSize: 200  // Process up to 200 stocks A-G
+    batchSize: 1800  // Russell 2000 + NASDAQ coverage (~1700 stocks A-G)
   },
   'stocks_ho': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'H', end: 'O' },
-    batchSize: 200  // Process up to 200 stocks H-O
+    batchSize: 1800  // Russell 2000 + NASDAQ coverage (~1700 stocks H-O)
   },
   'stocks_pz': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'P', end: 'Z' },
-    batchSize: 200  // Process up to 200 stocks P-Z
+    batchSize: 1800  // Russell 2000 + NASDAQ coverage (~1700 stocks P-Z)
   },
   'fx': {
     assetTypes: ['fx'],
