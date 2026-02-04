@@ -9,10 +9,12 @@ import {
   TrendingDown, 
   RefreshCw,
   Activity,
+  Calendar,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
+import { EconomicCalendarWidget } from './EconomicCalendarWidget';
 
 interface MarketOverviewPanelProps {
   onSymbolSelect: (symbol: string) => void;
@@ -239,6 +241,10 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
             <TrendingUp className="h-3 w-3 mr-1" />
             Movers
           </TabsTrigger>
+          <TabsTrigger value="calendar" className="text-xs h-6 px-2">
+            <Calendar className="h-3 w-3 mr-1" />
+            Calendar
+          </TabsTrigger>
         </TabsList>
 
         {/* Indices Tab */}
@@ -343,6 +349,11 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
               </div>
             </div>
           </ScrollArea>
+        </TabsContent>
+
+        {/* Calendar Tab */}
+        <TabsContent value="calendar" className="flex-1 m-0 overflow-hidden">
+          <EconomicCalendarWidget />
         </TabsContent>
       </Tabs>
     </div>
