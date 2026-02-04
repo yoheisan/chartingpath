@@ -319,7 +319,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           });
         }
 
-        // Entry marker
+        // Markers: Pattern zone, Entry, Exit
         const timeSet = new Set<number>(chartData.map((d) => d.time as number));
         const allMarkers: Array<{
           time: Time;
@@ -329,6 +329,29 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           text: string;
         }> = [];
 
+        // Pattern identification markers - show where the pattern was detected (before entry)
+        // Pattern zone spans from start of visible bars up to (entryBarIndex - 1)
+        const patternEndIndex = Math.max(0, entryBarIndex - 1);
+        const patternStartIndex = Math.max(0, patternEndIndex - 5); // Show last ~5 bars of pattern formation
+        
+        // Add pattern start marker
+        if (patternStartIndex < playback.visibleBars.length) {
+          const patternStartBar = playback.visibleBars[patternStartIndex];
+          if (patternStartBar) {
+            const patternStartTime = Math.floor(new Date(patternStartBar.t).getTime() / 1000);
+            if (timeSet.has(patternStartTime)) {
+              allMarkers.push({
+                time: patternStartTime as Time,
+                position: 'belowBar',
+                color: '#8b5cf6', // Purple for pattern identification
+                shape: 'square',
+                text: 'Pattern',
+              });
+            }
+          }
+        }
+
+        // Entry marker (show after we've reached the entry bar in playback)
         if (playback.isAfterEntry && entryBarIndex < playback.visibleBars.length) {
           const entryBar = playback.visibleBars[entryBarIndex];
           if (entryBar) {
