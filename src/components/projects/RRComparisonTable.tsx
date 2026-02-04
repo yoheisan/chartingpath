@@ -121,7 +121,10 @@ export const RRComparisonTable = ({
                           <p><span className="text-red-500 font-mono">-0.76R</span> = Lose 0.76× risk per trade</p>
                         </div>
                         <p className="text-xs mt-2 text-muted-foreground">
-                          Formula: (Win% × R:R) - (Loss% × 1)
+                          Formula: Total R-Multiple ÷ Trade Count
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          (Includes actual timeout R-values, not simplified win/loss)
                         </p>
                       </TooltipContent>
                     </Tooltip>

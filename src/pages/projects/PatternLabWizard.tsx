@@ -213,6 +213,7 @@ const PatternLabWizard = () => {
     gradeFilter?: string[];
     timeframe?: string;
     lookbackYears?: number;
+    riskPerTrade?: number;
   } | null;
   
   // Form state - use prefilled values from previous run if available
@@ -222,6 +223,8 @@ const PatternLabWizard = () => {
   );
   const [timeframe, setTimeframe] = useState(prefilledState?.timeframe ?? '1d');
   const [lookbackYears, setLookbackYears] = useState(prefilledState?.lookbackYears ?? 3);
+  // Professional risk per trade tiers: 0.5% (conservative), 1% (standard), 2% (aggressive)
+  const [riskPerTrade, setRiskPerTrade] = useState(prefilledState?.riskPerTrade ?? 1);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(
     prefilledState?.patterns ?? ['double-bottom']
   );
@@ -371,6 +374,7 @@ const PatternLabWizard = () => {
               timeframe,
               lookbackYears,
               gradeFilter: selectedGrades,
+              riskPerTrade, // Professional tiers: 0.5%, 1%, 2%
             },
           }),
         }
@@ -526,7 +530,7 @@ const PatternLabWizard = () => {
                 <CardDescription>Configure timeframe and data range</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label>Timeframe</Label>
                     <Select value={timeframe} onValueChange={setTimeframe}>
@@ -575,6 +579,44 @@ const PatternLabWizard = () => {
                     <p className="text-xs text-muted-foreground">
                       Data coverage: {getCoverageInfo(timeframe as Timeframe)}
                     </p>
+                  </div>
+                  
+                  {/* Risk Per Trade - Professional Tiers */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <Label>Risk Per Trade</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-sm font-semibold mb-1">Position Sizing</p>
+                            <p className="text-xs text-muted-foreground">
+                              Percentage of capital risked per trade. Affects equity curve simulation and max drawdown calculations.
+                            </p>
+                            <div className="text-xs mt-2 space-y-1">
+                              <p><span className="font-mono">0.5%</span> — Conservative (prop firms)</p>
+                              <p><span className="font-mono">1.0%</span> — Standard (institutional)</p>
+                              <p><span className="font-mono">2.0%</span> — Aggressive (retail)</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Select 
+                      value={String(riskPerTrade)} 
+                      onValueChange={(v) => setRiskPerTrade(Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.5">0.5% (Conservative)</SelectItem>
+                        <SelectItem value="1">1.0% (Standard)</SelectItem>
+                        <SelectItem value="2">2.0% (Aggressive)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 

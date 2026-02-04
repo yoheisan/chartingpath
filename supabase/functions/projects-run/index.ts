@@ -2308,11 +2308,13 @@ serve(async (req) => {
             let cumulativeR = 0;
             let peakValue = 10000;
             let maxDD = 0;
+            // Use user-defined riskPerTrade (default 1%) for equity simulation
+            const riskFraction = riskPerTrade / 100;
             for (const trade of sortedTrades) {
               const r = trade.rrOutcomes?.[tierKey]?.rMultiple ?? (tierKey === 'rr2' ? trade.rMultiple : 0);
               const d = trade.rrOutcomes?.[tierKey]?.exitDate ?? trade.exitDate;
               cumulativeR += r;
-              const value = 10000 * (1 + cumulativeR * 0.01);
+              const value = 10000 * (1 + cumulativeR * riskFraction);
               peakValue = Math.max(peakValue, value);
               const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
               maxDD = Math.max(maxDD, dd);
@@ -2417,19 +2419,21 @@ serve(async (req) => {
               ? Math.abs(losses.reduce((s: number, o: ExitStrategyResult) => s + o.rMultiple, 0) / losses.length) 
               : 1;
             
-            // Calculate drawdown for this strategy
+            // Calculate drawdown for this strategy using consistent percentage formula
+            // Uses riskPerTrade to convert R-units to portfolio percentage
             let cumulativeR = 0;
             let peakR = 0;
-            let maxDD = 0;
+            let maxDDinR = 0;
             for (const trade of trades.sort((a: any, b: any) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
               const outcome = trade.exitOutcomes[strategy.id];
               cumulativeR += outcome.rMultiple;
               peakR = Math.max(peakR, cumulativeR);
               const dd = peakR - cumulativeR;
-              maxDD = Math.max(maxDD, dd);
+              maxDDinR = Math.max(maxDDinR, dd);
             }
-            // Convert R drawdown to approximate percentage (assuming 1% risk per trade)
-            const maxDrawdownPercent = maxDD * 1; // 1R = 1% of capital risked
+            // Convert R drawdown to percentage using user's riskPerTrade setting
+            // This ensures consistency with the R:R comparison table's max drawdown
+            const maxDrawdownPercent = maxDDinR * riskPerTrade;
             
             return {
               strategyId: strategy.id,
@@ -2453,6 +2457,8 @@ serve(async (req) => {
           
           // Build equity curves per exit strategy
           const exitEquityByStrategy: Record<string, { date: string; value: number; drawdown: number }[]> = {};
+          // Use user-defined riskPerTrade for exit strategy equity simulation
+          const exitRiskFraction = riskPerTrade / 100;
           for (const strategy of EXIT_STRATEGIES) {
             const points: { date: string; value: number; drawdown: number }[] = [];
             let cumulativeR = 0;
@@ -2463,7 +2469,7 @@ serve(async (req) => {
               if (!outcome) continue;
               
               cumulativeR += outcome.rMultiple;
-              const value = 10000 * (1 + cumulativeR * 0.01);
+              const value = 10000 * (1 + cumulativeR * exitRiskFraction);
               peakValue = Math.max(peakValue, value);
               const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
               points.push({ date: outcome.exitDate, value: Math.max(0, value), drawdown: dd });
@@ -2478,15 +2484,18 @@ serve(async (req) => {
               instruments,
               patterns,
               gradeFilter,
+              riskPerTrade, // Professional tiers: 0.5%, 1%, 2%
             },
             timeframe,
             lookbackYears,
+            riskPerTrade, // Also at top level for easy access
             generatedAt: new Date().toISOString(),
             executionAssumptions: {
               bracketLevelsVersion: BRACKET_LEVELS_VERSION,
               priceRounding: ROUNDING_CONFIG,
               maxBarsInTrade: 50,
               fillRule: 'bar_close',
+              riskPerTrade, // Document the risk used in equity simulation
             },
             summary: {
               totalPatterns: patternResults.length,
