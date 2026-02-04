@@ -69,6 +69,8 @@ interface HistoricalOccurrencesListProps {
   limit?: number;
   className?: string;
   selectedRR?: number; // User-selected R:R for display consistency
+  /** Callback when an occurrence is selected for viewing */
+  onSelectOccurrence?: (setup: SetupWithVisuals) => void;
 }
 
 type TrendFilter = 'all' | 'with_trend' | 'counter_trend';
@@ -83,7 +85,8 @@ export function HistoricalOccurrencesList({
   direction,
   limit = DEFAULT_LIMIT,
   className,
-  selectedRR = 2
+  selectedRR = 2,
+  onSelectOccurrence,
 }: HistoricalOccurrencesListProps) {
   const [occurrences, setOccurrences] = useState<HistoricalOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,6 +324,69 @@ export function HistoricalOccurrencesList({
     .filter(o => o.outcomePnlPercent !== null)
     .reduce((sum, o) => sum + (o.outcomePnlPercent || 0), 0);
 
+  // Handler to convert occurrence to SetupWithVisuals and open chart
+  const handleOpenChart = (occurrence: HistoricalOccurrence) => {
+    if (!onSelectOccurrence) return;
+    
+    // Map outcome back to the database format
+    const outcomeMap: Record<string, 'hit_tp' | 'hit_sl' | 'timeout' | 'pending'> = {
+      'win': 'hit_tp',
+      'loss': 'hit_sl',
+      'pending': 'pending',
+    };
+    
+    // Calculate entryBarIndex from visualSpec or default to 30 bars before end
+    const entryBarIndex = occurrence.visualSpec?.entryBarIndex ?? 
+      Math.max(0, occurrence.bars.length - (occurrence.barsToOutcome ?? 1) - 1);
+    
+    const setup: SetupWithVisuals = {
+      instrument: occurrence.symbol,
+      patternId: patternId,
+      patternName: occurrence.patternName,
+      direction: occurrence.direction,
+      signalTs: occurrence.detectedAt,
+      quality: {
+        score: 7, // Default score
+        grade: (occurrence.qualityScore as 'A' | 'B' | 'C' | 'D' | 'F') || 'B',
+        confidence: 70,
+        reasons: [],
+        warnings: [],
+        tradeable: true,
+      },
+      tradePlan: {
+        entryType: 'market',
+        entry: occurrence.entryPrice,
+        stopLoss: occurrence.stopLossPrice,
+        takeProfit: occurrence.takeProfitPrice,
+        rr: occurrence.riskRewardRatio,
+        stopDistance: Math.abs(occurrence.entryPrice - occurrence.stopLossPrice),
+        tpDistance: Math.abs(occurrence.takeProfitPrice - occurrence.entryPrice),
+        timeStopBars: 100,
+        bracketLevelsVersion: '2.0.0',
+        priceRounding: { priceDecimals: 5, rrDecimals: 2 },
+      },
+      bars: occurrence.bars,
+      visualSpec: occurrence.visualSpec || {
+        version: '2.0.0',
+        symbol: occurrence.symbol,
+        timeframe: timeframe,
+        patternId: patternId,
+        signalTs: occurrence.detectedAt,
+        window: { startTs: occurrence.patternStartDate, endTs: occurrence.patternEndDate },
+        yDomain: { min: 0, max: 0 },
+        overlays: [],
+        entryBarIndex,
+      },
+      // Include outcome data for playback
+      outcome: occurrence.outcome ? outcomeMap[occurrence.outcome] : null,
+      outcomePnlPercent: occurrence.outcomePnlPercent,
+      barsToOutcome: occurrence.barsToOutcome,
+      entryBarIndex,
+    };
+    
+    onSelectOccurrence(setup);
+  };
+
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="pb-2">
@@ -476,7 +542,7 @@ export function HistoricalOccurrencesList({
           <div className="space-y-2">
             {filteredOccurrences.length > 0 ? (
               filteredOccurrences.map((occurrence) => (
-                <OccurrenceRow key={occurrence.id} occurrence={occurrence} selectedRR={selectedRR} />
+                <OccurrenceRow key={occurrence.id} occurrence={occurrence} selectedRR={selectedRR} onOpenChart={handleOpenChart} />
               ))
             ) : (
               <div className="text-center py-6 text-muted-foreground">
@@ -560,26 +626,19 @@ function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart }: OccurrenceRo
   const formattedTime = format(new Date(occurrence.detectedAt), 'HH:mm');
 
   return (
-    <div className={cn(
-      'group flex items-center gap-3 p-3 rounded-lg border transition-colors',
-      'hover:bg-muted/30 hover:border-border/80',
-      'border-border/50 bg-card/50'
-    )}>
-      {/* Open Chart Button - replaced busy thumbnails per UX refinement */}
-      {occurrence.bars && occurrence.bars.length > 0 && onOpenChart && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-2 text-xs flex-shrink-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenChart(occurrence);
-          }}
-        >
-          <BarChart3 className="h-3.5 w-3.5 mr-1" />
-          Chart
-        </Button>
+    <div 
+      className={cn(
+        'group flex items-center gap-3 p-3 rounded-lg border transition-colors',
+        'hover:bg-muted/30 hover:border-border/80',
+        'border-border/50 bg-card/50',
+        onOpenChart && occurrence.bars?.length > 0 && 'cursor-pointer'
       )}
+      onClick={() => {
+        if (onOpenChart && occurrence.bars?.length > 0) {
+          onOpenChart(occurrence);
+        }
+      }}
+    >
       
       {/* Main Content */}
       <div className="flex-1 min-w-0">
