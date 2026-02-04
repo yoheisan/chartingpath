@@ -91,7 +91,7 @@ export function PatternScreenerTeaser() {
   const [activeTab, setActiveTab] = useState<AssetType>('stocks');
   const [lastScanned, setLastScanned] = useState<string | null>(null);
 
-  // Fetch patterns for all asset types on mount
+  // Fetch patterns for all asset types on mount - staggered to avoid browser connection pool exhaustion
   useEffect(() => {
     const fetchPatternsForAsset = async (assetType: AssetType) => {
       try {
@@ -141,8 +141,21 @@ export function PatternScreenerTeaser() {
       }
     };
 
-    // Fetch all asset types in parallel
-    ASSET_TABS.forEach(tab => fetchPatternsForAsset(tab.value));
+    // Stagger requests to avoid browser connection pool exhaustion
+    // Fetch the active tab first, then others with delays
+    const fetchWithStagger = async () => {
+      // Fetch stocks first (default/most common tab)
+      await fetchPatternsForAsset('stocks');
+      
+      // Stagger remaining fetches with small delays to prevent ERR_ABORTED
+      const remainingTabs = ASSET_TABS.filter(t => t.value !== 'stocks');
+      for (let i = 0; i < remainingTabs.length; i++) {
+        await new Promise(r => setTimeout(r, 200)); // 200ms delay between each
+        fetchPatternsForAsset(remainingTabs[i].value); // Fire without awaiting
+      }
+    };
+    
+    fetchWithStagger();
   }, []);
 
   const currentPatterns = patternsByAsset[activeTab];
