@@ -56,6 +56,7 @@ import {
   History,
   Settings2,
   RotateCcw,
+  Play,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
@@ -65,6 +66,7 @@ import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
+import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -204,6 +206,9 @@ export default function FullChartViewer({
   const indicatorsRef = useRef<IndicatorSettings>(indicators);
   const [chartVersion, setChartVersion] = useState(0);
   
+  // Playback mode state - for historical patterns with outcome data
+  const [playbackEnabled, setPlaybackEnabled] = useState(false);
+  
   // Vertical panning state
   const [isDragging, setIsDragging] = useState(false);
   const dragStartY = useRef<number | null>(null);
@@ -211,6 +216,10 @@ export default function FullChartViewer({
   
   // Keep ref in sync for use inside effects
   indicatorsRef.current = indicators;
+  
+  // Determine if playback is available (historical pattern with outcome data)
+  const isHistoricalPattern = setup?.outcome != null || setup?.barsToOutcome != null;
+  const canPlayback = isHistoricalPattern && setup?.barsToOutcome != null && setup?.entryBarIndex != null;
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -835,191 +844,230 @@ export default function FullChartViewer({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left: Chart (2 cols) */}
             <div className="lg:col-span-2 space-y-4">
-              <div 
-                className="relative"
-                onMouseDown={handleChartMouseDown}
-                onMouseMove={handleChartMouseMove}
-                onMouseUp={handleChartMouseUp}
-                onMouseLeave={handleChartMouseLeave}
-              >
-                <div
-                  ref={setContainerEl}
-                  className={`w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50 ${isDragging ? 'cursor-grabbing' : ''}`}
-                />
-                
-                {/* Indicator Legend */}
-                <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none z-10">
-                  {indicators.ema20 && (
-                    <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-orange-500">
-                      EMA 20
+              {/* Playback Mode Toggle (only for historical patterns) */}
+              {canPlayback && (
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Play className="h-3.5 w-3.5" />
+                    <span>Trade Playback</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {playbackEnabled ? 'Interactive replay' : 'Static view'}
                     </span>
-                  )}
-                  {indicators.ema50 && (
-                    <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-blue-500">
-                      EMA 50
-                    </span>
-                  )}
-                  {indicators.sma200 && (
-                    <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-purple-500">
-                      SMA 200
-                    </span>
-                  )}
-                  {indicators.bollingerBands && (
-                    <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-gray-400">
-                      BB(20,2)
-                    </span>
-                  )}
-                  {indicators.vwap && (
-                    <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-cyan-500">
-                      VWAP
-                    </span>
-                  )}
+                    <Switch
+                      id="playback-toggle"
+                      checked={playbackEnabled}
+                      onCheckedChange={setPlaybackEnabled}
+                    />
+                  </div>
                 </div>
+              )}
 
-                {/* Chart Controls: Pan hint + Reset + Indicator Settings */}
-                <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
-                  {/* Pan hint - shows only when not dragging */}
-                  {!isDragging && (
+              {/* Conditional Chart Rendering */}
+              {playbackEnabled && canPlayback && setup.entryBarIndex != null ? (
+                <FullChartPlaybackView
+                  bars={setup.bars}
+                  visualSpec={visualSpec}
+                  direction={direction}
+                  entryBarIndex={setup.entryBarIndex}
+                  barsToOutcome={setup.barsToOutcome ?? null}
+                  outcome={setup.outcome}
+                  tradePlan={{
+                    entry: tradePlan.entry,
+                    stopLoss: tradePlan.stopLoss,
+                    takeProfit: tradePlan.takeProfit,
+                  }}
+                  indicators={indicators}
+                  height={420}
+                />
+              ) : (
+                <div 
+                  className="relative"
+                  onMouseDown={handleChartMouseDown}
+                  onMouseMove={handleChartMouseMove}
+                  onMouseUp={handleChartMouseUp}
+                  onMouseLeave={handleChartMouseLeave}
+                >
+                  <div
+                    ref={setContainerEl}
+                    className={`w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50 ${isDragging ? 'cursor-grabbing' : ''}`}
+                  />
+                  
+                  {/* Indicator Legend */}
+                  <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none z-10">
+                    {indicators.ema20 && (
+                      <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-orange-500">
+                        EMA 20
+                      </span>
+                    )}
+                    {indicators.ema50 && (
+                      <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-blue-500">
+                        EMA 50
+                      </span>
+                    )}
+                    {indicators.sma200 && (
+                      <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-purple-500">
+                        SMA 200
+                      </span>
+                    )}
+                    {indicators.bollingerBands && (
+                      <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-gray-400">
+                        BB(20,2)
+                      </span>
+                    )}
+                    {indicators.vwap && (
+                      <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-cyan-500">
+                        VWAP
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Chart Controls: Pan hint + Reset + Indicator Settings */}
+                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                    {/* Pan hint - shows only when not dragging */}
+                    {!isDragging && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-[10px] text-muted-foreground bg-background/90 border border-border/40 px-2 py-1 rounded cursor-help hidden lg:inline-flex items-center gap-1.5">
+                            <kbd className="px-1 py-0.5 text-[9px] bg-muted rounded font-mono">Shift</kbd>
+                            <span>+ drag to pan</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-[200px]">
+                          <p className="text-xs">Hold <kbd className="px-1 py-0.5 bg-muted rounded font-mono text-[10px]">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isDragging && (
+                      <span className="text-[10px] text-amber-500 bg-background/90 border border-amber-500/30 px-2 py-1 rounded inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                        Panning...
+                      </span>
+                    )}
+                    {/* Reset Chart Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="text-[10px] text-muted-foreground bg-background/90 border border-border/40 px-2 py-1 rounded cursor-help hidden lg:inline-flex items-center gap-1.5">
-                          <kbd className="px-1 py-0.5 text-[9px] bg-muted rounded font-mono">Shift</kbd>
-                          <span>+ drag to pan</span>
-                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 w-7 p-0 bg-background/90 border-border/50 hover:bg-background"
+                          onClick={handleResetChart}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-[200px]">
-                        <p className="text-xs">Hold <kbd className="px-1 py-0.5 bg-muted rounded font-mono text-[10px]">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.</p>
+                      <TooltipContent side="bottom">
+                        <p className="text-xs">Reset view &amp; re-enable auto-scale</p>
                       </TooltipContent>
                     </Tooltip>
-                  )}
-                  {isDragging && (
-                    <span className="text-[10px] text-amber-500 bg-background/90 border border-amber-500/30 px-2 py-1 rounded inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                      Panning...
-                    </span>
-                  )}
-                  {/* Reset Chart Button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-7 p-0 bg-background/90 border-border/50 hover:bg-background"
-                        onClick={handleResetChart}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 bg-background/90 border-border/50 hover:bg-background"
+                        >
+                          <Settings2 className="h-3.5 w-3.5 mr-1" />
+                          <span className="text-xs">Indicators</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent 
+                        className="w-56 p-3 bg-popover border border-border shadow-lg z-50" 
+                        align="end"
+                        sideOffset={4}
                       >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="text-xs">Reset view &amp; re-enable auto-scale</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 bg-background/90 border-border/50 hover:bg-background"
-                      >
-                        <Settings2 className="h-3.5 w-3.5 mr-1" />
-                        <span className="text-xs">Indicators</span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent 
-                      className="w-56 p-3 bg-popover border border-border shadow-lg z-50" 
-                      align="end"
-                      sideOffset={4}
-                    >
-                      <div className="space-y-3">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Toggle Indicators
-                        </p>
-                        
-                        <div className="space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="fc-ema20" className="text-sm flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-orange-500" />
-                              EMA 20
-                            </Label>
-                            <Switch
-                              id="fc-ema20"
-                              checked={indicators.ema20}
-                              onCheckedChange={() => handleToggle('ema20')}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="fc-ema50" className="text-sm flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-blue-500" />
-                              EMA 50
-                            </Label>
-                            <Switch
-                              id="fc-ema50"
-                              checked={indicators.ema50}
-                              onCheckedChange={() => handleToggle('ema50')}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="fc-sma200" className="text-sm flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-purple-500" />
-                              SMA 200
-                            </Label>
-                            <Switch
-                              id="fc-sma200"
-                              checked={indicators.sma200}
-                              onCheckedChange={() => handleToggle('sma200')}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="fc-bb" className="text-sm flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-gray-400" />
-                              Bollinger Bands
-                            </Label>
-                            <Switch
-                              id="fc-bb"
-                              checked={indicators.bollingerBands}
-                              onCheckedChange={() => handleToggle('bollingerBands')}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="fc-vwap" className="text-sm flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-cyan-500" />
-                              VWAP
-                            </Label>
-                            <Switch
-                              id="fc-vwap"
-                              checked={indicators.vwap}
-                              onCheckedChange={() => handleToggle('vwap')}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="pt-2 border-t border-border/50">
-                          <p className="text-[10px] text-muted-foreground">
-                            {Object.values(indicators).filter(Boolean).length} of 5 indicators active
+                        <div className="space-y-3">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Toggle Indicators
                           </p>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                {chartError && (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/30">
-                    {chartError}
-                  </div>
-                )}
+                          
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="fc-ema20" className="text-sm flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-orange-500" />
+                                EMA 20
+                              </Label>
+                              <Switch
+                                id="fc-ema20"
+                                checked={indicators.ema20}
+                                onCheckedChange={() => handleToggle('ema20')}
+                              />
+                            </div>
 
-                {!chartError && (loading || !hasBars) && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>{loading ? 'Loading detailed chart…' : 'No chart data available for this setup.'}</span>
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="fc-ema50" className="text-sm flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                EMA 50
+                              </Label>
+                              <Switch
+                                id="fc-ema50"
+                                checked={indicators.ema50}
+                                onCheckedChange={() => handleToggle('ema50')}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="fc-sma200" className="text-sm flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                                SMA 200
+                              </Label>
+                              <Switch
+                                id="fc-sma200"
+                                checked={indicators.sma200}
+                                onCheckedChange={() => handleToggle('sma200')}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="fc-bb" className="text-sm flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-gray-400" />
+                                Bollinger Bands
+                              </Label>
+                              <Switch
+                                id="fc-bb"
+                                checked={indicators.bollingerBands}
+                                onCheckedChange={() => handleToggle('bollingerBands')}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="fc-vwap" className="text-sm flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                                VWAP
+                              </Label>
+                              <Switch
+                                id="fc-vwap"
+                                checked={indicators.vwap}
+                                onCheckedChange={() => handleToggle('vwap')}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-border/50">
+                            <p className="text-[10px] text-muted-foreground">
+                              {Object.values(indicators).filter(Boolean).length} of 5 indicators active
+                            </p>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                )}
-              </div>
+                  
+                  {chartError && (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/30">
+                      {chartError}
+                    </div>
+                  )}
+
+                  {!chartError && (loading || !hasBars) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>{loading ? 'Loading detailed chart…' : 'No chart data available for this setup.'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             
             {/* Trade Levels */}
             <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
