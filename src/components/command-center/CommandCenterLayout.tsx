@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -20,8 +20,22 @@ import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
 import { FlaskConical, History, X, TrendingUp, TrendingDown } from 'lucide-react';
 
+/** Playback pattern passed from route state */
+interface PlaybackPatternContext {
+  occurrenceId: string;
+  symbol: string;
+  timeframe: string;
+  patternId: string;
+  patternName: string;
+  direction: 'long' | 'short';
+  setup: SetupWithVisuals;
+  enablePlayback: boolean;
+}
+
 interface CommandCenterLayoutProps {
   userId?: string;
+  /** Initial pattern to load for playback (from route state) */
+  initialPlaybackPattern?: PlaybackPatternContext;
 }
 
 // Response shape from edge functions (live and historical)
@@ -55,9 +69,13 @@ interface PatternDetailsResponse {
   error?: string;
 }
 
-export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('AAPL');
-  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1d');
+export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandCenterLayoutProps) {
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(
+    initialPlaybackPattern?.symbol || 'AAPL'
+  );
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>(
+    initialPlaybackPattern?.timeframe || '1d'
+  );
   
   // Pattern detail modal state
   const [chartOpen, setChartOpen] = useState(false);
@@ -71,6 +89,35 @@ export function CommandCenterLayout({ userId }: CommandCenterLayoutProps) {
   const [occurrenceSetup, setOccurrenceSetup] = useState<SetupWithVisuals | null>(null);
   const [loadingOccurrence, setLoadingOccurrence] = useState(false);
   const occurrenceRequestIdRef = useRef(0);
+  
+  // Track if we've processed the initial playback pattern
+  const hasProcessedInitialPlayback = useRef(false);
+
+  // Handle initial playback pattern from route state
+  useEffect(() => {
+    if (initialPlaybackPattern && !hasProcessedInitialPlayback.current) {
+      hasProcessedInitialPlayback.current = true;
+      
+      console.debug('[CommandCenter] Processing initial playback pattern', {
+        symbol: initialPlaybackPattern.symbol,
+        patternName: initialPlaybackPattern.patternName,
+        enablePlayback: initialPlaybackPattern.enablePlayback,
+      });
+      
+      // Set the symbol and timeframe
+      setSelectedSymbol(initialPlaybackPattern.symbol);
+      setSelectedTimeframe(initialPlaybackPattern.timeframe);
+      
+      // Open the FullChartViewer modal with the setup (playback enabled)
+      setSelectedSetup(initialPlaybackPattern.setup);
+      setChartOpen(true);
+      
+      toast.success(`Trade Playback: ${initialPlaybackPattern.symbol} - ${initialPlaybackPattern.patternName}`, {
+        description: 'Use playback controls to replay this trade bar-by-bar',
+        duration: 4000,
+      });
+    }
+  }, [initialPlaybackPattern]);
 
   const handleSymbolSelect = useCallback((symbol: string) => {
     setSelectedSymbol(symbol);
