@@ -31,22 +31,22 @@ const Terms = () => {
           <h2>3. Subscription Plans and Payments</h2>
           <p><strong>3.1</strong> Plans offered include:</p>
           <ul>
-            <li>Starter – $29/month or $313/year</li>
-            <li>Pro – $79/month or $852/year</li>
-            <li>Pro+ – $119/month or $1,284/year</li>
-            <li>Elite – $199/month or $2,148/year or $999 lifetime</li>
+            <li>Free – $0 (limited features, Daily timeframe only)</li>
+            <li>Lite – $12/month or $120/year</li>
+            <li>Plus – $29/month or $290/year</li>
+            <li>Pro – $79/month or $790/year</li>
+            <li>Team – $199/month or $1,990/year</li>
           </ul>
-          <p><strong>3.2</strong> Payments are processed via Stripe and PayPal.</p>
+          <p><strong>3.2</strong> Payments are processed via Stripe.</p>
           <p><strong>3.3</strong> Monthly plans bill every month on the signup date. Annual plans bill once every 12 months.</p>
-          <p><strong>3.4</strong> Annual plans offer a 10% discount compared to monthly billing and are billed once every 12 months on the signup date.</p>
-          <p><strong>3.5</strong> The Lifetime plan ($999) grants access for the lifetime of the service. If the service is discontinued, lifetime access will end. This plan is refundable only within one (1) month of purchase, then non-refundable.</p>
+          <p><strong>3.4</strong> Annual plans offer up to 17% savings compared to monthly billing and are billed once every 12 months on the signup date.</p>
 
           <h2>4. Refunds and Cancellations</h2>
           <p><strong>4.1</strong> Monthly plans: Non-refundable. Cancellation stops future billing, and access continues until the end of the paid month.</p>
           <p><strong>4.2</strong> Annual plans: If canceled before the end of the 12-month term, a prorated refund will be issued on a monthly basis for unused months.</p>
-          <p><strong>Example:</strong> If you cancel 4 months into a Starter Annual plan ($313/year), you keep 4 months of access and receive a refund for 8 months = $208.67.</p>
+          <p><strong>Example:</strong> If you cancel 4 months into a Lite Annual plan ($120/year), you keep 4 months of access and receive a refund for 8 months = $80.</p>
           <p>Refunds are calculated by dividing the annual fee by 12 and multiplying by the unused full months. Partial months are not refundable.</p>
-          <p><strong>4.3</strong> Lifetime plan: Refundable only within one (1) month of purchase; non-refundable afterward.</p>
+          <p><strong>4.3</strong> 30-Day Money-Back Guarantee: If you're not satisfied within 30 days of your initial subscription, you may request a full refund.</p>
 
           <h2>5. Use of Scripts and Tools</h2>
           <p><strong>5.1</strong> Scripts, indicators, calculators, and alerts are for personal educational use only.</p>
