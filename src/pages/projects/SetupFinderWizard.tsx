@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { PLANS_CONFIG } from '@/config/plans';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Pattern options matching server registry
 const PATTERNS = [
@@ -58,11 +59,8 @@ const SetupFinderWizard = () => {
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['donchian-breakout-long']);
   
-  
-  // Auth state - start with loading to avoid flash of "not signed in"
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Use centralized auth context instead of local state
+  const { isAuthenticated, isAuthLoading, isAdmin, session } = useAuth();
   
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
@@ -84,62 +82,6 @@ const SetupFinderWizard = () => {
     };
   } | null>(null);
   
-  // Check auth status on mount and listen for changes
-  useEffect(() => {
-    let mounted = true;
-    
-    // Set up auth state listener FIRST to avoid race conditions
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (mounted) {
-        setIsAuthenticated(!!session?.user);
-        setIsAuthLoading(false);
-        if (session?.user) {
-          setTimeout(() => {
-            supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
-              if (mounted) setIsAdmin(data === true);
-            });
-          }, 0);
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    });
-    
-    // Auth check timeout safeguard (5 seconds)
-    const timeoutId = setTimeout(() => {
-      if (mounted && isAuthLoading) {
-        console.warn('Auth check timeout - proceeding as unauthenticated');
-        setIsAuthLoading(false);
-      }
-    }, 5000);
-    
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setIsAuthenticated(!!session?.user);
-        setIsAuthLoading(false);
-        clearTimeout(timeoutId);
-        if (session?.user) {
-          supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
-            if (mounted) setIsAdmin(data === true);
-          });
-        }
-      }
-    }).catch((err) => {
-      console.error('Auth session check failed:', err);
-      if (mounted) {
-        setIsAuthLoading(false);
-        clearTimeout(timeoutId);
-      }
-    });
-    
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
-  }, []);
-  
   // Update universe when asset class changes
   useEffect(() => {
     const defaultUniverse = UNIVERSES[assetClass]?.[0]?.value || '';
@@ -156,8 +98,6 @@ const SetupFinderWizard = () => {
       
       setIsEstimating(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
         const response = await fetch(
           'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
           {
@@ -186,7 +126,7 @@ const SetupFinderWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [selectedInstruments, selectedPatterns, timeframe]);
+  }, [selectedInstruments, selectedPatterns, timeframe, session]);
   
   const handlePatternToggle = (patternId: string) => {
     setSelectedPatterns(prev => 
@@ -198,8 +138,6 @@ const SetupFinderWizard = () => {
   
   const handleRun = async () => {
     console.log('[SetupFinder] handleRun clicked');
-    
-    const { data: { session } } = await supabase.auth.getSession();
     console.log('[SetupFinder] Session:', session ? 'authenticated' : 'not authenticated');
     
     if (!session) {

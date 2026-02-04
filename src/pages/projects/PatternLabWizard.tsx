@@ -17,6 +17,7 @@ import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/GradeBadge';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   DATA_COVERAGE, 
   getValidLookbackOptions, 
@@ -220,52 +221,13 @@ const PatternLabWizard = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  
+  // Use centralized auth context instead of local state
+  const { isAuthenticated, isAuthLoading, session } = useAuth();
   
   // Check if Pattern Lab is enabled for user's tier
   const patternLabCaps = PLANS_CONFIG.tiers[userTier].projects.pattern_lab;
   const isEnabled = patternLabCaps.enabled;
-  
-  // Auth state listener - sync with site-wide auth
-  useEffect(() => {
-    let mounted = true;
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (mounted) {
-        setIsAuthenticated(!!session?.user);
-        setIsAuthLoading(false);
-      }
-    });
-    
-    // Check existing session with timeout safeguard
-    const timeoutId = setTimeout(() => {
-      if (mounted && isAuthLoading) {
-        console.warn('Auth check timeout - proceeding as unauthenticated');
-        setIsAuthLoading(false);
-      }
-    }, 5000);
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setIsAuthenticated(!!session?.user);
-        setIsAuthLoading(false);
-        clearTimeout(timeoutId);
-      }
-    }).catch((err) => {
-      console.error('Auth session check failed:', err);
-      if (mounted) {
-        setIsAuthLoading(false);
-        clearTimeout(timeoutId);
-      }
-    });
-    
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
-  }, []);
   
   // Auto-adjust lookback when timeframe changes to respect data coverage
   useEffect(() => {
@@ -291,8 +253,6 @@ const PatternLabWizard = () => {
       
       setIsEstimating(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
         const response = await fetch(
           'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
           {
@@ -326,7 +286,7 @@ const PatternLabWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades]);
+  }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades, session]);
   
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
@@ -345,8 +305,6 @@ const PatternLabWizard = () => {
   };
   
   const handleRun = async () => {
-    // Get fresh session for the API call - don't rely on state which may have race conditions
-    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error('Please sign in to run projects');
       navigate('/auth');
