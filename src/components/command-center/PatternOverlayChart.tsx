@@ -1,20 +1,11 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { 
   X, 
   TrendingUp, 
   TrendingDown, 
-  RefreshCw, 
-  ExternalLink,
   Target,
   ShieldAlert,
   Maximize2,
@@ -22,8 +13,8 @@ import {
   XCircle,
   Clock,
 } from 'lucide-react';
-import { SetupWithVisuals, CompressedBar } from '@/types/VisualSpec';
-import { TradePlaybackChart } from '@/components/charts/TradePlaybackChart';
+import { SetupWithVisuals } from '@/types/VisualSpec';
+import { FullChartPlaybackView } from '@/components/charts/FullChartPlaybackView';
 import StudyChart from '@/components/charts/StudyChart';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
@@ -204,21 +195,21 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
           </div>
         ) : bars && bars.length > 0 ? (
           <div className="h-full p-2">
-            {isHistoricalPattern && barsToOutcome != null ? (
-              // Use playback chart for historical patterns with outcome
-              <TradePlaybackChart
+            {isHistoricalPattern && barsToOutcome != null && computedEntryBarIndex != null ? (
+              // Use playback chart for historical patterns with outcome - auto-plays
+              <FullChartPlaybackView
                 bars={bars}
-                symbol={instrument}
+                direction={direction as 'long' | 'short'}
                 tradePlan={{
                   entry: tradePlan.entry,
                   stopLoss: tradePlan.stopLoss,
                   takeProfit: tradePlan.takeProfit,
-                  direction: direction as 'long' | 'short',
                 }}
                 entryBarIndex={computedEntryBarIndex}
                 barsToOutcome={barsToOutcome}
                 outcome={outcome}
-                enablePlayback={true}
+                autoPlay={true}
+                height={350}
               />
             ) : (
               // Use standard chart for live patterns

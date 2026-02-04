@@ -49,12 +49,15 @@ export const TradePlaybackChart = memo(function TradePlaybackChart({
   // Default to 30 bars before end (matching the seeding logic)
   const entryBarIndex = providedEntryBarIndex ?? Math.max(0, bars.length - (barsToOutcome ?? 1) - 1);
   
+  // Auto-play for historical patterns with outcome data
+  const shouldAutoPlay = enablePlayback && barsToOutcome != null && outcome != null;
+  
   const playback = useTradePlayback({
     bars,
     entryBarIndex,
     barsToOutcome,
-    playbackSpeed: 400,
-    autoPlay: false,
+    playbackSpeed: 350, // Slightly faster for smooth animation
+    autoPlay: shouldAutoPlay,
   });
 
   // Determine if we should show playback controls
