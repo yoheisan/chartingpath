@@ -217,7 +217,11 @@ const ProjectRun = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                {project?.name || 'Project Run'}
+                {project?.type === 'pattern_lab' ? 'Pattern Lab' : 
+                 project?.type === 'setup_finder' ? 'Setup Finder' : 
+                 project?.type === 'portfolio_checkup' ? 'Portfolio Checkup' :
+                 project?.type === 'portfolio_sim' ? 'Portfolio Simulator' :
+                 project?.name || 'Project Run'}
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
                 Run ID: {runId?.slice(0, 8)}...
