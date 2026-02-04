@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -203,18 +203,44 @@ interface EstimateResult {
 
 const PatternLabWizard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   
-  // Form state - defaults synced with screener
-  const [assetClass, setAssetClass] = useState('fx');
-  const [selectedInstruments, setSelectedInstruments] = useState<string[]>(['EURUSD=X']);
-  const [timeframe, setTimeframe] = useState('1d');
-  const [lookbackYears, setLookbackYears] = useState(3);
-  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(['double-bottom']);
+  // Check if we have prefilled state from a previous run
+  const prefilledState = location.state as {
+    instruments?: string[];
+    patterns?: string[];
+    gradeFilter?: string[];
+    timeframe?: string;
+    lookbackYears?: number;
+  } | null;
   
-  // Grade filter state
-  const [gradePreset, setGradePreset] = useState<GradePreset>('moderate');
-  const [selectedGrades, setSelectedGrades] = useState<GradeLetter[]>(['A', 'B', 'C']);
+  // Form state - use prefilled values from previous run if available
+  const [assetClass, setAssetClass] = useState('fx');
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>(
+    prefilledState?.instruments ?? ['EURUSD=X']
+  );
+  const [timeframe, setTimeframe] = useState(prefilledState?.timeframe ?? '1d');
+  const [lookbackYears, setLookbackYears] = useState(prefilledState?.lookbackYears ?? 3);
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(
+    prefilledState?.patterns ?? ['double-bottom']
+  );
+  
+  // Grade filter state - derive preset from gradeFilter if available
+  const getPresetFromGrades = (grades: string[]): GradePreset => {
+    const sorted = [...grades].sort().join(',');
+    if (sorted === 'A,B') return 'conservative';
+    if (sorted === 'A,B,C') return 'moderate';
+    if (sorted === 'A,B,C,D,F') return 'aggressive';
+    return 'custom';
+  };
+  
+  const [gradePreset, setGradePreset] = useState<GradePreset>(
+    prefilledState?.gradeFilter ? getPresetFromGrades(prefilledState.gradeFilter) : 'moderate'
+  );
+  const [selectedGrades, setSelectedGrades] = useState<GradeLetter[]>(
+    (prefilledState?.gradeFilter as GradeLetter[]) ?? ['A', 'B', 'C']
+  );
   
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
