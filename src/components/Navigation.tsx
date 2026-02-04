@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -43,9 +44,15 @@ const Navigation = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { prefetchArticles } = usePrefetchArticles();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Check if on dashboard route - use full width layout
   const isDashboard = location.pathname === '/members/dashboard';
+  
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
   
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
@@ -259,7 +266,7 @@ const Navigation = () => {
 
             {/* Mobile menu */}
             <div className="md:hidden flex items-center gap-2">
-              <Sheet>
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
                     <Menu className="h-5 w-5" />
