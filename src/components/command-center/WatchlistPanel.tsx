@@ -26,6 +26,7 @@ interface WatchlistPanelProps {
   selectedSymbol: string;
   onSymbolSelect: (symbol: string) => void;
   onPatternSelect?: (pattern: LivePattern) => void;
+  refreshTrigger?: number;
 }
 
 export interface LivePattern {
@@ -57,6 +58,7 @@ export function WatchlistPanel({
   selectedSymbol,
   onSymbolSelect,
   onPatternSelect,
+  refreshTrigger,
 }: WatchlistPanelProps) {
   const { profile } = useUserProfile();
   
@@ -119,7 +121,7 @@ export function WatchlistPanel({
 
   useEffect(() => {
     fetchUserWatchlist();
-  }, [fetchUserWatchlist]);
+  }, [fetchUserWatchlist, refreshTrigger]);
 
   useEffect(() => {
     fetchActivePatterns();
