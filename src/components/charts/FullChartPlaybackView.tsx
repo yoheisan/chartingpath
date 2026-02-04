@@ -35,7 +35,7 @@ import { VisualSpec } from '@/types/VisualSpec';
 
 interface FullChartPlaybackViewProps {
   bars: CompressedBar[];
-  visualSpec: VisualSpec;
+  visualSpec?: VisualSpec;
   direction: 'long' | 'short';
   entryBarIndex: number;
   barsToOutcome: number | null;
@@ -45,9 +45,20 @@ interface FullChartPlaybackViewProps {
     stopLoss: number;
     takeProfit: number;
   };
-  indicators: IndicatorSettings;
+  indicators?: IndicatorSettings;
   height?: number;
+  /** Auto-start playback animation */
+  autoPlay?: boolean;
 }
+
+// Default indicators for standalone usage
+const DEFAULT_INDICATORS: IndicatorSettings = {
+  ema20: false,
+  ema50: false,
+  sma200: false,
+  bollingerBands: false,
+  vwap: false,
+};
 
 /**
  * FullChartPlaybackView - Playback-enabled chart for historical pattern occurrences.
@@ -61,8 +72,9 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
   barsToOutcome,
   outcome,
   tradePlan,
-  indicators,
+  indicators = DEFAULT_INDICATORS,
   height = 420,
+  autoPlay = false,
 }: FullChartPlaybackViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -71,8 +83,8 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
     bars,
     entryBarIndex,
     barsToOutcome,
-    playbackSpeed: 400,
-    autoPlay: false,
+    playbackSpeed: 350, // Slightly faster for smoother animation
+    autoPlay,
   });
 
   // Rebuild chart when visible bars change
