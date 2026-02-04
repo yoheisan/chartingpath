@@ -206,8 +206,25 @@ export default function FullChartViewer({
   const indicatorsRef = useRef<IndicatorSettings>(indicators);
   const [chartVersion, setChartVersion] = useState(0);
   
-  // Playback mode state - for historical patterns with outcome data
+  // Determine if playback is available (historical pattern with outcome data)
+  // Compute entryBarIndex if not provided - default to 30 bars before end
+  const computedEntryBarIndex = setup?.entryBarIndex ?? 
+    (setup?.bars && setup?.barsToOutcome != null 
+      ? Math.max(0, setup.bars.length - setup.barsToOutcome - 1)
+      : undefined);
+  
+  const isHistoricalPattern = setup?.outcome != null || setup?.barsToOutcome != null;
+  const canPlayback = isHistoricalPattern && setup?.barsToOutcome != null && computedEntryBarIndex != null;
+
+  // Playback mode state - start with false, auto-enable via effect
   const [playbackEnabled, setPlaybackEnabled] = useState(false);
+  
+  // Auto-enable playback when opening a historical pattern with outcome data
+  useEffect(() => {
+    if (open && canPlayback) {
+      setPlaybackEnabled(true);
+    }
+  }, [open, canPlayback]);
   
   // Vertical panning state
   const [isDragging, setIsDragging] = useState(false);
@@ -216,10 +233,6 @@ export default function FullChartViewer({
   
   // Keep ref in sync for use inside effects
   indicatorsRef.current = indicators;
-  
-  // Determine if playback is available (historical pattern with outcome data)
-  const isHistoricalPattern = setup?.outcome != null || setup?.barsToOutcome != null;
-  const canPlayback = isHistoricalPattern && setup?.barsToOutcome != null && setup?.entryBarIndex != null;
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -485,18 +498,20 @@ export default function FullChartViewer({
         }
 
         // Pattern overlays (entry, SL, TP lines)
-        visualSpec.overlays.forEach((overlay) => {
-          if (overlay.type === 'hline') {
-            candleSeries.createPriceLine({
-              price: overlay.price,
-              color: getOverlayColor(overlay.style),
-              lineWidth: 2,
-              lineStyle: overlay.id === 'entry' ? 0 : 2,
-              axisLabelVisible: true,
-              title: overlay.label,
-            });
-          }
-        });
+        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+          visualSpec.overlays.forEach((overlay) => {
+            if (overlay.type === 'hline') {
+              candleSeries.createPriceLine({
+                price: overlay.price,
+                color: getOverlayColor(overlay.style),
+                lineWidth: 2,
+                lineStyle: overlay.id === 'entry' ? 0 : 2,
+                axisLabelVisible: true,
+                title: overlay.label,
+              });
+            }
+          });
+        }
 
         // Candle-level pivot confirmation markers
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
@@ -865,12 +880,12 @@ export default function FullChartViewer({
               )}
 
               {/* Conditional Chart Rendering */}
-              {playbackEnabled && canPlayback && setup.entryBarIndex != null ? (
+              {playbackEnabled && canPlayback && computedEntryBarIndex != null ? (
                 <FullChartPlaybackView
                   bars={setup.bars}
                   visualSpec={visualSpec}
                   direction={direction}
-                  entryBarIndex={setup.entryBarIndex}
+                  entryBarIndex={computedEntryBarIndex}
                   barsToOutcome={setup.barsToOutcome ?? null}
                   outcome={setup.outcome}
                   tradePlan={{
