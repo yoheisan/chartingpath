@@ -491,8 +491,8 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         {/* Main Content Area - Chart + Tab Bar + Content */}
         <ResizablePanel defaultSize={settings.mainPanelSize} minSize={50}>
           <div className="h-full flex flex-col">
-            {/* Main Chart - fills available space */}
-            <div className="flex-1 min-h-0">
+            {/* Main Chart - shrinks when panel expanded to make room for tabs */}
+            <div className={bottomPanelExpanded ? "h-[55%] min-h-[200px]" : "flex-1 min-h-0"}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
