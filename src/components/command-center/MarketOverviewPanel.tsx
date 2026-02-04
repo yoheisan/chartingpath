@@ -18,6 +18,8 @@ import { EconomicCalendarWidget } from './EconomicCalendarWidget';
 
 interface MarketOverviewPanelProps {
   onSymbolSelect: (symbol: string) => void;
+  defaultTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 interface MarketMover {
@@ -42,7 +44,7 @@ const MARKET_INDICES = [
   { symbol: 'DX-Y.NYB', name: 'US Dollar Index' },
 ];
 
-export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps) {
+export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', onTabChange }: MarketOverviewPanelProps) {
   const [indicesData, setIndicesData] = useState<Record<string, { price: number; change: number }>>({});
   const [topGainers, setTopGainers] = useState<MarketMover[]>([]);
   const [topLosers, setTopLosers] = useState<MarketMover[]>([]);
@@ -231,7 +233,7 @@ export function MarketOverviewPanel({ onSymbolSelect }: MarketOverviewPanelProps
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="indices" className="flex-1 flex flex-col min-h-0">
+      <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
           <TabsTrigger value="indices" className="text-xs h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />

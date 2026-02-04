@@ -27,6 +27,8 @@ interface WatchlistPanelProps {
   onSymbolSelect: (symbol: string) => void;
   onPatternSelect?: (pattern: LivePattern) => void;
   refreshTrigger?: number;
+  defaultTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 export interface LivePattern {
@@ -59,6 +61,8 @@ export function WatchlistPanel({
   onSymbolSelect,
   onPatternSelect,
   refreshTrigger,
+  defaultTab = 'watchlist',
+  onTabChange,
 }: WatchlistPanelProps) {
   const { profile } = useUserProfile();
   
@@ -231,7 +235,7 @@ export function WatchlistPanel({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="watchlist" className="flex-1 flex flex-col min-h-0">
+      <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
           <TabsTrigger value="watchlist" className="text-xs h-6 px-2">
             <Star className="h-3 w-3 mr-1" />

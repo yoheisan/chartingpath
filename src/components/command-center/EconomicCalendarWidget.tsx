@@ -7,6 +7,7 @@ import { AlertCircle, Clock, TrendingUp, TrendingDown, Minus, RefreshCw, Filter 
 import { Button } from '@/components/ui/button';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,11 +66,18 @@ const IMPACT_LEVELS = [
 ];
 
 export function EconomicCalendarWidget() {
+  const { settings, updateSettings } = useDashboardSettings();
+  
   const [events, setEvents] = useState<EconomicEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRegions, setSelectedRegions] = useState<string[]>(['US', 'EU', 'UK', 'JP']);
-  const [selectedImpacts, setSelectedImpacts] = useState<string[]>(['high', 'medium']);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>(settings.calendarRegions);
+  const [selectedImpacts, setSelectedImpacts] = useState<string[]>(settings.calendarImpacts);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Persist filter changes
+  useEffect(() => {
+    updateSettings({ calendarRegions: selectedRegions, calendarImpacts: selectedImpacts });
+  }, [selectedRegions, selectedImpacts, updateSettings]);
 
   const fetchEvents = useCallback(async () => {
     try {
