@@ -12,6 +12,7 @@ import { ArrowLeft, PieChart, AlertCircle, Loader2, Coins, Plus, X, TrendingUp }
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PLANS_CONFIG, type PlanTier } from '@/config/plans';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   DATA_COVERAGE, 
   getValidLookbackOptions, 
@@ -54,6 +55,7 @@ interface EstimateResult {
 
 const PortfolioCheckupWizard = () => {
   const navigate = useNavigate();
+  const { session, isAuthenticated, isAuthLoading } = useAuth();
   
   const [holdings, setHoldings] = useState<string[]>(['AAPL', 'MSFT', 'GOOGL']);
   const [newSymbol, setNewSymbol] = useState('');
@@ -81,8 +83,6 @@ const PortfolioCheckupWizard = () => {
       
       setIsEstimating(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
         const response = await fetch(
           'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
           {
@@ -113,7 +113,7 @@ const PortfolioCheckupWizard = () => {
     
     const debounce = setTimeout(fetchEstimate, 300);
     return () => clearTimeout(debounce);
-  }, [holdings, timeframe, lookbackYears]);
+  }, [holdings, timeframe, lookbackYears, session]);
   
   const addHolding = () => {
     const symbol = newSymbol.toUpperCase().trim();
@@ -134,8 +134,6 @@ const PortfolioCheckupWizard = () => {
   };
   
   const handleRun = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
     if (!session) {
       toast.error('Please sign in to run projects');
       navigate('/auth');

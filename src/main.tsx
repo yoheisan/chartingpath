@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { MarketReportProvider } from "@/contexts/MarketReportContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Bootstrap from "./Bootstrap";
 import "./index.css";
@@ -66,11 +67,13 @@ createRoot(document.getElementById("root")!).render(
           enableSystem
           disableTransitionOnChange
         >
-          <MarketReportProvider>
-            <ErrorBoundary>
-              <Bootstrap />
-            </ErrorBoundary>
-          </MarketReportProvider>
+          <AuthProvider>
+            <MarketReportProvider>
+              <ErrorBoundary>
+                <Bootstrap />
+              </ErrorBoundary>
+            </MarketReportProvider>
+          </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
