@@ -1687,6 +1687,62 @@ const FAQ = () => {
                   </div>
                 </div>
               )
+            },
+            {
+              question: "What does 'Timeout' mean in trade outcomes?",
+              answer: (
+                <div className="space-y-4">
+                  <p>In our backtesting and pattern analysis, every trade has one of three possible outcomes. Understanding these is essential for interpreting performance metrics.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Trade Outcome Types:</h4>
+                      <div className="space-y-4 text-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div>
+                            <strong className="text-emerald-600 dark:text-emerald-400">Win (TP Hit)</strong>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Price reached the Take Profit target before the Stop Loss or time limit. This is counted as a winning trade in win rate calculations.
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div>
+                            <strong className="text-red-600 dark:text-red-400">Loss (SL Hit)</strong>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Price hit the Stop Loss before reaching the Take Profit. This is counted as a losing trade.
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div>
+                            <strong className="text-amber-600 dark:text-amber-400">Timeout</strong>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              The trade reached the maximum holding period (100 bars) without hitting either the TP or SL. The trade is closed at the current market price. The actual P&L depends on where price was at exit—it could be a small profit, small loss, or breakeven.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3">Why Use a Time Stop?</h4>
+                      <div className="space-y-2 text-sm">
+                        <div>• <strong>Opportunity Cost:</strong> Capital tied up in stagnant trades can't capture other opportunities</div>
+                        <div>• <strong>Thesis Invalidation:</strong> If a pattern doesn't play out within a reasonable timeframe, the original setup thesis is considered invalid</div>
+                        <div>• <strong>Risk Management:</strong> Prevents indefinite exposure to overnight/weekend gaps and unexpected news events</div>
+                        <div>• <strong>Industry Standard:</strong> Professional traders and Bulkowski research commonly use 50–100 bar time stops</div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Important:</strong> Timeouts are NOT counted as "wins" in our win rate calculations, even if they exit with a small profit. This ensures statistical accuracy—only clean TP hits are considered wins.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
             }
           ]
         },
