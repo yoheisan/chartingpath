@@ -41,9 +41,6 @@ const Footer = () => {
                 <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pattern Lab
                 </Link>
-                <Link to="/projects/setup-finder/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Setup Finder
-                </Link>
                 <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Scripts
                 </Link>

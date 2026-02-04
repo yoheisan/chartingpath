@@ -61,7 +61,6 @@ const CommoditiesQuiz = lazy(() => import("./pages/CommoditiesQuiz"));
 
 const Projects = lazy(() => import("./pages/Projects"));
 const ProjectsPricing = lazy(() => import("./pages/ProjectsPricing"));
-const SetupFinderWizard = lazy(() => import("./pages/projects/SetupFinderWizard"));
 const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"));
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 const PortfolioCheckupWizard = lazy(() => import("./pages/projects/PortfolioCheckupWizard"));
@@ -240,7 +239,7 @@ const App = () => (
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/projects" element={withSuspense(<Projects />)} />
           <Route path="/projects/pricing" element={withSuspense(<ProjectsPricing />)} />
-          <Route path="/projects/setup-finder/new" element={withSuspense(<SetupFinderWizard />)} />
+          <Route path="/projects/setup-finder/new" element={<Navigate to="/projects/pattern-lab/new" replace />} />
           <Route path="/projects/pattern-lab/new" element={withSuspense(<PatternLabWizard />)} />
           <Route path="/projects/pattern-lab/audit" element={withSuspense(<PatternAuditPage />)} />
           <Route path="/projects/portfolio-checkup/new" element={withSuspense(<PortfolioCheckupWizard />)} />
