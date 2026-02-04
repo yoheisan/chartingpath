@@ -37,37 +37,37 @@ const PARTITIONS: Record<string, PartitionConfig> = {
   'stocks_ag': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'A', end: 'G' },
-    batchSize: 50
+    batchSize: 200  // Process up to 200 stocks A-G
   },
   'stocks_ho': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'H', end: 'O' },
-    batchSize: 50
+    batchSize: 200  // Process up to 200 stocks H-O
   },
   'stocks_pz': {
     assetTypes: ['stocks'],
     stockLetterFilter: { start: 'P', end: 'Z' },
-    batchSize: 50
+    batchSize: 200  // Process up to 200 stocks P-Z
   },
   'fx': {
     assetTypes: ['fx'],
-    batchSize: 30
+    batchSize: 150  // Full FX universe (~100 pairs)
   },
   'crypto': {
     assetTypes: ['crypto'],
-    batchSize: 30
+    batchSize: 150  // Full crypto universe (~100 coins)
   },
   'commodities': {
     assetTypes: ['commodities'],
-    batchSize: 25
+    batchSize: 50   // Full commodities universe (~30 instruments)
   },
   'indices': {
     assetTypes: ['indices'],
-    batchSize: 25
+    batchSize: 50   // Full indices universe (~35 instruments)
   },
   'etfs': {
     assetTypes: ['etfs'],
-    batchSize: 30
+    batchSize: 100  // Full ETF universe (~90 ETFs)
   },
   // Premium partition: Top 300 most-traded instruments for 15m scanning
   'premium_15m': {
