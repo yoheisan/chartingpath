@@ -1,12 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { AlertCircle, Clock, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Clock, TrendingUp, TrendingDown, Minus, RefreshCw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface EconomicEvent {
   id: string;
@@ -40,10 +48,61 @@ const COUNTRY_FLAGS: Record<string, string> = {
   MX: '🇲🇽',
 };
 
+const REGIONS = [
+  { value: 'US', label: 'United States', flag: '🇺🇸' },
+  { value: 'EU', label: 'Euro Area', flag: '🇪🇺' },
+  { value: 'UK', label: 'United Kingdom', flag: '🇬🇧' },
+  { value: 'JP', label: 'Japan', flag: '🇯🇵' },
+  { value: 'CN', label: 'China', flag: '🇨🇳' },
+  { value: 'AU', label: 'Australia', flag: '🇦🇺' },
+  { value: 'CA', label: 'Canada', flag: '🇨🇦' },
+];
+
+const IMPACT_LEVELS = [
+  { value: 'high', label: 'High Impact', color: 'text-destructive' },
+  { value: 'medium', label: 'Medium Impact', color: 'text-amber-500' },
+  { value: 'low', label: 'Low Impact', color: 'text-muted-foreground' },
+];
+
 export function EconomicCalendarWidget() {
   const [events, setEvents] = useState<EconomicEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>(['US', 'EU', 'UK', 'JP']);
+  const [selectedImpacts, setSelectedImpacts] = useState<string[]>(['high', 'medium']);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const now = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + 3); // Next 3 days
+
+      let query = supabase
+        .from('economic_events')
+        .select('*')
+        .gte('scheduled_time', now.toISOString())
+        .lte('scheduled_time', endDate.toISOString())
+        .order('scheduled_time', { ascending: true })
+        .limit(30);
+
+      if (selectedImpacts.length > 0) {
+        query = query.in('impact_level', selectedImpacts);
+      }
+
+      if (selectedRegions.length > 0) {
+        query = query.in('region', selectedRegions);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (err) {
+      console.error('[EconomicCalendarWidget] fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedImpacts, selectedRegions]);
 
   useEffect(() => {
     fetchEvents();
@@ -67,41 +126,22 @@ export function EconomicCalendarWidget() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchEvents]);
 
-  const fetchEvents = async () => {
-    try {
-      const now = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 3); // Next 3 days
-
-      const { data, error } = await supabase
-        .from('economic_events')
-        .select('*')
-        .gte('scheduled_time', now.toISOString())
-        .lte('scheduled_time', endDate.toISOString())
-        .in('impact_level', ['high', 'medium'])
-        .order('scheduled_time', { ascending: true })
-        .limit(20);
-
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (err) {
-      console.error('[EconomicCalendarWidget] fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
+  const toggleRegion = (region: string) => {
+    setSelectedRegions(prev => 
+      prev.includes(region) 
+        ? prev.filter(r => r !== region)
+        : [...prev, region]
+    );
   };
 
-  const getImpactColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'high':
-        return 'bg-red-500/10 text-red-600 border-red-500/20';
-      case 'medium':
-        return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  const toggleImpact = (impact: string) => {
+    setSelectedImpacts(prev => 
+      prev.includes(impact) 
+        ? prev.filter(i => i !== impact)
+        : [...prev, impact]
+    );
   };
 
   const getImpactDots = (level: string) => {
@@ -115,8 +155,10 @@ export function EconomicCalendarWidget() {
               'w-1.5 h-1.5 rounded-full',
               i < count
                 ? level.toLowerCase() === 'high'
-                  ? 'bg-red-500'
-                  : 'bg-amber-500'
+                  ? 'bg-destructive'
+                  : level.toLowerCase() === 'medium'
+                  ? 'bg-amber-500'
+                  : 'bg-muted-foreground'
                 : 'bg-muted'
             )}
           />
@@ -162,26 +204,12 @@ export function EconomicCalendarWidget() {
     return diff > 0 ? (
       <TrendingUp className="h-3 w-3 text-emerald-500" />
     ) : (
-      <TrendingDown className="h-3 w-3 text-red-500" />
+      <TrendingDown className="h-3 w-3 text-destructive" />
     );
   };
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (events.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-4">
-        <AlertCircle className="h-5 w-5 mb-2" />
-        <p className="text-xs text-center">No upcoming high-impact events</p>
-      </div>
-    );
-  }
+  const activeFilterCount = (selectedRegions.length < REGIONS.length ? 1 : 0) + 
+    (selectedImpacts.length < IMPACT_LEVELS.length ? 1 : 0);
 
   // Group events by date
   const groupedEvents: Record<string, EconomicEvent[]> = {};
@@ -194,65 +222,132 @@ export function EconomicCalendarWidget() {
   });
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-2 space-y-3">
-        {Object.entries(groupedEvents).map(([date, dateEvents]) => (
-          <div key={date}>
-            <div className="text-[10px] font-medium text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {date}
-            </div>
-            <div className="space-y-1">
-              {dateEvents.map(event => {
-                const { time } = formatEventTime(event.scheduled_time);
-                const flag = COUNTRY_FLAGS[event.region] || '🌐';
-                
-                return (
-                  <div
-                    key={event.id}
-                    className={cn(
-                      'flex items-start gap-2 px-2 py-1.5 rounded-md border',
-                      event.released ? 'bg-muted/30' : 'bg-background',
-                      'border-border/50'
-                    )}
-                  >
-                    <div className="text-[10px] font-mono text-muted-foreground w-10 shrink-0 pt-0.5">
-                      {time}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-xs">{flag}</span>
-                        {getImpactDots(event.impact_level)}
-                        {getResultIndicator(event)}
-                      </div>
-                      <div className="text-xs font-medium truncate" title={event.event_name}>
-                        {event.event_name}
-                      </div>
-                      {event.released && event.actual_value && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-muted-foreground">
-                            Actual: <span className="font-medium text-foreground">{event.actual_value}</span>
-                          </span>
-                          {event.forecast_value && (
+    <div className="h-full flex flex-col">
+      {/* Compact Filter Bar */}
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
+              <Filter className="h-3 w-3" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-1">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuLabel className="text-xs">Impact Level</DropdownMenuLabel>
+            {IMPACT_LEVELS.map(impact => (
+              <DropdownMenuCheckboxItem
+                key={impact.value}
+                checked={selectedImpacts.includes(impact.value)}
+                onCheckedChange={() => toggleImpact(impact.value)}
+                className="text-xs"
+              >
+                <span className={impact.color}>{impact.label}</span>
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs">Regions</DropdownMenuLabel>
+            {REGIONS.map(region => (
+              <DropdownMenuCheckboxItem
+                key={region.value}
+                checked={selectedRegions.includes(region.value)}
+                onCheckedChange={() => toggleRegion(region.value)}
+                className="text-xs"
+              >
+                <span className="mr-1.5">{region.flag}</span>
+                {region.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={fetchEvents}
+          disabled={loading}
+        >
+          <RefreshCw className={cn('h-3 w-3', loading && 'animate-spin')} />
+        </Button>
+      </div>
+
+      {/* Events List */}
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : events.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
+          <AlertCircle className="h-5 w-5 mb-2" />
+          <p className="text-xs text-center">No events match your filters</p>
+        </div>
+      ) : (
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-3">
+            {Object.entries(groupedEvents).map(([date, dateEvents]) => (
+              <div key={date}>
+                <div className="text-[10px] font-medium text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {date}
+                </div>
+                <div className="space-y-1">
+                  {dateEvents.map(event => {
+                    const { time } = formatEventTime(event.scheduled_time);
+                    const flag = COUNTRY_FLAGS[event.region] || '🌐';
+                    
+                    return (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          'flex items-start gap-2 px-2 py-1.5 rounded-md border',
+                          event.released ? 'bg-muted/30' : 'bg-background',
+                          'border-border/50'
+                        )}
+                      >
+                        <div className="text-[10px] font-mono text-muted-foreground w-10 shrink-0 pt-0.5">
+                          {time}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-xs">{flag}</span>
+                            {getImpactDots(event.impact_level)}
+                            {getResultIndicator(event)}
+                          </div>
+                          <div className="text-xs font-medium truncate" title={event.event_name}>
+                            {event.event_name}
+                          </div>
+                          {event.released && event.actual_value && (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] text-muted-foreground">
+                                Actual: <span className="font-medium text-foreground">{event.actual_value}</span>
+                              </span>
+                              {event.forecast_value && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  Forecast: {event.forecast_value}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!event.released && event.forecast_value && (
                             <span className="text-[10px] text-muted-foreground">
                               Forecast: {event.forecast_value}
                             </span>
                           )}
                         </div>
-                      )}
-                      {!event.released && event.forecast_value && (
-                        <span className="text-[10px] text-muted-foreground">
-                          Forecast: {event.forecast_value}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </ScrollArea>
+        </ScrollArea>
+      )}
+    </div>
   );
 }
