@@ -185,7 +185,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
       </div>
 
       {/* Chart Content */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-4">
@@ -194,7 +194,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
             </div>
           </div>
         ) : bars && bars.length > 0 ? (
-          <div className="h-full p-2">
+          <div className="h-full flex flex-col">
             {isHistoricalPattern && barsToOutcome != null && computedEntryBarIndex != null ? (
               // Use playback chart for historical patterns with outcome - auto-plays
               <FullChartPlaybackView
@@ -209,7 +209,6 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
                 barsToOutcome={barsToOutcome}
                 outcome={outcome}
                 autoPlay={true}
-                height={350}
               />
             ) : (
               // Use standard chart for live patterns
