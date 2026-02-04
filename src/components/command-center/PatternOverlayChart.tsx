@@ -216,7 +216,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               <StudyChart 
                 bars={bars} 
                 symbol={instrument} 
-                height={undefined}
+                autoHeight
                 tradePlan={{
                   entry: tradePlan.entry,
                   stopLoss: tradePlan.stopLoss,
