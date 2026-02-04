@@ -91,11 +91,12 @@ const BenchmarkSelector = ({
         const { data: yahooData, error: yahooError } = await supabase.functions.invoke('fetch-yahoo-finance', {
           body: {
             symbol,
+            startDate: start.toISOString().split('T')[0],
+            endDate: end.toISOString().split('T')[0],
             interval: '1d',
-            range: '10y', // Get max history
+            includeOhlc: true,
           }
         });
-        
         if (yahooError || !yahooData?.bars?.length) {
           console.error('Yahoo Finance also failed:', yahooError);
           throw new Error('Both data providers failed');
