@@ -4,13 +4,9 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
@@ -24,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
-import { FlaskConical, History, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { FlaskConical, History, ChevronUp, ChevronDown } from 'lucide-react';
 
 /** Playback pattern passed from route state */
 interface PlaybackPatternContext {
@@ -115,15 +111,26 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
   // Track if we've processed the initial playback pattern
   const hasProcessedInitialPlayback = useRef(false);
   
-  // Accordion state for bottom panel
-  const [bottomAccordionValue, setBottomAccordionValue] = useState<string>(
+  // Bottom panel state - tab-based with expand/collapse
+  const [bottomPanelTab, setBottomPanelTab] = useState<string>(
     settings.bottomPanelAccordion || 'pattern-history'
   );
+  const [bottomPanelExpanded, setBottomPanelExpanded] = useState(true);
   
-  // Persist accordion state
+  // Persist bottom panel state
   useEffect(() => {
-    updateSettings({ bottomPanelAccordion: bottomAccordionValue || null });
-  }, [bottomAccordionValue, updateSettings]);
+    updateSettings({ bottomPanelAccordion: bottomPanelTab });
+  }, [bottomPanelTab, updateSettings]);
+  
+  // Toggle panel expansion
+  const handleTabClick = useCallback((tab: string) => {
+    if (bottomPanelTab === tab && bottomPanelExpanded) {
+      setBottomPanelExpanded(false);
+    } else {
+      setBottomPanelTab(tab);
+      setBottomPanelExpanded(true);
+    }
+  }, [bottomPanelTab, bottomPanelExpanded]);
 
   // Handle initial playback pattern from route state - loads directly into inline chart (not modal)
   useEffect(() => {
@@ -517,51 +524,69 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             <ResizableHandle withHandle />
 
-            {/* Bottom Panel - Accordion Research + Pattern History */}
-            <ResizablePanel defaultSize={settings.bottomPanelSize} minSize={15} maxSize={50}>
-              <div className="h-full border-t border-l border-border overflow-auto">
-                <Accordion 
-                  type="single" 
-                  value={bottomAccordionValue} 
-                  onValueChange={setBottomAccordionValue}
-                  collapsible 
-                  className="h-full"
-                >
-                  {/* Pattern History Section */}
-                  <AccordionItem value="pattern-history" className="border-b">
-                    <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
-                      <span className="flex items-center gap-1.5">
-                        <History className="h-3.5 w-3.5" />
-                        Pattern History
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-0">
-                      <div className="max-h-[250px] overflow-auto">
-                        <PatternOccurrencesPanel 
-                          symbol={selectedSymbol} 
-                          timeframe={selectedTimeframe}
-                          onPatternSelect={handleOccurrenceSelect}
-                          selectedPatternId={selectedOccurrence?.id}
-                        />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  {/* Research Section */}
-                  <AccordionItem value="research" className="border-b-0">
-                    <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
-                      <span className="flex items-center gap-1.5">
-                        <FlaskConical className="h-3.5 w-3.5" />
-                        Research
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-0">
-                      <div className="max-h-[250px] overflow-auto">
-                        <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+            {/* Bottom Panel - TradingView-style ribbon with horizontal tabs */}
+            <ResizablePanel 
+              defaultSize={bottomPanelExpanded ? settings.bottomPanelSize : 5} 
+              minSize={5} 
+              maxSize={50}
+            >
+              <div className="h-full border-t border-border flex flex-col">
+                {/* Tab Ribbon - always visible */}
+                <div className="flex items-center justify-between px-2 border-b border-border bg-muted/30">
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => handleTabClick('pattern-history')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                        bottomPanelTab === 'pattern-history' && bottomPanelExpanded
+                          ? 'border-primary text-foreground'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      Pattern History
+                    </button>
+                    <button
+                      onClick={() => handleTabClick('research')}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                        bottomPanelTab === 'research' && bottomPanelExpanded
+                          ? 'border-primary text-foreground'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <FlaskConical className="h-3.5 w-3.5" />
+                      Research
+                    </button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setBottomPanelExpanded(!bottomPanelExpanded)}
+                  >
+                    {bottomPanelExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Panel Content - collapsible */}
+                {bottomPanelExpanded && (
+                  <div className="flex-1 overflow-auto">
+                    {bottomPanelTab === 'pattern-history' && (
+                      <PatternOccurrencesPanel 
+                        symbol={selectedSymbol} 
+                        timeframe={selectedTimeframe}
+                        onPatternSelect={handleOccurrenceSelect}
+                        selectedPatternId={selectedOccurrence?.id}
+                      />
+                    )}
+                    {bottomPanelTab === 'research' && (
+                      <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+                    )}
+                  </div>
+                )}
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
