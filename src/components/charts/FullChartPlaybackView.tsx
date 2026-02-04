@@ -26,6 +26,8 @@ import {
   VOLUME_SCALE_MARGINS,
   getVolumeColor,
   INDICATOR_COLORS,
+  PIVOT_COLORS,
+  getOverlayColor,
   normalizeBarsForConsistentColoring,
   calculateOptimalPriceMargins,
   calculatePricePrecision,
@@ -291,6 +293,23 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           }
         }
 
+        // Add pattern overlay lines from visualSpec (same as audit page)
+        // These show key levels identified by pattern detection
+        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+          visualSpec.overlays.forEach((overlay) => {
+            if (overlay.type === 'hline') {
+              candleSeries.createPriceLine({
+                price: overlay.price,
+                color: getOverlayColor(overlay.style),
+                lineWidth: 1,
+                lineStyle: 2, // dashed
+                axisLabelVisible: false,
+                title: overlay.label || '',
+              });
+            }
+          });
+        }
+
         // Trade plan overlays (only show after entry)
         if (playback.isAfterEntry) {
           candleSeries.createPriceLine({
@@ -319,7 +338,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           });
         }
 
-        // Markers: Pattern zone, Entry, Exit
+        // Markers: Pattern pivots, Pattern zone, Entry, Exit
         const timeSet = new Set<number>(chartData.map((d) => d.time as number));
         const allMarkers: Array<{
           time: Time;
@@ -329,24 +348,50 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           text: string;
         }> = [];
 
-        // Pattern identification markers - show where the pattern was detected (before entry)
-        // Pattern zone spans from start of visible bars up to (entryBarIndex - 1)
-        const patternEndIndex = Math.max(0, entryBarIndex - 1);
-        const patternStartIndex = Math.max(0, patternEndIndex - 5); // Show last ~5 bars of pattern formation
-        
-        // Add pattern start marker
-        if (patternStartIndex < playback.visibleBars.length) {
-          const patternStartBar = playback.visibleBars[patternStartIndex];
-          if (patternStartBar) {
-            const patternStartTime = Math.floor(new Date(patternStartBar.t).getTime() / 1000);
-            if (timeSet.has(patternStartTime)) {
+        // Add pattern pivot markers from visualSpec (same as audit page)
+        // These show the structural points of the pattern (highs/lows)
+        if (visualSpec?.pivots && visualSpec.pivots.length > 0) {
+          visualSpec.pivots.forEach((pivot) => {
+            const isHigh = pivot.type === 'high';
+            
+            // Try to match pivot to a bar time
+            let pivotTime = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+            
+            // If timestamp doesn't match, try using the index
+            if (!timeSet.has(pivotTime) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < playback.visibleBars.length) {
+              pivotTime = Math.floor(new Date(playback.visibleBars[pivot.index].t).getTime() / 1000);
+            }
+            
+            if (timeSet.has(pivotTime)) {
               allMarkers.push({
-                time: patternStartTime as Time,
-                position: 'belowBar',
-                color: '#8b5cf6', // Purple for pattern identification
-                shape: 'square',
-                text: 'Pattern',
+                time: pivotTime as Time,
+                position: isHigh ? 'aboveBar' : 'belowBar',
+                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
+                shape: isHigh ? 'arrowDown' : 'arrowUp',
+                text: pivot.label || '',
               });
+            }
+          });
+        }
+
+        // Pattern identification marker (if no pivots, show a simple zone marker)
+        if (!visualSpec?.pivots || visualSpec.pivots.length === 0) {
+          const patternEndIndex = Math.max(0, entryBarIndex - 1);
+          const patternStartIndex = Math.max(0, patternEndIndex - 5);
+          
+          if (patternStartIndex < playback.visibleBars.length) {
+            const patternStartBar = playback.visibleBars[patternStartIndex];
+            if (patternStartBar) {
+              const patternStartTime = Math.floor(new Date(patternStartBar.t).getTime() / 1000);
+              if (timeSet.has(patternStartTime)) {
+                allMarkers.push({
+                  time: patternStartTime as Time,
+                  position: 'belowBar',
+                  color: '#8b5cf6', // Purple for pattern identification
+                  shape: 'square',
+                  text: 'Pattern',
+                });
+              }
             }
           }
         }
