@@ -33,15 +33,18 @@ interface SetupArtifact {
   projectType: string;
   timeframe: string;
   lookbackYears?: number;
+  riskPerTrade?: number;
   generatedAt: string;
   inputs?: {
     instruments: string[];
     patterns: string[];
     gradeFilter: string[];
+    riskPerTrade?: number;
   };
   executionAssumptions: {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
+    riskPerTrade?: number;
   };
   setups: Array<{
     instrument: string;
@@ -223,6 +226,7 @@ const ProjectRun = () => {
                   gradeFilter: inputs.gradeFilter,
                   timeframe: artifact?.timeframe,
                   lookbackYears: artifact?.lookbackYears,
+                  riskPerTrade: inputs.riskPerTrade ?? artifact?.riskPerTrade ?? 1,
                 } : undefined
               });
             }}

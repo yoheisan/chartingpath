@@ -326,7 +326,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         // Prefer per-tier exit date when present (backend may provide)
         exitDate: outcome.exitDate ?? t.exitDate,
         rMultiple: outcome.rMultiple,
-        isWin: outcome.rMultiple > 0,
+        // Fix: isWin must be based on hitting TP, not just positive R-multiple
+        // Timeouts with positive R are not "wins" for statistical accuracy
+        isWin: outcome.outcome === 'hit_tp',
         exitReason: outcome.outcome === 'hit_tp' ? 'tp' : outcome.outcome === 'hit_sl' ? 'sl' : 'time_stop',
         tierOutcome: outcome,
       };
