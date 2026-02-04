@@ -393,9 +393,11 @@ export default function LivePatternsPage() {
       // Retry logic - ALWAYS use cached path for speed; forceRefresh disabled for UI
       // Full scans happen via background cron only to prevent timeout issues
       // Increased timeouts to handle edge function cold starts gracefully
+      // First attempt: 40s to handle worst-case cold starts
+      // Second attempt: 50s for additional buffer
       const attempts = [
-        { forceRefresh: false, timeout: 25_000 },  // Fast path: read from DB cache
-        { forceRefresh: false, timeout: 35_000 },  // Retry with longer timeout for cold starts
+        { forceRefresh: false, timeout: 40_000 },  // Fast path: read from DB cache (generous for cold start)
+        { forceRefresh: false, timeout: 50_000 },  // Retry with even longer timeout
       ];
 
       for (let i = 0; i < attempts.length; i++) {
