@@ -93,12 +93,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
   // Track if we've processed the initial playback pattern
   const hasProcessedInitialPlayback = useRef(false);
 
-  // Handle initial playback pattern from route state
+  // Handle initial playback pattern from route state - loads directly into inline chart (not modal)
   useEffect(() => {
     if (initialPlaybackPattern && !hasProcessedInitialPlayback.current) {
       hasProcessedInitialPlayback.current = true;
       
-      console.debug('[CommandCenter] Processing initial playback pattern', {
+      console.debug('[CommandCenter] Processing initial playback pattern (inline)', {
         symbol: initialPlaybackPattern.symbol,
         patternName: initialPlaybackPattern.patternName,
         enablePlayback: initialPlaybackPattern.enablePlayback,
@@ -108,9 +108,23 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
       setSelectedSymbol(initialPlaybackPattern.symbol);
       setSelectedTimeframe(initialPlaybackPattern.timeframe);
       
-      // Open the FullChartViewer modal with the setup (playback enabled)
-      setSelectedSetup(initialPlaybackPattern.setup);
-      setChartOpen(true);
+      // Load directly into the inline PatternOverlayChart (not modal)
+      // Create a synthetic occurrence for the inline view matching PatternOccurrence interface
+      setSelectedOccurrence({
+        id: initialPlaybackPattern.occurrenceId,
+        pattern_name: initialPlaybackPattern.patternName,
+        direction: initialPlaybackPattern.direction,
+        detected_at: initialPlaybackPattern.setup.signalTs,
+        entry_price: initialPlaybackPattern.setup.tradePlan.entry,
+        stop_loss_price: initialPlaybackPattern.setup.tradePlan.stopLoss,
+        take_profit_price: initialPlaybackPattern.setup.tradePlan.takeProfit,
+        risk_reward_ratio: initialPlaybackPattern.setup.tradePlan.rr,
+        quality_score: initialPlaybackPattern.setup.quality.grade,
+        outcome: initialPlaybackPattern.setup.outcome || null,
+        isActive: false, // Historical occurrence
+      });
+      setOccurrenceSetup(initialPlaybackPattern.setup);
+      setLoadingOccurrence(false);
       
       toast.success(`Trade Playback: ${initialPlaybackPattern.symbol} - ${initialPlaybackPattern.patternName}`, {
         description: 'Use playback controls to replay this trade bar-by-bar',
