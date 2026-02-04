@@ -86,33 +86,58 @@ const SetupFinderWizard = () => {
   
   // Check auth status on mount and listen for changes
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session?.user);
-      setIsAuthLoading(false);
-      if (session?.user) {
-        setTimeout(() => {
-          supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
-            setIsAdmin(data === true);
-          });
-        }, 0);
-      } else {
-        setIsAdmin(false);
+      if (mounted) {
+        setIsAuthenticated(!!session?.user);
+        setIsAuthLoading(false);
+        if (session?.user) {
+          setTimeout(() => {
+            supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
+              if (mounted) setIsAdmin(data === true);
+            });
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
       }
     });
+    
+    // Auth check timeout safeguard (5 seconds)
+    const timeoutId = setTimeout(() => {
+      if (mounted && isAuthLoading) {
+        console.warn('Auth check timeout - proceeding as unauthenticated');
+        setIsAuthLoading(false);
+      }
+    }, 5000);
     
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session?.user);
-      setIsAuthLoading(false);
-      if (session?.user) {
-        supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
-          setIsAdmin(data === true);
-        });
+      if (mounted) {
+        setIsAuthenticated(!!session?.user);
+        setIsAuthLoading(false);
+        clearTimeout(timeoutId);
+        if (session?.user) {
+          supabase.rpc('is_admin', { _user_id: session.user.id }).then(({ data }) => {
+            if (mounted) setIsAdmin(data === true);
+          });
+        }
+      }
+    }).catch((err) => {
+      console.error('Auth session check failed:', err);
+      if (mounted) {
+        setIsAuthLoading(false);
+        clearTimeout(timeoutId);
       }
     });
     
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
   
   // Update universe when asset class changes

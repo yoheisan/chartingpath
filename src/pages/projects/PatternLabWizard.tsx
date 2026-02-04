@@ -229,18 +229,42 @@ const PatternLabWizard = () => {
   
   // Auth state listener - sync with site-wide auth
   useEffect(() => {
+    let mounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session?.user);
-      setIsAuthLoading(false);
+      if (mounted) {
+        setIsAuthenticated(!!session?.user);
+        setIsAuthLoading(false);
+      }
     });
     
-    // Check existing session
+    // Check existing session with timeout safeguard
+    const timeoutId = setTimeout(() => {
+      if (mounted && isAuthLoading) {
+        console.warn('Auth check timeout - proceeding as unauthenticated');
+        setIsAuthLoading(false);
+      }
+    }, 5000);
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session?.user);
-      setIsAuthLoading(false);
+      if (mounted) {
+        setIsAuthenticated(!!session?.user);
+        setIsAuthLoading(false);
+        clearTimeout(timeoutId);
+      }
+    }).catch((err) => {
+      console.error('Auth session check failed:', err);
+      if (mounted) {
+        setIsAuthLoading(false);
+        clearTimeout(timeoutId);
+      }
     });
     
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
   
   // Auto-adjust lookback when timeframe changes to respect data coverage
