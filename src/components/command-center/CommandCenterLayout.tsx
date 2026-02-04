@@ -488,11 +488,11 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   return (
     <div className="h-[calc(100vh-4rem)] w-full">
       <ResizablePanelGroup direction="horizontal" className="h-full" onLayout={handleHorizontalResize}>
-        {/* Main Content Area - Chart + Bottom Tab Bar */}
+        {/* Main Content Area - Chart + Tab Bar + Content */}
         <ResizablePanel defaultSize={settings.mainPanelSize} minSize={50}>
           <div className="h-full flex flex-col">
             {/* Main Chart - fills available space */}
-            <div className="flex-1 min-h-0">
+            <div className={bottomPanelExpanded ? "h-[60%] min-h-0" : "flex-1 min-h-0"}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -510,24 +510,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </div>
             
-            {/* Bottom Panel Content - expands when active */}
-            {bottomPanelExpanded && (
-              <div className="h-[33vh] border-t border-border overflow-auto">
-                {bottomPanelTab === 'pattern-history' && (
-                  <PatternOccurrencesPanel 
-                    symbol={selectedSymbol} 
-                    timeframe={selectedTimeframe}
-                    onPatternSelect={handleOccurrenceSelect}
-                    selectedPatternId={selectedOccurrence?.id}
-                  />
-                )}
-                {bottomPanelTab === 'research' && (
-                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                )}
-              </div>
-            )}
-            
-            {/* Tab Bar - fixed at bottom */}
+            {/* Tab Bar - below chart */}
             <div className="flex items-center justify-between px-2 h-8 border-t border-border bg-background shrink-0">
               <div className="flex items-center">
                 <button
@@ -566,6 +549,23 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 )}
               </Button>
             </div>
+            
+            {/* Panel Content - below tabs */}
+            {bottomPanelExpanded && (
+              <div className="flex-1 border-t border-border overflow-auto">
+                {bottomPanelTab === 'pattern-history' && (
+                  <PatternOccurrencesPanel 
+                    symbol={selectedSymbol} 
+                    timeframe={selectedTimeframe}
+                    onPatternSelect={handleOccurrenceSelect}
+                    selectedPatternId={selectedOccurrence?.id}
+                  />
+                )}
+                {bottomPanelTab === 'research' && (
+                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
+                )}
+              </div>
+            )}
           </div>
         </ResizablePanel>
 
