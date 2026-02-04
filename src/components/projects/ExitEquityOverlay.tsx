@@ -135,6 +135,30 @@ export const ExitEquityOverlay = ({
       <CardContent>
         {/* Strategy toggles */}
         <div className="flex flex-wrap gap-2 mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (visibleSeries.size === 0) {
+                setVisibleSeries(new Set(series.map(s => s.strategyId)));
+              } else {
+                setVisibleSeries(new Set());
+              }
+            }}
+            className="gap-2 text-muted-foreground"
+          >
+            {visibleSeries.size === 0 ? (
+              <>
+                <Eye className="h-3 w-3" />
+                Show All
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3 w-3" />
+                Clear All
+              </>
+            )}
+          </Button>
           {sortedSeries.map((s, idx) => (
             <Button
               key={s.strategyId}
