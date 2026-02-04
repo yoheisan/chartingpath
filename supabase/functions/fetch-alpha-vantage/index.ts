@@ -51,9 +51,13 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    
+    // Log the full response structure for debugging
+    console.log('Alpha Vantage response keys:', Object.keys(data));
 
     // Check for API errors
     if (data['Error Message']) {
+      console.error('Alpha Vantage error message:', data['Error Message']);
       throw new Error(`Alpha Vantage error: ${data['Error Message']}`);
     }
 
@@ -62,10 +66,17 @@ serve(async (req) => {
       console.warn('Alpha Vantage rate limit:', data['Note']);
       throw new Error('Alpha Vantage rate limit reached. Please try again in a minute.');
     }
+    
+    if (data['Information']) {
+      // API limit message
+      console.warn('Alpha Vantage information:', data['Information']);
+      throw new Error(`Alpha Vantage API limit: ${data['Information']}`);
+    }
 
     const timeSeries = data['Time Series (Daily)'];
     if (!timeSeries) {
-      throw new Error('No time series data returned from Alpha Vantage');
+      console.error('Full Alpha Vantage response:', JSON.stringify(data).substring(0, 500));
+      throw new Error('No time series data returned from Alpha Vantage. The symbol may not be supported or API quota exceeded.');
     }
 
     // Convert to OHLC bars
