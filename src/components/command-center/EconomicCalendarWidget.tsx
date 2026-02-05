@@ -81,17 +81,20 @@ export function EconomicCalendarWidget() {
 
   const fetchEvents = useCallback(async () => {
     try {
-      const now = new Date();
+      // Show events from start of today (not just future events)
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 3); // Next 3 days
 
       let query = supabase
         .from('economic_events')
         .select('*')
-        .gte('scheduled_time', now.toISOString())
+        .gte('scheduled_time', startOfToday.toISOString())
         .lte('scheduled_time', endDate.toISOString())
         .order('scheduled_time', { ascending: true })
-        .limit(30);
+        .limit(50);
 
       if (selectedImpacts.length > 0) {
         query = query.in('impact_level', selectedImpacts);
