@@ -128,6 +128,7 @@ const TickerStudy = lazy(() => import("./pages/TickerStudy"));
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 const OutcomeAnalytics = lazy(() => import("./pages/admin/OutcomeAnalytics"));
+const PatternHealthMonitor = lazy(() => import("./pages/admin/PatternHealthMonitor"));
 
 // Markets
 const StockMarket = lazy(() => import("./pages/markets/StockMarket"));
@@ -262,6 +263,7 @@ const App = () => (
           <Route path="/admin/translation-management" element={withSuspense(<TranslationManagement />)} />
           <Route path="/admin/journey-analytics" element={withSuspense(<AIJourneyAnalytics />)} />
           <Route path="/admin/outcome-analytics" element={withSuspense(<OutcomeAnalytics />)} />
+          <Route path="/admin/pattern-health" element={withSuspense(<PatternHealthMonitor />)} />
           <Route path="/admin/social-cms" element={withSuspense(<SocialMediaCMS />)} />
           <Route path="/strategy/:strategyId" element={withSuspense(<StrategyDetail />)} />
           <Route path="/terms" element={withSuspense(<Terms />)} />
