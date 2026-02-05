@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, X, TrendingUp, Loader2 } from 'lucide-react';
+import { Plus, X, TrendingUp, Loader2, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 
 interface BenchmarkData {
   symbol: string;
@@ -49,7 +49,6 @@ const BenchmarkSelector = ({
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
   const [benchmarkData, setBenchmarkData] = useState<Map<string, BenchmarkData>>(new Map());
   const [loading, setLoading] = useState<Set<string>>(new Set());
-  const [customSymbol, setCustomSymbol] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Fetch benchmark data when selection changes
@@ -159,7 +158,6 @@ const BenchmarkSelector = ({
     if (selectedBenchmarks.length >= 4) return; // Max 4 benchmarks
     
     setSelectedBenchmarks(prev => [...prev, normalizedSymbol]);
-    setCustomSymbol('');
     setPopoverOpen(false);
   };
 
@@ -236,24 +234,18 @@ const BenchmarkSelector = ({
               </div>
               
               <div className="border-t pt-3">
-                <div className="text-sm font-medium mb-2">Custom Ticker</div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="e.g. AAPL, BTC-USD"
-                    value={customSymbol}
-                    onChange={(e) => setCustomSymbol(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addBenchmark(customSymbol)}
-                    className="h-8 text-sm"
-                  />
-                  <Button 
-                    size="sm" 
-                    className="h-8"
-                    onClick={() => addBenchmark(customSymbol)}
-                    disabled={!customSymbol.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
+                <div className="text-sm font-medium mb-2">Search Any Symbol</div>
+                <UniversalSymbolSearch
+                  onSelect={(symbol) => {
+                    addBenchmark(symbol);
+                  }}
+                  trigger={
+                    <Button variant="outline" size="sm" className="w-full h-8 justify-start gap-2 text-muted-foreground">
+                      <Search className="h-3.5 w-3.5" />
+                      <span className="text-sm">Search stocks, crypto, forex...</span>
+                    </Button>
+                  }
+                />
               </div>
             </div>
           </PopoverContent>
