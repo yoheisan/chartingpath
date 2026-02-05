@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Trophy, BookOpen, Target, Award, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface LearningProgress {
   id: string;
@@ -50,6 +51,7 @@ const LearningProgress = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchLearningData();
@@ -304,7 +306,7 @@ const LearningProgress = () => {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => simulateQuizAttempt(pattern.type)}
+                      onClick={() => navigate('/members/pattern-quiz')}
                     >
                       Practice
                     </Button>
