@@ -22,12 +22,16 @@ import {
   Info,
   Activity,
   FileCode,
-  Bell
+  Bell,
+  Star
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
 import { wedgeConfig } from "@/config/wedge";
 import { usePrefetchArticles } from "@/hooks/usePrefetchArticles";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadAlerts } from "@/hooks/useUnreadAlerts";
+import { WithNotificationBadge } from "@/components/ui/notification-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +49,10 @@ const Navigation = () => {
   const location = useLocation();
   const { prefetchArticles } = usePrefetchArticles();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Get user for notification badges
+  const { user } = useAuth();
+  const { count: alertCount, watchlistCount } = useUnreadAlerts(user?.id);
   
   // Check if on dashboard route - use full width layout
   const isDashboard = location.pathname === '/members/dashboard';
@@ -86,7 +94,9 @@ const Navigation = () => {
       
       {/* 3. Alerts - Execute */}
       <Link to="/members/alerts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
-        <Bell className="h-5 w-5 text-emerald-500" />
+        <WithNotificationBadge count={alertCount} size="sm">
+          <Bell className="h-5 w-5 text-emerald-500" />
+        </WithNotificationBadge>
         Alerts
       </Link>
       
@@ -168,7 +178,9 @@ const Navigation = () => {
             
             {/* 3. Alerts - Get notified */}
             <Link to="/members/alerts" className={navLinkClass('/members/alerts')}>
-              <Bell className="h-4 w-4 text-emerald-500" />
+              <WithNotificationBadge count={alertCount} size="sm">
+                <Bell className="h-4 w-4 text-emerald-500" />
+              </WithNotificationBadge>
               Alerts
             </Link>
             
