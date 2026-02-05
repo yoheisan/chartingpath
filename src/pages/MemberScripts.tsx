@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Download, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
-  FileCode, FlaskConical, Zap, Trash2, Clock, Save
+  FileCode, FlaskConical, Zap, Trash2, Clock, Save, LayoutGrid, List
 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -90,6 +90,7 @@ const MemberScripts = () => {
   // Saved scripts
   const [savedScripts, setSavedScripts] = useState<SavedScript[]>([]);
   const [activeTab, setActiveTab] = useState("generate");
+  const [scriptsView, setScriptsView] = useState<'grid' | 'list'>('grid');
   
   // Load saved scripts from localStorage
   useEffect(() => {
@@ -508,48 +509,131 @@ const MemberScripts = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {savedScripts.map((script) => (
-                <Card key={script.id} className="hover:border-primary/50 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-base">{script.patternName}</CardTitle>
-                        <CardDescription className="text-xs">
-                          {script.instrument} • {script.timeframe} • 1:{script.rrTarget} R:R
-                        </CardDescription>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {script.platform.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {new Date(script.createdAt).toLocaleDateString()}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex-1"
-                        onClick={() => handleLoadScript(script)}
-                      >
-                        Load
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteScript(script.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+            <div className="space-y-4">
+              {/* View Toggle */}
+              <div className="flex justify-end">
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant={scriptsView === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setScriptsView('grid')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={scriptsView === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setScriptsView('list')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Grid View */}
+              {scriptsView === 'grid' && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {savedScripts.map((script) => (
+                    <Card key={script.id} className="hover:border-primary/50 transition-colors">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <CardTitle className="text-base">{script.patternName}</CardTitle>
+                            <CardDescription className="text-xs">
+                              {script.instrument} • {script.timeframe} • 1:{script.rrTarget} R:R
+                            </CardDescription>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {script.platform.toUpperCase()}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {new Date(script.createdAt).toLocaleDateString()}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => handleLoadScript(script)}
+                          >
+                            Load
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteScript(script.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* List View */}
+              {scriptsView === 'list' && (
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
+                      {savedScripts.map((script) => (
+                        <div 
+                          key={script.id} 
+                          className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                              <FileCode className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-sm truncate">{script.patternName}</h4>
+                                <Badge variant="outline" className="text-xs shrink-0">
+                                  {script.platform.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {script.instrument} • {script.timeframe} • 1:{script.rrTarget} R:R
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {new Date(script.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleLoadScript(script)}
+                              >
+                                Load
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteScript(script.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )}
             </div>
           )}
         </TabsContent>
