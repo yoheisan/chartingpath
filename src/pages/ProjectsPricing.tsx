@@ -249,12 +249,12 @@ const ProjectsPricing = () => {
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-muted-foreground">{t('projects.pricing.examples.setupFinder50', 'Setup Finder (50 symbols, 4H, 2y, 6 patterns) ≈ 17 credits')}</span>
+                <Target className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-muted-foreground">{t('projects.pricing.examples.patternLabSmall', 'Pattern Lab (10 symbols, 1D, 3y, 4 patterns) ≈ 12 credits')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Target className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-muted-foreground">{t('projects.pricing.examples.patternLab10', 'Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits')}</span>
+                <TrendingUp className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-muted-foreground">{t('projects.pricing.examples.patternLabLarge', 'Pattern Lab (50 symbols, 4H, 2y, 6 patterns) ≈ 25 credits')}</span>
               </div>
             </div>
           </CardContent>
