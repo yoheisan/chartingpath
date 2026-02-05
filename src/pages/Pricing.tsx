@@ -147,7 +147,7 @@ const Pricing = () => {
         "100 active pattern alerts",
         "900 credits/month for unlimited research",
         "Multi-platform script export (TradingView, MT4/MT5)",
-        "Full backtesting: up to 7 years of data",
+        "Full backtesting: up to 5 years daily, 7 years weekly",
         "Advanced metrics & trade analytics",
         "Priority support"
       ],
