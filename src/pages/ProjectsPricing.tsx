@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, TrendingUp, Shield, Target, ArrowRight, Mail } from "lucide-react";
+import { Check, Zap, TrendingUp, Shield, Target, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
@@ -60,7 +60,7 @@ const ProjectsPricing = () => {
       price: 199,
       config: PLANS_CONFIG.tiers.TEAM,
       popular: false,
-      cta: t('projects.pricing.cta.team', 'Contact Sales'),
+      cta: t('projects.pricing.cta.team', 'Get Team'),
       bestFor: TIER_DISPLAY.TEAM.bestFor,
     },
   ];
@@ -183,11 +183,9 @@ const ProjectsPricing = () => {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Timeframes</span>
+                    <span className="text-muted-foreground">Study TFs</span>
                     <span className="font-semibold text-foreground text-right text-xs">
-                      {tier.key === 'FREE' ? '1D' : 
-                       tier.key === 'LITE' ? '15m, 4H, 1D' : 
-                       '15m, 1H, 4H, 1D, 1W'}
+                      {tier.config.study.allowedTimeframes.map(tf => tf.toUpperCase()).join(', ')}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
@@ -220,26 +218,17 @@ const ProjectsPricing = () => {
 
                 {/* CTA */}
                 <div className="mt-auto">
-                  {tier.key === 'TEAM' ? (
-                    <Button variant="outline" className="w-full" size="sm" asChild>
-                      <a href="mailto:team@chartingpath.com">
-                        <Mail className="h-4 w-4 mr-2" />
-                        {tier.cta}
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant={tier.popular ? "default" : "outline"} 
-                      className="w-full"
-                      size="sm"
-                      asChild
-                    >
-                      <Link to="/auth">
-                        {tier.cta}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Link>
-                    </Button>
-                  )}
+                  <Button 
+                    variant={tier.popular ? "default" : "outline"} 
+                    className="w-full"
+                    size="sm"
+                    asChild
+                  >
+                    <Link to="/auth">
+                      {tier.key === 'TEAM' ? 'Get Team' : tier.cta}
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
