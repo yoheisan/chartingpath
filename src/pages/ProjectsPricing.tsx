@@ -202,7 +202,7 @@ const ProjectsPricing = () => {
                 <div className="space-y-1.5 mb-4 text-xs">
                   <div className="flex items-start gap-2">
                     <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                    <span className="text-muted-foreground">Setup Finder</span>
+                    <span className="text-muted-foreground">Pattern Screener</span>
                   </div>
                   {tier.config.projects.pattern_lab.enabled !== false && (
                     <div className="flex items-start gap-2">
