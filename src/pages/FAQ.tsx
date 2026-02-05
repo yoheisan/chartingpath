@@ -51,7 +51,7 @@ const FAQ = () => {
                     <ul className="space-y-1 text-sm">
                       <li>• Natural language to code conversion</li>
                       <li>• Visual condition builder with drag-and-drop interface</li>
-                      <li>• Multi-platform support (Pine Script, MQL4/5, cTrader, NinjaTrader)</li>
+                      <li>• Multi-platform support (Pine Script, MQL4, MQL5)</li>
                       <li>• Built-in risk management with ATR-based stops</li>
                       <li>• Multi-timeframe analysis support</li>
                       <li>• Instant backtesting integration</li>
@@ -464,22 +464,22 @@ const FAQ = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded">
                           <div>
-                            <div className="font-medium">Pine Script (TradingView)</div>
+                            <div className="font-medium">Pine Script v5 (TradingView)</div>
                             <div className="text-xs text-muted-foreground">All tiers • Most popular platform</div>
                           </div>
                           <Badge variant="default">All Plans</Badge>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/30 rounded">
                           <div>
-                            <div className="font-medium">MQL4 & MQL5 (MetaTrader)</div>
+                            <div className="font-medium">MQL4 (MetaTrader 4)</div>
                             <div className="text-xs text-muted-foreground">Pro+ • Expert Advisors (EAs)</div>
                           </div>
                           <Badge variant="secondary">Pro+</Badge>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/30 rounded">
                           <div>
-                            <div className="font-medium">cTrader & NinjaTrader</div>
-                            <div className="text-xs text-muted-foreground">Elite • Advanced platforms</div>
+                            <div className="font-medium">MQL5 (MetaTrader 5)</div>
+                            <div className="text-xs text-muted-foreground">Elite • Advanced Expert Advisors</div>
                           </div>
                           <Badge className="bg-purple-600">Elite</Badge>
                         </div>
@@ -488,12 +488,12 @@ const FAQ = () => {
                     <div className="bg-muted/50 p-4 rounded-lg">
                       <h4 className="font-semibold mb-2">Export Features:</h4>
                       <div className="grid md:grid-cols-2 gap-3 text-sm">
-                        <div>• Complete strategy files with documentation</div>
+                        <div>• Pattern-based scripts with optimized exits</div>
                         <div>• Risk management parameters included</div>
-                        <div>• Alert system setup instructions</div>
+                        <div>• Dynamic SL/TP recalculation</div>
                         <div>• Backtesting-ready code</div>
-                        <div>• Custom parameter optimization</div>
-                        <div>• Installation guides for each platform</div>
+                        <div>• Step-by-step deployment guides</div>
+                        <div>• SL breach detection warnings</div>
                       </div>
                     </div>
                   </div>
@@ -513,31 +513,38 @@ const FAQ = () => {
                       <div className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-medium">Starter (Free)</div>
+                            <div className="font-medium">Free</div>
                             <div className="text-xs text-muted-foreground">Test the platform capabilities</div>
                           </div>
-                          <Badge variant="outline">1 generation</Badge>
+                          <Badge variant="outline">1 generation/day</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">Starter</div>
+                            <div className="text-xs text-muted-foreground">Getting started with strategy development</div>
+                          </div>
+                          <Badge variant="secondary">5 generations/day</Badge>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium">Pro</div>
                             <div className="text-xs text-muted-foreground">Regular strategy development</div>
                           </div>
-                          <Badge variant="secondary">15 generations</Badge>
+                          <Badge variant="secondary">20 generations/day</Badge>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium">Pro+</div>
                             <div className="text-xs text-muted-foreground">Heavy development workloads</div>
                           </div>
-                          <Badge variant="secondary">30 generations</Badge>
+                          <Badge variant="secondary">50 generations/day</Badge>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium">Elite</div>
                             <div className="text-xs text-muted-foreground">Professional strategy development</div>
                           </div>
-                          <Badge className="bg-purple-600">50 generations</Badge>
+                          <Badge className="bg-purple-600">Unlimited</Badge>
                         </div>
                       </div>
                     </div>
@@ -780,32 +787,32 @@ const FAQ = () => {
               )
             },
             {
-              question: "What is the Backtest Vault?",
+              question: "How does Strategy History work?",
               answer: (
                 <div className="space-y-4">
-                  <p>The Backtest Vault is your personal repository for saving, organizing, and comparing backtest results across different strategies and timeframes.</p>
+                  <p>The Strategy Workspace maintains a history of your backtest runs, allowing you to review and compare past performance analyses.</p>
                   <div className="space-y-3">
                     <div className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-3">Storage & Organization:</h4>
+                      <h4 className="font-semibold mb-3">History Features:</h4>
                       <div className="text-sm space-y-2">
-                        <div>• Unlimited backtest storage</div>
-                        <div>• Tag and categorize results</div>
-                        <div>• Star favorite strategies</div>
-                        <div>• Search and filter by metrics</div>
-                        <div>• Export results to CSV/PDF</div>
+                        <div>• View recent backtest runs</div>
+                        <div>• Compare results across instruments</div>
+                        <div>• Star favorite configurations</div>
+                        <div>• Filter by timeframe and pattern</div>
+                        <div>• Export results for documentation</div>
                       </div>
                     </div>
                     <div className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-3">Comparison Tools:</h4>
+                      <h4 className="font-semibold mb-3">Analysis Tools:</h4>
                       <div className="text-sm space-y-2">
-                        <div>• Side-by-side strategy comparison</div>
-                        <div>• Performance metric rankings</div>
-                        <div>• Equity curve overlays</div>
-                        <div>• Risk-adjusted return analysis</div>
+                        <div>• Performance metric summaries</div>
+                        <div>• Trade log review</div>
+                        <div>• Equity curve visualization</div>
+                        <div>• Risk-adjusted return metrics</div>
                       </div>
                     </div>
                     <div className="bg-muted/50 border border-border p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> Regularly review your vault to identify which strategies perform best in different market conditions.</p>
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Tip:</strong> Review your history to identify which pattern/timeframe combinations perform best in different market conditions.</p>
                     </div>
                   </div>
                 </div>
@@ -841,15 +848,15 @@ const FAQ = () => {
                       </div>
                     </div>
                     <div className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Subscription Limits:</h4>
+                      <h4 className="font-semibold mb-2">Alert Limits by Plan:</h4>
                       <div className="text-sm space-y-1">
-                        <div><strong>Starter:</strong> 0 alerts (upgrade required)</div>
-                        <div><strong>Pro:</strong> 3 simultaneous alerts</div>
-                        <div><strong>Elite:</strong> Unlimited alerts</div>
+                        <div><strong>Free:</strong> Limited alerts</div>
+                        <div><strong>Starter/Pro:</strong> Active alert monitoring</div>
+                        <div><strong>Pro+/Elite:</strong> Full alert access with priority delivery</div>
                       </div>
                     </div>
                     <div className="bg-muted/50 border border-border p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Delivery:</strong> Receive alerts via email with chart screenshots, pattern details, and suggested entry/exit levels.</p>
+                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Delivery:</strong> Receive alerts via email with pattern details, entry/exit levels, and stop loss/take profit brackets.</p>
                     </div>
                   </div>
                 </div>
@@ -1188,54 +1195,87 @@ const FAQ = () => {
                 <div className="space-y-4">
                   <div className="grid gap-4">
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="bg-primary text-primary-foreground p-3 border-b">
+                      <div className="bg-muted p-3 border-b">
                         <div className="flex items-center gap-2">
-                           <Badge variant="outline" className="text-primary-foreground border-primary-foreground/40">FREE</Badge>
-                          <h4 className="font-semibold text-primary-foreground">Starter Plan</h4>
+                           <Badge variant="outline">FREE</Badge>
+                          <h4 className="font-semibold">Free Plan</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
                         <div>• 1 AI strategy generation per day</div>
                         <div>• Pine Script export only</div>
+                        <div>• Full Screener access (ungated)</div>
                         <div>• Basic pattern library access</div>
                         <div>• Standard calculators (Pip, Risk)</div>
-                        <div>• Community forum access</div>
-                        <div className="text-xs text-muted-foreground">Perfect for testing the platform</div>
+                        <div className="text-xs text-muted-foreground">Perfect for exploring the platform</div>
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="bg-primary/10 p-3 border-b">
+                        <div className="flex items-center gap-2">
+                           <Badge variant="secondary">STARTER</Badge>
+                          <h4 className="font-semibold">Starter Plan</h4>
+                        </div>
+                      </div>
+                      <div className="p-4 space-y-2 text-sm">
+                        <div>• 5 AI strategy generations per day</div>
+                        <div>• Pine Script export</div>
+                        <div>• Full pattern library + quiz</div>
+                        <div>• Backtesting workspace access</div>
+                        <div>• Save strategies to library</div>
+                        <div className="text-xs text-muted-foreground">Getting started with automated trading</div>
                       </div>
                     </div>
                     
                     <div className="border rounded-lg overflow-hidden border-blue-200 dark:border-blue-800">
-                      <div className="bg-primary text-primary-foreground p-3 border-b border-blue-200 dark:border-blue-800">
+                      <div className="bg-blue-500/10 p-3 border-b border-blue-200 dark:border-blue-800">
                         <div className="flex items-center gap-2">
                            <Badge className="bg-blue-600">PRO</Badge>
-                          <h4 className="font-semibold text-primary-foreground">Professional Trader</h4>
+                          <h4 className="font-semibold">Professional Trader</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
-                        <div>• 15 AI strategy generations per day</div>
+                        <div>• 20 AI strategy generations per day</div>
                         <div>• Pine Script + MQL4 export</div>
-                        <div>• Full pattern library + quiz</div>
-                        <div>• Advanced backtesting workspace</div>
-                        <div>• Priority community support</div>
-                        <div>• Strategy library saves</div>
+                        <div>• Full Pattern Lab research access</div>
+                        <div>• Script export with optimized exits</div>
+                        <div>• Pair trading analysis</div>
                         <div className="text-xs text-muted-foreground">Ideal for serious traders</div>
                       </div>
                     </div>
                     
-                    <div className="border rounded-lg overflow-hidden border-purple-200 dark:border-purple-800">
-                      <div className="bg-primary text-primary-foreground p-3 border-b border-purple-200 dark:border-purple-800">
+                    <div className="border rounded-lg overflow-hidden border-orange-200 dark:border-orange-800">
+                      <div className="bg-orange-500/10 p-3 border-b border-orange-200 dark:border-orange-800">
                         <div className="flex items-center gap-2">
-                           <Badge className="bg-purple-600">ELITE</Badge>
-                          <h4 className="font-semibold text-primary-foreground">Professional Developer</h4>
+                           <Badge className="bg-orange-600">PRO+</Badge>
+                          <h4 className="font-semibold">Advanced Trader</h4>
                         </div>
                       </div>
                       <div className="p-4 space-y-2 text-sm">
                         <div>• 50 AI strategy generations per day</div>
-                        <div>• All platform exports (Pine, MQL4/5, cTrader, NT)</div>
-                        <div>• Pattern-based script exports with optimized exits</div>
-                        <div>• Advanced strategy optimization</div>
-                        <div>• Priority email support</div>
-                        <div>• White-label options available</div>
+                        <div>• All Pro features plus MQL5 export</div>
+                        <div>• Visual Builder access</div>
+                        <div>• Basket trading analysis</div>
+                        <div>• Tick data access</div>
+                        <div>• Community sharing features</div>
+                        <div className="text-xs text-muted-foreground">For advanced strategy development</div>
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-lg overflow-hidden border-purple-200 dark:border-purple-800">
+                      <div className="bg-purple-500/10 p-3 border-b border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center gap-2">
+                           <Badge className="bg-purple-600">ELITE</Badge>
+                          <h4 className="font-semibold">Professional Developer</h4>
+                        </div>
+                      </div>
+                      <div className="p-4 space-y-2 text-sm">
+                        <div>• Unlimited AI strategy generations</div>
+                        <div>• All platform exports (Pine Script, MQL4, MQL5)</div>
+                        <div>• All features unlocked</div>
+                        <div>• Priority email support (4-12 hour response)</div>
+                        <div>• Custom indicator development assistance</div>
                         <div className="text-xs text-muted-foreground">For professional strategy developers</div>
                       </div>
                     </div>
@@ -1350,14 +1390,17 @@ const FAQ = () => {
           ]
         },
         {
-          category: "Script Library & Platform Support",
+          category: "Script Export & Platform Support",
           questions: [
             {
-              question: "What's included in the Script Library?",
+              question: "What's included in the Script Export feature?",
               answer: (
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground space-y-2">
                   <p>
-                    Ready-to-use trading scripts for Pine Script (TradingView), Python (MT4/MT5), and MQL5. Each script includes setup instructions, backtesting results, and customization guides.
+                    Pattern-based trading scripts exported from Pattern Lab and backtest results. Each script includes the exact entry/exit logic, dynamic SL/TP calculation, and deployment guides.
+                  </p>
+                  <p className="text-sm">
+                    Scripts are generated based on validated pattern detections with optimized exits derived from historical backtest data.
                   </p>
                 </div>
               )
@@ -1365,9 +1408,12 @@ const FAQ = () => {
             {
               question: "What platforms do your scripts work with?",
               answer: (
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground space-y-2">
                   <p>
-                    Our scripts are compatible with TradingView (Pine Script), MetaTrader 4/5 (Python & MQL), and most major trading platforms.
+                    Our scripts are compatible with TradingView (Pine Script v5), MetaTrader 4 (MQL4), and MetaTrader 5 (MQL5).
+                  </p>
+                  <p className="text-sm">
+                    Each export includes platform-specific code and step-by-step deployment instructions.
                   </p>
                 </div>
               )
