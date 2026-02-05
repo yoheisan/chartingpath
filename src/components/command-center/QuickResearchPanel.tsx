@@ -5,7 +5,6 @@ import {
   Search, 
   TrendingUp, 
   BarChart3,
-  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -76,17 +75,9 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
           <h4 className="text-xs font-medium mb-2 text-muted-foreground">Quick Actions</h4>
           <div className="space-y-1">
             <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
-              <Link to="/vault">
-                <BarChart3 className="h-3.5 w-3.5 mr-2" />
-                View Results Vault
-                <ArrowRight className="h-3 w-3 ml-auto" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
               <Link to="/members/scripts">
                 <Search className="h-3.5 w-3.5 mr-2" />
                 Browse Scripts
-                <ArrowRight className="h-3 w-3 ml-auto" />
               </Link>
             </Button>
           </div>

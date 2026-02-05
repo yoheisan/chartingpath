@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home,
   FolderKanban,
-  Database,
-  BookOpen,
   Download,
   Settings
 } from "lucide-react";
@@ -28,11 +26,6 @@ const MemberNavigation = () => {
       to: "/members/downloads",
       icon: Download,
       label: "Downloads",
-    },
-    {
-      to: "/vault",
-      icon: Database,
-      label: "My Results",
     },
     {
       to: "/members/account",
