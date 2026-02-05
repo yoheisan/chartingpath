@@ -109,7 +109,7 @@ const generateInterpretation = (results: BacktestResultData): string => {
   } else if (isWeak) {
     return `Results suggest weak or no edge. Consider adjusting parameters before trading.`;
   }
-  return `Mixed signals. Review risk-reward and consider paper trading first.`;
+  return `Mixed signals. Review risk-reward and consider demo trading first.`;
 };
 
 export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({

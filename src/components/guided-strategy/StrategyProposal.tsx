@@ -380,7 +380,7 @@ export const StrategyProposal: React.FC<StrategyProposalProps> = ({
               <p>
                 This strategy proposal is for educational purposes only and does not constitute financial advice. 
                 Past performance does not guarantee future results. All trading involves substantial risk of loss. 
-                Please test thoroughly with paper trading before risking real capital.
+                Please test thoroughly on a demo account before risking real capital.
               </p>
             </div>
           </div>

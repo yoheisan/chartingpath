@@ -316,9 +316,9 @@ class TradingSystem:
                   },
                   {
                     step: 6,
-                    title: "Paper Trading",
-                    desc: "Run strategy live with simulated money for 1-3 months",
-                    example: "Compare paper fills to backtest expectations"
+                    title: "Demo Trading",
+                    desc: "Run strategy on a demo account for 1-3 months",
+                    example: "Compare demo fills to backtest expectations"
                   },
                   {
                     step: 7,

@@ -742,51 +742,6 @@ const FAQ = () => {
               )
             },
             {
-              question: "What is Paper Trading and how does it work?",
-              answer: (
-                <div className="space-y-4">
-                  <p>Paper Trading allows you to practice trading with virtual money in real market conditions, testing strategies without financial risk.</p>
-                  <div className="space-y-3">
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-3">Features:</h4>
-                      <div className="grid md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <strong>Portfolio Management:</strong>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            • $10,000 starting virtual balance<br/>
-                            • Real-time P&L tracking<br/>
-                            • Position management<br/>
-                            • Trade history
-                          </div>
-                        </div>
-                        <div>
-                          <strong>Trade Execution:</strong>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            • Long and short positions<br/>
-                            • Stop-loss & take-profit orders<br/>
-                            • Multiple position sizes<br/>
-                            • Trade notes and tags
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Performance Tracking:</h4>
-                      <div className="text-sm space-y-1">
-                        <div>• Win rate and profit factor calculations</div>
-                        <div>• Maximum drawdown monitoring</div>
-                        <div>• Average win/loss analysis</div>
-                        <div>• Learning achievements and milestones</div>
-                      </div>
-                    </div>
-                    <div className="bg-muted/50 border border-border p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground"><strong className="text-foreground">Best Practice:</strong> Use paper trading to validate your strategies before risking real capital. Track your performance over at least 50 trades.</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            },
-            {
               question: "How does Strategy History work?",
               answer: (
                 <div className="space-y-4">
