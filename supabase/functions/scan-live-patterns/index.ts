@@ -578,14 +578,23 @@ async function readCachedPatternsFromDb(
       };
     });
     
-    // Stats enrichment (fast path) - now per (pattern, symbol) for unique per-asset stats
-    // We always enrich with per-asset stats to show unique ROI per instrument
-    const pairsToEnrich = patterns.map((p: any) => ({ 
+    // FAST PATH OPTIMIZATION: Skip stats enrichment if all patterns already have valid cached stats
+    // This dramatically reduces response time by avoiding the expensive historical_pattern_occurrences query
+    const patternsNeedingStats = patterns.filter((p: any) => isStatsSuspect(p.historicalPerformance));
+    
+    if (patternsNeedingStats.length === 0) {
+      // All patterns have valid cached stats - return immediately (< 200ms)
+      console.info(`[scan-live-patterns] Ultra-fast path: all ${patterns.length} patterns have valid cached stats`);
+      return { patterns, instrumentsScanned: instruments.length, isFresh: true };
+    }
+    
+    // Only enrich patterns that are missing stats (not all of them)
+    const pairsToEnrich = patternsNeedingStats.map((p: any) => ({ 
       patternId: p.patternId, 
       symbol: p.instrument,
       dbId: p.dbId 
     }));
-    console.info(`[scan-live-patterns] Enriching ${pairsToEnrich.length} patterns with per-asset stats`);
+    console.info(`[scan-live-patterns] Enriching ${pairsToEnrich.length}/${patterns.length} patterns with per-asset stats (${patterns.length - pairsToEnrich.length} already cached)`);
 
     if (pairsToEnrich.length) {
       const stats = await fetchPatternSymbolStats(supabase, pairsToEnrich, timeframe, rrTier);
@@ -597,6 +606,11 @@ async function readCachedPatternsFromDb(
       let enrichedCount = 0;
       let clearedCount = 0;
       patterns = patterns.map((p: any) => {
+        // Skip patterns that already have valid stats
+        if (!isStatsSuspect(p.historicalPerformance)) {
+          return p;
+        }
+        
         const key = getStatsKey(p.patternId, p.instrument, timeframe, rrTier);
         const s = stats.get(key);
         
@@ -604,10 +618,6 @@ async function readCachedPatternsFromDb(
         // - Keep a non-suspect cached value (prevents Win% from showing as "—")
         // - Otherwise clear suspect fallbacks and omit
         if (!s) {
-          if (p.historicalPerformance && !isStatsSuspect(p.historicalPerformance)) {
-            return p;
-          }
-
           if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
             // Clear the stale pattern-level fallback from DB
             updatesToPerform.push({ id: p.dbId, hp: null });
@@ -621,25 +631,18 @@ async function readCachedPatternsFromDb(
         enrichedCount++;
         const hp = toHistoricalPerformance(s);
         
-        // Backfill DB if cached is suspect OR differs from computed.
+        // Backfill DB so future requests skip enrichment entirely
         if (p.dbId) {
-          const cached = p.historicalPerformance;
-          const differs =
-            !cached ||
-            cached?.sampleSize !== hp.sampleSize ||
-            cached?.winRate !== hp.winRate ||
-            cached?.avgRMultiple !== hp.avgRMultiple;
-          if (isStatsSuspect(cached) || differs) {
-            updatesToPerform.push({ id: p.dbId, hp });
-          }
+          updatesToPerform.push({ id: p.dbId, hp });
         }
 
         return { ...p, historicalPerformance: hp };
       });
 
       // Best-effort DB backfill/clear of stats (keeps future responses fast).
+      // Use EdgeRuntime.waitUntil to not block the response
       if (updatesToPerform.length) {
-        await Promise.allSettled(
+        const updatePromise = Promise.allSettled(
           updatesToPerform.map(({ id, hp }) => 
             supabase
               .from('live_pattern_detections')
@@ -647,9 +650,16 @@ async function readCachedPatternsFromDb(
               .eq('id', id)
           )
         );
+        
+        // @ts-ignore - EdgeRuntime.waitUntil is available in Supabase Edge Functions
+        if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+          EdgeRuntime.waitUntil(updatePromise);
+        } else {
+          await updatePromise;
+        }
       }
 
-      console.info(`[scan-live-patterns] Enriched ${enrichedCount}/${patterns.length} patterns with per-asset stats, cleared ${clearedCount} stale fallbacks`);
+      console.info(`[scan-live-patterns] Enriched ${enrichedCount}/${pairsToEnrich.length} patterns, cleared ${clearedCount} stale fallbacks`);
     }
     console.info(`[scan-live-patterns] Fast path: returned ${patterns.length} cached patterns for ${assetType}`);
     return { patterns, instrumentsScanned: instruments.length, isFresh: true };
