@@ -306,7 +306,7 @@ const LearningProgress = () => {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => navigate('/members/pattern-quiz')}
+                      onClick={() => navigate('/chart-patterns/quiz')}
                     >
                       Practice
                     </Button>
