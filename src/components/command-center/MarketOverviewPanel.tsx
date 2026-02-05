@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { 
   Globe, 
   TrendingUp, 
@@ -10,11 +11,29 @@ import {
   RefreshCw,
   Activity,
   Calendar,
+  BarChart3,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
+
+interface BreadthData {
+  advances: number;
+  declines: number;
+  unchanged: number;
+  advanceDeclineRatio: number;
+  advanceDeclineLine: number;
+  timestamp: string;
+  exchange: string;
+}
+
+interface BreadthMeta {
+  total: number;
+  advancePercent: number;
+  declinePercent: number;
+  sentiment: 'bullish' | 'neutral-bullish' | 'neutral-bearish' | 'bearish';
+}
 
 interface MarketOverviewPanelProps {
   onSymbolSelect: (symbol: string) => void;
@@ -49,10 +68,35 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
   const [topGainers, setTopGainers] = useState<MarketMover[]>([]);
   const [topLosers, setTopLosers] = useState<MarketMover[]>([]);
   const [loading, setLoading] = useState(false);
+  const [breadthData, setBreadthData] = useState<BreadthData | null>(null);
+  const [breadthMeta, setBreadthMeta] = useState<BreadthMeta | null>(null);
+  const [breadthLoading, setBreadthLoading] = useState(false);
 
   useEffect(() => {
     fetchMarketData();
+    fetchBreadthData();
   }, []);
+
+  const fetchBreadthData = async () => {
+    setBreadthLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-market-breadth');
+      
+      if (error) {
+        console.error('[MarketOverviewPanel] Breadth fetch error:', error);
+        return;
+      }
+
+      if (data?.success) {
+        setBreadthData(data.data);
+        setBreadthMeta(data.meta);
+      }
+    } catch (err) {
+      console.error('[MarketOverviewPanel] Breadth fetch exception:', err);
+    } finally {
+      setBreadthLoading(false);
+    }
+  };
 
   const fetchMarketData = async () => {
     setLoading(true);
@@ -239,6 +283,10 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
             <Activity className="h-3 w-3 mr-1" />
             Indices
           </TabsTrigger>
+          <TabsTrigger value="breadth" className="text-xs h-6 px-2">
+            <BarChart3 className="h-3 w-3 mr-1" />
+            Breadth
+          </TabsTrigger>
           <TabsTrigger value="movers" className="text-xs h-6 px-2">
             <TrendingUp className="h-3 w-3 mr-1" />
             Movers
@@ -274,8 +322,8 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                           className={cn(
                             'text-[10px]',
                             indicesData[index.symbol].change >= 0
-                              ? 'text-emerald-500'
-                              : 'text-red-500'
+                              ? 'text-bullish'
+                              : 'text-bearish'
                           )}
                         >
                           {indicesData[index.symbol].change >= 0 ? '+' : ''}
@@ -292,6 +340,139 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
           </ScrollArea>
         </TabsContent>
 
+        {/* Breadth Tab */}
+        <TabsContent value="breadth" className="flex-1 m-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-3 space-y-4">
+              {breadthLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : breadthData ? (
+                <>
+                  {/* Sentiment Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">NYSE Market Breadth</span>
+                    <Badge 
+                      className={cn(
+                        'text-[10px] border-0',
+                        breadthMeta?.sentiment === 'bullish' && 'bg-bullish/10 text-bullish',
+                        breadthMeta?.sentiment === 'neutral-bullish' && 'bg-bullish/10 text-bullish',
+                        breadthMeta?.sentiment === 'neutral-bearish' && 'bg-bearish/10 text-bearish',
+                        breadthMeta?.sentiment === 'bearish' && 'bg-bearish/10 text-bearish'
+                      )}
+                    >
+                      {breadthMeta?.sentiment === 'bullish' && '🟢 Bullish'}
+                      {breadthMeta?.sentiment === 'neutral-bullish' && '🟡 Neutral-Bullish'}
+                      {breadthMeta?.sentiment === 'neutral-bearish' && '🟠 Neutral-Bearish'}
+                      {breadthMeta?.sentiment === 'bearish' && '🔴 Bearish'}
+                    </Badge>
+                  </div>
+
+                  {/* A/D Ratio Display */}
+                  <div className="rounded-lg border border-border p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">Advance/Decline Ratio</span>
+                      <span className={cn(
+                        'text-lg font-bold',
+                        breadthData.advanceDeclineRatio >= 1 ? 'text-bullish' : 'text-bearish'
+                      )}>
+                        {breadthData.advanceDeclineRatio.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Visual Bar */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span className="text-bullish">Advancing: {breadthData.advances.toLocaleString()}</span>
+                        <span className="text-bearish">Declining: {breadthData.declines.toLocaleString()}</span>
+                      </div>
+                      <div className="flex h-3 rounded-full overflow-hidden bg-muted">
+                        <div 
+                          className="bg-bullish transition-all"
+                          style={{ width: `${breadthMeta?.advancePercent || 50}%` }}
+                        />
+                        <div 
+                          className="bg-bearish transition-all"
+                          style={{ width: `${breadthMeta?.declinePercent || 50}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>{breadthMeta?.advancePercent}%</span>
+                        <span>{breadthMeta?.declinePercent}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border border-border p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground mb-1">A/D Line</div>
+                      <div className={cn(
+                        'text-sm font-semibold',
+                        breadthData.advanceDeclineLine >= 0 ? 'text-bullish' : 'text-bearish'
+                      )}>
+                        {breadthData.advanceDeclineLine >= 0 ? '+' : ''}
+                        {breadthData.advanceDeclineLine.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-border p-2.5 text-center">
+                      <div className="text-[10px] text-muted-foreground mb-1">Unchanged</div>
+                      <div className="text-sm font-semibold text-muted-foreground">
+                        {breadthData.unchanged.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interpretation */}
+                  <div className="rounded-lg bg-muted/50 p-2.5">
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      {breadthData.advanceDeclineRatio >= 2 && 
+                        "Strong bullish breadth — broad participation confirms uptrend strength."}
+                      {breadthData.advanceDeclineRatio >= 1.5 && breadthData.advanceDeclineRatio < 2 && 
+                        "Healthy bullish breadth — more stocks advancing than declining."}
+                      {breadthData.advanceDeclineRatio >= 1 && breadthData.advanceDeclineRatio < 1.5 && 
+                        "Neutral-bullish breadth — slight edge to advancing issues."}
+                      {breadthData.advanceDeclineRatio >= 0.67 && breadthData.advanceDeclineRatio < 1 && 
+                        "Neutral-bearish breadth — slight edge to declining issues."}
+                      {breadthData.advanceDeclineRatio < 0.67 && 
+                        "Weak breadth — broad selling pressure across the market."}
+                    </p>
+                  </div>
+
+                  {/* Last Updated */}
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>Exchange: {breadthData.exchange}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-2 text-[10px]"
+                      onClick={fetchBreadthData}
+                      disabled={breadthLoading}
+                    >
+                      <RefreshCw className={cn('h-3 w-3 mr-1', breadthLoading && 'animate-spin')} />
+                      Refresh
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <BarChart3 className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                  <p className="text-xs text-muted-foreground">Breadth data unavailable</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-7 text-xs"
+                    onClick={fetchBreadthData}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
         {/* Movers Tab */}
         <TabsContent value="movers" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
@@ -299,7 +480,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
               {/* Top Gainers */}
               <div className="mb-4">
                 <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-emerald-500" />
+                  <TrendingUp className="h-3 w-3 text-bullish" />
                   Top Gainers
                 </h4>
                 {topGainers.length === 0 ? (
@@ -314,7 +495,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
                         <span className="text-xs font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[10px]">
+                        <Badge className="bg-bullish/10 text-bullish border-0 text-[10px]">
                           +{mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>
@@ -326,7 +507,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
               {/* Top Losers */}
               <div>
                 <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                  <TrendingDown className="h-3 w-3 text-red-500" />
+                  <TrendingDown className="h-3 w-3 text-bearish" />
                   Top Losers
                 </h4>
                 {topLosers.length === 0 ? (
@@ -341,7 +522,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
                         <span className="text-xs font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-red-500/10 text-red-600 border-0 text-[10px]">
+                        <Badge className="bg-bearish/10 text-bearish border-0 text-[10px]">
                           {mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>
