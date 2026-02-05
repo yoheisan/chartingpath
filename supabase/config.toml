@@ -179,3 +179,9 @@ verify_jwt = false
 
 [functions.fetch-market-breadth]
 verify_jwt = false
+
+[functions.save-push-subscription]
+verify_jwt = false
+
+[functions.remove-push-subscription]
+verify_jwt = false

@@ -1,26 +1,28 @@
- import { useState, useCallback, useEffect, useRef } from 'react';
- import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
- import { CommandCenterChart } from './CommandCenterChart';
- import { PatternOverlayChart } from './PatternOverlayChart';
- import { WatchlistPanel, LivePattern } from './WatchlistPanel';
- import { PatternOccurrencesPanel, PatternOccurrence } from './PatternOccurrencesPanel';
- import { QuickResearchPanel } from './QuickResearchPanel';
- import { AlertsHistoryPanel } from './AlertsHistoryPanel';
- import { MarketOverviewPanel } from './MarketOverviewPanel';
- import FullChartViewer from '@/components/charts/FullChartViewer';
- import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
- import { supabase } from '@/integrations/supabase/client';
- import { toast } from 'sonner';
- import { withTimeout } from '@/utils/withTimeout';
- import { useDashboardSettings } from '@/hooks/useDashboardSettings';
- import { 
-   BarChart3, 
-   Star, 
-   History, 
-   FlaskConical,
-   Bell,
-   TrendingUp,
- } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CommandCenterChart } from './CommandCenterChart';
+import { PatternOverlayChart } from './PatternOverlayChart';
+import { WatchlistPanel, LivePattern } from './WatchlistPanel';
+import { PatternOccurrencesPanel, PatternOccurrence } from './PatternOccurrencesPanel';
+import { QuickResearchPanel } from './QuickResearchPanel';
+import { AlertsHistoryPanel } from './AlertsHistoryPanel';
+import { MarketOverviewPanel } from './MarketOverviewPanel';
+import FullChartViewer from '@/components/charts/FullChartViewer';
+import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { withTimeout } from '@/utils/withTimeout';
+import { useDashboardSettings } from '@/hooks/useDashboardSettings';
+import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
+import { NotificationBadge } from '@/components/ui/notification-badge';
+import { 
+  BarChart3, 
+  Star, 
+  History, 
+  FlaskConical,
+  Bell,
+  TrendingUp,
+} from 'lucide-react';
  
  /** Playback pattern passed from route state */
  interface PlaybackPatternContext {
@@ -69,10 +71,11 @@
    error?: string;
  }
  
- export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCommandCenterProps) {
-   const { settings, updateSettings } = useDashboardSettings();
-   
-   const [activeTab, setActiveTab] = useState<string>('chart');
+export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCommandCenterProps) {
+  const { settings, updateSettings } = useDashboardSettings();
+  const { count: alertCount, watchlistCount } = useUnreadAlerts(userId);
+  
+  const [activeTab, setActiveTab] = useState<string>('chart');
    const [selectedSymbol, setSelectedSymbol] = useState<string>(
      initialPlaybackPattern?.symbol || settings.selectedSymbol
    );
@@ -447,13 +450,16 @@
               <BarChart3 className="h-4 w-4" />
                <span className="text-[10px]">Chart</span>
              </TabsTrigger>
-             <TabsTrigger 
-               value="watchlist" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
-             >
-              <Star className="h-4 w-4" />
-               <span className="text-[10px]">Watchlist</span>
-             </TabsTrigger>
+            <TabsTrigger 
+              value="watchlist" 
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
+            >
+              <span className="relative">
+                <Star className="h-4 w-4" />
+                <NotificationBadge count={watchlistCount} size="sm" position="top-right" variant="warning" />
+              </span>
+              <span className="text-[10px]">Watchlist</span>
+            </TabsTrigger>
              <TabsTrigger 
                value="patterns" 
               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
@@ -468,13 +474,16 @@
               <FlaskConical className="h-4 w-4" />
                <span className="text-[10px]">Research</span>
              </TabsTrigger>
-             <TabsTrigger 
-               value="alerts" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
-             >
-              <Bell className="h-4 w-4" />
-               <span className="text-[10px]">Alerts</span>
-             </TabsTrigger>
+            <TabsTrigger 
+              value="alerts" 
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
+            >
+              <span className="relative">
+                <Bell className="h-4 w-4" />
+                <NotificationBadge count={alertCount} size="sm" position="top-right" />
+              </span>
+              <span className="text-[10px]">Alerts</span>
+            </TabsTrigger>
            </TabsList>
          </Tabs>
        </div>
