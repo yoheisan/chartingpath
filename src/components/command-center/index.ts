@@ -5,3 +5,4 @@ export { AlertsHistoryPanel } from './AlertsHistoryPanel';
 export { QuickResearchPanel } from './QuickResearchPanel';
 export { PatternOccurrencesPanel } from './PatternOccurrencesPanel';
 export { MarketOverviewPanel } from './MarketOverviewPanel';
+export { MobileCommandCenter } from './MobileCommandCenter';
