@@ -364,7 +364,7 @@
    }, [selectedSetup, userId]);
  
    return (
-     <div className="h-[calc(100vh-4rem)] flex flex-col bg-background">
+    <div className="h-[calc(100vh-3rem)] flex flex-col bg-background">
        {/* Main Content - Takes all space except bottom nav */}
        <div className="flex-1 min-h-0 overflow-hidden">
          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
@@ -439,40 +439,40 @@
            </TabsContent>
  
            {/* Bottom Navigation Bar */}
-           <TabsList className="w-full h-14 rounded-none border-t border-border bg-background justify-around shrink-0 px-1">
+          <TabsList className="w-full h-14 rounded-none border-t border-border bg-background justify-around shrink-0 px-1 pb-safe">
              <TabsTrigger 
                value="chart" 
-               className="flex-1 flex-col gap-0.5 h-12 data-[state=active]:bg-primary/10 rounded-lg"
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
-               <BarChart3 className="h-5 w-5" />
+              <BarChart3 className="h-4 w-4" />
                <span className="text-[10px]">Chart</span>
              </TabsTrigger>
              <TabsTrigger 
                value="watchlist" 
-               className="flex-1 flex-col gap-0.5 h-12 data-[state=active]:bg-primary/10 rounded-lg"
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
-               <Star className="h-5 w-5" />
+              <Star className="h-4 w-4" />
                <span className="text-[10px]">Watchlist</span>
              </TabsTrigger>
              <TabsTrigger 
                value="patterns" 
-               className="flex-1 flex-col gap-0.5 h-12 data-[state=active]:bg-primary/10 rounded-lg"
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
-               <TrendingUp className="h-5 w-5" />
+              <TrendingUp className="h-4 w-4" />
                <span className="text-[10px]">Patterns</span>
              </TabsTrigger>
              <TabsTrigger 
                value="research" 
-               className="flex-1 flex-col gap-0.5 h-12 data-[state=active]:bg-primary/10 rounded-lg"
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
-               <FlaskConical className="h-5 w-5" />
+              <FlaskConical className="h-4 w-4" />
                <span className="text-[10px]">Research</span>
              </TabsTrigger>
              <TabsTrigger 
                value="alerts" 
-               className="flex-1 flex-col gap-0.5 h-12 data-[state=active]:bg-primary/10 rounded-lg"
+              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
-               <Bell className="h-5 w-5" />
+              <Bell className="h-4 w-4" />
                <span className="text-[10px]">Alerts</span>
              </TabsTrigger>
            </TabsList>
