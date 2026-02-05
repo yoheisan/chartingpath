@@ -2341,7 +2341,9 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string | null
+          email_notifications_enabled: boolean | null
           id: string
+          push_notifications_enabled: boolean | null
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
@@ -2352,7 +2354,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
           id?: string
+          push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
@@ -2363,7 +2367,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
           id?: string
+          push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null

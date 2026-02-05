@@ -1,42 +1,136 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, BellOff, Mail, Smartphone, Loader2 } from 'lucide-react';
+import { Bell, Mail, Smartphone, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface NotificationSettingsProps {
   userId?: string;
-  emailEnabled?: boolean;
-  onEmailChange?: (enabled: boolean) => void;
 }
 
 /**
  * Notification settings panel for managing push and email notifications.
- * Displays permission status and allows toggling notification channels.
+ * Persists preferences to the profiles table in Supabase.
  */
-export function NotificationSettings({
-  userId,
-  emailEnabled = true,
-  onEmailChange,
-}: NotificationSettingsProps) {
+export function NotificationSettings({ userId }: NotificationSettingsProps) {
+  const [emailEnabled, setEmailEnabled] = useState(true);
+  const [pushDbEnabled, setPushDbEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const {
     isSupported,
     permission,
     isSubscribed,
-    loading,
+    loading: pushLoading,
     subscribe,
     unsubscribe,
   } = usePushNotifications(userId);
 
-  const handlePushToggle = async () => {
+  // Load preferences from database
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    const loadPreferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email_notifications_enabled, push_notifications_enabled')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error('[NotificationSettings] Error loading preferences:', error);
+          return;
+        }
+
+        if (data) {
+          setEmailEnabled(data.email_notifications_enabled ?? true);
+          setPushDbEnabled(data.push_notifications_enabled ?? true);
+        }
+      } catch (err) {
+        console.error('[NotificationSettings] Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPreferences();
+  }, [userId]);
+
+  const savePreference = async (field: 'email_notifications_enabled' | 'push_notifications_enabled', value: boolean) => {
+    if (!userId) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: value })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success('Notification preference saved');
+    } catch (err: any) {
+      console.error('[NotificationSettings] Save error:', err);
+      toast.error('Failed to save preference');
+      // Revert on error
+      if (field === 'email_notifications_enabled') {
+        setEmailEnabled(!value);
+      } else {
+        setPushDbEnabled(!value);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEmailToggle = async (enabled: boolean) => {
+    setEmailEnabled(enabled);
+    await savePreference('email_notifications_enabled', enabled);
+  };
+
+  const handlePushDbToggle = async (enabled: boolean) => {
+    setPushDbEnabled(enabled);
+    await savePreference('push_notifications_enabled', enabled);
+  };
+
+  const handlePushSubscriptionToggle = async () => {
     if (isSubscribed) {
       await unsubscribe();
     } else {
-      await subscribe();
+      const success = await subscribe();
+      // If subscription succeeds, also enable in database
+      if (success && !pushDbEnabled) {
+        setPushDbEnabled(true);
+        await savePreference('push_notifications_enabled', true);
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notification Preferences
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -50,7 +144,7 @@ export function NotificationSettings({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Push Notifications */}
+        {/* Push Notifications - Browser Subscription */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label htmlFor="push-notifications" className="flex items-center gap-2">
@@ -66,17 +160,37 @@ export function NotificationSettings({
               <Badge variant="secondary">Not Supported</Badge>
             ) : permission === 'denied' ? (
               <Badge variant="destructive">Blocked</Badge>
-            ) : loading ? (
+            ) : pushLoading || saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Switch
                 id="push-notifications"
                 checked={isSubscribed}
-                onCheckedChange={handlePushToggle}
+                onCheckedChange={handlePushSubscriptionToggle}
               />
             )}
           </div>
         </div>
+
+        {/* Push Preference (database toggle) - only show if subscribed */}
+        {isSubscribed && (
+          <div className="flex items-center justify-between pl-6 border-l-2 border-muted">
+            <div className="space-y-1">
+              <Label htmlFor="push-db-enabled" className="text-sm">
+                Pattern Alert Push
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Send push when patterns are detected
+              </p>
+            </div>
+            <Switch
+              id="push-db-enabled"
+              checked={pushDbEnabled}
+              onCheckedChange={handlePushDbToggle}
+              disabled={saving}
+            />
+          </div>
+        )}
 
         {/* Permission Status */}
         {isSupported && permission === 'denied' && (
@@ -95,13 +209,14 @@ export function NotificationSettings({
               Email Notifications
             </Label>
             <p className="text-sm text-muted-foreground">
-              Receive daily digests and high-priority alerts
+              Receive pattern alerts via email
             </p>
           </div>
           <Switch
             id="email-notifications"
             checked={emailEnabled}
-            onCheckedChange={onEmailChange}
+            onCheckedChange={handleEmailToggle}
+            disabled={saving}
           />
         </div>
 
