@@ -24,10 +24,10 @@ import {
   Award,
   BarChart3,
   LineChart,
-  Code,
   ArrowRight,
   Zap,
   Star,
+  Bell,
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
@@ -495,6 +495,39 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               title="R:R Scenario Comparison"
               description="Optimize your target based on historical win rates and expectancy per R:R tier"
             />
+          )}
+
+          {/* Set Alert CTA - Journey Stage Handoff */}
+          {artifact.patterns.length > 0 && (
+            <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5">
+              <CardContent className="py-5">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-500/10">
+                      <Bell className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Like these results?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Set up alerts to get notified when {artifact.patterns.length === 1 ? 'this pattern forms' : 'these patterns form'} in the future
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      // Pass pattern context to alerts page
+                      const patternParam = artifact.patterns.map(p => p.patternId).join(',');
+                      navigate(`/members/alerts?patterns=${patternParam}&timeframe=${artifact.timeframe}`);
+                    }}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Bell className="h-4 w-4" />
+                    Set Alert
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Do Not Trade Rules */}
