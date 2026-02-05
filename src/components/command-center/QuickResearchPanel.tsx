@@ -24,12 +24,12 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
       bgColor: 'bg-violet-500/10',
     },
     {
-      icon: Search,
-      title: 'Setup Finder',
-      description: 'Scan any ticker for setups',
-      href: '/projects/setup-finder/new',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
+      icon: TrendingUp,
+      title: 'Live Screener',
+      description: 'Real-time pattern signals',
+      href: '/patterns/live',
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-500/10',
     },
     {
       icon: BarChart3,
@@ -38,14 +38,6 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
       href: '/projects/portfolio-checkup/new',
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Live Screener',
-      description: 'Real-time pattern signals',
-      href: '/patterns/live',
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10',
     },
   ];
 
