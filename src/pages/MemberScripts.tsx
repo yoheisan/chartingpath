@@ -7,11 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Download, Search, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
-  FileCode, FlaskConical, Zap, Info
+  Download, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
+  FileCode, FlaskConical, Zap, Trash2, Clock, Save
 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import MemberNavigation from "@/components/MemberNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PlatformImportGuide } from "@/components/scripts/PlatformImportGuide";
@@ -51,6 +50,20 @@ const PLATFORMS: { value: Platform; label: string }[] = [
   { value: 'mql5', label: 'MetaTrader 5 (MQL5)' },
 ];
 
+interface SavedScript {
+  id: string;
+  name: string;
+  patternName: string;
+  platform: Platform;
+  instrument: string;
+  timeframe: string;
+  rrTarget: number;
+  code: string;
+  createdAt: string;
+}
+
+const STORAGE_KEY = 'chartingpath_saved_scripts';
+
 const MemberScripts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,19 +87,21 @@ const MemberScripts = () => {
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
   
-  // Context message when navigating from other pages
-  const [contextMessage, setContextMessage] = useState<string | null>(null);
+  // Saved scripts
+  const [savedScripts, setSavedScripts] = useState<SavedScript[]>([]);
+  const [activeTab, setActiveTab] = useState("generate");
   
+  // Load saved scripts from localStorage
   useEffect(() => {
-    if (patternParam) {
-      const pattern = SUPPORTED_PATTERNS.find(p => p.id === patternParam);
-      if (pattern) {
-        setContextMessage(
-          `Generating script for "${pattern.name}"${symbolParam ? ` on ${symbolParam}` : ''}${timeframeParam ? ` (${timeframeParam})` : ''}`
-        );
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        setSavedScripts(JSON.parse(stored));
+      } catch {
+        console.error('Failed to load saved scripts');
       }
     }
-  }, [patternParam, symbolParam, timeframeParam]);
+  }, []);
 
   const handleGenerate = () => {
     const pattern = SUPPORTED_PATTERNS.find(p => p.id === selectedPattern);
@@ -101,14 +116,13 @@ const MemberScripts = () => {
 
     const symbolToUse = instrument.trim() || 'BTCUSD';
     
-    // Create export data with reasonable defaults
     const exportData: PatternExportData = {
       patternName: pattern.name,
       patternId: pattern.id,
       instrument: symbolToUse.toUpperCase(),
       timeframe,
       direction: pattern.direction,
-      entryPrice: 100, // Placeholder - script uses market entry
+      entryPrice: 100,
       stopLossPrice: pattern.direction === 'long' ? 98 : 102,
       takeProfitPrice: pattern.direction === 'long' ? 100 + (2 * rrTarget) : 100 - (2 * rrTarget),
       riskRewardRatio: rrTarget,
@@ -135,6 +149,46 @@ const MemberScripts = () => {
       title: 'Script Generated',
       description: `${pattern.name} script ready for ${PLATFORMS.find(p => p.value === platform)?.label}`,
     });
+  };
+
+  const handleSaveScript = () => {
+    if (!generatedCode) return;
+    
+    const pattern = SUPPORTED_PATTERNS.find(p => p.id === selectedPattern);
+    const newScript: SavedScript = {
+      id: crypto.randomUUID(),
+      name: `${pattern?.name || 'Pattern'} - ${instrument || 'Generic'} (${timeframe})`,
+      patternName: pattern?.name || 'Unknown',
+      platform,
+      instrument: instrument || 'Generic',
+      timeframe,
+      rrTarget,
+      code: generatedCode,
+      createdAt: new Date().toISOString(),
+    };
+    
+    const updated = [newScript, ...savedScripts];
+    setSavedScripts(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    
+    toast({
+      title: 'Script Saved',
+      description: 'Script added to My Scripts',
+    });
+  };
+
+  const handleDeleteScript = (id: string) => {
+    const updated = savedScripts.filter(s => s.id !== id);
+    setSavedScripts(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    toast({ title: 'Script Deleted' });
+  };
+
+  const handleLoadScript = (script: SavedScript) => {
+    setGeneratedCode(script.code);
+    setPlatform(script.platform);
+    setActiveTab("generate");
+    toast({ title: 'Script Loaded', description: script.name });
   };
 
   const handleCopy = async () => {
@@ -180,8 +234,6 @@ const MemberScripts = () => {
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
-      <MemberNavigation />
-      
       {/* Back Navigation */}
       <div className="mb-6">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -189,27 +241,6 @@ const MemberScripts = () => {
           Back to Home
         </Link>
       </div>
-
-      {/* Context Message */}
-      {contextMessage && (
-        <Alert className="mb-6 border-primary/30 bg-primary/5">
-          <Info className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>{contextMessage}</span>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                setContextMessage(null);
-                setSelectedPattern(SUPPORTED_PATTERNS[0].id);
-                setInstrument("");
-              }}
-            >
-              Clear
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Header */}
       <div className="text-center mb-8">
@@ -248,189 +279,281 @@ const MemberScripts = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Configuration Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Code className="h-5 w-5" />
-              Script Configuration
-            </CardTitle>
-            <CardDescription>
-              Configure your pattern-based trading script
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Pattern Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Pattern</label>
-              <Select value={selectedPattern} onValueChange={setSelectedPattern}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pattern..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPORTED_PATTERNS.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      <span className="flex items-center gap-2">
-                        {p.name}
-                        <Badge variant="outline" className={p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
-                          {p.direction}
-                        </Badge>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Instrument */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Instrument (optional)</label>
-              <Input
-                placeholder="e.g., BTCUSD, AAPL, EURUSD"
-                value={instrument}
-                onChange={(e) => setInstrument(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">Script uses market entry at deployment</p>
-            </div>
-
-            {/* Timeframe */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Timeframe</label>
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1m">1 Minute</SelectItem>
-                  <SelectItem value="5m">5 Minutes</SelectItem>
-                  <SelectItem value="15m">15 Minutes</SelectItem>
-                  <SelectItem value="1h">1 Hour</SelectItem>
-                  <SelectItem value="4h">4 Hours</SelectItem>
-                  <SelectItem value="1d">Daily</SelectItem>
-                  <SelectItem value="1w">Weekly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Platform */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Platform</label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PLATFORMS.map(p => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Script Type (Pine only) */}
-            {platform === 'pine' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Script Type</label>
-                <Select value={scriptType} onValueChange={(v) => setScriptType(v as ScriptType)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="strategy">Strategy (backtestable)</SelectItem>
-                    <SelectItem value="indicator">Indicator (visual only)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsTrigger value="generate" className="gap-2">
+            <Zap className="h-4 w-4" />
+            Generate Script
+          </TabsTrigger>
+          <TabsTrigger value="my-scripts" className="gap-2">
+            <FileCode className="h-4 w-4" />
+            My Scripts
+            {savedScripts.length > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {savedScripts.length}
+              </Badge>
             )}
+          </TabsTrigger>
+        </TabsList>
 
-            {/* R:R Target */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">R:R Target</label>
-              <Select value={rrTarget.toString()} onValueChange={(v) => setRrTarget(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2">1:2</SelectItem>
-                  <SelectItem value="3">1:3</SelectItem>
-                  <SelectItem value="4">1:4</SelectItem>
-                  <SelectItem value="5">1:5</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Execution Notes */}
-            <div className="p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">Execution Contract:</p>
-              <p>• Entry at current market price</p>
-              <p>• SL/TP maintain {rrTarget}:1 R:R ratio</p>
-              <p>• 100-bar time stop included</p>
-            </div>
-
-            <Button onClick={handleGenerate} className="w-full gap-2">
-              <Zap className="h-4 w-4" />
-              Generate Script
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Output Panel */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
+        {/* Generate Tab */}
+        <TabsContent value="generate">
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Configuration Panel */}
+            <Card className="lg:col-span-1">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Code className="h-5 w-5" />
-                  Generated Script
+                  Script Configuration
                 </CardTitle>
                 <CardDescription>
-                  {generatedCode 
-                    ? `${SUPPORTED_PATTERNS.find(p => p.id === selectedPattern)?.name} - ${PLATFORMS.find(p => p.value === platform)?.label}`
-                    : "Configure and generate your script"
-                  }
+                  Configure your pattern-based trading script
                 </CardDescription>
-              </div>
-              {generatedCode && (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCopy}>
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownload}
-                    disabled={!canDownload()}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
-                    {!canDownload() && <Lock className="h-3 w-3 ml-1" />}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Pattern Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Pattern</label>
+                  <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select pattern..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_PATTERNS.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          <span className="flex items-center gap-2">
+                            {p.name}
+                            <Badge variant="outline" className={p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
+                              {p.direction}
+                            </Badge>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Instrument */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Instrument (optional)</label>
+                  <Input
+                    placeholder="e.g., BTCUSD, AAPL, EURUSD"
+                    value={instrument}
+                    onChange={(e) => setInstrument(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Script uses market entry at deployment</p>
+                </div>
+
+                {/* Timeframe */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Timeframe</label>
+                  <Select value={timeframe} onValueChange={setTimeframe}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1m">1 Minute</SelectItem>
+                      <SelectItem value="5m">5 Minutes</SelectItem>
+                      <SelectItem value="15m">15 Minutes</SelectItem>
+                      <SelectItem value="1h">1 Hour</SelectItem>
+                      <SelectItem value="4h">4 Hours</SelectItem>
+                      <SelectItem value="1d">Daily</SelectItem>
+                      <SelectItem value="1w">Weekly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Platform */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Platform</label>
+                  <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLATFORMS.map(p => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Script Type (Pine only) */}
+                {platform === 'pine' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Script Type</label>
+                    <Select value={scriptType} onValueChange={(v) => setScriptType(v as ScriptType)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="strategy">Strategy (backtestable)</SelectItem>
+                        <SelectItem value="indicator">Indicator (visual only)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* R:R Target */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">R:R Target</label>
+                  <Select value={rrTarget.toString()} onValueChange={(v) => setRrTarget(parseInt(v))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2">1:2</SelectItem>
+                      <SelectItem value="3">1:3</SelectItem>
+                      <SelectItem value="4">1:4</SelectItem>
+                      <SelectItem value="5">1:5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Execution Notes */}
+                <div className="p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">Execution Contract:</p>
+                  <p>• Entry at current market price</p>
+                  <p>• SL/TP maintain {rrTarget}:1 R:R ratio</p>
+                  <p>• 100-bar time stop included</p>
+                </div>
+
+                <Button onClick={handleGenerate} className="w-full gap-2">
+                  <Zap className="h-4 w-4" />
+                  Generate Script
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Output Panel */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Code className="h-5 w-5" />
+                      Generated Script
+                    </CardTitle>
+                    <CardDescription>
+                      {generatedCode 
+                        ? `${SUPPORTED_PATTERNS.find(p => p.id === selectedPattern)?.name} - ${PLATFORMS.find(p => p.value === platform)?.label}`
+                        : "Configure and generate your script"
+                      }
+                    </CardDescription>
+                  </div>
+                  {generatedCode && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleSaveScript}>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleCopy}>
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? 'Copied' : 'Copy'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownload}
+                        disabled={!canDownload()}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                        {!canDownload() && <Lock className="h-3 w-3 ml-1" />}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {generatedCode ? (
+                  <Textarea
+                    value={generatedCode}
+                    readOnly
+                    className="min-h-[500px] font-mono text-sm bg-muted/30"
+                  />
+                ) : (
+                  <div className="min-h-[500px] flex items-center justify-center bg-muted/30 rounded-md border border-dashed border-muted-foreground/25">
+                    <div className="text-center space-y-3">
+                      <Code className="h-12 w-12 text-muted-foreground mx-auto" />
+                      <p className="text-muted-foreground">Select a pattern and click "Generate Script"</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* My Scripts Tab */}
+        <TabsContent value="my-scripts">
+          {savedScripts.length === 0 ? (
+            <Card>
+              <CardContent className="py-16">
+                <div className="text-center space-y-4">
+                  <FileCode className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <div>
+                    <h3 className="text-lg font-semibold">No Saved Scripts</h3>
+                    <p className="text-muted-foreground">
+                      Generate a script and click "Save" to add it to your collection
+                    </p>
+                  </div>
+                  <Button onClick={() => setActiveTab("generate")} variant="outline">
+                    Generate Your First Script
                   </Button>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {savedScripts.map((script) => (
+                <Card key={script.id} className="hover:border-primary/50 transition-colors">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-base">{script.patternName}</CardTitle>
+                        <CardDescription className="text-xs">
+                          {script.instrument} • {script.timeframe} • 1:{script.rrTarget} R:R
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {script.platform.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {new Date(script.createdAt).toLocaleDateString()}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleLoadScript(script)}
+                      >
+                        Load
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteScript(script.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </CardHeader>
-          <CardContent>
-            {generatedCode ? (
-              <Textarea
-                value={generatedCode}
-                readOnly
-                className="min-h-[500px] font-mono text-sm bg-muted/30"
-              />
-            ) : (
-              <div className="min-h-[500px] flex items-center justify-center bg-muted/30 rounded-md border border-dashed border-muted-foreground/25">
-                <div className="text-center space-y-3">
-                  <Code className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground">Select a pattern and click "Generate Script"</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Platform Import Guide */}
       <div className="mt-8">
