@@ -71,7 +71,20 @@ serve(async (req) => {
         if (patternResult.detected) {
           console.log(`Pattern detected for ${alert.symbol}: ${alert.pattern}`);
 
-          // Log the detection
+          // Calculate SL/TP prices for outcome tracking
+          const currentPrice = marketData[marketData.length - 1].c;
+          const atr = calculateATR(marketData.slice(-14));
+          const slDistance = atr * 1.5;
+          const tpDistance = atr * 3; // 2:1 R:R default
+          
+          // Determine direction from pattern
+          const isBullish = ['hammer', 'inverted_hammer', 'bullish_engulfing', 'morning_star', 'ema_cross_bullish', 'rsi_divergence_bullish'].includes(alert.pattern);
+          
+          const entryPrice = currentPrice;
+          const stopLossPrice = isBullish ? currentPrice - slDistance : currentPrice + slDistance;
+          const takeProfitPrice = isBullish ? currentPrice + tpDistance : currentPrice - tpDistance;
+
+          // Log the detection with SL/TP for outcome tracking
           const { error: logError } = await supabaseService
             .from("alerts_log")
             .insert({
@@ -84,9 +97,14 @@ serve(async (req) => {
               price_data: {
                 symbol: alert.symbol,
                 timeframe: alert.timeframe,
-                current_price: marketData[marketData.length - 1].c,
+                current_price: currentPrice,
                 candle_data: marketData.slice(-3) // Last 3 candles
-              }
+              },
+              // New fields for outcome tracking
+              entry_price: entryPrice,
+              stop_loss_price: stopLossPrice,
+              take_profit_price: takeProfitPrice,
+              outcome_status: 'pending'
             });
 
           if (logError) {
@@ -413,4 +431,24 @@ function detectRsiDivergence(candles: CandleData[], bullish: boolean): PatternRe
 function calculateSMA(candles: CandleData[], period: number): number {
   const prices = candles.slice(-period).map(c => c.c);
   return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+}
+
+function calculateATR(candles: CandleData[]): number {
+  if (candles.length < 2) return 0;
+  
+  let trSum = 0;
+  for (let i = 1; i < candles.length; i++) {
+    const high = candles[i].h;
+    const low = candles[i].l;
+    const prevClose = candles[i - 1].c;
+    
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    trSum += tr;
+  }
+  
+  return trSum / (candles.length - 1);
 }
