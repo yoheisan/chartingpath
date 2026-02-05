@@ -172,29 +172,65 @@ export type Database = {
       alerts_log: {
         Row: {
           alert_id: string
+          capture_method: string | null
+          check_count: number | null
+          checked_at: string | null
           email_sent: boolean | null
           email_sent_at: string | null
+          entry_price: number | null
           id: string
+          is_auto_captured: boolean | null
+          outcome_at: string | null
+          outcome_pnl_percent: number | null
+          outcome_price: number | null
+          outcome_r_multiple: number | null
+          outcome_status: string | null
           pattern_data: Json | null
           price_data: Json | null
+          stop_loss_price: number | null
+          take_profit_price: number | null
           triggered_at: string | null
         }
         Insert: {
           alert_id: string
+          capture_method?: string | null
+          check_count?: number | null
+          checked_at?: string | null
           email_sent?: boolean | null
           email_sent_at?: string | null
+          entry_price?: number | null
           id?: string
+          is_auto_captured?: boolean | null
+          outcome_at?: string | null
+          outcome_pnl_percent?: number | null
+          outcome_price?: number | null
+          outcome_r_multiple?: number | null
+          outcome_status?: string | null
           pattern_data?: Json | null
           price_data?: Json | null
+          stop_loss_price?: number | null
+          take_profit_price?: number | null
           triggered_at?: string | null
         }
         Update: {
           alert_id?: string
+          capture_method?: string | null
+          check_count?: number | null
+          checked_at?: string | null
           email_sent?: boolean | null
           email_sent_at?: string | null
+          entry_price?: number | null
           id?: string
+          is_auto_captured?: boolean | null
+          outcome_at?: string | null
+          outcome_pnl_percent?: number | null
+          outcome_price?: number | null
+          outcome_r_multiple?: number | null
+          outcome_status?: string | null
           pattern_data?: Json | null
           price_data?: Json | null
+          stop_loss_price?: number | null
+          take_profit_price?: number | null
           triggered_at?: string | null
         }
         Relationships: [
@@ -1822,6 +1858,51 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      outcome_analytics_cache: {
+        Row: {
+          avg_pnl_percent: number | null
+          avg_r_multiple: number | null
+          id: string
+          instrument: string | null
+          last_updated: string | null
+          losses: number | null
+          pattern_name: string
+          timeframe: string
+          timeouts: number | null
+          total_signals: number | null
+          win_rate: number | null
+          wins: number | null
+        }
+        Insert: {
+          avg_pnl_percent?: number | null
+          avg_r_multiple?: number | null
+          id?: string
+          instrument?: string | null
+          last_updated?: string | null
+          losses?: number | null
+          pattern_name: string
+          timeframe: string
+          timeouts?: number | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
+        }
+        Update: {
+          avg_pnl_percent?: number | null
+          avg_r_multiple?: number | null
+          id?: string
+          instrument?: string | null
+          last_updated?: string | null
+          losses?: number | null
+          pattern_name?: string
+          timeframe?: string
+          timeouts?: number | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
         }
         Relationships: []
       }

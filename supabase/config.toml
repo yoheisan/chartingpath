@@ -167,3 +167,6 @@ verify_jwt = false
 
 [functions.trigger-backfill]
 verify_jwt = false
+
+[functions.check-alert-outcomes]
+verify_jwt = false
