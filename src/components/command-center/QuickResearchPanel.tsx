@@ -4,7 +4,6 @@ import {
   FlaskConical, 
   Search, 
   TrendingUp, 
-  BarChart3,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -29,14 +28,6 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
       href: '/patterns/live',
       color: 'text-amber-500',
       bgColor: 'bg-amber-500/10',
-    },
-    {
-      icon: BarChart3,
-      title: 'Portfolio Checkup',
-      description: 'Analyze your holdings',
-      href: '/projects/portfolio-checkup/new',
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10',
     },
   ];
 

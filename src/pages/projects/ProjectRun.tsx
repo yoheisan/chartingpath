@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Search, PieChart, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Search, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SetupListViewer from '@/components/projects/SetupListViewer';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
-import PortfolioCheckupViewer from '@/components/projects/PortfolioCheckupViewer';
 import PortfolioSimViewer from '@/components/projects/PortfolioSimViewer';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
@@ -241,12 +240,10 @@ const ProjectRun = () => {
               <div className="flex items-center gap-3">
                 {project?.type === 'pattern_lab' && <FlaskConical className="h-8 w-8 text-primary" />}
                 {project?.type === 'setup_finder' && <Search className="h-8 w-8 text-primary" />}
-                {project?.type === 'portfolio_checkup' && <PieChart className="h-8 w-8 text-primary" />}
                 {project?.type === 'portfolio_sim' && <TrendingUp className="h-8 w-8 text-primary" />}
                 <h1 className="text-2xl font-bold text-foreground">
                   {project?.type === 'pattern_lab' ? 'Pattern Lab' : 
                    project?.type === 'setup_finder' ? 'Setup Finder' : 
-                   project?.type === 'portfolio_checkup' ? 'Portfolio Checkup' :
                    project?.type === 'portfolio_sim' ? 'Portfolio Simulator' :
                    project?.name || 'Project Run'}
                 </h1>
@@ -322,9 +319,6 @@ const ProjectRun = () => {
           <>
             {artifact.projectType === 'pattern_lab' && (
               <PatternLabViewer artifact={artifact as any} runId={runId!} />
-            )}
-            {artifact.projectType === 'portfolio_checkup' && (
-              <PortfolioCheckupViewer artifact={artifact as any} runId={runId!} />
             )}
             {artifact.projectType === 'portfolio_sim' && (
               <PortfolioSimViewer artifact={artifact as any} runId={runId!} />

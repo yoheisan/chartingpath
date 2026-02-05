@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   FlaskConical, 
-  PieChart, 
   TrendingUp,
   Sparkles,
   ChevronRight,
@@ -23,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectTemplate {
   id: string;
-  type: 'setup_finder' | 'pattern_lab' | 'portfolio_checkup' | 'portfolio_sim';
+  type: 'setup_finder' | 'pattern_lab' | 'portfolio_sim';
   name: string;
   description: string;
   icon: React.ElementType;
@@ -50,18 +49,6 @@ const projectTemplates: ProjectTemplate[] = [
     features: ['Multi-year backtest', 'Regime breakdown', 'Do-not-trade rules'],
     badge: 'Pro',
     badgeVariant: 'secondary'
-  },
-  {
-    id: 'portfolio_checkup',
-    type: 'portfolio_checkup',
-    name: 'Portfolio Checkup',
-    description: 'Analyze your holdings through a pattern lens with risk concentration insights',
-    icon: PieChart,
-    color: 'text-amber-500',
-    gradient: 'from-amber-500/20 via-amber-500/5 to-transparent',
-    estimatedCredits: '3-10',
-    estimatedTime: '20-40s',
-    features: ['Pattern state per holding', 'Risk analysis', 'Alert suggestions'],
   },
   {
     id: 'portfolio_sim',
@@ -277,7 +264,6 @@ const Projects = () => {
   const handleStartProject = (templateId: string) => {
     const routes: Record<string, string> = {
       pattern_lab: '/projects/pattern-lab/new',
-      portfolio_checkup: '/projects/portfolio-checkup/new',
       portfolio_sim: '/projects/portfolio-sim/new',
     };
 
