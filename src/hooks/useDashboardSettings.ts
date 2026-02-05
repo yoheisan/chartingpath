@@ -37,14 +37,38 @@ const DEFAULT_SETTINGS: DashboardSettings = {
   marketOverviewTab: 'indices',
   calendarRegions: ['US', 'EU', 'UK', 'JP'],
   calendarImpacts: ['high', 'medium'],
-  leftPanelSize: 20,
-  mainPanelSize: 55,
-  rightPanelSize: 25,
+  leftPanelSize: 0, // deprecated - left panel removed
+  mainPanelSize: 75, // main chart area
+  rightPanelSize: 25, // right sidebar (watchlist/alerts + market overview)
   topChartSize: 70,
   bottomPanelSize: 30,
   alertsPanelSize: 50,
   marketOverviewSize: 50,
 };
+
+/**
+ * Normalize panel sizes to ensure they sum to 100%.
+ * Handles legacy settings from when there were 3 horizontal panels.
+ */
+function normalizeHorizontalPanels(settings: DashboardSettings): DashboardSettings {
+  const { mainPanelSize, rightPanelSize } = settings;
+  const total = mainPanelSize + rightPanelSize;
+  
+  // If they already sum to ~100%, no need to normalize
+  if (Math.abs(total - 100) < 1) {
+    return settings;
+  }
+  
+  // Normalize proportionally
+  const normalizedMain = Math.round((mainPanelSize / total) * 100);
+  const normalizedRight = 100 - normalizedMain;
+  
+  return {
+    ...settings,
+    mainPanelSize: normalizedMain,
+    rightPanelSize: normalizedRight,
+  };
+}
 
 function loadSettings(): DashboardSettings {
   if (!hasPersistentBrowserStorage()) {
@@ -57,7 +81,10 @@ function loadSettings(): DashboardSettings {
     
     const parsed = JSON.parse(stored);
     // Merge with defaults to handle new fields added in updates
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    const merged = { ...DEFAULT_SETTINGS, ...parsed };
+    
+    // Normalize horizontal panel sizes to fix legacy 3-panel settings
+    return normalizeHorizontalPanels(merged);
   } catch {
     return DEFAULT_SETTINGS;
   }
