@@ -4,561 +4,446 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Search, Filter, Code, ArrowLeft, Lock, Crown, Eye, AlertCircle, FileCode } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Download, Search, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
+  FileCode, FlaskConical, Zap, Info
+} from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PlatformImportGuide } from "@/components/scripts/PlatformImportGuide";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import {
+  generatePineScriptV5,
+  generateMQL4,
+  generateMQL5,
+  getScriptFileExtension,
+  type PatternExportData,
+  type ScriptType,
+} from "@/utils/exports/PatternScriptExporter";
 
-// Pattern to strategy mapping for deep-linking from Screener/PatternLab
-const PATTERN_TO_STRATEGY_MAP: Record<string, string> = {
-  'double-top': 'Reversal',
-  'double-bottom': 'Reversal',
-  'head-shoulders': 'Reversal',
-  'inverse-head-shoulders': 'Reversal',
-  'rising-wedge': 'Reversal',
-  'falling-wedge': 'Reversal',
-  'ascending-triangle': 'Breakout',
-  'descending-triangle': 'Breakout',
-  'symmetric-triangle': 'Breakout',
-  'bull-flag': 'Trend Following',
-  'bear-flag': 'Trend Following',
-  'bullish-pennant': 'Trend Following',
-  'bearish-pennant': 'Trend Following',
-  'cup-handle': 'Breakout',
-  'rectangle': 'Breakout',
-  'channel-up': 'Trend Following',
-  'channel-down': 'Trend Following',
-};
+// Supported patterns for script generation
+const SUPPORTED_PATTERNS = [
+  { id: 'double-top', name: 'Double Top', direction: 'short' as const },
+  { id: 'double-bottom', name: 'Double Bottom', direction: 'long' as const },
+  { id: 'head-shoulders', name: 'Head & Shoulders', direction: 'short' as const },
+  { id: 'inverse-head-shoulders', name: 'Inverse Head & Shoulders', direction: 'long' as const },
+  { id: 'rising-wedge', name: 'Rising Wedge', direction: 'short' as const },
+  { id: 'falling-wedge', name: 'Falling Wedge', direction: 'long' as const },
+  { id: 'ascending-triangle', name: 'Ascending Triangle', direction: 'long' as const },
+  { id: 'descending-triangle', name: 'Descending Triangle', direction: 'short' as const },
+  { id: 'symmetric-triangle', name: 'Symmetric Triangle', direction: 'long' as const },
+  { id: 'bull-flag', name: 'Bull Flag', direction: 'long' as const },
+  { id: 'bear-flag', name: 'Bear Flag', direction: 'short' as const },
+  { id: 'cup-handle', name: 'Cup & Handle', direction: 'long' as const },
+  { id: 'triple-top', name: 'Triple Top', direction: 'short' as const },
+  { id: 'triple-bottom', name: 'Triple Bottom', direction: 'long' as const },
+];
+
+type Platform = 'pine' | 'mql4' | 'mql5';
+
+const PLATFORMS: { value: Platform; label: string }[] = [
+  { value: 'pine', label: 'TradingView (Pine Script v5)' },
+  { value: 'mql4', label: 'MetaTrader 4 (MQL4)' },
+  { value: 'mql5', label: 'MetaTrader 5 (MQL5)' },
+];
 
 const MemberScripts = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { canDownload } = useUserProfile();
+  
+  // URL params from Pattern Lab / Screener
   const patternParam = searchParams.get('pattern');
   const symbolParam = searchParams.get('symbol');
+  const timeframeParam = searchParams.get('timeframe');
   
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("all");
-  const [selectedStrategy, setSelectedStrategy] = useState("all");
-  const [previewScript, setPreviewScript] = useState<typeof scripts[0] | null>(null);
+  // Form state
+  const [selectedPattern, setSelectedPattern] = useState(patternParam || SUPPORTED_PATTERNS[0].id);
+  const [instrument, setInstrument] = useState(symbolParam || "");
+  const [timeframe, setTimeframe] = useState(timeframeParam || "1h");
+  const [platform, setPlatform] = useState<Platform>('pine');
+  const [scriptType, setScriptType] = useState<ScriptType>('strategy');
+  const [rrTarget, setRrTarget] = useState(2);
+  
+  // Generated code
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [copied, setCopied] = useState(false);
+  
+  // Context message when navigating from other pages
   const [contextMessage, setContextMessage] = useState<string | null>(null);
-  const { toast } = useToast();
   
-  // Apply pattern-based filtering when navigating from Screener/PatternLab
   useEffect(() => {
     if (patternParam) {
-      const mappedStrategy = PATTERN_TO_STRATEGY_MAP[patternParam];
-      if (mappedStrategy) {
-        setSelectedStrategy(mappedStrategy);
-        const patternName = patternParam.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        setContextMessage(`Showing scripts relevant to "${patternName}" pattern${symbolParam ? ` for ${symbolParam}` : ''}`);
+      const pattern = SUPPORTED_PATTERNS.find(p => p.id === patternParam);
+      if (pattern) {
+        setContextMessage(
+          `Generating script for "${pattern.name}"${symbolParam ? ` on ${symbolParam}` : ''}${timeframeParam ? ` (${timeframeParam})` : ''}`
+        );
       }
     }
-  }, [patternParam, symbolParam]);
+  }, [patternParam, symbolParam, timeframeParam]);
 
-  const scripts = [
-    {
-      id: 1,
-      name: "Moving Average Crossover",
-      description: "A classic trend-following strategy that generates signals when short-term and long-term moving averages cross. Works on any timeframe with built-in risk management, stop loss and take profit included.",
-      language: "Pine Script",
-      strategy: "Trend Following",
-      downloads: 2847,
-      rating: 4.9,
-      premium: false,
-      code: `//@version=5
-strategy("Moving Average Crossover", overlay=true)
-
-// Inputs
-fastLength = input.int(9, "Fast MA Length", minval=1)
-slowLength = input.int(21, "Slow MA Length", minval=1)
-riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
-
-// Calculate Moving Averages
-fastMA = ta.sma(close, fastLength)
-slowMA = ta.sma(close, slowLength)
-
-// Plot MAs
-plot(fastMA, "Fast MA", color=color.blue, linewidth=2)
-plot(slowMA, "Slow MA", color=color.red, linewidth=2)
-
-// Entry Conditions
-longCondition = ta.crossover(fastMA, slowMA)
-shortCondition = ta.crossunder(fastMA, slowMA)
-
-// Position Sizing
-accountSize = strategy.equity
-riskAmount = accountSize * (riskPercent / 100)
-stopLoss = ta.atr(14) * 2
-positionSize = riskAmount / stopLoss
-
-// Execute Trades
-if longCondition
-    strategy.entry("Long", strategy.long, qty=positionSize)
-    strategy.exit("Exit Long", "Long", stop=close - stopLoss, limit=close + stopLoss * 2)
-
-if shortCondition
-    strategy.entry("Short", strategy.short, qty=positionSize)
-    strategy.exit("Exit Short", "Short", stop=close + stopLoss, limit=close - stopLoss * 2)`
-    },
-    {
-      id: 2,
-      name: "RSI Overbought/Oversold",
-      description: "Identify potential reversal points using the Relative Strength Index indicator. Customizable RSI periods with alert system included, works on multiple markets.",
-      language: "Pine Script",
-      strategy: "Reversal",
-      downloads: 2134,
-      rating: 4.8,
-      premium: false,
-      code: `//@version=5
-strategy("RSI Overbought/Oversold", overlay=false)
-
-// Inputs
-rsiLength = input.int(14, "RSI Length", minval=1)
-rsiOverbought = input.int(70, "Overbought Level", minval=50, maxval=100)
-rsiOversold = input.int(30, "Oversold Level", minval=0, maxval=50)
-riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
-
-// Calculate RSI
-rsi = ta.rsi(close, rsiLength)
-
-// Plot RSI
-plot(rsi, "RSI", color=color.purple, linewidth=2)
-hline(rsiOverbought, "Overbought", color=color.red, linestyle=hline.style_dashed)
-hline(rsiOversold, "Oversold", color=color.green, linestyle=hline.style_dashed)
-hline(50, "Middle", color=color.gray, linestyle=hline.style_dotted)
-
-// Entry Conditions
-longCondition = ta.crossover(rsi, rsiOversold)
-shortCondition = ta.crossunder(rsi, rsiOverbought)
-
-// Risk Management
-stopLoss = ta.atr(14) * 1.5
-accountSize = strategy.equity
-riskAmount = accountSize * (riskPercent / 100)
-positionSize = riskAmount / stopLoss
-
-// Execute Trades
-if longCondition
-    strategy.entry("Long", strategy.long, qty=positionSize)
-    strategy.exit("Exit Long", "Long", stop=close - stopLoss, limit=close + stopLoss * 2)
-
-if shortCondition
-    strategy.entry("Short", strategy.short, qty=positionSize)
-    strategy.exit("Exit Short", "Short", stop=close + stopLoss, limit=close - stopLoss * 2)
-
-// Alerts
-alertcondition(longCondition, "RSI Buy Signal", "RSI crossed above oversold level")
-alertcondition(shortCondition, "RSI Sell Signal", "RSI crossed below overbought level")`
-    },
-    {
-      id: 3,
-      name: "Support & Resistance Breakout",
-      description: "Automatically identify and trade key support and resistance level breakouts. Features dynamic level detection, breakout confirmation, and position sizing calculator.",
-      language: "Pine Script",
-      strategy: "Breakout",
-      downloads: 1956,
-      rating: 4.7,
-      premium: false,
-      code: `//@version=5
-strategy("Support & Resistance Breakout", overlay=true)
-
-// Inputs
-lookbackPeriod = input.int(20, "Lookback Period", minval=5)
-breakoutConfirmation = input.int(2, "Confirmation Candles", minval=1)
-riskPercent = input.float(2.0, "Risk %", minval=0.1, maxval=100)
-
-// Calculate Support and Resistance
-resistance = ta.highest(high, lookbackPeriod)
-support = ta.lowest(low, lookbackPeriod)
-
-// Plot Levels
-plot(resistance, "Resistance", color=color.red, linewidth=2, style=plot.style_stepline)
-plot(support, "Support", color=color.green, linewidth=2, style=plot.style_stepline)
-
-// Breakout Detection
-var int bullishCount = 0
-var int bearishCount = 0
-
-if close > resistance[1]
-    bullishCount := bullishCount + 1
-else
-    bullishCount := 0
-
-if close < support[1]
-    bearishCount := bearishCount + 1
-else
-    bearishCount := 0
-
-// Entry Conditions
-longCondition = bullishCount >= breakoutConfirmation
-shortCondition = bearishCount >= breakoutConfirmation
-
-// Position Sizing
-accountSize = strategy.equity
-stopDistance = ta.atr(14) * 2
-riskAmount = accountSize * (riskPercent / 100)
-positionSize = riskAmount / stopDistance
-
-// Execute Trades
-if longCondition
-    strategy.entry("Long", strategy.long, qty=positionSize)
-    strategy.exit("Exit Long", "Long", stop=support, limit=close + (close - support) * 2)
-
-if shortCondition
-    strategy.entry("Short", strategy.short, qty=positionSize)
-    strategy.exit("Exit Short", "Short", stop=resistance, limit=close - (resistance - close) * 2)`
-    },
-    {
-      id: 4,
-      name: "Golden Cross Strategy",
-      description: "Moving average crossover with RSI confirmation",
-      language: "Pine Script",
-      strategy: "Trend Following",
-      downloads: 1247,
-      rating: 4.8,
-      premium: false,
-      code: "// Golden Cross strategy code available after download"
-    },
-    {
-      id: 5,
-      name: "Bollinger Band Squeeze",
-      description: "Volatility breakout strategy with volume confirmation",
-      language: "Python",
-      strategy: "Breakout",
-      downloads: 892,
-      rating: 4.6,
-      premium: true,
-      code: "# Bollinger Band Squeeze Python code available for Premium members"
-    },
-    {
-      id: 6,
-      name: "RSI Divergence Detector",
-      description: "Automatic divergence detection and alert system",
-      language: "MQL5",
-      strategy: "Reversal",
-      downloads: 634,
-      rating: 4.9,
-      premium: true,
-      code: "// RSI Divergence MQL5 code available for Premium members"
-    }
-  ];
-
-  const filteredScripts = scripts.filter(script => {
-    return (
-      script.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedLanguage === "all" || script.language === selectedLanguage) &&
-      (selectedStrategy === "all" || script.strategy === selectedStrategy)
-    );
-  });
-
-  const handleDownload = (script: typeof scripts[0]) => {
-    // Analytics event
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'script_downloaded', {
-        event_category: 'Members',
-        event_label: script.name,
-        value: script.id
+  const handleGenerate = () => {
+    const pattern = SUPPORTED_PATTERNS.find(p => p.id === selectedPattern);
+    if (!pattern) {
+      toast({
+        title: 'Pattern Required',
+        description: 'Please select a pattern to generate a script.',
+        variant: 'destructive',
       });
+      return;
     }
 
-    // Create download
-    const element = document.createElement('a');
-    const file = new Blob([script.code], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${script.name.replace(/\s+/g, '_')}.${script.language === 'Pine Script' ? 'pine' : script.language === 'Python' ? 'py' : 'mq5'}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const symbolToUse = instrument.trim() || 'BTCUSD';
+    
+    // Create export data with reasonable defaults
+    const exportData: PatternExportData = {
+      patternName: pattern.name,
+      patternId: pattern.id,
+      instrument: symbolToUse.toUpperCase(),
+      timeframe,
+      direction: pattern.direction,
+      entryPrice: 100, // Placeholder - script uses market entry
+      stopLossPrice: pattern.direction === 'long' ? 98 : 102,
+      takeProfitPrice: pattern.direction === 'long' ? 100 + (2 * rrTarget) : 100 - (2 * rrTarget),
+      riskRewardRatio: rrTarget,
+      atrValue: 1,
+      detectedAt: new Date().toISOString(),
+      qualityScore: 'A',
+    };
 
+    let code = '';
+    switch (platform) {
+      case 'pine':
+        code = generatePineScriptV5(exportData, scriptType);
+        break;
+      case 'mql4':
+        code = generateMQL4(exportData);
+        break;
+      case 'mql5':
+        code = generateMQL5(exportData);
+        break;
+    }
+    
+    setGeneratedCode(code);
     toast({
-      title: "Download Started",
-      description: `${script.name} has been downloaded successfully.`,
+      title: 'Script Generated',
+      description: `${pattern.name} script ready for ${PLATFORMS.find(p => p.value === platform)?.label}`,
     });
   };
 
-  const handlePreview = (script: typeof scripts[0]) => {
-    setPreviewScript(script);
+  const handleCopy = async () => {
+    if (!generatedCode) return;
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: 'Copied', description: 'Script copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy Failed', description: 'Unable to copy', variant: 'destructive' });
+    }
   };
 
-  const upgradeToElite = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to upgrade",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('admin-change-membership', {
-        body: {
-          user_id: user.id,
-          new_plan: 'elite',
-          reason: 'Dev upgrade to elite',
-          is_free_assignment: true
-        }
-      });
-
-      if (error) throw error;
-
+  const handleDownload = () => {
+    if (!canDownload()) {
       toast({
-        title: "Upgraded to Elite!",
-        description: "Your account has been upgraded to Elite membership",
+        title: 'Download Restricted',
+        description: 'File download requires Pro+ subscription. You can copy the code instead.',
+        variant: 'destructive',
       });
-
-      // Refresh the page to see changes
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upgrade membership",
-        variant: "destructive",
-      });
+      return;
     }
+
+    if (!generatedCode) return;
+
+    const pattern = SUPPORTED_PATTERNS.find(p => p.id === selectedPattern);
+    const ext = getScriptFileExtension(platform);
+    const filename = `${pattern?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'Pattern'}_${instrument || 'Script'}${ext}`;
+    
+    const blob = new Blob([generatedCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({ title: 'Downloaded', description: `${filename} saved` });
   };
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       <MemberNavigation />
-        
-        {/* Back Navigation */}
-        <div className="mb-6">
-          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Link>
-        </div>
+      
+      {/* Back Navigation */}
+      <div className="mb-6">
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
 
-        {/* Context Message - shows when navigating from Screener/PatternLab */}
-        {contextMessage && (
-          <Alert className="mb-6 border-primary/30 bg-primary/5">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{contextMessage}</span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setContextMessage(null);
-                  setSelectedStrategy("all");
-                }}
-              >
-                Clear Filter
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Context Message */}
+      {contextMessage && (
+        <Alert className="mb-6 border-primary/30 bg-primary/5">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{contextMessage}</span>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                setContextMessage(null);
+                setSelectedPattern(SUPPORTED_PATTERNS[0].id);
+                setInstrument("");
+              }}
+            >
+              Clear
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-cyan-500/10">
-              <FileCode className="h-6 w-6 text-cyan-500" />
-            </div>
-            <h1 className="text-3xl font-bold">
-              Scripts
-            </h1>
-            <Lock className="h-5 w-5 text-primary" />
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="p-3 rounded-xl bg-cyan-500/10">
+            <FileCode className="h-6 w-6 text-cyan-500" />
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Access your complete collection of ready-to-use trading scripts. Download, customize, and deploy instantly.
-          </p>
+          <h1 className="text-3xl font-bold">Pattern Scripts</h1>
         </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Generate executable trading scripts for chart patterns you've validated in Pattern Lab
+        </p>
+      </div>
 
-        {/* Filters */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Search Scripts</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+      {/* CTA: Go to Pattern Lab */}
+      <Card className="mb-8 border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+        <CardContent className="py-5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FlaskConical className="h-5 w-5 text-primary" />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Language</label>
-                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Languages" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Languages</SelectItem>
-                    <SelectItem value="Pine Script">Pine Script</SelectItem>
-                    <SelectItem value="Python">Python</SelectItem>
-                    <SelectItem value="MQL5">MQL5</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Strategy Type</label>
-                <Select value={selectedStrategy} onValueChange={setSelectedStrategy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Strategies" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Strategies</SelectItem>
-                    <SelectItem value="Trend Following">Trend Following</SelectItem>
-                    <SelectItem value="Breakout">Breakout</SelectItem>
-                    <SelectItem value="Reversal">Reversal</SelectItem>
-                    <SelectItem value="Scalping">Scalping</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedLanguage("all");
-                    setSelectedStrategy("all");
-                  }}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Scripts Grid */}
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Available Scripts ({filteredScripts.length})</h2>
-            <div className="text-sm text-muted-foreground">
-              Total Downloads: {scripts.reduce((sum, script) => sum + script.downloads, 0)}
-            </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredScripts.map((script) => (
-              <Card key={script.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-lg">{script.name}</CardTitle>
-                      <div className="flex gap-2">
-                        <Badge variant="secondary">{script.language}</Badge>
-                        <Badge variant="outline">{script.strategy}</Badge>
-                        {script.premium && (
-                          <Badge className="bg-gradient-to-r from-primary to-accent text-white">
-                            Premium
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <CardDescription>{script.description}</CardDescription>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{script.downloads} downloads</span>
-                    <div className="flex items-center gap-1">
-                      <span>★ {script.rating}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button 
-                      className="flex-1"
-                      onClick={() => handleDownload(script)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button variant="outline" onClick={() => handlePreview(script)}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Access Notice */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-foreground">Member Access Required</h3>
-                <p className="text-muted-foreground">
-                  This script library is available to active subscribers. Your current plan provides access to {scripts.length} scripts 
-                  with unlimited downloads and updates.
+              <div>
+                <h3 className="font-semibold">Start with Pattern Lab</h3>
+                <p className="text-sm text-muted-foreground">
+                  Backtest patterns first, then export scripts with validated performance data
                 </p>
-                <div className="flex gap-2 mt-3">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/pricing">Upgrade Plan</Link>
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    View Account
-                  </Button>
-                </div>
               </div>
             </div>
+            <Button onClick={() => navigate('/projects/pattern-lab')} className="gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Open Pattern Lab
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Configuration Panel */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              Script Configuration
+            </CardTitle>
+            <CardDescription>
+              Configure your pattern-based trading script
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Pattern Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Pattern</label>
+              <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select pattern..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_PATTERNS.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        {p.name}
+                        <Badge variant="outline" className={p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
+                          {p.direction}
+                        </Badge>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Instrument */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Instrument (optional)</label>
+              <Input
+                placeholder="e.g., BTCUSD, AAPL, EURUSD"
+                value={instrument}
+                onChange={(e) => setInstrument(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Script uses market entry at deployment</p>
+            </div>
+
+            {/* Timeframe */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Timeframe</label>
+              <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 Minute</SelectItem>
+                  <SelectItem value="5m">5 Minutes</SelectItem>
+                  <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="4h">4 Hours</SelectItem>
+                  <SelectItem value="1d">Daily</SelectItem>
+                  <SelectItem value="1w">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Platform */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Platform</label>
+              <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORMS.map(p => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Script Type (Pine only) */}
+            {platform === 'pine' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Script Type</label>
+                <Select value={scriptType} onValueChange={(v) => setScriptType(v as ScriptType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="strategy">Strategy (backtestable)</SelectItem>
+                    <SelectItem value="indicator">Indicator (visual only)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* R:R Target */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">R:R Target</label>
+              <Select value={rrTarget.toString()} onValueChange={(v) => setRrTarget(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">1:2</SelectItem>
+                  <SelectItem value="3">1:3</SelectItem>
+                  <SelectItem value="4">1:4</SelectItem>
+                  <SelectItem value="5">1:5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Execution Notes */}
+            <div className="p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">Execution Contract:</p>
+              <p>• Entry at current market price</p>
+              <p>• SL/TP maintain {rrTarget}:1 R:R ratio</p>
+              <p>• 100-bar time stop included</p>
+            </div>
+
+            <Button onClick={handleGenerate} className="w-full gap-2">
+              <Zap className="h-4 w-4" />
+              Generate Script
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Platform Import Guide */}
-        <PlatformImportGuide />
+        {/* Output Panel */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="h-5 w-5" />
+                  Generated Script
+                </CardTitle>
+                <CardDescription>
+                  {generatedCode 
+                    ? `${SUPPORTED_PATTERNS.find(p => p.id === selectedPattern)?.name} - ${PLATFORMS.find(p => p.value === platform)?.label}`
+                    : "Configure and generate your script"
+                  }
+                </CardDescription>
+              </div>
+              {generatedCode && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCopy}>
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownload}
+                    disabled={!canDownload()}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                    {!canDownload() && <Lock className="h-3 w-3 ml-1" />}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {generatedCode ? (
+              <Textarea
+                value={generatedCode}
+                readOnly
+                className="min-h-[500px] font-mono text-sm bg-muted/30"
+              />
+            ) : (
+              <div className="min-h-[500px] flex items-center justify-center bg-muted/30 rounded-md border border-dashed border-muted-foreground/25">
+                <div className="text-center space-y-3">
+                  <Code className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <p className="text-muted-foreground">Select a pattern and click "Generate Script"</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Preview Dialog */}
-      <Dialog open={!!previewScript} onOpenChange={() => setPreviewScript(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Code className="h-5 w-5" />
-              {previewScript?.name}
-            </DialogTitle>
-            <DialogDescription>
-              {previewScript?.description}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Badge variant="secondary">{previewScript?.language}</Badge>
-              <Badge variant="outline">{previewScript?.strategy}</Badge>
-            </div>
-            
-            <div className="bg-muted rounded-lg p-4">
-              <pre className="text-sm overflow-x-auto">
-                <code>{previewScript?.code}</code>
-              </pre>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button onClick={() => previewScript && handleDownload(previewScript)} className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                Download Script
-              </Button>
-              <Button variant="outline" onClick={() => setPreviewScript(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Platform Import Guide */}
+      <div className="mt-8">
+        <PlatformImportGuide />
+      </div>
+
+      {/* Disclaimer */}
+      <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+        <p className="text-sm text-muted-foreground text-center">
+          <strong>Disclaimer:</strong> Scripts are for educational purposes only and do not constitute financial advice. 
+          Trading involves risk. Always test thoroughly in demo accounts before live trading.
+        </p>
+      </div>
     </div>
   );
 };

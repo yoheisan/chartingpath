@@ -28,6 +28,7 @@ import {
   Zap,
   Star,
   Bell,
+  Code,
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
@@ -47,6 +48,7 @@ import { ExitComparisonTable, type ExitStrategyStats } from './ExitComparisonTab
 import ExitEquityOverlay, { type ExitEquitySeries } from './ExitEquityOverlay';
 import BenchmarkSelector from './BenchmarkSelector';
 import { BacktestAlertDialog } from './BacktestAlertDialog';
+import { BacktestScriptDialog } from './BacktestScriptDialog';
 
 interface BenchmarkData {
   symbol: string;
@@ -152,12 +154,13 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
     setBenchmarks(newBenchmarks);
   }, []);
 
-  // Extract data for alert dialog
+  // Extract data for alert/script dialogs
   const alertInstruments = useMemo(() => 
     [...new Set(artifact.trades.map(t => t.instrument))],
     [artifact.trades]
@@ -165,6 +168,26 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const alertPatterns = useMemo(() => 
     artifact.patterns.map(p => ({ patternId: p.patternId, patternName: p.patternName })),
     [artifact.patterns]
+  );
+  // Script dialog needs direction info
+  const scriptPatterns = useMemo(() => 
+    artifact.patterns.map(p => ({ 
+      patternId: p.patternId, 
+      patternName: p.patternName,
+      direction: p.direction 
+    })),
+    [artifact.patterns]
+  );
+  // Trade data for script generation
+  const scriptTrades = useMemo(() => 
+    artifact.trades.map(t => ({
+      instrument: t.instrument,
+      entryPrice: t.entryPrice,
+      stopLossPrice: t.entryPrice * (t.direction === 'long' ? 0.98 : 1.02), // Approximate if not stored
+      takeProfitPrice: t.exitPrice,
+      atrValue: Math.abs(t.entryPrice - t.exitPrice) / 2, // Approximate
+    })),
+    [artifact.trades]
   );
 
   const formatPercent = (value: number | undefined | null) => 
@@ -509,36 +532,47 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             />
           )}
 
-          {/* Set Alert CTA - Journey Stage Handoff */}
+          {/* Automation CTAs - Journey Stage Handoff */}
           {artifact.patterns.length > 0 && (() => {
             // Extract unique instruments from trades
             const instruments = [...new Set(artifact.trades.map(t => t.instrument))];
             const patternNames = artifact.patterns.map(p => p.patternName);
-            const totalAlerts = instruments.length * artifact.patterns.length;
             
             return (
-              <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5">
+              <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
                 <CardContent className="py-5">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-emerald-500/10">
-                        <Bell className="h-5 w-5 text-emerald-500" />
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Zap className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">Like these results?</h3>
+                        <h3 className="font-semibold">Ready to Automate?</h3>
                         <p className="text-sm text-muted-foreground">
-                          Set up {totalAlerts > 1 ? `${totalAlerts} alerts` : 'an alert'} to get notified when {patternNames.length === 1 ? patternNames[0] : `these ${patternNames.length} patterns`} {patternNames.length === 1 ? 'forms' : 'form'} on {instruments.length === 1 ? instruments[0] : `${instruments.length} instruments`}
+                          Set alerts or export scripts for {patternNames.length === 1 ? patternNames[0] : `${patternNames.length} patterns`} on {instruments.length === 1 ? instruments[0] : `${instruments.length} instruments`}
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      onClick={() => setAlertDialogOpen(true)}
-                      className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <Bell className="h-4 w-4" />
-                      Set Alert
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button 
+                        onClick={() => setAlertDialogOpen(true)}
+                        variant="outline"
+                        className="gap-2 flex-1 border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                      >
+                        <Bell className="h-4 w-4 text-emerald-500" />
+                        Set Alert
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        onClick={() => setScriptDialogOpen(true)}
+                        className="gap-2 flex-1"
+                      >
+                        <Code className="h-4 w-4" />
+                        Generate Script
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1137,6 +1171,18 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         instruments={alertInstruments}
         patterns={alertPatterns}
         timeframe={artifact.timeframe}
+      />
+      
+      {/* Script Generation Dialog */}
+      <BacktestScriptDialog
+        open={scriptDialogOpen}
+        onOpenChange={setScriptDialogOpen}
+        instruments={alertInstruments}
+        patterns={scriptPatterns}
+        timeframe={artifact.timeframe}
+        trades={scriptTrades}
+        rrTarget={selectedRRTier}
+        optimalExitStrategy={artifact.optimalExitStrategy}
       />
     </div>
   );
