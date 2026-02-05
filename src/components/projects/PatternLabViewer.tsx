@@ -498,37 +498,47 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
           )}
 
           {/* Set Alert CTA - Journey Stage Handoff */}
-          {artifact.patterns.length > 0 && (
-            <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5">
-              <CardContent className="py-5">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/10">
-                      <Bell className="h-5 w-5 text-emerald-500" />
+          {artifact.patterns.length > 0 && (() => {
+            // Extract unique instruments from trades
+            const instruments = [...new Set(artifact.trades.map(t => t.instrument))];
+            const patternIds = artifact.patterns.map(p => p.patternId);
+            const patternNames = artifact.patterns.map(p => p.patternName);
+            
+            return (
+              <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5">
+                <CardContent className="py-5">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-emerald-500/10">
+                        <Bell className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Like these results?</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Set up {instruments.length > 1 ? `${instruments.length} alerts` : 'an alert'} to get notified when {patternNames.length === 1 ? patternNames[0] : `these ${patternNames.length} patterns`} {patternNames.length === 1 ? 'forms' : 'form'} on {instruments.length === 1 ? instruments[0] : `${instruments.length} instruments`}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">Like these results?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Set up alerts to get notified when {artifact.patterns.length === 1 ? 'this pattern forms' : 'these patterns form'} in the future
-                      </p>
-                    </div>
+                    <Button 
+                      onClick={() => {
+                        // Pass full backtest context to alerts page
+                        const params = new URLSearchParams();
+                        params.set('patterns', patternIds.join(','));
+                        params.set('symbols', instruments.join(','));
+                        params.set('timeframe', artifact.timeframe);
+                        navigate(`/members/alerts?${params.toString()}`);
+                      }}
+                      className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      <Bell className="h-4 w-4" />
+                      Set {instruments.length > 1 ? `${instruments.length} Alerts` : 'Alert'}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button 
-                    onClick={() => {
-                      // Pass pattern context to alerts page
-                      const patternParam = artifact.patterns.map(p => p.patternId).join(',');
-                      navigate(`/members/alerts?patterns=${patternParam}&timeframe=${artifact.timeframe}`);
-                    }}
-                    className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    <Bell className="h-4 w-4" />
-                    Set Alert
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* Do Not Trade Rules */}
           {artifact.patterns.some(p => p.doNotTradeRules.length > 0) && (
