@@ -789,33 +789,64 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       // Merge equity data with benchmark data by date
                       if (benchmarks.length === 0) return effectiveEquity;
                       
-                      // Create a map of all dates to values
-                      const dateMap = new Map<string, any>();
+                      // Collect all unique dates from strategy + all benchmarks
+                      const allDates = new Set<string>();
                       
-                      // Add strategy equity
                       effectiveEquity.forEach(point => {
-                        const dateKey = point.date.split('T')[0];
-                        dateMap.set(dateKey, { 
-                          date: point.date, 
-                          strategy: point.value,
-                          drawdown: point.drawdown 
-                        });
+                        allDates.add(point.date.split('T')[0]);
                       });
                       
-                      // Add benchmark values
                       benchmarks.forEach(benchmark => {
                         benchmark.data.forEach(point => {
-                          const dateKey = point.date.split('T')[0];
-                          const existing = dateMap.get(dateKey);
-                          if (existing) {
-                            existing[benchmark.symbol] = point.value;
-                          }
+                          allDates.add(point.date.split('T')[0]);
                         });
                       });
                       
-                      // Convert back to array and sort
-                      return Array.from(dateMap.values())
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                      // Sort dates chronologically
+                      const sortedDates = Array.from(allDates).sort();
+                      
+                      // Create lookup maps for each data source
+                      const strategyMap = new Map<string, { value: number; drawdown?: number }>();
+                      effectiveEquity.forEach(point => {
+                        strategyMap.set(point.date.split('T')[0], { value: point.value, drawdown: point.drawdown });
+                      });
+                      
+                      const benchmarkMaps = benchmarks.map(b => {
+                        const map = new Map<string, number>();
+                        b.data.forEach(point => map.set(point.date.split('T')[0], point.value));
+                        return { symbol: b.symbol, map };
+                      });
+                      
+                      // Forward-fill interpolation to create continuous curves
+                      let lastStrategy: { value: number; drawdown: number } = { value: 10000, drawdown: 0 };
+                      const lastBenchmark: Record<string, number> = {};
+                      benchmarks.forEach(b => { lastBenchmark[b.symbol] = 10000; });
+                      
+                      return sortedDates.map(dateKey => {
+                        // Get or forward-fill strategy value
+                        const strategyPoint = strategyMap.get(dateKey);
+                        if (strategyPoint) {
+                          lastStrategy = { value: strategyPoint.value, drawdown: strategyPoint.drawdown ?? 0 };
+                        }
+                        
+                        // Build the data point
+                        const point: Record<string, any> = {
+                          date: dateKey,
+                          strategy: lastStrategy.value,
+                          drawdown: lastStrategy.drawdown,
+                        };
+                        
+                        // Get or forward-fill each benchmark value
+                        benchmarkMaps.forEach(({ symbol, map }) => {
+                          const val = map.get(dateKey);
+                          if (val !== undefined) {
+                            lastBenchmark[symbol] = val;
+                          }
+                          point[symbol] = lastBenchmark[symbol];
+                        });
+                        
+                        return point;
+                      });
                     })()}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
