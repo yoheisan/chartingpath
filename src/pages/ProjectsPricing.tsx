@@ -272,15 +272,7 @@ const ProjectsPricing = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-xs">PREMIUM</Badge>
-                </div>
-                <p className="font-semibold text-foreground mb-1">15-Minute Charts</p>
-                <p className="text-sm text-muted-foreground mb-2">Top 300 instruments</p>
-                <p className="text-xs text-emerald-600 font-medium">Refreshed every 15 minutes</p>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className="bg-blue-500/20 text-blue-600 border-blue-500/30 text-xs">CORE</Badge>
@@ -308,26 +300,25 @@ const ProjectsPricing = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h4 className="font-semibold text-foreground mb-2">Why is 15-minute data only available for 300 instruments?</h4>
+              <h4 className="font-semibold text-foreground mb-2">What timeframes are supported?</h4>
               <p className="text-sm text-muted-foreground">
-                Real-time 15-minute scanning for 8,500+ instruments would require 800,000+ API calls daily, exceeding our data provider limits. 
-                We prioritize the top 300 most-traded stocks, ETFs, crypto, and forex pairs for live 15m pattern detection. 
-                For the full universe, 15m historical data is backfilled daily for research purposes.
+                Pattern Lab and the screener support 1H, 4H, Daily, and Weekly timeframes for pattern detection and backtesting. 
+                The 15m timeframe is available for chart viewing (Study pages) on Lite+ plans, but not for automated scanning.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-foreground mb-2">How fresh is the pattern data?</h4>
               <p className="text-sm text-muted-foreground">
-                <strong>Premium 300:</strong> 15m, 1H, 4H patterns refresh every 15 minutes.<br/>
                 <strong>Core 1,100:</strong> 1H patterns refresh hourly; 4H/Daily every 4 hours.<br/>
                 <strong>Full 8,500+:</strong> 4H, Daily, and Weekly patterns refresh every 4 hours.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-2">Can I request a specific instrument for premium 15m scanning?</h4>
+              <h4 className="font-semibold text-foreground mb-2">What is Pattern Lab?</h4>
               <p className="text-sm text-muted-foreground">
-                The premium 300 list is curated based on trading volume and liquidity. Team plan users can request custom instruments 
-                to be added to the premium scanning tier. Contact us at team@chartingpath.com.
+                Pattern Lab is our research engine for backtesting chart patterns across historical data. 
+                Select instruments, patterns, and timeframes to see Win Rate, Expectancy, and trade-by-trade results 
+                with visual proof charts. Use it to validate strategies before setting alerts.
               </p>
             </div>
             <div>
