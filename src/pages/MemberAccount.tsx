@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import MemberNavigation from "@/components/MemberNavigation";
 import LearningProgress from "@/components/LearningProgress";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
-import { User, CreditCard, Settings, Shield, Mail, Bell, Crown, Star, Zap, ArrowLeft, KeyRound } from "lucide-react";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { User, Settings, Shield, Crown, Star, KeyRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -265,23 +263,7 @@ const MemberAccount = () => {
           </TabsContent>
 
           <TabsContent value="preferences">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Preferences
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <div className="text-sm text-muted-foreground">Receive alerts and updates</div>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
+            <NotificationSettings userId={profile?.id} />
           </TabsContent>
         </Tabs>
       </div>
