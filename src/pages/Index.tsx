@@ -3,12 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, ArrowRight, TrendingUp, Bell, Shield, Activity,
-  Search, FlaskConical, Code, BookOpen, Zap
+  Search, FlaskConical, Code, BookOpen
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
-import { wedgeConfig, featuredPresets, WEDGE_PATTERN_ID_MAP } from '@/config/wedge';
 import { track } from '@/services/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
@@ -53,11 +52,6 @@ const Index = () => {
     } else {
       navigate('/auth?redirect=/members/alerts');
     }
-  };
-
-  const handlePresetsClick = () => {
-    track('pricing_clicked', { source: 'landing_presets_view_all' });
-    navigate('/strategy-workspace');
   };
 
   // Activity cards configuration
@@ -220,54 +214,6 @@ const Index = () => {
 
       {/* How It Works */}
       <HowItWorks />
-
-      {/* Featured Presets Section */}
-      {wedgeConfig.wedgeEnabled && (
-        <section className="py-16 px-6">
-          <div className="container mx-auto max-w-5xl">
-            <div className="text-center mb-10">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Badge variant="secondary" className="px-3 py-1">
-                  <Zap className="h-3.5 w-3.5 mr-1.5" />
-                  Daily Timeframe • All Markets
-                </Badge>
-              </div>
-              <h2 className="text-3xl font-bold mb-3">Quick Start Presets</h2>
-              <p className="text-muted-foreground">Pre-configured playbooks to research and validate</p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {featuredPresets.slice(0, 10).map((preset, idx) => (
-                <Card 
-                  key={idx} 
-                  className="hover:border-primary/50 transition-colors cursor-pointer group"
-                  onClick={() => navigate('/strategy-workspace')}
-                >
-                  <CardContent className="p-4 text-center">
-                    <div className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {preset.symbol}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {WEDGE_PATTERN_ID_MAP[preset.patternId] || preset.patternId}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            
-            <div className="text-center mt-8">
-              <Button variant="outline" onClick={handlePresetsClick}>
-                Research in Workspace
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-            
-            <p className="text-center text-xs text-muted-foreground mt-4">
-              Presets are starter configurations—always validate with historical data.
-            </p>
-          </div>
-        </section>
-      )}
 
       {/* Pricing Teaser */}
       <PricingTeaser />
