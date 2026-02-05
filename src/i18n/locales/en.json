@@ -4,7 +4,7 @@
     "headline2": "ChartingPath shows when they've held up.",
     "subtitle": "Scan markets for pattern setups. Get repeatable trade plans with Entry, SL, TP.",
     "subtext": "Historical backtests + alerts. Built for crypto swing traders.",
-    "cta": "Run Setup Finder",
+    "cta": "Open Screener",
     "ctaSecondary": "Create Free Alert",
     "free_text": "$0 forever, no credit card needed",
     "disclaimer": "Past performance does not guarantee future results. Educational use only."
@@ -68,8 +68,8 @@
       "creditsExplained": "Credits scale with symbols × history × patterns × timeframe",
       "estimatedBefore": "Credits are estimated before you run.",
       "examples": {
-        "setupFinder50": "Setup Finder (50 symbols, 4H, 2y, 6 patterns) ≈ 17 credits",
-        "patternLab10": "Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits"
+        "screener": "Screener: Unlimited scans across 1,100+ instruments (free)",
+        "patternLab": "Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits"
       },
       "bestFor": {
         "free": "Exploring the platform",

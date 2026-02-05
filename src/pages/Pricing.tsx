@@ -84,7 +84,7 @@ const Pricing = () => {
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "6 classic chart patterns (Double Top/Bottom, H&S, Triangles)",
         "3 active pattern alerts",
-        "50 credits/month for Setup Finder research",
+        "50 credits/month for Pattern Lab research",
         "Demo-only backtesting (prebuilt examples)",
         "Basic pattern recognition learning guides"
       ],
@@ -104,7 +104,7 @@ const Pricing = () => {
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "8 chart patterns (incl. Channels, Flags)",
         "5 active pattern alerts",
-        "100 credits/month for Setup Finder & Pattern Lab",
+        "100 credits/month for Pattern Lab research",
         "Basic backtesting: up to 2 years of historical data",
         "Email support"
       ],

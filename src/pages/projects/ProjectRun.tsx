@@ -348,7 +348,7 @@ const ProjectRun = () => {
                 <p className="text-muted-foreground mb-4">
                   No patterns were detected in the selected universe and timeframe.
                 </p>
-                <Button onClick={() => navigate('/projects/setup-finder/new')}>
+                <Button onClick={() => navigate('/projects/pattern-lab/new')}>
                   Try Different Parameters
                 </Button>
               </div>
