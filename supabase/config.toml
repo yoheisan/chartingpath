@@ -176,3 +176,6 @@ verify_jwt = false
 
 [functions.recalculate-pattern-stats]
 verify_jwt = false
+
+[functions.fetch-market-breadth]
+verify_jwt = false
