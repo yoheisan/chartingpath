@@ -681,38 +681,6 @@ const FAQ = () => {
           category: "Advanced Tools",
           questions: [
             {
-              question: "What is the MultiScript Converter (Forge)?",
-              answer: (
-                <div className="space-y-4">
-                  <p>The Forge is our advanced code conversion tool that translates strategies between different trading platforms while preserving logic and functionality.</p>
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-3">Supported Conversions</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <strong>From Pine Script:</strong>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          • To MQL4/MQL5 (MetaTrader)<br/>
-                          • To cTrader (C#)<br/>
-                          • To NinjaTrader (C#)
-                        </div>
-                      </div>
-                      <div>
-                        <strong>From MQL4/MQL5:</strong>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          • To Pine Script<br/>
-                          • To cTrader<br/>
-                          • Cross-version conversion
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-muted/50 border border-border p-3 rounded-lg">
-                    <p className="text-sm text-muted-foreground"><strong className="text-foreground">Pro Feature:</strong> Available for Pro+ and Elite subscribers. Maintains complex logic, custom functions, and optimization parameters.</p>
-                  </div>
-                </div>
-              )
-            },
-            {
               question: "What is the Strategy Workspace?",
               answer: (
                 <div className="space-y-4">
@@ -1264,7 +1232,7 @@ const FAQ = () => {
                       <div className="p-4 space-y-2 text-sm">
                         <div>• 50 AI strategy generations per day</div>
                         <div>• All platform exports (Pine, MQL4/5, cTrader, NT)</div>
-                        <div>• MultiScript Converter (Forge) access</div>
+                        <div>• Pattern-based script exports with optimized exits</div>
                         <div>• Advanced strategy optimization</div>
                         <div>• Priority email support</div>
                         <div>• White-label options available</div>

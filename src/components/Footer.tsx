@@ -70,9 +70,6 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">More</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/forge" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  MultiScript Converter
-                </Link>
                 <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pip Calculator
                 </Link>
@@ -132,9 +129,6 @@ const Footer = () => {
             <nav className="flex flex-col gap-2">
               <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Strategy Workspace
-              </Link>
-              <Link to="/forge" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                MultiScript Converter
               </Link>
               <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pipCalculator', 'Pip Calculator')}
