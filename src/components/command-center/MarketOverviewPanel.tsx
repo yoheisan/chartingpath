@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
+import { useMarketDataCache } from '@/hooks/useMarketDataCache';
 
 interface BreadthData {
   advances: number;
@@ -35,6 +35,11 @@ interface BreadthMeta {
   sentiment: 'bullish' | 'neutral-bullish' | 'neutral-bearish' | 'bearish';
 }
 
+interface BreadthResponse {
+  data: BreadthData;
+  meta: BreadthMeta;
+}
+
 interface MarketOverviewPanelProps {
   onSymbolSelect: (symbol: string) => void;
   defaultTab?: string;
@@ -47,6 +52,12 @@ interface MarketMover {
   price: number;
   change: number;
   changePercent: number;
+}
+
+interface MarketDataResponse {
+  indicesData: Record<string, { price: number; change: number }>;
+  topGainers: MarketMover[];
+  topLosers: MarketMover[];
 }
 
 // Major indices and market benchmarks
@@ -63,193 +74,192 @@ const MARKET_INDICES = [
   { symbol: 'DX-Y.NYB', name: 'US Dollar Index' },
 ];
 
+// Fetch breadth data from edge function
+async function fetchBreadthDataFn(): Promise<BreadthResponse | null> {
+  const { data, error } = await supabase.functions.invoke('fetch-market-breadth');
+  
+  if (error) {
+    console.error('[MarketOverviewPanel] Breadth fetch error:', error);
+    return null;
+  }
+
+  if (data?.success) {
+    return { data: data.data, meta: data.meta };
+  }
+  return null;
+}
+
+// Fetch market data from database with fallback chain
+async function fetchMarketDataFn(): Promise<MarketDataResponse> {
+  const indicesSymbols = MARKET_INDICES.map((i) => i.symbol);
+  const indicesMap: Record<string, { price: number; change: number }> = {};
+  let topGainers: MarketMover[] = [];
+  let topLosers: MarketMover[] = [];
+
+  // Fetch from live_pattern_detections for price data
+  const { data: patterns, error } = await supabase
+    .from('live_pattern_detections')
+    .select('instrument, current_price, change_percent')
+    .eq('status', 'active')
+    .not('current_price', 'is', null)
+    .not('change_percent', 'is', null)
+    .order('change_percent', { ascending: false });
+
+  if (!error && patterns && patterns.length > 0) {
+    for (const p of patterns) {
+      if (indicesSymbols.includes(p.instrument) && !indicesMap[p.instrument]) {
+        indicesMap[p.instrument] = {
+          price: p.current_price || 0,
+          change: p.change_percent || 0,
+        };
+      }
+    }
+
+    // Top gainers (unique symbols)
+    const seen = new Set<string>();
+    topGainers = patterns
+      .filter((p) => {
+        if (seen.has(p.instrument) || (p.change_percent || 0) <= 0) return false;
+        seen.add(p.instrument);
+        return true;
+      })
+      .slice(0, 5)
+      .map((p) => ({
+        symbol: p.instrument,
+        name: p.instrument,
+        price: p.current_price || 0,
+        change: 0,
+        changePercent: p.change_percent || 0,
+      }));
+
+    // Top losers (unique symbols)
+    const seenLosers = new Set<string>();
+    const sortedLosers = [...patterns].sort((a, b) => (a.change_percent || 0) - (b.change_percent || 0));
+    topLosers = sortedLosers
+      .filter((p) => {
+        if (seenLosers.has(p.instrument) || (p.change_percent || 0) >= 0) return false;
+        seenLosers.add(p.instrument);
+        return true;
+      })
+      .slice(0, 5)
+      .map((p) => ({
+        symbol: p.instrument,
+        name: p.instrument,
+        price: p.current_price || 0,
+        change: 0,
+        changePercent: p.change_percent || 0,
+      }));
+  }
+
+  // For indices not in live_pattern_detections, fetch latest from historical_prices
+  let missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
+  if (missingIndices.length > 0) {
+    const { data: historicalData } = await supabase
+      .from('historical_prices')
+      .select('symbol, close, open')
+      .in('symbol', missingIndices)
+      .eq('timeframe', '1d')
+      .order('date', { ascending: false })
+      .limit(missingIndices.length * 3);
+
+    if (historicalData) {
+      for (const h of historicalData) {
+        if (!indicesMap[h.symbol]) {
+          const change = h.open > 0 ? ((h.close - h.open) / h.open) * 100 : 0;
+          indicesMap[h.symbol] = {
+            price: h.close,
+            change,
+          };
+        }
+      }
+    }
+
+    // If the DB has no rows, fall back to Yahoo Finance via edge function
+    missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
+    if (missingIndices.length > 0) {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - 10);
+
+      const startStr = startDate.toISOString().slice(0, 10);
+      const endStr = endDate.toISOString().slice(0, 10);
+
+      const results = await Promise.allSettled(
+        missingIndices.map((symbol) =>
+          supabase.functions.invoke('fetch-yahoo-finance', {
+            body: {
+              symbol,
+              startDate: startStr,
+              endDate: endStr,
+              interval: '1d',
+              includeOhlc: true,
+            },
+          })
+        )
+      );
+
+      results.forEach((res, idx) => {
+        const symbol = missingIndices[idx];
+        if (res.status !== 'fulfilled') return;
+
+        const { data, error } = res.value as any;
+        if (error) return;
+
+        const bars = (data as any)?.bars as Array<{ c: number }> | undefined;
+        if (!Array.isArray(bars) || bars.length < 1) return;
+
+        const last = bars[bars.length - 1];
+        const prev = bars.length >= 2 ? bars[bars.length - 2] : null;
+        const price = Number(last?.c);
+        const prevClose = prev ? Number(prev?.c) : NaN;
+        if (!Number.isFinite(price) || price === 0) return;
+
+        const changePct = Number.isFinite(prevClose) && prevClose !== 0
+          ? ((price - prevClose) / prevClose) * 100
+          : 0;
+
+        indicesMap[symbol] = {
+          price,
+          change: changePct,
+        };
+      });
+    }
+  }
+
+  return { indicesData: indicesMap, topGainers, topLosers };
+}
+
 export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', onTabChange }: MarketOverviewPanelProps) {
-  const [indicesData, setIndicesData] = useState<Record<string, { price: number; change: number }>>({});
-  const [topGainers, setTopGainers] = useState<MarketMover[]>([]);
-  const [topLosers, setTopLosers] = useState<MarketMover[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [breadthData, setBreadthData] = useState<BreadthData | null>(null);
-  const [breadthMeta, setBreadthMeta] = useState<BreadthMeta | null>(null);
-  const [breadthLoading, setBreadthLoading] = useState(false);
+  // Use caching for market data - shows cached immediately, refreshes in background if stale
+  const { 
+    data: marketData, 
+    loading: marketLoading, 
+    refresh: refreshMarket,
+  } = useMarketDataCache({
+    cacheKey: 'market-indices',
+    staleTime: 60_000, // 1 minute
+    maxAge: 300_000, // 5 minutes
+    fetchFn: fetchMarketDataFn,
+  });
 
-  useEffect(() => {
-    fetchMarketData();
-    fetchBreadthData();
-  }, []);
+  // Use caching for breadth data
+  const {
+    data: breadthResponse,
+    loading: breadthLoading,
+    refresh: refreshBreadth,
+  } = useMarketDataCache({
+    cacheKey: 'market-breadth',
+    staleTime: 60_000,
+    maxAge: 300_000,
+    fetchFn: fetchBreadthDataFn,
+  });
 
-  const fetchBreadthData = async () => {
-    setBreadthLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-market-breadth');
-      
-      if (error) {
-        console.error('[MarketOverviewPanel] Breadth fetch error:', error);
-        return;
-      }
-
-      if (data?.success) {
-        setBreadthData(data.data);
-        setBreadthMeta(data.meta);
-      }
-    } catch (err) {
-      console.error('[MarketOverviewPanel] Breadth fetch exception:', err);
-    } finally {
-      setBreadthLoading(false);
-    }
-  };
-
-  const fetchMarketData = async () => {
-    setLoading(true);
-    try {
-      // Fetch from live_pattern_detections for price data
-      const { data: patterns, error } = await supabase
-        .from('live_pattern_detections')
-        .select('instrument, current_price, change_percent')
-        .eq('status', 'active')
-        .not('current_price', 'is', null)
-        .not('change_percent', 'is', null)
-        .order('change_percent', { ascending: false });
-
-      if (error) throw error;
-
-      // Build indices data map from patterns that match our MARKET_INDICES
-      const indicesSymbols = MARKET_INDICES.map((i) => i.symbol);
-      const indicesMap: Record<string, { price: number; change: number }> = {};
-      
-      if (patterns && patterns.length > 0) {
-        for (const p of patterns) {
-          if (indicesSymbols.includes(p.instrument) && !indicesMap[p.instrument]) {
-            indicesMap[p.instrument] = {
-              price: p.current_price || 0,
-              change: p.change_percent || 0,
-            };
-          }
-        }
-      }
-
-      // For indices not in live_pattern_detections, fetch latest from historical_prices
-      let missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
-      if (missingIndices.length > 0) {
-        const { data: historicalData } = await supabase
-          .from('historical_prices')
-          .select('symbol, close, open')
-          .in('symbol', missingIndices)
-          .eq('timeframe', '1d')
-          .order('date', { ascending: false })
-          .limit(missingIndices.length * 3);
-
-        if (historicalData) {
-          // Get most recent price per symbol
-          for (const h of historicalData) {
-            if (!indicesMap[h.symbol]) {
-              const change = h.open > 0 ? ((h.close - h.open) / h.open) * 100 : 0;
-              indicesMap[h.symbol] = {
-                price: h.close,
-                change,
-              };
-            }
-          }
-        }
-
-        // If the DB has no rows (common for ^GSPC/^DJI/^IXIC in some environments),
-        // fall back to Yahoo Finance via edge function.
-        missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
-        if (missingIndices.length > 0) {
-          const endDate = new Date();
-          const startDate = new Date();
-          startDate.setDate(endDate.getDate() - 10);
-
-          const startStr = startDate.toISOString().slice(0, 10);
-          const endStr = endDate.toISOString().slice(0, 10);
-
-          const results = await Promise.allSettled(
-            missingIndices.map((symbol) =>
-              supabase.functions.invoke('fetch-yahoo-finance', {
-                body: {
-                  symbol,
-                  startDate: startStr,
-                  endDate: endStr,
-                  interval: '1d',
-                  includeOhlc: true,
-                },
-              })
-            )
-          );
-
-          results.forEach((res, idx) => {
-            const symbol = missingIndices[idx];
-            if (res.status !== 'fulfilled') return;
-
-            const { data, error } = res.value as any;
-            if (error) return;
-
-            const bars = (data as any)?.bars as Array<{ c: number }> | undefined;
-            if (!Array.isArray(bars) || bars.length < 1) return;
-
-            const last = bars[bars.length - 1];
-            const prev = bars.length >= 2 ? bars[bars.length - 2] : null;
-            const price = Number(last?.c);
-            const prevClose = prev ? Number(prev?.c) : NaN;
-            if (!Number.isFinite(price) || price === 0) return;
-
-            const changePct = Number.isFinite(prevClose) && prevClose !== 0
-              ? ((price - prevClose) / prevClose) * 100
-              : 0;
-
-            indicesMap[symbol] = {
-              price,
-              change: changePct,
-            };
-          });
-        }
-      }
-
-      setIndicesData(indicesMap);
-
-      // Top gainers (unique symbols)
-      if (patterns && patterns.length > 0) {
-        const seen = new Set<string>();
-        const gainers = patterns
-          .filter((p) => {
-            if (seen.has(p.instrument) || (p.change_percent || 0) <= 0) return false;
-            seen.add(p.instrument);
-            return true;
-          })
-          .slice(0, 5)
-          .map((p) => ({
-            symbol: p.instrument,
-            name: p.instrument,
-            price: p.current_price || 0,
-            change: 0,
-            changePercent: p.change_percent || 0,
-          }));
-        setTopGainers(gainers);
-
-        // Top losers (unique symbols)
-        const seenLosers = new Set<string>();
-        const sortedLosers = [...patterns].sort((a, b) => (a.change_percent || 0) - (b.change_percent || 0));
-        const losers = sortedLosers
-          .filter((p) => {
-            if (seenLosers.has(p.instrument) || (p.change_percent || 0) >= 0) return false;
-            seenLosers.add(p.instrument);
-            return true;
-          })
-          .slice(0, 5)
-          .map((p) => ({
-            symbol: p.instrument,
-            name: p.instrument,
-            price: p.current_price || 0,
-            change: 0,
-            changePercent: p.change_percent || 0,
-          }));
-        setTopLosers(losers);
-      }
-    } catch (err) {
-      console.error('[MarketOverviewPanel] fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const indicesData = marketData?.indicesData || {};
+  const topGainers = marketData?.topGainers || [];
+  const topLosers = marketData?.topLosers || [];
+  const breadthData = breadthResponse?.data || null;
+  const breadthMeta = breadthResponse?.meta || null;
+  const loading = marketLoading;
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -269,7 +279,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
           variant="ghost"
           size="icon"
           className="h-6 w-6"
-          onClick={fetchMarketData}
+          onClick={refreshMarket}
           disabled={loading}
         >
           <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
@@ -344,7 +354,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
         <TabsContent value="breadth" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-4">
-              {breadthLoading ? (
+              {breadthLoading && !breadthData ? (
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
@@ -447,7 +457,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       variant="ghost"
                       size="sm"
                       className="h-5 px-2 text-[10px]"
-                      onClick={fetchBreadthData}
+                      onClick={refreshBreadth}
                       disabled={breadthLoading}
                     >
                       <RefreshCw className={cn('h-3 w-3 mr-1', breadthLoading && 'animate-spin')} />
@@ -463,7 +473,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                     variant="outline"
                     size="sm"
                     className="mt-2 h-7 text-xs"
-                    onClick={fetchBreadthData}
+                    onClick={refreshBreadth}
                   >
                     Retry
                   </Button>
