@@ -9,12 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X } from "lucide-react";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserProfile {
   subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
@@ -46,7 +47,7 @@ const MemberAlerts = () => {
   // Form state
   const [symbol, setSymbol] = useState("");
   const [timeframe, setTimeframe] = useState(wedgeConfig.wedgeEnabled ? "1h" : "");
-  const [pattern, setPattern] = useState("");
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
 
   const patternOptions = [
     { value: 'donchian_breakout_long', label: 'Donchian Breakout (Long)' },
@@ -106,7 +107,8 @@ const MemberAlerts = () => {
           'DoubleTopBottom': 'double_top',
           'Triangle': 'ascending_triangle',
         };
-        setPattern(patternMap[playbookContext.pattern] || playbookContext.pattern.toLowerCase());
+        const mappedPattern = patternMap[playbookContext.pattern] || playbookContext.pattern.toLowerCase();
+        setSelectedPatterns([mappedPattern]);
       }
       if (playbookContext.timeframe) setTimeframe(playbookContext.timeframe);
     }
@@ -178,11 +180,23 @@ const MemberAlerts = () => {
     setAlerts(data || []);
   };
 
+  const togglePattern = (patternValue: string) => {
+    setSelectedPatterns(prev => 
+      prev.includes(patternValue)
+        ? prev.filter(p => p !== patternValue)
+        : [...prev, patternValue]
+    );
+  };
+
+  const clearPatterns = () => {
+    setSelectedPatterns([]);
+  };
+
   const createAlert = async () => {
-    if (!user || !symbol || !timeframe || !pattern) {
+    if (!user || !symbol || !timeframe || selectedPatterns.length === 0) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields",
+        description: "Please fill in all fields and select at least one pattern",
         variant: "destructive",
       });
       return;
@@ -193,10 +207,9 @@ const MemberAlerts = () => {
       const response = await supabase.functions.invoke('create-alert', {
         body: {
           symbol: symbol.toUpperCase(),
-          pattern,
+          patterns: selectedPatterns,
           timeframe,
-          action: 'create',
-          wedgeEnabled: wedgeConfig.wedgeEnabled
+          action: 'create'
         }
       });
 
@@ -221,22 +234,26 @@ const MemberAlerts = () => {
 
       if (!result.success) throw new Error(result.error || 'Failed to create alert');
 
-      trackAlertCreated({
-        symbol: symbol.toUpperCase(),
-        pattern,
-        timeframe,
-        plan_tier: profile?.subscription_plan || 'free'
+      // Track each pattern created
+      selectedPatterns.forEach(p => {
+        trackAlertCreated({
+          symbol: symbol.toUpperCase(),
+          pattern: p,
+          timeframe,
+          plan_tier: profile?.subscription_plan || 'free'
+        });
       });
 
+      const alertCount = result.alerts?.length || selectedPatterns.length;
       toast({
-        title: "Alert Created",
-        description: `Alert for ${symbol.toUpperCase()} ${pattern} pattern created successfully`,
+        title: alertCount > 1 ? "Alerts Created" : "Alert Created",
+        description: `${alertCount} alert${alertCount > 1 ? 's' : ''} for ${symbol.toUpperCase()} created successfully`,
       });
 
       clearPlaybookContext();
       setSymbol("");
       setTimeframe(wedgeConfig.wedgeEnabled ? "1h" : "");
-      setPattern("");
+      setSelectedPatterns([]);
 
       await fetchAlerts(user.id);
     } catch (error: any) {
@@ -512,19 +529,46 @@ const MemberAlerts = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pattern">Chart Pattern</Label>
-              <Select value={pattern} onValueChange={setPattern}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pattern" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patternOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+              <div className="flex items-center justify-between">
+                <Label>Chart Patterns</Label>
+                {selectedPatterns.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={clearPatterns}
+                  >
+                    Clear ({selectedPatterns.length})
+                    <X className="h-3 w-3 ml-1" />
+                  </Button>
+                )}
+              </div>
+              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                {patternOptions.map((option) => (
+                  <div 
+                    key={option.value} 
+                    className="flex items-center space-x-2 py-1"
+                  >
+                    <Checkbox
+                      id={option.value}
+                      checked={selectedPatterns.includes(option.value)}
+                      onCheckedChange={() => togglePattern(option.value)}
+                    />
+                    <label
+                      htmlFor={option.value}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                    >
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {selectedPatterns.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedPatterns.length} pattern{selectedPatterns.length > 1 ? 's' : ''} selected
+                  {planLimits.max !== 999999 && ` (${Math.max(0, planLimits.max - activeAlerts.length)} slots remaining)`}
+                </p>
+              )}
             </div>
 
             {!canCreateMore ? (
@@ -546,7 +590,7 @@ const MemberAlerts = () => {
             ) : (
               <Button 
                 onClick={createAlert} 
-                disabled={creating}
+                disabled={creating || selectedPatterns.length === 0}
                 className="w-full"
               >
                 {creating ? (
@@ -557,7 +601,7 @@ const MemberAlerts = () => {
                 ) : (
                   <>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Alert
+                    Create {selectedPatterns.length > 1 ? `${selectedPatterns.length} Alerts` : 'Alert'}
                   </>
                 )}
               </Button>

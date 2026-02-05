@@ -48,43 +48,10 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { symbol, pattern, timeframe, status = 'active', action = 'create', wedgeEnabled = false } = body;
-
-    // Wedge enforcement: when wedgeEnabled, only allow crypto + 1H alerts
-    if (wedgeEnabled) {
-      const timeframeLower = (timeframe || '').toLowerCase();
-      const isValidTimeframe = timeframeLower === '1h' || timeframeLower === '1hour';
-      
-      // Check if symbol is a crypto symbol (ends in USDT, USD, or common crypto)
-      const symbolUpper = (symbol || '').toUpperCase();
-      const cryptoSuffixes = ['USDT', 'USD', 'BUSD', 'USDC'];
-      const isCryptoSymbol = cryptoSuffixes.some(s => symbolUpper.endsWith(s)) ||
-        ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOGE', 'LINK', 'MATIC'].includes(symbolUpper);
-      
-      if (!isValidTimeframe) {
-        console.log(`Wedge violation: non-1H timeframe ${timeframe} rejected`);
-        return new Response(
-          JSON.stringify({
-            error: 'In wedge mode, only 1H timeframe is allowed',
-            code: 'WEDGE_TIMEFRAME_VIOLATION',
-            received: timeframe
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (!isCryptoSymbol) {
-        console.log(`Wedge violation: non-crypto symbol ${symbol} rejected`);
-        return new Response(
-          JSON.stringify({
-            error: 'In wedge mode, only crypto symbols are allowed',
-            code: 'WEDGE_SYMBOL_VIOLATION',
-            received: symbol
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
+    const { symbol, pattern, patterns, timeframe, status = 'active', action = 'create' } = body;
+    
+    // Support both single pattern and multiple patterns
+    const patternList: string[] = patterns || (pattern ? [pattern] : []);
 
     // Get user's subscription plan
     const { data: profile, error: profileError } = await supabase
@@ -136,25 +103,44 @@ serve(async (req) => {
 
     if (action === 'create') {
       // Validate required fields
-      if (!symbol || !pattern || !timeframe) {
+      if (!symbol || patternList.length === 0 || !timeframe) {
         return new Response(
-          JSON.stringify({ error: 'Missing required fields: symbol, pattern, timeframe', code: 'VALIDATION_ERROR' }),
+          JSON.stringify({ error: 'Missing required fields: symbol, pattern(s), timeframe', code: 'VALIDATION_ERROR' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      
+      // Check if creating multiple alerts would exceed limit
+      const alertsToCreate = patternList.length;
+      if (currentCount + alertsToCreate > maxAlerts) {
+        console.log(`Alert limit would be exceeded: ${currentCount} + ${alertsToCreate} > ${maxAlerts}`);
+        return new Response(
+          JSON.stringify({
+            error: 'Creating these alerts would exceed your limit',
+            code: 'ALERT_LIMIT',
+            current: currentCount,
+            requested: alertsToCreate,
+            max: maxAlerts,
+            plan: userPlan,
+            message: `You have ${currentCount} active alert(s) and want to create ${alertsToCreate}. Your ${userPlan} plan allows ${maxAlerts}.`
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-      // Insert the alert
-      const { data: alert, error: insertError } = await supabase
+      // Insert all alerts
+      const alertsToInsert = patternList.map(p => ({
+        user_id: user.id,
+        symbol: symbol.toUpperCase(),
+        pattern: p,
+        timeframe,
+        status: 'active'
+      }));
+      
+      const { data: alerts, error: insertError } = await supabase
         .from('alerts')
-        .insert({
-          user_id: user.id,
-          symbol: symbol.toUpperCase(),
-          pattern,
-          timeframe,
-          status: 'active'
-        })
-        .select()
-        .single();
+        .insert(alertsToInsert)
+        .select();
 
       if (insertError) {
         console.error('Insert error:', insertError);
@@ -164,12 +150,12 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Alert created successfully: ${alert.id}`);
+      console.log(`${alerts?.length || 0} alert(s) created successfully for ${symbol.toUpperCase()}`);
       return new Response(
         JSON.stringify({ 
           success: true, 
-          alert,
-          alertCount: currentCount + 1,
+          alerts,
+          alertCount: currentCount + (alerts?.length || 0),
           maxAlerts,
           plan: userPlan
         }),
