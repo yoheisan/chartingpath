@@ -42,8 +42,8 @@ const Index = () => {
   }, []);
 
   const handleSetupFinderClick = () => {
-    track('pricing_clicked', { source: 'landing_cta_setup_finder' });
-    navigate('/projects/setup-finder/new');
+    track('pricing_clicked', { source: 'landing_cta_screener' });
+    navigate('/patterns/live');
   };
 
   const handleAlertClick = () => {
@@ -161,8 +161,8 @@ const Index = () => {
               onClick={handleSetupFinderClick}
               className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
             >
-              <TrendingUp className="h-5 w-5 mr-2" />
-              Run Setup Finder
+              <Activity className="h-5 w-5 mr-2" />
+              Open Screener
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             
