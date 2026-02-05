@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -7,6 +7,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
@@ -20,7 +21,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { FlaskConical, History, ChevronUp, ChevronDown } from 'lucide-react';
+
+// Lazy load mobile layout for code splitting
+const MobileCommandCenter = lazy(() => 
+  import('./MobileCommandCenter').then(m => ({ default: m.MobileCommandCenter }))
+);
 
 /** Playback pattern passed from route state */
 interface PlaybackPatternContext {
@@ -72,6 +79,8 @@ interface PatternDetailsResponse {
 }
 
 export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandCenterLayoutProps) {
+  const isMobile = useIsMobile();
+
   // Persisted dashboard settings
   const { settings, updateSettings } = useDashboardSettings();
   
@@ -484,6 +493,25 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   const [rightPanelTab, setRightPanelTab] = useState<string>(
     settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
   );
+
+  // Render mobile layout for small screens
+  if (isMobile) {
+    return (
+      <Suspense fallback={
+        <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="space-y-4 text-center">
+            <Skeleton className="h-8 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto" />
+          </div>
+        </div>
+      }>
+        <MobileCommandCenter 
+          userId={userId} 
+          initialPlaybackPattern={initialPlaybackPattern} 
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full">
