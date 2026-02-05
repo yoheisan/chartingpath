@@ -213,7 +213,7 @@ export const TradingStrategies = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-accent rounded-full"></span>
-                  <span><strong>Practice with paper trading</strong> - Perfect your execution first</span>
+                  <span><strong>Practice on a demo account</strong> - Perfect your execution first</span>
                 </div>
               </div>
             </div>

@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Crown, 
   Zap, 
-  TrendingUp, 
   Users, 
   Layers,
   ArrowRight,
@@ -18,7 +17,6 @@ import {
   BookOpen,
   Bell,
   Download,
-  Target,
   Activity,
   Settings
 } from "lucide-react";
@@ -83,15 +81,6 @@ const EliteDashboard = () => {
       action: "Manage Alerts",
       link: "/members/alerts",
       color: "text-red-500"
-    },
-    {
-      icon: Target,
-      title: "Paper Trading Pro",
-      description: "Advanced simulation with real market conditions",
-      status: "Enhanced",
-      action: "Trade Now",
-      link: "/members/trading",
-      color: "text-cyan-500"
     }
   ];
 
@@ -133,13 +122,6 @@ const EliteDashboard = () => {
       icon: Zap,
       link: "/backtest",
       gradient: "from-yellow-500 to-orange-500"
-    },
-    {
-      title: "Live Paper Trading",
-      description: "Practice with real data",
-      icon: TrendingUp,
-      link: "/members/trading",
-      gradient: "from-green-500 to-emerald-500"
     },
     {
       title: "Download Scripts",

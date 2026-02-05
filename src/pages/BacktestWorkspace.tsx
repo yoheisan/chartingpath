@@ -336,52 +336,7 @@ const BacktestWorkspace = () => {
     }
   };
 
-  const handleForwardTest = async () => {
-    if (!user || !currentRun) {
-      toast.error("Please run a backtest first");
-      return;
-    }
-
-    if (!currentRun.trade_log || currentRun.trade_log.length === 0) {
-      toast.error("No trade data available for forward testing");
-      return;
-    }
-
-    try {
-      // Create or update paper portfolio
-      const { data: portfolio, error: portfolioError } = await supabase
-        .from('paper_portfolios')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (portfolioError && portfolioError.code !== 'PGRST116') {
-        throw portfolioError;
-      }
-
-      if (!portfolio) {
-        const { error: createError } = await supabase
-          .from('paper_portfolios')
-          .insert({
-            user_id: user.id,
-            initial_balance: backtestParams.initialCapital,
-            current_balance: backtestParams.initialCapital
-          });
-
-        if (createError) throw createError;
-      }
-
-      // Navigate to paper trading with strategy context
-      toast.success("Forward test setup complete! Redirecting to paper trading...");
-      setTimeout(() => {
-        window.location.href = `/members/trading?strategy=${encodeURIComponent(selectedStrategy)}&instrument=${backtestParams.instrument}`;
-      }, 1500);
-
-    } catch (error) {
-      console.error('Error setting up forward test:', error);
-      toast.error("Failed to setup forward test");
-    }
-  };
+  // Forward test functionality removed - Paper Trading deprecated
 
   const handleRunBacktest = async () => {
     if (!user || !canRunBacktest) {

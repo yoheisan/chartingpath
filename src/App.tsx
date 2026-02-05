@@ -65,8 +65,6 @@ const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"))
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 const PortfolioSimulatorWizard = lazy(() => import("./pages/projects/PortfolioSimulatorWizard"));
 
-
-const PaperTrading = lazy(() => import("./pages/PaperTrading"));
 const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
 const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
@@ -245,7 +243,6 @@ const App = () => (
           
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
           <Route path="/members/dashboard" element={withSuspense(<MemberDashboard />)} />
-          <Route path="/members/trading" element={withSuspense(<PaperTrading />)} />
           <Route path="/elite" element={withSuspense(<EliteDashboard />)} />
           <Route path="/share/:token" element={withSuspense(<SharedBacktest />)} />
           <Route path="/members/scripts" element={withSuspense(<MemberScripts />)} />
