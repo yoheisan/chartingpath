@@ -46,6 +46,7 @@ import { RRComparisonTable, type RRTierStats } from './RRComparisonTable';
 import { ExitComparisonTable, type ExitStrategyStats } from './ExitComparisonTable';
 import ExitEquityOverlay, { type ExitEquitySeries } from './ExitEquityOverlay';
 import BenchmarkSelector from './BenchmarkSelector';
+import { BacktestAlertDialog } from './BacktestAlertDialog';
 
 interface BenchmarkData {
   symbol: string;
@@ -150,10 +151,21 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
     setBenchmarks(newBenchmarks);
   }, []);
+
+  // Extract data for alert dialog
+  const alertInstruments = useMemo(() => 
+    [...new Set(artifact.trades.map(t => t.instrument))],
+    [artifact.trades]
+  );
+  const alertPatterns = useMemo(() => 
+    artifact.patterns.map(p => ({ patternId: p.patternId, patternName: p.patternName })),
+    [artifact.patterns]
+  );
 
   const formatPercent = (value: number | undefined | null) => 
     value != null ? `${(value * 100).toFixed(1)}%` : '0.0%';
@@ -501,8 +513,8 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
           {artifact.patterns.length > 0 && (() => {
             // Extract unique instruments from trades
             const instruments = [...new Set(artifact.trades.map(t => t.instrument))];
-            const patternIds = artifact.patterns.map(p => p.patternId);
             const patternNames = artifact.patterns.map(p => p.patternName);
+            const totalAlerts = instruments.length * artifact.patterns.length;
             
             return (
               <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5">
@@ -515,23 +527,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <div>
                         <h3 className="font-semibold">Like these results?</h3>
                         <p className="text-sm text-muted-foreground">
-                          Set up {instruments.length > 1 ? `${instruments.length} alerts` : 'an alert'} to get notified when {patternNames.length === 1 ? patternNames[0] : `these ${patternNames.length} patterns`} {patternNames.length === 1 ? 'forms' : 'form'} on {instruments.length === 1 ? instruments[0] : `${instruments.length} instruments`}
+                          Set up {totalAlerts > 1 ? `${totalAlerts} alerts` : 'an alert'} to get notified when {patternNames.length === 1 ? patternNames[0] : `these ${patternNames.length} patterns`} {patternNames.length === 1 ? 'forms' : 'form'} on {instruments.length === 1 ? instruments[0] : `${instruments.length} instruments`}
                         </p>
                       </div>
                     </div>
                     <Button 
-                      onClick={() => {
-                        // Pass full backtest context to alerts page
-                        const params = new URLSearchParams();
-                        params.set('patterns', patternIds.join(','));
-                        params.set('symbols', instruments.join(','));
-                        params.set('timeframe', artifact.timeframe);
-                        navigate(`/members/alerts?${params.toString()}`);
-                      }}
+                      onClick={() => setAlertDialogOpen(true)}
                       className="gap-2 bg-emerald-600 hover:bg-emerald-700"
                     >
                       <Bell className="h-4 w-4" />
-                      Set {instruments.length > 1 ? `${instruments.length} Alerts` : 'Alert'}
+                      Set Alert
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1125,6 +1130,14 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         </TabsContent>
       </Tabs>
       
+      {/* Alert Creation Dialog */}
+      <BacktestAlertDialog
+        open={alertDialogOpen}
+        onOpenChange={setAlertDialogOpen}
+        instruments={alertInstruments}
+        patterns={alertPatterns}
+        timeframe={artifact.timeframe}
+      />
     </div>
   );
 };
