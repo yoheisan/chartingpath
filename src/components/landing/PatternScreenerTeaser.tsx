@@ -111,8 +111,35 @@ export function PatternScreenerTeaser() {
 
         const allPatterns = data.patterns || [];
         
+        // Deduplicate: For stocks like GOOG/GOOGL (same company, different share classes),
+        // keep only the highest-graded entry per pattern name
+        const dedupeKey = (p: LiveSetup) => {
+          // Normalize instrument: strip suffix for share class variants
+          const baseSymbol = p.instrument.replace(/L$/, ''); // GOOGL -> GOOG
+          return `${baseSymbol}|${p.patternName}`;
+        };
+        
+        const seenPatterns = new Map<string, LiveSetup>();
+        for (const pattern of allPatterns) {
+          const key = dedupeKey(pattern);
+          const existing = seenPatterns.get(key);
+          if (!existing) {
+            seenPatterns.set(key, pattern);
+          } else {
+            // Keep the one with better grade, or higher win rate if same grade
+            const existingGrade = GRADE_ORDER[getPatternGrade(existing)] || 3;
+            const newGrade = GRADE_ORDER[getPatternGrade(pattern)] || 3;
+            if (newGrade < existingGrade || 
+                (newGrade === existingGrade && (pattern.historicalPerformance?.winRate ?? 0) > (existing.historicalPerformance?.winRate ?? 0))) {
+              seenPatterns.set(key, pattern);
+            }
+          }
+        }
+        
+        const dedupedPatterns = [...seenPatterns.values()];
+        
         // Sort by grade (A first) then by win rate (highest first)
-        const sorted = [...allPatterns].sort((a: LiveSetup, b: LiveSetup) => {
+        const sorted = dedupedPatterns.sort((a: LiveSetup, b: LiveSetup) => {
           const gradeA = GRADE_ORDER[getPatternGrade(a)] || 3;
           const gradeB = GRADE_ORDER[getPatternGrade(b)] || 3;
           if (gradeA !== gradeB) return gradeA - gradeB;
@@ -125,6 +152,10 @@ export function PatternScreenerTeaser() {
         setPatternsByAsset(prev => ({
           ...prev,
           [assetType]: sorted.slice(0, MAX_TEASER_ITEMS),
+        }));
+        setTotalCounts(prev => ({
+          ...prev,
+          [assetType]: dedupedPatterns.length, // Show deduped count
         }));
         setTotalCounts(prev => ({
           ...prev,
