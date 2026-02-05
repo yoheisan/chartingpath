@@ -22,7 +22,8 @@ import {
   HelpCircle,
   Info,
   Activity,
-  FileCode
+  FileCode,
+  Bell
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
@@ -81,6 +82,11 @@ const Navigation = () => {
         Pattern Lab
       </Link>
       
+      {/* 3. Alerts - Execute */}
+      <Link to="/members/alerts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+        <Bell className="h-5 w-5 text-emerald-500" />
+        Alerts
+      </Link>
       
       {/* 4. Scripts - Automate */}
       <Link to="/members/scripts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
@@ -159,7 +165,12 @@ const Navigation = () => {
               Pattern Lab
             </Link>
             
-              
+            {/* 3. Alerts - Get notified */}
+            <Link to="/members/alerts" className={navLinkClass('/members/alerts')}>
+              <Bell className="h-4 w-4 text-emerald-500" />
+              Alerts
+            </Link>
+            
             {/* 4. Scripts - Automate trading */}
             <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
               <FileCode className="h-4 w-4 text-cyan-500" />
