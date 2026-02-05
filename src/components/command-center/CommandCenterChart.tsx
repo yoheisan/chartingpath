@@ -17,6 +17,7 @@ import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CommandCenterChartProps {
   symbol: string;
@@ -40,6 +41,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   onWatchlistChange,
 }: CommandCenterChartProps) {
   const { profile, user } = useUserProfile();
+  const isMobile = useIsMobile();
   const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,16 +260,16 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Chart Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-3">
-          <InstrumentLogo instrument={symbol} size="md" showName={false} />
+      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2 border-b border-border">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <InstrumentLogo instrument={symbol} size={isMobile ? "sm" : "md"} showName={false} />
           <div>
-            <h2 className="text-lg font-semibold">{symbol}</h2>
+            <h2 className="text-sm sm:text-lg font-semibold">{symbol}</h2>
             {priceData && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                 <span className="font-medium">{formatPrice(priceData.current)}</span>
-                <span className={getChangeColor()}>
-                  {priceData.change >= 0 ? '+' : ''}{formatPrice(priceData.change)} ({priceData.changePct >= 0 ? '+' : ''}{priceData.changePct.toFixed(2)}%)
+                <span className={`${getChangeColor()} ${isMobile ? 'hidden xs:inline' : ''}`}>
+                  {priceData.change >= 0 ? '+' : ''}{priceData.changePct.toFixed(2)}%
                 </span>
                 {getTrendIcon()}
               </div>
@@ -275,23 +277,23 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Add to Watchlist Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant={isInWatchlist ? "secondary" : "outline"}
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7 sm:h-8 sm:w-8"
                 onClick={isInWatchlist ? removeFromWatchlist : addToWatchlist}
                 disabled={watchlistLoading}
               >
                 {watchlistLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 ) : isInWatchlist ? (
-                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                  <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-500 text-amber-500" />
                 ) : (
-                  <StarOff className="h-4 w-4" />
+                  <StarOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
               </Button>
             </TooltipTrigger>
@@ -302,7 +304,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
           {/* Timeframe Selector */}
           <Select value={timeframe} onValueChange={onTimeframeChange}>
-            <SelectTrigger className="w-20 h-8">
+            <SelectTrigger className="w-16 sm:w-20 h-7 sm:h-8 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -317,28 +319,30 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8"
             onClick={fetchChartData}
             disabled={loading}
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            asChild
-          >
-            <a
-              href={`https://www.tradingview.com/chart/?symbol=${symbol}&aff_id=3433`}
-              target="_blank"
-              rel="noopener noreferrer"
+          {!isMobile && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              asChild
             >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              TradingView
-            </a>
-          </Button>
+              <a
+                href={`https://www.tradingview.com/chart/?symbol=${symbol}&aff_id=3433`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                TradingView
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 

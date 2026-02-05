@@ -50,6 +50,9 @@ const Navigation = () => {
   // Check if on dashboard route - use full width layout
   const isDashboard = location.pathname === '/members/dashboard';
   
+  // Compact header for dashboard on mobile
+  const dashboardMobileCompact = isDashboard;
+  
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -137,17 +140,17 @@ const Navigation = () => {
   if (wedgeConfig.wedgeEnabled) {
     return (
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className={`mx-auto px-6 py-4 ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
+        <div className={`mx-auto px-3 sm:px-6 ${dashboardMobileCompact ? 'py-2' : 'py-3 sm:py-4'} ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`${dashboardMobileCompact ? 'p-1.5' : 'p-1.5 sm:p-2'} rounded-lg bg-gradient-to-r from-primary to-accent`}>
                 <img 
                   src="/lovable-uploads/a1391ff3-a490-4835-ba42-3564ff90dfc7.png" 
                   alt="ChartingPath Logo" 
-                  className="h-6 w-6 object-contain brightness-0 invert"
+                  className={`${dashboardMobileCompact ? 'h-5 w-5' : 'h-5 w-5 sm:h-6 sm:w-6'} object-contain brightness-0 invert`}
                 />
               </div>
-              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <Link to="/" className={`${dashboardMobileCompact ? 'text-base' : 'text-lg sm:text-xl'} font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent`}>
                 ChartingPath
               </Link>
             </div>
@@ -282,8 +285,8 @@ const Navigation = () => {
             <div className="md:hidden flex items-center gap-2">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className={dashboardMobileCompact ? 'h-8 w-8' : ''}>
+                    <Menu className={dashboardMobileCompact ? 'h-4 w-4' : 'h-5 w-5'} />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-72 flex flex-col p-0">
