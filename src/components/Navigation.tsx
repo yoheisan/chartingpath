@@ -13,7 +13,6 @@ import {
   Search,
   FlaskConical,
   Database,
-  Wrench,
   Calculator,
   BarChart3,
   Calendar,
@@ -231,12 +230,6 @@ const Navigation = () => {
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Tools</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
-                      <Link to="/forge" className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4" />
-                        MultiScript Converter
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
                       <Link to="/tools/pip-calculator" className="flex items-center gap-2">
                         <Calculator className="h-4 w-4" />
                         Pip Calculator
@@ -337,9 +330,6 @@ const Navigation = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/strategy-workspace">Strategy Workspace</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/forge">MultiScript Converter</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/tools/pip-calculator">Pip Calculator</Link>

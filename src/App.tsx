@@ -65,7 +65,7 @@ const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"))
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 const PortfolioSimulatorWizard = lazy(() => import("./pages/projects/PortfolioSimulatorWizard"));
 
-const Forge = lazy(() => import("./pages/Forge"));
+
 const PaperTrading = lazy(() => import("./pages/PaperTrading"));
 const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
@@ -242,7 +242,7 @@ const App = () => (
           <Route path="/projects/pattern-lab/audit" element={withSuspense(<PatternAuditPage />)} />
           <Route path="/projects/portfolio-sim/new" element={withSuspense(<PortfolioSimulatorWizard />)} />
           <Route path="/projects/runs/:runId" element={withSuspense(<ProjectRun />)} />
-          <Route path="/forge" element={withSuspense(<Forge />)} />
+          
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
           <Route path="/members/dashboard" element={withSuspense(<MemberDashboard />)} />
           <Route path="/members/trading" element={withSuspense(<PaperTrading />)} />
