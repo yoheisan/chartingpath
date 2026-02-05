@@ -170,3 +170,6 @@ verify_jwt = false
 
 [functions.check-alert-outcomes]
 verify_jwt = false
+
+[functions.recalculate-pattern-stats]
+verify_jwt = false
