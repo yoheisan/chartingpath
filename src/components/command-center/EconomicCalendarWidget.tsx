@@ -115,23 +115,44 @@ export function EconomicCalendarWidget() {
   useEffect(() => {
     fetchEvents();
     
-    // Realtime subscription for instant updates
+    // Realtime subscription for instant updates when events change
     const channel = supabase
       .channel('econ-calendar-widget')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'economic_events'
         },
         () => {
+          console.log('[EconomicCalendarWidget] New event inserted, refreshing...');
           fetchEvents();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'economic_events'
+        },
+        () => {
+          console.log('[EconomicCalendarWidget] Event updated, refreshing...');
+          fetchEvents();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[EconomicCalendarWidget] Realtime status:', status);
+      });
+
+    // Polling fallback every 2 minutes in case realtime fails
+    const pollInterval = setInterval(() => {
+      fetchEvents();
+    }, 120_000);
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [fetchEvents]);
