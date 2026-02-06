@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import MemberNavigation from "@/components/MemberNavigation";
-import LearningProgress from "@/components/LearningProgress";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { User, Settings, Shield, Crown, Star, KeyRound } from "lucide-react";
@@ -153,10 +152,9 @@ const MemberAccount = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="learning">Learning</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           </TabsList>
 
@@ -258,9 +256,6 @@ const MemberAccount = () => {
             <SubscriptionManager />
           </TabsContent>
 
-          <TabsContent value="learning">
-            <LearningProgress />
-          </TabsContent>
 
           <TabsContent value="preferences">
             <NotificationSettings userId={profile?.id} />
