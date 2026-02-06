@@ -81,12 +81,12 @@ export const topicLinks: Record<string, { url: string; title: string }> = {
     title: "Japanese Candlestick Patterns"
   },
   "risk-management": {
-    url: "/learn/risk-management",
+    url: "/learn/risk-management-fundamentals",
     title: "Risk Management Fundamentals"
   },
   "psychology": {
-    url: "/learn/trading-psychology",
-    title: "Trading Psychology"
+    url: "/learn/trading-psychology-101",
+    title: "Trading Psychology 101"
   },
   "breakout": {
     url: "/learn/breakout-trading",
@@ -99,6 +99,30 @@ export const topicLinks: Record<string, { url: string; title: string }> = {
   "continuation": {
     url: "/learn/continuation-patterns",
     title: "Continuation Patterns Guide"
+  },
+  "technical-analysis": {
+    url: "/learn/technical-vs-fundamental-analysis",
+    title: "Technical vs Fundamental Analysis"
+  },
+  "fundamental-analysis": {
+    url: "/learn/technical-vs-fundamental-analysis",
+    title: "Technical vs Fundamental Analysis"
+  },
+  "trading-styles": {
+    url: "/learn/trading-styles-timeframes",
+    title: "Trading Styles and Timeframes"
+  },
+  "day-trading": {
+    url: "/learn/trading-styles-timeframes",
+    title: "Trading Styles and Timeframes"
+  },
+  "swing-trading": {
+    url: "/learn/trading-styles-timeframes",
+    title: "Trading Styles and Timeframes"
+  },
+  "position-trading": {
+    url: "/learn/trading-styles-timeframes",
+    title: "Trading Styles and Timeframes"
   }
 };
 
