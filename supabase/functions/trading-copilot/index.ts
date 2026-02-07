@@ -56,6 +56,24 @@ const tools = [
         required: ["pattern_name"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_pine_script",
+      description: "Generate a TradingView Pine Script strategy for a specific chart pattern. Use this when user asks for Pine Script, TradingView strategy, or automated trading script.",
+      parameters: {
+        type: "object",
+        properties: {
+          pattern_name: { type: "string", description: "Pattern name like 'Bull Flag', 'Ascending Triangle', 'Head and Shoulders'." },
+          symbol: { type: "string", description: "Trading instrument symbol like BTCUSD, AAPL, EURUSD." },
+          timeframe: { type: "string", description: "Chart timeframe like '1H', '4H', 'D', 'W'." },
+          risk_reward: { type: "number", description: "Target risk-reward ratio. Default 2." },
+          include_alerts: { type: "boolean", description: "Include TradingView alert conditions. Default true." }
+        },
+        required: ["pattern_name", "symbol"]
+      }
+    }
   }
 ];
 
@@ -253,6 +271,148 @@ function executeExplainPattern(args: any) {
   };
 }
 
+function executeGeneratePineScript(args: any) {
+  const patternName = args.pattern_name || "Pattern";
+  const symbol = args.symbol || "BTCUSD";
+  const timeframe = args.timeframe || "D";
+  const rr = args.risk_reward || 2;
+  const includeAlerts = args.include_alerts !== false;
+  
+  // Generate pattern-specific detection logic
+  const patternKey = patternName.toLowerCase();
+  
+  let detectionLogic = "";
+  let patternDescription = "";
+  
+  if (patternKey.includes("ascending triangle")) {
+    patternDescription = "Ascending Triangle";
+    detectionLogic = `// Ascending Triangle Detection
+// Flat resistance with rising support (higher lows)
+resistanceLevel = ta.highest(high, lookback)
+isFlat = math.abs(resistanceLevel - resistanceLevel[5]) / resistanceLevel < 0.01
+higherLows = low > low[5] and low[5] > low[10]
+ascTriangle = isFlat and higherLows and close > ta.sma(close, 20)`;
+  } else if (patternKey.includes("bull flag")) {
+    patternDescription = "Bull Flag";
+    detectionLogic = `// Bull Flag Detection
+// Strong pole followed by consolidation
+poleHigh = ta.highest(high, 5)[5]
+poleLow = ta.lowest(low, 5)[5]
+poleSize = (poleHigh - poleLow) / poleLow * 100
+flagHigh = ta.highest(high, 5)
+flagLow = ta.lowest(low, 5)
+flagSize = (flagHigh - flagLow) / flagLow * 100
+bullFlag = poleSize > 5 and flagSize < poleSize * 0.5 and close > ta.sma(close, 20)`;
+  } else if (patternKey.includes("head and shoulders")) {
+    patternDescription = "Head and Shoulders";
+    detectionLogic = `// Head and Shoulders Detection (Bearish Reversal)
+leftShoulder = ta.highest(high, 10)[20]
+head = ta.highest(high, 10)[10]
+rightShoulder = ta.highest(high, 10)
+neckline = math.min(low[15], low[5])
+headAndShoulders = head > leftShoulder and head > rightShoulder and 
+     math.abs(leftShoulder - rightShoulder) / leftShoulder < 0.05 and close < neckline`;
+  } else if (patternKey.includes("double bottom")) {
+    patternDescription = "Double Bottom";
+    detectionLogic = `// Double Bottom Detection (Bullish Reversal)
+firstBottom = ta.lowest(low, 15)[15]
+secondBottom = ta.lowest(low, 15)
+neckline = ta.highest(high, 15)[7]
+doubleBottom = math.abs(firstBottom - secondBottom) / firstBottom < 0.02 and close > neckline`;
+  } else if (patternKey.includes("descending triangle")) {
+    patternDescription = "Descending Triangle";
+    detectionLogic = `// Descending Triangle Detection
+supportLevel = ta.lowest(low, lookback)
+isFlat = math.abs(supportLevel - supportLevel[5]) / supportLevel < 0.01
+lowerHighs = high < high[5] and high[5] < high[10]
+descTriangle = isFlat and lowerHighs and close < ta.sma(close, 20)`;
+  } else {
+    patternDescription = patternName;
+    detectionLogic = `// Generic Pattern Detection
+// Customize this logic for ${patternName}
+momentum = ta.rsi(close, 14)
+trend = ta.sma(close, 20)
+patternDetected = close > trend and momentum > 50`;
+  }
+
+  const alertCode = includeAlerts ? `
+// === ALERTS ===
+alertcondition(longCondition, title="Long Entry", message="${patternDescription} Long on ${symbol}")
+alertcondition(shortCondition, title="Short Entry", message="${patternDescription} Short on ${symbol}")
+alertcondition(strategy.position_size[1] != 0 and strategy.position_size == 0, title="Position Closed", message="Position closed on ${symbol}")` : "";
+
+  const script = `//@version=5
+strategy("${patternDescription} Strategy - ${symbol}", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, initial_capital=10000)
+
+// === INPUTS ===
+lookback = input.int(20, "Lookback Period", minval=5)
+atrPeriod = input.int(14, "ATR Period")
+atrMultSL = input.float(1.5, "ATR Multiplier for Stop Loss", step=0.1)
+atrMultTP = input.float(${rr * 1.5}, "ATR Multiplier for Take Profit", step=0.1)
+riskReward = input.float(${rr}, "Risk:Reward Ratio", step=0.1)
+
+// === INDICATORS ===
+atr = ta.atr(atrPeriod)
+ema20 = ta.ema(close, 20)
+ema50 = ta.ema(close, 50)
+
+${detectionLogic}
+
+// === ENTRY CONDITIONS ===
+trendUp = ema20 > ema50
+trendDown = ema20 < ema50
+longCondition = ${patternKey.includes("head and shoulders") ? "false" : (patternKey.includes("descending") ? "false" : `${patternKey.includes("ascending triangle") ? "ascTriangle" : patternKey.includes("bull flag") ? "bullFlag" : patternKey.includes("double bottom") ? "doubleBottom" : "patternDetected"} and trendUp`)}
+shortCondition = ${patternKey.includes("double bottom") ? "false" : patternKey.includes("ascending") ? "false" : patternKey.includes("bull flag") ? "false" : patternKey.includes("head and shoulders") ? "headAndShoulders and trendDown" : patternKey.includes("descending") ? "descTriangle and trendDown" : "not patternDetected and trendDown"}
+
+// === EXECUTE TRADES ===
+if longCondition and strategy.position_size == 0
+    stopLoss = close - (atr * atrMultSL)
+    takeProfit = close + (atr * atrMultTP)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=stopLoss, limit=takeProfit)
+
+if shortCondition and strategy.position_size == 0
+    stopLoss = close + (atr * atrMultSL)
+    takeProfit = close - (atr * atrMultTP)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=stopLoss, limit=takeProfit)
+
+// === PLOTTING ===
+plot(ema20, "EMA 20", color=color.blue)
+plot(ema50, "EMA 50", color=color.orange)
+plotshape(longCondition, "Long Signal", shape.triangleup, location.belowbar, color.green, size=size.small)
+plotshape(shortCondition, "Short Signal", shape.triangledown, location.abovebar, color.red, size=size.small)
+${alertCode}
+
+// === PERFORMANCE TABLE ===
+var table perfTable = table.new(position.top_right, 2, 4, bgcolor=color.new(color.black, 80))
+if barstate.islast
+    table.cell(perfTable, 0, 0, "Net Profit", text_color=color.white)
+    table.cell(perfTable, 1, 0, str.tostring(strategy.netprofit, "#.##"), text_color=strategy.netprofit > 0 ? color.green : color.red)
+    table.cell(perfTable, 0, 1, "Win Rate", text_color=color.white)
+    table.cell(perfTable, 1, 1, str.tostring(strategy.wintrades / math.max(strategy.closedtrades, 1) * 100, "#.#") + "%", text_color=color.white)
+    table.cell(perfTable, 0, 2, "Trades", text_color=color.white)
+    table.cell(perfTable, 1, 2, str.tostring(strategy.closedtrades), text_color=color.white)
+    table.cell(perfTable, 0, 3, "Profit Factor", text_color=color.white)
+    table.cell(perfTable, 1, 3, str.tostring(strategy.grossprofit / math.max(strategy.grossloss, 1), "#.##"), text_color=color.white)`;
+
+  return {
+    pattern: patternDescription,
+    symbol: symbol,
+    timeframe: timeframe,
+    riskReward: rr,
+    script: script,
+    instructions: [
+      "1. Open TradingView and go to Pine Editor",
+      "2. Create a new script and paste the code above",
+      "3. Click 'Add to Chart' to apply the strategy",
+      "4. Adjust inputs in the Settings panel as needed",
+      "5. Use Strategy Tester to backtest on historical data",
+      "⚠️ Always backtest thoroughly before using with real capital"
+    ]
+  };
+}
+
 async function executeTool(toolName: string, args: any, supabase: any) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
@@ -263,6 +423,8 @@ async function executeTool(toolName: string, args: any, supabase: any) {
       return await executeGetPatternStats(supabase, args);
     case 'explain_pattern':
       return executeExplainPattern(args);
+    case 'generate_pine_script':
+      return executeGeneratePineScript(args);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
