@@ -193,5 +193,34 @@ export function getDefaultLookback(timeframe: Timeframe): number {
   return DATA_COVERAGE[timeframe]?.defaultLookbackYears ?? 1;
 }
 
+/**
+ * Get chart data limits for a timeframe
+ * Used by all chart components to ensure consistent data fetching
+ */
+export function getChartDataLimits(timeframe: Timeframe): {
+  barLimit: number;
+  minBarsRequired: number;
+  daysBack: number;
+} {
+  switch (timeframe) {
+    case '1m':
+    case '5m':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 7 };
+    case '15m':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 30 };
+    case '1h':
+      return { barLimit: 730, minBarsRequired: 50, daysBack: 30 }; // Yahoo practical limit
+    case '4h':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 365 };
+    case '1wk':
+      return { barLimit: 365, minBarsRequired: 100, daysBack: 2555 }; // ~7 years
+    case '1M':
+      return { barLimit: 120, minBarsRequired: 24, daysBack: 3650 }; // ~10 years
+    case '1d':
+    default:
+      return { barLimit: 1260, minBarsRequired: 250, daysBack: 1825 }; // ~5 years
+  }
+}
+
 // Re-export for convenience
 export const SUPPORTED_TIMEFRAMES: Timeframe[] = ['1h', '4h', '1d', '1wk'];

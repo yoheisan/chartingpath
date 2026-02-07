@@ -687,19 +687,45 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
       
       for (const symbol of symbols) {
         try {
-          // Try to fetch from historical_prices cache
+          // Try to fetch from historical_prices cache (5 years for daily)
           const { data, error } = await supabase
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
             .eq('symbol', symbol)
             .eq('timeframe', '1D')
             .order('date', { ascending: true })
-            .limit(200);
+            .limit(1260); // ~5 years of trading days
           
           if (error || !data || data.length < 50) {
-            // Use synthetic demo data when no real data is available
-            console.info(`Using demo data for ${symbol} (no historical data available)`);
-            newBarsData[symbol] = generateDemoBars(200);
+            // Fallback to Yahoo Finance for real data
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 1825); // 5 years
+            
+            const { data: yfData, error: yfError } = await supabase.functions.invoke('fetch-yahoo-finance', {
+              body: {
+                symbol,
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                interval: '1d',
+                includeOhlc: true,
+              }
+            });
+            
+            if (yfError || !yfData?.bars || yfData.bars.length < 50) {
+              // Only use demo data as last resort
+              console.info(`Using demo data for ${symbol} (Yahoo fallback failed)`);
+              newBarsData[symbol] = generateDemoBars(200);
+            } else {
+              newBarsData[symbol] = yfData.bars.map((b: any) => ({
+                t: b.t || b.date,
+                o: b.o || b.open,
+                h: b.h || b.high,
+                l: b.l || b.low,
+                c: b.c || b.close,
+                v: b.v || b.volume || 0,
+              }));
+            }
           } else {
             newBarsData[symbol] = data.map(d => ({
               t: d.date,
