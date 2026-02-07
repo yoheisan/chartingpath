@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import { useCommandPalette } from "./useCommandPalette";
+import { useCommandPalette } from "./CommandPaletteContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
