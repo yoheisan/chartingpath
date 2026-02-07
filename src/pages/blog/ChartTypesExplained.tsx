@@ -86,38 +86,6 @@ const ChartTypesExplained = () => {
       </div>
 
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        {/* Visual Design Standard */}
-        <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Visual Design Standard</h2>
-          <Card className="bg-card border-border/50">
-            <CardContent className="p-6">
-              <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-10 bg-positive rounded" />
-                  <div>
-                    <p className="font-medium">Green Candles</p>
-                    <p className="text-xs text-muted-foreground">Price up from previous close</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-10 bg-destructive rounded" />
-                  <div>
-                    <p className="font-medium">Red Candles</p>
-                    <p className="text-xs text-muted-foreground">Price down from previous close</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-3 bg-background border border-border rounded" />
-                  <div>
-                    <p className="font-medium">Background</p>
-                    <p className="text-xs text-muted-foreground">Dark theme (#0f0f0f)</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
         {/* Study Chart Section */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
