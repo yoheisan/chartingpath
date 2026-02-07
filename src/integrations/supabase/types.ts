@@ -3877,6 +3877,7 @@ export type Database = {
         Returns: number
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_service_role: { Args: never; Returns: boolean }
       make_first_user_admin: { Args: never; Returns: undefined }
       process_plan_change: {
         Args: {
