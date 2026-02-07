@@ -74,11 +74,11 @@ const PlatformGlossary = () => {
       visual: (
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-8 bg-positive rounded" />
+            <div className="w-3 h-8 rounded" style={{ backgroundColor: '#22c55e' }} />
             <span className="text-xs text-muted-foreground">Bullish</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-8 bg-destructive rounded" />
+            <div className="w-3 h-8 rounded" style={{ backgroundColor: '#ef4444' }} />
             <span className="text-xs text-muted-foreground">Bearish</span>
           </div>
         </div>
@@ -141,7 +141,7 @@ const PlatformGlossary = () => {
       category: 'trading',
       visual: (
         <div className="flex items-center gap-2">
-          <div className="w-16 border-t-2 border-dashed border-positive" />
+          <div className="w-16 border-t-2 border-dashed" style={{ borderColor: '#22c55e' }} />
           <span className="text-xs">Take Profit</span>
         </div>
       ),
