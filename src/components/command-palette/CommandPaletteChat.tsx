@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 
 interface Message {
@@ -57,50 +58,86 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
       id: crypto.randomUUID(),
       role: "user",
       content: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    
-    setMessages(prev => [...prev, userMsg]);
+
+    const assistantId = crypto.randomUUID();
+
+    // Update UI immediately (prevents "stuck" spinner even if streaming isn't supported)
+    setMessages((prev) => [
+      ...prev,
+      userMsg,
+      {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+      },
+    ]);
     setIsLoading(true);
     setInput("");
 
     let assistantContent = "";
-    
+
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
+          Accept: "text/event-stream",
+          apikey: SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           messages: [...messages, userMsg]
-            .filter(m => m.role === "user" || m.content.trim().length > 0)
-            .map(m => ({
+            .filter((m) => m.role === "user" || m.content.trim().length > 0)
+            .map((m) => ({
               role: m.role,
-              content: m.content
-            }))
+              content: m.content,
+            })),
         }),
       });
 
       if (!resp.ok) {
-        throw new Error("Failed to get response");
+        const errorData = await resp.json().catch(() => ({}));
+        if (resp.status === 429) {
+          toast.error("Rate limit exceeded. Please wait a moment and try again.");
+          throw new Error("Rate limited");
+        }
+        if (resp.status === 402) {
+          toast.error("AI credits depleted. Please add credits to continue.");
+          throw new Error("Credits depleted");
+        }
+        throw new Error(errorData.error || "Failed to get response");
       }
 
-      if (!resp.body) throw new Error("No response body");
+      // If streaming isn't available (some mobile browsers/webviews), fall back to parsing the full text.
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const full = await resp.text();
+        for (const raw of full.split("\n")) {
+          const line = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) assistantContent += content;
+          } catch {
+            // ignore
+          }
+        }
+
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m))
+        );
+        return;
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
       let streamDone = false;
-
-      const assistantId = crypto.randomUUID();
-      setMessages(prev => [...prev, {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-        timestamp: new Date()
-      }]);
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -127,25 +164,58 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantId 
-                    ? { ...m, content: assistantContent }
-                    : m
-                )
+              setMessages((prev) =>
+                prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m))
               );
             }
           } catch {
+            // Incomplete JSON split across chunks: put it back and wait for more data
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
+
+      // Final flush in case remaining buffered lines arrived without trailing newline
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) assistantContent += content;
+          } catch {
+            // ignore partial leftovers
+          }
+        }
+
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m))
+        );
+      }
     } catch (error) {
       console.error("Chat error:", error);
+      if (!(error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted"))) {
+        toast.error("Copilot failed to respond. Please try again.");
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content: "Sorry — I couldn't get a response right now. Please try again.",
+              }
+            : m
+        )
+      );
     } finally {
       setIsLoading(false);
-      // Track the question and response for analytics
       trackQuestion(userMessage, assistantContent);
     }
   };
