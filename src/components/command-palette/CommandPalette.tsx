@@ -64,11 +64,11 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     );
   }
 
-  // Desktop: Use Dialog (centered modal)
+  // Desktop: Use Dialog (centered modal) - LARGER for command center feel
   if (mode === "chat") {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-2xl h-[600px] p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-3xl h-[700px] p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
           <DialogTitle className="sr-only">Trading Copilot</DialogTitle>
           <DialogDescription className="sr-only">
             AI chat for research and automation.
@@ -81,7 +81,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
         <DialogTitle className="sr-only">Trading Copilot</DialogTitle>
         <DialogDescription className="sr-only">
           Search commands or ask AI.
