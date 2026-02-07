@@ -182,10 +182,15 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
         {/* Permission Status Messages */}
         {isSupported && permission === 'default' && (
-          <div className="rounded-lg bg-muted p-3 text-sm">
+          <div className="rounded-lg bg-muted p-3 text-sm space-y-2">
             <p className="text-muted-foreground">
               Click "Enable" to receive real-time pattern alerts in your browser. You'll be asked to allow notifications.
             </p>
+            {window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovable.dev') ? (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                ⚠️ Testing in preview? Push notifications work best on your published app URL.
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -194,9 +199,15 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             <p className="text-destructive font-medium">
               Push notifications are blocked by your browser.
             </p>
-            <p className="text-muted-foreground text-xs">
-              To enable: Click the lock/info icon in your browser's address bar → Find "Notifications" → Change to "Allow" → Refresh the page.
-            </p>
+            {window.location.hostname.includes('lovable.app') || window.location.hostname.includes('lovable.dev') ? (
+              <p className="text-muted-foreground text-xs">
+                You're in the Lovable preview. To enable push notifications, <strong>publish your app</strong> and test on your published URL—push permissions are tied to the domain.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                To enable: Click the lock/tune icon in your browser's address bar → Find "Notifications" → Change to "Allow" → Refresh the page.
+              </p>
+            )}
           </div>
         )}
 
