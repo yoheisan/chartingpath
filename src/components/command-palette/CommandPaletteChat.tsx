@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 
 interface Message {
   id: string;
@@ -13,8 +14,8 @@ interface Message {
   timestamp: Date;
 }
 
-const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://dgznlsckoamseqcpzfqm.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
 const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
 
 interface CommandPaletteChatProps {
@@ -29,6 +30,7 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasInitialized = useRef(false);
+  const { trackQuestion } = useCopilotFeedback();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -143,6 +145,8 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
       console.error("Chat error:", error);
     } finally {
       setIsLoading(false);
+      // Track the question and response for analytics
+      trackQuestion(userMessage, assistantContent);
     }
   };
 
