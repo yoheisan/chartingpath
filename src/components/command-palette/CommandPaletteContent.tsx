@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Command,
@@ -25,7 +25,9 @@ import {
   Target,
   LineChart,
   Compass,
+  Command as CommandIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CommandItemData {
   id: string;
@@ -36,6 +38,7 @@ interface CommandItemData {
   action: () => void;
   shortcut?: string;
   keywords?: string[];
+  color?: string;
 }
 
 interface CommandPaletteContentProps {
@@ -61,7 +64,8 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       icon: Target,
       category: "suggested",
       action: () => onAIQuery("Show me the best A-quality patterns forming right now across major stocks and crypto"),
-      keywords: ["patterns", "signals", "setups", "quality"]
+      keywords: ["patterns", "signals", "setups", "quality"],
+      color: "from-emerald-500 to-teal-600"
     },
     {
       id: "market-overview",
@@ -70,7 +74,8 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       icon: LineChart,
       category: "suggested",
       action: () => onAIQuery("Give me a quick market overview - what patterns are forming on SPY, QQQ, and BTC?"),
-      keywords: ["market", "overview", "moving", "today"]
+      keywords: ["market", "overview", "moving", "today"],
+      color: "from-blue-500 to-indigo-600"
     },
     {
       id: "generate-script",
@@ -79,7 +84,8 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       icon: Code,
       category: "suggested",
       action: () => onAIQuery("Help me create a Pine Script strategy. What pattern and instrument should we build it for?"),
-      keywords: ["pine", "script", "tradingview", "strategy", "code"]
+      keywords: ["pine", "script", "tradingview", "strategy", "code"],
+      color: "from-orange-500 to-red-600"
     },
     {
       id: "learn-pattern",
@@ -88,7 +94,8 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       icon: BookOpen,
       category: "suggested",
       action: () => onAIQuery("I want to learn about chart patterns. Which pattern would you recommend I start with and why?"),
-      keywords: ["learn", "education", "pattern", "teach"]
+      keywords: ["learn", "education", "pattern", "teach"],
+      color: "from-purple-500 to-pink-600"
     },
   ], [onAIQuery]);
 
@@ -243,71 +250,132 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
   };
 
   return (
-    <Command className="rounded-lg border-0" onKeyDown={handleKeyDown}>
-      <div className="flex items-center border-b px-3">
-        <Sparkles className="mr-2 h-4 w-4 shrink-0 text-primary" />
-        <CommandInput 
-          placeholder={isMobile ? "Search or ask AI..." : "Search commands or ask AI anything..."} 
-          value={search}
-          onValueChange={setSearch}
-          className="border-0 focus:ring-0"
-        />
+    <Command className="rounded-lg border-0 bg-background" onKeyDown={handleKeyDown}>
+      {/* Enhanced Header */}
+      <div className={cn(
+        "flex items-center gap-3 border-b bg-muted/30",
+        isMobile ? "px-4 py-3" : "px-5 py-4"
+      )}>
+        <div className={cn(
+          "flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg",
+          isMobile ? "h-9 w-9" : "h-10 w-10"
+        )}>
+          <CommandIcon className={cn("text-white", isMobile ? "h-5 w-5" : "h-5 w-5")} />
+        </div>
+        <div className="flex-1">
+          <CommandInput 
+            placeholder={isMobile ? "Search or ask AI..." : "Search commands or ask AI anything..."} 
+            value={search}
+            onValueChange={setSearch}
+            className={cn(
+              "border-0 bg-transparent focus:ring-0 placeholder:text-muted-foreground/60",
+              isMobile ? "text-base h-10" : "text-lg h-12"
+            )}
+          />
+        </div>
         {!isMobile && (
-          <Badge variant="secondary" className="ml-2 shrink-0 text-xs">
+          <Badge variant="outline" className="shrink-0 text-xs font-mono px-2 py-1 bg-muted">
             ⌘K
           </Badge>
         )}
       </div>
-      <CommandList className={isMobile ? "max-h-[50vh]" : "max-h-[400px]"}>
-        <CommandEmpty className="py-6 text-center">
-          <p className="text-sm text-muted-foreground mb-2">No commands found</p>
-          <button 
-            onClick={() => onAIQuery(search)}
-            className="text-sm text-primary hover:underline"
-          >
-            Ask AI: "{search}"
-          </button>
+
+      <CommandList className={cn(
+        "scrollbar-thin",
+        isMobile ? "max-h-[55vh]" : "max-h-[500px]"
+      )}>
+        <CommandEmpty className="py-12 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">No commands found</p>
+              <button 
+                onClick={() => onAIQuery(search)}
+                className="text-sm text-primary hover:underline font-medium"
+              >
+                Ask AI: "{search}"
+              </button>
+            </div>
+          </div>
         </CommandEmpty>
 
+        {/* Suggested Commands - Enhanced Cards */}
         {filteredGroups.suggested.length > 0 && (
-          <CommandGroup heading="Suggested">
-            {filteredGroups.suggested.map((cmd) => (
-              <CommandItem
-                key={cmd.id}
-                onSelect={() => handleAction(cmd)}
-                className={`flex items-center gap-3 ${isMobile ? 'py-4' : 'py-3'}`}
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                  <cmd.icon className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{cmd.label}</p>
-                  {cmd.description && (
-                    <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
+          <CommandGroup heading={
+            <span className={cn("font-semibold", isMobile ? "text-sm" : "text-base")}>
+              Quick Actions
+            </span>
+          } className={isMobile ? "px-3 py-2" : "px-4 py-3"}>
+            <div className={cn(
+              "grid gap-2",
+              isMobile ? "grid-cols-1" : "grid-cols-2"
+            )}>
+              {filteredGroups.suggested.map((cmd) => (
+                <CommandItem
+                  key={cmd.id}
+                  onSelect={() => handleAction(cmd)}
+                  className={cn(
+                    "flex items-center gap-4 rounded-xl border border-border/50 bg-card/50 hover:bg-accent/50 cursor-pointer transition-all",
+                    isMobile ? "p-4" : "p-5"
                   )}
-                </div>
-                <Sparkles className="h-3 w-3 text-muted-foreground shrink-0" />
-              </CommandItem>
-            ))}
+                >
+                  <div className={cn(
+                    "flex items-center justify-center rounded-xl bg-gradient-to-br shadow-md",
+                    cmd.color || "from-primary to-accent",
+                    isMobile ? "h-11 w-11" : "h-12 w-12"
+                  )}>
+                    <cmd.icon className={cn("text-white", isMobile ? "h-5 w-5" : "h-6 w-6")} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn("font-semibold truncate", isMobile ? "text-sm" : "text-base")}>
+                      {cmd.label}
+                    </p>
+                    {cmd.description && (
+                      <p className={cn(
+                        "text-muted-foreground truncate",
+                        isMobile ? "text-xs" : "text-sm"
+                      )}>
+                        {cmd.description}
+                      </p>
+                    )}
+                  </div>
+                  <Sparkles className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                </CommandItem>
+              ))}
+            </div>
           </CommandGroup>
         )}
 
+        {/* Navigation Commands */}
         {filteredGroups.navigate.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Navigate">
+            <CommandSeparator className="my-2" />
+            <CommandGroup heading={
+              <span className={cn("font-semibold", isMobile ? "text-sm" : "text-base")}>
+                Navigate
+              </span>
+            } className={isMobile ? "px-3" : "px-4"}>
               {filteredGroups.navigate.map((cmd) => (
                 <CommandItem
                   key={cmd.id}
                   onSelect={() => handleAction(cmd)}
-                  className={`flex items-center gap-3 ${isMobile ? 'py-4' : ''}`}
+                  className={cn(
+                    "flex items-center gap-4 rounded-lg cursor-pointer",
+                    isMobile ? "py-4 px-3" : "py-3 px-4"
+                  )}
                 >
-                  <cmd.icon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <cmd.icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
                   <div className="flex-1">
-                    <p>{cmd.label}</p>
+                    <p className={cn("font-medium", isMobile ? "text-sm" : "text-base")}>{cmd.label}</p>
                   </div>
                   {cmd.shortcut && (
-                    <span className="text-xs text-muted-foreground">{cmd.shortcut}</span>
+                    <Badge variant="outline" className="text-xs font-mono shrink-0">
+                      {cmd.shortcut}
+                    </Badge>
                   )}
                 </CommandItem>
               ))}
@@ -315,48 +383,68 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
           </>
         )}
 
+        {/* Research Commands */}
         {filteredGroups.research.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Research">
+            <CommandSeparator className="my-2" />
+            <CommandGroup heading={
+              <span className={cn("font-semibold", isMobile ? "text-sm" : "text-base")}>
+                Research
+              </span>
+            } className={isMobile ? "px-3" : "px-4"}>
               {filteredGroups.research.map((cmd) => (
                 <CommandItem
                   key={cmd.id}
                   onSelect={() => handleAction(cmd)}
-                  className={`flex items-center gap-3 ${isMobile ? 'py-4' : ''}`}
+                  className={cn(
+                    "flex items-center gap-4 rounded-lg cursor-pointer",
+                    isMobile ? "py-4 px-3" : "py-3 px-4"
+                  )}
                 >
-                  <cmd.icon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <cmd.icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate">{cmd.label}</p>
+                    <p className={cn("font-medium truncate", isMobile ? "text-sm" : "text-base")}>{cmd.label}</p>
                     {cmd.description && (
                       <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
                     )}
                   </div>
-                  <Sparkles className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <Sparkles className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                 </CommandItem>
               ))}
             </CommandGroup>
           </>
         )}
 
+        {/* Automate Commands */}
         {filteredGroups.automate.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Automate">
+            <CommandSeparator className="my-2" />
+            <CommandGroup heading={
+              <span className={cn("font-semibold", isMobile ? "text-sm" : "text-base")}>
+                Automate
+              </span>
+            } className={isMobile ? "px-3" : "px-4"}>
               {filteredGroups.automate.map((cmd) => (
                 <CommandItem
                   key={cmd.id}
                   onSelect={() => handleAction(cmd)}
-                  className={`flex items-center gap-3 ${isMobile ? 'py-4' : ''}`}
+                  className={cn(
+                    "flex items-center gap-4 rounded-lg cursor-pointer",
+                    isMobile ? "py-4 px-3" : "py-3 px-4"
+                  )}
                 >
-                  <cmd.icon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <cmd.icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate">{cmd.label}</p>
+                    <p className={cn("font-medium truncate", isMobile ? "text-sm" : "text-base")}>{cmd.label}</p>
                     {cmd.description && (
                       <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
                     )}
                   </div>
-                  <Sparkles className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <Sparkles className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -364,13 +452,29 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
         )}
       </CommandList>
 
-      <div className="border-t p-2 text-xs text-muted-foreground flex items-center justify-between">
-        <span>Type anything to ask AI</span>
+      {/* Enhanced Footer */}
+      <div className={cn(
+        "border-t bg-muted/20 text-muted-foreground flex items-center justify-between",
+        isMobile ? "p-3 text-xs" : "px-5 py-3 text-sm"
+      )}>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>Type anything to ask AI</span>
+        </div>
         {!isMobile && (
-          <div className="flex items-center gap-2">
-            <span>↑↓ Navigate</span>
-            <span>↵ Select</span>
-            <span>Esc Close</span>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↑↓</kbd>
+              Navigate
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↵</kbd>
+              Select
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">Esc</kbd>
+              Close
+            </span>
           </div>
         )}
       </div>
