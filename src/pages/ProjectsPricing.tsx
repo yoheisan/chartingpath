@@ -302,15 +302,15 @@ const ProjectsPricing = () => {
             <div>
               <h4 className="font-semibold text-foreground mb-2">What timeframes are supported?</h4>
               <p className="text-sm text-muted-foreground">
-                Pattern Lab and the screener support 1H, 4H, Daily, and Weekly timeframes for pattern detection and backtesting. 
+                Pattern Lab and the screener support 1H, 4H, 8H, Daily, and Weekly timeframes for pattern detection and backtesting. 
                 The 15m timeframe is available for chart viewing (Study pages) on Lite+ plans, but not for automated scanning.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-foreground mb-2">How fresh is the pattern data?</h4>
               <p className="text-sm text-muted-foreground">
-                <strong>Core 1,100:</strong> 1H patterns refresh hourly; 4H/Daily every 4 hours.<br/>
-                <strong>Full 8,500+:</strong> 4H, Daily, and Weekly patterns refresh every 4 hours.
+                <strong>Core 1,100:</strong> 1H patterns refresh hourly; 4H/8H/Daily every 4 hours.<br/>
+                <strong>Full 8,500+:</strong> 4H, 8H, Daily, and Weekly patterns refresh every 4 hours.
               </p>
             </div>
             <div>

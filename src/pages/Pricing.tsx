@@ -100,7 +100,7 @@ const Pricing = () => {
       annualPrice: 120,
       description: "Unlock intraday timeframes for active trading",
       features: [
-        "Daily + 4H + 15-minute timeframe charts",
+        "Daily + 8H + 4H + 15-minute timeframe charts",
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "8 chart patterns (incl. Channels, Flags)",
         "5 active pattern alerts",
@@ -120,7 +120,7 @@ const Pricing = () => {
       annualPrice: 290,
       description: "All timeframes for serious pattern research",
       features: [
-        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "10 chart patterns (incl. Wedges, Cup & Handle)",
         "25 active pattern alerts",
@@ -141,7 +141,7 @@ const Pricing = () => {
       annualPrice: 790,
       description: "Complete toolkit for professional traders",
       features: [
-        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "Full pattern library (12 patterns incl. premium)",
         "100 active pattern alerts",
@@ -163,7 +163,7 @@ const Pricing = () => {
       annualPrice: 1990,
       description: "Enterprise features for trading teams",
       features: [
-        "All timeframes (15m, 1H, 4H, Daily, Weekly)",
+        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
         "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
         "Complete pattern library (15+ patterns)",
         "500 active pattern alerts",
