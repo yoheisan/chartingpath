@@ -8,7 +8,7 @@
  * Last Verified: 2026-02-02
  */
 
-export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '1d' | '1wk' | '1M';
+export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '8h' | '1d' | '1wk' | '1M';
 
 export interface TimeframeCoverage {
   maxLookbackYears: number;
@@ -51,6 +51,13 @@ export const DATA_COVERAGE: Record<Timeframe, TimeframeCoverage> = {
     maxLookbackYears: 2,
     maxLookbackDays: 730,
     description: '2 years max',
+    isIntraday: true,
+    defaultLookbackYears: 1,
+  },
+  '8h': {
+    maxLookbackYears: 2,
+    maxLookbackDays: 730,
+    description: '2 years max (aggregated from 1h)',
     isIntraday: true,
     defaultLookbackYears: 1,
   },
