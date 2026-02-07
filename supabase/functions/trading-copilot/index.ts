@@ -275,101 +275,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // First request - may return tool calls
-    const aiMessages = [{ role: "system", content: systemPrompt }, ...messages];
-    
-    console.log("[trading-copilot] Sending initial request");
-    
-    let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: aiMessages,
-        tools: tools,
-        tool_choice: "auto",
-        stream: false,
-      }),
-    });
+    // Tool-call loop (non-stream) to guarantee we return assistant content.
+    // Proxy-streaming can surface tool_calls (with no content) to the client for some providers.
+    let convo: any[] = [{ role: "system", content: systemPrompt }, ...messages];
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits depleted" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
+    const MAX_TOOL_ROUNDS = 3;
 
-    // Parse response - handle both JSON and SSE formats
-    const responseText = await response.text();
-    let assistantMessage: any = null;
-    
-    // Try to parse as JSON first
-    try {
-      const result = JSON.parse(responseText);
-      assistantMessage = result.choices?.[0]?.message;
-    } catch {
-      // Parse SSE format
-      const lines = responseText.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.choices?.[0]?.delta?.tool_calls || data.choices?.[0]?.message?.tool_calls) {
-              assistantMessage = data.choices[0].delta || data.choices[0].message;
-              // Merge tool_calls from delta
-              if (data.choices[0].delta?.tool_calls) {
-                assistantMessage = {
-                  role: "assistant",
-                  content: null,
-                  tool_calls: data.choices[0].delta.tool_calls
-                };
-              }
-              break;
-            }
-          } catch { /* skip unparseable lines */ }
-        }
-      }
-    }
-    
-    console.log("[trading-copilot] Parsed assistant message:", JSON.stringify(assistantMessage));
-    
-    // Check for tool calls and execute them
-    if (assistantMessage?.tool_calls?.length) {
-      console.log("[trading-copilot] Tool calls detected:", assistantMessage.tool_calls.length);
-      
-      // Execute all tools
-      const toolResults = await Promise.all(
-        assistantMessage.tool_calls.map(async (tc: any) => {
-          const args = JSON.parse(tc.function.arguments || "{}");
-          const result = await executeTool(tc.function.name, args, supabase);
-          return {
-            role: "tool",
-            tool_call_id: tc.id,
-            content: JSON.stringify(result)
-          };
-        })
-      );
+    for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
+      console.log(`[trading-copilot] AI round ${round}`);
 
-      // Send follow-up request with tool results
-      const followUpMessages = [
-        ...aiMessages,
-        assistantMessage,
-        ...toolResults
-      ];
-
-      console.log("[trading-copilot] Sending follow-up with tool results");
-      
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -377,31 +292,101 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
-          messages: followUpMessages,
-          stream: true,
+          messages: convo,
+          tools,
+          tool_choice: "auto",
+          stream: false,
         }),
       });
 
-      if (!response.ok) throw new Error(`Follow-up AI error: ${response.status}`);
+      if (!aiResp.ok) {
+        if (aiResp.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (aiResp.status === 402) {
+          return new Response(JSON.stringify({ error: "AI credits depleted" }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const t = await aiResp.text().catch(() => "");
+        console.error("[trading-copilot] AI gateway error:", aiResp.status, t);
+        throw new Error(`AI gateway error: ${aiResp.status}`);
+      }
 
-      return new Response(response.body, {
-        headers: { 
-          ...corsHeaders, 
+      const responseText = await aiResp.text();
+      let assistantMessage: any = null;
+
+      // Try JSON first
+      try {
+        const result = JSON.parse(responseText);
+        assistantMessage = result.choices?.[0]?.message;
+      } catch {
+        // Fallback: parse SSE-ish bodies if returned
+        const lines = responseText.split("\n");
+        for (const line of lines) {
+          if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            assistantMessage = data.choices?.[0]?.message ?? data.choices?.[0]?.delta;
+            if (assistantMessage) break;
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      console.log("[trading-copilot] Assistant message:", JSON.stringify(assistantMessage));
+
+      if (assistantMessage?.tool_calls?.length) {
+        console.log("[trading-copilot] Tool calls detected:", assistantMessage.tool_calls.length);
+
+        const toolResults = await Promise.all(
+          assistantMessage.tool_calls.map(async (tc: any) => {
+            let args: any = {};
+            try {
+              args = JSON.parse(tc.function.arguments || "{}");
+            } catch {
+              console.error("[trading-copilot] Failed to parse tool args:", tc.function.arguments);
+              args = {};
+            }
+
+            const result = await executeTool(tc.function.name, args, supabase);
+            return {
+              role: "tool",
+              tool_call_id: tc.id,
+              content: JSON.stringify(result),
+            };
+          })
+        );
+
+        convo = [...convo, assistantMessage, ...toolResults];
+        continue;
+      }
+
+      const content = assistantMessage?.content || "I couldn't process that request.";
+      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
+
+      return new Response(sseData, {
+        headers: {
+          ...corsHeaders,
           "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache"
+          "Cache-Control": "no-cache",
         },
       });
     }
 
-    // No tool calls - return direct response as SSE stream
-    const content = assistantMessage?.content || "I couldn't process that request.";
-    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
-    
+    const fallback = "I couldn't complete that request—please try again with a more specific question (symbol, timeframe, and pattern).";
+    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}\n\ndata: [DONE]\n\n`;
+
     return new Response(sseData, {
-      headers: { 
-        ...corsHeaders, 
+      headers: {
+        ...corsHeaders,
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache"
+        "Cache-Control": "no-cache",
       },
     });
 
