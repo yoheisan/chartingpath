@@ -59,6 +59,8 @@ const tools = [
   }
 ];
 
+const BASE_URL = "https://chartingpath.com";
+
 const systemPrompt = `You are ChartingPath Copilot, an AI trading research assistant specialized in chart pattern analysis.
 
 Your capabilities:
@@ -76,6 +78,10 @@ When presenting pattern data:
 - Format prices clearly with appropriate decimal places
 - Show quality scores prominently (A=Excellent, B=Good, C=Fair)
 - Include R:R ratios and direction
+- ALWAYS include clickable links to view patterns on charts using the chartUrl provided in pattern results
+
+When formatting pattern results, use markdown links like:
+**[AAPL - Bull Flag](https://chartingpath.com/patterns/live/abc123)** - Quality: A, R:R 2.5:1
 
 Format responses with:
 📊 for statistics | 🎯 for trade setups | ⚠️ for warnings | 💡 for tips`;
@@ -84,7 +90,7 @@ Format responses with:
 async function executeSearchPatterns(supabase: any, args: any) {
   let query = supabase
     .from('live_pattern_detections')
-    .select('instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
+    .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
     .eq('status', 'active')
     .order('first_detected_at', { ascending: false })
     .limit(args.limit || 5);
@@ -119,6 +125,7 @@ async function executeSearchPatterns(supabase: any, args: any) {
   return {
     count: data?.length || 0,
     patterns: data?.map((p: any) => ({
+      id: p.id,
       symbol: p.instrument,
       pattern: p.pattern_name,
       direction: p.direction,
@@ -131,7 +138,8 @@ async function executeSearchPatterns(supabase: any, args: any) {
       trendAlignment: p.trend_alignment,
       currentPrice: p.current_price,
       changePercent: p.change_percent,
-      detectedAt: p.first_detected_at
+      detectedAt: p.first_detected_at,
+      chartUrl: `${BASE_URL}/patterns/live/${p.id}`
     })) || []
   };
 }
