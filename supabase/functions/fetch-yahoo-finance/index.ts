@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { resolveToYahooSymbol, getSymbolVariants } from "../_shared/symbolResolver.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,19 +104,37 @@ serve(async (req) => {
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
 
-    // Yahoo Finance query URL - use yahooInterval (1h if 4h requested)
-    // IMPORTANT: symbol must be URL-encoded because index tickers include special chars (e.g. ^GSPC)
-    const encodedSymbol = encodeURIComponent(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+    // Resolve symbol to Yahoo format and try variants
+    const symbolVariants = getSymbolVariants(symbol);
+    let response: Response | null = null;
+    let lastError: Error | null = null;
+    let usedSymbol = symbol;
 
-    const response = await fetch(yahooUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    for (const variant of symbolVariants) {
+      const encodedSymbol = encodeURIComponent(variant);
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+
+      console.log(`Trying Yahoo Finance URL: ${yahooUrl}`);
+
+      const resp = await fetch(yahooUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      if (resp.ok) {
+        response = resp;
+        usedSymbol = variant;
+        console.log(`Success with symbol variant: ${variant}`);
+        break;
+      } else {
+        lastError = new Error(`Yahoo Finance API error for ${variant}: ${resp.status} ${resp.statusText}`);
+        console.log(`Failed with ${variant}: ${resp.status}`);
       }
-    });
+    }
 
-    if (!response.ok) {
-      throw new Error(`Yahoo Finance API error: ${response.statusText}`);
+    if (!response) {
+      throw lastError || new Error(`Yahoo Finance API error: No valid symbol variant found for ${symbol}`);
     }
 
     const data = await response.json();

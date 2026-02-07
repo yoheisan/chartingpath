@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { PATTERN_REGISTRY, calculateATR, BASE_PATTERNS } from "../_shared/patternDetectors.ts";
+import { resolveToYahooSymbol, getSymbolVariants } from "../_shared/symbolResolver.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +45,7 @@ interface DetectedPattern {
   outcome_pnl_percent: number | null;
 }
 
-// Fetch data from Yahoo Finance
+// Fetch data from Yahoo Finance with symbol resolution
 async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: number): Promise<CompressedBar[]> {
   const endDate = new Date();
   const startDate = new Date();
@@ -62,64 +63,75 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
   const period1 = Math.floor(startDate.getTime() / 1000);
   const period2 = Math.floor(endDate.getTime() / 1000);
 
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
-
-  console.log(`Fetching Yahoo data: ${yahooUrl}`);
-
-  const response = await fetch(yahooUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Yahoo Finance error: ${response.status}`);
-  }
-
-  const data = await response.json();
+  // Try multiple symbol variants
+  const symbolVariants = getSymbolVariants(symbol);
   
-  if (!data.chart?.result?.[0]) {
-    console.error('No data from Yahoo for', symbol);
-    return [];
-  }
+  for (const variant of symbolVariants) {
+    const encodedSymbol = encodeURIComponent(variant);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
 
-  const result = data.chart.result[0];
-  const timestamps: number[] = result.timestamp || [];
-  const quotes = result.indicators?.quote?.[0];
+    console.log(`Trying Yahoo data: ${yahooUrl}`);
 
-  if (!timestamps.length || !quotes) {
-    return [];
-  }
-
-  const bars: CompressedBar[] = timestamps
-    .map((ts: number, idx: number) => {
-      const o = quotes.open?.[idx];
-      const h = quotes.high?.[idx];
-      const l = quotes.low?.[idx];
-      const c = quotes.close?.[idx];
-      const v = quotes.volume?.[idx] ?? 0;
-
-      if (!Number.isFinite(o) || !Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(c)) {
-        return null;
+    const response = await fetch(yahooUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
+    });
 
-      return {
-        t: new Date(ts * 1000).toISOString(),
-        o: Number(o),
-        h: Number(h),
-        l: Number(l),
-        c: Number(c),
-        v: Number(v) || 0,
-      };
-    })
-    .filter((b): b is CompressedBar => b !== null);
+    if (!response.ok) {
+      console.log(`Failed with ${variant}: ${response.status}`);
+      continue;
+    }
 
-  // Aggregate to 4H if needed
-  if (timeframe === '4h' && bars.length > 0) {
-    return aggregateTo4H(bars);
+    const data = await response.json();
+    
+    if (!data.chart?.result?.[0]) {
+      console.log(`No data from Yahoo for ${variant}`);
+      continue;
+    }
+
+    console.log(`Success with symbol variant: ${variant}`);
+    
+    const result = data.chart.result[0];
+    const timestamps: number[] = result.timestamp || [];
+    const quotes = result.indicators?.quote?.[0];
+
+    if (!timestamps.length || !quotes) {
+      continue;
+    }
+
+    const bars: CompressedBar[] = timestamps
+      .map((ts: number, idx: number) => {
+        const o = quotes.open?.[idx];
+        const h = quotes.high?.[idx];
+        const l = quotes.low?.[idx];
+        const c = quotes.close?.[idx];
+        const v = quotes.volume?.[idx] ?? 0;
+
+        if (!Number.isFinite(o) || !Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(c)) {
+          return null;
+        }
+
+        return {
+          t: new Date(ts * 1000).toISOString(),
+          o: Number(o),
+          h: Number(h),
+          l: Number(l),
+          c: Number(c),
+          v: Number(v) || 0,
+        };
+      })
+      .filter((b): b is CompressedBar => b !== null);
+
+    // Aggregate to 4H if needed
+    if (timeframe === '4h' && bars.length > 0) {
+      return aggregateTo4H(bars);
+    }
+
+    return bars;
   }
 
-  return bars;
+  // All variants failed
 }
 
 // Aggregate 1H bars to 4H
