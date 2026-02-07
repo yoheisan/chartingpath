@@ -115,6 +115,7 @@ const RectanglePattern = lazy(() => import("./pages/blog/RectanglePattern"));
 const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 const TradingStrategiesGuide = lazy(() => import("./pages/blog/TradingStrategiesGuide"));
+const ChartTypesExplained = lazy(() => import("./pages/blog/ChartTypesExplained"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -175,6 +176,7 @@ const App = () => (
           <Route path="/quiz/crypto" element={withSuspense(<CryptoQuiz />)} />
           <Route path="/quiz/commodities" element={withSuspense(<CommoditiesQuiz />)} />
           <Route path="/learn" element={withSuspense(<BlogV2 />)} />
+          <Route path="/blog/chart-types-explained" element={withSuspense(<ChartTypesExplained />)} />
           <Route path="/blog/:slug" element={withSuspense(<DynamicArticle />)} />
           <Route path="/learn/head-and-shoulders" element={withSuspense(<HeadAndShoulders />)} />
           <Route path="/learn/double-top-bottom" element={withSuspense(<DoubleTopBottom />)} />
