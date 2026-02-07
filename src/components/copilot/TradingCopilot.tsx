@@ -314,7 +314,7 @@ export function TradingCopilot({
                   )}
                 >
                   {message.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80">
                       <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                     </div>
                   ) : (
