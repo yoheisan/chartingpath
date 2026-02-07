@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -35,7 +36,9 @@ interface ToolCall {
   result?: any;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trading-copilot`;
+const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
+const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
 
 const QUICK_ACTIONS = [
   { 
@@ -104,7 +107,7 @@ export function TradingCopilot({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ 
           messages: [...messages, userMsg].map(m => ({ 
