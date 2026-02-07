@@ -43,9 +43,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="max-h-[85vh]">
-          <DrawerTitle className="sr-only">Trading Copilot</DrawerTitle>
+          <DrawerTitle className="sr-only">Command Center</DrawerTitle>
           <DrawerDescription className="sr-only">
-            Search commands or ask AI for help with trading.
+            Your central hub for navigation, research, and automation.
           </DrawerDescription>
           
           {mode === "chat" ? (
@@ -69,9 +69,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-3xl h-[700px] p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
-          <DialogTitle className="sr-only">Trading Copilot</DialogTitle>
+          <DialogTitle className="sr-only">Command Center</DialogTitle>
           <DialogDescription className="sr-only">
-            AI chat for research and automation.
+            Your central hub for navigation, research, and automation.
           </DialogDescription>
           <CommandPaletteChat initialPrompt={chatPrompt} onBack={handleBack} />
         </DialogContent>
@@ -82,9 +82,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
-        <DialogTitle className="sr-only">Trading Copilot</DialogTitle>
+        <DialogTitle className="sr-only">Command Center</DialogTitle>
         <DialogDescription className="sr-only">
-          Search commands or ask AI.
+          Your central hub for navigation, research, and automation.
         </DialogDescription>
         <CommandPaletteContent 
           onClose={onClose} 
