@@ -200,6 +200,37 @@ const Pricing = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
             Scan 1,100+ instruments across S&P 500, Crypto, Forex & Commodities. Start free, upgrade when you're ready.
           </p>
+          
+          {/* Value Proposition - Competitive Positioning */}
+          <div className="max-w-4xl mx-auto mb-8 p-6 bg-gradient-to-br from-primary/5 via-background to-accent/5 rounded-2xl border border-border/50">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Why traders choose ChartingPath
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
+                <div className="text-2xl mb-2">📈</div>
+                <div className="font-medium text-foreground mb-1">Outcome Proof, Not Theory</div>
+                <div className="text-muted-foreground">
+                  We auto-capture real trade outcomes. See actual win rates per pattern—not backtested estimates.
+                </div>
+              </div>
+              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
+                <div className="text-2xl mb-2">💰</div>
+                <div className="font-medium text-foreground mb-1">Pro Features, Fair Pricing</div>
+                <div className="text-muted-foreground">
+                  Full backtesting and alerts from $12/mo. Comparable platforms charge $80–$250/mo for similar depth.
+                </div>
+              </div>
+              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
+                <div className="text-2xl mb-2">🎯</div>
+                <div className="font-medium text-foreground mb-1">Pattern-First, No Noise</div>
+                <div className="text-muted-foreground">
+                  Focused on what matters: detecting, validating, and acting on chart patterns across 8,500+ instruments.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground mb-8">
             <span className="px-3 py-1 bg-muted rounded-full">📊 500+ US Stocks</span>
             <span className="px-3 py-1 bg-muted rounded-full">₿ 100+ Cryptocurrencies</span>
