@@ -138,7 +138,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       description: "Research & backtest patterns",
       icon: FlaskConical,
       category: "navigate",
-      action: () => navigate("/members/pattern-lab"),
+      action: () => navigate("/projects/pattern-lab/new"),
       shortcut: "G L",
       keywords: ["backtest", "research", "analyze"]
     },
