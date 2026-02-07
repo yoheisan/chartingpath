@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home,
-  FolderKanban,
-  Download,
   Settings
 } from "lucide-react";
 
@@ -16,16 +14,6 @@ const MemberNavigation = () => {
       icon: Home,
       label: "Dashboard",
       primary: true
-    },
-    {
-      to: "/projects",
-      icon: FolderKanban,
-      label: "Projects",
-    },
-    {
-      to: "/members/downloads",
-      icon: Download,
-      label: "Downloads",
     },
     {
       to: "/members/account",

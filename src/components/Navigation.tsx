@@ -127,7 +127,6 @@ const Navigation = () => {
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Account</p>
         <div className="flex flex-col gap-2 pl-2">
           <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Dashboard</Link>
-          <Link to="/members/downloads" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Downloads</Link>
           <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Settings</Link>
         </div>
       </div>
