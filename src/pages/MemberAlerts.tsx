@@ -71,11 +71,13 @@ const MemberAlerts = () => {
     { value: '1h', label: '1 Hour (Recommended)' },
     { value: '15m', label: '15 Minutes' },
     { value: '4h', label: '4 Hours' },
+    { value: '8h', label: '8 Hours' },
     { value: '1d', label: '1 Day' },
   ] : [
     { value: '15m', label: '15 Minutes' },
     { value: '1h', label: '1 Hour' },
     { value: '4h', label: '4 Hours' },
+    { value: '8h', label: '8 Hours' },
     { value: '1d', label: '1 Day' },
   ];
 

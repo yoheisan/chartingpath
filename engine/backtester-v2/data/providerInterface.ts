@@ -13,7 +13,7 @@ import { PriceFrame, Bar } from "./types";
 // ============================================================================
 
 export type InstrumentType = 'stock' | 'etf' | 'forex' | 'crypto' | 'index' | 'commodity' | 'futures';
-export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1wk' | '1mo';
+export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '8h' | '1d' | '1wk' | '1mo';
 export type CostTier = 'free' | 'freemium' | 'paid' | 'enterprise';
 
 export interface ProviderCapabilities {
@@ -76,7 +76,7 @@ export interface DataProvider {
     symbol: string, 
     start: string, 
     end: string, 
-    interval: '1m' | '5m' | '15m' | '30m' | '1h' | '4h'
+    interval: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '8h'
   ): Promise<PriceFrame>;
   
   /**

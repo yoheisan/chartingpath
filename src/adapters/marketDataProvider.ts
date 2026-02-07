@@ -114,7 +114,7 @@ export class MarketDataProvider {
    */
   findBestProvider(criteria: {
     instrument?: 'stock' | 'etf' | 'forex' | 'crypto' | 'index';
-    timeframe?: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1wk' | '1mo';
+    timeframe?: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '8h' | '1d' | '1wk' | '1mo';
     preferFree?: boolean;
     requireCommercialLicense?: boolean;
   }): string | null {
