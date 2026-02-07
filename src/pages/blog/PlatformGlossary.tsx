@@ -56,16 +56,81 @@ const PlatformGlossary = () => {
       term: 'Full Chart',
       definition: 'An expanded modal view of the Study Chart with trade overlays (Entry, Stop Loss, Take Profit lines), pattern zone markers, and Trade Playback controls.',
       category: 'charts',
+      visual: (
+        <div className="space-y-2">
+          <div className="h-20 bg-background rounded overflow-hidden border">
+            <Suspense fallback={<Skeleton className="w-full h-full" />}>
+              <ThumbnailChart 
+                bars={demoBars} 
+                visualSpec={{
+                  ...demoVisualSpec,
+                  overlays: [
+                    { type: 'hline' as const, id: 'entry', price: 175, label: 'Entry', style: 'primary' as const },
+                    { type: 'hline' as const, id: 'sl', price: 168, label: 'SL', style: 'destructive' as const },
+                    { type: 'hline' as const, id: 'tp', price: 189, label: 'TP', style: 'positive' as const },
+                  ],
+                }} 
+                height={80} 
+              />
+            </Suspense>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-8 h-0.5 bg-warning" />
+              <span className="text-muted-foreground">Entry</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-8 border-t border-dashed" style={{ borderColor: '#ef4444' }} />
+              <span className="text-muted-foreground">SL</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-8 border-t border-dashed" style={{ borderColor: '#22c55e' }} />
+              <span className="text-muted-foreground">TP</span>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
       term: 'Thumbnail Chart',
       definition: 'A compact, read-only chart preview used in pattern cards and galleries. Optimized for fast scanning without interactive controls.',
       category: 'charts',
+      visual: (
+        <div className="grid grid-cols-3 gap-2">
+          {[60, 70, 65].map((h, i) => (
+            <div key={i} className="h-12 bg-background rounded overflow-hidden border">
+              <Suspense fallback={<Skeleton className="w-full h-full" />}>
+                <ThumbnailChart bars={demoBars.slice(i * 5)} visualSpec={demoVisualSpec} height={48} />
+              </Suspense>
+            </div>
+          ))}
+        </div>
+      ),
     },
     {
       term: 'Signal Chart',
       definition: 'A specialized chart for detected patterns showing entry markers, price levels, pattern zones, and quality grades.',
       category: 'charts',
+      visual: (
+        <div className="flex items-center gap-3">
+          <div className="h-16 flex-1 bg-background rounded overflow-hidden border">
+            <Suspense fallback={<Skeleton className="w-full h-full" />}>
+              <ThumbnailChart 
+                bars={demoBars} 
+                visualSpec={{
+                  ...demoVisualSpec,
+                  overlays: [
+                    { type: 'hline' as const, id: 'entry', price: 175, label: 'Entry', style: 'primary' as const },
+                  ],
+                }}
+                quality={{ score: 8.5, grade: 'A' as const, reasons: [], confidence: 0.85, warnings: [], tradeable: true }}
+                height={64} 
+              />
+            </Suspense>
+          </div>
+          <GradeBadge grade="A" size="sm" showTooltip={false} />
+        </div>
+      ),
     },
     {
       term: 'Candlestick',
