@@ -162,6 +162,14 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
               <Badge variant="destructive">Blocked</Badge>
             ) : pushLoading || saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : permission === 'default' ? (
+              <Button
+                size="sm"
+                onClick={handlePushSubscriptionToggle}
+                disabled={pushLoading}
+              >
+                Enable
+              </Button>
             ) : (
               <Switch
                 id="push-notifications"
@@ -171,6 +179,26 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             )}
           </div>
         </div>
+
+        {/* Permission Status Messages */}
+        {isSupported && permission === 'default' && (
+          <div className="rounded-lg bg-muted p-3 text-sm">
+            <p className="text-muted-foreground">
+              Click "Enable" to receive real-time pattern alerts in your browser. You'll be asked to allow notifications.
+            </p>
+          </div>
+        )}
+
+        {isSupported && permission === 'denied' && (
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm space-y-2">
+            <p className="text-destructive font-medium">
+              Push notifications are blocked by your browser.
+            </p>
+            <p className="text-muted-foreground text-xs">
+              To enable: Click the lock/info icon in your browser's address bar → Find "Notifications" → Change to "Allow" → Refresh the page.
+            </p>
+          </div>
+        )}
 
         {/* Push Preference (database toggle) - only show if subscribed */}
         {isSubscribed && (
@@ -191,17 +219,6 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             />
           </div>
         )}
-
-        {/* Permission Status */}
-        {isSupported && permission === 'denied' && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm">
-            <p className="text-destructive">
-              Push notifications are blocked. To enable them, click the lock icon in your browser's address bar and allow notifications.
-            </p>
-          </div>
-        )}
-
-        {/* Email Notifications */}
         <div className="flex items-center justify-between border-t pt-4">
           <div className="space-y-1">
             <Label htmlFor="email-notifications" className="flex items-center gap-2">
