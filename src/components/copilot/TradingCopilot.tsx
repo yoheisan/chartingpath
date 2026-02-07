@@ -20,7 +20,6 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -109,11 +108,13 @@ export function TradingCopilot({
           "Content-Type": "application/json",
           "apikey": SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ 
-          messages: [...messages, userMsg].map(m => ({ 
-            role: m.role, 
-            content: m.content 
-          }))
+        body: JSON.stringify({
+          messages: [...messages, userMsg]
+            .filter(m => m.role === "user" || m.content.trim().length > 0)
+            .map(m => ({
+              role: m.role,
+              content: m.content
+            }))
         }),
       });
 
