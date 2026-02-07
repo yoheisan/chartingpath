@@ -179,16 +179,16 @@ const PlatformFAQ = () => {
           <p className="mb-4">ChartingPath uses <strong>close-to-close</strong> coloring for consistent trend visualization:</p>
           <div className="flex items-center gap-6 mb-4 p-4 bg-background rounded-lg border">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-10 bg-positive rounded" />
+              <div className="w-4 h-10 rounded" style={{ backgroundColor: '#22c55e' }} />
               <div>
-                <p className="font-medium text-positive">Green</p>
+                <p className="font-medium" style={{ color: '#22c55e' }}>Green</p>
                 <p className="text-xs text-muted-foreground">Close &gt; Previous Close</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-10 bg-destructive rounded" />
+              <div className="w-4 h-10 rounded" style={{ backgroundColor: '#ef4444' }} />
               <div>
-                <p className="font-medium text-destructive">Red</p>
+                <p className="font-medium" style={{ color: '#ef4444' }}>Red</p>
                 <p className="text-xs text-muted-foreground">Close &lt; Previous Close</p>
               </div>
             </div>
