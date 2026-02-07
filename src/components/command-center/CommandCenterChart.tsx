@@ -172,12 +172,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars, hasEnoughData=${hasEnoughData}`);
 
       if (!hasEnoughData) {
-        // Fallback to Yahoo Finance using DATA_COVERAGE limits
+        // Fallback to Yahoo Finance
+        // IMPORTANT: Yahoo limits hourly data to ~60 days, so for 4h/8h (aggregated from 1h)
+        // we must use a shorter lookback to avoid API errors
+        const isHourlyAggregated = ['4h', '8h'].includes(timeframe);
+        const yahooLookbackDays = isHourlyAggregated ? 60 : daysBack;
+        
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(endDate.getDate() - daysBack);
+        startDate.setDate(endDate.getDate() - yahooLookbackDays);
         
-        console.log(`[CommandCenterChart] Using Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+        console.log(`[CommandCenterChart] Using Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${yahooLookbackDays} days)`);
 
         const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
           body: { 
@@ -189,7 +194,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           },
         });
 
-        if (fnError) throw fnError;
+        if (fnError) {
+          console.error('[CommandCenterChart] Yahoo fallback error:', fnError);
+          throw new Error(fnError.message || 'Failed to fetch chart data');
+        }
         
         console.log(`[CommandCenterChart] Yahoo returned ${fnData?.bars?.length || 0} bars`);
         
@@ -201,6 +209,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           c: b.close || b.c,
           v: b.volume || b.v,
         }));
+
+        if (fetchedBars.length === 0) {
+          throw new Error('No data available for this symbol/timeframe');
+        }
 
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
