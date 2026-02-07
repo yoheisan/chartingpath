@@ -429,54 +429,54 @@ const CommandCenterGuide = () => {
           <div className="space-y-3">
             {[
               {
-                command: 'Find bull flags on tech stocks with grade A',
-                description: 'Discover high-quality continuation patterns in the technology sector',
-                category: 'Pattern Discovery',
+                command: 'Find bull flag patterns with grade A quality',
+                description: 'Search for high-quality bull flag continuation patterns across all instruments',
+                category: 'Pattern Search',
               },
               {
-                command: 'What crypto has the best win rate patterns right now?',
-                description: 'AI analyzes historical performance to surface highest-probability setups',
-                category: 'AI Analysis',
+                command: 'Show me bearish patterns on AAPL',
+                description: 'Find all active bearish setups forming on Apple stock',
+                category: 'Pattern Search',
               },
               {
-                command: 'Show me AAPL chart with all indicators',
-                description: 'Instantly load a full Study Chart with EMA, SMA, Bollinger, and VWAP',
-                category: 'Charting',
-              },
-              {
-                command: 'Compare head and shoulders vs double top success rates',
-                description: 'Get statistical comparison between two reversal pattern types',
+                command: 'What is the win rate for head and shoulders?',
+                description: 'Get historical performance statistics including win rate and average R-multiple',
                 category: 'Statistics',
               },
               {
-                command: 'Find patterns with 2:1 or better reward-to-risk',
-                description: 'Filter active signals by minimum R:R threshold',
-                category: 'Pattern Discovery',
+                command: 'Find ascending triangle patterns on daily timeframe',
+                description: 'Scan for triangle consolidation patterns on the daily chart',
+                category: 'Pattern Search',
               },
               {
-                command: 'What patterns work best in a downtrend?',
-                description: 'Learn which continuation and reversal setups excel in bearish markets',
+                command: 'Explain the double bottom pattern',
+                description: 'Learn the psychology, entry rules, stop placement, and targets for this reversal pattern',
                 category: 'Education',
               },
               {
-                command: 'Show forex pairs forming triangles this week',
-                description: 'Scan FX markets for consolidation patterns nearing breakout',
-                category: 'Pattern Discovery',
+                command: 'Show bullish patterns with B quality or better',
+                description: 'Find all active bullish setups with at least B-grade quality scores',
+                category: 'Pattern Search',
               },
               {
-                command: 'Explain how the quality score is calculated',
-                description: 'Get a breakdown of the trend, volume, structure, and history factors',
-                category: 'Education',
-              },
-              {
-                command: 'BTC historical performance on cup and handle',
-                description: 'Review Bitcoin-specific win rates and average returns for this pattern',
+                command: 'What are the stats for bull flag on BTCUSD?',
+                description: 'Get instrument-specific historical performance for Bitcoin bull flags',
                 category: 'Statistics',
               },
               {
-                command: 'Generate TradingView alert for NVDA bull flag',
-                description: 'AI creates a ready-to-use Pine Script alert for your setup',
+                command: 'Generate Pine Script for ascending triangle on NVDA',
+                description: 'Create a ready-to-use TradingView strategy with alerts and ATR-based exits',
                 category: 'Automation',
+              },
+              {
+                command: 'How do I trade head and shoulders?',
+                description: 'Get a complete educational breakdown of entry, stop-loss, and target rules',
+                category: 'Education',
+              },
+              {
+                command: 'Find patterns on 4h timeframe',
+                description: 'Search for intraday patterns forming on the 4-hour chart',
+                category: 'Pattern Search',
               },
             ].map((item, i) => (
               <Card key={i} className="hover:border-primary/30 transition-colors">
