@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   Command,
   CommandEmpty,
@@ -62,9 +62,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     }
   }, [isOpen]);
 
-  const handleAction = (action: () => void) => {
-    action();
-    onClose();
+  const handleAction = (cmd: CommandItem) => {
+    cmd.action();
+    if (cmd.category === "navigate") onClose();
   };
 
   const handleAIQuery = (prompt: string) => {
@@ -273,10 +273,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-2xl h-[600px] p-0 gap-0 overflow-hidden">
-          <CommandPaletteChat 
-            initialPrompt={chatPrompt} 
-            onBack={() => setMode("commands")} 
-          />
+          <DialogTitle className="sr-only">Trading Copilot</DialogTitle>
+          <DialogDescription className="sr-only">AI chat for research and automation.</DialogDescription>
+          <CommandPaletteChat initialPrompt={chatPrompt} onBack={() => setMode("commands")} />
+
         </DialogContent>
       </Dialog>
     );
@@ -285,7 +285,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
-        <Command className="rounded-lg border-0" onKeyDown={handleKeyDown}>
+        <DialogTitle className="sr-only">Trading Copilot</DialogTitle><DialogDescription className="sr-only">Search commands or ask AI.</DialogDescription><Command className="rounded-lg border-0" onKeyDown={handleKeyDown}>
           <div className="flex items-center border-b px-3">
             <Sparkles className="mr-2 h-4 w-4 shrink-0 text-primary" />
             <CommandInput 
@@ -314,7 +314,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 {filteredGroups.suggested.map((cmd) => (
                   <CommandItem
                     key={cmd.id}
-                    onSelect={() => handleAction(cmd.action)}
+                     onSelect={() => handleAction(cmd)}
                     className="flex items-center gap-3 py-3"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
@@ -339,7 +339,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   {filteredGroups.navigate.map((cmd) => (
                     <CommandItem
                       key={cmd.id}
-                      onSelect={() => handleAction(cmd.action)}
+                       onSelect={() => handleAction(cmd)}
                       className="flex items-center gap-3"
                     >
                       <cmd.icon className="h-4 w-4 text-muted-foreground" />
@@ -362,7 +362,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   {filteredGroups.research.map((cmd) => (
                     <CommandItem
                       key={cmd.id}
-                      onSelect={() => handleAction(cmd.action)}
+                       onSelect={() => handleAction(cmd)}
                       className="flex items-center gap-3"
                     >
                       <cmd.icon className="h-4 w-4 text-muted-foreground" />
@@ -386,7 +386,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   {filteredGroups.automate.map((cmd) => (
                     <CommandItem
                       key={cmd.id}
-                      onSelect={() => handleAction(cmd.action)}
+                      onSelect={() => handleAction(cmd)}
                       className="flex items-center gap-3"
                     >
                       <cmd.icon className="h-4 w-4 text-muted-foreground" />
