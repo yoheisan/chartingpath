@@ -150,12 +150,13 @@ const ASSET_CLASS_LABELS: Record<string, string> = {
 };
 
 // Timeframes - synced with screener (1h, 4h, 8h, 1d, 1wk)
+// Lookback limits based on Data Coverage Contract (Yahoo Finance provider)
 const TIMEFRAMES = [
-  { value: '1h', label: '1 Hour', intradayLimit: '30 days' },
-  { value: '4h', label: '4 Hour', intradayLimit: '30 days' },
-  { value: '8h', label: '8 Hour', intradayLimit: '30 days' },
-  { value: '1d', label: 'Daily', intradayLimit: null },
-  { value: '1wk', label: 'Weekly', intradayLimit: null },
+  { value: '1h', label: '1 Hour', maxYears: 2, hint: '2 years max' },
+  { value: '4h', label: '4 Hour', maxYears: 2, hint: '2 years max' },
+  { value: '8h', label: '8 Hour', maxYears: 2, hint: '2 years max' },
+  { value: '1d', label: 'Daily', maxYears: 5, hint: '5 years max' },
+  { value: '1wk', label: 'Weekly', maxYears: 7, hint: '7 years max' },
 ];
 
 // LOOKBACK_OPTIONS now derived from dataCoverageContract - removed static array
@@ -542,8 +543,8 @@ const PatternLabWizard = () => {
                         {TIMEFRAMES.map(tf => (
                           <SelectItem key={tf.value} value={tf.value}>
                             {tf.label}
-                            {tf.intradayLimit && (
-                              <span className="text-muted-foreground ml-2">({tf.intradayLimit} max)</span>
+                            {tf.hint && (
+                              <span className="text-muted-foreground ml-2">({tf.hint})</span>
                             )}
                           </SelectItem>
                         ))}
