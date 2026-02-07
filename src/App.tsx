@@ -116,6 +116,9 @@ const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 const TradingStrategiesGuide = lazy(() => import("./pages/blog/TradingStrategiesGuide"));
 const ChartTypesExplained = lazy(() => import("./pages/blog/ChartTypesExplained"));
+const PlatformGlossary = lazy(() => import("./pages/blog/PlatformGlossary"));
+const CommandCenterGuide = lazy(() => import("./pages/blog/CommandCenterGuide"));
+const PlatformFAQ = lazy(() => import("./pages/blog/PlatformFAQ"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -177,6 +180,9 @@ const App = () => (
           <Route path="/quiz/commodities" element={withSuspense(<CommoditiesQuiz />)} />
           <Route path="/learn" element={withSuspense(<BlogV2 />)} />
           <Route path="/blog/chart-types-explained" element={withSuspense(<ChartTypesExplained />)} />
+          <Route path="/blog/platform-glossary" element={withSuspense(<PlatformGlossary />)} />
+          <Route path="/blog/command-center-guide" element={withSuspense(<CommandCenterGuide />)} />
+          <Route path="/blog/platform-faq" element={withSuspense(<PlatformFAQ />)} />
           <Route path="/blog/:slug" element={withSuspense(<DynamicArticle />)} />
           <Route path="/learn/head-and-shoulders" element={withSuspense(<HeadAndShoulders />)} />
           <Route path="/learn/double-top-bottom" element={withSuspense(<DoubleTopBottom />)} />

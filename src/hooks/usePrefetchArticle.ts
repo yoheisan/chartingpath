@@ -32,6 +32,9 @@ const STATIC_ARTICLE_SLUGS = new Set([
   'trading-strategies-guide',
   // Platform documentation
   'chart-types-explained',
+  'platform-glossary',
+  'command-center-guide',
+  'platform-faq',
   // Strategy articles
   'strategies/scalping',
   'strategies/day-trading',
@@ -93,6 +96,9 @@ export function usePrefetchArticle() {
         'trading-strategies-guide': () => import('@/pages/blog/TradingStrategiesGuide'),
         // Platform documentation
         'chart-types-explained': () => import('@/pages/blog/ChartTypesExplained'),
+        'platform-glossary': () => import('@/pages/blog/PlatformGlossary'),
+        'command-center-guide': () => import('@/pages/blog/CommandCenterGuide'),
+        'platform-faq': () => import('@/pages/blog/PlatformFAQ'),
         // Strategy articles
         'strategies/scalping': () => import('@/pages/strategies/ScalpingStrategy'),
         'strategies/day-trading': () => import('@/pages/strategies/DayTradingStrategy'),
