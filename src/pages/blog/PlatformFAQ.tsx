@@ -356,15 +356,21 @@ const PlatformFAQ = () => {
       question: 'What timeframes are supported?',
       answer: (
         <div>
-          <p className="mb-4">Pattern detection runs on multiple timeframes:</p>
+          <p className="mb-3 font-medium">Pattern Detection:</p>
           <div className="flex flex-wrap gap-2 mb-4">
             {['1H', '4H', '1D', '1W'].map(tf => (
               <Badge key={tf} variant="outline" className="text-sm">{tf}</Badge>
             ))}
           </div>
+          <p className="mb-3 font-medium">Study Chart (viewing only):</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {['15m', '1H', '4H', '8H', '1D', '1W'].map(tf => (
+              <Badge key={tf} variant="outline" className="text-sm">{tf}</Badge>
+            ))}
+          </div>
           <p className="text-sm text-muted-foreground">
             <strong>Daily (1D)</strong> is the default and most reliable for swing trading. 
-            <strong> Weekly (1W)</strong> is best for position trading and macro analysis.
+            <strong> 15m</strong> is available for chart study with 60-day lookback (Lite+ plans).
           </p>
         </div>
       ),
