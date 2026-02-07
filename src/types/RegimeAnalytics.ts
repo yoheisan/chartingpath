@@ -21,7 +21,7 @@ import { z } from 'zod';
  * Valid timeframes for regime computation
  * Must match playbook timeframe for single-TF consistency
  */
-export const VALID_TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '1D', '1W'] as const;
+export const VALID_TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '8h', '1D', '1W'] as const;
 export type ValidTimeframe = typeof VALID_TIMEFRAMES[number];
 
 /**

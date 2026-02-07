@@ -31,6 +31,7 @@ const TIMEFRAMES = [
   { value: '15m', label: '15m' },
   { value: '1h', label: '1H' },
   { value: '4h', label: '4H' },
+  { value: '8h', label: '8H' },
   { value: '1d', label: '1D' },
   { value: '1wk', label: '1W' },
 ];

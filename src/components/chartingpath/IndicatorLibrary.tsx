@@ -19,6 +19,7 @@ const TIMEFRAMES = [
   { value: '30m', label: '30 Minutes' },
   { value: '1h', label: '1 Hour' },
   { value: '4h', label: '4 Hours' },
+  { value: '8h', label: '8 Hours' },
   { value: '1d', label: '1 Day' },
   { value: '1w', label: '1 Week' },
   { value: '1M', label: '1 Month' }

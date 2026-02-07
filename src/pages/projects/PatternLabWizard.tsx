@@ -149,10 +149,11 @@ const ASSET_CLASS_LABELS: Record<string, string> = {
   etfs: 'ETFs',
 };
 
-// Timeframes - synced with screener (1h, 4h, 1d, 1wk)
+// Timeframes - synced with screener (1h, 4h, 8h, 1d, 1wk)
 const TIMEFRAMES = [
   { value: '1h', label: '1 Hour', intradayLimit: '30 days' },
   { value: '4h', label: '4 Hour', intradayLimit: '30 days' },
+  { value: '8h', label: '8 Hour', intradayLimit: '30 days' },
   { value: '1d', label: 'Daily', intradayLimit: null },
   { value: '1wk', label: 'Weekly', intradayLimit: null },
 ];

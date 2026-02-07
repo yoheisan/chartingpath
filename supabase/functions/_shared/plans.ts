@@ -125,7 +125,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
+        allowedTimeframes: ['15m', '1h', '4h', '8h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
@@ -144,7 +144,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
+        allowedTimeframes: ['15m', '1h', '4h', '8h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
@@ -163,7 +163,7 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
       },
       study: {
-        allowedTimeframes: ['15m', '1h', '4h', '1d', '1wk']
+        allowedTimeframes: ['15m', '1h', '4h', '8h', '1d', '1wk']
       },
       projects: {
         setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
@@ -182,6 +182,7 @@ export const PLANS_CONFIG: PlansConfig = {
  */
 export const BARS_PER_YEAR: Record<string, number> = {
   '1d': 365,
+  '8h': 1095,  // 365 * 3
   '4h': 2190,  // 365 * 6
   '1h': 8760,  // 365 * 24
   '15m': 35040, // 365 * 24 * 4
