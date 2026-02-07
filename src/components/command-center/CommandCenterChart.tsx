@@ -16,6 +16,7 @@ import StudyChart from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -148,6 +149,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     setError(null);
 
     try {
+      // Use centralized DATA_COVERAGE limits
+      const chartLimits = getChartDataLimits(timeframe as Timeframe);
+      const { barLimit, minBarsRequired, daysBack } = chartLimits;
+
       // Fetch from historical_prices table
       const { data, error: dbError } = await supabase
         .from('historical_prices')
@@ -155,24 +160,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         .eq('symbol', symbol)
         .eq('timeframe', timeframe)
         .order('date', { ascending: true })
-        .limit(200);
+        .limit(barLimit);
 
       if (dbError) throw dbError;
 
-      if (!data || data.length === 0) {
-        // Fallback to edge function with proper date parameters
-        // Intraday intervals (15m, 1h, 4h) are limited to ~30 days by Yahoo Finance
-        const isIntraday = ['15m', '1h', '4h'].includes(timeframe);
+      // Only use DB data if we have enough bars
+      const hasEnoughData = data && data.length >= minBarsRequired;
+
+      if (!hasEnoughData) {
+        // Fallback to Yahoo Finance using DATA_COVERAGE limits
         const endDate = new Date();
         const startDate = new Date();
-        
-        if (isIntraday) {
-          // Yahoo limits intraday to ~30 days
-          startDate.setDate(endDate.getDate() - 30);
-        } else {
-          // Daily/weekly can go back 1 year
-          startDate.setFullYear(endDate.getFullYear() - 1);
-        }
+        startDate.setDate(endDate.getDate() - daysBack);
 
         const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
           body: { 
