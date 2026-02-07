@@ -207,7 +207,7 @@ export function getChartDataLimits(timeframe: Timeframe): {
     case '5m':
       return { barLimit: 500, minBarsRequired: 50, daysBack: 7 };
     case '15m':
-      return { barLimit: 500, minBarsRequired: 50, daysBack: 30 };
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 60 }; // 60 days max
     case '1h':
       return { barLimit: 730, minBarsRequired: 50, daysBack: 365 }; // 1 year
     case '4h':
