@@ -74,6 +74,48 @@ const tools = [
         required: ["pattern_name", "symbol"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_article",
+      description: "Search the learning center for strategy guides, pattern tutorials, and trading education articles. Use when users ask about trading strategies, how to trade patterns, or want educational content.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query - pattern name, strategy type, or topic like 'trend following', 'reversal strategies', 'risk management'" },
+          category: { type: "string", description: "Article category filter: 'Chart Patterns', 'Trend Following', 'Technical Indicators', 'Risk Management', 'Options', 'Algorithmic'" },
+          limit: { type: "number", description: "Maximum results. Default 5." }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_to_watchlist",
+      description: "Add an instrument symbol to the user's watchlist for pattern monitoring. Use when users want to track or monitor a specific stock, crypto, or forex pair.",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Instrument symbol to add, e.g. AAPL, BTCUSD, EURUSD" }
+        },
+        required: ["symbol"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_market_breadth",
+      description: "Get current market breadth data including advance/decline ratios and market sentiment. Use when users ask about overall market health, market internals, or broad market conditions.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
   }
 ];
 
@@ -90,6 +132,9 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - **get_pattern_stats**: Get historical win rates and performance data for specific patterns.
 - **explain_pattern**: Teach users about pattern psychology and trading approaches.
 - **generate_pine_script**: Create TradingView Pine Script strategies.
+- **find_article**: Search 120+ strategy guides and educational articles in the Learning Center.
+- **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
+- **get_market_breadth**: Get current market internals (advance/decline ratio, sentiment).
 
 ## Your Personality
 - Be warm, helpful, and conversational—not robotic
@@ -447,7 +492,168 @@ if barstate.islast
   };
 }
 
-async function executeTool(toolName: string, args: any, supabase: any) {
+// === NEW TOOLS ===
+
+async function executeFindArticle(supabase: any, args: any) {
+  const query = args.query?.toLowerCase() || '';
+  const category = args.category;
+  const limit = args.limit || 5;
+
+  let dbQuery = supabase
+    .from('learning_articles')
+    .select('id, title, slug, category, subcategory, excerpt, tags, reading_time_minutes')
+    .eq('status', 'published')
+    .order('view_count', { ascending: false })
+    .limit(limit);
+
+  // Category filter
+  if (category) {
+    dbQuery = dbQuery.ilike('category', `%${category}%`);
+  }
+
+  // Text search across title, tags, and excerpt
+  if (query) {
+    dbQuery = dbQuery.or(`title.ilike.%${query}%,excerpt.ilike.%${query}%,tags.cs.{${query}}`);
+  }
+
+  const { data, error } = await dbQuery;
+
+  if (error) {
+    console.error('[trading-copilot] Article search error:', error);
+    return { error: 'Failed to search articles', articles: [] };
+  }
+
+  if (!data?.length) {
+    // Fallback: try broader search
+    const { data: fallbackData } = await supabase
+      .from('learning_articles')
+      .select('id, title, slug, category, subcategory, excerpt, reading_time_minutes')
+      .eq('status', 'published')
+      .order('view_count', { ascending: false })
+      .limit(5);
+
+    return {
+      message: `No exact matches for "${args.query}", but here are popular articles:`,
+      articles: fallbackData?.map((a: any) => ({
+        title: a.title,
+        category: a.category,
+        subcategory: a.subcategory,
+        excerpt: a.excerpt,
+        readingTime: a.reading_time_minutes,
+        url: `/blog/${a.slug}`
+      })) || []
+    };
+  }
+
+  return {
+    count: data.length,
+    articles: data.map((a: any) => ({
+      title: a.title,
+      category: a.category,
+      subcategory: a.subcategory,
+      excerpt: a.excerpt,
+      readingTime: a.reading_time_minutes,
+      url: `/blog/${a.slug}`
+    }))
+  };
+}
+
+async function executeAddToWatchlist(supabase: any, args: any, userId: string | null) {
+  const symbol = args.symbol?.toUpperCase();
+  
+  if (!symbol) {
+    return { success: false, message: 'Please provide a symbol to add.' };
+  }
+
+  if (!userId) {
+    return { 
+      success: false, 
+      message: `I can't add ${symbol} to your watchlist because you're not logged in. Please log in first, or you can manually add it from the Dashboard.`,
+      suggestedAction: 'login'
+    };
+  }
+
+  // Check if already in watchlist
+  const { data: existing } = await supabase
+    .from('user_watchlist')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('symbol', symbol)
+    .single();
+
+  if (existing) {
+    return { 
+      success: true, 
+      alreadyExists: true,
+      message: `${symbol} is already in your watchlist!`,
+      symbol
+    };
+  }
+
+  // Add to watchlist
+  const { error } = await supabase
+    .from('user_watchlist')
+    .insert({ user_id: userId, symbol });
+
+  if (error) {
+    console.error('[trading-copilot] Watchlist insert error:', error);
+    return { success: false, message: `Failed to add ${symbol} to watchlist. Please try again.` };
+  }
+
+  return { 
+    success: true, 
+    message: `✅ Added ${symbol} to your watchlist! You'll now see pattern alerts for this symbol.`,
+    symbol,
+    dashboardUrl: '/dashboard'
+  };
+}
+
+async function executeGetMarketBreadth() {
+  // Call the existing market breadth edge function
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-market-breadth`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Market breadth fetch failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    return {
+      advanceDecline: {
+        advancing: data.advancing || 0,
+        declining: data.declining || 0,
+        ratio: data.adRatio || 0,
+        netAdvances: data.netAdvances || 0
+      },
+      sentiment: data.sentiment || 'Neutral',
+      marketStatus: data.marketStatus || 'unknown',
+      description: data.sentiment === 'Bullish' 
+        ? 'More stocks are advancing than declining, indicating positive market breadth.'
+        : data.sentiment === 'Bearish'
+        ? 'More stocks are declining than advancing, indicating negative market breadth.'
+        : 'Market breadth is relatively balanced.',
+      dashboardUrl: '/dashboard'
+    };
+  } catch (error) {
+    console.error('[trading-copilot] Market breadth error:', error);
+    return {
+      error: 'Unable to fetch market breadth data at this time.',
+      suggestion: 'You can view market breadth directly on the Dashboard.'
+    };
+  }
+}
+
+async function executeTool(toolName: string, args: any, supabase: any, userId: string | null) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
   switch (toolName) {
@@ -459,6 +665,12 @@ async function executeTool(toolName: string, args: any, supabase: any) {
       return executeExplainPattern(args);
     case 'generate_pine_script':
       return executeGeneratePineScript(args);
+    case 'find_article':
+      return await executeFindArticle(supabase, args);
+    case 'add_to_watchlist':
+      return await executeAddToWatchlist(supabase, args, userId);
+    case 'get_market_breadth':
+      return await executeGetMarketBreadth();
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
@@ -478,6 +690,19 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Extract user ID from auth header if available
+    let userId: string | null = null;
+    const authHeader = req.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const { data: { user } } = await supabase.auth.getUser(token);
+        userId = user?.id || null;
+      } catch {
+        // Auth failed, continue without user context
+      }
+    }
 
     // Tool-call loop (non-stream) to guarantee we return assistant content.
     // Proxy-streaming can surface tool_calls (with no content) to the client for some providers.
@@ -559,7 +784,7 @@ serve(async (req) => {
               args = {};
             }
 
-            const result = await executeTool(tc.function.name, args, supabase);
+            const result = await executeTool(tc.function.name, args, supabase, userId);
             return {
               role: "tool",
               tool_call_id: tc.id,

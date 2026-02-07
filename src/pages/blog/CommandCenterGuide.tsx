@@ -434,9 +434,9 @@ const CommandCenterGuide = () => {
                 category: 'Pattern Search',
               },
               {
-                command: 'Show me bearish patterns on AAPL',
-                description: 'Find all active bearish setups forming on Apple stock',
-                category: 'Pattern Search',
+                command: 'Add TSLA to my watchlist',
+                description: 'Instantly add Tesla to your watchlist for pattern monitoring',
+                category: 'Execution',
               },
               {
                 command: 'What is the win rate for head and shoulders?',
@@ -444,9 +444,14 @@ const CommandCenterGuide = () => {
                 category: 'Statistics',
               },
               {
-                command: 'Find ascending triangle patterns on daily timeframe',
-                description: 'Scan for triangle consolidation patterns on the daily chart',
-                category: 'Pattern Search',
+                command: 'How is the market breadth looking?',
+                description: 'Get current advance/decline ratios and overall market sentiment',
+                category: 'Research',
+              },
+              {
+                command: 'Find articles about trend following strategies',
+                description: 'Search 120+ strategy guides in the Learning Center',
+                category: 'Content',
               },
               {
                 command: 'Explain the double bottom pattern',
@@ -454,14 +459,9 @@ const CommandCenterGuide = () => {
                 category: 'Education',
               },
               {
-                command: 'Show bullish patterns with B quality or better',
-                description: 'Find all active bullish setups with at least B-grade quality scores',
+                command: 'Show me bearish patterns on AAPL',
+                description: 'Find all active bearish setups forming on Apple stock',
                 category: 'Pattern Search',
-              },
-              {
-                command: 'What are the stats for bull flag on BTCUSD?',
-                description: 'Get instrument-specific historical performance for Bitcoin bull flags',
-                category: 'Statistics',
               },
               {
                 command: 'Generate Pine Script for ascending triangle on NVDA',
@@ -469,14 +469,14 @@ const CommandCenterGuide = () => {
                 category: 'Automation',
               },
               {
-                command: 'How do I trade head and shoulders?',
-                description: 'Get a complete educational breakdown of entry, stop-loss, and target rules',
-                category: 'Education',
+                command: 'Find risk management guides',
+                description: 'Discover articles about position sizing, stop-losses, and portfolio protection',
+                category: 'Content',
               },
               {
-                command: 'Find patterns on 4h timeframe',
-                description: 'Search for intraday patterns forming on the 4-hour chart',
-                category: 'Pattern Search',
+                command: 'What are the stats for bull flag on BTCUSD?',
+                description: 'Get instrument-specific historical performance for Bitcoin bull flags',
+                category: 'Statistics',
               },
             ].map((item, i) => (
               <Card key={i} className="hover:border-primary/30 transition-colors">
