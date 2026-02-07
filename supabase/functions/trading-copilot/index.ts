@@ -77,7 +77,11 @@ const tools = [
   }
 ];
 
-const BASE_URL = "https://chartingpath.com";
+// Use relative URLs so links work in preview and production
+const getBaseUrl = () => {
+  // Will be resolved by the frontend
+  return "";
+};
 
 const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading research assistant.
 
@@ -92,6 +96,7 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - Anticipate what traders actually need
 - If one search returns empty, try broader searches (different timeframes, lower quality threshold) before giving up
 - Always provide value even if exact matches aren't found
+- Ask follow-up questions to better understand what the user needs
 
 ## Smart Search Strategy
 When users ask for patterns:
@@ -104,12 +109,18 @@ When users ask for patterns:
 - Format prices with appropriate decimals
 - Show quality scores: A=Excellent, B=Good, C=Fair
 - Include R:R ratios and trade direction
-- ALWAYS include clickable chart links from chartUrl field
+- ALWAYS include clickable chart links using the ticker link format
+
+**CRITICAL - Link Format:**
+- For tickers/symbols: Use [SYMBOL](/study/SYMBOL) format, e.g. [AAPL](/study/AAPL), [BTCUSD](/study/BTCUSD)
+- For pattern browsing: Link to [Active Patterns](/patterns/live)
+- Never use external URLs like chartingpath.com - use relative paths only
 
 **Pattern Format Example:**
-### 🎯 [AAPL - Bull Flag](https://chartingpath.com/patterns/live/abc123)
+### 🎯 [AAPL](/study/AAPL) - Bull Flag
 - **Quality:** A | **Direction:** Bullish | **R:R:** 2.5:1
 - **Entry:** $185.50 | **Stop:** $182.00 | **Target:** $194.25
+- 📊 [View all AAPL patterns →](/study/AAPL)
 
 ## When No A-Quality Patterns Exist
 Don't apologize! Instead say something like:
@@ -178,7 +189,9 @@ async function executeSearchPatterns(supabase: any, args: any) {
       currentPrice: p.current_price,
       changePercent: p.change_percent,
       detectedAt: p.first_detected_at,
-      chartUrl: `${BASE_URL}/patterns/live/${p.id}`
+      // Use relative URL that works in-app: /study/:symbol
+      studyUrl: `/study/${encodeURIComponent(p.instrument)}`,
+      patternsListUrl: `/patterns/live`
     })) || []
   };
 }
