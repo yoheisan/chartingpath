@@ -14,7 +14,7 @@
  * Last Verified: 2026-02-02
  */
 
-export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '1d' | '1wk' | '1M';
+export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '8h' | '1d' | '1wk' | '1M';
 
 export interface TimeframeCoverage {
   /** Maximum historical lookback in years */
@@ -74,6 +74,13 @@ export const DATA_COVERAGE: Record<Timeframe, TimeframeCoverage> = {
     maxLookbackYears: 2,
     maxLookbackDays: 730,
     description: '2 years max',
+    isIntraday: true,
+    defaultLookbackYears: 1,
+  },
+  '8h': {
+    maxLookbackYears: 2,
+    maxLookbackDays: 730,
+    description: '2 years max (aggregated from 1h)',
     isIntraday: true,
     defaultLookbackYears: 1,
   },
@@ -212,6 +219,8 @@ export function getChartDataLimits(timeframe: Timeframe): {
       return { barLimit: 730, minBarsRequired: 50, daysBack: 365 }; // 1 year
     case '4h':
       return { barLimit: 500, minBarsRequired: 50, daysBack: 730 }; // 2 years max
+    case '8h':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 730 }; // 2 years max (aggregated from 1h)
     case '1wk':
       return { barLimit: 365, minBarsRequired: 100, daysBack: 2555 }; // ~7 years
     case '1M':
@@ -223,4 +232,4 @@ export function getChartDataLimits(timeframe: Timeframe): {
 }
 
 // Re-export for convenience
-export const SUPPORTED_TIMEFRAMES: Timeframe[] = ['1h', '4h', '1d', '1wk'];
+export const SUPPORTED_TIMEFRAMES: Timeframe[] = ['1h', '4h', '8h', '1d', '1wk'];
