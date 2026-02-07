@@ -153,6 +153,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const chartLimits = getChartDataLimits(timeframe as Timeframe);
       const { barLimit, minBarsRequired, daysBack } = chartLimits;
 
+      console.log(`[CommandCenterChart] Fetching ${symbol} ${timeframe}: barLimit=${barLimit}, minBarsRequired=${minBarsRequired}, daysBack=${daysBack}`);
+
       // Fetch from historical_prices table
       const { data, error: dbError } = await supabase
         .from('historical_prices')
@@ -166,12 +168,15 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       // Only use DB data if we have enough bars
       const hasEnoughData = data && data.length >= minBarsRequired;
+      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars, hasEnoughData=${hasEnoughData}`);
 
       if (!hasEnoughData) {
         // Fallback to Yahoo Finance using DATA_COVERAGE limits
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(endDate.getDate() - daysBack);
+        
+        console.log(`[CommandCenterChart] Using Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
 
         const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
           body: { 
@@ -184,6 +189,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         });
 
         if (fnError) throw fnError;
+        
+        console.log(`[CommandCenterChart] Yahoo returned ${fnData?.bars?.length || 0} bars`);
         
         const fetchedBars: CompressedBar[] = (fnData?.bars || []).map((b: any) => ({
           t: b.date || (typeof b.t === 'number' ? new Date(b.t * 1000).toISOString() : b.t),
