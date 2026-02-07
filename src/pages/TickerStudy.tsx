@@ -399,8 +399,16 @@ export default function TickerStudy() {
           setLivePatterns(mappedLive);
         }
 
-        // Fetch historical price data for chart (limit varies by timeframe)
-        const barLimit = selectedTimeframe === '1h' ? 500 : selectedTimeframe === '4h' ? 300 : 200;
+        // Fetch historical price data for chart
+        // Bar limits based on DATA_COVERAGE contract:
+        // - 1h/4h: 2 years max (~500-730 bars)
+        // - 1d: 5 years max (~1260 trading days)
+        // - 1wk: 7 years max (~365 weeks)
+        const barLimit = selectedTimeframe === '1h' ? 730 
+          : selectedTimeframe === '4h' ? 500 
+          : selectedTimeframe === '1wk' ? 400 
+          : 1260; // 1d: ~5 years of trading days
+        
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData: any[] | null = null;
 
@@ -419,8 +427,13 @@ export default function TickerStudy() {
           }
         }
 
-        if (pricesData && pricesData.length > 0) {
-          const bars: CompressedBar[] = pricesData
+        // Only use DB data if we have a meaningful amount (>100 bars for daily)
+        // Otherwise, fetch fresh data from Yahoo
+        const minBarsForDaily = selectedTimeframe === '1d' ? 250 : selectedTimeframe === '1wk' ? 100 : 50;
+        const hasEnoughData = pricesData && pricesData.length >= minBarsForDaily;
+
+        if (hasEnoughData) {
+          const bars: CompressedBar[] = pricesData!
             .map((p: any) => ({
               t: new Date(p.date).toISOString(),
               o: Number(p.open),
@@ -433,8 +446,15 @@ export default function TickerStudy() {
           setPriceData(bars);
         } else {
           // Yahoo fallback (OHLC)
-          // Adjust date range based on timeframe
-          const daysBack = selectedTimeframe === '1h' ? 30 : selectedTimeframe === '4h' ? 90 : 400;
+          // Fetch based on DATA_COVERAGE contract limits:
+          // - 1h: 30 days (Yahoo limit ~730 days, but 30 is practical)
+          // - 4h: 365 days (~1 year within 2 year limit)
+          // - 1d: 1825 days (~5 years)
+          // - 1wk: 2555 days (~7 years)
+          const daysBack = selectedTimeframe === '1h' ? 30 
+            : selectedTimeframe === '4h' ? 365 
+            : selectedTimeframe === '1wk' ? 2555 
+            : 1825; // 1d: 5 years
           const endDate = new Date();
           const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
           const startStr = startDate.toISOString().slice(0, 10);
