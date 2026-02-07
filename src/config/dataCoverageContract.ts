@@ -209,7 +209,7 @@ export function getChartDataLimits(timeframe: Timeframe): {
     case '15m':
       return { barLimit: 500, minBarsRequired: 50, daysBack: 30 };
     case '1h':
-      return { barLimit: 730, minBarsRequired: 50, daysBack: 30 }; // Yahoo practical limit
+      return { barLimit: 730, minBarsRequired: 50, daysBack: 365 }; // 1 year
     case '4h':
       return { barLimit: 500, minBarsRequired: 50, daysBack: 365 };
     case '1wk':
