@@ -417,6 +417,88 @@ const CommandCenterGuide = () => {
           </div>
         </section>
 
+        {/* Example Commands */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            10 Powerful Commands to Try
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Type these directly into the Command Center to unlock powerful research and analysis:
+          </p>
+          <div className="space-y-3">
+            {[
+              {
+                command: 'Find bull flags on tech stocks with grade A',
+                description: 'Discover high-quality continuation patterns in the technology sector',
+                category: 'Pattern Discovery',
+              },
+              {
+                command: 'What crypto has the best win rate patterns right now?',
+                description: 'AI analyzes historical performance to surface highest-probability setups',
+                category: 'AI Analysis',
+              },
+              {
+                command: 'Show me AAPL chart with all indicators',
+                description: 'Instantly load a full Study Chart with EMA, SMA, Bollinger, and VWAP',
+                category: 'Charting',
+              },
+              {
+                command: 'Compare head and shoulders vs double top success rates',
+                description: 'Get statistical comparison between two reversal pattern types',
+                category: 'Statistics',
+              },
+              {
+                command: 'Find patterns with 2:1 or better reward-to-risk',
+                description: 'Filter active signals by minimum R:R threshold',
+                category: 'Pattern Discovery',
+              },
+              {
+                command: 'What patterns work best in a downtrend?',
+                description: 'Learn which continuation and reversal setups excel in bearish markets',
+                category: 'Education',
+              },
+              {
+                command: 'Show forex pairs forming triangles this week',
+                description: 'Scan FX markets for consolidation patterns nearing breakout',
+                category: 'Pattern Discovery',
+              },
+              {
+                command: 'Explain how the quality score is calculated',
+                description: 'Get a breakdown of the trend, volume, structure, and history factors',
+                category: 'Education',
+              },
+              {
+                command: 'BTC historical performance on cup and handle',
+                description: 'Review Bitcoin-specific win rates and average returns for this pattern',
+                category: 'Statistics',
+              },
+              {
+                command: 'Generate TradingView alert for NVDA bull flag',
+                description: 'AI creates a ready-to-use Pine Script alert for your setup',
+                category: 'Automation',
+              },
+            ].map((item, i) => (
+              <Card key={i} className="hover:border-primary/30 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <span className="text-lg font-bold text-muted-foreground/50 shrink-0 w-6">{i + 1}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <code className="text-sm font-medium bg-muted px-2 py-0.5 rounded">
+                          {item.command}
+                        </code>
+                        <Badge variant="outline" className="text-xs shrink-0">{item.category}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         {/* Related Guides */}
         <section className="pt-8 border-t">
           <h2 className="text-xl font-semibold mb-4">Related Guides</h2>
