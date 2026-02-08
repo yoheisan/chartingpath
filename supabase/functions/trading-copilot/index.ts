@@ -984,37 +984,55 @@ serve(async (req) => {
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[trading-copilot] AI round ${round}`);
 
-      const aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GEMINI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash",
-          messages: convo,
-          tools,
-          tool_choice: "auto",
-          stream: false,
-        }),
-      });
+      // Retry logic with exponential backoff for rate limits
+      let aiResp: Response | null = null;
+      let lastError: string = '';
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GEMINI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gemini-2.0-flash",
+            messages: convo,
+            tools,
+            tool_choice: "auto",
+            stream: false,
+          }),
+        });
 
-      if (!aiResp.ok) {
-        if (aiResp.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        if (aiResp.status === 429 && attempt < 3) {
+          // Rate limited - wait with exponential backoff
+          const waitTime = Math.pow(2, attempt) * 1000; // 2s, 4s
+          console.log(`[trading-copilot] Rate limited, retrying in ${waitTime}ms (attempt ${attempt}/3)`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // Break on success or non-retryable error
+        break;
+      }
+
+      if (!aiResp || !aiResp.ok) {
+        if (aiResp?.status === 429) {
+          console.error("[trading-copilot] Rate limit exceeded after retries");
+          return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), {
             status: 429,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        if (aiResp.status === 402) {
+        if (aiResp?.status === 402) {
           return new Response(JSON.stringify({ error: "AI credits depleted" }), {
             status: 402,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const t = await aiResp.text().catch(() => "");
-        console.error("[trading-copilot] AI gateway error:", aiResp.status, t);
-        throw new Error(`AI gateway error: ${aiResp.status}`);
+        const t = await aiResp?.text().catch(() => "") || lastError;
+        console.error("[trading-copilot] AI gateway error:", aiResp?.status, t);
+        throw new Error(`AI gateway error: ${aiResp?.status || 'unknown'}`);
       }
 
       const responseText = await aiResp.text();
