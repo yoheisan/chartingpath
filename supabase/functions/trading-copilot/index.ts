@@ -653,6 +653,212 @@ async function executeGetMarketBreadth() {
   }
 }
 
+// ============================================
+// RAG CONTEXT RETRIEVAL
+// Fetches relevant ChartingPath data based on user query
+// ============================================
+
+interface RAGContext {
+  relevantPatternStats: any[];
+  activePatterns: any[];
+  relevantArticles: any[];
+  marketContext: string | null;
+}
+
+// Extract keywords for RAG retrieval
+function extractQueryKeywords(messages: any[]): { symbols: string[], patterns: string[], topics: string[] } {
+  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+  const text = lastUserMessage.toLowerCase();
+  
+  // Common pattern names
+  const patternKeywords = [
+    'bull flag', 'bear flag', 'head and shoulders', 'inverse head and shoulders',
+    'double top', 'double bottom', 'triple top', 'triple bottom',
+    'ascending triangle', 'descending triangle', 'symmetrical triangle',
+    'cup and handle', 'wedge', 'falling wedge', 'rising wedge',
+    'channel', 'rectangle', 'pennant', 'flag'
+  ];
+  
+  // Common trading topics
+  const topicKeywords = [
+    'entry', 'exit', 'stop loss', 'take profit', 'risk', 'reward',
+    'win rate', 'statistics', 'backtest', 'strategy', 'trend',
+    'breakout', 'reversal', 'continuation', 'momentum', 'volume'
+  ];
+  
+  // Extract symbols (uppercase 2-5 letter words or common crypto pairs)
+  const symbolRegex = /\b([A-Z]{2,5}(?:USD|USDT|BTC|ETH)?)\b/g;
+  const symbols = [...new Set((lastUserMessage.match(symbolRegex) || []))];
+  
+  // Extract patterns mentioned
+  const patterns = patternKeywords.filter(p => text.includes(p));
+  
+  // Extract topics mentioned
+  const topics = topicKeywords.filter(t => text.includes(t));
+  
+  return { symbols, patterns, topics };
+}
+
+// Fetch relevant context from ChartingPath database
+async function fetchRAGContext(supabase: any, messages: any[]): Promise<RAGContext> {
+  const keywords = extractQueryKeywords(messages);
+  console.log('[RAG] Extracted keywords:', keywords);
+  
+  const context: RAGContext = {
+    relevantPatternStats: [],
+    activePatterns: [],
+    relevantArticles: [],
+    marketContext: null
+  };
+  
+  try {
+    // Parallel fetch for performance
+    const fetchPromises: Promise<void>[] = [];
+    
+    // 1. Fetch relevant pattern statistics
+    if (keywords.patterns.length > 0 || keywords.symbols.length > 0) {
+      fetchPromises.push((async () => {
+        let query = supabase
+          .from('pattern_hit_rates')
+          .select('pattern_name, timeframe, win_rate, total_signals, avg_r_multiple, expectancy, profit_factor, direction')
+          .limit(10);
+        
+        if (keywords.patterns.length > 0) {
+          // Search for any of the mentioned patterns
+          const patternFilter = keywords.patterns.map(p => `pattern_name.ilike.%${p}%`).join(',');
+          query = query.or(patternFilter);
+        }
+        
+        const { data } = await query;
+        if (data?.length) {
+          context.relevantPatternStats = data;
+          console.log(`[RAG] Found ${data.length} pattern stats`);
+        }
+      })());
+    }
+    
+    // 2. Fetch active patterns for mentioned symbols
+    if (keywords.symbols.length > 0) {
+      fetchPromises.push((async () => {
+        const { data } = await supabase
+          .from('live_pattern_detections')
+          .select('instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, timeframe')
+          .eq('status', 'active')
+          .in('instrument', keywords.symbols)
+          .limit(5);
+        
+        if (data?.length) {
+          context.activePatterns = data;
+          console.log(`[RAG] Found ${data.length} active patterns for symbols`);
+        }
+      })());
+    }
+    
+    // 3. Fetch relevant learning articles
+    if (keywords.patterns.length > 0 || keywords.topics.length > 0) {
+      fetchPromises.push((async () => {
+        let query = supabase
+          .from('learning_articles')
+          .select('title, slug, excerpt, category')
+          .eq('status', 'published')
+          .limit(3);
+        
+        const searchTerms = [...keywords.patterns, ...keywords.topics.slice(0, 2)];
+        if (searchTerms.length > 0) {
+          const searchFilter = searchTerms.map(t => `title.ilike.%${t}%`).join(',');
+          query = query.or(searchFilter);
+        }
+        
+        const { data } = await query;
+        if (data?.length) {
+          context.relevantArticles = data;
+          console.log(`[RAG] Found ${data.length} relevant articles`);
+        }
+      })());
+    }
+    
+    // 4. Fetch recent market overview if asking about market conditions
+    const text = messages.filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
+    if (text.includes('market') || text.includes('today') || text.includes('overview')) {
+      fetchPromises.push((async () => {
+        const { data } = await supabase
+          .from('historical_overview_tactical')
+          .select('market_overview, market_drivers')
+          .order('asof_date', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          context.marketContext = `Market Overview: ${data.market_overview?.substring(0, 500) || ''}`;
+          console.log('[RAG] Found market context');
+        }
+      })());
+    }
+    
+    await Promise.all(fetchPromises);
+    
+  } catch (error) {
+    console.error('[RAG] Error fetching context:', error);
+    // Continue without RAG context on error
+  }
+  
+  return context;
+}
+
+// Build enhanced system prompt with RAG context
+function buildEnhancedSystemPrompt(basePrompt: string, ragContext: RAGContext): string {
+  const contextSections: string[] = [];
+  
+  if (ragContext.relevantPatternStats.length > 0) {
+    const statsText = ragContext.relevantPatternStats.map(s => 
+      `• ${s.pattern_name} (${s.timeframe}): Win Rate ${(s.win_rate * 100).toFixed(1)}%, ` +
+      `Expectancy ${s.expectancy?.toFixed(2) || 'N/A'}, Profit Factor ${s.profit_factor?.toFixed(2) || 'N/A'}, ` +
+      `Sample: ${s.total_signals} trades`
+    ).join('\n');
+    
+    contextSections.push(`## ChartingPath Pattern Statistics (Real Data)\n${statsText}`);
+  }
+  
+  if (ragContext.activePatterns.length > 0) {
+    const patternsText = ragContext.activePatterns.map(p => 
+      `• ${p.instrument}: ${p.pattern_name} (${p.direction}, Quality: ${p.quality_score}, R:R ${p.risk_reward_ratio?.toFixed(1) || 'N/A'})`
+    ).join('\n');
+    
+    contextSections.push(`## Active Patterns on Mentioned Symbols\n${patternsText}`);
+  }
+  
+  if (ragContext.relevantArticles.length > 0) {
+    const articlesText = ragContext.relevantArticles.map(a => 
+      `• "${a.title}" (/learn/${a.slug}) - ${a.excerpt?.substring(0, 100) || a.category}...`
+    ).join('\n');
+    
+    contextSections.push(`## Relevant ChartingPath Articles\nRecommend these to users:\n${articlesText}`);
+  }
+  
+  if (ragContext.marketContext) {
+    contextSections.push(`## Current Market Context\n${ragContext.marketContext}`);
+  }
+  
+  if (contextSections.length === 0) {
+    return basePrompt;
+  }
+  
+  const ragSection = `
+## IMPORTANT: ChartingPath Proprietary Data
+Use this real data from our platform to inform your responses. Quote these statistics when relevant - they're based on actual verified trade outcomes.
+
+${contextSections.join('\n\n')}
+
+When answering, prioritize this proprietary data over generic knowledge. Cite specific win rates and statistics from above.
+`;
+  
+  return basePrompt + '\n' + ragSection;
+}
+
+// ============================================
+// TOOL EXECUTION
+// ============================================
+
 async function executeTool(toolName: string, args: any, supabase: any, userId: string | null) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
@@ -704,9 +910,17 @@ serve(async (req) => {
       }
     }
 
+    // ============================================
+    // RAG: Fetch relevant ChartingPath context
+    // ============================================
+    console.log('[trading-copilot] Fetching RAG context...');
+    const ragContext = await fetchRAGContext(supabase, messages);
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext);
+    console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
+
     // Tool-call loop (non-stream) to guarantee we return assistant content.
     // Proxy-streaming can surface tool_calls (with no content) to the client for some providers.
-    let convo: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+    let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
 
     // Increase to 5 rounds to allow broader searches when initial queries return empty
     const MAX_TOOL_ROUNDS = 5;
