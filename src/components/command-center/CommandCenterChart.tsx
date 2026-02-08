@@ -19,6 +19,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTradingCopilotContext } from '@/components/copilot';
 
 interface CommandCenterChartProps {
   symbol: string;
@@ -44,6 +45,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 }: CommandCenterChartProps) {
   const { profile, user } = useUserProfile();
   const isMobile = useIsMobile();
+  const copilot = useTradingCopilotContext();
   const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -386,7 +388,13 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         ) : bars.length > 0 ? (
           <div className="h-full p-2">
-            <StudyChart bars={bars} symbol={symbol} autoHeight />
+            <StudyChart 
+              bars={bars} 
+              symbol={symbol} 
+              timeframe={timeframe}
+              autoHeight 
+              onSendToCopilot={(context) => copilot.openWithContext(context, { symbol, timeframe, summary: context })}
+            />
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
