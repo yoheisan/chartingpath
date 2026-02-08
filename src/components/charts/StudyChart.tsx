@@ -44,6 +44,8 @@ import {
   calculateOptimalPriceMargins,
   calculatePricePrecision,
 } from './chartConstants';
+import { ChartAnalysisToolbar } from './ChartAnalysisToolbar';
+import { useChartAnalysis } from '@/hooks/useChartAnalysis';
 import { cn } from '@/lib/utils';
 
 export interface IndicatorSettings {
@@ -100,6 +102,12 @@ interface StudyChartProps {
   autoHeight?: boolean;
   /** Optional trade plan to render Entry/SL/TP price lines */
   tradePlan?: TradePlanOverlay;
+  /** Timeframe for analysis (e.g., '1d', '4h') */
+  timeframe?: string;
+  /** Callback when user wants to send chart context to copilot */
+  onSendToCopilot?: (context: string) => void;
+  /** Hide analysis toolbar */
+  hideAnalysisToolbar?: boolean;
 }
 
 /**
@@ -110,7 +118,16 @@ interface StudyChartProps {
  * - Bollinger Bands
  * - VWAP
  */
-const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }: StudyChartProps) => {
+const StudyChart = memo(({ 
+  bars, 
+  symbol, 
+  height, 
+  autoHeight = false, 
+  tradePlan,
+  timeframe = '1d',
+  onSendToCopilot,
+  hideAnalysisToolbar = false
+}: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -120,6 +137,20 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
 
   const fixedHeight = height ?? 350;
+
+  // Chart analysis hook
+  const analysis = useChartAnalysis({
+    symbol,
+    timeframe,
+    onSendToCopilot
+  });
+
+  // Update bars in analysis hook when bars change
+  useEffect(() => {
+    if (bars && bars.length > 0) {
+      analysis.setBars(bars);
+    }
+  }, [bars, analysis.setBars]);
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -523,6 +554,23 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
         )}
         style={autoHeight ? undefined : { height: fixedHeight }}
       />
+
+      {/* Chart Analysis Toolbar */}
+      {!hideAnalysisToolbar && onSendToCopilot && (
+        <ChartAnalysisToolbar
+          selectionMode={analysis.selectionMode}
+          isAnalyzing={analysis.isAnalyzing}
+          hasSelection={analysis.selectedBars.length > 0}
+          hasAnalysis={!!analysis.analysisResult}
+          onStartRangeSelection={analysis.startRangeSelection}
+          onSelectVisible={analysis.analyzeVisibleChart}
+          onSelectPattern={analysis.selectPatternContext}
+          onAnalyze={analysis.analyzeSelection}
+          onSendToCopilot={analysis.sendToCopilot}
+          onClear={analysis.clearSelection}
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-30"
+        />
+      )}
 
       {/* Indicator Legend - only show active ones */}
       <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none">

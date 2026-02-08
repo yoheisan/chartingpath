@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Navigation from "./Navigation";
 import Footer from "./Footer";
 import { CommandPalette, CommandPaletteTrigger, useCommandPalette } from "./command-palette";
+import { TradingCopilot, useTradingCopilotContext } from "./copilot";
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,9 +18,11 @@ const COMMAND_EXCLUDED_ROUTES = ['/auth', '/admin'];
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { isOpen, close } = useCommandPalette();
+  const copilot = useTradingCopilotContext();
   
   const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
   const showCommandPalette = !COMMAND_EXCLUDED_ROUTES.some(route => location.pathname.startsWith(route));
+  const showCopilot = !COMMAND_EXCLUDED_ROUTES.some(route => location.pathname.startsWith(route));
 
   if (isFullscreen) {
     return (
@@ -33,6 +36,14 @@ const Layout = ({ children }: LayoutProps) => {
             <CommandPaletteTrigger />
             <CommandPalette isOpen={isOpen} onClose={close} />
           </>
+        )}
+        {showCopilot && (
+          <TradingCopilot
+            isExpanded={copilot.isOpen}
+            onToggle={copilot.toggle}
+            pendingContext={copilot.pendingContext}
+            onContextConsumed={copilot.consumePendingContext}
+          />
         )}
       </div>
     );
@@ -50,6 +61,14 @@ const Layout = ({ children }: LayoutProps) => {
           <CommandPaletteTrigger />
           <CommandPalette isOpen={isOpen} onClose={close} />
         </>
+      )}
+      {showCopilot && (
+        <TradingCopilot
+          isExpanded={copilot.isOpen}
+          onToggle={copilot.toggle}
+          pendingContext={copilot.pendingContext}
+          onContextConsumed={copilot.consumePendingContext}
+        />
       )}
     </div>
   );

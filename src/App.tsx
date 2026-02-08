@@ -8,6 +8,8 @@ import Layout from "./components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
 import { CommandPaletteProvider } from "./components/command-palette";
+import { TradingCopilotProvider } from "./components/copilot";
+
 // Reusable loading fallback
 const PageLoader = () => (
   <div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>
@@ -152,11 +154,12 @@ const Altcoins = lazy(() => import("./pages/markets/crypto/Altcoins"));
 const App = () => (
   <TooltipProvider>
     <CommandPaletteProvider>
-      <Toaster />
-      <Sonner />
-      <ScrollToTop />
-      <PageCaptureButton />
-      <Layout>
+      <TradingCopilotProvider>
+        <Toaster />
+        <Sonner />
+        <ScrollToTop />
+        <PageCaptureButton />
+        <Layout>
         <Routes>
           <Route path="/" element={withSuspense(<Index />)} />
           <Route path="/about" element={withSuspense(<About />)} />
@@ -282,6 +285,7 @@ const App = () => (
           <Route path="*" element={withSuspense(<NotFound />)} />
         </Routes>
       </Layout>
+      </TradingCopilotProvider>
     </CommandPaletteProvider>
   </TooltipProvider>
 );
