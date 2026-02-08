@@ -134,7 +134,7 @@ export function useChartAnalysis({
     });
   }, []);
 
-  // Run analysis on selected bars
+  // Run analysis on selected bars with timeout
   const analyzeSelection = useCallback(async (bars?: CompressedBar[]) => {
     const barsToAnalyze = bars || state.selectedBars;
     
@@ -144,6 +144,10 @@ export function useChartAnalysis({
     }
 
     setState(prev => ({ ...prev, isAnalyzing: true }));
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-chart-context', {
@@ -161,18 +165,31 @@ export function useChartAnalysis({
         }
       });
 
+      clearTimeout(timeoutId);
+
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Analysis failed');
 
       const result = data.analysis as ChartAnalysisResult;
       
       setState(prev => ({ ...prev, analysisResult: result, isAnalyzing: false }));
+      toast.success('Analysis complete');
       onAnalysisComplete?.(result);
       
       return result;
-    } catch (err) {
+    } catch (err: any) {
+      clearTimeout(timeoutId);
       console.error('[useChartAnalysis] Error:', err);
-      toast.error('Failed to analyze chart. Please try again.');
+      
+      // Better error messages
+      if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+        toast.error('Analysis timed out. Please check your connection and try again.');
+      } else if (err.message?.includes('Failed to fetch')) {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Analysis failed. Please try again.');
+      }
+      
       setState(prev => ({ ...prev, isAnalyzing: false }));
       return null;
     }
