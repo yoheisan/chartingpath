@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -9,7 +10,8 @@ import {
 import { 
   Sparkles, 
   Loader2,
-  MessageSquare
+  MessageSquare,
+  Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SelectionMode } from '@/hooks/useChartAnalysis';
@@ -19,6 +21,8 @@ interface ChartAnalysisToolbarProps {
   isAnalyzing: boolean;
   hasSelection: boolean;
   hasAnalysis: boolean;
+  showOverlay: boolean;
+  onToggleOverlay: (show: boolean) => void;
   onStartRangeSelection: () => void;
   onSelectVisible: () => void;
   onSelectPattern: () => void;
@@ -31,6 +35,7 @@ interface ChartAnalysisToolbarProps {
 /**
  * Simplified toolbar for chart analysis actions
  * - Analyze visible chart (primary action)
+ * - Toggle overlay visualization
  * - Send to Trading Copilot
  */
 const ChartAnalysisToolbar = memo(({
@@ -38,6 +43,8 @@ const ChartAnalysisToolbar = memo(({
   isAnalyzing,
   hasSelection,
   hasAnalysis,
+  showOverlay,
+  onToggleOverlay,
   onSelectVisible,
   onSendToCopilot,
   onClear,
@@ -73,6 +80,25 @@ const ChartAnalysisToolbar = memo(({
             <p>AI analysis of visible chart</p>
           </TooltipContent>
         </Tooltip>
+
+        {/* Overlay Toggle - Shows after analysis */}
+        {hasAnalysis && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
+                <Layers className={cn("h-3.5 w-3.5", showOverlay ? "text-primary" : "text-muted-foreground")} />
+                <Switch
+                  checked={showOverlay}
+                  onCheckedChange={onToggleOverlay}
+                  className="scale-75"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{showOverlay ? 'Hide' : 'Show'} levels on chart</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Send to Copilot Button - Shows after analysis */}
         {hasAnalysis && (
