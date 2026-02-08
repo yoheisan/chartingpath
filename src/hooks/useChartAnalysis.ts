@@ -246,41 +246,29 @@ export function useChartAnalysis({
   };
 }
 
-// Helper to format analysis result for copilot context
+// Helper to format analysis result for copilot context - now more concise
 function formatAnalysisForCopilot(result: ChartAnalysisResult): string {
+  const trend = result.priceAnalysis.trend;
+  const trendEmoji = trend === 'bullish' ? '📈' : trend === 'bearish' ? '📉' : '➡️';
+  const change = result.priceAnalysis.priceChangePercent;
+  
+  // Build a concise summary for the AI to expand on
   const parts: string[] = [];
   
-  parts.push(`Analyze this chart context for ${result.symbol} (${result.timeframe}):`);
+  parts.push(`${trendEmoji} **${result.symbol}** (${result.timeframe}) - ${trend.toUpperCase()} trend`);
   parts.push('');
-  parts.push(`**Price Analysis:**`);
-  parts.push(`- Trend: ${result.priceAnalysis.trend} (${result.priceAnalysis.trendStrength} strength)`);
-  parts.push(`- Change: ${result.priceAnalysis.priceChangePercent >= 0 ? '+' : ''}${result.priceAnalysis.priceChangePercent.toFixed(2)}%`);
-  parts.push(`- Support: $${result.priceAnalysis.support.toFixed(2)}`);
-  parts.push(`- Resistance: $${result.priceAnalysis.resistance.toFixed(2)}`);
+  parts.push(`**Quick Stats:** ${change >= 0 ? '+' : ''}${change.toFixed(1)}% | RSI ${result.indicators.rsi.current.toFixed(0)} | ${result.volumeAnalysis.volumeTrend} volume | ${result.riskAssessment.overallRisk} risk`);
   parts.push('');
-  parts.push(`**Indicators:**`);
-  parts.push(`- RSI: ${result.indicators.rsi.current.toFixed(1)} (${result.indicators.rsi.interpretation})`);
-  parts.push(`- MACD: ${result.indicators.macd.interpretation}`);
-  parts.push(`- Bollinger: Price at ${result.indicators.bollingerBands.position}`);
-  parts.push(`- ATR: ${result.indicators.atr.volatilityLevel} volatility`);
-  if (result.indicators.adx) {
-    parts.push(`- ADX: ${result.indicators.adx.adx.toFixed(1)} (${result.indicators.adx.interpretation})`);
-  }
-  parts.push('');
-  parts.push(`**Volume:** ${result.volumeAnalysis.volumeTrend} (${result.volumeAnalysis.volumeRatio.toFixed(2)}x average)`);
+  parts.push(`**Key Levels:** Support $${result.priceAnalysis.support.toFixed(2)} → Resistance $${result.priceAnalysis.resistance.toFixed(2)}`);
   
   if (result.patterns.length > 0) {
+    const patternList = result.patterns.map(p => `${p.name} (${p.quality})`).join(', ');
     parts.push('');
-    parts.push(`**Active Patterns:**`);
-    result.patterns.forEach(p => {
-      parts.push(`- ${p.name} (${p.direction}, ${p.quality}-quality)`);
-    });
+    parts.push(`**Patterns:** ${patternList}`);
   }
   
   parts.push('');
-  parts.push(`**Risk Assessment:** ${result.riskAssessment.overallRisk}`);
-  parts.push('');
-  parts.push('Based on this analysis, what trading scenarios and setups should I consider? What are the key risks?');
+  parts.push('What are the best entry/exit setups and key risks to watch?');
   
   return parts.join('\n');
 }
