@@ -345,9 +345,14 @@ export function TradingCopilot({
                 {/* Visual Analysis Card - shown for user messages with analysis data */}
                 {message.role === "user" && message.analysisData && (
                   <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                    <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                      <BarChart3 className="h-3.5 w-3.5" />
-                      <span>Chart Analysis</span>
+                    <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        <span>Chart Analysis</span>
+                      </div>
+                      <span className="text-[10px]">
+                        {message.timestamp.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {message.timestamp.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                     <ChartAnalysisSummary analysis={message.analysisData} />
                   </Card>
