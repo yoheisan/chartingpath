@@ -393,7 +393,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               symbol={symbol} 
               timeframe={timeframe}
               autoHeight 
-              onSendToCopilot={(context) => copilot.openWithContext(context, { symbol, timeframe, summary: context })}
+              onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
             />
           </div>
         ) : (

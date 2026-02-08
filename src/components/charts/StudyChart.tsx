@@ -105,7 +105,7 @@ interface StudyChartProps {
   /** Timeframe for analysis (e.g., '1d', '4h') */
   timeframe?: string;
   /** Callback when user wants to send chart context to copilot */
-  onSendToCopilot?: (context: string) => void;
+  onSendToCopilot?: (context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => void;
   /** Hide analysis toolbar */
   hideAnalysisToolbar?: boolean;
 }

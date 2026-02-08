@@ -223,14 +223,10 @@ export default function TickerStudy() {
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
 
-  // Handler for sending chart context to copilot
-  const handleSendToCopilot = useCallback((context: string) => {
-    copilot.openWithContext(context, {
-      symbol: displaySymbol,
-      timeframe: selectedTimeframe,
-      summary: `Chart analysis for ${displaySymbol} on ${selectedTimeframe}`
-    });
-  }, [copilot, displaySymbol, selectedTimeframe]);
+  // Handler for sending chart context to copilot with visual analysis
+  const handleSendToCopilot = useCallback((context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => {
+    copilot.openWithAnalysis(context, analysis);
+  }, [copilot]);
   
   // Get timeframe label for display
   const timeframeLabel = useMemo(() => {

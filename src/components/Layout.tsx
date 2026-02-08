@@ -42,6 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
             isExpanded={copilot.isOpen}
             onToggle={copilot.toggle}
             pendingContext={copilot.pendingContext}
+            pendingAnalysis={copilot.pendingAnalysis}
             onContextConsumed={copilot.consumePendingContext}
           />
         )}
@@ -67,6 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
           isExpanded={copilot.isOpen}
           onToggle={copilot.toggle}
           pendingContext={copilot.pendingContext}
+          pendingAnalysis={copilot.pendingAnalysis}
           onContextConsumed={copilot.consumePendingContext}
         />
       )}
