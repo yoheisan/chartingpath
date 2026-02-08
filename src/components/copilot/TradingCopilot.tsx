@@ -143,7 +143,9 @@ export function TradingCopilot({
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
         if (resp.status === 429) {
-          toast.error("Rate limit exceeded. Please wait a moment and try again.");
+          toast.error("AI is processing other requests. Please wait 10 seconds and try again.", {
+            duration: 5000
+          });
           throw new Error("Rate limited");
         }
         if (resp.status === 402) {
