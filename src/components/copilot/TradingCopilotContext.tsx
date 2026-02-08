@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useCallback, useRef } from 'react';
+import { ChartAnalysisResult } from '@/hooks/useChartAnalysis';
 
 export interface ChartContextData {
   symbol: string;
@@ -12,7 +13,9 @@ interface TradingCopilotContextValue {
   open: () => void;
   close: () => void;
   openWithContext: (context: string, chartData?: ChartContextData) => void;
+  openWithAnalysis: (context: string, analysis: ChartAnalysisResult) => void;
   pendingContext: string | null;
+  pendingAnalysis: ChartAnalysisResult | null;
   consumePendingContext: () => string | null;
   setChartContext: (data: ChartContextData | null) => void;
   getChartContext: () => ChartContextData | null;
@@ -23,6 +26,7 @@ const TradingCopilotContext = createContext<TradingCopilotContextValue | null>(n
 export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingContext, setPendingContext] = useState<string | null>(null);
+  const [pendingAnalysis, setPendingAnalysis] = useState<ChartAnalysisResult | null>(null);
   const contextRef = useRef<ChartContextData | null>(null);
 
   const toggle = useCallback(() => {
@@ -42,12 +46,20 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
       contextRef.current = chartData;
     }
     setPendingContext(context);
+    setPendingAnalysis(null);
+    setIsOpen(true);
+  }, []);
+
+  const openWithAnalysis = useCallback((context: string, analysis: ChartAnalysisResult) => {
+    setPendingContext(context);
+    setPendingAnalysis(analysis);
     setIsOpen(true);
   }, []);
 
   const consumePendingContext = useCallback(() => {
     const context = pendingContext;
     setPendingContext(null);
+    setPendingAnalysis(null);
     return context;
   }, [pendingContext]);
 
@@ -66,7 +78,9 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
       open,
       close,
       openWithContext,
+      openWithAnalysis,
       pendingContext,
+      pendingAnalysis,
       consumePendingContext,
       setChartContext,
       getChartContext
@@ -83,7 +97,9 @@ const NOOP_CONTEXT: TradingCopilotContextValue = {
   open: () => {},
   close: () => {},
   openWithContext: () => {},
+  openWithAnalysis: () => {},
   pendingContext: null,
+  pendingAnalysis: null,
   consumePendingContext: () => null,
   setChartContext: () => {},
   getChartContext: () => null

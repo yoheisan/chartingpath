@@ -15,11 +15,14 @@ import {
   TrendingUp,
   Bell,
   Code,
-  BookOpen
+  BookOpen,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
+import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 
 interface Message {
   id: string;
@@ -27,6 +30,7 @@ interface Message {
   content: string;
   timestamp: Date;
   toolCalls?: ToolCall[];
+  analysisData?: ChartAnalysisResult;
 }
 
 interface ToolCall {
@@ -66,6 +70,7 @@ export interface TradingCopilotProps {
   isExpanded?: boolean;
   onToggle?: () => void;
   pendingContext?: string | null;
+  pendingAnalysis?: ChartAnalysisResult | null; // Visual analysis data
   onContextConsumed?: () => void;
 }
 
@@ -73,9 +78,11 @@ export function TradingCopilot({
   isExpanded = false, 
   onToggle,
   pendingContext,
+  pendingAnalysis,
   onContextConsumed
 }: TradingCopilotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -98,8 +105,12 @@ export function TradingCopilot({
   useEffect(() => {
     if (pendingContext && isExpanded && !contextProcessedRef.current && !isLoading) {
       contextProcessedRef.current = true;
+      // Store the analysis data for visual display
+      if (pendingAnalysis) {
+        setCurrentAnalysis(pendingAnalysis);
+      }
       // Auto-send the context as a message
-      streamChat(pendingContext);
+      streamChat(pendingContext, pendingAnalysis);
       onContextConsumed?.();
     }
     
@@ -107,14 +118,15 @@ export function TradingCopilot({
     if (!isExpanded) {
       contextProcessedRef.current = false;
     }
-  }, [pendingContext, isExpanded, isLoading, onContextConsumed]);
+  }, [pendingContext, pendingAnalysis, isExpanded, isLoading, onContextConsumed]);
 
-  const streamChat = async (userMessage: string) => {
+  const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
       content: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      analysisData: analysisData || undefined
     };
     
     setMessages(prev => [...prev, userMsg]);
@@ -326,10 +338,22 @@ export function TradingCopilot({
               <div
                 key={message.id}
                 className={cn(
-                  "flex",
-                  message.role === "user" ? "justify-end" : "justify-start"
+                  "flex flex-col gap-2",
+                  message.role === "user" ? "items-end" : "items-start"
                 )}
               >
+                {/* Visual Analysis Card - shown for user messages with analysis data */}
+                {message.role === "user" && message.analysisData && (
+                  <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+                    <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      <span>Chart Analysis</span>
+                    </div>
+                    <ChartAnalysisSummary analysis={message.analysisData} />
+                  </Card>
+                )}
+                
+                {/* Message bubble */}
                 <div
                   className={cn(
                     "max-w-[85%] rounded-lg px-3 py-2 text-sm",
@@ -343,7 +367,12 @@ export function TradingCopilot({
                       <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                     </div>
                   ) : (
-                    message.content
+                    // For user messages with analysis, show compact summary
+                    message.analysisData ? (
+                      <span className="text-xs opacity-80">Analyzing {message.analysisData.symbol}...</span>
+                    ) : (
+                      message.content
+                    )
                   )}
                 </div>
               </div>

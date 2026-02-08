@@ -71,7 +71,7 @@ interface UseChartAnalysisOptions {
   symbol: string;
   timeframe?: string;
   onAnalysisComplete?: (result: ChartAnalysisResult) => void;
-  onSendToCopilot?: (context: string) => void;
+  onSendToCopilot?: (context: string, analysis: ChartAnalysisResult) => void;
 }
 
 export function useChartAnalysis({
@@ -209,9 +209,9 @@ export function useChartAnalysis({
       return;
     }
 
-    // Format context for the copilot
+    // Format context for the copilot and pass full analysis
     const contextMessage = formatAnalysisForCopilot(result);
-    onSendToCopilot?.(contextMessage);
+    onSendToCopilot?.(contextMessage, result);
   }, [state.analysisResult, state.selectedBars, analyzeSelection, onSendToCopilot]);
 
   // Analyze visible chart (quick action)
