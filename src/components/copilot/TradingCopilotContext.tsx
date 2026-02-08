@@ -1,0 +1,88 @@
+import { createContext, useContext, ReactNode, useState, useCallback, useRef } from 'react';
+
+export interface ChartContextData {
+  symbol: string;
+  timeframe: string;
+  summary: string;
+}
+
+interface TradingCopilotContextValue {
+  isOpen: boolean;
+  toggle: () => void;
+  open: () => void;
+  close: () => void;
+  openWithContext: (context: string, chartData?: ChartContextData) => void;
+  pendingContext: string | null;
+  consumePendingContext: () => string | null;
+  setChartContext: (data: ChartContextData | null) => void;
+  getChartContext: () => ChartContextData | null;
+}
+
+const TradingCopilotContext = createContext<TradingCopilotContextValue | null>(null);
+
+export function TradingCopilotProvider({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [pendingContext, setPendingContext] = useState<string | null>(null);
+  const contextRef = useRef<ChartContextData | null>(null);
+
+  const toggle = useCallback(() => {
+    setIsOpen(prev => !prev);
+  }, []);
+
+  const open = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const openWithContext = useCallback((context: string, chartData?: ChartContextData) => {
+    if (chartData) {
+      contextRef.current = chartData;
+    }
+    setPendingContext(context);
+    setIsOpen(true);
+  }, []);
+
+  const consumePendingContext = useCallback(() => {
+    const context = pendingContext;
+    setPendingContext(null);
+    return context;
+  }, [pendingContext]);
+
+  const setChartContext = useCallback((data: ChartContextData | null) => {
+    contextRef.current = data;
+  }, []);
+
+  const getChartContext = useCallback(() => {
+    return contextRef.current;
+  }, []);
+
+  return (
+    <TradingCopilotContext.Provider value={{
+      isOpen,
+      toggle,
+      open,
+      close,
+      openWithContext,
+      pendingContext,
+      consumePendingContext,
+      setChartContext,
+      getChartContext
+    }}>
+      {children}
+    </TradingCopilotContext.Provider>
+  );
+}
+
+export function useTradingCopilotContext() {
+  const context = useContext(TradingCopilotContext);
+  if (!context) {
+    throw new Error('useTradingCopilotContext must be used within TradingCopilotProvider');
+  }
+  return context;
+}
+
+// Re-export standalone hook for backward compatibility
+export { useTradingCopilot } from './useTradingCopilot';

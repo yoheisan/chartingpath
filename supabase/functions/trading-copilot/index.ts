@@ -116,6 +116,20 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "analyze_chart_context",
+      description: "Analyze chart context that was captured from the user's chart. Use this when the user's message contains embedded chart analysis data (indicators, price levels, patterns). Summarize and provide trading insights based on the context.",
+      parameters: {
+        type: "object",
+        properties: {
+          context_summary: { type: "string", description: "Brief summary of what the user is asking about the chart context" }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -135,6 +149,7 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - **find_article**: Search 120+ strategy guides and educational articles in the Learning Center.
 - **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
 - **get_market_breadth**: Get current market internals (advance/decline ratio, sentiment).
+- **analyze_chart_context**: When users send chart context with technical indicators and price data, analyze it and provide trading scenarios.
 
 ## Your Personality
 - Be warm, helpful, and conversational—not robotic
@@ -142,6 +157,21 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - If one search returns empty, try broader searches (different timeframes, lower quality threshold) before giving up
 - Always provide value even if exact matches aren't found
 - Ask follow-up questions to better understand what the user needs
+
+## Chart Context Analysis
+When users share chart context (from the "Analyze Chart" feature), their message will contain embedded technical data including:
+- Price trend, support/resistance levels
+- Indicators: RSI, MACD, Bollinger Bands, ATR, ADX
+- Volume analysis
+- Active patterns detected
+- Pre-calculated trading scenarios
+
+**Your job is to:**
+1. Interpret the technical setup in plain language
+2. Identify the highest-probability trading scenarios
+3. Highlight key risks and what could invalidate the setup
+4. Suggest specific entry, stop-loss, and take-profit levels with reasoning
+5. Recommend position sizing based on volatility (ATR)
 
 ## Smart Search Strategy
 When users ask for patterns:
@@ -177,7 +207,7 @@ When generate_pine_script returns, you MUST:
 2. Add the setup instructions after
 
 ## Formatting Icons
-📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching
+📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish
 
 ⚠️ Always end with: "This is for educational purposes only—not financial advice."`;
 
@@ -859,7 +889,31 @@ When answering, prioritize this proprietary data over generic knowledge. Cite sp
 // TOOL EXECUTION
 // ============================================
 
-async function executeTool(toolName: string, args: any, supabase: any, userId: string | null) {
+// Analyze chart context (when user sends chart data)
+function executeAnalyzeChartContext(args: any, messages: any[]) {
+  // The chart context is embedded in the user's message
+  // Extract and summarize it for the AI to provide insights
+  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+  
+  // Parse embedded context if present
+  const contextMatch = lastUserMessage.match(/\*\*Price Analysis:\*\*[\s\S]*?(?=Based on this analysis|$)/);
+  
+  if (contextMatch) {
+    return {
+      analyzed: true,
+      message: "Chart context received. Providing analysis based on the technical data.",
+      tip: "The AI will now interpret the indicators, identify trading scenarios, and highlight key risks."
+    };
+  }
+  
+  return {
+    analyzed: false,
+    message: "No embedded chart context found. Ask the user to use the 'Analyze Chart' button on their chart to capture context.",
+    suggestion: "You can analyze any chart by clicking the Analyze button in the chart toolbar."
+  };
+}
+
+async function executeTool(toolName: string, args: any, supabase: any, userId: string | null, messages?: any[]) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
   switch (toolName) {
@@ -877,6 +931,8 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeAddToWatchlist(supabase, args, userId);
     case 'get_market_breadth':
       return await executeGetMarketBreadth();
+    case 'analyze_chart_context':
+      return executeAnalyzeChartContext(args, messages || []);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
