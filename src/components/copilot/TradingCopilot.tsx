@@ -62,18 +62,25 @@ const QUICK_ACTIONS = [
   },
 ];
 
-export function TradingCopilot({ 
-  isExpanded = false, 
-  onToggle 
-}: { 
+export interface TradingCopilotProps {
   isExpanded?: boolean;
   onToggle?: () => void;
-}) {
+  pendingContext?: string | null;
+  onContextConsumed?: () => void;
+}
+
+export function TradingCopilot({ 
+  isExpanded = false, 
+  onToggle,
+  pendingContext,
+  onContextConsumed
+}: TradingCopilotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const contextProcessedRef = useRef(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -86,6 +93,21 @@ export function TradingCopilot({
       inputRef.current.focus();
     }
   }, [isExpanded]);
+
+  // Handle pending context from chart analysis
+  useEffect(() => {
+    if (pendingContext && isExpanded && !contextProcessedRef.current && !isLoading) {
+      contextProcessedRef.current = true;
+      // Auto-send the context as a message
+      streamChat(pendingContext);
+      onContextConsumed?.();
+    }
+    
+    // Reset the flag when copilot is closed
+    if (!isExpanded) {
+      contextProcessedRef.current = false;
+    }
+  }, [pendingContext, isExpanded, isLoading, onContextConsumed]);
 
   const streamChat = async (userMessage: string) => {
     const userMsg: Message = {

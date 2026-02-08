@@ -1,0 +1,269 @@
+import { useState, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { CompressedBar } from '@/types/VisualSpec';
+import { toast } from 'sonner';
+
+// Re-export for convenience
+export type { ChartContextData } from '@/components/copilot';
+
+export type SelectionMode = 'none' | 'range' | 'visible' | 'pattern';
+
+export interface ChartAnalysisState {
+  selectionMode: SelectionMode;
+  selectedBars: CompressedBar[];
+  isAnalyzing: boolean;
+  analysisResult: ChartAnalysisResult | null;
+}
+
+export interface ChartAnalysisResult {
+  symbol: string;
+  timeframe: string;
+  barCount: number;
+  priceAnalysis: {
+    priceChange: number;
+    priceChangePercent: number;
+    trend: string;
+    trendStrength: string;
+    support: number;
+    resistance: number;
+  };
+  volumeAnalysis: {
+    avgVolume: number;
+    lastVolume: number;
+    volumeRatio: number;
+    volumeTrend: string;
+  };
+  indicators: {
+    rsi: { current: number; interpretation: string };
+    macd: { macd: number; signal: number; histogram: number; interpretation: string };
+    bollingerBands: { upper: number; middle: number; lower: number; position: string };
+    atr: { value: number; volatilityLevel: string };
+    adx?: { adx: number; plusDI: number; minusDI: number; interpretation: string };
+    ema20: number;
+    ema50: number;
+    sma200?: number;
+  };
+  patterns: {
+    name: string;
+    direction: string;
+    quality: string;
+    entry: number;
+    stopLoss: number;
+    takeProfit: number;
+    rr: number;
+    timeframe: string;
+  }[];
+  tradingScenarios: {
+    bullish: { probability: string; entry: number; stopLoss: number; takeProfit: number; riskReward: number };
+    bearish: { probability: string; entry: number; stopLoss: number; takeProfit: number; riskReward: number };
+    neutral: { description: string };
+  };
+  riskAssessment: {
+    overallRisk: string;
+    volatilityRisk: string;
+    trendRisk: string;
+    keyLevels: { level: number; type: string }[];
+  };
+  summary: string;
+}
+
+interface UseChartAnalysisOptions {
+  symbol: string;
+  timeframe?: string;
+  onAnalysisComplete?: (result: ChartAnalysisResult) => void;
+  onSendToCopilot?: (context: string) => void;
+}
+
+export function useChartAnalysis({
+  symbol,
+  timeframe = '1d',
+  onAnalysisComplete,
+  onSendToCopilot
+}: UseChartAnalysisOptions) {
+  const [state, setState] = useState<ChartAnalysisState>({
+    selectionMode: 'none',
+    selectedBars: [],
+    isAnalyzing: false,
+    analysisResult: null
+  });
+  
+  const barsRef = useRef<CompressedBar[]>([]);
+
+  // Set the available bars for selection
+  const setBars = useCallback((bars: CompressedBar[]) => {
+    barsRef.current = bars;
+  }, []);
+
+  // Start range selection mode
+  const startRangeSelection = useCallback(() => {
+    setState(prev => ({ ...prev, selectionMode: 'range', selectedBars: [] }));
+    toast.info('Click and drag on the chart to select a range');
+  }, []);
+
+  // Select visible bars
+  const selectVisibleBars = useCallback(() => {
+    setState(prev => ({ 
+      ...prev, 
+      selectionMode: 'visible', 
+      selectedBars: barsRef.current 
+    }));
+  }, []);
+
+  // Auto-detect pattern context
+  const selectPatternContext = useCallback(() => {
+    setState(prev => ({ ...prev, selectionMode: 'pattern' }));
+    // Will be populated when pattern is detected
+  }, []);
+
+  // Handle range selection complete
+  const onRangeSelected = useCallback((startIndex: number, endIndex: number) => {
+    const selected = barsRef.current.slice(
+      Math.min(startIndex, endIndex),
+      Math.max(startIndex, endIndex) + 1
+    );
+    setState(prev => ({ ...prev, selectedBars: selected }));
+  }, []);
+
+  // Clear selection
+  const clearSelection = useCallback(() => {
+    setState({
+      selectionMode: 'none',
+      selectedBars: [],
+      isAnalyzing: false,
+      analysisResult: null
+    });
+  }, []);
+
+  // Run analysis on selected bars
+  const analyzeSelection = useCallback(async (bars?: CompressedBar[]) => {
+    const barsToAnalyze = bars || state.selectedBars;
+    
+    if (barsToAnalyze.length < 10) {
+      toast.error('Please select at least 10 bars for meaningful analysis');
+      return null;
+    }
+
+    setState(prev => ({ ...prev, isAnalyzing: true }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-chart-context', {
+        body: {
+          symbol,
+          timeframe,
+          bars: barsToAnalyze.map(b => ({
+            t: b.t,
+            o: b.o,
+            h: b.h,
+            l: b.l,
+            c: b.c,
+            v: b.v
+          }))
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Analysis failed');
+
+      const result = data.analysis as ChartAnalysisResult;
+      
+      setState(prev => ({ ...prev, analysisResult: result, isAnalyzing: false }));
+      onAnalysisComplete?.(result);
+      
+      return result;
+    } catch (err) {
+      console.error('[useChartAnalysis] Error:', err);
+      toast.error('Failed to analyze chart. Please try again.');
+      setState(prev => ({ ...prev, isAnalyzing: false }));
+      return null;
+    }
+  }, [state.selectedBars, symbol, timeframe, onAnalysisComplete]);
+
+  // Send analysis to Trading Copilot
+  const sendToCopilot = useCallback(async () => {
+    let result = state.analysisResult;
+    
+    // If no analysis yet, run it first
+    if (!result && state.selectedBars.length > 0) {
+      result = await analyzeSelection();
+    }
+    
+    if (!result) {
+      toast.error('No analysis available. Please select bars first.');
+      return;
+    }
+
+    // Format context for the copilot
+    const contextMessage = formatAnalysisForCopilot(result);
+    onSendToCopilot?.(contextMessage);
+  }, [state.analysisResult, state.selectedBars, analyzeSelection, onSendToCopilot]);
+
+  // Analyze visible chart (quick action)
+  const analyzeVisibleChart = useCallback(async () => {
+    if (barsRef.current.length < 10) {
+      toast.error('Not enough bars to analyze');
+      return null;
+    }
+    
+    setState(prev => ({ 
+      ...prev, 
+      selectionMode: 'visible',
+      selectedBars: barsRef.current,
+      isAnalyzing: true 
+    }));
+
+    return analyzeSelection(barsRef.current);
+  }, [analyzeSelection]);
+
+  return {
+    ...state,
+    setBars,
+    startRangeSelection,
+    selectVisibleBars,
+    selectPatternContext,
+    onRangeSelected,
+    clearSelection,
+    analyzeSelection,
+    analyzeVisibleChart,
+    sendToCopilot,
+    barsCount: barsRef.current.length
+  };
+}
+
+// Helper to format analysis result for copilot context
+function formatAnalysisForCopilot(result: ChartAnalysisResult): string {
+  const parts: string[] = [];
+  
+  parts.push(`Analyze this chart context for ${result.symbol} (${result.timeframe}):`);
+  parts.push('');
+  parts.push(`**Price Analysis:**`);
+  parts.push(`- Trend: ${result.priceAnalysis.trend} (${result.priceAnalysis.trendStrength} strength)`);
+  parts.push(`- Change: ${result.priceAnalysis.priceChangePercent >= 0 ? '+' : ''}${result.priceAnalysis.priceChangePercent.toFixed(2)}%`);
+  parts.push(`- Support: $${result.priceAnalysis.support.toFixed(2)}`);
+  parts.push(`- Resistance: $${result.priceAnalysis.resistance.toFixed(2)}`);
+  parts.push('');
+  parts.push(`**Indicators:**`);
+  parts.push(`- RSI: ${result.indicators.rsi.current.toFixed(1)} (${result.indicators.rsi.interpretation})`);
+  parts.push(`- MACD: ${result.indicators.macd.interpretation}`);
+  parts.push(`- Bollinger: Price at ${result.indicators.bollingerBands.position}`);
+  parts.push(`- ATR: ${result.indicators.atr.volatilityLevel} volatility`);
+  if (result.indicators.adx) {
+    parts.push(`- ADX: ${result.indicators.adx.adx.toFixed(1)} (${result.indicators.adx.interpretation})`);
+  }
+  parts.push('');
+  parts.push(`**Volume:** ${result.volumeAnalysis.volumeTrend} (${result.volumeAnalysis.volumeRatio.toFixed(2)}x average)`);
+  
+  if (result.patterns.length > 0) {
+    parts.push('');
+    parts.push(`**Active Patterns:**`);
+    result.patterns.forEach(p => {
+      parts.push(`- ${p.name} (${p.direction}, ${p.quality}-quality)`);
+    });
+  }
+  
+  parts.push('');
+  parts.push(`**Risk Assessment:** ${result.riskAssessment.overallRisk}`);
+  parts.push('');
+  parts.push('Based on this analysis, what trading scenarios and setups should I consider? What are the key risks?');
+  
+  return parts.join('\n');
+}
