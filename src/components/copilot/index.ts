@@ -6,3 +6,4 @@ export {
   useTradingCopilotContext,
   type ChartContextData 
 } from './TradingCopilotContext';
+export { ChartAnalysisSummary } from './ChartAnalysisSummary';
