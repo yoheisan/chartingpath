@@ -76,12 +76,23 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Safe fallback for when context is not available
+const NOOP_CONTEXT: TradingCopilotContextValue = {
+  isOpen: false,
+  toggle: () => {},
+  open: () => {},
+  close: () => {},
+  openWithContext: () => {},
+  pendingContext: null,
+  consumePendingContext: () => null,
+  setChartContext: () => {},
+  getChartContext: () => null
+};
+
 export function useTradingCopilotContext() {
   const context = useContext(TradingCopilotContext);
-  if (!context) {
-    throw new Error('useTradingCopilotContext must be used within TradingCopilotProvider');
-  }
-  return context;
+  // Return safe no-op fallback instead of throwing to prevent crashes
+  return context ?? NOOP_CONTEXT;
 }
 
 // Re-export standalone hook for backward compatibility
