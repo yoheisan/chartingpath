@@ -48,6 +48,7 @@ import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec'
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { format, formatDistanceToNow } from 'date-fns';
+import { useTradingCopilotContext } from '@/components/copilot';
 
 interface HistoricalPattern {
   id: string;
@@ -208,6 +209,9 @@ export default function TickerStudy() {
   const [priceData, setPriceData] = useState<CompressedBar[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<HistoricalPattern | LivePattern | null>(null);
   
+  // Trading Copilot context for chart analysis
+  const copilot = useTradingCopilotContext();
+  
   // Timeframe selection (paid feature)
   const { allowedTimeframes, isTimeframeAllowed } = useStudyTimeframes();
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1d');
@@ -218,6 +222,15 @@ export default function TickerStudy() {
 
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
+
+  // Handler for sending chart context to copilot
+  const handleSendToCopilot = useCallback((context: string) => {
+    copilot.openWithContext(context, {
+      symbol: displaySymbol,
+      timeframe: selectedTimeframe,
+      summary: `Chart analysis for ${displaySymbol} on ${selectedTimeframe}`
+    });
+  }, [copilot, displaySymbol, selectedTimeframe]);
   
   // Get timeframe label for display
   const timeframeLabel = useMemo(() => {
@@ -699,6 +712,8 @@ export default function TickerStudy() {
               bars={priceData}
               symbol={displaySymbol}
               height={350}
+              timeframe={selectedTimeframe}
+              onSendToCopilot={handleSendToCopilot}
             />
           </CardContent>
         </Card>
