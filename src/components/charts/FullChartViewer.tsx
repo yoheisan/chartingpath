@@ -39,7 +39,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Copy,
   Bell,
   FileCode,
   TrendingUp,
@@ -47,6 +46,7 @@ import {
   Target,
   ShieldAlert,
   CheckCircle2,
+  Copy,
   Loader2,
   AlertTriangle,
   Clock,
@@ -121,38 +121,13 @@ function saveIndicatorSettings(settings: IndicatorSettings) {
   }
 }
 
-/** Copy Plan button with clipboard feedback */
-function CopyPlanButton({ onCopy }: { onCopy: () => void }) {
-  const [copied, setCopied] = useState(false);
-  
-  const handleClick = () => {
-    onCopy();
-    setCopied(true);
-    toast.success('Trade plan copied!', {
-      description: 'Paste into TradingView notes, your trading journal, or broker order form.',
-      duration: 4000,
-    });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <Button variant="outline" onClick={handleClick} className="flex-1">
-      {copied ? (
-        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-      ) : (
-        <Copy className="h-4 w-4 mr-2" />
-      )}
-      {copied ? 'Copied!' : 'Copy Plan'}
-    </Button>
-  );
-}
+/** Run Backtest CTA - drives users to Pattern Lab for deeper research */
 
 interface FullChartViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setup: SetupWithVisuals | null;
   loading?: boolean;
-  onCopyPlan: () => void;
   onCreateAlert: () => void;
   onExportPine?: () => void;
   onSaveToVault?: () => void;
@@ -216,7 +191,6 @@ export default function FullChartViewer({
   onOpenChange, 
   setup,
   loading = false,
-  onCopyPlan,
   onCreateAlert,
   onExportPine,
   onSaveToVault,
@@ -1175,20 +1149,38 @@ export default function FullChartViewer({
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions - Monetization CTAs */}
             <div className="flex flex-wrap gap-2">
-              <CopyPlanButton onCopy={onCopyPlan} />
               <Button onClick={onCreateAlert} disabled={isCreatingAlert} className="flex-1">
                 {isCreatingAlert ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Bell className="h-4 w-4 mr-2" />
                 )}
-                Create Alert
+                Set Alert
               </Button>
+              {onExportPine && (
+                <Button variant="secondary" onClick={onExportPine} className="flex-1">
+                  <FileCode className="h-4 w-4 mr-2" />
+                  Generate Script
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="flex-1"
+                asChild
+              >
+                <Link to={`/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Run Backtest
+                </Link>
+              </Button>
+            </div>
+            <div className="flex gap-2">
               {onSaveToVault && (
                 <Button
-                  variant="secondary"
+                  variant="ghost"
+                  size="sm"
                   onClick={onSaveToVault}
                   disabled={isSavingToVault}
                   className="flex-1"
@@ -1199,12 +1191,6 @@ export default function FullChartViewer({
                     <Bookmark className="h-4 w-4 mr-2" />
                   )}
                   Save to Vault
-                </Button>
-              )}
-              {onExportPine && (
-                <Button variant="secondary" onClick={onExportPine}>
-                  <FileCode className="h-4 w-4 mr-2" />
-                  Pine
                 </Button>
               )}
               <Button

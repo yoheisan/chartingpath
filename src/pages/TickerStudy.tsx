@@ -1071,14 +1071,6 @@ export default function TickerStudy() {
             open={!!selectedPattern}
             onOpenChange={(open) => !open && setSelectedPattern(null)}
             setup={setup}
-            onCopyPlan={() => {
-              const plan = `${displaySymbol} ${setup.patternName}\nEntry: $${setup.tradePlan.entry}\nSL: $${setup.tradePlan.stopLoss}\nTP: $${setup.tradePlan.takeProfit}`;
-              navigator.clipboard.writeText(plan);
-              toast.success('Trade plan copied!', {
-                description: 'Paste into TradingView notes, your trading journal, or broker order form.',
-                duration: 4000,
-              });
-            }}
             onCreateAlert={() => {}}
             isCreatingAlert={false}
           />

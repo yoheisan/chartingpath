@@ -1410,15 +1410,6 @@ export default function LivePatternsPage() {
           setup={selectedSetup}
           loading={loadingChartDetails}
           selectedRR={DEFAULT_RR}
-          onCopyPlan={() => {
-            navigator.clipboard.writeText(
-              `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${DEFAULT_RR.toFixed(1)}`
-            );
-            toast.success('Trade plan copied!', {
-              description: 'Paste into TradingView notes, your trading journal, or broker order form.',
-              duration: 4000,
-            });
-          }}
           onCreateAlert={() => {
             window.location.href = `/members/alerts?symbol=${selectedSetup.instrument}&pattern=${selectedSetup.patternId}`;
           }}
