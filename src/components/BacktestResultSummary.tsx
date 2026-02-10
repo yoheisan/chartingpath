@@ -437,15 +437,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             Create Alert
           </Button>
           
-          <Button 
-            onClick={handleOpenTradingView} 
-            variant="outline" 
-            className="flex-1 gap-2"
-            size="lg"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open in TradingView
-          </Button>
+          
           
           <Button 
             onClick={handleShare} 

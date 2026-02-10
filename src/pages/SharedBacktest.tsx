@@ -267,15 +267,6 @@ const SharedBacktest = () => {
                 <Bell className="h-4 w-4" />
                 Create Alert
               </Button>
-              <Button 
-                onClick={() => openTradingView(backtest.instrument, 'crypto', backtest.timeframe)}
-                variant="outline"
-                size="lg"
-                className="gap-2 flex-1 max-w-xs"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open in TradingView
-              </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center mt-4">
               Most traders validate performance before creating alerts.
