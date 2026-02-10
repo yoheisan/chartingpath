@@ -54,6 +54,7 @@ import {
 
 import type { LiveSetup, ScanResult } from '@/types/screener';
 import { GRADE_ORDER, getPatternGrade, ASSET_TYPE_LABELS } from '@/types/screener';
+import { GradeBadge } from '@/components/ui/GradeBadge';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
 type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
