@@ -219,6 +219,7 @@ function detectAssetTypeFromSymbol(symbol: string): AssetType | null {
 export default function LivePatternsPage() {
   const [searchParams] = useSearchParams();
   const highlightSymbol = searchParams.get('highlight');
+  const openPatternId = searchParams.get('openPattern');
   
   // Detect initial asset type from highlight symbol if present
   const initialAssetType = highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx';
