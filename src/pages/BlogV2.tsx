@@ -140,7 +140,7 @@ const BlogV2 = () => {
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-normal pb-2">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight pb-1">
             Trading Education Center
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

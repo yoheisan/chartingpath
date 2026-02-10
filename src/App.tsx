@@ -7,6 +7,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
+import { CommandPaletteProvider } from "./components/command-palette";
+import { TradingCopilotProvider } from "./components/copilot";
 
 // Reusable loading fallback
 const PageLoader = () => (
@@ -115,6 +117,10 @@ const RectanglePattern = lazy(() => import("./pages/blog/RectanglePattern"));
 const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
 const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
 const TradingStrategiesGuide = lazy(() => import("./pages/blog/TradingStrategiesGuide"));
+const ChartTypesExplained = lazy(() => import("./pages/blog/ChartTypesExplained"));
+const PlatformGlossary = lazy(() => import("./pages/blog/PlatformGlossary"));
+const CommandCenterGuide = lazy(() => import("./pages/blog/CommandCenterGuide"));
+const PlatformFAQ = lazy(() => import("./pages/blog/PlatformFAQ"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -147,11 +153,13 @@ const Altcoins = lazy(() => import("./pages/markets/crypto/Altcoins"));
 
 const App = () => (
   <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ScrollToTop />
-      <PageCaptureButton />
-      <Layout>
+    <CommandPaletteProvider>
+      <TradingCopilotProvider>
+        <Toaster />
+        <Sonner />
+        <ScrollToTop />
+        <PageCaptureButton />
+        <Layout>
         <Routes>
           <Route path="/" element={withSuspense(<Index />)} />
           <Route path="/about" element={withSuspense(<About />)} />
@@ -175,6 +183,10 @@ const App = () => (
           <Route path="/quiz/crypto" element={withSuspense(<CryptoQuiz />)} />
           <Route path="/quiz/commodities" element={withSuspense(<CommoditiesQuiz />)} />
           <Route path="/learn" element={withSuspense(<BlogV2 />)} />
+          <Route path="/blog/chart-types-explained" element={withSuspense(<ChartTypesExplained />)} />
+          <Route path="/blog/platform-glossary" element={withSuspense(<PlatformGlossary />)} />
+          <Route path="/blog/command-center-guide" element={withSuspense(<CommandCenterGuide />)} />
+          <Route path="/blog/platform-faq" element={withSuspense(<PlatformFAQ />)} />
           <Route path="/blog/:slug" element={withSuspense(<DynamicArticle />)} />
           <Route path="/learn/head-and-shoulders" element={withSuspense(<HeadAndShoulders />)} />
           <Route path="/learn/double-top-bottom" element={withSuspense(<DoubleTopBottom />)} />
@@ -273,7 +285,9 @@ const App = () => (
           <Route path="*" element={withSuspense(<NotFound />)} />
         </Routes>
       </Layout>
-    </TooltipProvider>
+      </TradingCopilotProvider>
+    </CommandPaletteProvider>
+  </TooltipProvider>
 );
 
 export default App;

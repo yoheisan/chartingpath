@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -70,6 +71,7 @@ const MAX_TEASER_ITEMS = 10;
  * No filters, minimal UI, strong CTA to full screener.
  */
 export function PatternScreenerTeaser() {
+  const navigate = useNavigate();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<AssetType, LiveSetup[]>>({
     stocks: [],
     fx: [],
@@ -227,7 +229,8 @@ export function PatternScreenerTeaser() {
           return (
             <TableRow 
               key={`${setup.instrument}-${setup.patternId}-${idx}`}
-              className="hover:bg-muted/50 transition-colors"
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`)}
             >
               <TableCell>
                 <InstrumentLogo instrument={setup.instrument} />

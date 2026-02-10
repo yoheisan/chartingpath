@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import UserManagement from "@/components/UserManagement";
 import { InstrumentSearchAnalytics } from "@/components/admin/InstrumentSearchAnalytics";
 import { InternalDocs } from "@/components/admin/InternalDocs";
+import { CopilotFeedbackDashboard } from "@/components/admin/CopilotFeedbackDashboard";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -199,6 +200,14 @@ const AdminDashboard = () => {
             Settings
           </Button>
           <Button
+            variant={activeTab === "copilot-feedback" ? "default" : "outline"}
+            onClick={() => setActiveTab("copilot-feedback")}
+            className="flex items-center gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Copilot Feedback
+          </Button>
+          <Button
             variant={activeTab === "docs" ? "default" : "outline"}
             onClick={() => setActiveTab("docs")}
             className="flex items-center gap-2"
@@ -230,6 +239,8 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "docs" && <InternalDocs />}
+
+        {activeTab === "copilot-feedback" && <CopilotFeedbackDashboard />}
       </div>
     </div>
   );

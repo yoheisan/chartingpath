@@ -44,6 +44,8 @@ import {
   calculateOptimalPriceMargins,
   calculatePricePrecision,
 } from './chartConstants';
+import { ChartAnalysisToolbar } from './ChartAnalysisToolbar';
+import { useChartAnalysis } from '@/hooks/useChartAnalysis';
 import { cn } from '@/lib/utils';
 
 export interface IndicatorSettings {
@@ -100,6 +102,12 @@ interface StudyChartProps {
   autoHeight?: boolean;
   /** Optional trade plan to render Entry/SL/TP price lines */
   tradePlan?: TradePlanOverlay;
+  /** Timeframe for analysis (e.g., '1d', '4h') */
+  timeframe?: string;
+  /** Callback when user wants to send chart context to copilot */
+  onSendToCopilot?: (context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => void;
+  /** Hide analysis toolbar */
+  hideAnalysisToolbar?: boolean;
 }
 
 /**
@@ -110,16 +118,42 @@ interface StudyChartProps {
  * - Bollinger Bands
  * - VWAP
  */
-const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }: StudyChartProps) => {
+const StudyChart = memo(({ 
+  bars, 
+  symbol, 
+  height, 
+  autoHeight = false, 
+  tradePlan,
+  timeframe = '1d',
+  onSendToCopilot,
+  hideAnalysisToolbar = false
+}: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
+  const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
   const isPanningRef = useRef(false);
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
+  const analysisLinesRef = useRef<any[]>([]);
 
   const fixedHeight = height ?? 350;
+
+  // Chart analysis hook
+  const analysis = useChartAnalysis({
+    symbol,
+    timeframe,
+    onSendToCopilot
+  });
+
+  // Update bars in analysis hook when bars change
+  useEffect(() => {
+    if (bars && bars.length > 0) {
+      analysis.setBars(bars);
+    }
+  }, [bars, analysis.setBars]);
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -228,6 +262,9 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
         minMove,
       },
     });
+    
+    // Store reference for price lines
+    candleSeriesRef.current = candleSeries;
 
     // Normalize bars for consistent day-to-day coloring (green = up, red = down)
     const normalizedBars = normalizeBarsForConsistentColoring(bars);
@@ -499,6 +536,110 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
     };
   }, [bars, fixedHeight, autoHeight, indicators, i18n.language, tradePlan]);
 
+  // Effect to draw/remove analysis overlay lines
+  useEffect(() => {
+    if (!candleSeriesRef.current) return;
+    
+    // Remove existing lines first
+    analysisLinesRef.current.forEach(line => {
+      try { candleSeriesRef.current?.removePriceLine(line); } catch {}
+    });
+    analysisLinesRef.current = [];
+    
+    // Don't draw if overlay is off or no analysis
+    if (!showAnalysisOverlay || !analysis.analysisResult) return;
+    
+    const result = analysis.analysisResult;
+    const lines: any[] = [];
+    
+    // Support line (green, dashed)
+    if (result.priceAnalysis.support > 0) {
+      const supportLine = candleSeriesRef.current.createPriceLine({
+        price: result.priceAnalysis.support,
+        color: '#22c55e',
+        lineWidth: 1,
+        lineStyle: 2, // Dashed
+        axisLabelVisible: true,
+        title: 'Support',
+      });
+      lines.push(supportLine);
+    }
+    
+    // Resistance line (red, dashed)
+    if (result.priceAnalysis.resistance > 0) {
+      const resistanceLine = candleSeriesRef.current.createPriceLine({
+        price: result.priceAnalysis.resistance,
+        color: '#ef4444',
+        lineWidth: 1,
+        lineStyle: 2, // Dashed
+        axisLabelVisible: true,
+        title: 'Resistance',
+      });
+      lines.push(resistanceLine);
+    }
+    
+    // Key levels from risk assessment
+    if (result.riskAssessment.keyLevels) {
+      result.riskAssessment.keyLevels.slice(0, 3).forEach((level, i) => {
+        const levelLine = candleSeriesRef.current?.createPriceLine({
+          price: level.level,
+          color: level.type === 'support' ? '#22c55e80' : level.type === 'resistance' ? '#ef444480' : '#f59e0b80',
+          lineWidth: 1,
+          lineStyle: 3, // Dotted
+          axisLabelVisible: false,
+          title: '',
+        });
+        if (levelLine) lines.push(levelLine);
+      });
+    }
+    
+    // Best trading scenario entry/SL/TP
+    const scenario = result.priceAnalysis.trend === 'bullish' 
+      ? result.tradingScenarios.bullish 
+      : result.tradingScenarios.bearish;
+    
+    if (scenario && scenario.entry > 0) {
+      // Entry (amber)
+      const entryLine = candleSeriesRef.current.createPriceLine({
+        price: scenario.entry,
+        color: '#f59e0b',
+        lineWidth: 2,
+        lineStyle: 0, // Solid
+        axisLabelVisible: true,
+        title: 'Entry',
+      });
+      lines.push(entryLine);
+      
+      // Stop Loss (red)
+      if (scenario.stopLoss > 0) {
+        const slLine = candleSeriesRef.current.createPriceLine({
+          price: scenario.stopLoss,
+          color: '#ef4444',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'SL',
+        });
+        lines.push(slLine);
+      }
+      
+      // Take Profit (green)
+      if (scenario.takeProfit > 0) {
+        const tpLine = candleSeriesRef.current.createPriceLine({
+          price: scenario.takeProfit,
+          color: '#22c55e',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'TP',
+        });
+        lines.push(tpLine);
+      }
+    }
+    
+    analysisLinesRef.current = lines;
+  }, [showAnalysisOverlay, analysis.analysisResult]);
+
   if (!bars || bars.length === 0) {
     return (
       <div
@@ -523,6 +664,32 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
         )}
         style={autoHeight ? undefined : { height: fixedHeight }}
       />
+
+      {/* Chart Analysis Toolbar */}
+      {!hideAnalysisToolbar && onSendToCopilot && (
+        <ChartAnalysisToolbar
+          selectionMode={analysis.selectionMode}
+          isAnalyzing={analysis.isAnalyzing}
+          hasSelection={analysis.selectedBars.length > 0}
+          hasAnalysis={!!analysis.analysisResult}
+          showOverlay={showAnalysisOverlay}
+          onToggleOverlay={setShowAnalysisOverlay}
+          onStartRangeSelection={analysis.startRangeSelection}
+          onSelectVisible={analysis.analyzeVisibleChart}
+          onSelectPattern={analysis.selectPatternContext}
+          onAnalyze={analysis.analyzeSelection}
+          onSendToCopilot={analysis.sendToCopilot}
+          onClear={() => {
+            analysis.clearSelection();
+            // Remove analysis lines when clearing
+            analysisLinesRef.current.forEach(line => {
+              try { candleSeriesRef.current?.removePriceLine(line); } catch {}
+            });
+            analysisLinesRef.current = [];
+          }}
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-30"
+        />
+      )}
 
       {/* Indicator Legend - only show active ones */}
       <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none">
@@ -553,7 +720,20 @@ const StudyChart = memo(({ bars, symbol, height, autoHeight = false, tradePlan }
         )}
       </div>
 
-      {/* Pan Hint - Desktop only */}
+      {/* Analysis Overlay Legend */}
+      {showAnalysisOverlay && analysis.analysisResult && (
+        <div className="absolute top-2 right-2 flex flex-col gap-1 text-[10px] pointer-events-none">
+          <span className="px-1.5 py-0.5 rounded bg-background/90 border border-emerald-500/30 text-emerald-500">
+            Support / TP
+          </span>
+          <span className="px-1.5 py-0.5 rounded bg-background/90 border border-red-500/30 text-red-500">
+            Resistance / SL
+          </span>
+          <span className="px-1.5 py-0.5 rounded bg-background/90 border border-amber-500/30 text-amber-500">
+            Entry
+          </span>
+        </div>
+      )}
       <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-[10px] text-muted-foreground/70 pointer-events-none">
         <TooltipProvider>
           <Tooltip>

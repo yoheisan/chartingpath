@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { resolveToYahooSymbol, getSymbolVariants } from "../_shared/symbolResolver.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,22 +24,23 @@ interface OHLCBar {
 }
 
 /**
- * Aggregate 1h bars into 4h bars
- * Groups by 4-hour windows (0-4, 4-8, 8-12, 12-16, 16-20, 20-24)
+ * Aggregate 1h bars into larger timeframe bars
+ * @param bars - Array of 1h OHLC bars
+ * @param hoursPerBar - Number of hours to aggregate (4 or 8)
  */
-function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   if (!bars || bars.length === 0) return [];
   
-  // Group bars by 4-hour window
+  // Group bars by N-hour window
   const groupedBars = new Map<string, OHLCBar[]>();
   
   for (const bar of bars) {
     const date = new Date(bar.t);
     const hour = date.getUTCHours();
-    // Determine 4-hour window: 0, 4, 8, 12, 16, 20
-    const windowStart = Math.floor(hour / 4) * 4;
+    // Determine N-hour window start
+    const windowStart = Math.floor(hour / hoursPerBar) * hoursPerBar;
     
-    // Create key for this 4-hour window
+    // Create key for this N-hour window
     const windowDate = new Date(date);
     windowDate.setUTCHours(windowStart, 0, 0, 0);
     const key = windowDate.toISOString();
@@ -49,7 +51,7 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
     groupedBars.get(key)!.push(bar);
   }
   
-  // Aggregate each group into a single 4h bar
+  // Aggregate each group into a single bar
   const aggregatedBars: OHLCBar[] = [];
   
   for (const [windowKey, windowBars] of groupedBars) {
@@ -90,29 +92,49 @@ serve(async (req) => {
       includeOhlc = false,
     }: YahooFinanceRequest = await req.json();
     
-    // Determine if we need to aggregate 4h from 1h data
+    // Determine if we need to aggregate from 1h data
     const needs4hAggregation = interval === '4h';
-    const yahooInterval = needs4hAggregation ? '1h' : interval;
+    const needs8hAggregation = interval === '8h';
+    const needsAggregation = needs4hAggregation || needs8hAggregation;
+    const yahooInterval = needsAggregation ? '1h' : interval;
     
-    console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}${needs4hAggregation ? ' (fetching 1h for aggregation)' : ''}`);
+    console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}${needsAggregation ? ` (fetching 1h for ${interval} aggregation)` : ''}`);
 
     // Convert dates to Unix timestamps
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
 
-    // Yahoo Finance query URL - use yahooInterval (1h if 4h requested)
-    // IMPORTANT: symbol must be URL-encoded because index tickers include special chars (e.g. ^GSPC)
-    const encodedSymbol = encodeURIComponent(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+    // Resolve symbol to Yahoo format and try variants
+    const symbolVariants = getSymbolVariants(symbol);
+    let response: Response | null = null;
+    let lastError: Error | null = null;
+    let usedSymbol = symbol;
 
-    const response = await fetch(yahooUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    for (const variant of symbolVariants) {
+      const encodedSymbol = encodeURIComponent(variant);
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+
+      console.log(`Trying Yahoo Finance URL: ${yahooUrl}`);
+
+      const resp = await fetch(yahooUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      if (resp.ok) {
+        response = resp;
+        usedSymbol = variant;
+        console.log(`Success with symbol variant: ${variant}`);
+        break;
+      } else {
+        lastError = new Error(`Yahoo Finance API error for ${variant}: ${resp.status} ${resp.statusText}`);
+        console.log(`Failed with ${variant}: ${resp.status}`);
       }
-    });
+    }
 
-    if (!response.ok) {
-      throw new Error(`Yahoo Finance API error: ${response.statusText}`);
+    if (!response) {
+      throw lastError || new Error(`Yahoo Finance API error: No valid symbol variant found for ${symbol}`);
     }
 
     const data = await response.json();
@@ -159,11 +181,15 @@ serve(async (req) => {
       })
       .filter((bar): bar is OHLCBar => bar !== null);
     
-    // Aggregate to 4h if needed
+    // Aggregate to 4h or 8h if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 4h bars`);
-      ohlcBars = aggregate1hTo4h(ohlcBars);
+      ohlcBars = aggregate1hBars(ohlcBars, 4);
       console.log(`Result: ${ohlcBars.length} 4h bars`);
+    } else if (needs8hAggregation && ohlcBars.length > 0) {
+      console.log(`Aggregating ${ohlcBars.length} 1h bars into 8h bars`);
+      ohlcBars = aggregate1hBars(ohlcBars, 8);
+      console.log(`Result: ${ohlcBars.length} 8h bars`);
     }
     
     // Format data into PriceFrame format
@@ -178,7 +204,8 @@ serve(async (req) => {
         exchangeName: result.meta.exchangeName,
         instrumentType: result.meta.instrumentType,
         dataGranularity: interval, // Use requested granularity
-        aggregated: needs4hAggregation,
+        aggregated: needsAggregation,
+        aggregatedFrom: needsAggregation ? '1h' : undefined,
       }
     };
 

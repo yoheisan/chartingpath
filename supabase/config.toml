@@ -185,3 +185,6 @@ verify_jwt = false
 
 [functions.remove-push-subscription]
 verify_jwt = false
+
+[functions.trading-copilot]
+verify_jwt = false

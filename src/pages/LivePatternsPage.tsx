@@ -282,7 +282,7 @@ export default function LivePatternsPage() {
   
   // Filters - use detected type from highlight or default to 'fx'
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
-  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '1d' | '1wk'>('1d');
+  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '8h' | '1d' | '1wk'>('1d');
   const [filters, setFilters] = useState<ScreenerFiltersState>(DEFAULT_SCREENER_FILTERS);
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
@@ -460,7 +460,7 @@ export default function LivePatternsPage() {
     fetchLivePatterns(false, newType, timeframe);
   };
 
-  const handleTimeframeChange = (newTf: '1h' | '4h' | '1d' | '1wk') => {
+  const handleTimeframeChange = (newTf: '1h' | '4h' | '8h' | '1d' | '1wk') => {
     setTimeframe(newTf);
     setPatterns([]); // Clear patterns immediately for visual feedback
     setError(null);  // Clear any previous errors
@@ -931,7 +931,7 @@ export default function LivePatternsPage() {
                 <p className="font-medium mb-2">How This Works</p>
                 <p className="text-sm mb-2">
                   We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
-                  for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
+                  for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '8h' ? '8-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
                   {instrumentsScanned < (totalInUniverse || 0) && (
                     <span className="block mt-1 text-xs text-muted-foreground">
                       Your plan has access to {instrumentsScanned} of these instruments.
@@ -947,7 +947,7 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments on {timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '1wk' ? 'Weekly' : 'Daily'} • 
+          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments on {timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? 'Weekly' : 'Daily'} • 
           Showing {patterns.length} with active patterns
         </p>
       </div>
@@ -982,7 +982,7 @@ export default function LivePatternsPage() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
-                  <Select value={timeframe} onValueChange={(v) => handleTimeframeChange(v as '1h' | '4h' | '1d' | '1wk')}>
+                  <Select value={timeframe} onValueChange={(v) => handleTimeframeChange(v as '1h' | '4h' | '8h' | '1d' | '1wk')}>
                     <SelectTrigger className="w-24">
                       <Clock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                       <SelectValue placeholder="Timeframe" />
@@ -990,6 +990,7 @@ export default function LivePatternsPage() {
                     <SelectContent>
                       <SelectItem value="1h">1H</SelectItem>
                       <SelectItem value="4h">4H</SelectItem>
+                      <SelectItem value="8h">8H</SelectItem>
                       <SelectItem value="1d">Daily</SelectItem>
                       <SelectItem value="1wk">Weekly</SelectItem>
                     </SelectContent>
@@ -1004,6 +1005,7 @@ export default function LivePatternsPage() {
                 <div className="text-xs space-y-1 text-muted-foreground">
                   <div><span className="font-medium">1H:</span> Intraday signals (last 30 days history)</div>
                   <div><span className="font-medium">4H:</span> Swing trading (last 30 days history)</div>
+                  <div><span className="font-medium">8H:</span> Swing trading (last 30 days history)</div>
                   <div><span className="font-medium">Daily:</span> Position trading (5+ years history)</div>
                   <div><span className="font-medium">Weekly:</span> Long-term investing (5+ years history)</div>
                 </div>

@@ -961,6 +961,60 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_feedback: {
+        Row: {
+          content_gap_description: string | null
+          content_gap_identified: boolean | null
+          created_at: string
+          id: string
+          intent_category: string | null
+          priority_score: number | null
+          quality_score: number | null
+          question: string
+          resolved: boolean | null
+          response: string | null
+          response_helpful: boolean | null
+          session_id: string | null
+          topics: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content_gap_description?: string | null
+          content_gap_identified?: boolean | null
+          created_at?: string
+          id?: string
+          intent_category?: string | null
+          priority_score?: number | null
+          quality_score?: number | null
+          question: string
+          resolved?: boolean | null
+          response?: string | null
+          response_helpful?: boolean | null
+          session_id?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content_gap_description?: string | null
+          content_gap_identified?: boolean | null
+          created_at?: string
+          id?: string
+          intent_category?: string | null
+          priority_score?: number | null
+          quality_score?: number | null
+          question?: string
+          resolved?: boolean | null
+          response?: string | null
+          response_helpful?: boolean | null
+          session_id?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       country_language_mapping: {
         Row: {
           country_code: string
@@ -3877,6 +3931,7 @@ export type Database = {
         Returns: number
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_service_role: { Args: never; Returns: boolean }
       make_first_user_admin: { Args: never; Returns: undefined }
       process_plan_change: {
         Args: {

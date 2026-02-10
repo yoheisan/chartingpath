@@ -46,7 +46,9 @@ import { GradeBadge } from '@/components/ui/GradeBadge';
 import { TimeframeSelector, useStudyTimeframes, STUDY_TIMEFRAMES } from '@/components/charts/TimeframeSelector';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { format, formatDistanceToNow } from 'date-fns';
+import { useTradingCopilotContext } from '@/components/copilot';
 
 interface HistoricalPattern {
   id: string;
@@ -207,6 +209,9 @@ export default function TickerStudy() {
   const [priceData, setPriceData] = useState<CompressedBar[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<HistoricalPattern | LivePattern | null>(null);
   
+  // Trading Copilot context for chart analysis
+  const copilot = useTradingCopilotContext();
+  
   // Timeframe selection (paid feature)
   const { allowedTimeframes, isTimeframeAllowed } = useStudyTimeframes();
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1d');
@@ -217,6 +222,11 @@ export default function TickerStudy() {
 
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
+
+  // Handler for sending chart context to copilot with visual analysis
+  const handleSendToCopilot = useCallback((context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => {
+    copilot.openWithAnalysis(context, analysis);
+  }, [copilot]);
   
   // Get timeframe label for display
   const timeframeLabel = useMemo(() => {
@@ -399,8 +409,10 @@ export default function TickerStudy() {
           setLivePatterns(mappedLive);
         }
 
-        // Fetch historical price data for chart (limit varies by timeframe)
-        const barLimit = selectedTimeframe === '1h' ? 500 : selectedTimeframe === '4h' ? 300 : 200;
+        // Fetch historical price data using centralized DATA_COVERAGE limits
+        const chartLimits = getChartDataLimits(selectedTimeframe as Timeframe);
+        const { barLimit, minBarsRequired, daysBack } = chartLimits;
+        
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData: any[] | null = null;
 
@@ -419,8 +431,11 @@ export default function TickerStudy() {
           }
         }
 
-        if (pricesData && pricesData.length > 0) {
-          const bars: CompressedBar[] = pricesData
+        // Only use DB data if we have enough bars, otherwise fetch fresh from Yahoo
+        const hasEnoughData = pricesData && pricesData.length >= minBarsRequired;
+
+        if (hasEnoughData) {
+          const bars: CompressedBar[] = pricesData!
             .map((p: any) => ({
               t: new Date(p.date).toISOString(),
               o: Number(p.open),
@@ -432,9 +447,7 @@ export default function TickerStudy() {
             .reverse();
           setPriceData(bars);
         } else {
-          // Yahoo fallback (OHLC)
-          // Adjust date range based on timeframe
-          const daysBack = selectedTimeframe === '1h' ? 30 : selectedTimeframe === '4h' ? 90 : 400;
+          // Yahoo fallback using DATA_COVERAGE contract limits
           const endDate = new Date();
           const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
           const startStr = startDate.toISOString().slice(0, 10);
@@ -695,6 +708,8 @@ export default function TickerStudy() {
               bars={priceData}
               symbol={displaySymbol}
               height={350}
+              timeframe={selectedTimeframe}
+              onSendToCopilot={handleSendToCopilot}
             />
           </CardContent>
         </Card>

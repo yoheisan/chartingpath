@@ -16,8 +16,10 @@ import StudyChart from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTradingCopilotContext } from '@/components/copilot';
 
 interface CommandCenterChartProps {
   symbol: string;
@@ -30,6 +32,7 @@ const TIMEFRAMES = [
   { value: '15m', label: '15m' },
   { value: '1h', label: '1H' },
   { value: '4h', label: '4H' },
+  { value: '8h', label: '8H' },
   { value: '1d', label: '1D' },
   { value: '1wk', label: '1W' },
 ];
@@ -42,6 +45,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 }: CommandCenterChartProps) {
   const { profile, user } = useUserProfile();
   const isMobile = useIsMobile();
+  const copilot = useTradingCopilotContext();
   const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +152,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     setError(null);
 
     try {
+      // Use centralized DATA_COVERAGE limits
+      const chartLimits = getChartDataLimits(timeframe as Timeframe);
+      const { barLimit, minBarsRequired, daysBack } = chartLimits;
+
+      console.log(`[CommandCenterChart] Fetching ${symbol} ${timeframe}: barLimit=${barLimit}, minBarsRequired=${minBarsRequired}, daysBack=${daysBack}`);
+
       // Fetch from historical_prices table
       const { data, error: dbError } = await supabase
         .from('historical_prices')
@@ -155,24 +165,26 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         .eq('symbol', symbol)
         .eq('timeframe', timeframe)
         .order('date', { ascending: true })
-        .limit(200);
+        .limit(barLimit);
 
       if (dbError) throw dbError;
 
-      if (!data || data.length === 0) {
-        // Fallback to edge function with proper date parameters
-        // Intraday intervals (15m, 1h, 4h) are limited to ~30 days by Yahoo Finance
-        const isIntraday = ['15m', '1h', '4h'].includes(timeframe);
+      // Only use DB data if we have enough bars
+      const hasEnoughData = data && data.length >= minBarsRequired;
+      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars, hasEnoughData=${hasEnoughData}`);
+
+      if (!hasEnoughData) {
+        // Fallback to Yahoo Finance
+        // IMPORTANT: Yahoo limits hourly data to ~60 days, so for 4h/8h (aggregated from 1h)
+        // we must use a shorter lookback to avoid API errors
+        const isHourlyAggregated = ['4h', '8h'].includes(timeframe);
+        const yahooLookbackDays = isHourlyAggregated ? 60 : daysBack;
+        
         const endDate = new Date();
         const startDate = new Date();
+        startDate.setDate(endDate.getDate() - yahooLookbackDays);
         
-        if (isIntraday) {
-          // Yahoo limits intraday to ~30 days
-          startDate.setDate(endDate.getDate() - 30);
-        } else {
-          // Daily/weekly can go back 1 year
-          startDate.setFullYear(endDate.getFullYear() - 1);
-        }
+        console.log(`[CommandCenterChart] Using Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${yahooLookbackDays} days)`);
 
         const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
           body: { 
@@ -184,7 +196,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           },
         });
 
-        if (fnError) throw fnError;
+        if (fnError) {
+          console.error('[CommandCenterChart] Yahoo fallback error:', fnError);
+          throw new Error(fnError.message || 'Failed to fetch chart data');
+        }
+        
+        console.log(`[CommandCenterChart] Yahoo returned ${fnData?.bars?.length || 0} bars`);
         
         const fetchedBars: CompressedBar[] = (fnData?.bars || []).map((b: any) => ({
           t: b.date || (typeof b.t === 'number' ? new Date(b.t * 1000).toISOString() : b.t),
@@ -194,6 +211,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           c: b.close || b.c,
           v: b.volume || b.v,
         }));
+
+        if (fetchedBars.length === 0) {
+          throw new Error('No data available for this symbol/timeframe');
+        }
 
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
@@ -367,7 +388,13 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         ) : bars.length > 0 ? (
           <div className="h-full p-2">
-            <StudyChart bars={bars} symbol={symbol} autoHeight />
+            <StudyChart 
+              bars={bars} 
+              symbol={symbol} 
+              timeframe={timeframe}
+              autoHeight 
+              onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
+            />
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">

@@ -14,7 +14,7 @@
  * Last Verified: 2026-02-02
  */
 
-export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '1d' | '1wk' | '1M';
+export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '8h' | '1d' | '1wk' | '1M';
 
 export interface TimeframeCoverage {
   /** Maximum historical lookback in years */
@@ -74,6 +74,13 @@ export const DATA_COVERAGE: Record<Timeframe, TimeframeCoverage> = {
     maxLookbackYears: 2,
     maxLookbackDays: 730,
     description: '2 years max',
+    isIntraday: true,
+    defaultLookbackYears: 1,
+  },
+  '8h': {
+    maxLookbackYears: 2,
+    maxLookbackDays: 730,
+    description: '2 years max (aggregated from 1h)',
     isIntraday: true,
     defaultLookbackYears: 1,
   },
@@ -193,5 +200,36 @@ export function getDefaultLookback(timeframe: Timeframe): number {
   return DATA_COVERAGE[timeframe]?.defaultLookbackYears ?? 1;
 }
 
+/**
+ * Get chart data limits for a timeframe
+ * Used by all chart components to ensure consistent data fetching
+ */
+export function getChartDataLimits(timeframe: Timeframe): {
+  barLimit: number;
+  minBarsRequired: number;
+  daysBack: number;
+} {
+  switch (timeframe) {
+    case '1m':
+    case '5m':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 7 };
+    case '15m':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 60 }; // 60 days max
+    case '1h':
+      return { barLimit: 730, minBarsRequired: 50, daysBack: 365 }; // 1 year
+    case '4h':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 730 }; // 2 years max
+    case '8h':
+      return { barLimit: 500, minBarsRequired: 50, daysBack: 730 }; // 2 years max (aggregated from 1h)
+    case '1wk':
+      return { barLimit: 365, minBarsRequired: 100, daysBack: 2555 }; // ~7 years
+    case '1M':
+      return { barLimit: 120, minBarsRequired: 24, daysBack: 3650 }; // ~10 years
+    case '1d':
+    default:
+      return { barLimit: 1260, minBarsRequired: 250, daysBack: 1825 }; // ~5 years
+  }
+}
+
 // Re-export for convenience
-export const SUPPORTED_TIMEFRAMES: Timeframe[] = ['1h', '4h', '1d', '1wk'];
+export const SUPPORTED_TIMEFRAMES: Timeframe[] = ['1h', '4h', '8h', '1d', '1wk'];

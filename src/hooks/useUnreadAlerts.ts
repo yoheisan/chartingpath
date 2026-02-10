@@ -35,37 +35,22 @@ export function useUnreadAlerts(userId?: string): UnreadAlertsState {
     }
 
     try {
-      // Fetch unread alerts count from alerts_log where checked_at is null or before triggered_at
+      // Fetch unread alerts count from alerts_log where email_sent is false or null
       // and triggered within the last 7 days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      // First get user's alert IDs
-      const { data: userAlerts, error: alertsError } = await supabase
-        .from('alerts')
-        .select('id')
-        .eq('user_id', userId);
+      const { count: alertCount, error } = await supabase
+        .from('alerts_log')
+        .select('id, alerts!inner(user_id)', { count: 'exact', head: true })
+        .eq('alerts.user_id', userId)
+        .gte('triggered_at', sevenDaysAgo.toISOString())
+        .or('checked_at.is.null,checked_at.lt.triggered_at');
 
-      if (alertsError) {
-        console.error('[useUnreadAlerts] Error fetching user alerts:', alertsError);
-      } else if (userAlerts && userAlerts.length > 0) {
-        const alertIds = userAlerts.map(a => a.id);
-        
-        // Then count unread logs for those alerts
-        const { count: alertCount, error: countError } = await supabase
-          .from('alerts_log')
-          .select('id', { count: 'exact', head: true })
-          .in('alert_id', alertIds)
-          .gte('triggered_at', sevenDaysAgo.toISOString())
-          .is('checked_at', null);
-
-        if (countError) {
-          console.error('[useUnreadAlerts] Error fetching counts:', countError);
-        } else {
-          setCount(alertCount || 0);
-        }
+      if (error) {
+        console.error('[useUnreadAlerts] Error fetching counts:', error);
       } else {
-        setCount(0);
+        setCount(alertCount || 0);
       }
 
       // Fetch watchlist pattern matches (live patterns matching user watchlist symbols)

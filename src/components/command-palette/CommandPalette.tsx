@@ -1,0 +1,97 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { CommandPaletteContent } from "./CommandPaletteContent";
+import { CommandPaletteChat } from "./CommandPaletteChat";
+
+interface CommandPaletteProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
+  const isMobile = useIsMobile();
+  const [mode, setMode] = useState<"commands" | "chat">("commands");
+  const [chatPrompt, setChatPrompt] = useState<string | undefined>();
+
+  // Reset state when closing
+  useEffect(() => {
+    if (!isOpen) {
+      setMode("commands");
+      setChatPrompt(undefined);
+    }
+  }, [isOpen]);
+
+  const handleAIQuery = (prompt: string) => {
+    setChatPrompt(prompt);
+    setMode("chat");
+  };
+
+  const handleBack = () => {
+    setMode("commands");
+    setChatPrompt(undefined);
+  };
+
+  // Mobile: Use Drawer (bottom sheet)
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerTitle className="sr-only">Command Center</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Your central hub for navigation, research, and automation.
+          </DrawerDescription>
+          
+          {mode === "chat" ? (
+            <div className="h-[70vh]">
+              <CommandPaletteChat initialPrompt={chatPrompt} onBack={handleBack} />
+            </div>
+          ) : (
+            <CommandPaletteContent 
+              onClose={onClose} 
+              onAIQuery={handleAIQuery}
+              isMobile={true}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Use Dialog (centered modal) - LARGER for command center feel
+  if (mode === "chat") {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-3xl h-[700px] p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
+          <DialogTitle className="sr-only">Command Center</DialogTitle>
+          <DialogDescription className="sr-only">
+            Your central hub for navigation, research, and automation.
+          </DialogDescription>
+          <CommandPaletteChat initialPrompt={chatPrompt} onBack={handleBack} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden shadow-2xl border-border/50">
+        <DialogTitle className="sr-only">Command Center</DialogTitle>
+        <DialogDescription className="sr-only">
+          Your central hub for navigation, research, and automation.
+        </DialogDescription>
+        <CommandPaletteContent 
+          onClose={onClose} 
+          onAIQuery={handleAIQuery}
+          isMobile={false}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
