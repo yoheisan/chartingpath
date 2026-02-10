@@ -29,8 +29,8 @@ export function useTradePlayback({
   // Calculate exit bar index
   const exitBarIndex = barsToOutcome != null ? entryBarIndex + barsToOutcome : null;
   
-  // Start from just before entry to give context
-  const startIndex = Math.max(0, entryBarIndex - 2);
+  // Start from well before entry to show pattern formation context
+  const startIndex = 0;
   const endIndex = exitBarIndex != null ? Math.min(exitBarIndex + 1, bars.length) : bars.length;
   
   const [currentBarIndex, setCurrentBarIndex] = useState(startIndex);
