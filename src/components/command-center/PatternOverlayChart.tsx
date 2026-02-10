@@ -48,8 +48,19 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
   // Check if this is a historical pattern with outcome data
   const isHistoricalPattern = outcome != null || barsToOutcome != null;
   
-  // Calculate entry bar index from visualSpec or setup
-  const computedEntryBarIndex = entryBarIndex ?? visualSpec?.entryBarIndex ?? undefined;
+  // Calculate entry bar index from visualSpec or setup, with fallback computation
+  const computedEntryBarIndex = entryBarIndex 
+    ?? visualSpec?.entryBarIndex 
+    ?? (barsToOutcome != null && bars && bars.length > 0 
+        ? Math.max(0, bars.length - barsToOutcome - 1) 
+        : undefined);
+  
+  // Compute barsToOutcome fallback: if we have entryBarIndex but no barsToOutcome, 
+  // use remaining bars after entry as the outcome window
+  const computedBarsToOutcome = barsToOutcome 
+    ?? (computedEntryBarIndex != null && bars && bars.length > 0 
+        ? bars.length - 1 - computedEntryBarIndex 
+        : null);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -195,7 +206,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
           </div>
         ) : bars && bars.length > 0 ? (
           <div className="h-full flex flex-col">
-            {isHistoricalPattern && barsToOutcome != null && computedEntryBarIndex != null ? (
+            {isHistoricalPattern && computedBarsToOutcome != null && computedEntryBarIndex != null ? (
               // Use playback chart for historical patterns with outcome - manual start
               <FullChartPlaybackView
                 bars={bars}
@@ -207,7 +218,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
                   takeProfit: tradePlan.takeProfit,
                 }}
                 entryBarIndex={computedEntryBarIndex}
-                barsToOutcome={barsToOutcome}
+                barsToOutcome={computedBarsToOutcome}
                 outcome={outcome}
                 autoPlay={false}
               />
