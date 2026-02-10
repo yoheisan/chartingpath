@@ -25,7 +25,7 @@ const stages = [
     stage: 3,
     title: "Execute",
     subtitle: "Take the Trade",
-    description: "Open charts in TradingView with pre-calculated levels ready to trade.",
+    description: "Set alerts and automate with pre-calculated levels ready to trade.",
     icon: TrendingUp,
     link: "/patterns/live",
     color: "from-green-500 to-emerald-500",

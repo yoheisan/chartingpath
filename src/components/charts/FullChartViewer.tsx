@@ -1193,69 +1193,7 @@ export default function FullChartViewer({
                   Save to Vault
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                aria-label="Open in TradingView"
-                onClick={() => openExternal(tradingViewUrl)}
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
             </div>
-
-            {externalLink && (
-              <Card className="border-border/50">
-                <CardContent className="pt-4 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
-                      TradingView link (copy & open in a new tab)
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      type="button"
-                      aria-label="Dismiss link"
-                      onClick={() => setExternalLink(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Input
-                      value={externalLink}
-                      readOnly
-                      onFocus={(e) => e.currentTarget.select()}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(externalLink);
-                          toast.message('Link copied.');
-                        } catch {
-                          toast.message('Select the link and copy it.');
-                        }
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span className="sr-only">Copy link</span>
-                    </Button>
-                  </div>
-
-                  <a
-                    className="text-xs text-muted-foreground underline"
-                    href={externalLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open in new tab (may be blocked in preview)
-                  </a>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Right: Info Panel (1 col) */}
@@ -1329,22 +1267,6 @@ export default function FullChartViewer({
                   </div>
                 </a>
 
-                {/* Open in TradingView */}
-                <button
-                  type="button"
-                  onClick={() => openExternal(tradingViewAffiliateUrl)}
-                  className="block w-full text-left"
-                >
-                  <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="p-1.5 rounded bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Execute on TradingView</p>
-                      <p className="text-[10px] text-muted-foreground truncate">Professional charts & trading</p>
-                    </div>
-                  </div>
-                </button>
 
                 {/* Get Script */}
                 <a 
