@@ -49,7 +49,7 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
             <TableRow
               key={`${setup.instrument}-${setup.patternId}-${idx}`}
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`)}
+              onClick={() => navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}&openPattern=${setup.dbId || ''}`)}
             >
               <TableCell>
                 <InstrumentLogo instrument={setup.instrument} />
