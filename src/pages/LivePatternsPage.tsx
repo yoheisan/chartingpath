@@ -446,15 +446,25 @@ export default function LivePatternsPage() {
   }, [capsLoading, tier]);
 
   useEffect(() => {
-    if (highlightSymbol && patterns.length > 0 && !chartOpen) {
-      const matchingSetup = patterns.find(p => 
-        p.instrument === highlightSymbol || p.instrument.includes(highlightSymbol)
-      );
+    if ((highlightSymbol || openPatternId) && patterns.length > 0 && !chartOpen) {
+      let matchingSetup: LiveSetup | undefined;
+      
+      // Prefer exact dbId match from openPattern param
+      if (openPatternId) {
+        matchingSetup = patterns.find(p => p.dbId === openPatternId);
+      }
+      // Fall back to symbol match
+      if (!matchingSetup && highlightSymbol) {
+        matchingSetup = patterns.find(p => 
+          p.instrument === highlightSymbol || p.instrument.includes(highlightSymbol)
+        );
+      }
+      
       if (matchingSetup) {
         handleOpenChart(matchingSetup);
       }
     }
-  }, [highlightSymbol, patterns]);
+  }, [highlightSymbol, openPatternId, patterns]);
 
   // Get unique pattern types for filter dropdown
   const patternOptions = useMemo(() => {
