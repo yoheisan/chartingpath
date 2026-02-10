@@ -1854,16 +1854,18 @@ function detectTripleTop(highs: number[]): boolean {
   const peaks = findPeaks(highs);
   if (peaks.length < 3) return false;
   const lastThreePeaks = peaks.slice(-3).map(i => highs[i]);
-  const avg = lastThreePeaks.reduce((a, b) => a + b, 0) / 3;
-  return lastThreePeaks.every(p => Math.abs(p - avg) / avg < 0.03);
+  const maxPeak = Math.max(...lastThreePeaks);
+  const minPeak = Math.min(...lastThreePeaks);
+  return (maxPeak - minPeak) / minPeak < 0.03;
 }
 
 function detectTripleBottom(lows: number[]): boolean {
   const troughs = findTroughs(lows);
   if (troughs.length < 3) return false;
   const lastThreeTroughs = troughs.slice(-3).map(i => lows[i]);
-  const avg = lastThreeTroughs.reduce((a, b) => a + b, 0) / 3;
-  return lastThreeTroughs.every(t => Math.abs(t - avg) / avg < 0.03);
+  const maxTrough = Math.max(...lastThreeTroughs);
+  const minTrough = Math.min(...lastThreeTroughs);
+  return (maxTrough - minTrough) / minTrough < 0.03;
 }
 
 function detectDescendingTriangle(highs: number[], lows: number[]): boolean {
