@@ -450,6 +450,8 @@ export default function LivePatternsPage() {
   useEffect(() => {
     if (autoOpenTriggeredRef.current || chartOpen) return;
     if (!highlightSymbol && !openPatternId) return;
+    // Wait until initial fetch completes
+    if (loading) return;
 
     // Try matching in loaded patterns first
     if (patterns.length > 0) {
@@ -469,10 +471,9 @@ export default function LivePatternsPage() {
       }
     }
 
-    // If patterns loaded but no match found, fetch the specific pattern directly
-    if (!loading && openPatternId && patterns.length > 0) {
+    // Pattern not in screener results — fetch directly by dbId
+    if (openPatternId) {
       autoOpenTriggeredRef.current = true;
-      // Fetch pattern details directly by dbId and open chart
       (async () => {
         try {
           setChartOpen(true);
