@@ -174,6 +174,10 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
       setOccurrenceSetup(initialPlaybackPattern.setup);
       setLoadingOccurrence(false);
       
+      // Auto-open Pattern History tab when navigating with playback data
+      setBottomPanelTab('pattern-history');
+      setBottomPanelExpanded(true);
+      
       toast.success(`Trade Playback: ${initialPlaybackPattern.symbol} - ${initialPlaybackPattern.patternName}`, {
         description: 'Use playback controls to replay this trade bar-by-bar',
         duration: 4000,
