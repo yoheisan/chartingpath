@@ -594,10 +594,7 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Helper to extract grade from pattern
-  const getPatternGrade = (p: LiveSetup): string => {
-    return p.quality?.grade || p.quality?.score?.toString() || 'C';
-  };
+  // getPatternGrade imported from @/types/screener
 
   // Get unique pattern types for filter dropdown
   const patternOptions = useMemo(() => {
