@@ -1170,7 +1170,7 @@ export default function FullChartViewer({
                 className="flex-1"
                 asChild
               >
-                <Link to={`/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${setup.timeframe || '1D'}`}>
+                <Link to={`/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`}>
                   <Play className="h-4 w-4 mr-2" />
                   Run Backtest
                 </Link>
