@@ -255,6 +255,7 @@ export default function LivePatternsPage() {
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
+  const [creatingAlertInline, setCreatingAlertInline] = useState(false);
   // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
   const chartDetailsRequestIdRef = useRef(0);
   
