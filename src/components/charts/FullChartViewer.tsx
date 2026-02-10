@@ -1157,11 +1157,30 @@ export default function FullChartViewer({
                 ) : (
                   <Bell className="h-4 w-4 mr-2" />
                 )}
-                Create Alert
+                Set Alert
               </Button>
+              {onExportPine && (
+                <Button variant="secondary" onClick={onExportPine} className="flex-1">
+                  <FileCode className="h-4 w-4 mr-2" />
+                  Generate Script
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="flex-1"
+                asChild
+              >
+                <Link to={`/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${setup.timeframe || '1D'}`}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Run Backtest
+                </Link>
+              </Button>
+            </div>
+            <div className="flex gap-2">
               {onSaveToVault && (
                 <Button
-                  variant="secondary"
+                  variant="ghost"
+                  size="sm"
                   onClick={onSaveToVault}
                   disabled={isSavingToVault}
                   className="flex-1"
@@ -1172,12 +1191,6 @@ export default function FullChartViewer({
                     <Bookmark className="h-4 w-4 mr-2" />
                   )}
                   Save to Vault
-                </Button>
-              )}
-              {onExportPine && (
-                <Button variant="secondary" onClick={onExportPine}>
-                  <FileCode className="h-4 w-4 mr-2" />
-                  Pine
                 </Button>
               )}
               <Button
