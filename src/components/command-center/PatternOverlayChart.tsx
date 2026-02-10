@@ -211,8 +211,8 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
           </div>
         ) : bars && bars.length > 0 ? (
           <div className="h-full flex flex-col">
-            {isHistoricalPattern && computedBarsToOutcome != null && computedEntryBarIndex != null ? (
-              // Use playback chart for historical patterns with outcome - manual start
+            {canPlayback && computedEntryBarIndex != null && computedBarsToOutcome != null ? (
+              // Use playback chart for all patterns with bars
               <FullChartPlaybackView
                 bars={bars}
                 visualSpec={visualSpec}
@@ -228,7 +228,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
                 autoPlay={false}
               />
             ) : (
-              // Use standard chart for live patterns
+              // Fallback to standard chart if insufficient data
               <StudyChart 
                 bars={bars} 
                 symbol={instrument} 
