@@ -629,8 +629,10 @@ const PATTERN_REGISTRY: Record<string, {
       
       // Check last 3 peaks are at similar levels (within 3% range)
       const lastThreePeaks = peaks.slice(-3);
-      const avgPeak = lastThreePeaks.reduce((a, p) => a + p.value, 0) / 3;
-      const allSimilar = lastThreePeaks.every(p => Math.abs(p.value - avgPeak) / avgPeak < 0.03);
+      const peakValues = lastThreePeaks.map(p => p.value);
+      const maxPeak = Math.max(...peakValues);
+      const minPeak = Math.min(...peakValues);
+      const allSimilar = (maxPeak - minPeak) / minPeak < 0.03;
       
       if (!allSimilar) return { detected: false, pivots: [] };
       
