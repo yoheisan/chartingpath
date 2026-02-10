@@ -1267,22 +1267,6 @@ export default function FullChartViewer({
                   </div>
                 </a>
 
-                {/* Open in TradingView */}
-                <button
-                  type="button"
-                  onClick={() => openExternal(tradingViewAffiliateUrl)}
-                  className="block w-full text-left"
-                >
-                  <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="p-1.5 rounded bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Execute on TradingView</p>
-                      <p className="text-[10px] text-muted-foreground truncate">Professional charts & trading</p>
-                    </div>
-                  </div>
-                </button>
 
                 {/* Get Script */}
                 <a 
