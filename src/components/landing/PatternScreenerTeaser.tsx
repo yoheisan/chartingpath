@@ -71,6 +71,7 @@ const MAX_TEASER_ITEMS = 10;
  * No filters, minimal UI, strong CTA to full screener.
  */
 export function PatternScreenerTeaser() {
+  const navigate = useNavigate();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<AssetType, LiveSetup[]>>({
     stocks: [],
     fx: [],
