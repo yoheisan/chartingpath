@@ -1151,10 +1151,7 @@ export default function FullChartViewer({
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={onCopyPlan} className="flex-1">
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Plan
-              </Button>
+              <CopyPlanButton onCopy={onCopyPlan} />
               <Button onClick={onCreateAlert} disabled={isCreatingAlert} className="flex-1">
                 {isCreatingAlert ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
