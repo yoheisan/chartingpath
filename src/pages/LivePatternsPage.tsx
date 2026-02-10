@@ -445,26 +445,62 @@ export default function LivePatternsPage() {
     }
   }, [capsLoading, tier]);
 
+  // Auto-open chart when navigated with highlight/openPattern params
+  const autoOpenTriggeredRef = useRef(false);
   useEffect(() => {
-    if ((highlightSymbol || openPatternId) && patterns.length > 0 && !chartOpen) {
+    if (autoOpenTriggeredRef.current || chartOpen) return;
+    if (!highlightSymbol && !openPatternId) return;
+    // Wait until initial fetch completes
+    if (loading) return;
+
+    // Try matching in loaded patterns first
+    if (patterns.length > 0) {
       let matchingSetup: LiveSetup | undefined;
-      
-      // Prefer exact dbId match from openPattern param
       if (openPatternId) {
         matchingSetup = patterns.find(p => p.dbId === openPatternId);
       }
-      // Fall back to symbol match
       if (!matchingSetup && highlightSymbol) {
         matchingSetup = patterns.find(p => 
           p.instrument === highlightSymbol || p.instrument.includes(highlightSymbol)
         );
       }
-      
       if (matchingSetup) {
+        autoOpenTriggeredRef.current = true;
         handleOpenChart(matchingSetup);
+        return;
       }
     }
-  }, [highlightSymbol, openPatternId, patterns]);
+
+    // Pattern not in screener results — fetch directly by dbId
+    if (openPatternId) {
+      autoOpenTriggeredRef.current = true;
+      (async () => {
+        try {
+          setChartOpen(true);
+          setLoadingChartDetails(true);
+          const res = await withTimeout(
+            supabase.functions.invoke('get-live-pattern-details', {
+              body: { id: openPatternId },
+            }),
+            30_000,
+            'get-live-pattern-details'
+          );
+          if (res.error || !res.data?.success || !res.data.pattern) {
+            console.warn('[LivePatternsPage] Failed to load openPattern directly', res.error);
+            setChartOpen(false);
+            return;
+          }
+          const setup = mapApiResponseToLiveSetup(res.data.pattern);
+          setSelectedSetup(toSetupWithVisuals(setup));
+        } catch (err) {
+          console.error('[LivePatternsPage] Error fetching openPattern', err);
+          setChartOpen(false);
+        } finally {
+          setLoadingChartDetails(false);
+        }
+      })();
+    }
+  }, [highlightSymbol, openPatternId, patterns, loading, chartOpen]);
 
   // Get unique pattern types for filter dropdown
   const patternOptions = useMemo(() => {
