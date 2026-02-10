@@ -170,57 +170,8 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
   ],
 };
 
-interface LiveSetup {
-  // Optional DB identifier (used for lazy-loading full chart details)
-  dbId?: string;
-  instrument: string;
-  patternId: string;
-  patternName: string;
-  direction: 'long' | 'short';
-  signalTs: string;
-  quality: PatternQuality;
-  tradePlan: {
-    entry: number;
-    stopLoss: number;
-    takeProfit: number;
-    rr: number;
-    entryType?: string;
-    stopDistance?: number;
-    tpDistance?: number;
-    timeStopBars?: number;
-    bracketLevelsVersion?: string;
-    priceRounding?: { priceDecimals: number; rrDecimals: number };
-  };
-  bars: CompressedBar[];
-  visualSpec: VisualSpec;
-  // Price data
-  currentPrice?: number;
-  prevClose?: number;
-  changePercent?: number | null;
-  // Trend alignment data
-  trendAlignment?: 'with_trend' | 'counter_trend' | 'neutral' | null;
-  trendIndicators?: {
-    macd_signal?: string;
-    ema_trend?: string;
-    rsi_zone?: string;
-    adx_strength?: string;
-  } | null;
-  // Historical performance data
-  historicalPerformance?: {
-    winRate: number;
-    avgRMultiple: number;
-    sampleSize: number;
-    avgDurationBars?: number;
-    // Accumulated ROI by time period (%)
-    accumulatedRoi?: {
-      threeMonth: number | null;
-      sixMonth: number | null;
-      oneYear: number | null;
-      threeYear: number | null;
-      fiveYear: number | null;
-    };
-  };
-}
+import type { LiveSetup } from '@/types/screener';
+import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
 
@@ -759,7 +710,7 @@ export default function LivePatternsPage() {
       patternName: setup.patternName,
       direction: setup.direction,
       signalTs: setup.signalTs,
-      quality: setup.quality,
+      quality: setup.quality as PatternQuality,
       tradePlan: {
         entryType: setup.tradePlan.entryType || 'bar_close',
         entry: recalculated.entry,

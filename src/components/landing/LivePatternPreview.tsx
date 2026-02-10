@@ -9,29 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 
-interface LiveSetup {
-  instrument: string;
-  patternId: string;
-  patternName: string;
-  direction: 'long' | 'short';
-  signalTs: string;
-  quality: PatternQuality;
-  tradePlan: {
-    entry: number;
-    stopLoss: number;
-    takeProfit: number;
-    rr: number;
-  };
-  bars: CompressedBar[];
-  visualSpec: VisualSpec;
-}
-
-interface ScanResult {
-  success: boolean;
-  patterns: LiveSetup[];
-  scannedAt: string;
-  instrumentsScanned: number;
-}
+import type { LiveSetup, ScanResult } from '@/types/screener';
 
 export default function LivePatternPreview() {
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);

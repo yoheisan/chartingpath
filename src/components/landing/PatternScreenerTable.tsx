@@ -52,55 +52,12 @@ import {
   DEFAULT_RR,
 } from '@/components/screener/ScreenerFilters';
 
-interface LiveSetup {
-  instrument: string;
-  patternId: string;
-  patternName: string;
-  direction: 'long' | 'short';
-  signalTs: string;
-  quality: { score: string; grade?: string; reasons: string[] };
-  tradePlan: {
-    entry: number;
-    stopLoss: number;
-    takeProfit: number;
-    rr: number;
-  };
-  bars: any[];
-  visualSpec: any;
-  // Price data
-  currentPrice?: number;
-  prevClose?: number;
-  changePercent?: number | null;
-  // Historical edge metrics (from pattern_hit_rates)
-  historicalPerformance?: {
-    winRate: number;
-    avgRMultiple: number;
-    sampleSize: number;
-    profitFactor?: number;
-  };
-}
-
+import type { LiveSetup, ScanResult } from '@/types/screener';
+import { GRADE_ORDER, getPatternGrade, ASSET_TYPE_LABELS } from '@/types/screener';
 import { GradeBadge } from '@/components/ui/GradeBadge';
-
-interface ScanResult {
-  success: boolean;
-  patterns: LiveSetup[];
-  scannedAt: string;
-  instrumentsScanned: number;
-  assetType: string;
-  marketOpen?: boolean;
-  marketStatus?: 'open' | 'closed';
-}
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
 type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
-
-const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  fx: 'Forex',
-  crypto: 'Crypto',
-  stocks: 'Stocks',
-  commodities: 'Commodities',
-};
 
 // Universe coverage - what instruments are scanned per asset type
 const UNIVERSE_INFO: Record<AssetType, { count: number; description: string; examples: string }> = {
@@ -535,8 +492,7 @@ export default function PatternScreenerTable() {
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   const navigate = useNavigate();
   
-  // Grade order for sorting (A is highest, F is lowest)
-  const GRADE_ORDER: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5 };
+  // GRADE_ORDER imported from @/types/screener
   
   // Client-side cache for instant asset type switching
   const [cache, setCache] = useState<Record<AssetType, { patterns: LiveSetup[]; scannedAt: string; marketOpen: boolean } | null>>({
@@ -638,10 +594,7 @@ export default function PatternScreenerTable() {
     }
   };
 
-  // Helper to extract grade from pattern
-  const getPatternGrade = (p: LiveSetup): string => {
-    return p.quality?.grade || p.quality?.score?.toString() || 'C';
-  };
+  // getPatternGrade imported from @/types/screener
 
   // Get unique pattern types for filter dropdown
   const patternOptions = useMemo(() => {
