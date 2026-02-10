@@ -229,7 +229,8 @@ export function PatternScreenerTeaser() {
           return (
             <TableRow 
               key={`${setup.instrument}-${setup.patternId}-${idx}`}
-              className="hover:bg-muted/50 transition-colors"
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}`)}
             >
               <TableCell>
                 <InstrumentLogo instrument={setup.instrument} />
