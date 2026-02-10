@@ -39,14 +39,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Copy,
   Bell,
   FileCode,
   TrendingUp,
   TrendingDown,
   Target,
   ShieldAlert,
-  CheckCircle2,
   Loader2,
   AlertTriangle,
   Clock,
