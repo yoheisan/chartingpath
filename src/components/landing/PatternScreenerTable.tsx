@@ -52,55 +52,11 @@ import {
   DEFAULT_RR,
 } from '@/components/screener/ScreenerFilters';
 
-interface LiveSetup {
-  instrument: string;
-  patternId: string;
-  patternName: string;
-  direction: 'long' | 'short';
-  signalTs: string;
-  quality: { score: string; grade?: string; reasons: string[] };
-  tradePlan: {
-    entry: number;
-    stopLoss: number;
-    takeProfit: number;
-    rr: number;
-  };
-  bars: any[];
-  visualSpec: any;
-  // Price data
-  currentPrice?: number;
-  prevClose?: number;
-  changePercent?: number | null;
-  // Historical edge metrics (from pattern_hit_rates)
-  historicalPerformance?: {
-    winRate: number;
-    avgRMultiple: number;
-    sampleSize: number;
-    profitFactor?: number;
-  };
-}
-
-import { GradeBadge } from '@/components/ui/GradeBadge';
-
-interface ScanResult {
-  success: boolean;
-  patterns: LiveSetup[];
-  scannedAt: string;
-  instrumentsScanned: number;
-  assetType: string;
-  marketOpen?: boolean;
-  marketStatus?: 'open' | 'closed';
-}
+import type { LiveSetup, ScanResult } from '@/types/screener';
+import { GRADE_ORDER, getPatternGrade, ASSET_TYPE_LABELS } from '@/types/screener';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities';
 type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade';
-
-const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  fx: 'Forex',
-  crypto: 'Crypto',
-  stocks: 'Stocks',
-  commodities: 'Commodities',
-};
 
 // Universe coverage - what instruments are scanned per asset type
 const UNIVERSE_INFO: Record<AssetType, { count: number; description: string; examples: string }> = {
