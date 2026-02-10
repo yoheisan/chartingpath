@@ -492,8 +492,7 @@ export default function PatternScreenerTable() {
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   const navigate = useNavigate();
   
-  // Grade order for sorting (A is highest, F is lowest)
-  const GRADE_ORDER: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5 };
+  // GRADE_ORDER imported from @/types/screener
   
   // Client-side cache for instant asset type switching
   const [cache, setCache] = useState<Record<AssetType, { patterns: LiveSetup[]; scannedAt: string; marketOpen: boolean } | null>>({
