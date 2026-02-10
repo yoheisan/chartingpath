@@ -1479,7 +1479,12 @@ export default function LivePatternsPage() {
               }
             } catch (err: any) {
               console.error('Create alert error:', err);
-              toast.error(err?.message || 'Failed to create alert');
+              const msg = err?.message || '';
+              if (msg.includes('401') || msg.includes('Unauthorized') || err?.status === 401) {
+                toast.error('Please log in to set alerts');
+              } else {
+                toast.error(msg || 'Failed to create alert');
+              }
             } finally {
               setCreatingAlertInline(false);
             }
