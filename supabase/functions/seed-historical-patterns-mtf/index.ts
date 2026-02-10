@@ -685,8 +685,10 @@ const PATTERN_REGISTRY: Record<string, {
       
       // Check last 3 troughs are at similar levels (within 3% range)
       const lastThreeTroughs = troughs.slice(-3);
-      const avgTrough = lastThreeTroughs.reduce((a, t) => a + t.value, 0) / 3;
-      const allSimilar = lastThreeTroughs.every(t => Math.abs(t.value - avgTrough) / avgTrough < 0.03);
+      const troughValues = lastThreeTroughs.map(t => t.value);
+      const maxTrough = Math.max(...troughValues);
+      const minTrough = Math.min(...troughValues);
+      const allSimilar = (maxTrough - minTrough) / minTrough < 0.03;
       
       if (!allSimilar) return { detected: false, pivots: [] };
       
