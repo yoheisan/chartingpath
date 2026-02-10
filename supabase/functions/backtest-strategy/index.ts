@@ -1854,8 +1854,9 @@ function detectTripleTop(highs: number[]): boolean {
   const peaks = findPeaks(highs);
   if (peaks.length < 3) return false;
   const lastThreePeaks = peaks.slice(-3).map(i => highs[i]);
-  const avg = lastThreePeaks.reduce((a, b) => a + b, 0) / 3;
-  return lastThreePeaks.every(p => Math.abs(p - avg) / avg < 0.03);
+  const maxPeak = Math.max(...lastThreePeaks);
+  const minPeak = Math.min(...lastThreePeaks);
+  return (maxPeak - minPeak) / minPeak < 0.03;
 }
 
 function detectTripleBottom(lows: number[]): boolean {
