@@ -128,7 +128,6 @@ interface FullChartViewerProps {
   onOpenChange: (open: boolean) => void;
   setup: SetupWithVisuals | null;
   loading?: boolean;
-  onCopyPlan: () => void;
   onCreateAlert: () => void;
   onExportPine?: () => void;
   onSaveToVault?: () => void;
