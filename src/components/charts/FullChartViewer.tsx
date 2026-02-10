@@ -121,31 +121,7 @@ function saveIndicatorSettings(settings: IndicatorSettings) {
   }
 }
 
-/** Copy Plan button with clipboard feedback */
-function CopyPlanButton({ onCopy }: { onCopy: () => void }) {
-  const [copied, setCopied] = useState(false);
-  
-  const handleClick = () => {
-    onCopy();
-    setCopied(true);
-    toast.success('Trade plan copied!', {
-      description: 'Paste into TradingView notes, your trading journal, or broker order form.',
-      duration: 4000,
-    });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <Button variant="outline" onClick={handleClick} className="flex-1">
-      {copied ? (
-        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-      ) : (
-        <Copy className="h-4 w-4 mr-2" />
-      )}
-      {copied ? 'Copied!' : 'Copy Plan'}
-    </Button>
-  );
-}
+/** Run Backtest CTA - drives users to Pattern Lab for deeper research */
 
 interface FullChartViewerProps {
   open: boolean;
