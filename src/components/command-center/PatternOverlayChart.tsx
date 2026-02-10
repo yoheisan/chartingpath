@@ -49,14 +49,11 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
   const isHistoricalPattern = outcome != null || barsToOutcome != null;
   
   // Calculate entry bar index from visualSpec or setup, with fallback computation
-  // For active patterns without barsToOutcome, estimate entry ~30 bars before end
   const computedEntryBarIndex = entryBarIndex 
     ?? visualSpec?.entryBarIndex 
     ?? (barsToOutcome != null && bars && bars.length > 0 
         ? Math.max(0, bars.length - barsToOutcome - 1) 
-        : (bars && bars.length > 0 
-            ? Math.max(0, bars.length - 30) 
-            : undefined));
+        : undefined);
   
   // Compute barsToOutcome fallback: use remaining bars after entry as the outcome window
   const computedBarsToOutcome = barsToOutcome 
@@ -64,8 +61,8 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
         ? bars.length - 1 - computedEntryBarIndex 
         : null);
   
-  // Enable playback for any pattern with sufficient bars and a computed entry point
-  const canPlayback = bars && bars.length > 1 && computedEntryBarIndex != null && computedBarsToOutcome != null;
+  // Enable playback only for historical patterns with sufficient data
+  const canPlayback = isHistoricalPattern && bars && bars.length > 1 && computedEntryBarIndex != null && computedBarsToOutcome != null;
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
