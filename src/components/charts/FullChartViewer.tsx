@@ -147,6 +147,7 @@ function CopyPlanButton({ onCopy }: { onCopy: () => void }) {
   );
 }
 
+interface FullChartViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setup: SetupWithVisuals | null;
