@@ -1465,7 +1465,7 @@ export default function LivePatternsPage() {
                 body: {
                   symbol: selectedSetup.instrument,
                   pattern: selectedSetup.patternId,
-                  timeframe: selectedSetup.timeframe || '1d',
+                  timeframe: selectedSetup.visualSpec?.timeframe || '1d',
                   action: 'create',
                 },
               });
