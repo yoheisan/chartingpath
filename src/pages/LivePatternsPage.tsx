@@ -1457,10 +1457,33 @@ export default function LivePatternsPage() {
           setup={selectedSetup}
           loading={loadingChartDetails}
           selectedRR={DEFAULT_RR}
-          onCreateAlert={() => {
-            window.location.href = `/members/alerts?symbol=${selectedSetup.instrument}&pattern=${selectedSetup.patternId}`;
+          onCreateAlert={async () => {
+            setCreatingAlertInline(true);
+            try {
+              const { data, error } = await supabase.functions.invoke('create-alert', {
+                body: {
+                  symbol: selectedSetup.instrument,
+                  pattern: selectedSetup.patternId,
+                  timeframe: selectedSetup.timeframe || '1d',
+                  action: 'create',
+                },
+              });
+              if (error) throw error;
+              if (data?.code === 'ALERT_LIMIT') {
+                toast.error(data.message || 'Alert limit reached for your plan');
+              } else if (data?.error) {
+                toast.error(data.error);
+              } else {
+                toast.success(`Alert created for ${selectedSetup.instrument} — ${selectedSetup.patternName}`);
+              }
+            } catch (err: any) {
+              console.error('Create alert error:', err);
+              toast.error(err?.message || 'Failed to create alert');
+            } finally {
+              setCreatingAlertInline(false);
+            }
           }}
-          isCreatingAlert={false}
+          isCreatingAlert={creatingAlertInline}
         />
       )}
     </div>
