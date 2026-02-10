@@ -652,9 +652,8 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         open={chartOpen}
         onOpenChange={setChartOpen}
         setup={selectedSetup}
-        loading={loadingChartDetails}
-        onCopyPlan={handleCopyPlan}
-        onCreateAlert={handleCreateAlert}
+         loading={loadingChartDetails}
+         onCreateAlert={handleCreateAlert}
         isCreatingAlert={isCreatingAlert}
       />
     </div>

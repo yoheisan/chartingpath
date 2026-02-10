@@ -622,7 +622,6 @@ Generated: ${new Date(artifact.generatedAt).toLocaleString()}
         open={isViewerOpen}
         onOpenChange={setIsViewerOpen}
         setup={selectedSetup}
-        onCopyPlan={() => selectedSetup && handleCopyTradePlan(selectedSetup)}
         onCreateAlert={() => selectedSetup && handleCreateAlert(selectedSetup)}
         isCreatingAlert={!!creatingAlertFor}
       />

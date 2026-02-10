@@ -191,7 +191,6 @@ export default function FullChartViewer({
   onOpenChange, 
   setup,
   loading = false,
-  onCopyPlan,
   onCreateAlert,
   onExportPine,
   onSaveToVault,

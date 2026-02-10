@@ -493,9 +493,8 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
          open={chartOpen}
          onOpenChange={setChartOpen}
          setup={selectedSetup}
-         loading={loadingChartDetails}
-         onCopyPlan={handleCopyPlan}
-         onCreateAlert={handleCreateAlert}
+          loading={loadingChartDetails}
+          onCreateAlert={handleCreateAlert}
          isCreatingAlert={isCreatingAlert}
        />
      </div>
