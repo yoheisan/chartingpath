@@ -45,6 +45,8 @@ import {
   TrendingDown,
   Target,
   ShieldAlert,
+  CheckCircle2,
+  Copy,
   Loader2,
   AlertTriangle,
   Clock,
