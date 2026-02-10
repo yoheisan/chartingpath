@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, Fragment, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1413,6 +1414,10 @@ export default function LivePatternsPage() {
             navigator.clipboard.writeText(
               `${selectedSetup.instrument} ${selectedSetup.patternName}\nEntry: ${selectedSetup.tradePlan.entry}\nSL: ${selectedSetup.tradePlan.stopLoss}\nTP: ${selectedSetup.tradePlan.takeProfit}\nR:R ${DEFAULT_RR.toFixed(1)}`
             );
+            toast.success('Trade plan copied!', {
+              description: 'Paste into TradingView notes, your trading journal, or broker order form.',
+              duration: 4000,
+            });
           }}
           onCreateAlert={() => {
             window.location.href = `/members/alerts?symbol=${selectedSetup.instrument}&pattern=${selectedSetup.patternId}`;
