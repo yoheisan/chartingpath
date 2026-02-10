@@ -710,7 +710,7 @@ export default function LivePatternsPage() {
       patternName: setup.patternName,
       direction: setup.direction,
       signalTs: setup.signalTs,
-      quality: setup.quality,
+      quality: setup.quality as PatternQuality,
       tradePlan: {
         entryType: setup.tradePlan.entryType || 'bar_close',
         entry: recalculated.entry,
