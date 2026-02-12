@@ -301,13 +301,26 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
          ? 'get-live-pattern-details' 
          : 'get-historical-pattern-details';
        
-       const res = await withTimeout(
-         supabase.functions.invoke<PatternDetailsResponse>(endpoint, {
-           body: { id: occurrence.id },
-         }),
-         25_000,
-         endpoint
-       );
+       let res: Awaited<ReturnType<typeof supabase.functions.invoke<PatternDetailsResponse>>> | null = null;
+       for (let attempt = 0; attempt < 2; attempt++) {
+         try {
+           res = await withTimeout(
+             supabase.functions.invoke<PatternDetailsResponse>(endpoint, {
+               body: { id: occurrence.id },
+             }),
+             40_000,
+             endpoint
+           );
+           break;
+         } catch (retryErr) {
+           if (attempt === 0) {
+             console.warn(`[MobileCommandCenter] ${endpoint} attempt 1 failed, retrying...`);
+             continue;
+           }
+           throw retryErr;
+         }
+       }
+       if (!res) throw new Error('No response received');
  
        if (res.error) throw res.error;
        if (!res.data?.success || !res.data.pattern) {
