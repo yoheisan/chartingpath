@@ -539,17 +539,29 @@ const MemberAlerts = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Chart Patterns</Label>
-                {selectedPatterns.length > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 px-2 text-xs"
-                    onClick={clearPatterns}
-                  >
-                    Clear ({selectedPatterns.length})
-                    <X className="h-3 w-3 ml-1" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {selectedPatterns.length < patternOptions.length && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={() => setSelectedPatterns(patternOptions.map(p => p.value))}
+                    >
+                      Select All
+                    </Button>
+                  )}
+                  {selectedPatterns.length > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={clearPatterns}
+                    >
+                      Clear ({selectedPatterns.length})
+                      <X className="h-3 w-3 ml-1" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                 {patternOptions.map((option) => (
