@@ -94,7 +94,7 @@ async function sendEmail(
     const patternName = patternNames[alert.pattern] || alert.pattern;
     const timeframeName = timeframeNames[alert.timeframe] || alert.timeframe;
     const currentPrice = marketData[marketData.length - 1]?.c || 0;
-    const chartingPathUrl = `https://chartingpath.com/members/alerts`;
+    const chartingPathUrl = `https://chartingpath.com/study/${alert.symbol}`;
 
     const subject = `Pattern Alert: ${patternName} detected on ${alert.symbol} (${timeframeName})`;
 
