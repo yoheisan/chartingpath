@@ -315,25 +315,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const chartMarkers: ChartMarker[] = useMemo(() => {
     if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
     
+    const patternLabel = PATTERN_OPTIONS.find(p => p.value === selectedPattern)?.label || selectedPattern;
+    
     return patternOccurrences.map((p) => {
-      const isWin = p.outcome === 'win' || p.outcome === 'hit_tp';
-      const isLoss = p.outcome === 'loss' || p.outcome === 'hit_sl';
       const isBullish = p.direction === 'long';
-      
-      let color = '#a855f7'; // purple for pending/unknown
-      if (isWin) color = '#22c55e'; // green
-      if (isLoss) color = '#ef4444'; // red
-
-      const label = p.outcome_pnl_percent != null 
-        ? `${p.outcome_pnl_percent >= 0 ? '+' : ''}${p.outcome_pnl_percent.toFixed(1)}%`
-        : (p.quality_score || '').toUpperCase();
+      const color = isBullish ? '#3b82f6' : '#f97316'; // blue for bullish, orange for bearish
 
       return {
         time: p.detected_at,
         position: isBullish ? 'belowBar' as const : 'aboveBar' as const,
         color,
-        shape: isBullish ? 'arrowUp' as const : 'arrowDown' as const,
-        text: label,
+        shape: 'circle' as const,
+        text: patternLabel,
       };
     });
   }, [selectedPattern, patternOccurrences]);
