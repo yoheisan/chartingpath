@@ -107,15 +107,26 @@ async function sendEmail(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Chart Pattern Alert</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-          .container { max-width: 600px; margin: 0 auto; background-color: white; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
-          .content { padding: 30px 20px; }
-          .pattern-card { background-color: #f1f5f9; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
-          .price-info { background-color: #ecfdf5; border: 1px solid #10b981; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 20px 0; }
-          .footer { background-color: #1e293b; color: #94a3b8; padding: 20px; text-align: center; font-size: 12px; }
-          .disclaimer { background-color: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #0d0d12; color: #e2e8f0; }
+          .container { max-width: 600px; margin: 0 auto; background-color: #111118; border-radius: 12px; overflow: hidden; }
+          .header { background: linear-gradient(135deg, #e8530e, #f97316, #ea580c); color: white; padding: 36px 24px; text-align: center; }
+          .header h1 { margin: 0 0 8px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+          .header p { margin: 0; font-size: 14px; opacity: 0.9; }
+          .content { padding: 32px 24px; }
+          .pattern-card { background-color: #1a1a24; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+          .pattern-card h2 { color: #f8fafc; margin-top: 0; font-size: 18px; }
+          .pattern-card p { color: #94a3b8; margin: 6px 0; font-size: 14px; }
+          .pattern-card strong { color: #cbd5e1; }
+          .price-info { background-color: #0f2318; border: 1px solid #22c55e44; padding: 18px; border-radius: 8px; margin: 20px 0; }
+          .price-info h3 { color: #22c55e; margin-top: 0; font-size: 16px; }
+          .price-info p { color: #94a3b8; margin: 5px 0; font-size: 14px; }
+          .price-info strong { color: #cbd5e1; }
+          .cta-button { display: inline-block; background: linear-gradient(135deg, #e8530e, #f97316); color: white !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 24px 0; letter-spacing: 0.01em; }
+          .disclaimer { background-color: #1a1a24; border: 1px solid #f59e0b33; padding: 16px; border-radius: 8px; margin: 20px 0; }
+          .disclaimer h4 { color: #f59e0b; margin-top: 0; font-size: 14px; }
+          .disclaimer p { color: #94a3b8; font-size: 13px; margin-bottom: 0; }
+          .footer { background-color: #0a0a0f; color: #475569; padding: 24px; text-align: center; font-size: 12px; border-top: 1px solid #1e293b; }
+          .footer p { margin: 4px 0; }
         </style>
       </head>
       <body>
@@ -127,7 +138,7 @@ async function sendEmail(
           
           <div class="content">
             <div class="pattern-card">
-              <h2 style="margin-top: 0; color: #1e293b;">Pattern Detected: ${patternName}</h2>
+              <h2>Pattern Detected: ${patternName}</h2>
               <p><strong>Symbol:</strong> ${alert.symbol}</p>
               <p><strong>Timeframe:</strong> ${timeframeName}</p>
               <p><strong>Confidence:</strong> ${(patternResult.confidence * 100).toFixed(0)}%</p>
@@ -135,41 +146,41 @@ async function sendEmail(
             </div>
 
             <div class="price-info">
-              <h3 style="margin-top: 0; color: #065f46;">Market Information</h3>
+              <h3>Market Information</h3>
               <p><strong>Current Price:</strong> $${currentPrice.toFixed(4)}</p>
               <p><strong>Alert Time:</strong> ${new Date().toLocaleString()}</p>
               ${bracketLevels ? `
-              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #10b981;">
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #22c55e33;">
                 <p style="margin: 5px 0;"><strong>Direction:</strong> ${bracketLevels.direction.toUpperCase()}</p>
                 <p style="margin: 5px 0;"><strong>Entry:</strong> $${bracketLevels.entryPrice.toFixed(4)}</p>
-                <p style="margin: 5px 0; color: #dc2626;"><strong>Stop Loss:</strong> $${bracketLevels.stopLossPrice.toFixed(4)}</p>
-                <p style="margin: 5px 0; color: #16a34a;"><strong>Take Profit:</strong> $${bracketLevels.takeProfitPrice.toFixed(4)}</p>
+                <p style="margin: 5px 0; color: #ef4444;"><strong>Stop Loss:</strong> $${bracketLevels.stopLossPrice.toFixed(4)}</p>
+                <p style="margin: 5px 0; color: #22c55e;"><strong>Take Profit:</strong> $${bracketLevels.takeProfitPrice.toFixed(4)}</p>
                 <p style="margin: 5px 0;"><strong>R:R Ratio:</strong> ${bracketLevels.riskRewardRatio.toFixed(2)}</p>
               </div>
               ` : ''}
             </div>
 
             <div style="text-align: center;">
-              <a href="${chartingPathUrl}" class="cta-button">View on ChartingPath</a>
+              <a href="${chartingPathUrl}" class="cta-button">View on ChartingPath →</a>
             </div>
 
             <div class="disclaimer">
-              <h4 style="margin-top: 0; color: #92400e;">⚠️ Important Disclaimer</h4>
-              <p style="margin-bottom: 0; color: #92400e; font-size: 14px;">
+              <h4>⚠️ Important Disclaimer</h4>
+              <p>
                 This alert is for educational purposes only and does not constitute financial advice. 
                 Trading involves substantial risk of loss. Always conduct your own research and consider 
                 your risk tolerance before making trading decisions.
               </p>
             </div>
 
-            <p style="color: #64748b; font-size: 14px;">
+            <p style="color: #475569; font-size: 13px;">
               This alert was generated by ChartingPath's automated pattern detection system. 
-              You can manage your alerts by logging into your account.
+              You can manage your alerts from your account dashboard.
             </p>
           </div>
 
           <div class="footer">
-            <p>ChartingPath - Chart Pattern Email Alerts</p>
+            <p style="color: #94a3b8;">ChartingPath</p>
             <p>Turn Charts Into Trading Scripts — Without the Guesswork</p>
           </div>
         </div>
