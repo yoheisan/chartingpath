@@ -1,6 +1,6 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, Search, ChevronDown, BarChart3, TrendingUp, Shield, Zap, Bell, Calculator, Globe, Clock, Target, Award, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Search, ChevronDown, BarChart3, TrendingUp, TrendingDown, Shield, Zap, Bell, Calculator, Globe, Clock, Target, Award, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -128,8 +128,69 @@ const PlatformFAQ = () => {
       ),
       category: 'patterns',
     },
+    {
+      question: 'How does ChartingPath detect Double Top and Double Bottom patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Our detection engine follows institutional-grade criteria inspired by Bulkowski's research to ensure only high-quality, meaningful patterns are flagged:</p>
+          <div className="space-y-3 mb-4">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Double Top Detection Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Peak Prominence</strong> — Both peaks must be within 5% of the window's highest high. This filters out minor lower-highs in downtrends that don't represent genuine resistance tests.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Price Similarity</strong> — The two peaks must be within 2-3% of each other (Bulkowski standard), confirming they tested the same resistance level.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                  <span><strong>Prior Uptrend Required</strong> — Price must have risen at least 2% before the first peak. A Double Top is a reversal pattern and requires a preceding uptrend to reverse.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span><strong>Minimum Separation</strong> — At least 5 bars between peaks, ensuring sufficient time for a genuine retest rather than a single consolidation.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Neckline Confirmation</strong> — Price must close below the neckline (lowest point between the two peaks) with a 0.2% margin to confirm the breakdown.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Double Bottom Detection Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Trough Prominence</strong> — Both troughs must be within 5% of the window's lowest low. This filters out minor higher-lows in uptrends.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Price Similarity</strong> — The two troughs must be within 2-3% of each other, confirming they tested the same support level.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <span><strong>Prior Downtrend Required</strong> — Price must have fallen at least 2% before the first trough. A Double Bottom is a reversal pattern and requires a preceding downtrend.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span><strong>Minimum Separation</strong> — At least 5 bars between troughs.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Neckline Confirmation</strong> — Price must close above the neckline (highest point between the two troughs) with a 0.2% margin to confirm the breakout.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">These rules ensure that patterns in downtrends with staircase lower-highs are not misidentified as Double Tops, and patterns in uptrends with staircase higher-lows are not misidentified as Double Bottoms.</p>
+        </div>
+      ),
+      category: 'patterns',
+    },
 
-    // Charts Category
     {
       question: "What's the difference between chart types?",
       answer: (
