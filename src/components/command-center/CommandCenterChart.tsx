@@ -292,7 +292,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       try {
         const { data, error } = await supabase
           .from('historical_pattern_occurrences')
-          .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price')
+          .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
           .eq('symbol', symbol.toUpperCase())
           .eq('pattern_id', selectedPattern)
           .order('detected_at', { ascending: true })
@@ -315,20 +315,37 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const chartMarkers: ChartMarker[] = useMemo(() => {
     if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
     
-    const patternLabel = PATTERN_OPTIONS.find(p => p.value === selectedPattern)?.label || selectedPattern;
+    const markers: ChartMarker[] = [];
     
-    return patternOccurrences.map((p) => {
-      const isBullish = p.direction === 'long';
-      const color = isBullish ? '#3b82f6' : '#f97316'; // blue for bullish, orange for bearish
-
-      return {
-        time: p.detected_at,
-        position: isBullish ? 'belowBar' as const : 'aboveBar' as const,
-        color,
-        shape: 'circle' as const,
-        text: patternLabel,
-      };
+    patternOccurrences.forEach((p) => {
+      const vs = p.visual_spec as any;
+      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+      
+      if (pivots && pivots.length > 0) {
+        // Place a marker at each pivot point (e.g., Top 1, Top 2, Neckline)
+        pivots.forEach((pivot) => {
+          const isHigh = pivot.type === 'high';
+          markers.push({
+            time: pivot.timestamp,
+            position: isHigh ? 'aboveBar' : 'belowBar',
+            color: isHigh ? '#f97316' : '#3b82f6', // orange for peaks, blue for troughs/necklines
+            shape: 'circle',
+            text: pivot.label,
+          });
+        });
+      } else {
+        // Fallback: single marker at detection date
+        markers.push({
+          time: p.detected_at,
+          position: 'aboveBar',
+          color: '#f97316',
+          shape: 'circle',
+          text: p.pattern_name || selectedPattern,
+        });
+      }
     });
+    
+    return markers;
   }, [selectedPattern, patternOccurrences]);
 
   const formatPrice = (price: number) => {
