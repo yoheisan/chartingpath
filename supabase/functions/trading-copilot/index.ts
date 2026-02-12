@@ -984,10 +984,10 @@ serve(async (req) => {
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[trading-copilot] AI round ${round}`);
 
-      // Retry logic with exponential backoff for rate limits (5 attempts, longer delays)
+      // Retry logic with exponential backoff for rate limits (2 attempts to fail fast)
       let aiResp: Response | null = null;
       let lastError: string = '';
-      const MAX_RETRY_ATTEMPTS = 5;
+      const MAX_RETRY_ATTEMPTS = 2;
       
       for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
         aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
@@ -1006,8 +1006,8 @@ serve(async (req) => {
         });
 
         if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
-          // Rate limited - wait with longer exponential backoff (3s, 6s, 12s, 24s)
-          const waitTime = Math.pow(2, attempt) * 1500;
+          // Rate limited - short wait before single retry (3s)
+          const waitTime = 3000;
           console.log(`[trading-copilot] Rate limited, retrying in ${waitTime}ms (attempt ${attempt}/${MAX_RETRY_ATTEMPTS})`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
