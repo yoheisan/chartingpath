@@ -100,12 +100,18 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Peak prominence threshold: peaks must be within 5% of the window high
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       let firstTop = -1, secondTop = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
             highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          // Skip peaks that aren't prominent (lower highs in downtrend)
+          if (highs[i] < prominenceThreshold) continue;
+          
           if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= 3 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
+          else if (i - firstTop >= 5 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
             secondTop = i;
             break;
           }
@@ -113,6 +119,11 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       }
       
       if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
+      
+      // Prior uptrend check: price before first top should be lower
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, firstTop)));
+      const priorRise = (highs[firstTop] - preTopPrice) / preTopPrice;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
       
       let necklineIdx = firstTop;
       let neckline = lows[firstTop];
@@ -150,12 +161,18 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Trough prominence threshold: troughs must be within 5% of the window low
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       let firstBottom = -1, secondBottom = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
             lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          // Skip troughs that aren't prominent (higher lows in uptrend)
+          if (lows[i] > prominenceThreshold) continue;
+          
           if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= 3 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
+          else if (i - firstBottom >= 5 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
             secondBottom = i;
             break;
           }
@@ -163,6 +180,11 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       }
       
       if (firstBottom === -1 || secondBottom === -1) return { detected: false, pivots: [] };
+      
+      // Prior downtrend check: price before first bottom should be higher
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, firstBottom)));
+      const priorDrop = (preBottomPrice - lows[firstBottom]) / preBottomPrice;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
       let necklineIdx = firstBottom;
       let neckline = highs[firstBottom];
