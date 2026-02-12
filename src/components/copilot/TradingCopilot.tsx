@@ -251,9 +251,25 @@ export function TradingCopilot({
 
     } catch (error) {
       console.error("Chat error:", error);
-      if (!(error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted"))) {
+      const isKnownError = error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted");
+      if (!isKnownError) {
         toast.error("Failed to get response. Please try again.");
       }
+      // Add error message so user isn't left with a hanging state
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "user") {
+          return [...prev, {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: isKnownError
+              ? "⚠️ Rate limited — please wait a few seconds and try again."
+              : "⚠️ Something went wrong. Please try again.",
+            timestamp: new Date()
+          }];
+        }
+        return prev;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -372,9 +388,9 @@ export function TradingCopilot({
                       <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                     </div>
                   ) : (
-                    // For user messages with analysis, show compact summary
+                    // For user messages with analysis, show symbol context
                     message.analysisData ? (
-                      <span className="text-xs opacity-80">Analyzing {message.analysisData.symbol}...</span>
+                      <span className="text-xs opacity-80">Analyze {message.analysisData.symbol} ({message.analysisData.timeframe})</span>
                     ) : (
                       message.content
                     )
