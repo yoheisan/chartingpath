@@ -17,6 +17,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
 
 interface UserProfile {
   id: string;
@@ -460,6 +461,9 @@ const MemberAlerts = () => {
           Back to Home
         </Link>
       </div>
+
+      {/* Push Notification Prompt */}
+      <PushNotificationPrompt userId={profile?.id} />
 
       {/* Header */}
       <div className="text-center mb-8">
