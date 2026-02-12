@@ -186,14 +186,18 @@ export function PatternOccurrencesPanel({
                   <Badge
                     className={cn(
                       'text-[10px] px-1.5 py-0',
-                      p.outcome === 'win'
+                      (p.outcome === 'win' || p.outcome === 'hit_tp')
                         ? 'bg-emerald-500/20 text-emerald-600'
-                        : p.outcome === 'loss'
+                        : (p.outcome === 'loss' || p.outcome === 'hit_sl')
                         ? 'bg-red-500/20 text-red-600'
                         : 'bg-muted text-muted-foreground'
                     )}
                   >
-                    {p.outcome === 'win' ? `+${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome === 'loss' ? `${p.outcome_pnl_percent?.toFixed(1)}%` : p.outcome}
+                    {(p.outcome === 'win' || p.outcome === 'hit_tp') 
+                      ? (p.outcome_pnl_percent != null ? `+${p.outcome_pnl_percent.toFixed(1)}%` : 'hit_tp')
+                      : (p.outcome === 'loss' || p.outcome === 'hit_sl') 
+                      ? (p.outcome_pnl_percent != null ? `${p.outcome_pnl_percent.toFixed(1)}%` : 'hit_sl')
+                      : p.outcome}
                   </Badge>
                 ) : null}
                 
