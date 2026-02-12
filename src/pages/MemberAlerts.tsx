@@ -9,15 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone } from "lucide-react";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
 interface UserProfile {
+  id: string;
   subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
   subscription_status: string;
 }
@@ -48,6 +50,7 @@ const MemberAlerts = () => {
   const [symbol, setSymbol] = useState("");
   const [timeframe, setTimeframe] = useState(wedgeConfig.wedgeEnabled ? "1h" : "");
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
+  const [deliveryMethods, setDeliveryMethods] = useState<string[]>(['email', 'push']);
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: 'Donchian Breakout (Long)' },
@@ -168,7 +171,7 @@ const MemberAlerts = () => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('subscription_plan, subscription_status')
+      .select('id, subscription_plan, subscription_status')
       .eq('user_id', userId)
       .single();
 
@@ -176,7 +179,7 @@ const MemberAlerts = () => {
       console.error('Profile fetch error:', error);
       return;
     }
-    setProfile(data || { subscription_plan: 'free', subscription_status: 'active' });
+    setProfile(data || { id: '', subscription_plan: 'free', subscription_status: 'active' });
   };
 
   const fetchAlerts = async (userId: string) => {
@@ -469,7 +472,7 @@ const MemberAlerts = () => {
           </h1>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
-          Get instant email notifications when chart patterns form on your favorite instruments.
+          Get notified via email and push when chart patterns form on your favorite instruments.
         </p>
         
         {/* Plan Status */}
@@ -493,7 +496,7 @@ const MemberAlerts = () => {
               Create New Alert
             </CardTitle>
             <CardDescription>
-              Set up email notifications for chart pattern formations
+              Set up notifications for chart pattern formations
               {playbookContext && (
                 <Badge variant="secondary" className="ml-2">
                   Prefilled from playbook
@@ -598,6 +601,52 @@ const MemberAlerts = () => {
               )}
             </div>
 
+            {/* Delivery Method */}
+            <div className="space-y-2">
+              <Label>Delivery Method</Label>
+              <div className="border rounded-lg p-3 space-y-2">
+                <div className="flex items-center space-x-2 py-1">
+                  <Checkbox
+                    id="delivery-email"
+                    checked={deliveryMethods.includes('email')}
+                    onCheckedChange={(checked) => {
+                      setDeliveryMethods(prev => 
+                        checked 
+                          ? [...prev, 'email'] 
+                          : prev.filter(m => m !== 'email')
+                      );
+                    }}
+                  />
+                  <label htmlFor="delivery-email" className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    Email
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2 py-1">
+                  <Checkbox
+                    id="delivery-push"
+                    checked={deliveryMethods.includes('push')}
+                    onCheckedChange={(checked) => {
+                      setDeliveryMethods(prev => 
+                        checked 
+                          ? [...prev, 'push'] 
+                          : prev.filter(m => m !== 'push')
+                      );
+                    }}
+                  />
+                  <label htmlFor="delivery-push" className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                    Push Notification
+                  </label>
+                </div>
+              </div>
+              {deliveryMethods.length === 0 && (
+                <p className="text-xs text-destructive">
+                  Select at least one delivery method
+                </p>
+              )}
+            </div>
+
             {!canCreateMore ? (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -617,7 +666,7 @@ const MemberAlerts = () => {
             ) : (
               <Button 
                 onClick={createAlert} 
-                disabled={creating || selectedPatterns.length === 0}
+                disabled={creating || selectedPatterns.length === 0 || deliveryMethods.length === 0}
                 className="w-full"
               >
                 {creating ? (
@@ -718,6 +767,11 @@ const MemberAlerts = () => {
         </Card>
       </div>
 
+      {/* Notification Settings */}
+      <div className="mt-8">
+        <NotificationSettings userId={profile?.id} />
+      </div>
+
       {/* How It Works */}
       <Card className="mt-8">
         <CardHeader>
@@ -749,7 +803,7 @@ const MemberAlerts = () => {
               </div>
               <h3 className="font-semibold mb-2">Get Notified</h3>
               <p className="text-sm text-muted-foreground">
-                Receive instant email alerts when patterns are detected
+                Receive instant alerts via email and push when patterns are detected
               </p>
             </div>
           </div>
