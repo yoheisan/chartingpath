@@ -41,8 +41,8 @@ const MemberAlerts = () => {
   const { toast } = useToast();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();
 
-  // Data fetch timeout (10 seconds)
-  const DATA_TIMEOUT_MS = 10000;
+  // Data fetch timeout (20 seconds)
+  const DATA_TIMEOUT_MS = 20000;
 
   // Form state
   const [symbol, setSymbol] = useState("");
@@ -126,8 +126,11 @@ const MemberAlerts = () => {
     setDataLoading(true);
     setFetchError(null);
     
+    let timedOut = false;
+    
     // Create timeout for request
     const timeoutId = setTimeout(() => {
+      timedOut = true;
       setDataLoading(false);
       setFetchError('Request timed out. Please check your connection and try again.');
     }, DATA_TIMEOUT_MS);
@@ -137,12 +140,17 @@ const MemberAlerts = () => {
         fetchProfile(userId),
         fetchAlerts(userId)
       ]);
+      // If timeout already fired, don't overwrite the error state
+      if (timedOut) return;
     } catch (error: any) {
+      if (timedOut) return;
       console.error('Data fetch error:', error);
       setFetchError(error.message || 'Failed to load alerts.');
     } finally {
       clearTimeout(timeoutId);
-      setDataLoading(false);
+      if (!timedOut) {
+        setDataLoading(false);
+      }
     }
   };
 
