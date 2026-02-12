@@ -98,24 +98,60 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
   'double-top': {
     direction: 'short',
     detector: (window: any[]) => {
-      if (window.length < 10) return false;
+      if (window.length < 15) return false;
       const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       const peaks = findPeaksInternal(highs);
-      if (peaks.length < 2) return false;
-      const lastTwoPeaks = peaks.slice(-2).map(i => highs[i]);
-      return Math.abs(lastTwoPeaks[0] - lastTwoPeaks[1]) / lastTwoPeaks[0] < 0.02;
+      // Filter to only prominent peaks near window high
+      const prominentPeaks = peaks.filter(i => highs[i] >= prominenceThreshold);
+      if (prominentPeaks.length < 2) return false;
+      
+      const lastTwo = prominentPeaks.slice(-2);
+      // Minimum 5-bar separation
+      if (lastTwo[1] - lastTwo[0] < 5) return false;
+      
+      const similarity = Math.abs(highs[lastTwo[0]] - highs[lastTwo[1]]) / highs[lastTwo[0]];
+      if (similarity >= 0.02) return false;
+      
+      // Prior uptrend: price before first peak should be meaningfully lower
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, lastTwo[0])));
+      const priorRise = (highs[lastTwo[0]] - preTopPrice) / preTopPrice;
+      return priorRise >= 0.02;
     },
     displayName: 'Double Top (Short)'
   },
   'double-bottom': {
     direction: 'long',
     detector: (window: any[]) => {
-      if (window.length < 10) return false;
+      if (window.length < 15) return false;
+      const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       const troughs = findTroughsInternal(lows);
-      if (troughs.length < 2) return false;
-      const lastTwoTroughs = troughs.slice(-2).map(i => lows[i]);
-      return Math.abs(lastTwoTroughs[0] - lastTwoTroughs[1]) / lastTwoTroughs[0] < 0.02;
+      // Filter to only prominent troughs near window low
+      const prominentTroughs = troughs.filter(i => lows[i] <= prominenceThreshold);
+      if (prominentTroughs.length < 2) return false;
+      
+      const lastTwo = prominentTroughs.slice(-2);
+      // Minimum 5-bar separation
+      if (lastTwo[1] - lastTwo[0] < 5) return false;
+      
+      const similarity = Math.abs(lows[lastTwo[0]] - lows[lastTwo[1]]) / lows[lastTwo[0]];
+      if (similarity >= 0.02) return false;
+      
+      // Prior downtrend: price before first trough should be meaningfully higher
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, lastTwo[0])));
+      const priorDrop = (preBottomPrice - lows[lastTwo[0]]) / preBottomPrice;
+      return priorDrop >= 0.02;
     },
     displayName: 'Double Bottom (Long)'
   },
@@ -1811,15 +1847,37 @@ function detectHeadAndShoulders(highs: number[], lows: number[]): boolean {
 function detectDoubleTop(highs: number[]): boolean {
   const peaks = findPeaks(highs);
   if (peaks.length < 2) return false;
-  const lastTwoPeaks = peaks.slice(-2).map(i => highs[i]);
-  return Math.abs(lastTwoPeaks[0] - lastTwoPeaks[1]) / lastTwoPeaks[0] < 0.02;
+  
+  // Peak prominence: only consider peaks near the window high
+  const highestHigh = Math.max(...highs);
+  const lowestVal = Math.min(...highs);
+  const range = highestHigh - lowestVal;
+  const prominenceThreshold = highestHigh - range * 0.05;
+  const prominentPeaks = peaks.filter(i => highs[i] >= prominenceThreshold);
+  if (prominentPeaks.length < 2) return false;
+  
+  const lastTwo = prominentPeaks.slice(-2);
+  if (lastTwo[1] - lastTwo[0] < 5) return false;
+  
+  return Math.abs(highs[lastTwo[0]] - highs[lastTwo[1]]) / highs[lastTwo[0]] < 0.02;
 }
 
 function detectDoubleBottom(lows: number[]): boolean {
   const troughs = findTroughs(lows);
   if (troughs.length < 2) return false;
-  const lastTwoTroughs = troughs.slice(-2).map(i => lows[i]);
-  return Math.abs(lastTwoTroughs[0] - lastTwoTroughs[1]) / lastTwoTroughs[0] < 0.02;
+  
+  // Trough prominence: only consider troughs near the window low
+  const lowestLow = Math.min(...lows);
+  const highestVal = Math.max(...lows);
+  const range = highestVal - lowestLow;
+  const prominenceThreshold = lowestLow + range * 0.05;
+  const prominentTroughs = troughs.filter(i => lows[i] <= prominenceThreshold);
+  if (prominentTroughs.length < 2) return false;
+  
+  const lastTwo = prominentTroughs.slice(-2);
+  if (lastTwo[1] - lastTwo[0] < 5) return false;
+  
+  return Math.abs(lows[lastTwo[0]] - lows[lastTwo[1]]) / lows[lastTwo[0]] < 0.02;
 }
 
 function detectAscendingTriangle(highs: number[], lows: number[]): boolean {
