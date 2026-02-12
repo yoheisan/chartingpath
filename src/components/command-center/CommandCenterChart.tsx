@@ -289,16 +289,19 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const fetchPatterns = async () => {
       setPatternLoading(true);
+      const upperSymbol = symbol.toUpperCase();
+      console.log(`[CommandCenterChart] Fetching patterns: symbol=${upperSymbol}, pattern_id=${selectedPattern}`);
       try {
         const { data, error } = await supabase
           .from('historical_pattern_occurrences')
           .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
-          .eq('symbol', symbol.toUpperCase())
+          .eq('symbol', upperSymbol)
           .eq('pattern_id', selectedPattern)
           .order('detected_at', { ascending: true })
           .limit(100);
 
         if (error) throw error;
+        console.log(`[CommandCenterChart] Pattern query returned ${data?.length || 0} occurrences`);
         setPatternOccurrences(data || []);
       } catch (err) {
         console.error('[CommandCenterChart] pattern fetch error:', err);
