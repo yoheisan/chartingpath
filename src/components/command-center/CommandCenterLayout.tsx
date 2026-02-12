@@ -670,7 +670,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
           ) : (
             <div className="flex flex-col h-full w-full">
               {/* Collapse button */}
-              <div className="flex items-center justify-end px-1 py-1 border-b border-border shrink-0">
+              <div className="flex items-center justify-start px-1 py-1 border-b border-border shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
