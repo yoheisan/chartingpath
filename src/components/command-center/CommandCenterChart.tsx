@@ -316,31 +316,32 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
     
     const markers: ChartMarker[] = [];
+    const occurrenceColors = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899', '#14b8a6', '#f43f5e', '#8b5cf6'];
     
-    patternOccurrences.forEach((p) => {
+    patternOccurrences.forEach((p, idx) => {
       const vs = p.visual_spec as any;
       const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+      const occNum = idx + 1;
+      const color = occurrenceColors[idx % occurrenceColors.length];
       
       if (pivots && pivots.length > 0) {
-        // Place a marker at each pivot point (e.g., Top 1, Top 2, Neckline)
         pivots.forEach((pivot) => {
           const isHigh = pivot.type === 'high';
           markers.push({
             time: pivot.timestamp,
             position: isHigh ? 'aboveBar' : 'belowBar',
-            color: isHigh ? '#f97316' : '#3b82f6', // orange for peaks, blue for troughs/necklines
+            color,
             shape: 'circle',
-            text: pivot.label,
+            text: `${pivot.label} #${occNum}`,
           });
         });
       } else {
-        // Fallback: single marker at detection date
         markers.push({
           time: p.detected_at,
           position: 'aboveBar',
-          color: '#f97316',
+          color,
           shape: 'circle',
-          text: p.pattern_name || selectedPattern,
+          text: `${p.pattern_name || selectedPattern} #${occNum}`,
         });
       }
     });
