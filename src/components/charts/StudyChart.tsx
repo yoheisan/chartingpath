@@ -32,7 +32,16 @@ import {
 } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Settings2, RotateCcw } from 'lucide-react';
+import { Settings2, RotateCcw, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ChartAnalysisSummary } from '@/components/copilot/ChartAnalysisSummary';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -134,6 +143,8 @@ const StudyChart = memo(({
   const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+  const isMobile = useIsMobile();
   const isPanningRef = useRef(false);
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
@@ -145,6 +156,11 @@ const StudyChart = memo(({
   const analysis = useChartAnalysis({
     symbol,
     timeframe,
+    onAnalysisComplete: useCallback((result) => {
+      if (!isMobile) {
+        setShowAnalysisDialog(true);
+      }
+    }, [isMobile]),
     onSendToCopilot
   });
 
@@ -657,6 +673,7 @@ const StudyChart = memo(({
   const activeIndicators = Object.entries(indicators).filter(([, v]) => v);
 
   return (
+    <>
     <div className={cn('relative', autoHeight && 'h-full')}>
       <div
         ref={containerRef}
@@ -866,6 +883,36 @@ const StudyChart = memo(({
         </Popover>
       </div>
     </div>
+
+      {/* Analysis Result Dialog - Desktop only */}
+      {!isMobile && (
+        <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+          <DialogContent className="max-w-md max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle className="text-base">Chart Analysis</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-3">
+              {analysis.analysisResult && (
+                <ChartAnalysisSummary analysis={analysis.analysisResult} />
+              )}
+            </ScrollArea>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              {onSendToCopilot && (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setShowAnalysisDialog(false);
+                  analysis.sendToCopilot();
+                }}>
+                  Ask Copilot
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 });
 
