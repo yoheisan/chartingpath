@@ -11,17 +11,14 @@ interface PushNotificationPromptProps {
  * Always shows unless dismissed or user has already set up notifications.
  */
 export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) {
-  const [dismissed, setDismissed] = useState(() => {
-    return sessionStorage.getItem('push-prompt-dismissed') === 'true';
-  });
+  const [dismissed, setDismissed] = useState(false);
 
-  if (dismissed || !userId) {
+  if (dismissed) {
     return null;
   }
 
   const handleDismiss = () => {
     setDismissed(true);
-    sessionStorage.setItem('push-prompt-dismissed', 'true');
   };
 
   const scrollToSettings = () => {
