@@ -45,7 +45,7 @@ export function useUnreadAlerts(userId?: string): UnreadAlertsState {
         .select('id, alerts!inner(user_id)', { count: 'exact', head: true })
         .eq('alerts.user_id', userId)
         .gte('triggered_at', sevenDaysAgo.toISOString())
-        .or('checked_at.is.null,checked_at.lt.triggered_at');
+        .is('checked_at', null);
 
       if (error) {
         console.error('[useUnreadAlerts] Error fetching counts:', error);
