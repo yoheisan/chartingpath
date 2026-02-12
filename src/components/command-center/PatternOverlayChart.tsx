@@ -40,7 +40,18 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
   onClose,
   onOpenFullChart,
 }: PatternOverlayChartProps) {
-  if (!setup) return null;
+  if (loading || !setup) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-3 bg-background">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-[60%] w-[90%]" />
+        <p className="text-xs text-muted-foreground">{loading ? 'Loading pattern chart…' : 'No pattern data'}</p>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="h-4 w-4 mr-1" /> Close
+        </Button>
+      </div>
+    );
+  }
 
   const { instrument, patternName, direction, tradePlan, bars, visualSpec, outcome, barsToOutcome, entryBarIndex } = setup;
   const timeframe = visualSpec?.timeframe || '1d';
