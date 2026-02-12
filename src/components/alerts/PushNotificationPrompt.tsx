@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface PushNotificationPromptProps {
   userId?: string;
@@ -9,17 +8,14 @@ interface PushNotificationPromptProps {
 
 /**
  * A dismissible banner prompting users to enable push notifications.
- * Only shows when push is supported, not yet granted, and not dismissed.
+ * Always shows unless dismissed or user has already set up notifications.
  */
 export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) {
   const [dismissed, setDismissed] = useState(() => {
     return sessionStorage.getItem('push-prompt-dismissed') === 'true';
   });
 
-  const { isSupported, permission, isSubscribed, loading, subscribe } = usePushNotifications(userId);
-
-  // Don't show if: not supported, already subscribed, or dismissed
-  if (!isSupported || isSubscribed || dismissed) {
+  if (dismissed || !userId) {
     return null;
   }
 
@@ -28,11 +24,12 @@ export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) 
     sessionStorage.setItem('push-prompt-dismissed', 'true');
   };
 
-  const handleEnable = async () => {
-    await subscribe();
+  const scrollToSettings = () => {
+    const el = document.getElementById('notification-settings');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
-
-  const isBlocked = permission === 'denied';
 
   return (
     <div className="relative rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6">
@@ -49,25 +46,19 @@ export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) 
           <Bell className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 space-y-2">
-          <h4 className="font-medium text-sm">
-            {isBlocked ? 'Push notifications are blocked' : 'Never miss a pattern signal'}
-          </h4>
+          <h4 className="font-medium text-sm">Never miss a pattern signal</h4>
           <p className="text-sm text-muted-foreground">
-            {isBlocked
-              ? 'To enable: click the lock/tune icon in your browser\'s address bar → find "Notifications" → change to "Allow" → refresh the page.'
-              : 'Enable push notifications to get instant alerts when your patterns trigger — right in your browser.'}
+            Enable push notifications to get instant browser alerts when your patterns trigger. Configure your preferences below.
           </p>
-          {!isBlocked && (
-            <Button
-              size="sm"
-              onClick={handleEnable}
-              disabled={loading}
-              className="mt-1"
-            >
-              <Bell className="h-3.5 w-3.5 mr-1.5" />
-              {loading ? 'Enabling...' : 'Enable Push Notifications'}
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={scrollToSettings}
+            className="mt-1"
+          >
+            <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
+            Go to Notification Settings
+          </Button>
         </div>
       </div>
     </div>
