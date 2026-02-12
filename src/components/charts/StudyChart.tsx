@@ -478,6 +478,8 @@ const StudyChart = memo(({
           ? { height: Math.max(nextHeight || initialHeight, 250) }
           : {}),
       });
+      // Re-fit content so data fills the visible area after resize
+      chartRef.current.timeScale().fitContent();
     });
 
     resizeObserver.observe(containerRef.current);
