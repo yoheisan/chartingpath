@@ -501,6 +501,13 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   // Right sidebar collapsed state
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
+  // Dispatch resize event after sidebar transition so charts re-fit
+  const toggleSidebar = useCallback((collapsed: boolean) => {
+    setRightSidebarCollapsed(collapsed);
+    // Wait for CSS transition to finish (200ms), then trigger resize
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 220);
+  }, []);
+
   // Render mobile layout for small screens
   if (isMobile) {
     return (
@@ -604,7 +611,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         </div>
 
         {/* Right Sidebar - Collapsible */}
-        <div className={`flex h-full border-l border-border transition-all duration-200 ${rightSidebarCollapsed ? 'w-12' : 'w-[320px]'}`}>
+        <div className={`flex h-full border-l border-border shrink-0 overflow-hidden transition-[width] duration-200 ${rightSidebarCollapsed ? 'w-12' : 'w-[320px]'}`}>
           {/* Collapsed icon strip */}
           {rightSidebarCollapsed ? (
             <div className="flex flex-col items-center w-12 py-2 gap-1">
@@ -612,7 +619,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 mb-2"
-                onClick={() => setRightSidebarCollapsed(false)}
+                onClick={() => toggleSidebar(false)}
                 title="Expand sidebar"
               >
                 <PanelRightOpen className="h-4 w-4" />
@@ -621,7 +628,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 variant={rightPanelTab === 'watchlist' ? 'secondary' : 'ghost'}
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => { setRightPanelTab('watchlist'); setRightSidebarCollapsed(false); }}
+                onClick={() => { setRightPanelTab('watchlist'); toggleSidebar(false); }}
                 title="Watchlist"
               >
                 <Eye className="h-4 w-4" />
@@ -630,7 +637,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 variant={rightPanelTab === 'alerts' ? 'secondary' : 'ghost'}
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => { setRightPanelTab('alerts'); setRightSidebarCollapsed(false); }}
+                onClick={() => { setRightPanelTab('alerts'); toggleSidebar(false); }}
                 title="Alerts"
               >
                 <Bell className="h-4 w-4" />
@@ -640,7 +647,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => { setRightSidebarCollapsed(false); }}
+                onClick={() => { toggleSidebar(false); }}
                 title="Market Overview"
               >
                 <Globe className="h-4 w-4" />
@@ -654,7 +661,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={() => setRightSidebarCollapsed(true)}
+                  onClick={() => toggleSidebar(true)}
                   title="Collapse sidebar"
                 >
                   <PanelRightClose className="h-4 w-4" />
