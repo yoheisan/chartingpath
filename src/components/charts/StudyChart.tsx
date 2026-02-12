@@ -476,6 +476,8 @@ const StudyChart = memo(({
           }]);
         } catch {
           // Ignore marker errors
+        }
+      }
     }
 
     // Render external chart markers (e.g., historical pattern occurrences)
@@ -499,8 +501,6 @@ const StudyChart = memo(({
         }
       } catch {
         // Ignore marker errors
-      }
-    }
       }
     }
 
