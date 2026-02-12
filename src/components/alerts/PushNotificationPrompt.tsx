@@ -18,8 +18,8 @@ export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) 
 
   const { isSupported, permission, isSubscribed, loading, subscribe } = usePushNotifications(userId);
 
-  // Don't show if: not supported, already subscribed, already granted, or dismissed
-  if (!isSupported || isSubscribed || permission === 'granted' || dismissed) {
+  // Don't show if: not supported, already subscribed, or dismissed
+  if (!isSupported || isSubscribed || dismissed) {
     return null;
   }
 
