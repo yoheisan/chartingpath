@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,9 +10,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2 } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import StudyChart from '@/components/charts/StudyChart';
+import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -37,6 +37,25 @@ const TIMEFRAMES = [
   { value: '1wk', label: '1W' },
 ];
 
+const PATTERN_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'double-top', label: 'Double Top' },
+  { value: 'double-bottom', label: 'Double Bottom' },
+  { value: 'head-and-shoulders', label: 'Head & Shoulders' },
+  { value: 'inverse-head-and-shoulders', label: 'Inv. H&S' },
+  { value: 'ascending-triangle', label: 'Asc. Triangle' },
+  { value: 'descending-triangle', label: 'Desc. Triangle' },
+  { value: 'rising-wedge', label: 'Rising Wedge' },
+  { value: 'falling-wedge', label: 'Falling Wedge' },
+  { value: 'bull-flag', label: 'Bull Flag' },
+  { value: 'bear-flag', label: 'Bear Flag' },
+  { value: 'cup-and-handle', label: 'Cup & Handle' },
+  { value: 'triple-top', label: 'Triple Top' },
+  { value: 'triple-bottom', label: 'Triple Bottom' },
+  { value: 'donchian-breakout-long', label: 'Donchian Long' },
+  { value: 'donchian-breakout-short', label: 'Donchian Short' },
+];
+
 export const CommandCenterChart = memo(function CommandCenterChart({
   symbol,
   timeframe,
@@ -53,6 +72,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [priceData, setPriceData] = useState<{ current: number; change: number; changePct: number } | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [selectedPattern, setSelectedPattern] = useState('none');
+  const [patternOccurrences, setPatternOccurrences] = useState<any[]>([]);
+  const [patternLoading, setPatternLoading] = useState(false);
 
   // Check if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
@@ -258,6 +280,64 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     fetchChartData();
   }, [fetchChartData]);
 
+  // Fetch historical pattern occurrences when pattern is selected
+  useEffect(() => {
+    if (!selectedPattern || selectedPattern === 'none') {
+      setPatternOccurrences([]);
+      return;
+    }
+
+    const fetchPatterns = async () => {
+      setPatternLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('historical_pattern_occurrences')
+          .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price')
+          .eq('symbol', symbol.toUpperCase())
+          .eq('pattern_id', selectedPattern)
+          .order('detected_at', { ascending: true })
+          .limit(100);
+
+        if (error) throw error;
+        setPatternOccurrences(data || []);
+      } catch (err) {
+        console.error('[CommandCenterChart] pattern fetch error:', err);
+        setPatternOccurrences([]);
+      } finally {
+        setPatternLoading(false);
+      }
+    };
+
+    fetchPatterns();
+  }, [selectedPattern, symbol]);
+
+  // Generate chart markers from pattern occurrences
+  const chartMarkers: ChartMarker[] = useMemo(() => {
+    if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
+    
+    return patternOccurrences.map((p) => {
+      const isWin = p.outcome === 'win' || p.outcome === 'hit_tp';
+      const isLoss = p.outcome === 'loss' || p.outcome === 'hit_sl';
+      const isBullish = p.direction === 'long';
+      
+      let color = '#a855f7'; // purple for pending/unknown
+      if (isWin) color = '#22c55e'; // green
+      if (isLoss) color = '#ef4444'; // red
+
+      const label = p.outcome_pnl_percent != null 
+        ? `${p.outcome_pnl_percent >= 0 ? '+' : ''}${p.outcome_pnl_percent.toFixed(1)}%`
+        : (p.quality_score || '').toUpperCase();
+
+      return {
+        time: p.detected_at,
+        position: isBullish ? 'belowBar' as const : 'aboveBar' as const,
+        color,
+        shape: isBullish ? 'arrowUp' as const : 'arrowDown' as const,
+        text: label,
+      };
+    });
+  }, [selectedPattern, patternOccurrences]);
+
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
@@ -337,6 +417,43 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             </SelectContent>
           </Select>
 
+          {/* Pattern History Overlay */}
+          {!isMobile && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+                    <SelectTrigger className={`w-8 h-8 p-0 justify-center ${selectedPattern && selectedPattern !== 'none' ? 'border-primary text-primary' : ''}`}>
+                      {patternLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3.5 w-3.5" />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PATTERN_OPTIONS.map((p) => (
+                        <SelectItem key={p.value || 'none'} value={p.value || 'none'}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedPattern && selectedPattern !== 'none' && patternOccurrences.length > 0 && (
+                    <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] bg-primary text-primary-foreground">
+                      {patternOccurrences.length}
+                    </Badge>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {selectedPattern && selectedPattern !== 'none'
+                  ? `${patternOccurrences.length} ${PATTERN_OPTIONS.find(p => p.value === selectedPattern)?.label || ''} occurrences`
+                  : 'Map historical patterns'
+                }
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           <Button
             variant="ghost"
             size="icon"
@@ -394,6 +511,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               timeframe={timeframe}
               autoHeight 
               onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
+              chartMarkers={chartMarkers}
             />
           </div>
         ) : (
