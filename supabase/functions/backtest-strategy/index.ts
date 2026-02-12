@@ -191,7 +191,11 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      // Find peaks (potential shoulders and head)
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       const peaks: { index: number; value: number }[] = [];
       for (let i = 2; i < window.length - 2; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
@@ -202,7 +206,6 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       
       if (peaks.length < 3) return false;
       
-      // Find highest peak as head
       let headIdx = 0;
       for (let i = 1; i < peaks.length; i++) {
         if (peaks[i].value > peaks[headIdx].value) headIdx = i;
@@ -214,23 +217,29 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const head = peaks[headIdx];
       const rightShoulder = peaks[headIdx + 1];
       
-      // Shoulder symmetry check (within 25%)
-      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
-      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      // Head must be prominent (near window high)
+      if (head.value < prominenceThreshold) return false;
       
-      // Head must be 2%+ higher than shoulders
+      // Minimum 5-bar separation
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return false;
+      
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const headRange = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
       
       if (!symmetryOk || !headHigherOk) return false;
       
-      // Find neckline (lowest low between shoulders)
+      // Prior uptrend required (≥3%)
+      const prePatternPrice = Math.min(...lows.slice(0, Math.max(1, leftShoulder.index)));
+      const priorRise = (head.value - prePatternPrice) / prePatternPrice;
+      if (priorRise < 0.03) return false;
+      
       let neckline = Infinity;
       for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
         if (lows[i] < neckline) neckline = lows[i];
       }
       
-      // Check for neckline break
       const lastClose = closes[closes.length - 1];
       return lastClose < neckline * 0.998;
     },
@@ -244,7 +253,11 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      // Find troughs (potential shoulders and head)
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       const troughs: { index: number; value: number }[] = [];
       for (let i = 2; i < window.length - 2; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
@@ -255,7 +268,6 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       
       if (troughs.length < 3) return false;
       
-      // Find lowest trough as head
       let headIdx = 0;
       for (let i = 1; i < troughs.length; i++) {
         if (troughs[i].value < troughs[headIdx].value) headIdx = i;
@@ -267,23 +279,29 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const head = troughs[headIdx];
       const rightShoulder = troughs[headIdx + 1];
       
-      // Shoulder symmetry check
-      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
-      const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
+      // Head must be prominent (near window low)
+      if (head.value > prominenceThreshold) return false;
       
-      // Head must be 2%+ lower than shoulders
+      // Minimum 5-bar separation
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return false;
+      
+      const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
+      const headRange = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
       
       if (!symmetryOk || !headLowerOk) return false;
       
-      // Find neckline (highest high between shoulders)
+      // Prior downtrend required (≥3%)
+      const prePatternPrice = Math.max(...highs.slice(0, Math.max(1, leftShoulder.index)));
+      const priorDrop = (prePatternPrice - head.value) / prePatternPrice;
+      if (priorDrop < 0.03) return false;
+      
       let neckline = -Infinity;
       for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
         if (highs[i] > neckline) neckline = highs[i];
       }
       
-      // Check for neckline break
       const lastClose = closes[closes.length - 1];
       return lastClose > neckline * 1.002;
     },
@@ -296,6 +314,12 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       if (window.length < 15) return false;
       const closes = window.map(d => d.close);
       
+      // Prior uptrend required (≥2%)
+      const earlyLow = Math.min(...window.slice(0, 5).map(d => d.low));
+      const wedgeHigh = Math.max(...window.map(d => d.high));
+      const priorRise = (wedgeHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return false;
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
@@ -304,16 +328,13 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
       const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
       
-      // Both trendlines must be rising
       const upperRising = avgSecondHigh > avgFirstHigh;
       const lowerRising = avgSecondLow > avgFirstLow;
       
-      // Range must converge (at least 15%)
       const firstRange = avgFirstHigh - avgFirstLow;
       const secondRange = avgSecondHigh - avgSecondLow;
       const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
-      // Breakdown confirmation
       const lastClose = closes[closes.length - 1];
       return upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
     },
@@ -325,6 +346,12 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       if (window.length < 15) return false;
       const closes = window.map(d => d.close);
       
+      // Prior downtrend required (≥2%)
+      const earlyHigh = Math.max(...window.slice(0, 5).map(d => d.high));
+      const wedgeLow = Math.min(...window.map(d => d.low));
+      const priorDrop = (earlyHigh - wedgeLow) / earlyHigh;
+      if (priorDrop < 0.02) return false;
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
@@ -333,16 +360,13 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
       const avgFirstLow = firstHalf.reduce((sum, d) => sum + d.low, 0) / firstHalf.length;
       const avgSecondLow = secondHalf.reduce((sum, d) => sum + d.low, 0) / secondHalf.length;
       
-      // Both trendlines must be falling
       const upperFalling = avgSecondHigh < avgFirstHigh;
       const lowerFalling = avgSecondLow < avgFirstLow;
       
-      // Range must converge
       const firstRange = avgFirstHigh - avgFirstLow;
       const secondRange = avgSecondHigh - avgSecondLow;
       const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
-      // Breakout confirmation
       const lastClose = closes[closes.length - 1];
       return upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
     },

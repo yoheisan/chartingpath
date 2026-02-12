@@ -162,13 +162,18 @@ const PlatformGlossary = () => {
       category: 'patterns',
     },
     {
-      term: 'Head and Shoulders',
-      definition: 'A reversal pattern with three peaks—the middle peak (head) higher than the two side peaks (shoulders). Signals trend reversal.',
+      term: 'Head and Shoulders / Inverse H&S',
+      definition: 'A reversal pattern with three peaks (H&S) or troughs (iH&S). Detection requires: (1) head within 5% of window extreme, (2) prior trend ≥3% (uptrend for H&S, downtrend for iH&S), (3) minimum 5-bar separation between shoulders and head, (4) shoulder symmetry within 25%, and (5) neckline break confirmation with 0.2% margin.',
+      category: 'patterns',
+    },
+    {
+      term: 'Rising Wedge / Falling Wedge',
+      definition: 'Reversal patterns with converging trendlines. Rising Wedge (bearish) requires a prior uptrend ≥2%; Falling Wedge (bullish) requires a prior downtrend ≥2%. Both require 15%+ range convergence and a trendline break confirmation. Without these prior trend filters, any converging channel would be flagged.',
       category: 'patterns',
     },
     {
       term: 'Double Top/Bottom',
-      definition: 'A reversal pattern where price tests a level twice and fails, creating an "M" shape (top) or "W" shape (bottom). Detection requires: (1) both peaks/troughs within 5% of the window extreme, (2) 2-3% price similarity between the two tests (Bulkowski standard), (3) a prior uptrend (for tops) or downtrend (for bottoms) of at least 2%, (4) minimum 5-bar separation between tests, and (5) neckline break confirmation.',
+      definition: 'A reversal pattern where price tests a level twice and fails, creating an "M" shape (top) or "W" shape (bottom). Detection requires: (1) both peaks/troughs within 5% of the window extreme, (2) 2-3% price similarity between the two tests (Bulkowski standard), (3) a prior uptrend (for tops) or downtrend (for bottoms) of at least 2%, (4) minimum 5-bar separation between tests, and (5) neckline break confirmation with 0.2% margin.',
       category: 'patterns',
     },
     {
