@@ -334,13 +334,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const outcome = p.outcome === 'hit_tp' ? '✓' : p.outcome === 'hit_sl' ? '✗' : '–';
       const direction = p.direction === 'long' ? '▲' : '▼';
       
-      // Single marker per occurrence at detection time
+      // Use prominent arrow markers instead of tiny circles
+      const isLong = p.direction === 'long';
       markers.push({
         time: p.detected_at,
-        position: p.direction === 'long' ? 'belowBar' : 'aboveBar',
+        position: isLong ? 'belowBar' : 'aboveBar',
         color,
-        shape: 'circle',
-        text: `#${occNum} ${direction} ${outcome}`,
+        shape: isLong ? 'arrowUp' : 'arrowDown',
+        text: `#${occNum} ${outcome}`,
       });
     });
     
