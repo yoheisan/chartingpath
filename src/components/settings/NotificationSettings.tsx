@@ -195,7 +195,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         )}
 
         {isSupported && permission === 'denied' && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm space-y-2">
+          <div className="rounded-lg bg-destructive/10 p-4 text-sm space-y-3">
             <p className="text-destructive font-medium">
               Push notifications are blocked by your browser.
             </p>
@@ -204,9 +204,23 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
                 You're in the Lovable preview. To enable push notifications, <strong>publish your app</strong> and test on your published URL—push permissions are tied to the domain.
               </p>
             ) : (
-              <p className="text-muted-foreground text-xs">
-                To enable: Click the lock/tune icon in your browser's address bar → Find "Notifications" → Change to "Allow" → Refresh the page.
-              </p>
+              <div className="space-y-2">
+                <p className="text-muted-foreground font-medium text-xs">How to unblock in Chrome:</p>
+                <ol className="text-muted-foreground text-xs list-decimal list-inside space-y-1.5">
+                  <li>Click the <strong>lock / tune icon</strong> (🔒) in the address bar (left of the URL)</li>
+                  <li>Click <strong>"Site settings"</strong></li>
+                  <li>Find <strong>"Notifications"</strong> and change it from "Block" to <strong>"Allow"</strong></li>
+                  <li>Come back to this tab and <strong>refresh the page</strong></li>
+                </ol>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => window.location.reload()}
+                >
+                  I've allowed it — Refresh now
+                </Button>
+              </div>
             )}
           </div>
         )}
