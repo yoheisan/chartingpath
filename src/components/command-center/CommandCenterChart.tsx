@@ -315,34 +315,61 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   }, [selectedPattern, symbol]);
 
   // Generate chart markers from pattern occurrences
-  // Show only recent occurrences with one marker each to avoid clutter
-  const MAX_VISIBLE_OCCURRENCES = 10;
+  // Show pivots (tops, neckline) for recent occurrences so patterns are visually clear
+  const MAX_VISIBLE_OCCURRENCES = 3;
 
   const chartMarkers: ChartMarker[] = useMemo(() => {
     if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
     
-    // Take only the most recent N occurrences
     const recent = patternOccurrences.slice(-MAX_VISIBLE_OCCURRENCES);
     const offset = Math.max(0, patternOccurrences.length - MAX_VISIBLE_OCCURRENCES);
     
     const markers: ChartMarker[] = [];
-    const occurrenceColors = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899', '#14b8a6', '#f43f5e', '#8b5cf6'];
+    const occurrenceColors = ['#f97316', '#a855f7', '#06b6d4'];
     
     recent.forEach((p, idx) => {
       const occNum = offset + idx + 1;
       const color = occurrenceColors[idx % occurrenceColors.length];
+      const vs = p.visual_spec as any;
+      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
       const outcome = p.outcome === 'hit_tp' ? '✓' : p.outcome === 'hit_sl' ? '✗' : '–';
-      const direction = p.direction === 'long' ? '▲' : '▼';
       
-      // Use prominent arrow markers instead of tiny circles
-      const isLong = p.direction === 'long';
-      markers.push({
-        time: p.detected_at,
-        position: isLong ? 'belowBar' : 'aboveBar',
-        color,
-        shape: isLong ? 'arrowUp' : 'arrowDown',
-        text: `#${occNum} ${outcome}`,
-      });
+      if (pivots && pivots.length > 0) {
+        // Render each pivot point (Top 1, Top 2, Neckline, etc.)
+        pivots.forEach((pivot) => {
+          const isHigh = pivot.type === 'high';
+          // Shorten labels: "Top 1" → "T1", "Neckline" → "NL"
+          const shortLabel = pivot.label
+            .replace('Top ', 'T').replace('Bottom ', 'B')
+            .replace('Neckline', 'NL').replace('Head', 'H')
+            .replace('Shoulder ', 'S');
+          markers.push({
+            time: pivot.timestamp,
+            position: isHigh ? 'aboveBar' : 'belowBar',
+            color,
+            shape: isHigh ? 'arrowDown' : 'arrowUp',
+            text: `${shortLabel} #${occNum}`,
+          });
+        });
+        
+        // Add outcome marker at detection time
+        markers.push({
+          time: p.detected_at,
+          position: 'belowBar',
+          color,
+          shape: 'circle',
+          text: `${outcome} #${occNum}`,
+        });
+      } else {
+        // Fallback: single marker at detection
+        markers.push({
+          time: p.detected_at,
+          position: p.direction === 'long' ? 'belowBar' : 'aboveBar',
+          color,
+          shape: p.direction === 'long' ? 'arrowUp' : 'arrowDown',
+          text: `#${occNum} ${outcome}`,
+        });
+      }
     });
     
     // Deduplicate markers by time + text
