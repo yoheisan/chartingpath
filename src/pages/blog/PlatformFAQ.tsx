@@ -190,6 +190,106 @@ const PlatformFAQ = () => {
       ),
       category: 'patterns',
     },
+    {
+      question: 'How does ChartingPath detect Head & Shoulders and Inverse Head & Shoulders?',
+      answer: (
+        <div>
+          <p className="mb-3">Head & Shoulders (and its inverse) are validated with Bulkowski-grade institutional filters to ensure only genuine trend reversal signals are flagged:</p>
+          <div className="space-y-3 mb-4">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Head & Shoulders Detection Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Head Prominence</strong> — The head (highest peak) must be within 5% of the window's highest high. This prevents minor peaks in sideways markets from being flagged.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                  <span><strong>Prior Uptrend Required (≥3%)</strong> — Price must have risen at least 3% before the left shoulder. H&S is a reversal pattern and requires a preceding uptrend to reverse.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span><strong>Minimum 5-Bar Separation</strong> — At least 5 bars between each shoulder and the head, ensuring the formation has structural integrity.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Shoulder Symmetry (≤25%)</strong> — Left and right shoulders must be within 25% of each other's height relative to the head.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Neckline Confirmation</strong> — Price must close below the neckline with a 0.2% margin.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Inverse Head & Shoulders — Mirror Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Head Prominence</strong> — The head (lowest trough) must be within 5% of the window's lowest low.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <span><strong>Prior Downtrend Required (≥3%)</strong> — Price must have dropped at least 3% before the left shoulder.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Neckline Confirmation</strong> — Price must close above the neckline with a 0.2% margin to confirm the breakout.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">These filters prevent false signals in choppy, range-bound markets where random peaks might superficially resemble H&S formations.</p>
+        </div>
+      ),
+      category: 'patterns',
+    },
+    {
+      question: 'How does ChartingPath detect Rising Wedge and Falling Wedge patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Wedge patterns are validated as genuine reversal signals using Bulkowski-grade context filters:</p>
+          <div className="space-y-3 mb-4">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Rising Wedge (Bearish Reversal):</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                  <span><strong>Prior Uptrend Required (≥2%)</strong> — The wedge must form after a meaningful upward move. A rising wedge in a downtrend is not a valid reversal signal.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Converging Trendlines</strong> — Both upper and lower trendlines must be rising, with range narrowing by at least 15%.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Breakdown Confirmation</strong> — Price must close below the lower trendline with a 0.2% margin.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Falling Wedge (Bullish Reversal):</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <span><strong>Prior Downtrend Required (≥2%)</strong> — The wedge must form after a meaningful downward move.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Converging Trendlines</strong> — Both upper and lower trendlines must be falling, with range narrowing by at least 15%.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Breakout Confirmation</strong> — Price must close above the upper trendline with a 0.2% margin.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Without the prior trend requirement, any converging channel would be flagged — these filters ensure wedges act as genuine exhaustion/reversal signals.</p>
+        </div>
+      ),
+      category: 'patterns',
+    },
 
     {
       question: "What's the difference between chart types?",
