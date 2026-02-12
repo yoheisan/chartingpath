@@ -77,6 +77,29 @@ const patternNames: { [key: string]: string } = {
   'rsi_divergence_bearish': 'RSI Divergence (Bearish)',
 };
 
+// Helper: map ChartingPath symbol to TradingView symbol
+function buildTradingViewSymbol(symbol: string): string {
+  const s = symbol.toUpperCase();
+  // Forex pairs (6-char like EURUSD)
+  if (/^[A-Z]{6}$/.test(s) && ['USD','EUR','GBP','JPY','CHF','AUD','NZD','CAD'].some(c => s.includes(c))) {
+    return `FX:${s}`;
+  }
+  // Crypto (ends with USDT/USD/BTC)
+  if (s.endsWith('USDT') || s.endsWith('USD') || s.endsWith('BTC')) {
+    return `BINANCE:${s}`;
+  }
+  // Commodities
+  if (['XAUUSD','XAGUSD','GOLD','SILVER'].includes(s)) return `TVC:${s === 'XAUUSD' || s === 'GOLD' ? 'GOLD' : 'SILVER'}`;
+  // Default to stock
+  return s;
+}
+
+// Helper: map timeframe to TradingView interval
+function mapTimeframeToTV(tf: string): string {
+  const map: Record<string, string> = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '4h': '240', '1d': 'D', '1w': 'W' };
+  return map[tf] || '60';
+}
+
 const timeframeNames: { [key: string]: string } = {
   '15m': '15 Minutes',
   '1h': '1 Hour',
@@ -96,6 +119,13 @@ async function sendEmail(
     const currentPrice = marketData[marketData.length - 1]?.c || 0;
     const baseUrl = Deno.env.get("SITE_URL") || "https://chartingpath.com";
     const chartingPathUrl = `${baseUrl}/study/${alert.symbol}`;
+    
+    // Build TradingView URL with affiliate tracking
+    const tvAffiliateId = Deno.env.get("TRADINGVIEW_AFFILIATE_ID") || "";
+    const tvSymbol = buildTradingViewSymbol(alert.symbol);
+    const tvInterval = mapTimeframeToTV(alert.timeframe);
+    const tvBaseUrl = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}&interval=${tvInterval}&style=1`;
+    const tradingViewUrl = tvAffiliateId ? `${tvBaseUrl}&aff_id=${tvAffiliateId}` : tvBaseUrl;
 
     const subject = `Pattern Alert: ${patternName} detected on ${alert.symbol} (${timeframeName})`;
 
@@ -160,8 +190,9 @@ async function sendEmail(
               ` : ''}
             </div>
 
-            <div style="text-align: center;">
-              <a href="${chartingPathUrl}" class="cta-button">View on ChartingPath →</a>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${chartingPathUrl}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #e8530e, #f97316); color: white !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 0 6px 10px 6px;">📊 Research on ChartingPath</a>
+              <a href="${tradingViewUrl}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #1e88e5, #2962ff); color: white !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 0 6px 10px 6px;">📈 Trade on TradingView</a>
             </div>
 
             <div class="disclaimer">
