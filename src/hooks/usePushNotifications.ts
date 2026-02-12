@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Augment ServiceWorkerRegistration to include pushManager (missing from default DOM lib)
+interface PushServiceWorkerRegistration extends ServiceWorkerRegistration {
+  pushManager: PushManager;
+}
+
 export interface PushNotificationState {
   /** Whether push notifications are supported by the browser */
   isSupported: boolean;
@@ -63,7 +68,7 @@ export function usePushNotifications(userId?: string): PushNotificationState {
 
     const checkSubscription = async () => {
       try {
-        const registration = await navigator.serviceWorker.ready;
+        const registration = await navigator.serviceWorker.ready as PushServiceWorkerRegistration;
         const subscription = await registration.pushManager.getSubscription();
         setIsSubscribed(!!subscription);
       } catch (err) {
@@ -102,7 +107,7 @@ export function usePushNotifications(userId?: string): PushNotificationState {
 
       // Subscribe to push
       const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await (registration as PushServiceWorkerRegistration).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as BufferSource,
       });
@@ -138,7 +143,7 @@ export function usePushNotifications(userId?: string): PushNotificationState {
     setLoading(true);
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.ready as PushServiceWorkerRegistration;
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
