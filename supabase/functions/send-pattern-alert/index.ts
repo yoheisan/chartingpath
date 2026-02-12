@@ -94,7 +94,7 @@ async function sendEmail(
     const patternName = patternNames[alert.pattern] || alert.pattern;
     const timeframeName = timeframeNames[alert.timeframe] || alert.timeframe;
     const currentPrice = marketData[marketData.length - 1]?.c || 0;
-    const tradingViewUrl = `https://www.tradingview.com/chart/?symbol=${alert.symbol}`;
+    const chartingPathUrl = `https://chartingpath.com/members/alerts`;
 
     const subject = `Pattern Alert: ${patternName} detected on ${alert.symbol} (${timeframeName})`;
 
@@ -149,7 +149,7 @@ async function sendEmail(
             </div>
 
             <div style="text-align: center;">
-              <a href="${tradingViewUrl}" class="cta-button">View Chart on TradingView</a>
+              <a href="${chartingPathUrl}" class="cta-button">View on ChartingPath</a>
             </div>
 
             <div class="disclaimer">
