@@ -152,13 +152,13 @@ const PlatformGlossary = () => {
     
     // Patterns Category
     {
-      term: 'Bull Flag',
-      definition: 'A continuation pattern where price consolidates in a downward-sloping channel after a strong upward move, signaling potential continuation higher.',
+      term: 'Bull Flag / Bear Flag',
+      definition: 'Continuation patterns requiring: (1) a strong prior "pole" move of ≥5% (up for Bull, down for Bear), (2) a tight consolidation flag with <5% price range, and (3) flag retracement <50% of the pole height. These filters ensure the flag represents orderly profit-taking, not a trend reversal.',
       category: 'patterns',
     },
     {
-      term: 'Bear Flag',
-      definition: 'A continuation pattern where price consolidates upward after a strong downward move, signaling potential continuation lower.',
+      term: 'Cup & Handle',
+      definition: 'A bullish continuation pattern validated with Bulkowski-grade criteria: (1) prior uptrend ≥5%, (2) cup depth between 12-33% of the prior move (shallower = noise, deeper = structural damage), (3) handle retracement <50% of the cup depth, and (4) approximate rim symmetry. The handle confirms buyer support before breakout.',
       category: 'patterns',
     },
     {
@@ -177,8 +177,13 @@ const PlatformGlossary = () => {
       category: 'patterns',
     },
     {
-      term: 'Triangle',
-      definition: 'A consolidation pattern with converging trendlines. Ascending = bullish; Descending = bearish; Symmetrical = neutral.',
+      term: 'Ascending / Descending Triangle',
+      definition: 'Continuation patterns requiring prior trend context: Ascending Triangle needs ≥2% prior uptrend, ≥3 resistance touches, and rising lows. Descending Triangle needs ≥2% prior downtrend, ≥3 support touches, and falling highs. These filters prevent false signals in directionless markets.',
+      category: 'patterns',
+    },
+    {
+      term: 'Donchian Breakout',
+      definition: 'A momentum breakout signal filtered with two institutional-grade rules: (1) close-based confirmation (price must close beyond the channel, not just wick through), and (2) ADX >20 trending environment filter. Without these filters, any price expansion in choppy markets would generate false breakouts.',
       category: 'patterns',
     },
     

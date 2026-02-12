@@ -74,24 +74,52 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
   'donchian-breakout-long': {
     direction: 'long',
     detector: (window: any[]) => {
-      if (window.length < 10) return false;
+      if (window.length < 20) return false;
       const highs = window.map(d => d.high);
       const closes = window.map(d => d.close);
       const recentHigh = Math.max(...highs.slice(-10, -1));
       const currentClose = closes[closes.length - 1];
-      return currentClose > recentHigh * 1.005; // Breakout above recent high
+      if (currentClose <= recentHigh * 1.005) return false;
+      // ADX > 20 proxy
+      const adxBars = window.slice(-15);
+      let dmP = 0, dmM = 0, trS = 0;
+      for (let i = 1; i < adxBars.length; i++) {
+        const dp = Math.max(0, adxBars[i].high - adxBars[i-1].high);
+        const dm = Math.max(0, adxBars[i-1].low - adxBars[i].low);
+        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
+        if (dp > dm) { dmP += dp; } else { dmM += dm; }
+        trS += tr;
+      }
+      const diP = trS > 0 ? (dmP / trS) * 100 : 0;
+      const diM = trS > 0 ? (dmM / trS) * 100 : 0;
+      const dx = (diP + diM) > 0 ? Math.abs(diP - diM) / (diP + diM) * 100 : 0;
+      return dx >= 20;
     },
     displayName: 'Donchian Breakout (Long)'
   },
   'donchian-breakout-short': {
     direction: 'short',
     detector: (window: any[]) => {
-      if (window.length < 10) return false;
+      if (window.length < 20) return false;
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       const recentLow = Math.min(...lows.slice(-10, -1));
       const currentClose = closes[closes.length - 1];
-      return currentClose < recentLow * 0.995; // Breakout below recent low
+      if (currentClose >= recentLow * 0.995) return false;
+      // ADX > 20 proxy
+      const adxBars = window.slice(-15);
+      let dmP = 0, dmM = 0, trS = 0;
+      for (let i = 1; i < adxBars.length; i++) {
+        const dp = Math.max(0, adxBars[i].high - adxBars[i-1].high);
+        const dm = Math.max(0, adxBars[i-1].low - adxBars[i].low);
+        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
+        if (dp > dm) { dmP += dp; } else { dmM += dm; }
+        trS += tr;
+      }
+      const diP = trS > 0 ? (dmP / trS) * 100 : 0;
+      const diM = trS > 0 ? (dmM / trS) * 100 : 0;
+      const dx = (diP + diM) > 0 ? Math.abs(diP - diM) / (diP + diM) * 100 : 0;
+      return dx >= 20;
     },
     displayName: 'Donchian Breakout (Short)'
   },
@@ -158,27 +186,50 @@ const WEDGE_PATTERN_REGISTRY: Record<string, WedgePatternEntry> = {
   'ascending-triangle': {
     direction: 'long',
     detector: (window: any[]) => {
-      if (window.length < 15) return false;
+      if (window.length < 20) return false;
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
-      const recentLows = lows.slice(-15);
-      const trend = calculateTrendInternal(recentLows);
-      const highVolatility = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
-      return trend > 0 && highVolatility < 1.05;
+      // Prior uptrend ≥2%
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const midHigh = Math.max(...highs.slice(5, 15));
+      if ((midHigh - earlyLow) / earlyLow < 0.02) return false;
+      // Flat resistance with ≥3 touches
+      const resistanceZone = Math.max(...highs.slice(0, -2));
+      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      if (resistanceTests < 3) return false;
+      // Rising lows
+      const recentLows = lows.slice(-10);
+      let risingCount = 0;
+      for (let i = 1; i < recentLows.length; i++) {
+        if (recentLows[i] > recentLows[i-1] * 1.001) risingCount++;
+        if (recentLows[i] < recentLows[i-1] * 0.995) risingCount--;
+      }
+      return risingCount >= 2;
     },
     displayName: 'Ascending Triangle (Long)'
   },
   'descending-triangle': {
     direction: 'short',
     detector: (window: any[]) => {
-      if (window.length < 15) return false;
+      if (window.length < 20) return false;
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
-      const recentHighs = highs.slice(-15);
-      const recentLows = lows.slice(-15);
-      const highTrend = calculateTrendInternal(recentHighs);
-      const lowFlatness = Math.max(...recentLows) / Math.min(...recentLows);
-      return highTrend < -0.01 && lowFlatness < 1.03;
+      // Prior downtrend ≥2%
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const midLow = Math.min(...lows.slice(5, 15));
+      if ((earlyHigh - midLow) / earlyHigh < 0.02) return false;
+      // Flat support with ≥3 touches
+      const supportZone = Math.min(...lows.slice(0, -2));
+      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      if (supportTests < 3) return false;
+      // Falling highs
+      const recentHighs = highs.slice(-10);
+      let fallingCount = 0;
+      for (let i = 1; i < recentHighs.length; i++) {
+        if (recentHighs[i] < recentHighs[i-1] * 0.999) fallingCount++;
+        if (recentHighs[i] > recentHighs[i-1] * 1.005) fallingCount--;
+      }
+      return fallingCount >= 2;
     },
     displayName: 'Descending Triangle (Short)'
   },
@@ -1970,22 +2021,47 @@ function detectSymmetricalTriangle(highs: number[], lows: number[]): boolean {
 
 function detectBullFlag(highs: number[], lows: number[], closes: number[]): boolean {
   if (closes.length < 15) return false;
-  // Strong uptrend in first half, consolidation in second half
+  // Pole: strong uptrend in first half (≥5%)
   const firstHalf = closes.slice(0, 7);
+  const poleTrend = calculateTrend(firstHalf);
+  if (poleTrend < 0.05) return false;
+  
+  // Flag: consolidation in second half (<5% range)
   const secondHalf = closes.slice(7);
-  const firstTrend = calculateTrend(firstHalf);
-  const secondRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
-  return firstTrend > 0.03 && secondRange < 0.05;
+  const flagRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
+  if (flagRange >= 0.05) return false;
+  
+  // Flag duration ≤ pole duration (flag shouldn't be longer than pole)
+  // Already ensured by 7/8 split
+  
+  // Flag retracement < 50% of pole
+  const poleHigh = Math.max(...firstHalf);
+  const poleLow = firstHalf[0];
+  const poleHeight = poleHigh - poleLow;
+  const flagLow = Math.min(...secondHalf);
+  const retracement = (poleHigh - flagLow) / poleHeight;
+  return retracement < 0.50;
 }
 
 function detectBearFlag(highs: number[], lows: number[], closes: number[]): boolean {
   if (closes.length < 15) return false;
-  // Strong downtrend in first half, consolidation in second half
+  // Pole: strong downtrend in first half (≥5%)
   const firstHalf = closes.slice(0, 7);
+  const poleTrend = calculateTrend(firstHalf);
+  if (poleTrend > -0.05) return false;
+  
+  // Flag: consolidation in second half (<5% range)
   const secondHalf = closes.slice(7);
-  const firstTrend = calculateTrend(firstHalf);
-  const secondRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
-  return firstTrend < -0.03 && secondRange < 0.05;
+  const flagRange = (Math.max(...secondHalf) - Math.min(...secondHalf)) / Math.min(...secondHalf);
+  if (flagRange >= 0.05) return false;
+  
+  // Flag retracement < 50% of pole
+  const poleLow = Math.min(...firstHalf);
+  const poleHigh = firstHalf[0];
+  const poleHeight = poleHigh - poleLow;
+  const flagHigh = Math.max(...secondHalf);
+  const retracement = (flagHigh - poleLow) / poleHeight;
+  return retracement < 0.50;
 }
 
 function detectRisingWedge(highs: number[], lows: number[]): boolean {

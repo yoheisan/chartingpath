@@ -290,7 +290,143 @@ const PlatformFAQ = () => {
       ),
       category: 'patterns',
     },
-
+    {
+      question: 'How does ChartingPath detect Bull Flag and Bear Flag patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Flag patterns are continuation signals validated with strict pole and consolidation requirements:</p>
+          <div className="space-y-3 mb-4">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Bull Flag Detection Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                  <span><strong>Strong Pole Required (≥5%)</strong> — The preceding upward move ("pole") must be at least 5%. Without a strong pole, the pattern is just a small pullback.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Tight Consolidation (&lt;5%)</strong> — The flag's price range must be less than 5% to confirm orderly consolidation, not a new trend.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Retracement &lt;50%</strong> — The flag cannot retrace more than half the pole's height, preserving the continuation bias.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Bear Flag — Mirror Rules:</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <span><strong>Strong Downward Pole (≥5%)</strong> — Requires at least 5% drop before consolidation.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Retracement &lt;50%</strong> — The upward flag cannot bounce more than half the pole's drop.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      ),
+      category: 'patterns',
+    },
+    {
+      question: 'How does ChartingPath detect Cup & Handle patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Cup & Handle follows Bulkowski's depth and symmetry criteria:</p>
+          <div className="p-3 bg-muted/30 rounded-lg mb-4">
+            <ul className="space-y-1.5 text-sm">
+              <li className="flex items-start gap-2">
+                <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                <span><strong>Prior Uptrend Required (≥5%)</strong> — The cup must form after a meaningful upward move.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                <span><strong>Cup Depth 12-33%</strong> — Cups shallower than 12% are noise; deeper than 33% indicate structural damage rather than healthy consolidation.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                <span><strong>Handle Retracement &lt;50%</strong> — The handle (final pullback) cannot retrace more than half the cup's depth, confirming buyer support.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                <span><strong>Rim Symmetry</strong> — Both sides of the cup should be at approximately the same price level.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      ),
+      category: 'patterns',
+    },
+    {
+      question: 'How does ChartingPath detect Ascending and Descending Triangle patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Triangles require prior trend context and structural validation:</p>
+          <div className="space-y-3 mb-4">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Ascending Triangle (Bullish):</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-positive shrink-0 mt-0.5" />
+                  <span><strong>Prior Uptrend ≥2%</strong> — As a continuation pattern, it requires a preceding upward trend to confirm bullish bias.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Minimum 3 Resistance Touches</strong> — The flat resistance line must be tested at least 3 times (within 2% tolerance).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Rising Support Line</strong> — At least 2 higher lows confirming ascending pressure.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">Descending Triangle (Bearish):</p>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <span><strong>Prior Downtrend ≥2%</strong> — Requires preceding downward trend for continuation context.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <span><strong>Minimum 3 Support Touches</strong> — The flat support must be tested at least 3 times.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Shield className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                  <span><strong>Falling Resistance Line</strong> — At least 2 lower highs confirming descending pressure.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      ),
+      category: 'patterns',
+    },
+    {
+      question: 'How does ChartingPath detect Donchian Breakout patterns?',
+      answer: (
+        <div>
+          <p className="mb-3">Donchian Channel breakouts are validated with two institutional-grade filters to reduce false signals:</p>
+          <div className="p-3 bg-muted/30 rounded-lg mb-4">
+            <ul className="space-y-1.5 text-sm">
+              <li className="flex items-start gap-2">
+                <BarChart3 className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+                <span><strong>Close-Based Confirmation</strong> — Price must close beyond the channel boundary (not just wick through it). This eliminates false breakouts caused by intrabar spikes.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Zap className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
+                <span><strong>ADX &gt;20 Trending Filter</strong> — The Average Directional Index must exceed 20, confirming the market is in a trending environment. Breakouts in non-trending (choppy) markets have significantly lower success rates.</span>
+              </li>
+            </ul>
+          </div>
+          <p className="text-xs text-muted-foreground">Without the ADX filter, any price channel expansion in sideways markets would trigger false breakout signals.</p>
+        </div>
+      ),
+      category: 'patterns',
+    },
     {
       question: "What's the difference between chart types?",
       answer: (

@@ -46,21 +46,42 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   'donchian-breakout-long': {
     direction: 'long',
     detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       const lookbackHighs = highs.slice(0, -2);
       const recentHigh = Math.max(...lookbackHighs);
       const recentHighIdx = lookbackHighs.indexOf(recentHigh);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      const detected = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      
+      // Must close beyond channel (not just wick)
+      const closeBeyond = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      if (!closeBeyond) return { detected: false, pivots: [] };
+      
+      // ADX > 20 filter: use directional movement as proxy
+      // Calculate average directional range over last 14 bars
+      const adxBars = window.slice(-15);
+      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
+      for (let i = 1; i < adxBars.length; i++) {
+        const dmPlus = Math.max(0, adxBars[i].high - adxBars[i-1].high);
+        const dmMinus = Math.max(0, adxBars[i-1].low - adxBars[i].low);
+        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
+        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
+        trSum += tr;
+      }
+      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
+      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
+      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
+      if (dx < 20) return { detected: false, pivots: [] };
+      
       return {
-        detected,
-        pivots: detected ? [
+        detected: true,
+        pivots: [
           { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
           { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
-        ] : []
+        ]
       };
     },
     displayName: 'Donchian Breakout Long'
@@ -68,7 +89,8 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   'donchian-breakout-short': {
     direction: 'short',
     detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       const lookbackLows = lows.slice(0, -2);
@@ -76,13 +98,32 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const recentLowIdx = lookbackLows.indexOf(recentLow);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      const detected = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      
+      // Must close beyond channel (not just wick)
+      const closeBeyond = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      if (!closeBeyond) return { detected: false, pivots: [] };
+      
+      // ADX > 20 filter
+      const adxBars = window.slice(-15);
+      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
+      for (let i = 1; i < adxBars.length; i++) {
+        const dmPlus = Math.max(0, adxBars[i].high - adxBars[i-1].high);
+        const dmMinus = Math.max(0, adxBars[i-1].low - adxBars[i].low);
+        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
+        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
+        trSum += tr;
+      }
+      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
+      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
+      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
+      if (dx < 20) return { detected: false, pivots: [] };
+      
       return {
-        detected,
-        pivots: detected ? [
+        detected: true,
+        pivots: [
           { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
           { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
-        ] : []
+        ]
       };
     },
     displayName: 'Donchian Breakout Short'
@@ -212,22 +253,34 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   'ascending-triangle': {
     direction: 'long',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const resistanceZone = Math.max(...highs.slice(0, -2));
-      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      // Prior uptrend ≥2%: price should be rising into the triangle
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const midHigh = Math.max(...highs.slice(5, 15));
+      const priorRise = (midHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
       
+      const resistanceZone = Math.max(...highs.slice(0, -2));
+      
+      // Minimum 3 touches on resistance (flat top)
+      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      if (resistanceTests < 3) return { detected: false, pivots: [] };
+      
+      // Rising lows (minimum 2 higher lows)
       const recentLows = lows.slice(-10);
-      let risingLows = true;
+      let risingLowCount = 0;
       for (let i = 1; i < recentLows.length; i++) {
-        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLows = false;
+        if (recentLows[i] > recentLows[i - 1] * 1.001) risingLowCount++;
+        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLowCount--;
       }
+      if (risingLowCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = resistanceTests >= 2 && risingLows && lastClose > resistanceZone * 1.002;
+      const detected = lastClose > resistanceZone * 1.002;
       
       const resistanceIdx = highs.indexOf(resistanceZone);
       const lowestRecentLowIdx = window.length - 10 + recentLows.indexOf(Math.min(...recentLows));
@@ -246,22 +299,34 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   'descending-triangle': {
     direction: 'short',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const supportZone = Math.min(...lows.slice(0, -2));
-      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      // Prior downtrend ≥2%: price should be falling into the triangle
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const midLow = Math.min(...lows.slice(5, 15));
+      const priorDrop = (earlyHigh - midLow) / earlyHigh;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
+      const supportZone = Math.min(...lows.slice(0, -2));
+      
+      // Minimum 3 touches on support (flat bottom)
+      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      if (supportTests < 3) return { detected: false, pivots: [] };
+      
+      // Falling highs (minimum 2 lower highs)
       const recentHighs = highs.slice(-10);
-      let fallingHighs = true;
+      let fallingHighCount = 0;
       for (let i = 1; i < recentHighs.length; i++) {
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighs = false;
+        if (recentHighs[i] < recentHighs[i - 1] * 0.999) fallingHighCount++;
+        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighCount--;
       }
+      if (fallingHighCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = supportTests >= 2 && fallingHighs && lastClose < supportZone * 0.998;
+      const detected = lastClose < supportZone * 0.998;
       
       const supportIdx = lows.indexOf(supportZone);
       const highestRecentHighIdx = window.length - 10 + recentHighs.indexOf(Math.max(...recentHighs));
