@@ -345,7 +345,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       }
     });
     
-    return markers;
+    // Deduplicate markers by time + text
+    const seen = new Set<string>();
+    return markers.filter((m) => {
+      const key = `${m.time}|${m.text}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [selectedPattern, patternOccurrences]);
 
   const formatPrice = (price: number) => {
