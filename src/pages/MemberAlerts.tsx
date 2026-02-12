@@ -63,8 +63,6 @@ const MemberAlerts = () => {
     { value: 'doji', label: 'Doji' },
     { value: 'morning_star', label: 'Morning Star' },
     { value: 'evening_star', label: 'Evening Star' },
-    { value: 'ema_cross_bullish', label: 'EMA Cross (Bullish)' },
-    { value: 'ema_cross_bearish', label: 'EMA Cross (Bearish)' },
   ];
 
   const timeframeOptions = wedgeConfig.wedgeEnabled ? [
