@@ -103,6 +103,15 @@ interface TradePlanOverlay {
   direction?: 'long' | 'short';
 }
 
+/** External marker to render on the chart */
+export interface ChartMarker {
+  time: string; // ISO date string
+  position: 'aboveBar' | 'belowBar' | 'inBar';
+  color: string;
+  shape: 'circle' | 'square' | 'arrowUp' | 'arrowDown';
+  text: string;
+}
+
 interface StudyChartProps {
   bars: CompressedBar[];
   symbol: string;
@@ -117,6 +126,8 @@ interface StudyChartProps {
   onSendToCopilot?: (context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => void;
   /** Hide analysis toolbar */
   hideAnalysisToolbar?: boolean;
+  /** External markers to render on the chart (e.g., historical pattern occurrences) */
+  chartMarkers?: ChartMarker[];
 }
 
 /**
@@ -135,7 +146,8 @@ const StudyChart = memo(({
   tradePlan,
   timeframe = '1d',
   onSendToCopilot,
-  hideAnalysisToolbar = false
+  hideAnalysisToolbar = false,
+  chartMarkers,
 }: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -464,7 +476,31 @@ const StudyChart = memo(({
           }]);
         } catch {
           // Ignore marker errors
+    }
+
+    // Render external chart markers (e.g., historical pattern occurrences)
+    if (chartMarkers && chartMarkers.length > 0 && chartData.length > 0) {
+      try {
+        const validMarkers = chartMarkers
+          .map(m => {
+            const dateStr = m.time.split('T')[0];
+            return {
+              time: dateStr as Time,
+              position: m.position,
+              color: m.color,
+              shape: m.shape as SeriesMarkerShape,
+              text: m.text,
+            };
+          })
+          .sort((a, b) => (a.time as string).localeCompare(b.time as string));
+
+        if (validMarkers.length > 0) {
+          createSeriesMarkers(candleSeries, validMarkers);
         }
+      } catch {
+        // Ignore marker errors
+      }
+    }
       }
     }
 
@@ -552,7 +588,7 @@ const StudyChart = memo(({
         chartRef.current = null;
       }
     };
-  }, [bars, fixedHeight, autoHeight, indicators, i18n.language, tradePlan]);
+  }, [bars, fixedHeight, autoHeight, indicators, i18n.language, tradePlan, chartMarkers]);
 
   // Effect to draw/remove analysis overlay lines
   useEffect(() => {
