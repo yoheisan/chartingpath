@@ -628,7 +628,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         <div className={`flex h-full border-l border-border shrink-0 overflow-hidden transition-[width] duration-200 ${rightSidebarCollapsed ? 'w-12' : 'w-[320px]'}`}>
           {/* Collapsed icon strip */}
           {rightSidebarCollapsed ? (
-            <div className="flex flex-col items-center w-12 py-2 gap-1">
+            <div className="flex flex-col items-start w-12 py-2 gap-1 pl-1">
               <Button
                 variant="ghost"
                 size="icon"
