@@ -168,7 +168,7 @@ const PlatformGlossary = () => {
     },
     {
       term: 'Double Top/Bottom',
-      definition: 'A reversal pattern where price tests a level twice and fails, creating an "M" shape (top) or "W" shape (bottom).',
+      definition: 'A reversal pattern where price tests a level twice and fails, creating an "M" shape (top) or "W" shape (bottom). Detection requires: (1) both peaks/troughs within 5% of the window extreme, (2) 2-3% price similarity between the two tests (Bulkowski standard), (3) a prior uptrend (for tops) or downtrend (for bottoms) of at least 2%, (4) minimum 5-bar separation between tests, and (5) neckline break confirmation.',
       category: 'patterns',
     },
     {
