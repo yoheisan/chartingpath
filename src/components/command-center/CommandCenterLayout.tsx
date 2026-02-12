@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FlaskConical, History, ChevronUp, ChevronDown } from 'lucide-react';
+import { FlaskConical, History, ChevronUp, ChevronDown, PanelRightOpen, PanelRightClose, Eye, Bell, Globe } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
@@ -498,6 +498,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
     settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
   );
 
+  // Right sidebar collapsed state
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+
   // Render mobile layout for small screens
   if (isMobile) {
     return (
@@ -518,10 +521,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full">
-      <ResizablePanelGroup direction="horizontal" className="h-full" onLayout={handleHorizontalResize}>
-        {/* Main Content Area - Chart + Tab Bar + Content */}
-        <ResizablePanel defaultSize={settings.mainPanelSize} minSize={50}>
+    <div className="h-[calc(100vh-4rem)] w-full flex">
+      {/* Main Content Area - Chart + Tab Bar + Content */}
+      <div className="flex-1 min-w-0">
           <div className="h-full flex flex-col">
             {/* Main Chart - shrinks when panel expanded to make room for tabs */}
             <div className={bottomPanelExpanded ? "h-[55%] min-h-[200px]" : "flex-1 min-h-0"}>
@@ -599,57 +601,111 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               </div>
             )}
           </div>
-        </ResizablePanel>
+        </div>
 
-        <ResizableHandle withHandle />
+        {/* Right Sidebar - Collapsible */}
+        <div className={`flex h-full border-l border-border transition-all duration-200 ${rightSidebarCollapsed ? 'w-12' : 'w-[320px]'}`}>
+          {/* Collapsed icon strip */}
+          {rightSidebarCollapsed ? (
+            <div className="flex flex-col items-center w-12 py-2 gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 mb-2"
+                onClick={() => setRightSidebarCollapsed(false)}
+                title="Expand sidebar"
+              >
+                <PanelRightOpen className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={rightPanelTab === 'watchlist' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setRightPanelTab('watchlist'); setRightSidebarCollapsed(false); }}
+                title="Watchlist"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={rightPanelTab === 'alerts' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setRightPanelTab('alerts'); setRightSidebarCollapsed(false); }}
+                title="Alerts"
+              >
+                <Bell className="h-4 w-4" />
+              </Button>
+              <div className="flex-1" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setRightSidebarCollapsed(false); }}
+                title="Market Overview"
+              >
+                <Globe className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col h-full w-full">
+              {/* Collapse button */}
+              <div className="flex items-center justify-end px-1 py-1 border-b border-border shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setRightSidebarCollapsed(true)}
+                  title="Collapse sidebar"
+                >
+                  <PanelRightClose className="h-4 w-4" />
+                </Button>
+              </div>
+              <ResizablePanelGroup direction="vertical" className="flex-1" onLayout={handleRightPanelResize}>
+                {/* Watchlist & Alerts - Tabbed */}
+                <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={30}>
+                  <Tabs value={rightPanelTab} onValueChange={(tab) => {
+                    setRightPanelTab(tab);
+                    updateSettings({ watchlistTab: tab });
+                  }} className="h-full flex flex-col">
+                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2">
+                      <TabsTrigger value="watchlist" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                        Watchlist
+                      </TabsTrigger>
+                      <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                        Alerts
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
+                      <WatchlistPanel
+                        userId={userId}
+                        selectedSymbol={selectedSymbol}
+                        onSymbolSelect={handleSymbolSelect}
+                        onPatternSelect={handlePatternSelect}
+                        refreshTrigger={watchlistVersion}
+                        defaultTab={settings.watchlistTab}
+                        onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
+                      />
+                    </TabsContent>
+                    <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
+                      <AlertsHistoryPanel userId={userId} />
+                    </TabsContent>
+                  </Tabs>
+                </ResizablePanel>
 
-        {/* Right Sidebar - Watchlist/Alerts tabs + Market Overview stacked */}
-        <ResizablePanel defaultSize={settings.rightPanelSize} minSize={18} maxSize={40}>
-          <ResizablePanelGroup direction="vertical" className="h-full border-l border-border" onLayout={handleRightPanelResize}>
-            {/* Watchlist & Alerts - Tabbed */}
-            <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={30}>
-              <Tabs value={rightPanelTab} onValueChange={(tab) => {
-                setRightPanelTab(tab);
-                updateSettings({ watchlistTab: tab });
-              }} className="h-full flex flex-col">
-                <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2">
-                  <TabsTrigger value="watchlist" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                    Watchlist
-                  </TabsTrigger>
-                  <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                    Alerts
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
-                  <WatchlistPanel
-                    userId={userId}
-                    selectedSymbol={selectedSymbol}
-                    onSymbolSelect={handleSymbolSelect}
-                    onPatternSelect={handlePatternSelect}
-                    refreshTrigger={watchlistVersion}
-                    defaultTab={settings.watchlistTab}
-                    onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
+                <ResizableHandle withHandle />
+
+                {/* Market Overview */}
+                <ResizablePanel defaultSize={settings.marketOverviewSize} minSize={20}>
+                  <MarketOverviewPanel 
+                    onSymbolSelect={handleSymbolSelect} 
+                    defaultTab={settings.marketOverviewTab}
+                    onTabChange={(tab) => updateSettings({ marketOverviewTab: tab })}
                   />
-                </TabsContent>
-                <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
-                  <AlertsHistoryPanel userId={userId} />
-                </TabsContent>
-              </Tabs>
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Market Overview */}
-            <ResizablePanel defaultSize={settings.marketOverviewSize} minSize={20}>
-              <MarketOverviewPanel 
-                onSymbolSelect={handleSymbolSelect} 
-                defaultTab={settings.marketOverviewTab}
-                onTabChange={(tab) => updateSettings({ marketOverviewTab: tab })}
-              />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+          )}
+        </div>
 
       {/* Full Chart Viewer Modal for Pattern Details */}
       <FullChartViewer
