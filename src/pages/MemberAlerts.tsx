@@ -772,7 +772,7 @@ const MemberAlerts = () => {
       </div>
 
       {/* Notification Settings */}
-      <div className="mt-8">
+      <div id="notification-settings" className="mt-8 scroll-mt-6">
         <NotificationSettings userId={profile?.id} />
       </div>
 
