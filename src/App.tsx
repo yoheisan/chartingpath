@@ -10,6 +10,21 @@ import { PageCaptureButton } from "./components/dev/PageCaptureButton";
 import { CommandPaletteProvider } from "./components/command-palette";
 import { TradingCopilotProvider } from "./components/copilot";
 
+// Retry wrapper for lazy imports that fail due to stale chunks after deploy
+function lazyWithRetry(factory: () => Promise<any>, retries = 2): ReturnType<typeof lazy> {
+  return lazy(() =>
+    factory().catch((err: any) => {
+      if (retries > 0) {
+        // Force reload on chunk load failure (stale cache)
+        return new Promise<any>((resolve) => setTimeout(resolve, 500)).then(() =>
+          lazyWithRetry(factory, retries - 1) as any
+        );
+      }
+      throw err;
+    })
+  );
+}
+
 // Reusable loading fallback
 const PageLoader = () => (
   <div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>
