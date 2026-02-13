@@ -9,7 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye } from 'lucide-react';
+import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -638,38 +639,49 @@ const PatternLabWizard = () => {
             
             {/* Patterns */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Pattern Selection</CardTitle>
-                <CardDescription>Select patterns to backtest</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {PATTERNS.map(pattern => (
-                    <div
-                      key={pattern.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedPatterns.includes(pattern.id)
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border/50 hover:border-border'
-                      }`}
-                      onClick={() => handlePatternToggle(pattern.id)}
-                    >
-                      <Checkbox
-                        checked={selectedPatterns.includes(pattern.id)}
-                        onCheckedChange={() => handlePatternToggle(pattern.id)}
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{pattern.name}</div>
-                      </div>
-                      {pattern.direction === 'bullish' ? (
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500" />
-                      )}
+              <Collapsible defaultOpen={false}>
+                <CardHeader className="pb-4">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full group">
+                    <div className="text-left">
+                      <CardTitle className="text-lg">Pattern Selection</CardTitle>
+                      <CardDescription>
+                        {selectedPatterns.length} pattern{selectedPatterns.length !== 1 ? 's' : ''} selected
+                      </CardDescription>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {PATTERNS.map(pattern => (
+                        <div
+                          key={pattern.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPatterns.includes(pattern.id)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border/50 hover:border-border'
+                          }`}
+                          onClick={() => handlePatternToggle(pattern.id)}
+                        >
+                          <Checkbox
+                            checked={selectedPatterns.includes(pattern.id)}
+                            onCheckedChange={() => handlePatternToggle(pattern.id)}
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{pattern.name}</div>
+                          </div>
+                          {pattern.direction === 'bullish' ? (
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
 
             {/* Quality Grade Filter */}
