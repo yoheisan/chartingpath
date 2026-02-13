@@ -18,6 +18,8 @@ import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/GradeBadge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { 
   DATA_COVERAGE, 
   getValidLookbackOptions, 
@@ -255,6 +257,7 @@ const PatternLabWizard = () => {
   
   // Use centralized auth context instead of local state
   const { isAuthenticated, isAuthLoading, session } = useAuth();
+  const { showAuthDialog, setShowAuthDialog } = useAuthGate("backtesting");
   
   // Check if Pattern Lab is enabled for user's tier
   const patternLabCaps = PLANS_CONFIG.tiers[userTier].projects.pattern_lab;
@@ -337,8 +340,7 @@ const PatternLabWizard = () => {
   
   const handleRun = async () => {
     if (!session) {
-      toast.error('Please sign in to run projects');
-      navigate('/auth');
+      setShowAuthDialog(true);
       return;
     }
     
@@ -926,6 +928,7 @@ const PatternLabWizard = () => {
           </div>
         </div>
       </div>
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="backtesting" />
     </div>
   );
 };

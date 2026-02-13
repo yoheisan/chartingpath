@@ -61,6 +61,8 @@ import {
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
 import { toast } from 'sonner';
 import { InstrumentLogo } from './InstrumentLogo';
@@ -198,6 +200,7 @@ export default function FullChartViewer({
   isSavingToVault = false,
   selectedRR = 2,
 }: FullChartViewerProps) {
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("this feature");
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
@@ -777,6 +780,7 @@ export default function FullChartViewer({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -1151,7 +1155,7 @@ export default function FullChartViewer({
 
             {/* Actions - Monetization CTAs */}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={onCreateAlert} disabled={isCreatingAlert} className="flex-1">
+              <Button onClick={() => requireAuth(onCreateAlert)} disabled={isCreatingAlert} className="flex-1">
                 {isCreatingAlert ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -1160,7 +1164,7 @@ export default function FullChartViewer({
                 Set Alert
               </Button>
               {onExportPine && (
-                <Button variant="secondary" onClick={onExportPine} className="flex-1">
+                <Button variant="secondary" onClick={() => requireAuth(onExportPine)} className="flex-1">
                   <FileCode className="h-4 w-4 mr-2" />
                   Generate Script
                 </Button>
@@ -1168,12 +1172,12 @@ export default function FullChartViewer({
               <Button
                 variant="outline"
                 className="flex-1"
-                asChild
+                onClick={() => requireAuth(() => {
+                  window.location.href = `/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`;
+                })}
               >
-                <Link to={`/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`}>
-                  <Play className="h-4 w-4 mr-2" />
-                  Run Backtest
-                </Link>
+                <Play className="h-4 w-4 mr-2" />
+                Run Backtest
               </Button>
             </div>
             <div className="flex gap-2">
@@ -1337,5 +1341,7 @@ export default function FullChartViewer({
         </div>
       </DialogContent>
     </Dialog>
+    <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="this feature" />
+    </>
   );
 }

@@ -11,6 +11,8 @@ import {
   FileCode, FlaskConical, Zap, Trash2, Clock, Save, LayoutGrid, List
 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PlatformImportGuide } from "@/components/scripts/PlatformImportGuide";
@@ -69,6 +71,7 @@ const MemberScripts = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { canDownload } = useUserProfile();
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("script generation");
   
   // URL params from Pattern Lab / Screener
   const patternParam = searchParams.get('pattern');
@@ -422,10 +425,11 @@ const MemberScripts = () => {
                   <p>• 100-bar time stop included</p>
                 </div>
 
-                <Button onClick={handleGenerate} className="w-full gap-2">
+                <Button onClick={() => requireAuth(handleGenerate)} className="w-full gap-2">
                   <Zap className="h-4 w-4" />
                   Generate Script
                 </Button>
+                <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script generation" />
               </CardContent>
             </Card>
 

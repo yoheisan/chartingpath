@@ -13,7 +13,9 @@ import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
@@ -35,7 +37,8 @@ interface Alert {
 }
 
 const MemberAlerts = () => {
-  const { user, loading: authLoading } = useRequireAuth();
+  const { user, isAuthLoading: authLoading } = useAuth();
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("alerts");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
@@ -669,7 +672,7 @@ const MemberAlerts = () => {
               </div>
             ) : (
               <Button 
-                onClick={createAlert} 
+                onClick={() => requireAuth(createAlert)} 
                 disabled={creating || selectedPatterns.length === 0 || deliveryMethods.length === 0}
                 className="w-full"
               >
@@ -820,6 +823,7 @@ const MemberAlerts = () => {
           <strong>Disclaimer:</strong> Alerts are for educational use only and do not constitute financial advice. Trading involves risk of loss. Past pattern performance does not guarantee future results.
         </p>
       </div>
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="alerts" />
     </div>
   );
 };
