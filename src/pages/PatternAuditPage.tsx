@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, AlertTriangle, RefreshCw, Download, Eye, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, RefreshCw, Download, Eye, Loader2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import { ALL_PATTERN_IDS, PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
@@ -42,6 +43,7 @@ const PatternAuditPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1d');
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
+  const [zoomedExample, setZoomedExample] = useState<PatternExample | null>(null);
 
   useEffect(() => {
     fetchAuditData();
@@ -270,7 +272,11 @@ const PatternAuditPage = () => {
                   <div className={`grid ${expandedPattern === pattern.patternId ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-3 lg:grid-cols-6'} gap-4`}>
                     {pattern.examples.slice(0, expandedPattern === pattern.patternId ? 6 : 3).map((example, idx) => (
                       <div key={example.id} className="space-y-2">
-                        <div className="aspect-[16/10] bg-[#0f0f0f] rounded-lg overflow-hidden border border-border/50">
+                        <div 
+                          className="aspect-[16/10] bg-[#0f0f0f] rounded-lg overflow-hidden border border-border/50 cursor-pointer hover:border-primary/50 hover:ring-1 hover:ring-primary/20 transition-all"
+                          onDoubleClick={() => setZoomedExample(example)}
+                          title="Double-click to enlarge"
+                        >
                           <ThumbnailChart
                             bars={example.bars}
                             visualSpec={example.visual_spec}
@@ -388,6 +394,68 @@ const PatternAuditPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Zoomed Chart Dialog */}
+        <Dialog open={!!zoomedExample} onOpenChange={(open) => !open && setZoomedExample(null)}>
+          <DialogContent className="max-w-4xl w-[90vw] p-0 gap-0">
+            {zoomedExample && (
+              <>
+                <DialogHeader className="px-6 pt-6 pb-3">
+                  <DialogTitle className="flex items-center gap-3">
+                    <span>{PATTERN_DISPLAY_NAMES[zoomedExample.pattern_id] || zoomedExample.pattern_name}</span>
+                    <Badge variant="secondary" className="font-mono text-xs">{zoomedExample.symbol}</Badge>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        zoomedExample.quality_score === 'A' ? 'border-emerald-500 text-emerald-500' :
+                        zoomedExample.quality_score === 'B' ? 'border-blue-500 text-blue-500' :
+                        'border-yellow-500 text-yellow-500'
+                      }`}
+                    >
+                      Grade {zoomedExample.quality_score}
+                    </Badge>
+                    {zoomedExample.outcome && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          zoomedExample.outcome === 'hit_tp' ? 'border-green-500 text-green-500' :
+                          zoomedExample.outcome === 'hit_sl' ? 'border-red-500 text-red-500' :
+                          'border-muted-foreground'
+                        }`}
+                      >
+                        {zoomedExample.outcome === 'hit_tp' ? 'WIN' : 
+                         zoomedExample.outcome === 'hit_sl' ? 'LOSS' : 'Timeout'}
+                      </Badge>
+                    )}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="px-6 pb-2">
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Entry</span>
+                      <span className="ml-2 font-mono text-amber-500">{zoomedExample.entry_price?.toFixed(4)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">SL</span>
+                      <span className="ml-2 font-mono text-red-500">{zoomedExample.stop_loss_price?.toFixed(4)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">TP</span>
+                      <span className="ml-2 font-mono text-green-500">{zoomedExample.take_profit_price?.toFixed(4)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#0f0f0f] rounded-b-lg overflow-hidden">
+                  <ThumbnailChart
+                    bars={zoomedExample.bars}
+                    visualSpec={zoomedExample.visual_spec}
+                    height={500}
+                  />
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
