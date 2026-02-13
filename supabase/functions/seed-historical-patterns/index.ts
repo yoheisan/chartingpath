@@ -55,12 +55,16 @@ const PATTERN_REGISTRY: Record<string, {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03; // Bulkowski 3%
       
+      // Peak prominence threshold: peaks must be within 5% of window high
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       let firstTop = -1, secondTop = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
             highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          if (highs[i] < prominenceThreshold) continue;
           if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= 3 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
+          else if (i - firstTop >= 5 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
             secondTop = i;
             break;
           }
@@ -68,6 +72,11 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
+      
+      // PRIOR UPTREND CHECK: price before first top should be lower (≥2%)
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, firstTop)));
+      const priorRise = (highs[firstTop] - preTopPrice) / preTopPrice;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
       
       let necklineIdx = firstTop;
       let neckline = lows[firstTop];
@@ -107,12 +116,16 @@ const PATTERN_REGISTRY: Record<string, {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Trough prominence threshold: troughs must be within 5% of window low
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       let firstBottom = -1, secondBottom = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
             lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          if (lows[i] > prominenceThreshold) continue;
           if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= 3 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
+          else if (i - firstBottom >= 5 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
             secondBottom = i;
             break;
           }
@@ -120,6 +133,11 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       if (firstBottom === -1 || secondBottom === -1) return { detected: false, pivots: [] };
+      
+      // PRIOR DOWNTREND CHECK: price before first bottom should be higher (≥2%)
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, firstBottom)));
+      const priorDrop = (preBottomPrice - lows[firstBottom]) / preBottomPrice;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
       let necklineIdx = firstBottom;
       let neckline = highs[firstBottom];
@@ -154,6 +172,11 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       const peaks: { index: number; value: number }[] = [];
       for (let i = 2; i < window.length - 2; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
@@ -175,12 +198,23 @@ const PATTERN_REGISTRY: Record<string, {
       const head = peaks[headIdx];
       const rightShoulder = peaks[headIdx + 1];
       
+      // Head must be prominent
+      if (head.value < prominenceThreshold) return { detected: false, pivots: [] };
+      
+      // Minimum 5-bar separation
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return { detected: false, pivots: [] };
+      
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
-      const symmetryOk = shoulderDiff / range < 0.25;
+      const headRange = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
       
       if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
+      
+      // PRIOR UPTREND CHECK: ≥3% rise before pattern
+      const prePatternPrice = Math.min(...lows.slice(0, Math.max(1, leftShoulder.index)));
+      const priorRise = (head.value - prePatternPrice) / prePatternPrice;
+      if (priorRise < 0.03) return { detected: false, pivots: [] };
       
       let neckline = Infinity;
       let necklineIdx = leftShoulder.index;
@@ -216,6 +250,11 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       const troughs: { index: number; value: number }[] = [];
       for (let i = 2; i < window.length - 2; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
@@ -237,12 +276,23 @@ const PATTERN_REGISTRY: Record<string, {
       const head = troughs[headIdx];
       const rightShoulder = troughs[headIdx + 1];
       
+      // Head must be prominent
+      if (head.value > prominenceThreshold) return { detected: false, pivots: [] };
+      
+      // Minimum 5-bar separation
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return { detected: false, pivots: [] };
+      
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
-      const symmetryOk = shoulderDiff / range < 0.25;
+      const headRange = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
       
       if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
+      
+      // PRIOR DOWNTREND CHECK: ≥3% drop before pattern
+      const prePatternPrice = Math.max(...highs.slice(0, Math.max(1, leftShoulder.index)));
+      const priorDrop = (prePatternPrice - head.value) / prePatternPrice;
+      if (priorDrop < 0.03) return { detected: false, pivots: [] };
       
       let neckline = -Infinity;
       let necklineIdx = leftShoulder.index;
@@ -273,22 +323,34 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Ascending Triangle',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const resistanceZone = Math.max(...highs.slice(0, -2));
-      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      // PRIOR UPTREND CHECK: ≥2% rise into the triangle
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const midHigh = Math.max(...highs.slice(5, 15));
+      const priorRise = (midHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
       
+      const resistanceZone = Math.max(...highs.slice(0, -2));
+      
+      // Minimum 3 touches on resistance
+      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      if (resistanceTests < 3) return { detected: false, pivots: [] };
+      
+      // Rising lows (minimum 2 higher lows)
       const recentLows = lows.slice(-10);
-      let risingLows = true;
+      let risingLowCount = 0;
       for (let i = 1; i < recentLows.length; i++) {
-        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLows = false;
+        if (recentLows[i] > recentLows[i - 1] * 1.001) risingLowCount++;
+        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLowCount--;
       }
+      if (risingLowCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = resistanceTests >= 2 && risingLows && lastClose > resistanceZone * 1.002;
+      const detected = lastClose > resistanceZone * 1.002;
       
       return {
         detected,
@@ -305,22 +367,34 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'short',
     displayName: 'Descending Triangle',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const supportZone = Math.min(...lows.slice(0, -2));
-      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      // PRIOR DOWNTREND CHECK: ≥2% drop into the triangle
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const midLow = Math.min(...lows.slice(5, 15));
+      const priorDrop = (earlyHigh - midLow) / earlyHigh;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
+      const supportZone = Math.min(...lows.slice(0, -2));
+      
+      // Minimum 3 touches on support
+      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      if (supportTests < 3) return { detected: false, pivots: [] };
+      
+      // Falling highs (minimum 2 lower highs)
       const recentHighs = highs.slice(-10);
-      let fallingHighs = true;
+      let fallingHighCount = 0;
       for (let i = 1; i < recentHighs.length; i++) {
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighs = false;
+        if (recentHighs[i] < recentHighs[i - 1] * 0.999) fallingHighCount++;
+        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighCount--;
       }
+      if (fallingHighCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = supportTests >= 2 && fallingHighs && lastClose < supportZone * 0.998;
+      const detected = lastClose < supportZone * 0.998;
       
       return {
         detected,
@@ -342,28 +416,28 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      // PRIOR UPTREND CHECK: wedge must form after a rise of ≥2%
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const wedgeHigh = Math.max(...highs);
+      const priorRise = (wedgeHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
+      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
       
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
-      
-      const highSlope = (avgSecondHigh - avgFirstHigh) / avgFirstHigh;
-      const lowSlope = (avgSecondLow - avgFirstLow) / avgFirstLow;
-      
-      const bothRising = highSlope > 0.01 && lowSlope > 0.01;
-      const converging = lowSlope > highSlope;
+      const upperRising = avgSecondHigh > avgFirstHigh;
+      const lowerRising = avgSecondLow > avgFirstLow;
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
-      const recentLowTrend = avgSecondLow - (avgSecondLow - avgFirstLow) * 0.3;
-      const detected = bothRising && converging && lastClose < recentLowTrend;
+      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
       
       return {
         detected,
@@ -385,28 +459,28 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      // PRIOR DOWNTREND CHECK: wedge must form after a drop of ≥2%
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const wedgeLow = Math.min(...lows);
+      const priorDrop = (earlyHigh - wedgeLow) / earlyHigh;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
+      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
       
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
-      
-      const highSlope = (avgSecondHigh - avgFirstHigh) / avgFirstHigh;
-      const lowSlope = (avgSecondLow - avgFirstLow) / avgFirstLow;
-      
-      const bothFalling = highSlope < -0.01 && lowSlope < -0.01;
-      const converging = highSlope < lowSlope;
+      const upperFalling = avgSecondHigh < avgFirstHigh;
+      const lowerFalling = avgSecondLow < avgFirstLow;
+      const firstRange = avgFirstHigh - avgFirstLow;
+      const secondRange = avgSecondHigh - avgSecondLow;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
-      const recentHighTrend = avgSecondHigh + (avgFirstHigh - avgSecondHigh) * 0.3;
-      const detected = bothFalling && converging && lastClose > recentHighTrend;
+      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
       
       return {
         detected,
