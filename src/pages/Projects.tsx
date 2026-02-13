@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
-  FlaskConical, 
-  TrendingUp,
+  FlaskConical,
   Sparkles,
   ChevronRight,
   Zap,
@@ -22,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectTemplate {
   id: string;
-  type: 'setup_finder' | 'pattern_lab' | 'portfolio_sim';
+  type: 'setup_finder' | 'pattern_lab';
   name: string;
   description: string;
   icon: React.ElementType;
@@ -50,18 +49,6 @@ const projectTemplates: ProjectTemplate[] = [
     badge: 'Pro',
     badgeVariant: 'secondary'
   },
-  {
-    id: 'portfolio_sim',
-    type: 'portfolio_sim',
-    name: 'Portfolio Simulator',
-    description: 'What-if scenarios for DCA, rebalancing, and allocation strategies',
-    icon: TrendingUp,
-    color: 'text-sky-500',
-    gradient: 'from-sky-500/20 via-sky-500/5 to-transparent',
-    estimatedCredits: '8-20',
-    estimatedTime: '1-2 min',
-    features: ['DCA simulation', 'Rebalance testing', 'Equity curves'],
-  }
 ];
 
 const ProjectCard = ({ 
@@ -264,7 +251,6 @@ const Projects = () => {
   const handleStartProject = (templateId: string) => {
     const routes: Record<string, string> = {
       pattern_lab: '/projects/pattern-lab/new',
-      portfolio_sim: '/projects/portfolio-sim/new',
     };
 
     const target = routes[templateId] || '/projects';
@@ -305,7 +291,7 @@ const Projects = () => {
                   Pattern-Powered Analysis
                 </h1>
                 <p className="text-muted-foreground text-lg max-w-xl">
-                  Run professional-grade analysis on markets, patterns, and portfolios. 
+                  Run professional-grade analysis on markets and patterns. 
                   Each project generates actionable artifacts with trade plans.
                 </p>
               </div>
@@ -321,7 +307,7 @@ const Projects = () => {
         
         {/* Projects Grid */}
         <section className="container mx-auto px-4 py-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 gap-6 max-w-2xl mx-auto">
             {projectTemplates.map((template) => (
               <ProjectCard
                 key={template.id}
