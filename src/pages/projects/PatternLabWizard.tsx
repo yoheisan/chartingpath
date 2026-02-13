@@ -255,6 +255,8 @@ const PatternLabWizard = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
+  const [paramsOpen, setParamsOpen] = useState(false);
+  const [patternsOpen, setPatternsOpen] = useState(false);
   
   // Use centralized auth context instead of local state
   const { isAuthenticated, isAuthLoading, session } = useAuth();
@@ -529,117 +531,127 @@ const PatternLabWizard = () => {
             </Card>
             
             {/* Timeframe & Lookback */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Backtest Parameters</CardTitle>
-                <CardDescription>Configure timeframe and data range</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label>Timeframe</Label>
-                    <Select value={timeframe} onValueChange={setTimeframe}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMEFRAMES.map(tf => (
-                          <SelectItem key={tf.value} value={tf.value}>
-                            {tf.label}
-                            {tf.hint && (
-                              <span className="text-muted-foreground ml-2">({tf.hint})</span>
-                            )}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Lookback Period</Label>
-                    <Select 
-                      value={String(lookbackYears)} 
-                      onValueChange={(v) => setLookbackYears(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getValidLookbackOptions(timeframe as Timeframe).map(lb => {
-                          // Also respect tier caps if they exist
-                          const tierCapped = patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears;
-                          return (
-                            <SelectItem 
-                              key={lb.value} 
-                              value={String(lb.value)}
-                              disabled={tierCapped}
-                            >
-                              {lb.label}
-                              {tierCapped && <span className="text-muted-foreground ml-1">(upgrade)</span>}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Data coverage: {getCoverageInfo(timeframe as Timeframe)}
-                    </p>
-                  </div>
-                  
-                  {/* Risk Per Trade - Professional Tiers */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <Label>Risk Per Trade</Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p className="text-sm font-semibold mb-1">Position Sizing</p>
-                            <p className="text-xs text-muted-foreground">
-                              Percentage of capital risked per trade. Affects equity curve simulation and max drawdown calculations.
-                            </p>
-                            <div className="text-xs mt-2 space-y-1">
-                              <p><span className="font-mono">0.5%</span> — Conservative (prop firms)</p>
-                              <p><span className="font-mono">1.0%</span> — Standard (institutional)</p>
-                              <p><span className="font-mono">2.0%</span> — Aggressive (retail)</p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+            <Card className={`bg-card/50 backdrop-blur-sm transition-colors ${!paramsOpen ? 'border-primary/40 border' : 'border-border/50'}`}>
+              <Collapsible open={paramsOpen} onOpenChange={setParamsOpen}>
+                <CardHeader className="pb-4">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full group">
+                    <div className="text-left">
+                      <CardTitle className="text-lg">Backtest Parameters</CardTitle>
+                      <CardDescription>
+                        {TIMEFRAMES.find(t => t.value === timeframe)?.label} • {lookbackYears}Y lookback • {riskPerTrade}% risk
+                      </CardDescription>
                     </div>
-                    <Select 
-                      value={String(riskPerTrade)} 
-                      onValueChange={(v) => setRiskPerTrade(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0.5">0.5% (Conservative)</SelectItem>
-                        <SelectItem value="1">1.0% (Standard)</SelectItem>
-                        <SelectItem value="2">2.0% (Aggressive)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {/* Data coverage notice */}
-                {DATA_COVERAGE[timeframe as Timeframe]?.isIntraday && (
-                  <Alert className="border-amber-500/30 bg-amber-500/5 mt-4">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
-                    <AlertDescription className="text-sm">
-                      {timeframe} data is limited to {getCoverageInfo(timeframe as Timeframe)} due to data provider constraints.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label>Timeframe</Label>
+                        <Select value={timeframe} onValueChange={setTimeframe}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIMEFRAMES.map(tf => (
+                              <SelectItem key={tf.value} value={tf.value}>
+                                {tf.label}
+                                {tf.hint && (
+                                  <span className="text-muted-foreground ml-2">({tf.hint})</span>
+                                )}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Lookback Period</Label>
+                        <Select 
+                          value={String(lookbackYears)} 
+                          onValueChange={(v) => setLookbackYears(Number(v))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getValidLookbackOptions(timeframe as Timeframe).map(lb => {
+                              const tierCapped = patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears;
+                              return (
+                                <SelectItem 
+                                  key={lb.value} 
+                                  value={String(lb.value)}
+                                  disabled={tierCapped}
+                                >
+                                  {lb.label}
+                                  {tierCapped && <span className="text-muted-foreground ml-1">(upgrade)</span>}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Data coverage: {getCoverageInfo(timeframe as Timeframe)}
+                        </p>
+                      </div>
+                      
+                      {/* Risk Per Trade - Professional Tiers */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <Label>Risk Per Trade</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-sm font-semibold mb-1">Position Sizing</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Percentage of capital risked per trade. Affects equity curve simulation and max drawdown calculations.
+                                </p>
+                                <div className="text-xs mt-2 space-y-1">
+                                  <p><span className="font-mono">0.5%</span> — Conservative (prop firms)</p>
+                                  <p><span className="font-mono">1.0%</span> — Standard (institutional)</p>
+                                  <p><span className="font-mono">2.0%</span> — Aggressive (retail)</p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <Select 
+                          value={String(riskPerTrade)} 
+                          onValueChange={(v) => setRiskPerTrade(Number(v))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.5">0.5% (Conservative)</SelectItem>
+                            <SelectItem value="1">1.0% (Standard)</SelectItem>
+                            <SelectItem value="2">2.0% (Aggressive)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    {/* Data coverage notice */}
+                    {DATA_COVERAGE[timeframe as Timeframe]?.isIntraday && (
+                      <Alert className="border-amber-500/30 bg-amber-500/5 mt-4">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        <AlertDescription className="text-sm">
+                          {timeframe} data is limited to {getCoverageInfo(timeframe as Timeframe)} due to data provider constraints.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
             
             {/* Patterns */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <Collapsible defaultOpen={false}>
+            <Card className={`bg-card/50 backdrop-blur-sm transition-colors ${!patternsOpen ? 'border-primary/40 border' : 'border-border/50'}`}>
+              <Collapsible open={patternsOpen} onOpenChange={setPatternsOpen}>
                 <CardHeader className="pb-4">
                   <CollapsibleTrigger className="flex items-center justify-between w-full group">
                     <div className="text-left">
