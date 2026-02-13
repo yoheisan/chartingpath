@@ -3942,6 +3942,7 @@ export type Database = {
         Returns: Json
       }
       publish_scheduled_articles: { Args: never; Returns: number }
+      purge_all_historical_patterns: { Args: never; Returns: Json }
       recalculate_pattern_stats: {
         Args: { p_hit_rate_id: string }
         Returns: undefined

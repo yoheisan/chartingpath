@@ -15,53 +15,73 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const patternsToDelete = [
-      'Donchian Breakout (Long)',
-      'Donchian Breakout (Short)',
-      'Ascending Triangle',
-      'Descending Triangle',
-      'Bull Flag',
-      'Bear Flag',
-      'Cup & Handle',
-    ];
+    // Parse request body for mode
+    let purgeAll = false;
+    try {
+      const body = await req.json();
+      purgeAll = body.purgeAll === true;
+    } catch {}
 
     const results: Record<string, number> = {};
 
-    for (const pattern of patternsToDelete) {
-      console.log(`[purge] Deleting pattern: ${pattern}`);
+    if (purgeAll) {
+      // Full purge via database function (bypasses PostgREST statement timeout)
+      console.log('[purge] FULL PURGE MODE - calling purge_all_historical_patterns()');
       
-      let totalDeleted = 0;
-      let batchDeleted = 0;
+      const { data, error } = await supabase.rpc('purge_all_historical_patterns');
       
-      // Delete in small batches of 500 to avoid statement timeout
-      do {
-        const { data, error } = await supabase
-          .from('historical_pattern_occurrences')
-          .delete()
-          .eq('pattern_name', pattern)
-          .limit(500)
-          .select('id');
-        
-        if (error) {
-          console.error(`[purge] Error deleting ${pattern}:`, error);
-          break;
-        }
-        
-        batchDeleted = data?.length || 0;
-        totalDeleted += batchDeleted;
-        if (batchDeleted > 0) console.log(`[purge] ${pattern}: +${batchDeleted} (total: ${totalDeleted})`);
-      } while (batchDeleted === 500);
+      if (error) {
+        console.error('[purge] RPC error:', error);
+        throw new Error(`Purge RPC failed: ${error.message}`);
+      }
       
-      results[pattern] = totalDeleted;
-    }
+      console.log('[purge] RPC result:', data);
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        totalPurged: data?.deleted_patterns || 0,
+        method: 'rpc_purge_all'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
 
-    // Also clear analytics cache
-    const { error: cacheError } = await supabase
-      .from('outcome_analytics_cache')
-      .delete()
-      .in('pattern_name', patternsToDelete);
-    
-    if (cacheError) console.error('[purge] Cache clear error:', cacheError);
+    } else {
+      // Legacy mode: only purge specific stale patterns
+      const patternsToDelete = [
+        'Donchian Breakout (Long)',
+        'Donchian Breakout (Short)',
+        'Ascending Triangle',
+        'Descending Triangle',
+        'Bull Flag',
+        'Bear Flag',
+        'Cup & Handle',
+      ];
+
+      for (const pattern of patternsToDelete) {
+        console.log(`[purge] Deleting pattern: ${pattern}`);
+        let totalDeleted = 0;
+        let batchDeleted = 0;
+        do {
+          const { data, error } = await supabase
+            .from('historical_pattern_occurrences')
+            .delete()
+            .eq('pattern_name', pattern)
+            .limit(500)
+            .select('id');
+          if (error) { console.error(`[purge] Error deleting ${pattern}:`, error); break; }
+          batchDeleted = data?.length || 0;
+          totalDeleted += batchDeleted;
+          if (batchDeleted > 0) console.log(`[purge] ${pattern}: +${batchDeleted} (total: ${totalDeleted})`);
+        } while (batchDeleted === 500);
+        results[pattern] = totalDeleted;
+      }
+
+      const { error: cacheError } = await supabase
+        .from('outcome_analytics_cache')
+        .delete()
+        .in('pattern_name', patternsToDelete);
+      if (cacheError) console.error('[purge] Cache clear error:', cacheError);
+    }
 
     const totalPurged = Object.values(results).reduce((a, b) => a + b, 0);
     console.log(`[purge] Complete. Total purged: ${totalPurged}`);
