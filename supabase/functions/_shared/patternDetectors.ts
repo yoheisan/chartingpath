@@ -39,7 +39,7 @@ export const PREMIUM_PATTERNS = [
   'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom'
 ];
 
-export const ALL_PATTERNS = [...BASE_PATTERNS];
+export const ALL_PATTERNS = [...BASE_PATTERNS, ...EXTENDED_PATTERNS, ...PREMIUM_PATTERNS];
 
 // Pattern registry with detection logic
 export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
@@ -581,6 +581,239 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       };
     },
     displayName: 'Falling Wedge'
+  },
+  'bull-flag': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Flagpole: Strong uptrend in first 8 bars (at least 5% gain)
+      const poleGain = (closes[7] - closes[0]) / closes[0];
+      if (poleGain < 0.05) return { detected: false, pivots: [] };
+      
+      // Flag: Consolidation in bars 8-18 (range < 4%, slight downward or flat drift)
+      const flagHighs = highs.slice(8, 18);
+      const flagLows = lows.slice(8, 18);
+      if (flagHighs.length === 0) return { detected: false, pivots: [] };
+      const flagHigh = Math.max(...flagHighs);
+      const flagLow = Math.min(...flagLows);
+      const flagRange = (flagHigh - flagLow) / flagLow;
+      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
+      
+      // Retracement must be < 50% of pole
+      const poleHeight = closes[7] - closes[0];
+      const retracement = (closes[7] - flagLow) / poleHeight;
+      if (flagRange > 0.04 || flagDrift > 0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > flagHigh * 1.005;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: closes[0], type: 'low', label: 'Pole Start' },
+          { index: 7, price: closes[7], type: 'high', label: 'Pole End' },
+          { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+        ] : []
+      };
+    },
+    displayName: 'Bull Flag'
+  },
+  'bear-flag': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // Flagpole: Strong downtrend in first 8 bars (at least 5% drop)
+      const poleDrop = (closes[0] - closes[7]) / closes[0];
+      if (poleDrop < 0.05) return { detected: false, pivots: [] };
+      
+      // Flag: Consolidation in bars 8-18
+      const flagHighs = highs.slice(8, 18);
+      const flagLows = lows.slice(8, 18);
+      if (flagLows.length === 0) return { detected: false, pivots: [] };
+      const flagHigh = Math.max(...flagHighs);
+      const flagLow = Math.min(...flagLows);
+      const flagRange = (flagHigh - flagLow) / flagLow;
+      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
+      
+      // Retracement must be < 50% of pole
+      const poleHeight = closes[0] - closes[7];
+      const retracement = (flagHigh - closes[7]) / poleHeight;
+      if (flagRange > 0.04 || flagDrift < -0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < flagLow * 0.995;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: 0, price: closes[0], type: 'high', label: 'Pole Start' },
+          { index: 7, price: closes[7], type: 'low', label: 'Pole End' },
+          { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+        ] : []
+      };
+    },
+    displayName: 'Bear Flag'
+  },
+  'cup-and-handle': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      
+      // PRIOR UPTREND CHECK: ≥5% (Bulkowski)
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      if ((earlyHigh - earlyLow) / earlyLow < 0.05) return { detected: false, pivots: [] };
+      
+      const cupEnd = Math.floor(window.length * 0.7);
+      const handleStart = Math.floor(window.length * 0.75);
+      
+      const leftRim = Math.max(...highs.slice(0, 4));
+      const rightRimArea = highs.slice(Math.floor(cupEnd * 0.8), cupEnd);
+      const rightRim = rightRimArea.length > 0 ? Math.max(...rightRimArea) : 0;
+      const cupMiddle = lows.slice(3, cupEnd - 2);
+      const cupBottom = cupMiddle.length > 0 ? Math.min(...cupMiddle) : 0;
+      
+      if (cupBottom === 0) return { detected: false, pivots: [] };
+      
+      const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
+      const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
+      if (rimDiff > 0.08 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      
+      const handleLows = lows.slice(handleStart, window.length - 1);
+      if (handleLows.length === 0) return { detected: false, pivots: [] };
+      const handleLow = Math.min(...handleLows);
+      const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+      if (handleDepth < 0.03 || handleDepth > 0.60) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > rightRim * 1.001;
+      
+      const leftRimIdx = highs.slice(0, 4).indexOf(leftRim);
+      const cupBottomIdx = 3 + cupMiddle.indexOf(cupBottom);
+      const rightRimStartIdx = Math.floor(cupEnd * 0.8);
+      const rightRimIdx = rightRimStartIdx + rightRimArea.indexOf(rightRim);
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
+          { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
+          { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
+          { index: handleStart + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+        ] : []
+      };
+    },
+    displayName: 'Cup & Handle'
+  },
+  'triple-top': {
+    direction: 'short',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      const peaks: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+      }
+      if (peaks.length < 3) return { detected: false, pivots: [] };
+      
+      const lastThreePeaks = peaks.slice(-3);
+      const peakValues = lastThreePeaks.map(p => p.value);
+      const maxPeak = Math.max(...peakValues);
+      const minPeak = Math.min(...peakValues);
+      if ((maxPeak - minPeak) / minPeak >= 0.03) return { detected: false, pivots: [] };
+      
+      // PRIOR UPTREND CHECK: ≥2%
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, lastThreePeaks[0].index)));
+      if ((lastThreePeaks[0].value - preTopPrice) / preTopPrice < 0.02) return { detected: false, pivots: [] };
+      
+      let neckline = Infinity;
+      let necklineIdx = lastThreePeaks[0].index;
+      for (let i = lastThreePeaks[0].index; i <= lastThreePeaks[2].index; i++) {
+        if (lows[i] < neckline) { neckline = lows[i]; necklineIdx = i; }
+      }
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < neckline * 0.998;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: lastThreePeaks[0].index, price: lastThreePeaks[0].value, type: 'high', label: 'Top 1' },
+          { index: lastThreePeaks[1].index, price: lastThreePeaks[1].value, type: 'high', label: 'Top 2' },
+          { index: lastThreePeaks[2].index, price: lastThreePeaks[2].value, type: 'high', label: 'Top 3' },
+          { index: necklineIdx, price: neckline, type: 'low', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Triple Top'
+  },
+  'triple-bottom': {
+    direction: 'long',
+    detector: (window) => {
+      if (window.length < 25) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+      
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      if (troughs.length < 3) return { detected: false, pivots: [] };
+      
+      const lastThreeTroughs = troughs.slice(-3);
+      const troughValues = lastThreeTroughs.map(t => t.value);
+      const maxTrough = Math.max(...troughValues);
+      const minTrough = Math.min(...troughValues);
+      if ((maxTrough - minTrough) / minTrough >= 0.03) return { detected: false, pivots: [] };
+      
+      // PRIOR DOWNTREND CHECK: ≥2%
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, lastThreeTroughs[0].index)));
+      if ((preBottomPrice - lastThreeTroughs[0].value) / preBottomPrice < 0.02) return { detected: false, pivots: [] };
+      
+      let neckline = -Infinity;
+      let necklineIdx = lastThreeTroughs[0].index;
+      for (let i = lastThreeTroughs[0].index; i <= lastThreeTroughs[2].index; i++) {
+        if (highs[i] > neckline) { neckline = highs[i]; necklineIdx = i; }
+      }
+      
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > neckline * 1.002;
+      
+      return {
+        detected,
+        pivots: detected ? [
+          { index: lastThreeTroughs[0].index, price: lastThreeTroughs[0].value, type: 'low', label: 'Bottom 1' },
+          { index: lastThreeTroughs[1].index, price: lastThreeTroughs[1].value, type: 'low', label: 'Bottom 2' },
+          { index: lastThreeTroughs[2].index, price: lastThreeTroughs[2].value, type: 'low', label: 'Bottom 3' },
+          { index: necklineIdx, price: neckline, type: 'high', label: 'Neckline' }
+        ] : []
+      };
+    },
+    displayName: 'Triple Bottom'
   },
 };
 

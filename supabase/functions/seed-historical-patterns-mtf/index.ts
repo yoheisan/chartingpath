@@ -556,6 +556,12 @@ const PATTERN_REGISTRY: Record<string, {
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
+      // PRIOR UPTREND CHECK: Cup & Handle requires a prior uptrend of ≥5% (Bulkowski)
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const priorRise = (earlyHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.05) return { detected: false, pivots: [] };
+      
       // Dynamic window sizing for flexibility
       const cupEnd = Math.floor(window.length * 0.7);
       const handleStart = Math.floor(window.length * 0.75);
@@ -636,6 +642,11 @@ const PATTERN_REGISTRY: Record<string, {
       
       if (!allSimilar) return { detected: false, pivots: [] };
       
+      // PRIOR UPTREND CHECK: Price before first top must be meaningfully lower (≥2%)
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, lastThreePeaks[0].index)));
+      const priorRise = (lastThreePeaks[0].value - preTopPrice) / preTopPrice;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
+      
       // Find neckline (lowest low between first and last peak)
       let neckline = Infinity;
       let necklineIdx = lastThreePeaks[0].index;
@@ -691,6 +702,11 @@ const PATTERN_REGISTRY: Record<string, {
       const allSimilar = (maxTrough - minTrough) / minTrough < 0.03;
       
       if (!allSimilar) return { detected: false, pivots: [] };
+      
+      // PRIOR DOWNTREND CHECK: Price before first trough must be meaningfully higher (≥2%)
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, lastThreeTroughs[0].index)));
+      const priorDrop = (preBottomPrice - lastThreeTroughs[0].value) / preBottomPrice;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
       // Find neckline (highest high between first and last trough)
       let neckline = -Infinity;
