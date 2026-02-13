@@ -7,24 +7,30 @@ import Layout from "@/components/Layout";
 import Auth from "@/pages/Auth";
 import AdminLogin from "@/pages/AdminLogin";
 import { PageCaptureButton } from "@/components/dev/PageCaptureButton";
+import { CommandPaletteProvider } from "@/components/command-palette";
+import { TradingCopilotProvider } from "@/components/copilot";
 
 export default function AuthShell() {
   return (
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ScrollToTop />
-      <PageCaptureButton />
-      <Layout>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/" element={<Auth />} />
-          <Route path="/auth/*" element={<Auth />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/login/" element={<AdminLogin />} />
-          <Route path="/admin/login/*" element={<AdminLogin />} />
-        </Routes>
-      </Layout>
+      <CommandPaletteProvider>
+        <TradingCopilotProvider>
+          <Toaster />
+          <Sonner />
+          <ScrollToTop />
+          <PageCaptureButton />
+          <Layout>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/" element={<Auth />} />
+              <Route path="/auth/*" element={<Auth />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/login/" element={<AdminLogin />} />
+              <Route path="/admin/login/*" element={<AdminLogin />} />
+            </Routes>
+          </Layout>
+        </TradingCopilotProvider>
+      </CommandPaletteProvider>
     </TooltipProvider>
   );
 }
