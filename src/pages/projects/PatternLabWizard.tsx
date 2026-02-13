@@ -665,6 +665,29 @@ const PatternLabWizard = () => {
                 </CardHeader>
                 <CollapsibleContent>
                   <CardContent>
+                    <div className="flex items-center gap-2 mb-3">
+                      {selectedPatterns.length < PATTERNS.length && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setSelectedPatterns(PATTERNS.map(p => p.id))}
+                        >
+                          Select All
+                        </Button>
+                      )}
+                      {selectedPatterns.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setSelectedPatterns([])}
+                        >
+                          Clear All ({selectedPatterns.length})
+                          <X className="h-3 w-3 ml-1" />
+                        </Button>
+                      )}
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {PATTERNS.map(pattern => (
                         <div
