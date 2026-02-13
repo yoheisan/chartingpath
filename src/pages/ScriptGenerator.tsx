@@ -10,6 +10,8 @@ import { tradingStrategies } from "@/utils/TradingStrategiesData";
 import { EXPORT_TEMPLATES } from "@/components/StrategyExportTemplates";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { AuthGateDialog } from "@/components/AuthGateDialog";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "8h", "1d", "1w"];
 
@@ -24,6 +26,7 @@ const EXPORT_PLATFORMS = {
 const ScriptGenerator = () => {
   const { toast } = useToast();
   const { canDownload } = useUserProfile();
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("script generation");
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("TradingView - Pine Script v5");
@@ -191,13 +194,14 @@ const ScriptGenerator = () => {
               </div>
 
               <Button 
-                onClick={handleGenerateScript}
+                onClick={() => requireAuth(handleGenerateScript)}
                 disabled={!selectedStrategy}
                 className="w-full"
               >
                 <Code className="h-4 w-4 mr-2" />
                 Generate Script
               </Button>
+              <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script generation" />
 
               {selectedStrategyData && (
                 <div className="p-4 bg-muted/50 rounded-lg">
