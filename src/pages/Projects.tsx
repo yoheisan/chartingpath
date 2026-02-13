@@ -129,7 +129,7 @@ const ProjectCard = ({
           >
             <span className="pointer-events-none relative z-10 flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Start Project
+              Run Backtest
               <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
             </span>
           </Button>
@@ -285,14 +285,14 @@ const Projects = () => {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Target className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium text-primary">Projects</span>
+                  <span className="text-sm font-medium text-primary">Backtest</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                  Pattern-Powered Analysis
+                  Run Backtest
                 </h1>
                 <p className="text-muted-foreground text-lg max-w-xl">
-                  Run professional-grade analysis on markets and patterns. 
-                  Each project generates actionable artifacts with trade plans.
+                  Deep-test any pattern across markets with regime analysis and edge validation.
+                  Each run generates actionable artifacts with trade plans.
                 </p>
               </div>
               
@@ -325,7 +325,7 @@ const Projects = () => {
                 <AlertCircle className="h-5 w-5 shrink-0" />
                 <div className="text-sm">
                   <span className="font-medium">Sign in required.</span>{' '}
-                  <span className="text-muted-foreground">Create a free account to start running projects.</span>
+                  <span className="text-muted-foreground">Create a free account to start running backtests.</span>
                 </div>
                 <Button 
                   size="sm" 
@@ -344,7 +344,7 @@ const Projects = () => {
         <section className="border-t border-border/50 bg-muted/30">
           <div className="container mx-auto px-4 py-12">
             <div className="text-center mb-8">
-              <h2 className="text-xl font-semibold">How Projects Work</h2>
+              <h2 className="text-xl font-semibold">How It Works</h2>
               <p className="text-muted-foreground mt-1">Three simple steps to actionable insights</p>
             </div>
             
