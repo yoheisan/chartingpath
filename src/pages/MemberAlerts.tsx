@@ -418,9 +418,36 @@ const MemberAlerts = () => {
     );
   }
 
-  // If no user after auth check, hook redirects
+  // If no user after auth check, show auth gate
   if (!user) {
-    return null;
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
+              <Bell className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Chart Pattern Alerts
+            </h1>
+          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            Get notified via email and push when chart patterns form on your favorite instruments.
+          </p>
+          <Button asChild size="lg">
+            <Link to={`/auth?redirect=${encodeURIComponent('/members/alerts')}`}>
+              <Lock className="h-4 w-4 mr-2" />
+              Sign in to manage alerts
+            </Link>
+          </Button>
+        </div>
+        <AuthGateDialog
+          open={showAuthDialog}
+          onOpenChange={setShowAuthDialog}
+          featureLabel="alerts"
+        />
+      </div>
+    );
   }
 
   // Error state
