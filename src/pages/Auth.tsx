@@ -246,19 +246,44 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // IMPORTANT: Always return OAuth flows to /auth (a routing-resilient path with static fallbacks),
-      // then let the app client-side navigate to the intended destination.
-      // Redirecting OAuth directly to deep member routes can hit a host-level 404 on some static hosts.
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
 
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: oauthRedirectTo,
-        }
-      });
+      // Detect if we're on a custom domain (not Lovable preview/project domains)
+      const isCustomDomain =
+        !window.location.hostname.includes("lovable.app") &&
+        !window.location.hostname.includes("lovableproject.com");
 
-      if (error) throw error;
+      if (isCustomDomain) {
+        // Bypass auth-bridge by getting OAuth URL directly
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: oauthRedirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        // For Lovable domains, use normal flow (auth-bridge handles it)
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: oauthRedirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Authentication Error",
