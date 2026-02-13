@@ -121,7 +121,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.create-alert]
-verify_jwt = true
+verify_jwt = false
 
 [functions.projects-run]
 verify_jwt = false
