@@ -70,16 +70,22 @@ export default function SharedPattern() {
         // Set OG meta tags dynamically for social sharing
         if (!ogSet.current) {
           ogSet.current = true;
-          const title = `${data.pattern_name} on ${data.instrument} — ${data.direction === 'long' ? '↑ Long' : '↓ Short'}`;
+          const displaySymbol = data.instrument.replace('-USD', '').replace('=X', '').replace('=F', '');
+          const title = `${data.pattern_name} on ${displaySymbol} — ${data.direction === 'long' ? '↑ Long' : '↓ Short'}`;
           const desc = `R:R ${data.risk_reward_ratio?.toFixed(1)} | Quality: ${data.quality_score || 'N/A'} | Entry: ${data.entry_price}`;
+          const ogImageUrl = `https://dgznlsckoamseqcpzfqm.supabase.co/storage/v1/object/public/share-images/${token}.svg`;
           
           document.title = `${title} | ChartingPath`;
           setMetaTag('og:title', title);
           setMetaTag('og:description', desc);
           setMetaTag('og:type', 'article');
+          setMetaTag('og:image', ogImageUrl);
+          setMetaTag('og:image:width', '1200');
+          setMetaTag('og:image:height', '630');
           setMetaTag('twitter:card', 'summary_large_image');
           setMetaTag('twitter:title', title);
           setMetaTag('twitter:description', desc);
+          setMetaTag('twitter:image', ogImageUrl);
         }
 
         track('shared_pattern_viewed', {
