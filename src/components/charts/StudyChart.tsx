@@ -157,7 +157,11 @@ const StudyChart = memo(({
 }: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const rsiContainerRef = useRef<HTMLDivElement>(null);
+  const macdContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const rsiChartRef = useRef<IChartApi | null>(null);
+  const macdChartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
@@ -435,80 +439,6 @@ const StudyChart = memo(({
       }
     }
 
-    // RSI (14) - rendered in a separate pane
-    if (indicators.rsi) {
-      const rsiData = calculateRSI(bars, 14);
-      if (rsiData.length > 0) {
-        const rsiSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.rsi,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: true,
-          priceScaleId: 'rsi',
-          priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
-        });
-
-        // Position RSI pane: if MACD is also on, RSI goes higher
-        const rsiTop = indicators.macd ? 0.7 : 0.78;
-        const rsiBottom = indicators.macd ? 0.15 : 0;
-
-        chart.priceScale('rsi').applyOptions({
-          scaleMargins: { top: rsiTop, bottom: rsiBottom },
-          borderVisible: false,
-        });
-
-        rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
-
-        // Overbought/oversold reference lines
-        rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
-        rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
-      }
-    }
-
-    // MACD (12, 26, 9) - rendered in a separate pane
-    if (indicators.macd) {
-      const macdData = calculateMACD(bars, 12, 26, 9);
-      if (macdData.length > 0) {
-        // MACD histogram
-        const macdHistSeries = chart.addSeries(HistogramSeries, {
-          priceLineVisible: false,
-          lastValueVisible: false,
-          priceScaleId: 'macd',
-          priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
-        });
-
-        chart.priceScale('macd').applyOptions({
-          scaleMargins: { top: 0.85, bottom: 0 },
-          borderVisible: false,
-        });
-
-        macdHistSeries.setData(macdData.map(p => ({
-          time: p.time as Time,
-          value: p.histogram,
-          color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
-        })));
-
-        // MACD line
-        const macdLineSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.macdLine,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-          priceScaleId: 'macd',
-        });
-        macdLineSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.macd })));
-
-        // Signal line
-        const macdSignalSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.macdSignal,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-          priceScaleId: 'macd',
-        });
-        macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
-      }
-    }
 
     if (tradePlan) {
       // Entry line (amber/primary)
@@ -589,13 +519,9 @@ const StudyChart = memo(({
     // Reserve bottom space for oscillator panes (RSI, MACD)
     const hasOverlays = !!tradePlan;
     const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
-    const bottomReserve = (indicators.rsi ? 0.18 : 0) + (indicators.macd ? 0.15 : 0);
     chart.priceScale('right').applyOptions({
       autoScale: true,
-      scaleMargins: {
-        top: optimalMargins.top,
-        bottom: Math.max(optimalMargins.bottom, bottomReserve),
-      },
+      scaleMargins: optimalMargins,
     });
 
     // Fit content
@@ -673,7 +599,180 @@ const StudyChart = memo(({
         chartRef.current = null;
       }
     };
-  }, [bars, fixedHeight, autoHeight, indicators, i18n.language, tradePlan, chartMarkers]);
+  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.sma200, indicators.bollingerBands, indicators.vwap, i18n.language, tradePlan, chartMarkers]);
+
+  // === RSI Chart (separate instance) ===
+  useEffect(() => {
+    if (!rsiContainerRef.current || !bars || bars.length === 0 || !indicators.rsi) {
+      if (rsiChartRef.current) {
+        rsiChartRef.current.remove();
+        rsiChartRef.current = null;
+      }
+      return;
+    }
+
+    const theme = getThemeColors();
+
+    if (rsiChartRef.current) {
+      rsiChartRef.current.remove();
+      rsiChartRef.current = null;
+    }
+
+    const rsiChart = createChart(rsiContainerRef.current, {
+      width: rsiContainerRef.current.clientWidth,
+      height: 100,
+      layout: { background: { color: theme.background }, textColor: theme.text },
+      grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 } },
+      timeScale: { visible: false },
+      crosshair: { mode: 0 },
+    });
+
+    rsiChartRef.current = rsiChart;
+
+    const rsiData = calculateRSI(bars, 14);
+    if (rsiData.length > 0) {
+      const rsiSeries = rsiChart.addSeries(LineSeries, {
+        color: INDICATOR_COLORS.rsi,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: true,
+        priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
+      });
+      rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
+
+      // Reference lines
+      rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
+      rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
+      rsiSeries.createPriceLine({ price: 50, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+    }
+
+    rsiChart.timeScale().fitContent();
+
+    // Sync time scale with main chart
+    if (chartRef.current) {
+      const mainChart = chartRef.current;
+      mainChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (range && rsiChartRef.current) {
+          rsiChartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+      rsiChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (range && chartRef.current) {
+          chartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries[0] && rsiChartRef.current) {
+        rsiChartRef.current.applyOptions({ width: Math.floor(entries[0].contentRect.width) });
+      }
+    });
+    resizeObserver.observe(rsiContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (rsiChartRef.current) {
+        rsiChartRef.current.remove();
+        rsiChartRef.current = null;
+      }
+    };
+  }, [bars, indicators.rsi, i18n.language]);
+
+  // === MACD Chart (separate instance) ===
+  useEffect(() => {
+    if (!macdContainerRef.current || !bars || bars.length === 0 || !indicators.macd) {
+      if (macdChartRef.current) {
+        macdChartRef.current.remove();
+        macdChartRef.current = null;
+      }
+      return;
+    }
+
+    const theme = getThemeColors();
+
+    if (macdChartRef.current) {
+      macdChartRef.current.remove();
+      macdChartRef.current = null;
+    }
+
+    const macdChart = createChart(macdContainerRef.current, {
+      width: macdContainerRef.current.clientWidth,
+      height: 100,
+      layout: { background: { color: theme.background }, textColor: theme.text },
+      grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 } },
+      timeScale: { visible: false },
+      crosshair: { mode: 0 },
+    });
+
+    macdChartRef.current = macdChart;
+
+    const macdData = calculateMACD(bars, 12, 26, 9);
+    if (macdData.length > 0) {
+      const macdHistSeries = macdChart.addSeries(HistogramSeries, {
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      macdHistSeries.setData(macdData.map(p => ({
+        time: p.time as Time,
+        value: p.histogram,
+        color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
+      })));
+
+      const macdLineSeries = macdChart.addSeries(LineSeries, {
+        color: INDICATOR_COLORS.macdLine,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      macdLineSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.macd })));
+
+      const macdSignalSeries = macdChart.addSeries(LineSeries, {
+        color: INDICATOR_COLORS.macdSignal,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
+
+      // Zero line
+      macdHistSeries.createPriceLine({ price: 0, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+    }
+
+    macdChart.timeScale().fitContent();
+
+    // Sync time scale with main chart
+    if (chartRef.current) {
+      const mainChart = chartRef.current;
+      mainChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (range && macdChartRef.current) {
+          macdChartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+      macdChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (range && chartRef.current) {
+          chartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries[0] && macdChartRef.current) {
+        macdChartRef.current.applyOptions({ width: Math.floor(entries[0].contentRect.width) });
+      }
+    });
+    resizeObserver.observe(macdContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (macdChartRef.current) {
+        macdChartRef.current.remove();
+        macdChartRef.current = null;
+      }
+    };
+  }, [bars, indicators.macd, i18n.language]);
 
   // Effect to draw/remove analysis overlay lines
   useEffect(() => {
@@ -799,8 +898,9 @@ const StudyChart = memo(({
       <div
         ref={containerRef}
         className={cn(
-          'w-full rounded overflow-hidden border border-border/50',
-          autoHeight ? 'h-full' : ''
+          'w-full overflow-hidden border border-border/50',
+          autoHeight ? 'h-full' : '',
+          (indicators.rsi || indicators.macd) ? 'rounded-t' : 'rounded'
         )}
         style={autoHeight ? undefined : { height: fixedHeight }}
       />
@@ -1044,6 +1144,34 @@ const StudyChart = memo(({
         </Popover>
       </div>
     </div>
+
+      {/* RSI Oscillator Pane */}
+      {indicators.rsi && bars && bars.length > 0 && (
+        <div className="relative">
+          <div className="absolute top-1 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-yellow-500 pointer-events-none">
+            RSI(14)
+          </div>
+          <div
+            ref={rsiContainerRef}
+            className="w-full border-x border-b border-border/50 rounded-b overflow-hidden"
+            style={{ height: 100 }}
+          />
+        </div>
+      )}
+
+      {/* MACD Oscillator Pane */}
+      {indicators.macd && bars && bars.length > 0 && (
+        <div className="relative">
+          <div className="absolute top-1 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-blue-400 pointer-events-none">
+            MACD(12,26,9)
+          </div>
+          <div
+            ref={macdContainerRef}
+            className="w-full border-x border-b border-border/50 rounded-b overflow-hidden"
+            style={{ height: 100 }}
+          />
+        </div>
+      )}
 
       {/* Analysis Result Dialog - Desktop only */}
       {!isMobile && (
