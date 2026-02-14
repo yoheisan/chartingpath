@@ -1,0 +1,1 @@
+ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS stripe_refund_id text;
