@@ -17,7 +17,14 @@ import {
   Crown,
   AlertTriangle,
   HelpCircle,
-  CheckCircle
+  CheckCircle,
+  Shield,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  Layers,
+  Scan
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -108,6 +115,235 @@ const FAQ = () => {
                         <p className="text-xs text-muted-foreground">Pattern detected but with significant deviations from ideal</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: "How ChartingPath Identifies Patterns",
+          questions: [
+            {
+              question: "What methodology does ChartingPath use for pattern detection?",
+              answer: (
+                <div className="space-y-4">
+                  <p>ChartingPath uses a <strong>two-layer detection pipeline</strong> based on institutional-grade standards established by Thomas Bulkowski's pattern research.</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Scan className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">Layer 1 — Bulkowski Engine (Structural Detection)</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        The engine scans price action using adaptive lookback windows (up to 120 bars) with peak/trough detection to identify structural formations. Each pattern must satisfy strict formation rules before being registered.
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">Layer 2 — Context Validator (Probabilistic Confirmation)</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Every detection passes through a 6-factor weighted validation model analyzing trend alignment (30%), RSI (15%), MACD momentum (15%), ADX strength (15%), volume conviction (15%), and risk calibration (10%). Only patterns that score above the confirmation threshold are shown.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                    <strong>Result:</strong> Patterns marked as "rejected" by the validator are automatically excluded from the Screener, Chart overlays, and all research views. Only <em>confirmed</em> patterns are displayed.
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "How is each pattern identified? (Full definitions)",
+              answer: (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">Below are the structural rules enforced by ChartingPath's Bulkowski Engine for each of the 15 supported patterns.</p>
+                  
+                  {/* Reversal Patterns */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                      Bearish Reversal Patterns
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Double Top</div>
+                        <p className="text-xs text-muted-foreground mt-1">Two peaks at approximately the same price level (±1.5% tolerance) separated by a trough. Requires a prior uptrend of ≥2%. Confirmed on a break below the neckline (trough level).</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Triple Top</div>
+                        <p className="text-xs text-muted-foreground mt-1">Three peaks at similar price levels (±1.5%) with two intervening troughs. Requires a prior uptrend of ≥2%. Confirmed on a break below the lowest trough (neckline).</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Head & Shoulders</div>
+                        <p className="text-xs text-muted-foreground mt-1">Three peaks where the middle peak (Head) is higher than both outer peaks (Shoulders). Shoulders must be approximately symmetric (within 30% height tolerance). Requires a prior uptrend of ≥3%. Confirmed on a neckline break.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Rising Wedge</div>
+                        <p className="text-xs text-muted-foreground mt-1">Converging trendlines with both support and resistance sloping upward, with resistance rising at a shallower angle. Requires ≥3 touches on each trendline. Bearish breakdown expected.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bullish Reversal Patterns */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
+                      Bullish Reversal Patterns
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Double Bottom</div>
+                        <p className="text-xs text-muted-foreground mt-1">Two troughs at approximately the same price level (±1.5% tolerance) separated by a peak. Requires a prior downtrend of ≥2%. Confirmed on a break above the neckline (peak level).</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Triple Bottom</div>
+                        <p className="text-xs text-muted-foreground mt-1">Three troughs at similar price levels (±1.5%) with two intervening peaks. Requires a prior downtrend of ≥2%. Confirmed on a break above the highest peak (neckline).</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Inverse Head & Shoulders</div>
+                        <p className="text-xs text-muted-foreground mt-1">Three troughs where the middle trough (Head) is lower than both outer troughs (Shoulders). Symmetric shoulder tolerance of 30%. Requires a prior downtrend of ≥3%. Confirmed on a neckline breakout.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Falling Wedge</div>
+                        <p className="text-xs text-muted-foreground mt-1">Converging trendlines with both support and resistance sloping downward, with support falling at a shallower angle. Requires ≥3 touches on each trendline. Bullish breakout expected.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Continuation Patterns */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <ArrowUpRight className="h-4 w-4 text-primary" />
+                      Continuation Patterns
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Bull Flag</div>
+                        <p className="text-xs text-muted-foreground mt-1">A sharp upward move (flagpole, ≥5% gain) followed by a tight, downward-sloping consolidation channel. The flag body should retrace no more than 50% of the pole. ADX &gt; 20 required. Bullish continuation on upside break.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Bear Flag</div>
+                        <p className="text-xs text-muted-foreground mt-1">A sharp downward move (flagpole, ≥5% drop) followed by a tight, upward-sloping consolidation channel. The flag body should retrace no more than 50% of the pole. ADX &gt; 20 required. Bearish continuation on downside break.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Cup & Handle</div>
+                        <p className="text-xs text-muted-foreground mt-1">A rounded bottom (cup) followed by a shallow pullback (handle). The cup must form over at least 7 bars with a prior uptrend of ≥5%. The handle should retrace less than 50% of the cup depth. Bullish breakout above the rim.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Triangle Patterns */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-primary" />
+                      Triangle Patterns
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Ascending Triangle</div>
+                        <p className="text-xs text-muted-foreground mt-1">Flat resistance with rising support. Requires ≥3 touches on each trendline. Higher lows converge toward a horizontal ceiling. Bullish breakout expected above resistance.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Descending Triangle</div>
+                        <p className="text-xs text-muted-foreground mt-1">Flat support with declining resistance. Requires ≥3 touches on each trendline. Lower highs converge toward a horizontal floor. Bearish breakdown expected below support.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Momentum Breakouts */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <ArrowDownRight className="h-4 w-4 text-primary" />
+                      Momentum Breakout Patterns
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Donchian Breakout (Long)</div>
+                        <p className="text-xs text-muted-foreground mt-1">Price closes above the highest high of the past N bars (Donchian channel). Requires ADX &gt; 20 for trend confirmation. No excessive retracement from recent highs. Bullish momentum signal.</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <div className="font-medium text-sm">Donchian Breakout (Short)</div>
+                        <p className="text-xs text-muted-foreground mt-1">Price closes below the lowest low of the past N bars (Donchian channel). Requires ADX &gt; 20 for trend confirmation. No excessive retracement from recent lows. Bearish momentum signal.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What is the quality scoring system?",
+              answer: (
+                <div className="space-y-4">
+                  <p>Each detected pattern receives a quality grade (A through F) based on a <strong>9-factor weighted model</strong>:</p>
+                  <div className="border rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div className="space-y-1">
+                        <div className="font-medium">Structural Factors</div>
+                        <div className="text-xs text-muted-foreground">• Prior Trend strength</div>
+                        <div className="text-xs text-muted-foreground">• Structural symmetry</div>
+                        <div className="text-xs text-muted-foreground">• Price action quality</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-medium">Volume & Volatility</div>
+                        <div className="text-xs text-muted-foreground">• Volume confirmation</div>
+                        <div className="text-xs text-muted-foreground">• Relative volume</div>
+                        <div className="text-xs text-muted-foreground">• Volatility regime</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-medium">Context Factors</div>
+                        <div className="text-xs text-muted-foreground">• ADX trend strength</div>
+                        <div className="text-xs text-muted-foreground">• Historical win rate</div>
+                        <div className="text-xs text-muted-foreground">• Pattern symmetry</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-2 border rounded-lg">
+                      <Badge className="bg-emerald-600 text-white min-w-8 justify-center">A</Badge>
+                      <span className="text-sm">Score 8–10: Institutional quality, strong confluence</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 border rounded-lg">
+                      <Badge className="bg-sky-600 text-white min-w-8 justify-center">B</Badge>
+                      <span className="text-sm">Score 6–8: Solid formation with minor deviations</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 border rounded-lg">
+                      <Badge variant="secondary" className="min-w-8 justify-center">C</Badge>
+                      <span className="text-sm">Score 4–6: Acceptable but with notable imperfections</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 border rounded-lg">
+                      <Badge variant="outline" className="min-w-8 justify-center">D–F</Badge>
+                      <span className="text-sm">Score 0–4: Marginal formation, use with caution</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What does the validation pipeline filter out?",
+              answer: (
+                <div className="space-y-4">
+                  <p>The Layer 2 Context Validator evaluates 6 weighted technical factors and assigns a composite score. Patterns are classified as:</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-3 border rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                      <div>
+                        <strong className="text-sm">Confirmed</strong>
+                        <p className="text-xs text-muted-foreground">Composite score ≥ 0.15 — displayed in Screener, Charts, and Research views</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 border rounded-lg">
+                      <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+                      <div>
+                        <strong className="text-sm">Rejected</strong>
+                        <p className="text-xs text-muted-foreground">Composite score ≤ −0.15 — automatically hidden from all views</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                    <p>This two-layer approach significantly reduces false positives compared to structural detection alone, ensuring that only patterns with supporting technical context reach the user.</p>
                   </div>
                 </div>
               )
