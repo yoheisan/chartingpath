@@ -416,6 +416,7 @@ async function processValidations(
 ): Promise<{ results: Array<{ detection_id: string; verdict: ValidationVerdict }> }> {
   const startTime = Date.now();
   const results: Array<{ detection_id: string; verdict: ValidationVerdict }> = [];
+  const confirmedForLayer3: Array<{ detection_id: string; detection_source: string; pattern_name: string; direction: string; entry_price: number; stop_loss_price: number; take_profit_price: number; symbol: string; timeframe: string }> = [];
 
   for (const detection of detections) {
     const detectionStart = Date.now();
@@ -442,13 +443,12 @@ async function processValidations(
         : "historical_pattern_occurrences";
 
       const updatePayload: Record<string, unknown> = {
-        validation_status: verdict.verdict,
-        validation_completed_at: new Date().toISOString(),
+        validation_status: verdict.verdict === "confirmed" ? "pending" : verdict.verdict, // Keep pending until Layer 3
+        validation_completed_at: verdict.verdict !== "confirmed" ? new Date().toISOString() : undefined,
       };
 
       // Append this layer to passed layers if confirmed
       if (verdict.verdict === "confirmed") {
-        // We need to read current layers first
         const { data: current } = await supabase
           .from(table)
           .select("validation_layers_passed")
@@ -459,6 +459,19 @@ async function processValidations(
         if (!existingLayers.includes("ai_context_validator")) {
           updatePayload.validation_layers_passed = [...existingLayers, "ai_context_validator"];
         }
+
+        // Queue for Layer 3
+        confirmedForLayer3.push({
+          detection_id: detection.detection_id,
+          detection_source: detection.detection_source,
+          pattern_name: detection.pattern_name,
+          direction: detection.direction,
+          entry_price: detection.entry_price,
+          stop_loss_price: detection.stop_loss_price,
+          take_profit_price: detection.take_profit_price,
+          symbol: detection.symbol,
+          timeframe: detection.timeframe,
+        });
       }
 
       await supabase.from(table).update(updatePayload).eq("id", detection.detection_id);
@@ -468,7 +481,6 @@ async function processValidations(
     } catch (err) {
       console.error(`[validate-pattern-context] Error validating ${detection.detection_id}:`, err);
 
-      // Log error to pipeline
       await supabase.from("pattern_pipeline_results").insert({
         detection_id: detection.detection_id,
         detection_source: detection.detection_source,
@@ -483,6 +495,24 @@ async function processValidations(
         detection_id: detection.detection_id,
         verdict: { verdict: "skipped", confidence: 0, reasoning: "Validation error — fallback to pass", factors: [] }
       });
+    }
+  }
+
+  // Chain to Layer 3: MTF Confluence for confirmed patterns
+  if (confirmedForLayer3.length > 0) {
+    try {
+      console.info(`[pipeline] Chaining ${confirmedForLayer3.length} confirmed patterns to Layer 3 (MTF Confluence)`);
+      const { data: l3Data, error: l3Error } = await supabase.functions.invoke("validate-mtf-confluence", {
+        body: { detections: confirmedForLayer3 },
+      });
+
+      if (l3Error) {
+        console.error("[pipeline] Layer 3 invoke error:", l3Error);
+      } else {
+        console.info("[pipeline] Layer 3 complete:", l3Data?.summary);
+      }
+    } catch (l3Err) {
+      console.error("[pipeline] Layer 3 chain failed:", l3Err);
     }
   }
 

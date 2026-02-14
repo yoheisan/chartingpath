@@ -191,3 +191,6 @@ verify_jwt = false
 
 [functions.validate-pattern-context]
 verify_jwt = false
+
+[functions.validate-mtf-confluence]
+verify_jwt = false
