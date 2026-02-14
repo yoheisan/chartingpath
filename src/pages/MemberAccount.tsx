@@ -8,10 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import MemberNavigation from "@/components/MemberNavigation";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
-import { User, Settings, Shield, Crown, Star, KeyRound } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { trackCheckoutCompleted } from "@/services/analytics";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserProfile {
   id: string;
@@ -32,8 +34,21 @@ const MemberAccount = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    if (sessionId) {
+      setCheckoutSuccess(true);
+      trackCheckoutCompleted({ plan: 'unknown', billing_cycle: 'monthly' });
+      // Clean up the URL
+      searchParams.delete('session_id');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   useEffect(() => {
     checkAuth();
@@ -146,6 +161,15 @@ const MemberAccount = () => {
       <MemberNavigation />
       
       <div className="container mx-auto px-6 py-8 max-w-4xl">
+        {checkoutSuccess && (
+          <Alert className="mb-6 border-green-500/50 bg-green-500/10">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700 dark:text-green-400">
+              🎉 Payment successful! Your subscription is being activated. It may take a moment to reflect below.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Account Settings</h1>
           <p className="text-muted-foreground">Manage your account and preferences</p>
