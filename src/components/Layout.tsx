@@ -4,6 +4,8 @@ import Navigation from "./Navigation";
 import Footer from "./Footer";
 import { CommandPalette, CommandPaletteTrigger, useCommandPalette } from "./command-palette";
 import { TradingCopilot, useTradingCopilotContext } from "./copilot";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +21,10 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { isOpen, close } = useCommandPalette();
   const copilot = useTradingCopilotContext();
+  const { isAuthenticated } = useAuth();
+  
+  // Prefetch member route chunks once authenticated
+  usePrefetchRoutes(isAuthenticated);
   
   const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
   const showCommandPalette = !COMMAND_EXCLUDED_ROUTES.some(route => location.pathname.startsWith(route));

@@ -1,4 +1,5 @@
 import { Suspense, lazy, type ReactNode } from "react";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,13 +26,9 @@ function lazyWithRetry(factory: () => Promise<any>, retries = 2): ReturnType<typ
   );
 }
 
-// Reusable loading fallback
-const PageLoader = () => (
-  <div className="container mx-auto px-6 py-12 text-muted-foreground">Loading…</div>
-);
-
+// Skeleton loading fallback — gives instant visual structure
 const withSuspense = (node: ReactNode) => (
-  <Suspense fallback={<PageLoader />}>{node}</Suspense>
+  <Suspense fallback={<PageSkeleton />}>{node}</Suspense>
 );
 
 // Core pages (lazy to avoid pulling the entire route tree on first load)
