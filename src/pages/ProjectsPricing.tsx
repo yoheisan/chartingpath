@@ -12,6 +12,7 @@ import { useState } from "react";
 const ProjectsPricing = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
   const planNameToDbPlan: Record<string, string> = {
     FREE: 'free',
@@ -38,7 +39,7 @@ const ProjectsPricing = () => {
       }
 
       const { data, error } = await supabase.functions.invoke('create-subscription', {
-        body: { plan: dbPlan, billing_cycle: 'monthly' }
+        body: { plan: dbPlan, billing_cycle: billingCycle }
       });
 
       if (error) throw error;
@@ -56,59 +57,54 @@ const ProjectsPricing = () => {
       setLoading(null);
     }
   };
+  // Annual prices (yearly / 12, rounded)
+  const annualMonthlyPrices: Record<string, number> = {
+    FREE: 0,
+    LITE: Math.round(20500 / 12 / 100),   // ~$17/mo
+    PLUS: Math.round(42100 / 12 / 100),   // ~$35/mo
+    PRO: Math.round(85300 / 12 / 100),    // ~$71/mo
+    TEAM: Math.round(160900 / 12 / 100),  // ~$134/mo
+  };
+
+  const monthlyPrices: Record<string, number> = {
+    FREE: 0, LITE: 19, PLUS: 39, PRO: 79, TEAM: 149,
+  };
+
   const tiers: Array<{
     key: PlanTier;
     name: string;
-    price: number;
+    monthlyPrice: number;
+    annualMonthlyPrice: number;
+    annualYearlyPrice: number;
     config: typeof PLANS_CONFIG.tiers.FREE;
     popular: boolean;
     cta: string;
     bestFor: string;
   }> = [
     {
-      key: 'FREE',
-      name: 'Free',
-      price: 0,
-      config: PLANS_CONFIG.tiers.FREE,
-      popular: false,
-      cta: t('projects.pricing.cta.free', 'Start Free'),
-      bestFor: TIER_DISPLAY.FREE.bestFor,
+      key: 'FREE', name: 'Free', monthlyPrice: 0, annualMonthlyPrice: 0, annualYearlyPrice: 0,
+      config: PLANS_CONFIG.tiers.FREE, popular: false,
+      cta: t('projects.pricing.cta.free', 'Start Free'), bestFor: TIER_DISPLAY.FREE.bestFor,
     },
     {
-      key: 'LITE',
-      name: 'Lite',
-      price: 12,
-      config: PLANS_CONFIG.tiers.LITE,
-      popular: false,
-      cta: 'Get Lite',
-      bestFor: TIER_DISPLAY.LITE.bestFor,
+      key: 'LITE', name: 'Lite', monthlyPrice: 19, annualMonthlyPrice: annualMonthlyPrices.LITE, annualYearlyPrice: 205,
+      config: PLANS_CONFIG.tiers.LITE, popular: false,
+      cta: 'Get Lite', bestFor: TIER_DISPLAY.LITE.bestFor,
     },
     {
-      key: 'PLUS',
-      name: 'Plus',
-      price: 29,
-      config: PLANS_CONFIG.tiers.PLUS,
-      popular: false,
-      cta: t('projects.pricing.cta.plus', 'Get Plus'),
-      bestFor: TIER_DISPLAY.PLUS.bestFor,
+      key: 'PLUS', name: 'Plus', monthlyPrice: 39, annualMonthlyPrice: annualMonthlyPrices.PLUS, annualYearlyPrice: 421,
+      config: PLANS_CONFIG.tiers.PLUS, popular: false,
+      cta: t('projects.pricing.cta.plus', 'Get Plus'), bestFor: TIER_DISPLAY.PLUS.bestFor,
     },
     {
-      key: 'PRO',
-      name: 'Pro',
-      price: 79,
-      config: PLANS_CONFIG.tiers.PRO,
-      popular: true,
-      cta: t('projects.pricing.cta.pro', 'Go Pro'),
-      bestFor: TIER_DISPLAY.PRO.bestFor,
+      key: 'PRO', name: 'Pro', monthlyPrice: 79, annualMonthlyPrice: annualMonthlyPrices.PRO, annualYearlyPrice: 853,
+      config: PLANS_CONFIG.tiers.PRO, popular: true,
+      cta: t('projects.pricing.cta.pro', 'Go Pro'), bestFor: TIER_DISPLAY.PRO.bestFor,
     },
     {
-      key: 'TEAM',
-      name: 'Team',
-      price: 199,
-      config: PLANS_CONFIG.tiers.TEAM,
-      popular: false,
-      cta: t('projects.pricing.cta.team', 'Get Team'),
-      bestFor: TIER_DISPLAY.TEAM.bestFor,
+      key: 'TEAM', name: 'Team', monthlyPrice: 149, annualMonthlyPrice: annualMonthlyPrices.TEAM, annualYearlyPrice: 1609,
+      config: PLANS_CONFIG.tiers.TEAM, popular: false,
+      cta: t('projects.pricing.cta.team', 'Get Team'), bestFor: TIER_DISPLAY.TEAM.bestFor,
     },
   ];
 
@@ -170,10 +166,37 @@ const ProjectsPricing = () => {
           </div>
         </div>
 
+        {/* Billing Cycle Toggle */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>
+            Monthly
+          </span>
+          <button
+            onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              billingCycle === 'annual' ? 'bg-primary' : 'bg-muted'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
+                billingCycle === 'annual' ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-medium ${billingCycle === 'annual' ? 'text-foreground' : 'text-muted-foreground'}`}>
+            Annual
+          </span>
+          {billingCycle === 'annual' && (
+            <Badge variant="secondary">Save ~10%</Badge>
+          )}
+        </div>
+
         {/* Pricing Cards - 5 columns on large screens */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-16">
-          {tiers.map((tier) => (
-            <Card 
+          {tiers.map((tier) => {
+            const displayPrice = billingCycle === 'annual' ? tier.annualMonthlyPrice : tier.monthlyPrice;
+            return (
+            <Card
               key={tier.key} 
               className={`relative flex flex-col ${
                 tier.popular 
@@ -192,12 +215,19 @@ const ProjectsPricing = () => {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
                 <div className="mt-3">
-                  {tier.price === 0 ? (
+                  {displayPrice === 0 ? (
                     <div className="text-3xl font-bold text-foreground">Free</div>
                   ) : (
-                    <div className="text-3xl font-bold text-foreground">
-                      ${tier.price}
-                      <span className="text-sm text-muted-foreground font-normal">/mo</span>
+                    <div>
+                      <div className="text-3xl font-bold text-foreground">
+                        ${displayPrice}
+                        <span className="text-sm text-muted-foreground font-normal">/mo</span>
+                      </div>
+                      {billingCycle === 'annual' && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          ${tier.annualYearlyPrice}/year · <span className="line-through">${tier.monthlyPrice * 12}/yr</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -278,7 +308,8 @@ const ProjectsPricing = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
         {/* Credit Explanation */}
