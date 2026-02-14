@@ -543,6 +543,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   symbol={selectedSymbol}
                   timeframe={selectedTimeframe}
                   onTimeframeChange={setSelectedTimeframe}
+                  onSymbolChange={handleSymbolSelect}
                   onWatchlistChange={handleWatchlistChange}
                 />
               )}
