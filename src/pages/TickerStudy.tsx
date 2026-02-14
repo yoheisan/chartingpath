@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, Search, TrendingUp, TrendingDown, Target, Shield, 
   Clock, BarChart3, List, CalendarDays, CheckCircle, XCircle, Timer,
-  ExternalLink, ChevronDown, ChevronUp, Filter, X, ChevronRight
+  ExternalLink, ChevronDown, ChevronUp, Filter, X, ChevronRight, Play
 } from 'lucide-react';
 import {
   Collapsible,
@@ -933,7 +933,8 @@ export default function TickerStudy() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Pattern</TableHead>
-                    <TableHead className="w-[140px]">Chart</TableHead>
+                    <TableHead className="w-[100px]">Chart</TableHead>
+                    <TableHead className="w-[90px]">Replay</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead className="text-right">Entry</TableHead>
                     <TableHead className="text-right">Target</TableHead>
@@ -976,6 +977,68 @@ export default function TickerStudy() {
                           <BarChart3 className="h-4 w-4 mr-1.5" />
                           Open Chart
                         </Button>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {pattern.bars_to_outcome != null && pattern.bars?.length > 0 ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-3 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const setup: SetupWithVisuals = {
+                                instrument: displaySymbol,
+                                patternId: pattern.pattern_id,
+                                patternName: PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name,
+                                direction: pattern.direction === 'bullish' ? 'long' : 'short',
+                                signalTs: pattern.detected_at,
+                                quality: {
+                                  score: pattern.quality_score === 'A' ? 9 : pattern.quality_score === 'B' ? 7 : pattern.quality_score === 'C' ? 5 : 3,
+                                  grade: (pattern.quality_score || 'B') as 'A' | 'B' | 'C' | 'D' | 'F',
+                                  confidence: 75,
+                                  reasons: pattern.quality_reasons || [],
+                                  warnings: [],
+                                  tradeable: true,
+                                },
+                                tradePlan: {
+                                  entryType: 'market',
+                                  entry: pattern.entry_price,
+                                  stopLoss: pattern.stop_loss_price,
+                                  takeProfit: pattern.take_profit_price,
+                                  rr: pattern.risk_reward_ratio,
+                                  stopDistance: Math.abs(pattern.entry_price - pattern.stop_loss_price),
+                                  tpDistance: Math.abs(pattern.take_profit_price - pattern.entry_price),
+                                  timeStopBars: 100,
+                                  bracketLevelsVersion: '1.0',
+                                  priceRounding: { priceDecimals: 2, rrDecimals: 1 },
+                                },
+                                bars: pattern.bars,
+                                visualSpec: pattern.visual_spec,
+                                outcome: pattern.outcome === 'hit_tp' ? 'hit_tp' : pattern.outcome === 'hit_sl' ? 'hit_sl' : pattern.outcome === 'timeout' ? 'timeout' : null,
+                                barsToOutcome: pattern.bars_to_outcome,
+                              };
+                              navigate('/members/dashboard', {
+                                state: {
+                                  playbackPattern: {
+                                    occurrenceId: pattern.id,
+                                    symbol: displaySymbol,
+                                    timeframe: pattern.timeframe || '1d',
+                                    patternId: pattern.pattern_id,
+                                    patternName: PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name,
+                                    direction: pattern.direction === 'bullish' ? 'long' : 'short',
+                                    setup,
+                                    enablePlayback: true,
+                                  }
+                                }
+                              });
+                            }}
+                          >
+                            <Play className="h-4 w-4 mr-1.5 fill-current" />
+                            Replay
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground px-3">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
