@@ -131,15 +131,8 @@ export const SubscriptionManager = () => {
 
       if (error) throw error;
 
-      if (data.checkout_url) {
-        // For upgrades requiring payment
-        window.open(data.checkout_url, '_blank');
-        toast.success('Redirecting to payment...');
-      } else {
-        // For downgrades or no-payment upgrades
-        toast.success(data.message);
-        await loadSubscriptionData();
-      }
+      toast.success(data.message || 'Plan changed successfully');
+      await loadSubscriptionData();
 
     } catch (error) {
       console.error('Error changing plan:', error);
