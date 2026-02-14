@@ -1711,6 +1711,7 @@ export type Database = {
           quality_reasons: string[] | null
           quality_score: string | null
           risk_reward_ratio: number
+          share_token: string | null
           status: string
           stop_loss_price: number
           take_profit_price: number
@@ -1742,6 +1743,7 @@ export type Database = {
           quality_reasons?: string[] | null
           quality_score?: string | null
           risk_reward_ratio: number
+          share_token?: string | null
           status?: string
           stop_loss_price: number
           take_profit_price: number
@@ -1773,6 +1775,7 @@ export type Database = {
           quality_reasons?: string[] | null
           quality_score?: string | null
           risk_reward_ratio?: number
+          share_token?: string | null
           status?: string
           stop_loss_price?: number
           take_profit_price?: number

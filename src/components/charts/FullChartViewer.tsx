@@ -57,6 +57,7 @@ import {
   Settings2,
   RotateCcw,
   Play,
+  Share2,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { DISCLAIMERS } from '@/constants/disclaimers';
@@ -69,6 +70,7 @@ import { InstrumentLogo } from './InstrumentLogo';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
+import { useSharePattern } from '@/hooks/useSharePattern';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -201,6 +203,7 @@ export default function FullChartViewer({
   selectedRR = 2,
 }: FullChartViewerProps) {
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("this feature");
+  const { sharePattern, sharing } = useSharePattern();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
@@ -1198,6 +1201,27 @@ export default function FullChartViewer({
                   Save to Vault
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const dbId = (setup as any)?.dbId;
+                  if (dbId) {
+                    sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId);
+                  } else {
+                    toast.error('Cannot share this pattern');
+                  }
+                }}
+                disabled={sharing}
+                className="flex-1"
+              >
+                {sharing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4 mr-2" />
+                )}
+                Share
+              </Button>
             </div>
           </div>
 
