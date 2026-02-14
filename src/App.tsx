@@ -262,7 +262,7 @@ const App = () => (
           <Route path="/strategy-workspace" element={withSuspense(<StrategyWorkspace />)} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
-          <Route path="/projects" element={withSuspense(<Projects />)} />
+          <Route path="/projects" element={<Navigate to="/projects/pattern-lab/new" replace />} />
           <Route path="/projects/pricing" element={withSuspense(<ProjectsPricing />)} />
           <Route path="/projects/setup-finder/new" element={<Navigate to="/projects/pattern-lab/new" replace />} />
           <Route path="/projects/pattern-lab/new" element={withSuspense(<PatternLabWizard />)} />
