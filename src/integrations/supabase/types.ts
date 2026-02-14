@@ -4001,6 +4001,8 @@ export type Database = {
         | "cup-and-handle"
         | "triple-top"
         | "triple-bottom"
+        | "symmetrical-triangle"
+        | "inverse-cup-and-handle"
       content_status: "draft" | "published" | "archived" | "scheduled"
       content_type:
         | "article"
@@ -4202,6 +4204,8 @@ export const Constants = {
         "cup-and-handle",
         "triple-top",
         "triple-bottom",
+        "symmetrical-triangle",
+        "inverse-cup-and-handle",
       ],
       content_status: ["draft", "published", "archived", "scheduled"],
       content_type: [

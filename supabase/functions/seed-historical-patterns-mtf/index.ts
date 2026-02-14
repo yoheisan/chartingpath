@@ -860,6 +860,114 @@ const PATTERN_REGISTRY: Record<string, {
         ] : []
       };
     }
+  },
+  'symmetrical-triangle': {
+    direction: 'long' as const,
+    displayName: 'Symmetrical Triangle',
+    detector: (window: OHLCBar[]): PatternDetectionResult => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+      const closes = window.map(d => d.close);
+
+      const peaks: { index: number; value: number }[] = [];
+      const troughs: { index: number; value: number }[] = [];
+      for (let i = 2; i < window.length - 2; i++) {
+        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
+            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          peaks.push({ index: i, value: highs[i] });
+        }
+        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
+            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          troughs.push({ index: i, value: lows[i] });
+        }
+      }
+      if (peaks.length < 2 || troughs.length < 2) return { detected: false, pivots: [] };
+
+      const lastPeaks = peaks.slice(-2);
+      if (lastPeaks[1].value >= lastPeaks[0].value) return { detected: false, pivots: [] };
+      const highSlope = (lastPeaks[1].value - lastPeaks[0].value) / (lastPeaks[1].index - lastPeaks[0].index);
+
+      const lastTroughs = troughs.slice(-2);
+      if (lastTroughs[1].value <= lastTroughs[0].value) return { detected: false, pivots: [] };
+      const lowSlope = (lastTroughs[1].value - lastTroughs[0].value) / (lastTroughs[1].index - lastTroughs[0].index);
+
+      if (highSlope >= 0 || lowSlope <= 0) return { detected: false, pivots: [] };
+
+      const patternRange = (lastPeaks[0].value - lastTroughs[0].value) / lastTroughs[0].value;
+      if (patternRange < 0.03) return { detected: false, pivots: [] };
+
+      const projectedResistance = lastPeaks[1].value + highSlope * (window.length - 1 - lastPeaks[1].index);
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose > projectedResistance * 1.002;
+
+      return {
+        detected,
+        pivots: detected ? [
+          { index: lastPeaks[0].index, price: lastPeaks[0].value, type: 'high', label: 'R1' },
+          { index: lastPeaks[1].index, price: lastPeaks[1].value, type: 'high', label: 'R2' },
+          { index: lastTroughs[0].index, price: lastTroughs[0].value, type: 'low', label: 'S1' },
+          { index: lastTroughs[1].index, price: lastTroughs[1].value, type: 'low', label: 'S2' },
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+        ] : []
+      };
+    }
+  },
+  'inverse-cup-and-handle': {
+    direction: 'short' as const,
+    displayName: 'Inverse Cup & Handle',
+    detector: (window: OHLCBar[]): PatternDetectionResult => {
+      if (window.length < 20) return { detected: false, pivots: [] };
+      const closes = window.map(d => d.close);
+      const highs = window.map(d => d.high);
+      const lows = window.map(d => d.low);
+
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      if ((earlyHigh - earlyLow) / earlyHigh < 0.05) return { detected: false, pivots: [] };
+
+      const cupEnd = Math.floor(window.length * 0.7);
+      const handleStart = Math.floor(window.length * 0.75);
+
+      const leftRim = Math.min(...lows.slice(0, 4));
+      const rightRimArea = lows.slice(Math.floor(cupEnd * 0.8), cupEnd);
+      const rightRim = rightRimArea.length > 0 ? Math.min(...rightRimArea) : Infinity;
+      const cupMiddle = highs.slice(3, cupEnd - 2);
+      const cupTop = cupMiddle.length > 0 ? Math.max(...cupMiddle) : 0;
+
+      if (cupTop === 0) return { detected: false, pivots: [] };
+
+      const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
+      const cupHeight = (cupTop - Math.max(leftRim, rightRim)) / Math.max(leftRim, rightRim);
+      if (rimDiff > 0.08 || cupHeight < 0.07 || cupHeight > 0.40) return { detected: false, pivots: [] };
+
+      const handleHighs = highs.slice(handleStart, window.length - 1);
+      if (handleHighs.length === 0) return { detected: false, pivots: [] };
+      const handleHigh = Math.max(...handleHighs);
+      const handleRetracement = (handleHigh - rightRim) / (cupTop - rightRim);
+      if (handleRetracement < 0.03 || handleRetracement > 0.60) return { detected: false, pivots: [] };
+
+      const lastClose = closes[closes.length - 1];
+      const detected = lastClose < rightRim * 0.999;
+
+      const leftRimIdx = lows.slice(0, 4).indexOf(leftRim);
+      const cupTopIdx = 3 + cupMiddle.indexOf(cupTop);
+      const rightRimStartIdx = Math.floor(cupEnd * 0.8);
+      const rightRimIdx = rightRimStartIdx + rightRimArea.indexOf(rightRim);
+
+      return {
+        detected,
+        patternStartIndex: leftRimIdx,
+        patternEndIndex: window.length - 1,
+        pivots: detected ? [
+          { index: leftRimIdx, price: leftRim, type: 'low', label: 'Left Rim' },
+          { index: cupTopIdx, price: cupTop, type: 'high', label: 'Cup Top' },
+          { index: rightRimIdx, price: rightRim, type: 'low', label: 'Right Rim' },
+          { index: handleStart + handleHighs.indexOf(handleHigh), price: handleHigh, type: 'high', label: 'Handle' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+        ] : []
+      };
+    }
   }
 };
 
