@@ -21,7 +21,24 @@ const Pricing = () => {
     }
   }, [searchParams]);
 
+  // Map display plan names to database plan_pricing keys
+  const planNameToDbPlan: Record<string, string> = {
+    free: 'free',
+    lite: 'starter',
+    plus: 'pro',
+    pro: 'pro_plus',
+    team: 'elite',
+  };
+
   const handlePlanSelect = (planName: string) => {
+    const dbPlan = planNameToDbPlan[planName.toLowerCase()];
+    
+    // Free plan: redirect to sign up
+    if (dbPlan === 'free') {
+      window.location.href = '/auth';
+      return;
+    }
+
     // Track pricing clicked
     trackPricingClicked({ source: 'plan_select', current_plan: planName.toLowerCase() });
     
@@ -34,34 +51,39 @@ const Pricing = () => {
     }
     
     // Create subscription via Supabase function
-    createSubscription(planName);
+    createSubscription(dbPlan, planName);
   };
 
-  const createSubscription = async (plan: string) => {
+  const createSubscription = async (dbPlan: string, displayName: string) => {
     try {
       // Track checkout started
       trackCheckoutStarted({
-        plan: plan.toLowerCase(),
+        plan: dbPlan,
         billing_cycle: isAnnual ? 'annual' : 'monthly',
         source: 'pricing_page'
       });
 
       const { data, error } = await supabase.functions.invoke('create-subscription', {
         body: {
-          plan: plan.toLowerCase(),
+          plan: dbPlan,
           billing_cycle: isAnnual ? 'annual' : 'monthly'
         }
       });
 
       if (error) throw error;
 
-      if (data.url) {
-        // Open Stripe checkout in new tab
-        window.open(data.url, '_blank');
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
-      // Show error message
       toast.error('Failed to start checkout. Please try again or contact support.');
     }
   };
