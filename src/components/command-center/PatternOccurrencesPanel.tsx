@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, TrendingUp, TrendingDown, Clock, Target, Eye, BarChart3, ChevronDown } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Clock, Target, Eye, BarChart3, ChevronDown, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -226,13 +226,20 @@ function PatternRow({
         {isClickable && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Eye className={cn(
-                "h-3.5 w-3.5 shrink-0",
-                isSelected ? "text-primary" : "text-muted-foreground"
-              )} />
+              {p.isActive ? (
+                <Eye className={cn(
+                  "h-3.5 w-3.5 shrink-0",
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                )} />
+              ) : (
+                <Play className={cn(
+                  "h-3.5 w-3.5 shrink-0",
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                )} />
+              )}
             </TooltipTrigger>
             <TooltipContent side="left">
-              <p>View pattern on chart</p>
+              <p>{p.isActive ? 'View pattern on chart' : 'Replay trade'}</p>
             </TooltipContent>
           </Tooltip>
         )}
