@@ -153,6 +153,11 @@ export const INDICATOR_COLORS = {
   sma200: 'rgba(139, 92, 246, 0.8)',   // Purple
   bollingerBands: 'rgba(156, 163, 175, 0.4)', // Gray translucent
   vwap: 'rgba(6, 182, 212, 0.8)',      // Cyan
+  rsi: 'rgba(234, 179, 8, 0.8)',       // Yellow
+  macdLine: 'rgba(59, 130, 246, 0.8)', // Blue
+  macdSignal: 'rgba(249, 115, 22, 0.8)', // Orange
+  macdHistogramUp: 'rgba(34, 197, 94, 0.5)',  // Green
+  macdHistogramDown: 'rgba(239, 68, 68, 0.5)', // Red
 } as const;
 
 // === OVERLAY/PRICE LINE COLORS ===
