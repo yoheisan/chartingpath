@@ -279,7 +279,7 @@ const StudyChart = memo(({
         visible: true,
         borderColor: theme.grid,
         mode: 0, // Allow manual vertical scaling
-        minimumWidth: 80,
+        minimumWidth: 100,
       },
       timeScale: {
         visible: true,
@@ -630,7 +630,7 @@ const StudyChart = memo(({
       height: 100,
       layout: { background: { color: theme.background }, textColor: theme.text },
       grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 80 },
+      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 100 },
       timeScale: { visible: false },
       crosshair: { mode: 0 },
     });
@@ -703,7 +703,7 @@ const StudyChart = memo(({
       height: 100,
       layout: { background: { color: theme.background }, textColor: theme.text },
       grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 80 },
+      rightPriceScale: { borderColor: theme.grid, scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 100 },
       timeScale: { visible: false },
       crosshair: { mode: 0 },
     });
