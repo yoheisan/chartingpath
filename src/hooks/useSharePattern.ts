@@ -30,7 +30,9 @@ export function useSharePattern() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Failed to generate share link');
 
-      return `${window.location.origin}/s/${data.shareToken}`;
+      // Point share URLs to the edge function for OG tag pre-rendering
+      // The edge function redirects human visitors to the SPA, but serves OG HTML to bots
+      return `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/og-share?token=${data.shareToken}`;
     } catch (err: any) {
       console.error('[useSharePattern]', err);
       toast.error('Failed to create share link');
