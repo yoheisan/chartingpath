@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search } from 'lucide-react';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
@@ -25,6 +26,7 @@ interface CommandCenterChartProps {
   symbol: string;
   timeframe: string;
   onTimeframeChange: (tf: string) => void;
+  onSymbolChange?: (symbol: string) => void;
   onWatchlistChange?: () => void;
 }
 
@@ -60,6 +62,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   symbol,
   timeframe,
   onTimeframeChange,
+  onSymbolChange,
   onWatchlistChange,
 }: CommandCenterChartProps) {
   const { profile, user } = useUserProfile();
@@ -393,6 +396,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               </div>
             )}
           </div>
+          {onSymbolChange && (
+            <UniversalSymbolSearch
+              onSelect={(sym) => onSymbolChange(sym)}
+              trigger={
+                <Button variant="outline" size="sm" className="h-7 sm:h-8 gap-1.5 text-xs text-muted-foreground">
+                  <Search className="h-3 w-3" />
+                  <span className="hidden sm:inline">Search ticker...</span>
+                </Button>
+              }
+            />
+          )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
