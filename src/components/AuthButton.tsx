@@ -58,10 +58,19 @@ const AuthButton = () => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.error('Sign out error:', error);
+      }
+      setUser(null);
+      setUserRole(null);
       navigate('/');
     } catch (error) {
       console.error('Sign out error:', error);
+      // Force cleanup even on error
+      setUser(null);
+      setUserRole(null);
+      navigate('/');
     }
   };
 
@@ -138,7 +147,11 @@ const AuthButton = () => {
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+        <DropdownMenuItem 
+          onClick={handleSignOut} 
+          onSelect={(e) => e.preventDefault()}
+          className="text-red-600 cursor-pointer"
+        >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
         </DropdownMenuItem>
