@@ -252,9 +252,13 @@ const StudyChart = memo(({
       return localeMap[lang] || 'en-US';
     };
 
+    // Calculate oscillator space to subtract from main chart
+    const oscCount = (indicators.rsi ? 1 : 0) + (indicators.macd ? 1 : 0);
+    const oscHeight = oscCount * 100;
+
     const measuredHeight = autoHeight
-      ? Math.floor(containerRef.current.getBoundingClientRect().height || 0)
-      : fixedHeight;
+      ? Math.floor((containerRef.current.getBoundingClientRect().height || 0))
+      : fixedHeight - oscHeight;
 
     const initialHeight = Math.max(measuredHeight || fixedHeight, 250);
 
@@ -599,7 +603,7 @@ const StudyChart = memo(({
         chartRef.current = null;
       }
     };
-  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.sma200, indicators.bollingerBands, indicators.vwap, i18n.language, tradePlan, chartMarkers]);
+  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.sma200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
 
   // === RSI Chart (separate instance) ===
   useEffect(() => {
@@ -892,17 +896,19 @@ const StudyChart = memo(({
   // Count active indicators for legend
   const activeIndicators = Object.entries(indicators).filter(([, v]) => v);
 
+  const oscillatorCount = (indicators.rsi ? 1 : 0) + (indicators.macd ? 1 : 0);
+  const oscillatorHeight = oscillatorCount * 100; // 100px per oscillator pane
+
   return (
     <>
-    <div className={cn('relative', autoHeight && 'h-full')}>
+    <div className={cn('flex flex-col', autoHeight && 'h-full')}>
+      <div className="relative flex-1 min-h-[200px]">
       <div
         ref={containerRef}
         className={cn(
-          'w-full overflow-hidden border border-border/50',
-          autoHeight ? 'h-full' : '',
+          'w-full h-full overflow-hidden border border-border/50',
           (indicators.rsi || indicators.macd) ? 'rounded-t' : 'rounded'
         )}
-        style={autoHeight ? undefined : { height: fixedHeight }}
       />
 
       {/* Chart Analysis Toolbar */}
@@ -1143,17 +1149,17 @@ const StudyChart = memo(({
           </PopoverContent>
         </Popover>
       </div>
-    </div>
+      </div>
 
       {/* RSI Oscillator Pane */}
       {indicators.rsi && bars && bars.length > 0 && (
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <div className="absolute top-1 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-yellow-500 pointer-events-none">
             RSI(14)
           </div>
           <div
             ref={rsiContainerRef}
-            className="w-full border-x border-b border-border/50 rounded-b overflow-hidden"
+            className="w-full border-x border-b border-border/50 overflow-hidden"
             style={{ height: 100 }}
           />
         </div>
@@ -1161,7 +1167,7 @@ const StudyChart = memo(({
 
       {/* MACD Oscillator Pane */}
       {indicators.macd && bars && bars.length > 0 && (
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <div className="absolute top-1 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-blue-400 pointer-events-none">
             MACD(12,26,9)
           </div>
@@ -1172,6 +1178,7 @@ const StudyChart = memo(({
           />
         </div>
       )}
+    </div>
 
       {/* Analysis Result Dialog - Desktop only */}
       {!isMobile && (
