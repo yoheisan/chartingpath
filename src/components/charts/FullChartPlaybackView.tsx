@@ -144,7 +144,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             secondsVisible: false,
             visible: true,
           },
-          crosshair: { mode: 1 },
+          crosshair: { mode: 0 },
           handleScroll: {
             vertTouchDrag: true,
             mouseWheel: true,

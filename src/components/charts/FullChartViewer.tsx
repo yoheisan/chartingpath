@@ -331,7 +331,7 @@ export default function FullChartViewer({
             visible: true,
           },
           crosshair: {
-            mode: 1,
+            mode: 0,
           },
           // Enable vertical scrolling/panning of the chart
           handleScroll: {
