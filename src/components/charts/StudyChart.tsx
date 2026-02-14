@@ -280,7 +280,7 @@ const StudyChart = memo(({
         visible: true,
         borderColor: theme.grid,
         mode: 0, // Allow manual vertical scaling
-        minimumWidth: 65,
+        minimumWidth: 85,
       },
       timeScale: {
         visible: true,
@@ -543,7 +543,7 @@ const StudyChart = memo(({
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 65 },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 85 },
           timeScale: { visible: false },
           crosshair: { mode: 0 },
         });
@@ -572,7 +572,7 @@ const StudyChart = memo(({
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 65 },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 85 },
           timeScale: { visible: false },
           crosshair: { mode: 0 },
         });
@@ -639,24 +639,16 @@ const StudyChart = memo(({
     // Fit content
     chart.timeScale().fitContent();
 
-    // Sync price scale widths: read actual rendered widths, then force all to the widest.
-    // This ensures identical plotting areas so the vertical crosshair aligns across panes.
+    // Sync price scale widths: force all to the same large minimumWidth
     const syncPriceScaleWidths = () => {
       const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
       if (charts.length <= 1) return;
-      // Read each chart's actual rendered price scale width
-      const widths = charts.map((c) => {
-        try { return c.priceScale('right').width(); } catch { return 0; }
-      });
-      const maxW = Math.max(...widths, 50);
-      // Force all price scales to match the widest one
       charts.forEach((c) => {
-        c.priceScale('right').applyOptions({ minimumWidth: maxW });
+        c.priceScale('right').applyOptions({ minimumWidth: 85 });
       });
     };
-    // Delay to allow initial render, then sync again after labels stabilize
+    // Delay to allow initial render
     const syncTimer = setTimeout(syncPriceScaleWidths, 100);
-    const syncTimer2 = setTimeout(syncPriceScaleWidths, 300);
 
     // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
@@ -719,7 +711,7 @@ const StudyChart = memo(({
 
     return () => {
       clearTimeout(syncTimer);
-      clearTimeout(syncTimer2);
+      
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
