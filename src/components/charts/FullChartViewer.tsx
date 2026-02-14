@@ -1174,7 +1174,7 @@ export default function FullChartViewer({
                 variant="outline"
                 className="flex-1"
                 onClick={() => requireAuth(() => {
-                  window.location.href = `/projects?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`;
+                  window.location.href = `/projects/pattern-lab/new?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}`;
                 })}
               >
                 <Play className="h-4 w-4 mr-2" />
