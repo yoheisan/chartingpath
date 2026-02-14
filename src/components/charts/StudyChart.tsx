@@ -163,6 +163,8 @@ const StudyChart = memo(({
   const rsiChartRef = useRef<IChartApi | null>(null);
   const macdChartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
+  const rsiSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
+  const macdHistSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
@@ -644,6 +646,7 @@ const StudyChart = memo(({
         priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
       });
       rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
+      rsiSeriesRef.current = rsiSeries;
 
       // Reference lines
       rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
@@ -724,6 +727,7 @@ const StudyChart = memo(({
         value: p.histogram,
         color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
       })));
+      macdHistSeriesRef.current = macdHistSeries;
 
       const macdLineSeries = macdChart.addSeries(LineSeries, {
         color: INDICATOR_COLORS.macdLine,
@@ -777,6 +781,83 @@ const StudyChart = memo(({
       }
     };
   }, [bars, indicators.macd, i18n.language]);
+
+  // === Crosshair Sync across all panes ===
+  useEffect(() => {
+    const mainChart = chartRef.current;
+    const rsiChart = rsiChartRef.current;
+    const macdChart = macdChartRef.current;
+    if (!mainChart) return;
+
+    const syncingRef = { current: false };
+
+    const getCrosshairDataPoint = (series: any, param: any) => {
+      if (!param || !param.time || !param.seriesData) return null;
+      const data = param.seriesData.get(series);
+      if (!data) return null;
+      return { time: param.time, value: (data as any).value ?? (data as any).close ?? 0 };
+    };
+
+    const mainHandler = (param: any) => {
+      if (syncingRef.current) return;
+      syncingRef.current = true;
+      try {
+        const dp = getCrosshairDataPoint(candleSeriesRef.current, param);
+        if (dp) {
+          if (rsiChart && rsiSeriesRef.current) rsiChart.setCrosshairPosition(NaN, dp.time, rsiSeriesRef.current);
+          if (macdChart && macdHistSeriesRef.current) macdChart.setCrosshairPosition(NaN, dp.time, macdHistSeriesRef.current);
+        } else {
+          rsiChart?.clearCrosshairPosition();
+          macdChart?.clearCrosshairPosition();
+        }
+      } finally { syncingRef.current = false; }
+    };
+    mainChart.subscribeCrosshairMove(mainHandler);
+
+    let rsiHandler: ((param: any) => void) | undefined;
+    if (rsiChart && rsiSeriesRef.current) {
+      rsiHandler = (param: any) => {
+        if (syncingRef.current) return;
+        syncingRef.current = true;
+        try {
+          const dp = getCrosshairDataPoint(rsiSeriesRef.current, param);
+          if (dp) {
+            if (candleSeriesRef.current) mainChart.setCrosshairPosition(NaN, dp.time, candleSeriesRef.current);
+            if (macdChart && macdHistSeriesRef.current) macdChart.setCrosshairPosition(NaN, dp.time, macdHistSeriesRef.current);
+          } else {
+            mainChart.clearCrosshairPosition();
+            macdChart?.clearCrosshairPosition();
+          }
+        } finally { syncingRef.current = false; }
+      };
+      rsiChart.subscribeCrosshairMove(rsiHandler);
+    }
+
+    let macdHandler: ((param: any) => void) | undefined;
+    if (macdChart && macdHistSeriesRef.current) {
+      macdHandler = (param: any) => {
+        if (syncingRef.current) return;
+        syncingRef.current = true;
+        try {
+          const dp = getCrosshairDataPoint(macdHistSeriesRef.current, param);
+          if (dp) {
+            if (candleSeriesRef.current) mainChart.setCrosshairPosition(NaN, dp.time, candleSeriesRef.current);
+            if (rsiChart && rsiSeriesRef.current) rsiChart.setCrosshairPosition(NaN, dp.time, rsiSeriesRef.current);
+          } else {
+            mainChart.clearCrosshairPosition();
+            rsiChart?.clearCrosshairPosition();
+          }
+        } finally { syncingRef.current = false; }
+      };
+      macdChart.subscribeCrosshairMove(macdHandler);
+    }
+
+    return () => {
+      mainChart.unsubscribeCrosshairMove(mainHandler);
+      if (rsiChart && rsiHandler) rsiChart.unsubscribeCrosshairMove(rsiHandler);
+      if (macdChart && macdHandler) macdChart.unsubscribeCrosshairMove(macdHandler);
+    };
+  }, [bars, indicators.rsi, indicators.macd]);
 
   // Effect to draw/remove analysis overlay lines
   useEffect(() => {
