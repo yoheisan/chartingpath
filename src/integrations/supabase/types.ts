@@ -1381,6 +1381,9 @@ export type Database = {
           trend_alignment: string | null
           trend_indicators: Json | null
           updated_at: string
+          validation_completed_at: string | null
+          validation_layers_passed: string[] | null
+          validation_status: string
           visual_spec: Json
         }
         Insert: {
@@ -1420,6 +1423,9 @@ export type Database = {
           trend_alignment?: string | null
           trend_indicators?: Json | null
           updated_at?: string
+          validation_completed_at?: string | null
+          validation_layers_passed?: string[] | null
+          validation_status?: string
           visual_spec?: Json
         }
         Update: {
@@ -1459,6 +1465,9 @@ export type Database = {
           trend_alignment?: string | null
           trend_indicators?: Json | null
           updated_at?: string
+          validation_completed_at?: string | null
+          validation_layers_passed?: string[] | null
+          validation_status?: string
           visual_spec?: Json
         }
         Relationships: []
@@ -1709,6 +1718,9 @@ export type Database = {
           trend_alignment: string | null
           trend_indicators: Json | null
           updated_at: string
+          validation_completed_at: string | null
+          validation_layers_passed: string[] | null
+          validation_status: string
           visual_spec: Json
         }
         Insert: {
@@ -1737,6 +1749,9 @@ export type Database = {
           trend_alignment?: string | null
           trend_indicators?: Json | null
           updated_at?: string
+          validation_completed_at?: string | null
+          validation_layers_passed?: string[] | null
+          validation_status?: string
           visual_spec: Json
         }
         Update: {
@@ -1765,6 +1780,9 @@ export type Database = {
           trend_alignment?: string | null
           trend_indicators?: Json | null
           updated_at?: string
+          validation_completed_at?: string | null
+          validation_layers_passed?: string[] | null
+          validation_status?: string
           visual_spec?: Json
         }
         Relationships: []
@@ -2258,6 +2276,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pattern_pipeline_results: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          detection_id: string
+          detection_source: string
+          id: string
+          layer_name: string
+          layer_output: Json | null
+          processing_time_ms: number | null
+          reasoning: string | null
+          verdict: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          detection_id: string
+          detection_source?: string
+          id?: string
+          layer_name: string
+          layer_output?: Json | null
+          processing_time_ms?: number | null
+          reasoning?: string | null
+          verdict: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          detection_id?: string
+          detection_source?: string
+          id?: string
+          layer_name?: string
+          layer_output?: Json | null
+          processing_time_ms?: number | null
+          reasoning?: string | null
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pattern_pipeline_results_layer_name_fkey"
+            columns: ["layer_name"]
+            isOneToOne: false
+            referencedRelation: "pattern_validation_layers"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      pattern_validation_layers: {
+        Row: {
+          config: Json | null
+          created_at: string
+          description: string | null
+          edge_function_name: string | null
+          fallback_action: string
+          id: string
+          is_active: boolean
+          layer_order: number
+          layer_type: string
+          name: string
+          timeout_ms: number
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          edge_function_name?: string | null
+          fallback_action?: string
+          id?: string
+          is_active?: boolean
+          layer_order: number
+          layer_type?: string
+          name: string
+          timeout_ms?: number
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          edge_function_name?: string | null
+          fallback_action?: string
+          id?: string
+          is_active?: boolean
+          layer_order?: number
+          layer_type?: string
+          name?: string
+          timeout_ms?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       plan_pricing: {
         Row: {
