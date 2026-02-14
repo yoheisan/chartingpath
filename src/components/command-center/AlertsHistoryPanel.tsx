@@ -30,13 +30,24 @@ interface AlertLog {
   }[] | null;
 }
 
+interface ConfiguredAlert {
+  id: string;
+  symbol: string;
+  pattern: string;
+  timeframe: string;
+  status: string;
+  created_at: string | null;
+}
+
 export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
   const [alertLogs, setAlertLogs] = useState<AlertLog[]>([]);
+  const [configuredAlerts, setConfiguredAlerts] = useState<ConfiguredAlert[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (userId) {
       fetchAlertLogs();
+      fetchConfiguredAlerts();
     }
   }, [userId]);
 
@@ -64,6 +75,23 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
       console.error('[AlertsHistoryPanel] fetch error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchConfiguredAlerts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('id, symbol, pattern, timeframe, status, created_at')
+        .eq('user_id', userId!)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setConfiguredAlerts((data as ConfiguredAlert[]) || []);
+    } catch (err) {
+      console.error('[AlertsHistoryPanel] configured alerts fetch error:', err);
     }
   };
 
@@ -107,12 +135,9 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
               Loading alerts...
             </div>
           ) : alertLogs.length === 0 ? (
-            <div className="text-center py-6 text-xs text-muted-foreground">
-              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <div className="text-center py-4 text-xs text-muted-foreground">
+              <Bell className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
               <p>No triggered alerts yet</p>
-              <Button variant="link" size="sm" className="text-xs mt-1" asChild>
-                <Link to="/members/alerts">Set up alerts</Link>
-              </Button>
             </div>
           ) : (
             <div className="space-y-1">
@@ -163,6 +188,42 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
                 );
               })}
             </div>
+          )}
+
+          {/* Configured (Pending) Alerts */}
+          {userId && configuredAlerts.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mt-3 mb-1.5 px-1">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active Monitors ({configuredAlerts.length})
+                </span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="space-y-0.5">
+                {configuredAlerts.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    <Bell className="h-3 w-3 text-primary/60" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium">{a.symbol}</span>
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">
+                          {a.timeframe}
+                        </Badge>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {formatPatternName(a.pattern)}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-[9px] bg-primary/10 text-primary border-0">
+                      Watching
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </ScrollArea>
