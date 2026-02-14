@@ -820,7 +820,7 @@ const StudyChart = memo(({
       )}
 
       {/* Indicator Legend - only show active ones */}
-      <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none">
+      <div className="absolute top-10 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none">
         {indicators.ema20 && (
           <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-orange-500">
             EMA 20
@@ -908,7 +908,7 @@ const StudyChart = memo(({
       </TooltipProvider>
 
       {/* Settings Button */}
-      <div className="absolute top-2 right-2 z-20">
+      <div className="absolute top-2 left-2 z-20">
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -922,7 +922,7 @@ const StudyChart = memo(({
           </PopoverTrigger>
           <PopoverContent 
             className="w-56 p-3 bg-popover border border-border shadow-lg z-50" 
-            align="end"
+            align="start"
             sideOffset={4}
           >
             <div className="space-y-3">
