@@ -145,16 +145,19 @@ export function useChartAnalysis({
 
     setState(prev => ({ ...prev, isAnalyzing: true }));
 
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    // Limit bars sent to the edge function to avoid huge payloads
+    // Use the most recent 300 bars max (enough for all indicators including SMA200)
+    const maxBars = 300;
+    const trimmedBars = barsToAnalyze.length > maxBars 
+      ? barsToAnalyze.slice(-maxBars) 
+      : barsToAnalyze;
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-chart-context', {
         body: {
           symbol,
           timeframe,
-          bars: barsToAnalyze.map(b => ({
+          bars: trimmedBars.map(b => ({
             t: b.t,
             o: b.o,
             h: b.h,
@@ -165,7 +168,6 @@ export function useChartAnalysis({
         }
       });
 
-      clearTimeout(timeoutId);
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Analysis failed');
@@ -178,7 +180,7 @@ export function useChartAnalysis({
       
       return result;
     } catch (err: any) {
-      clearTimeout(timeoutId);
+      
       console.error('[useChartAnalysis] Error:', err);
       
       // Better error messages
