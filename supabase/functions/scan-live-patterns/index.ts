@@ -562,7 +562,7 @@ async function readCachedPatternsFromDb(
     const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
       .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
       .in('pattern_id', allowedPatterns).in('instrument', instruments)
-      .in('validation_status', ['confirmed', 'pending']) // Pipeline filter: exclude rejected patterns
+      .eq('validation_status', 'confirmed') // Pipeline filter: only show validated patterns
       .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
     
     if (error) {

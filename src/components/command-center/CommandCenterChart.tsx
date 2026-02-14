@@ -300,6 +300,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
           .eq('symbol', upperSymbol)
           .eq('pattern_id', selectedPattern)
+          .eq('validation_status', 'confirmed')
           .order('detected_at', { ascending: true })
           .limit(100);
 

@@ -132,6 +132,7 @@ export function HistoricalOccurrencesList({
           .select('*')
           .eq('pattern_id', patternId)
           .eq('timeframe', timeframe)
+          .eq('validation_status', 'confirmed')
           .order('detected_at', { ascending: false })
           .limit(limit);
         
