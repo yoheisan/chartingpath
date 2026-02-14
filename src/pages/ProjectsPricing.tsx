@@ -12,7 +12,7 @@ import { useState } from "react";
 const ProjectsPricing = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
 
   const planNameToDbPlan: Record<string, string> = {
     FREE: 'free',
