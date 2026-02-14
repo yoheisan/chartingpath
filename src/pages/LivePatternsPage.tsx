@@ -912,7 +912,7 @@ export default function LivePatternsPage() {
           <Activity className="h-8 w-8 text-amber-500" />
           <h1 className="text-3xl font-bold">Active Pattern Screener</h1>
           <UniversalSymbolSearch 
-            onSelect={(symbol) => navigate(`/study/${encodeURIComponent(symbol)}`)}
+            onSelect={(symbol) => navigate('/members/dashboard', { state: { initialSymbol: symbol.toUpperCase() } })}
             trigger={
               <Button variant="outline" size="sm" className="gap-2">
                 <Search className="h-4 w-4" />

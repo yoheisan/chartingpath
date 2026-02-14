@@ -47,6 +47,8 @@ interface CommandCenterLayoutProps {
   userId?: string;
   /** Initial pattern to load for playback (from route state) */
   initialPlaybackPattern?: PlaybackPatternContext;
+  /** Initial symbol to display (from /study/:symbol redirect) */
+  initialSymbol?: string;
 }
 
 // Response shape from edge functions (live and historical)
@@ -80,14 +82,14 @@ interface PatternDetailsResponse {
   error?: string;
 }
 
-export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandCenterLayoutProps) {
+export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSymbol }: CommandCenterLayoutProps) {
   const isMobile = useIsMobile();
 
   // Persisted dashboard settings
   const { settings, updateSettings } = useDashboardSettings();
   
   const [selectedSymbol, setSelectedSymbol] = useState<string>(
-    initialPlaybackPattern?.symbol || settings.selectedSymbol
+    initialPlaybackPattern?.symbol || initialSymbol || settings.selectedSymbol
   );
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>(
     initialPlaybackPattern?.timeframe || settings.selectedTimeframe

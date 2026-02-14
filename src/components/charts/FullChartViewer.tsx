@@ -797,7 +797,8 @@ export default function FullChartViewer({
               <div>
                 <DialogTitle className="text-xl">
                   <Link 
-                    to={`/study/${encodeURIComponent(instrument)}`}
+                    to="/members/dashboard"
+                    state={{ initialSymbol: instrument }}
                     className="hover:text-primary transition-colors hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
