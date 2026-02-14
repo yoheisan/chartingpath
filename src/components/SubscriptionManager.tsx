@@ -102,15 +102,16 @@ export const SubscriptionManager = () => {
 
   const checkRefundEligibility = async (subscriptionId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('request-refund', {
-        body: { 
-          subscription_id: subscriptionId,
-          check_only: true 
-        }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase.rpc('check_refund_eligibility', {
+        p_user_id: user.id,
+        p_subscription_id: subscriptionId
       });
 
       if (error) throw error;
-      setRefundEligibility(data);
+      setRefundEligibility(data as unknown as RefundEligibility);
     } catch (error) {
       console.error('Error checking refund eligibility:', error);
     }
@@ -158,7 +159,7 @@ export const SubscriptionManager = () => {
       if (error) throw error;
 
       if (data.success) {
-        toast.success('Refund request submitted successfully');
+        toast.success(data.message || 'Refund processed successfully. Funds will be returned within 5-10 business days.');
         setShowRefundDialog(false);
         setRefundReason("");
         await loadSubscriptionData();
@@ -457,8 +458,9 @@ export const SubscriptionManager = () => {
                       <Button
                         onClick={handleRefundRequest}
                         disabled={processingRefund || !refundReason.trim()}
+                        variant="destructive"
                       >
-                        {processingRefund ? "Submitting..." : "Submit Request"}
+                        {processingRefund ? "Processing Refund..." : "Confirm Refund"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
