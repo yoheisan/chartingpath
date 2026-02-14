@@ -90,6 +90,7 @@ export interface VisualSpec {
 }
 
 export interface SetupWithVisuals {
+  dbId?: string;
   instrument: string;
   patternId: string;
   patternName: string;
