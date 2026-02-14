@@ -157,10 +157,16 @@ const StudyChart = memo(({
 }: StudyChartProps) => {
   const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const rsiContainerRef = useRef<HTMLDivElement>(null);
+  const macdContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const rsiChartRef = useRef<IChartApi | null>(null);
+  const macdChartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const rsiSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const macdHistSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
+  const syncingRangeRef = useRef(false);
+  const syncingCrosshairRef = useRef(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
@@ -250,10 +256,12 @@ const StudyChart = memo(({
       return localeMap[lang] || 'en-US';
     };
 
-    // Chart height - no need to subtract oscillator space since they're native panes now
+    // Chart height - subtract space for oscillator panes
+    const oscillatorCount = (indicators.rsi ? 1 : 0) + (indicators.macd ? 1 : 0);
+    const oscillatorHeight = oscillatorCount * 100;
     const measuredHeight = autoHeight
-      ? Math.floor((containerRef.current.getBoundingClientRect().height || 0))
-      : fixedHeight;
+      ? Math.floor((containerRef.current.getBoundingClientRect().height || 0)) - oscillatorHeight
+      : fixedHeight - oscillatorHeight;
 
     const initialHeight = Math.max(measuredHeight || fixedHeight, 250);
 
@@ -524,67 +532,107 @@ const StudyChart = memo(({
       scaleMargins: optimalMargins,
     });
 
-    // === RSI as native pane ===
-    if (indicators.rsi) {
+    // === RSI as separate chart ===
+    if (indicators.rsi && rsiContainerRef.current) {
+      if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       const rsiData = calculateRSI(bars, 14);
       if (rsiData.length > 0) {
-        const rsiPane = chart.addPane();
-        rsiPane.setHeight(100);
-        const rsiSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.rsi,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: true,
+        const rsiChart = createChart(rsiContainerRef.current, {
+          width: containerRef.current.clientWidth,
+          height: 100,
+          layout: { background: { color: theme.background }, textColor: theme.text },
+          grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 100 },
+          timeScale: { visible: false },
+          crosshair: { mode: 0 },
+        });
+        rsiChartRef.current = rsiChart;
+        const rsiSeries = rsiChart.addSeries(LineSeries, {
+          color: INDICATOR_COLORS.rsi, lineWidth: 1, priceLineVisible: false, lastValueVisible: true,
           priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
-        }, rsiPane.paneIndex());
+        });
         rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
         rsiSeriesRef.current = rsiSeries;
-
-        // Reference lines
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
         rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
         rsiSeries.createPriceLine({ price: 50, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+        rsiChart.timeScale().fitContent();
       }
     }
 
-    // === MACD as native pane ===
-    if (indicators.macd) {
+    // === MACD as separate chart ===
+    if (indicators.macd && macdContainerRef.current) {
+      if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
       const macdData = calculateMACD(bars, 12, 26, 9);
       if (macdData.length > 0) {
-        const macdPane = chart.addPane();
-        macdPane.setHeight(100);
+        const macdChart = createChart(macdContainerRef.current, {
+          width: containerRef.current.clientWidth,
+          height: 100,
+          layout: { background: { color: theme.background }, textColor: theme.text },
+          grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 100 },
+          timeScale: { visible: false },
+          crosshair: { mode: 0 },
+        });
+        macdChartRef.current = macdChart;
 
-        const macdHistSeries = chart.addSeries(HistogramSeries, {
-          priceLineVisible: false,
-          lastValueVisible: false,
-        }, macdPane.paneIndex());
+        const macdHistSeries = macdChart.addSeries(HistogramSeries, { priceLineVisible: false, lastValueVisible: false });
         macdHistSeries.setData(macdData.map(p => ({
-          time: p.time as Time,
-          value: p.histogram,
+          time: p.time as Time, value: p.histogram,
           color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
         })));
         macdHistSeriesRef.current = macdHistSeries;
 
-        const macdLineSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.macdLine,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-        }, macdPane.paneIndex());
+        const macdLineSeries = macdChart.addSeries(LineSeries, { color: INDICATOR_COLORS.macdLine, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
         macdLineSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.macd })));
 
-        const macdSignalSeries = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.macdSignal,
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-        }, macdPane.paneIndex());
+        const macdSignalSeries = macdChart.addSeries(LineSeries, { color: INDICATOR_COLORS.macdSignal, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
         macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
 
-        // Zero line
         macdHistSeries.createPriceLine({ price: 0, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+        macdChart.timeScale().fitContent();
       }
     }
+
+    // Sync time scales across all charts
+    const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
+    allCharts.forEach((src) => {
+      src.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (syncingRangeRef.current || !range) return;
+        syncingRangeRef.current = true;
+        allCharts.forEach((dst) => {
+          if (dst !== src) {
+            dst.timeScale().setVisibleLogicalRange(range);
+          }
+        });
+        syncingRangeRef.current = false;
+      });
+    });
+
+    // Sync crosshairs via time-based positioning
+    // Note: setCrosshairPosition requires a series reference, so we track series per chart
+    const chartSeriesMap = new Map<IChartApi, ReturnType<IChartApi['addSeries']>>();
+    chartSeriesMap.set(chart, candleSeries);
+    if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
+    if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
+
+    allCharts.forEach((src) => {
+      src.subscribeCrosshairMove((param) => {
+        if (syncingCrosshairRef.current) return;
+        syncingCrosshairRef.current = true;
+        allCharts.forEach((dst) => {
+          const dstSeries = chartSeriesMap.get(dst);
+          if (dst !== src && dstSeries) {
+            if (param.time) {
+              dst.setCrosshairPosition(NaN, param.time, dstSeries);
+            } else {
+              dst.clearCrosshairPosition();
+            }
+          }
+        });
+        syncingCrosshairRef.current = false;
+      });
+    });
 
     // Fit content
     chart.timeScale().fitContent();
@@ -603,7 +651,9 @@ const StudyChart = memo(({
           ? { height: Math.max(nextHeight || initialHeight, 250) }
           : {}),
       });
-      // Re-fit content so data fills the visible area after resize
+      // Resize oscillator charts too
+      rsiChartRef.current?.applyOptions({ width: nextWidth });
+      macdChartRef.current?.applyOptions({ width: nextWidth });
       chartRef.current.timeScale().fitContent();
     });
 
@@ -613,15 +663,12 @@ const StudyChart = memo(({
     const container = containerRef.current;
     
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.shiftKey || e.button === 1) { // Shift+left-click or middle-mouse
+      if (e.shiftKey || e.button === 1) {
         e.preventDefault();
         isPanningRef.current = true;
         panStartYRef.current = e.clientY;
-        const priceScale = chart.priceScale('right');
-        // Get current visible price range by querying chart's visible range
         const visibleRange = chart.timeScale().getVisibleLogicalRange();
         if (visibleRange) {
-          // Store approximate vertical range for panning
           panStartPriceRef.current = { from: 0, to: 0 };
         }
         container.style.cursor = 'ns-resize';
@@ -631,10 +678,7 @@ const StudyChart = memo(({
     const handleMouseMove = (e: MouseEvent) => {
       if (isPanningRef.current && chartRef.current) {
         const deltaY = e.clientY - panStartYRef.current;
-        // Disable auto-scale when manually panning
-        chartRef.current.priceScale('right').applyOptions({
-          autoScale: false,
-        });
+        chartRef.current.priceScale('right').applyOptions({ autoScale: false });
         panStartYRef.current = e.clientY;
       }
     };
@@ -656,10 +700,9 @@ const StudyChart = memo(({
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      if (chartRef.current) {
-        chartRef.current.remove();
-        chartRef.current = null;
-      }
+      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
+      if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
+      if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
     };
   }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.sma200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
 
@@ -1032,6 +1075,24 @@ const StudyChart = memo(({
         </Popover>
       </div>
       </div>
+
+      {/* RSI Oscillator Pane */}
+      {indicators.rsi && (
+        <div
+          ref={rsiContainerRef}
+          className="w-full border-x border-b border-border/50 rounded-b"
+          style={{ height: 100 }}
+        />
+      )}
+
+      {/* MACD Oscillator Pane */}
+      {indicators.macd && (
+        <div
+          ref={macdContainerRef}
+          className="w-full border-x border-b border-border/50 rounded-b"
+          style={{ height: 100 }}
+        />
+      )}
     </div>
 
 
