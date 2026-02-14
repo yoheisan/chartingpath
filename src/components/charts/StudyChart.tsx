@@ -17,6 +17,8 @@ import {
   calculateSMA,
   calculateBollingerBands,
   calculateVWAP,
+  calculateRSI,
+  calculateMACD,
 } from '@/utils/chartIndicators';
 import { Button } from '@/components/ui/button';
 import {
@@ -63,6 +65,8 @@ export interface IndicatorSettings {
   sma200: boolean;
   bollingerBands: boolean;
   vwap: boolean;
+  rsi: boolean;
+  macd: boolean;
 }
 
 const DEFAULT_INDICATORS: IndicatorSettings = {
@@ -71,6 +75,8 @@ const DEFAULT_INDICATORS: IndicatorSettings = {
   sma200: true,
   bollingerBands: true,
   vwap: true,
+  rsi: false,
+  macd: false,
 };
 
 // Persist settings in localStorage
@@ -429,7 +435,81 @@ const StudyChart = memo(({
       }
     }
 
-    // === TRADE PLAN OVERLAYS (Entry/SL/TP) ===
+    // RSI (14) - rendered in a separate pane
+    if (indicators.rsi) {
+      const rsiData = calculateRSI(bars, 14);
+      if (rsiData.length > 0) {
+        const rsiSeries = chart.addSeries(LineSeries, {
+          color: INDICATOR_COLORS.rsi,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+          priceScaleId: 'rsi',
+          priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
+        });
+
+        // Position RSI pane: if MACD is also on, RSI goes higher
+        const rsiTop = indicators.macd ? 0.7 : 0.78;
+        const rsiBottom = indicators.macd ? 0.15 : 0;
+
+        chart.priceScale('rsi').applyOptions({
+          scaleMargins: { top: rsiTop, bottom: rsiBottom },
+          borderVisible: false,
+        });
+
+        rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
+
+        // Overbought/oversold reference lines
+        rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+        rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+      }
+    }
+
+    // MACD (12, 26, 9) - rendered in a separate pane
+    if (indicators.macd) {
+      const macdData = calculateMACD(bars, 12, 26, 9);
+      if (macdData.length > 0) {
+        // MACD histogram
+        const macdHistSeries = chart.addSeries(HistogramSeries, {
+          priceLineVisible: false,
+          lastValueVisible: false,
+          priceScaleId: 'macd',
+          priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
+        });
+
+        chart.priceScale('macd').applyOptions({
+          scaleMargins: { top: 0.85, bottom: 0 },
+          borderVisible: false,
+        });
+
+        macdHistSeries.setData(macdData.map(p => ({
+          time: p.time as Time,
+          value: p.histogram,
+          color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
+        })));
+
+        // MACD line
+        const macdLineSeries = chart.addSeries(LineSeries, {
+          color: INDICATOR_COLORS.macdLine,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          priceScaleId: 'macd',
+        });
+        macdLineSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.macd })));
+
+        // Signal line
+        const macdSignalSeries = chart.addSeries(LineSeries, {
+          color: INDICATOR_COLORS.macdSignal,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          priceScaleId: 'macd',
+        });
+        macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
+      }
+    }
+
     if (tradePlan) {
       // Entry line (amber/primary)
       candleSeries.createPriceLine({
@@ -506,11 +586,16 @@ const StudyChart = memo(({
 
     // Calculate optimal price margins based on data volatility
     // Ensures charts never look "flat" regardless of actual price movement
+    // Reserve bottom space for oscillator panes (RSI, MACD)
     const hasOverlays = !!tradePlan;
     const optimalMargins = calculateOptimalPriceMargins(bars, hasOverlays);
+    const bottomReserve = (indicators.rsi ? 0.18 : 0) + (indicators.macd ? 0.15 : 0);
     chart.priceScale('right').applyOptions({
       autoScale: true,
-      scaleMargins: optimalMargins,
+      scaleMargins: {
+        top: optimalMargins.top,
+        bottom: Math.max(optimalMargins.bottom, bottomReserve),
+      },
     });
 
     // Fit content
@@ -773,6 +858,16 @@ const StudyChart = memo(({
             VWAP
           </span>
         )}
+        {indicators.rsi && (
+          <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-yellow-500">
+            RSI(14)
+          </span>
+        )}
+        {indicators.macd && (
+          <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-blue-400">
+            MACD
+          </span>
+        )}
       </div>
 
       {/* Analysis Overlay Legend */}
@@ -907,11 +1002,41 @@ const StudyChart = memo(({
                     onCheckedChange={() => handleToggle('vwap')}
                   />
                 </div>
+
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
+                    Oscillators
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="rsi" className="text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                    RSI (14)
+                  </Label>
+                  <Switch
+                    id="rsi"
+                    checked={indicators.rsi}
+                    onCheckedChange={() => handleToggle('rsi')}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="macd" className="text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    MACD (12,26,9)
+                  </Label>
+                  <Switch
+                    id="macd"
+                    checked={indicators.macd}
+                    onCheckedChange={() => handleToggle('macd')}
+                  />
+                </div>
               </div>
 
               <div className="pt-2 border-t border-border/50">
                 <p className="text-[10px] text-muted-foreground">
-                  {activeIndicators.length} of 5 indicators active
+                  {activeIndicators.length} of {Object.keys(indicators).length} indicators active
                 </p>
               </div>
             </div>
