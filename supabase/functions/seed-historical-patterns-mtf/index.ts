@@ -54,12 +54,16 @@ const PATTERN_REGISTRY: Record<string, {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Peak prominence threshold: peaks must be within 5% of the window high
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
       let firstTop = -1, secondTop = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
             highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+          if (highs[i] < prominenceThreshold) continue;
           if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= 3 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
+          else if (i - firstTop >= 5 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
             secondTop = i;
             break;
           }
@@ -68,13 +72,15 @@ const PATTERN_REGISTRY: Record<string, {
       
       if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
       
+      // Prior uptrend check: ≥2%
+      const preTopPrice = Math.min(...lows.slice(0, Math.max(1, firstTop)));
+      const priorRise = (highs[firstTop] - preTopPrice) / preTopPrice;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
+      
       let necklineIdx = firstTop;
       let neckline = lows[firstTop];
       for (let i = firstTop; i <= secondTop; i++) {
-        if (lows[i] < neckline) {
-          neckline = lows[i];
-          necklineIdx = i;
-        }
+        if (lows[i] < neckline) { neckline = lows[i]; necklineIdx = i; }
       }
       
       const lastClose = closes[closes.length - 1];
@@ -106,12 +112,16 @@ const PATTERN_REGISTRY: Record<string, {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Trough prominence threshold: troughs must be within 5% of the window low
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
       let firstBottom = -1, secondBottom = -1;
       for (let i = 2; i < window.length - 3; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
             lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+          if (lows[i] > prominenceThreshold) continue;
           if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= 3 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
+          else if (i - firstBottom >= 5 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
             secondBottom = i;
             break;
           }
@@ -120,13 +130,15 @@ const PATTERN_REGISTRY: Record<string, {
       
       if (firstBottom === -1 || secondBottom === -1) return { detected: false, pivots: [] };
       
+      // Prior downtrend check: ≥2%
+      const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, firstBottom)));
+      const priorDrop = (preBottomPrice - lows[firstBottom]) / preBottomPrice;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
+      
       let necklineIdx = firstBottom;
       let neckline = highs[firstBottom];
       for (let i = firstBottom; i <= secondBottom; i++) {
-        if (highs[i] > neckline) {
-          neckline = highs[i];
-          necklineIdx = i;
-        }
+        if (highs[i] > neckline) { neckline = highs[i]; necklineIdx = i; }
       }
       
       const lastClose = closes[closes.length - 1];
@@ -153,10 +165,23 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      
+      // Head prominence: head must be within 5% of window high
+      const prominenceThreshold = highestHigh - range * 0.05;
+      
+      // Adaptive peak detection radius: wider for larger windows (macro H&S)
+      const peakRadius = Math.max(2, Math.min(6, Math.floor(window.length / 15)));
+      
       const peaks: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+      for (let i = peakRadius; i < window.length - peakRadius; i++) {
+        let isPeak = true;
+        for (let r = 1; r <= peakRadius; r++) {
+          if (highs[i] <= highs[i - r] || highs[i] <= highs[i + r]) { isPeak = false; break; }
+        }
+        if (isPeak) {
           peaks.push({ index: i, value: highs[i] });
         }
       }
@@ -174,20 +199,28 @@ const PATTERN_REGISTRY: Record<string, {
       const head = peaks[headIdx];
       const rightShoulder = peaks[headIdx + 1];
       
+      // Head must be prominent (near window high)
+      if (head.value < prominenceThreshold) return { detected: false, pivots: [] };
+      
+      // Minimum 5-bar separation between shoulders and head
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return { detected: false, pivots: [] };
+      
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
-      const symmetryOk = shoulderDiff / range < 0.25;
+      const headRange = head.value - Math.min(leftShoulder.value, rightShoulder.value);
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
       
       if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
       
+      // Prior uptrend required: ≥3%
+      const prePatternPrice = Math.min(...lows.slice(0, Math.max(1, leftShoulder.index)));
+      const priorRise = (head.value - prePatternPrice) / prePatternPrice;
+      if (priorRise < 0.03) return { detected: false, pivots: [] };
+      
       let neckline = Infinity;
       let necklineIdx = leftShoulder.index;
       for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
-        if (lows[i] < neckline) {
-          neckline = lows[i];
-          necklineIdx = i;
-        }
+        if (lows[i] < neckline) { neckline = lows[i]; necklineIdx = i; }
       }
       
       const lastClose = closes[closes.length - 1];
@@ -215,10 +248,23 @@ const PATTERN_REGISTRY: Record<string, {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      const highestHigh = Math.max(...highs);
+      const lowestLow = Math.min(...lows);
+      const range = highestHigh - lowestLow;
+      
+      // Head prominence: head must be within 5% of window low
+      const prominenceThreshold = lowestLow + range * 0.05;
+      
+      // Adaptive trough detection radius: wider for larger windows (macro IH&S)
+      const troughRadius = Math.max(2, Math.min(6, Math.floor(window.length / 15)));
+      
       const troughs: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+      for (let i = troughRadius; i < window.length - troughRadius; i++) {
+        let isTrough = true;
+        for (let r = 1; r <= troughRadius; r++) {
+          if (lows[i] >= lows[i - r] || lows[i] >= lows[i + r]) { isTrough = false; break; }
+        }
+        if (isTrough) {
           troughs.push({ index: i, value: lows[i] });
         }
       }
@@ -236,20 +282,28 @@ const PATTERN_REGISTRY: Record<string, {
       const head = troughs[headIdx];
       const rightShoulder = troughs[headIdx + 1];
       
+      // Head must be prominent (near window low)
+      if (head.value > prominenceThreshold) return { detected: false, pivots: [] };
+      
+      // Minimum 5-bar separation between shoulders and head
+      if (head.index - leftShoulder.index < 5 || rightShoulder.index - head.index < 5) return { detected: false, pivots: [] };
+      
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
-      const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
-      const symmetryOk = shoulderDiff / range < 0.25;
+      const headRange = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
+      const symmetryOk = headRange > 0 && shoulderDiff / headRange < 0.25;
       const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
       
       if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
       
+      // Prior downtrend required: ≥3%
+      const prePatternPrice = Math.max(...highs.slice(0, Math.max(1, leftShoulder.index)));
+      const priorDrop = (prePatternPrice - head.value) / prePatternPrice;
+      if (priorDrop < 0.03) return { detected: false, pivots: [] };
+      
       let neckline = -Infinity;
       let necklineIdx = leftShoulder.index;
       for (let i = leftShoulder.index; i <= rightShoulder.index; i++) {
-        if (highs[i] > neckline) {
-          neckline = highs[i];
-          necklineIdx = i;
-        }
+        if (highs[i] > neckline) { neckline = highs[i]; necklineIdx = i; }
       }
       
       const lastClose = closes[closes.length - 1];
@@ -272,29 +326,45 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Ascending Triangle',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const resistanceZone = Math.max(...highs.slice(0, -2));
-      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      // Prior uptrend ≥2%
+      const earlyLow = Math.min(...lows.slice(0, 5));
+      const midHigh = Math.max(...highs.slice(5, 15));
+      const priorRise = (midHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
       
+      const resistanceZone = Math.max(...highs.slice(0, -2));
+      
+      // Minimum 3 touches on resistance (flat top)
+      const resistanceTests = highs.filter(h => h > resistanceZone * 0.98 && h <= resistanceZone * 1.02).length;
+      if (resistanceTests < 3) return { detected: false, pivots: [] };
+      
+      // Rising lows (minimum 2 higher lows)
       const recentLows = lows.slice(-10);
-      let risingLows = true;
+      let risingLowCount = 0;
       for (let i = 1; i < recentLows.length; i++) {
-        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLows = false;
+        if (recentLows[i] > recentLows[i - 1] * 1.001) risingLowCount++;
+        if (recentLows[i] < recentLows[i - 1] * 0.995) risingLowCount--;
       }
+      if (risingLowCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = resistanceTests >= 2 && risingLows && lastClose > resistanceZone * 1.002;
+      const detected = lastClose > resistanceZone * 1.002;
+      
+      const resistanceIdx = highs.indexOf(resistanceZone);
+      const lowestRecentLowIdx = window.length - 10 + recentLows.indexOf(Math.min(...recentLows));
       
       return {
         detected,
         patternStartIndex: 0,
         patternEndIndex: window.length - 1,
         pivots: detected ? [
-          { index: highs.indexOf(resistanceZone), price: resistanceZone, type: 'high', label: 'Resistance' },
+          { index: resistanceIdx, price: resistanceZone, type: 'high', label: 'Resistance' },
+          { index: lowestRecentLowIdx, price: Math.min(...recentLows), type: 'low', label: 'Rising Support' },
           { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
       };
@@ -304,29 +374,45 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'short',
     displayName: 'Descending Triangle',
     detector: (window) => {
-      if (window.length < 15) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
-      const supportZone = Math.min(...lows.slice(0, -2));
-      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      // Prior downtrend ≥2%
+      const earlyHigh = Math.max(...highs.slice(0, 5));
+      const midLow = Math.min(...lows.slice(5, 15));
+      const priorDrop = (earlyHigh - midLow) / earlyHigh;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
       
+      const supportZone = Math.min(...lows.slice(0, -2));
+      
+      // Minimum 3 touches on support (flat bottom)
+      const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
+      if (supportTests < 3) return { detected: false, pivots: [] };
+      
+      // Falling highs (minimum 2 lower highs)
       const recentHighs = highs.slice(-10);
-      let fallingHighs = true;
+      let fallingHighCount = 0;
       for (let i = 1; i < recentHighs.length; i++) {
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighs = false;
+        if (recentHighs[i] < recentHighs[i - 1] * 0.999) fallingHighCount++;
+        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighCount--;
       }
+      if (fallingHighCount < 2) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
-      const detected = supportTests >= 2 && fallingHighs && lastClose < supportZone * 0.998;
+      const detected = lastClose < supportZone * 0.998;
+      
+      const supportIdx = lows.indexOf(supportZone);
+      const highestRecentHighIdx = window.length - 10 + recentHighs.indexOf(Math.max(...recentHighs));
       
       return {
         detected,
         patternStartIndex: 0,
         patternEndIndex: window.length - 1,
         pivots: detected ? [
-          { index: lows.indexOf(supportZone), price: supportZone, type: 'low', label: 'Support' },
+          { index: supportIdx, price: supportZone, type: 'low', label: 'Support' },
+          { index: highestRecentHighIdx, price: Math.max(...recentHighs), type: 'high', label: 'Falling Resistance' },
           { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
       };
@@ -339,25 +425,26 @@ const PATTERN_REGISTRY: Record<string, {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
+      // Prior uptrend required: wedge must form after a rise of ≥2%
+      const earlyLow = Math.min(...window.slice(0, 5).map(d => d.low));
+      const wedgeHigh = Math.max(...window.map(d => d.high));
+      const priorRise = (wedgeHigh - earlyLow) / earlyLow;
+      if (priorRise < 0.02) return { detected: false, pivots: [] };
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
-      
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
+      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
       
       const upperRising = avgSecondHigh > avgFirstHigh;
       const lowerRising = avgSecondLow > avgFirstLow;
       
       const firstRange = avgFirstHigh - avgFirstLow;
       const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = secondRange < firstRange * 0.85;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
       const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
@@ -368,7 +455,9 @@ const PATTERN_REGISTRY: Record<string, {
         patternEndIndex: window.length - 1,
         pivots: detected ? [
           { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper Trend End' }
+          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper Trend End' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
+          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
       };
     }
@@ -380,25 +469,26 @@ const PATTERN_REGISTRY: Record<string, {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
+      // Prior downtrend required: wedge must form after a drop of ≥2%
+      const earlyHigh = Math.max(...window.slice(0, 5).map(d => d.high));
+      const wedgeLow = Math.min(...window.map(d => d.low));
+      const priorDrop = (earlyHigh - wedgeLow) / earlyHigh;
+      if (priorDrop < 0.02) return { detected: false, pivots: [] };
+      
       const firstHalf = window.slice(0, Math.floor(window.length / 2));
       const secondHalf = window.slice(Math.floor(window.length / 2));
       
-      const firstHighs = firstHalf.map(d => d.high);
-      const secondHighs = secondHalf.map(d => d.high);
-      const firstLows = firstHalf.map(d => d.low);
-      const secondLows = secondHalf.map(d => d.low);
-      
-      const avgFirstHigh = firstHighs.reduce((a, b) => a + b, 0) / firstHighs.length;
-      const avgSecondHigh = secondHighs.reduce((a, b) => a + b, 0) / secondHighs.length;
-      const avgFirstLow = firstLows.reduce((a, b) => a + b, 0) / firstLows.length;
-      const avgSecondLow = secondLows.reduce((a, b) => a + b, 0) / secondLows.length;
+      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
+      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
+      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
+      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
       
       const upperFalling = avgSecondHigh < avgFirstHigh;
       const lowerFalling = avgSecondLow < avgFirstLow;
       
       const firstRange = avgFirstHigh - avgFirstLow;
       const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = secondRange < firstRange * 0.85;
+      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
       const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
@@ -409,7 +499,9 @@ const PATTERN_REGISTRY: Record<string, {
         patternEndIndex: window.length - 1,
         pivots: detected ? [
           { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' },
+          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
+          { index: window.length - 1, price: avgSecondLow, type: 'low', label: 'Lower Trend End' }
         ] : []
       };
     }
@@ -418,22 +510,41 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Donchian Breakout (Long)',
     detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const closes = window.map(d => d.close);
       const lookbackHighs = highs.slice(0, -2);
       const recentHigh = Math.max(...lookbackHighs);
       const recentHighIdx = lookbackHighs.indexOf(recentHigh);
       const currentClose = closes[closes.length - 1];
-      const detected = currentClose > recentHigh * 1.001;
+      const prevClose = closes[closes.length - 2];
+      
+      const closeBeyond = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      if (!closeBeyond) return { detected: false, pivots: [] };
+      
+      // ADX > 20 filter
+      const adxBars = window.slice(-15);
+      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
+      for (let k = 1; k < adxBars.length; k++) {
+        const dmPlus = Math.max(0, adxBars[k].high - adxBars[k-1].high);
+        const dmMinus = Math.max(0, adxBars[k-1].low - adxBars[k].low);
+        const tr = Math.max(adxBars[k].high - adxBars[k].low, Math.abs(adxBars[k].high - adxBars[k-1].close), Math.abs(adxBars[k].low - adxBars[k-1].close));
+        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
+        trSum += tr;
+      }
+      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
+      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
+      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
+      if (dx < 20) return { detected: false, pivots: [] };
+      
       return {
-        detected,
+        detected: true,
         patternStartIndex: recentHighIdx,
         patternEndIndex: window.length - 1,
-        pivots: detected ? [
+        pivots: [
           { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
           { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
-        ] : []
+        ]
       };
     }
   },
@@ -441,22 +552,41 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'short',
     displayName: 'Donchian Breakout (Short)',
     detector: (window) => {
-      if (window.length < 10) return { detected: false, pivots: [] };
+      if (window.length < 20) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       const lookbackLows = lows.slice(0, -2);
       const recentLow = Math.min(...lookbackLows);
       const recentLowIdx = lookbackLows.indexOf(recentLow);
       const currentClose = closes[closes.length - 1];
-      const detected = currentClose < recentLow * 0.999;
+      const prevClose = closes[closes.length - 2];
+      
+      const closeBeyond = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      if (!closeBeyond) return { detected: false, pivots: [] };
+      
+      // ADX > 20 filter
+      const adxBars = window.slice(-15);
+      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
+      for (let k = 1; k < adxBars.length; k++) {
+        const dmPlus = Math.max(0, adxBars[k].high - adxBars[k-1].high);
+        const dmMinus = Math.max(0, adxBars[k-1].low - adxBars[k].low);
+        const tr = Math.max(adxBars[k].high - adxBars[k].low, Math.abs(adxBars[k].high - adxBars[k-1].close), Math.abs(adxBars[k].low - adxBars[k-1].close));
+        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
+        trSum += tr;
+      }
+      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
+      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
+      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
+      if (dx < 20) return { detected: false, pivots: [] };
+      
       return {
-        detected,
+        detected: true,
         patternStartIndex: recentLowIdx,
         patternEndIndex: window.length - 1,
-        pivots: detected ? [
+        pivots: [
           { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
           { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
-        ] : []
+        ]
       };
     }
   },
@@ -469,34 +599,32 @@ const PATTERN_REGISTRY: Record<string, {
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
-      // Flagpole: Strong uptrend in first 8 bars (at least 5% gain)
-      const poleStart = 0;
-      const poleEnd = 7;
-      const poleGain = (closes[poleEnd] - closes[poleStart]) / closes[poleStart];
+      const poleGain = (closes[7] - closes[0]) / closes[0];
       if (poleGain < 0.05) return { detected: false, pivots: [] };
       
-      // Flag: Consolidation/pullback in bars 8-18 (range < 4% and slight downward drift)
-      const flagBars = closes.slice(8, 18);
       const flagHighs = highs.slice(8, 18);
       const flagLows = lows.slice(8, 18);
+      if (flagHighs.length === 0) return { detected: false, pivots: [] };
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (flagBars[flagBars.length - 1] - flagBars[0]) / flagBars[0];
+      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
-      if (flagRange > 0.04 || flagDrift > 0.02) return { detected: false, pivots: [] };
+      // Retracement must be < 50% of pole
+      const poleHeight = closes[7] - closes[0];
+      const retracement = (closes[7] - flagLow) / poleHeight;
+      if (flagRange > 0.04 || flagDrift > 0.02 || retracement > 0.50) return { detected: false, pivots: [] };
       
-      // Breakout: Last close breaks above flag high
       const lastClose = closes[closes.length - 1];
       const detected = lastClose > flagHigh * 1.005;
       
       return {
         detected,
-        patternStartIndex: poleStart,
+        patternStartIndex: 0,
         patternEndIndex: window.length - 1,
         pivots: detected ? [
-          { index: poleStart, price: closes[poleStart], type: 'low', label: 'Pole Start' },
-          { index: poleEnd, price: closes[poleEnd], type: 'high', label: 'Pole End' },
+          { index: 0, price: closes[0], type: 'low', label: 'Pole Start' },
+          { index: 7, price: closes[7], type: 'high', label: 'Pole End' },
           { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
           { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
@@ -512,34 +640,32 @@ const PATTERN_REGISTRY: Record<string, {
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
-      // Flagpole: Strong downtrend in first 8 bars (at least 5% drop)
-      const poleStart = 0;
-      const poleEnd = 7;
-      const poleDrop = (closes[poleStart] - closes[poleEnd]) / closes[poleStart];
+      const poleDrop = (closes[0] - closes[7]) / closes[0];
       if (poleDrop < 0.05) return { detected: false, pivots: [] };
       
-      // Flag: Consolidation/bounce in bars 8-18 (range < 4% and slight upward drift)
-      const flagBars = closes.slice(8, 18);
       const flagHighs = highs.slice(8, 18);
       const flagLows = lows.slice(8, 18);
+      if (flagLows.length === 0) return { detected: false, pivots: [] };
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (flagBars[flagBars.length - 1] - flagBars[0]) / flagBars[0];
+      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
-      if (flagRange > 0.04 || flagDrift < -0.02) return { detected: false, pivots: [] };
+      // Retracement must be < 50% of pole
+      const poleHeight = closes[0] - closes[7];
+      const retracement = (flagHigh - closes[7]) / poleHeight;
+      if (flagRange > 0.04 || flagDrift < -0.02 || retracement > 0.50) return { detected: false, pivots: [] };
       
-      // Breakdown: Last close breaks below flag low
       const lastClose = closes[closes.length - 1];
       const detected = lastClose < flagLow * 0.995;
       
       return {
         detected,
-        patternStartIndex: poleStart,
+        patternStartIndex: 0,
         patternEndIndex: window.length - 1,
         pivots: detected ? [
-          { index: poleStart, price: closes[poleStart], type: 'high', label: 'Pole Start' },
-          { index: poleEnd, price: closes[poleEnd], type: 'low', label: 'Pole End' },
+          { index: 0, price: closes[0], type: 'high', label: 'Pole Start' },
+          { index: 7, price: closes[7], type: 'low', label: 'Pole End' },
           { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
           { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
@@ -1014,6 +1140,31 @@ interface HistoricalOccurrence {
   trend_indicators: TrendIndicators | null;
 }
 
+// Adaptive lookback per pattern and timeframe for macro pattern detection
+function getPatternLookback(patternId: string, timeframe: string): number {
+  const largeWindowPatterns = ['head-and-shoulders', 'inverse-head-and-shoulders', 'triple-top', 'triple-bottom'];
+  const mediumWindowPatterns = ['cup-and-handle'];
+  
+  if (largeWindowPatterns.includes(patternId)) {
+    switch (timeframe) {
+      case '1wk': return 120; // ~2.3 years of weekly bars
+      case '1d': return 60;   // ~3 months of daily bars
+      case '4h': return 40;   // ~7 days of 4h bars
+      default: return 25;
+    }
+  }
+  
+  if (mediumWindowPatterns.includes(patternId)) {
+    switch (timeframe) {
+      case '1wk': return 80;
+      case '1d': return 40;
+      default: return 25;
+    }
+  }
+  
+  return 25; // Default for all other patterns
+}
+
 function runHistoricalBacktest(
   bars: OHLCBar[],
   symbol: string,
@@ -1021,9 +1172,11 @@ function runHistoricalBacktest(
   pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[]) => PatternDetectionResult },
   timeframe: string,
   assetType?: string,
-  lookback: number = 25,
+  lookback?: number,
   maxBarsInTrade: number = 100
 ): HistoricalOccurrence[] {
+  // Use adaptive lookback if not explicitly provided
+  if (!lookback) lookback = getPatternLookback(patternId, timeframe);
   const occurrences: HistoricalOccurrence[] = [];
   const resolvedAssetType = assetType || getAssetType(symbol);
   

@@ -357,10 +357,15 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       // Head prominence: head must be within 5% of window high
       const prominenceThreshold = highestHigh - range * 0.05;
       
+      // Adaptive peak detection radius: wider for larger windows (macro H&S patterns)
+      const peakRadius = Math.max(2, Math.min(6, Math.floor(window.length / 15)));
       const peaks: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+      for (let i = peakRadius; i < window.length - peakRadius; i++) {
+        let isPeak = true;
+        for (let r = 1; r <= peakRadius; r++) {
+          if (highs[i] <= highs[i - r] || highs[i] <= highs[i + r]) { isPeak = false; break; }
+        }
+        if (isPeak) {
           peaks.push({ index: i, value: highs[i] });
         }
       }
@@ -435,10 +440,15 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       // Head prominence: head must be within 5% of window low
       const prominenceThreshold = lowestLow + range * 0.05;
       
+      // Adaptive trough detection radius: wider for larger windows (macro IH&S patterns)
+      const troughRadius = Math.max(2, Math.min(6, Math.floor(window.length / 15)));
       const troughs: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+      for (let i = troughRadius; i < window.length - troughRadius; i++) {
+        let isTrough = true;
+        for (let r = 1; r <= troughRadius; r++) {
+          if (lows[i] >= lows[i - r] || lows[i] >= lows[i + r]) { isTrough = false; break; }
+        }
+        if (isTrough) {
           troughs.push({ index: i, value: lows[i] });
         }
       }
