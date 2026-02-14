@@ -194,3 +194,6 @@ verify_jwt = false
 
 [functions.validate-mtf-confluence]
 verify_jwt = false
+
+[functions.backfill-validation]
+verify_jwt = false
