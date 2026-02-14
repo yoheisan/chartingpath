@@ -667,7 +667,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       />
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
-                      <AlertsHistoryPanel userId={userId} />
+                      <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
                     </TabsContent>
                   </Tabs>
                 </ResizablePanel>

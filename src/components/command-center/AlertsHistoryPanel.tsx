@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface AlertsHistoryPanelProps {
   userId?: string;
+  onSymbolSelect?: (symbol: string) => void;
 }
 
 interface AlertLog {
@@ -39,7 +40,7 @@ interface ConfiguredAlert {
   created_at: string | null;
 }
 
-export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
+export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPanelProps) {
   const [alertLogs, setAlertLogs] = useState<AlertLog[]>([]);
   const [configuredAlerts, setConfiguredAlerts] = useState<ConfiguredAlert[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,9 +147,10 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
                 const alert = log.alerts;
                 
                 return (
-                  <div
+                  <button
                     key={log.id}
-                    className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                    onClick={() => alert?.symbol && onSymbolSelect?.(alert.symbol)}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer text-left"
                   >
                     {getOutcomeIcon(outcome?.outcome_type)}
                     <div className="flex-1 min-w-0">
@@ -184,7 +186,7 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
                           : 'N/A'}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -201,9 +203,10 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
               </div>
               <div className="space-y-0.5">
                 {configuredAlerts.map((a) => (
-                  <div
+                  <button
                     key={a.id}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
+                    onClick={() => onSymbolSelect?.(a.symbol)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors cursor-pointer text-left"
                   >
                     <Bell className="h-3 w-3 text-primary/60" />
                     <div className="flex-1 min-w-0">
@@ -220,7 +223,7 @@ export function AlertsHistoryPanel({ userId }: AlertsHistoryPanelProps) {
                     <Badge variant="secondary" className="text-[9px] bg-primary/10 text-primary border-0">
                       Watching
                     </Badge>
-                  </div>
+                  </button>
                 ))}
               </div>
             </>

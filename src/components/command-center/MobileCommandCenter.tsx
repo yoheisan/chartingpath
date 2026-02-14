@@ -451,7 +451,7 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
  
            {/* Alerts Tab */}
            <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden data-[state=inactive]:hidden">
-             <AlertsHistoryPanel userId={userId} />
+             <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
            </TabsContent>
  
            {/* Bottom Navigation Bar */}

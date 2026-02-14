@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +45,7 @@ const MemberAlerts = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();
 
   // Data fetch timeout (20 seconds)
@@ -744,9 +745,12 @@ const MemberAlerts = () => {
                 {alerts.map((alert) => (
                   <div
                     key={alert.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => navigate('/members/dashboard', { state: { symbol: alert.symbol } })}
+                      className="flex items-center gap-4 cursor-pointer text-left flex-1 min-w-0"
+                    >
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{alert.symbol}</span>
@@ -758,7 +762,7 @@ const MemberAlerts = () => {
                           {alert.pattern} • {alert.timeframe}
                         </p>
                       </div>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
