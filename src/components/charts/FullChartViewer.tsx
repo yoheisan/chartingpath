@@ -1226,7 +1226,12 @@ export default function FullChartViewer({
                       onClick={() => {
                         const dbId = setup?.dbId;
                         if (dbId) {
-                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'twitter');
+                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'twitter', {
+                            entry: setup.tradePlan.entry,
+                            stopLoss: setup.tradePlan.stopLoss,
+                            takeProfit: setup.tradePlan.takeProfit,
+                            rr: setup.tradePlan.rr,
+                          }, setup.direction);
                         } else { toast.error('Cannot share this pattern'); }
                       }}
                     >
@@ -1240,7 +1245,12 @@ export default function FullChartViewer({
                       onClick={() => {
                         const dbId = setup?.dbId;
                         if (dbId) {
-                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'whatsapp');
+                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'whatsapp', {
+                            entry: setup.tradePlan.entry,
+                            stopLoss: setup.tradePlan.stopLoss,
+                            takeProfit: setup.tradePlan.takeProfit,
+                            rr: setup.tradePlan.rr,
+                          }, setup.direction);
                         } else { toast.error('Cannot share this pattern'); }
                       }}
                     >
@@ -1255,7 +1265,12 @@ export default function FullChartViewer({
                       onClick={() => {
                         const dbId = setup?.dbId;
                         if (dbId) {
-                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'clipboard');
+                          sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId, 'clipboard', {
+                            entry: setup.tradePlan.entry,
+                            stopLoss: setup.tradePlan.stopLoss,
+                            takeProfit: setup.tradePlan.takeProfit,
+                            rr: setup.tradePlan.rr,
+                          }, setup.direction);
                         } else { toast.error('Cannot share this pattern'); }
                       }}
                     >
