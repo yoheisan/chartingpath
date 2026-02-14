@@ -532,7 +532,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
       <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
             {/* Main Chart - expands when study panel collapsed */}
-            <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1" : "h-[45%] min-h-[200px] shrink-0")}>
+            <div className={cn("relative", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[45%] min-h-[200px] shrink-0")}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
