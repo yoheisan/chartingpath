@@ -1010,8 +1010,8 @@ const StudyChart = memo(({
 
   return (
     <>
-    <div className={cn('flex flex-col', autoHeight && 'h-full')}>
-      <div className="relative flex-1 min-h-[200px]">
+    <div className={cn('flex flex-col overflow-hidden', autoHeight && 'h-full')}>
+      <div className="relative flex-1 min-h-0">
       <div
         ref={containerRef}
         className={cn(
