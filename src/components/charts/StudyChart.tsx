@@ -656,19 +656,12 @@ const StudyChart = memo(({
 
     rsiChart.timeScale().fitContent();
 
-    // Sync time scale with main chart
+    // Initial sync: match main chart's visible range immediately
     if (chartRef.current) {
-      const mainChart = chartRef.current;
-      mainChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-        if (range && rsiChartRef.current) {
-          rsiChartRef.current.timeScale().setVisibleLogicalRange(range);
-        }
-      });
-      rsiChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-        if (range && chartRef.current) {
-          chartRef.current.timeScale().setVisibleLogicalRange(range);
-        }
-      });
+      const mainRange = chartRef.current.timeScale().getVisibleLogicalRange();
+      if (mainRange) {
+        rsiChart.timeScale().setVisibleLogicalRange(mainRange);
+      }
     }
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -751,19 +744,12 @@ const StudyChart = memo(({
 
     macdChart.timeScale().fitContent();
 
-    // Sync time scale with main chart
+    // Initial sync: match main chart's visible range immediately
     if (chartRef.current) {
-      const mainChart = chartRef.current;
-      mainChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-        if (range && macdChartRef.current) {
-          macdChartRef.current.timeScale().setVisibleLogicalRange(range);
-        }
-      });
-      macdChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-        if (range && chartRef.current) {
-          chartRef.current.timeScale().setVisibleLogicalRange(range);
-        }
-      });
+      const mainRange = chartRef.current.timeScale().getVisibleLogicalRange();
+      if (mainRange) {
+        macdChart.timeScale().setVisibleLogicalRange(mainRange);
+      }
     }
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -789,8 +775,42 @@ const StudyChart = memo(({
     const macdChart = macdChartRef.current;
     if (!mainChart) return;
 
-    const syncingRef = { current: false };
+    const syncingRangeRef = { current: false };
+    const syncingCrosshairRef = { current: false };
 
+    // === Time Scale (scroll/zoom) Sync — main chart is the source of truth ===
+    const mainRangeHandler = (range: any) => {
+      if (syncingRangeRef.current || !range) return;
+      syncingRangeRef.current = true;
+      try {
+        if (rsiChart) rsiChart.timeScale().setVisibleLogicalRange(range);
+        if (macdChart) macdChart.timeScale().setVisibleLogicalRange(range);
+      } finally { syncingRangeRef.current = false; }
+    };
+    mainChart.timeScale().subscribeVisibleLogicalRangeChange(mainRangeHandler);
+
+    // Also let oscillator scroll propagate back to main + siblings
+    const rsiRangeHandler = rsiChart ? (range: any) => {
+      if (syncingRangeRef.current || !range) return;
+      syncingRangeRef.current = true;
+      try {
+        mainChart.timeScale().setVisibleLogicalRange(range);
+        if (macdChart) macdChart.timeScale().setVisibleLogicalRange(range);
+      } finally { syncingRangeRef.current = false; }
+    } : undefined;
+    if (rsiChart && rsiRangeHandler) rsiChart.timeScale().subscribeVisibleLogicalRangeChange(rsiRangeHandler);
+
+    const macdRangeHandler = macdChart ? (range: any) => {
+      if (syncingRangeRef.current || !range) return;
+      syncingRangeRef.current = true;
+      try {
+        mainChart.timeScale().setVisibleLogicalRange(range);
+        if (rsiChart) rsiChart.timeScale().setVisibleLogicalRange(range);
+      } finally { syncingRangeRef.current = false; }
+    } : undefined;
+    if (macdChart && macdRangeHandler) macdChart.timeScale().subscribeVisibleLogicalRangeChange(macdRangeHandler);
+
+    // === Crosshair Sync ===
     const getCrosshairDataPoint = (series: any, param: any) => {
       if (!param || !param.time || !param.seriesData) return null;
       const data = param.seriesData.get(series);
@@ -798,9 +818,9 @@ const StudyChart = memo(({
       return { time: param.time, value: (data as any).value ?? (data as any).close ?? 0 };
     };
 
-    const mainHandler = (param: any) => {
-      if (syncingRef.current) return;
-      syncingRef.current = true;
+    const mainCrosshairHandler = (param: any) => {
+      if (syncingCrosshairRef.current) return;
+      syncingCrosshairRef.current = true;
       try {
         const dp = getCrosshairDataPoint(candleSeriesRef.current, param);
         if (dp) {
@@ -810,15 +830,15 @@ const StudyChart = memo(({
           rsiChart?.clearCrosshairPosition();
           macdChart?.clearCrosshairPosition();
         }
-      } finally { syncingRef.current = false; }
+      } finally { syncingCrosshairRef.current = false; }
     };
-    mainChart.subscribeCrosshairMove(mainHandler);
+    mainChart.subscribeCrosshairMove(mainCrosshairHandler);
 
-    let rsiHandler: ((param: any) => void) | undefined;
+    let rsiCrosshairHandler: ((param: any) => void) | undefined;
     if (rsiChart && rsiSeriesRef.current) {
-      rsiHandler = (param: any) => {
-        if (syncingRef.current) return;
-        syncingRef.current = true;
+      rsiCrosshairHandler = (param: any) => {
+        if (syncingCrosshairRef.current) return;
+        syncingCrosshairRef.current = true;
         try {
           const dp = getCrosshairDataPoint(rsiSeriesRef.current, param);
           if (dp) {
@@ -828,16 +848,16 @@ const StudyChart = memo(({
             mainChart.clearCrosshairPosition();
             macdChart?.clearCrosshairPosition();
           }
-        } finally { syncingRef.current = false; }
+        } finally { syncingCrosshairRef.current = false; }
       };
-      rsiChart.subscribeCrosshairMove(rsiHandler);
+      rsiChart.subscribeCrosshairMove(rsiCrosshairHandler);
     }
 
-    let macdHandler: ((param: any) => void) | undefined;
+    let macdCrosshairHandler: ((param: any) => void) | undefined;
     if (macdChart && macdHistSeriesRef.current) {
-      macdHandler = (param: any) => {
-        if (syncingRef.current) return;
-        syncingRef.current = true;
+      macdCrosshairHandler = (param: any) => {
+        if (syncingCrosshairRef.current) return;
+        syncingCrosshairRef.current = true;
         try {
           const dp = getCrosshairDataPoint(macdHistSeriesRef.current, param);
           if (dp) {
@@ -847,15 +867,22 @@ const StudyChart = memo(({
             mainChart.clearCrosshairPosition();
             rsiChart?.clearCrosshairPosition();
           }
-        } finally { syncingRef.current = false; }
+        } finally { syncingCrosshairRef.current = false; }
       };
-      macdChart.subscribeCrosshairMove(macdHandler);
+      macdChart.subscribeCrosshairMove(macdCrosshairHandler);
     }
 
     return () => {
-      mainChart.unsubscribeCrosshairMove(mainHandler);
-      if (rsiChart && rsiHandler) rsiChart.unsubscribeCrosshairMove(rsiHandler);
-      if (macdChart && macdHandler) macdChart.unsubscribeCrosshairMove(macdHandler);
+      mainChart.timeScale().unsubscribeVisibleLogicalRangeChange(mainRangeHandler);
+      mainChart.unsubscribeCrosshairMove(mainCrosshairHandler);
+      if (rsiChart) {
+        if (rsiRangeHandler) rsiChart.timeScale().unsubscribeVisibleLogicalRangeChange(rsiRangeHandler);
+        if (rsiCrosshairHandler) rsiChart.unsubscribeCrosshairMove(rsiCrosshairHandler);
+      }
+      if (macdChart) {
+        if (macdRangeHandler) macdChart.timeScale().unsubscribeVisibleLogicalRangeChange(macdRangeHandler);
+        if (macdCrosshairHandler) macdChart.unsubscribeCrosshairMove(macdCrosshairHandler);
+      }
     };
   }, [bars, indicators.rsi, indicators.macd]);
 
