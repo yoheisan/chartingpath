@@ -738,7 +738,7 @@ export default function FullChartViewer({
   };
 
   const instrumentCategory = getInstrumentCategory(instrument);
-  const tradingViewUrl = getTradingViewUrl(instrument, instrumentCategory, visualSpec.timeframe);
+  const tradingViewUrl = getTradingViewUrl(instrument, instrumentCategory, visualSpec?.timeframe || '1d');
   const tradingViewAffiliateUrl = `${tradingViewUrl}&aff_id=3433`;
 
   const openExternal = async (url: string) => {
@@ -805,7 +805,7 @@ export default function FullChartViewer({
                   </Link>
                 </DialogTitle>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm text-muted-foreground">{patternName} • {visualSpec.timeframe.toUpperCase()}</p>
+                  <p className="text-sm text-muted-foreground">{patternName} • {(visualSpec?.timeframe || '').toUpperCase()}</p>
                   {currentPrice != null && (
                     <Tooltip>
                       <TooltipTrigger asChild>
