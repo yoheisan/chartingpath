@@ -82,6 +82,7 @@ const PortfolioSimulatorWizard = lazy(() => import("./pages/projects/PortfolioSi
 const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
 const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
+const SharedPattern = lazy(() => import("./pages/SharedPattern"));
 
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
 const MemberScripts = lazy(() => import("./pages/MemberScripts"));
@@ -272,6 +273,7 @@ const App = () => (
           <Route path="/members/dashboard" element={withSuspense(<MemberDashboard />)} />
           <Route path="/elite" element={withSuspense(<EliteDashboard />)} />
           <Route path="/share/:token" element={withSuspense(<SharedBacktest />)} />
+          <Route path="/s/:token" element={withSuspense(<SharedPattern />)} />
           <Route path="/members/scripts" element={withSuspense(<MemberScripts />)} />
           
           <Route path="/members/downloads" element={withSuspense(<MemberDownloads />)} />

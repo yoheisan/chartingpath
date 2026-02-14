@@ -43,7 +43,9 @@ export type AnalyticsEvent =
   | 'landing_cta_create_alert'
   | 'landing_actioncard_clicked'
   | 'landing_presets_view_all'
-  | 'landing_pricing_view';
+  | 'landing_pricing_view'
+  | 'pattern_shared'
+  | 'shared_pattern_viewed';
 
 // Event properties types
 export interface PresetLoadedProps {
