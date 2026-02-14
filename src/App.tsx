@@ -271,6 +271,7 @@ const App = () => (
           <Route path="/projects/runs/:runId" element={withSuspense(<ProjectRun />)} />
           
           <Route path="/pricing" element={<Navigate to="/projects/pricing" replace />} />
+          <Route path="/members/trading" element={<Navigate to="/members/dashboard" replace />} />
           <Route path="/members/dashboard" element={withSuspense(<MemberDashboard />)} />
           <Route path="/elite" element={withSuspense(<EliteDashboard />)} />
           <Route path="/share/:token" element={withSuspense(<SharedBacktest />)} />
