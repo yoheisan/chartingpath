@@ -12,8 +12,9 @@ import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
-import { QuickResearchPanel } from './QuickResearchPanel';
-import { PatternOccurrencesPanel, PatternOccurrence } from './PatternOccurrencesPanel';
+
+import { PatternOccurrence } from './PatternOccurrencesPanel';
+import { DashboardPatternStudy } from './DashboardPatternStudy';
 import { MarketOverviewPanel } from './MarketOverviewPanel';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
@@ -22,7 +23,7 @@ import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FlaskConical, History, ChevronUp, ChevronDown, PanelRightOpen, PanelRightClose, Eye, Bell, Globe } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
@@ -120,26 +121,6 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
   // Track if we've processed the initial playback pattern
   const hasProcessedInitialPlayback = useRef(false);
   
-  // Bottom panel state - tab-based with expand/collapse
-  const [bottomPanelTab, setBottomPanelTab] = useState<string>(
-    settings.bottomPanelAccordion || 'pattern-history'
-  );
-  const [bottomPanelExpanded, setBottomPanelExpanded] = useState(true);
-  
-  // Persist bottom panel state
-  useEffect(() => {
-    updateSettings({ bottomPanelAccordion: bottomPanelTab });
-  }, [bottomPanelTab, updateSettings]);
-  
-  // Toggle panel expansion
-  const handleTabClick = useCallback((tab: string) => {
-    if (bottomPanelTab === tab && bottomPanelExpanded) {
-      setBottomPanelExpanded(false);
-    } else {
-      setBottomPanelTab(tab);
-      setBottomPanelExpanded(true);
-    }
-  }, [bottomPanelTab, bottomPanelExpanded]);
 
   // Handle initial playback pattern from route state - loads directly into inline chart (not modal)
   useEffect(() => {
@@ -174,9 +155,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern }: CommandC
       setOccurrenceSetup(initialPlaybackPattern.setup);
       setLoadingOccurrence(false);
       
-      // Auto-open Pattern History tab when navigating with playback data
-      setBottomPanelTab('pattern-history');
-      setBottomPanelExpanded(true);
+      
       
       toast.success(`Trade Playback: ${initialPlaybackPattern.symbol} - ${initialPlaybackPattern.patternName}`, {
         description: 'Use playback controls to replay this trade bar-by-bar',
@@ -544,10 +523,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   return (
     <div className="h-[calc(100vh-4rem)] w-full flex">
       {/* Main Content Area - Chart + Tab Bar + Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
-            {/* Main Chart - shrinks when panel expanded to make room for tabs */}
-            <div className={bottomPanelExpanded ? "h-[55%] min-h-[200px]" : "flex-1 min-h-0"}>
+            {/* Main Chart - fixed height */}
+            <div className="h-[45%] min-h-[200px] shrink-0">
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -565,62 +544,15 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </div>
             
-            {/* Tab Bar - below chart */}
-            <div className="flex items-center justify-between px-2 h-8 border-t border-border bg-background shrink-0">
-              <div className="flex items-center">
-                <button
-                  onClick={() => handleTabClick('pattern-history')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
-                    bottomPanelTab === 'pattern-history' && bottomPanelExpanded
-                      ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <History className="h-3.5 w-3.5" />
-                  Pattern History
-                </button>
-                <button
-                  onClick={() => handleTabClick('research')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
-                    bottomPanelTab === 'research' && bottomPanelExpanded
-                      ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <FlaskConical className="h-3.5 w-3.5" />
-                  Research
-                </button>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => setBottomPanelExpanded(!bottomPanelExpanded)}
-              >
-                {bottomPanelExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                )}
-              </Button>
+            {/* Scrollable Study-style content below chart */}
+            <div className="flex-1 min-h-0 overflow-auto border-t border-border">
+              <DashboardPatternStudy
+                symbol={selectedSymbol}
+                timeframe={selectedTimeframe}
+                onPatternSelect={handleOccurrenceSelect}
+                selectedPatternId={selectedOccurrence?.id}
+              />
             </div>
-            
-            {/* Panel Content - below tabs */}
-            {bottomPanelExpanded && (
-              <div className="flex-1 border-t border-border overflow-auto">
-                {bottomPanelTab === 'pattern-history' && (
-                  <PatternOccurrencesPanel 
-                    symbol={selectedSymbol} 
-                    timeframe={selectedTimeframe}
-                    onPatternSelect={handleOccurrenceSelect}
-                    selectedPatternId={selectedOccurrence?.id}
-                  />
-                )}
-                {bottomPanelTab === 'research' && (
-                  <QuickResearchPanel onSymbolSelect={handleSymbolSelect} />
-                )}
-              </div>
-            )}
           </div>
         </div>
 
