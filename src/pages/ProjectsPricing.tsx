@@ -5,10 +5,57 @@ import { Check, Zap, TrendingUp, Shield, Target, ArrowRight } from "lucide-react
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const ProjectsPricing = () => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState<string | null>(null);
 
+  const planNameToDbPlan: Record<string, string> = {
+    FREE: 'free',
+    LITE: 'starter',
+    PLUS: 'pro',
+    PRO: 'pro_plus',
+    TEAM: 'elite',
+  };
+
+  const handlePlanSelect = async (tierKey: string) => {
+    const dbPlan = planNameToDbPlan[tierKey];
+    
+    if (dbPlan === 'free') {
+      window.location.href = '/auth';
+      return;
+    }
+
+    setLoading(tierKey);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/auth';
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-subscription', {
+        body: { plan: dbPlan, billing_cycle: 'monthly' }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      toast.error('Failed to start checkout. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
   const tiers: Array<{
     key: PlanTier;
     name: string;
@@ -222,12 +269,11 @@ const ProjectsPricing = () => {
                     variant={tier.popular ? "default" : "outline"} 
                     className="w-full"
                     size="sm"
-                    asChild
+                    disabled={loading === tier.key}
+                    onClick={() => handlePlanSelect(tier.key)}
                   >
-                    <Link to="/auth">
-                      {tier.key === 'TEAM' ? 'Get Team' : tier.cta}
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
+                    {loading === tier.key ? 'Loading...' : (tier.key === 'TEAM' ? 'Get Team' : tier.cta)}
+                    {loading !== tier.key && <ArrowRight className="h-4 w-4 ml-2" />}
                   </Button>
                 </div>
               </CardContent>
