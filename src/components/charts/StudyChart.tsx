@@ -275,7 +275,7 @@ const StudyChart = memo(({
         locale: getChartLocale(i18n.language),
       },
       crosshair: {
-        mode: 1,
+        mode: 0,
       },
     });
 
