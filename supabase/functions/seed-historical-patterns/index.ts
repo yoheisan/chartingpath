@@ -903,6 +903,7 @@ serve(async (req) => {
     // Insert into database in chunks using regular insert
     const CHUNK_SIZE = 50;
     let insertedCount = 0;
+    const allInsertedIds: string[] = [];
     
     for (let i = 0; i < allOccurrences.length; i += CHUNK_SIZE) {
       const chunk = allOccurrences.slice(i, i + CHUNK_SIZE);
@@ -914,7 +915,7 @@ serve(async (req) => {
           asset_type: occ.asset_type,
           pattern_id: occ.pattern_id,
           pattern_name: occ.pattern_name,
-          direction: occ.direction === 'long' ? 'bullish' : 'bearish', // Map to DB constraint values
+          direction: occ.direction === 'long' ? 'bullish' : 'bearish',
           timeframe: occ.timeframe,
           detected_at: occ.detected_at,
           pattern_start_date: occ.pattern_start_date,
@@ -927,20 +928,68 @@ serve(async (req) => {
           visual_spec: occ.visual_spec,
           quality_score: occ.quality_score,
           quality_reasons: occ.quality_reasons,
-          outcome: occ.outcome, // Already using hit_tp, hit_sl, timeout, pending
+          outcome: occ.outcome,
           outcome_price: occ.outcome_price,
           outcome_date: occ.outcome_date,
           outcome_pnl_percent: occ.outcome_pnl_percent,
           bars_to_outcome: occ.bars_to_outcome,
-          // NEW: Trend alignment fields
           trend_alignment: occ.trend_alignment,
-          trend_indicators: occ.trend_indicators
-        })));
+          trend_indicators: occ.trend_indicators,
+          validation_status: 'pending',
+          validation_layers_passed: ['bulkowski_engine'],
+        })))
+        .select('id');
       
       if (insertError) {
         console.error(`Insert error at chunk ${i / CHUNK_SIZE}:`, insertError);
       } else {
         insertedCount += chunk.length;
+        if (data) allInsertedIds.push(...data.map((r: any) => r.id));
+      }
+    }
+
+    // Trigger async pipeline validation for inserted patterns (background, non-blocking)
+    if (allInsertedIds.length > 0) {
+      const validationPromise = (async () => {
+        try {
+          // Validate in batches of 50
+          const VALIDATION_BATCH = 50;
+          for (let i = 0; i < Math.min(allInsertedIds.length, 200); i += VALIDATION_BATCH) {
+            const batchIds = allInsertedIds.slice(i, i + VALIDATION_BATCH);
+            const batchOccs = allOccurrences.slice(i, i + VALIDATION_BATCH);
+            
+            const detections = batchIds.map((id, idx) => {
+              const occ = batchOccs[idx];
+              if (!occ?.bars?.length) return null;
+              return {
+                detection_id: id,
+                detection_source: 'historical',
+                pattern_name: occ.pattern_id,
+                direction: occ.direction === 'long' ? 'bullish' : 'bearish',
+                entry_price: occ.entry_price,
+                stop_loss_price: occ.stop_loss_price,
+                take_profit_price: occ.take_profit_price,
+                symbol: occ.symbol,
+                timeframe: occ.timeframe,
+                bars: occ.bars.slice(-60),
+                quality_score: occ.quality_score,
+                trend_alignment: occ.trend_alignment,
+              };
+            }).filter(Boolean);
+            
+            if (detections.length) {
+              await supabase.functions.invoke('validate-pattern-context', { body: { detections } });
+            }
+          }
+          console.info(`[pipeline] Historical validation triggered for ${Math.min(allInsertedIds.length, 200)} patterns`);
+        } catch (err) {
+          console.error('[pipeline] Historical validation error:', err);
+        }
+      })();
+      
+      // @ts-ignore
+      if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+        EdgeRuntime.waitUntil(validationPromise);
       }
     }
 

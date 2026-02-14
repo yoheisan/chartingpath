@@ -414,7 +414,9 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
         risk_reward_ratio: p.tradePlan.rr, visual_spec: p.visualSpec, bars: p.bars,
         current_price: p.currentPrice, prev_close: p.prevClose, change_percent: p.changePercent,
         quality_score: p.quality?.score || 'B', quality_reasons: p.quality?.reasons || [],
-        trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {}, _key: key,
+        trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {},
+        validation_status: 'pending', validation_layers_passed: ['bulkowski_engine'],
+        _key: key,
       });
     }
   }
@@ -429,14 +431,89 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
     ));
   }
   
+  // Track newly inserted IDs for pipeline validation
+  const newlyInsertedIds: string[] = [];
+  
   if (toInsert.length) {
     const insertData = toInsert.map(({ _key, ...d }) => d);
-    const { data: inserted } = await supabase.from('live_pattern_detections').insert(insertData).select('instrument, pattern_id, first_detected_at');
+    const { data: inserted } = await supabase.from('live_pattern_detections').insert(insertData).select('id, instrument, pattern_id, first_detected_at');
     if (inserted) {
-      for (const ins of inserted) patternKeys.set(`${ins.instrument}|${ins.pattern_id}|${timeframe}`, new Date(ins.first_detected_at));
+      for (const ins of inserted) {
+        patternKeys.set(`${ins.instrument}|${ins.pattern_id}|${timeframe}`, new Date(ins.first_detected_at));
+        newlyInsertedIds.push(ins.id);
+      }
     }
   }
+  
+  // Trigger async pipeline validation for newly inserted patterns
+  if (newlyInsertedIds.length > 0) {
+    const validationPromise = triggerPipelineValidation(supabase, newlyInsertedIds, detectedPatterns, toInsert, 'live');
+    // @ts-ignore - EdgeRuntime.waitUntil is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      EdgeRuntime.waitUntil(validationPromise);
+    }
+    // Don't await — validation runs in background
+  }
+  
   return patternKeys;
+}
+
+// Pipeline validation: sends newly detected patterns to validate-pattern-context
+async function triggerPipelineValidation(
+  supabase: any, 
+  insertedIds: string[], 
+  allDetected: any[], 
+  insertedRecords: any[],
+  source: 'live' | 'historical'
+) {
+  try {
+    // Build detection inputs from the inserted records
+    const detections = insertedIds.map((id, idx) => {
+      const record = insertedRecords[idx];
+      if (!record) return null;
+      
+      // Find the matching detected pattern to get bars
+      const matchingPattern = allDetected.find(
+        p => p.instrument === record.instrument && p.patternId === record.pattern_id
+      );
+      
+      if (!matchingPattern?.bars?.length) return null;
+      
+      return {
+        detection_id: id,
+        detection_source: source,
+        pattern_name: record.pattern_id,
+        direction: record.direction === 'long' ? 'bullish' : record.direction === 'short' ? 'bearish' : record.direction,
+        entry_price: record.entry_price,
+        stop_loss_price: record.stop_loss_price,
+        take_profit_price: record.take_profit_price,
+        symbol: record.instrument,
+        timeframe: record.timeframe,
+        bars: matchingPattern.bars,
+        quality_score: record.quality_score,
+        trend_alignment: record.trend_alignment,
+      };
+    }).filter(Boolean);
+    
+    if (!detections.length) {
+      console.info('[pipeline] No valid detections to validate');
+      return;
+    }
+    
+    console.info(`[pipeline] Sending ${detections.length} detections to validate-pattern-context`);
+    
+    const { data, error } = await supabase.functions.invoke('validate-pattern-context', {
+      body: { detections }
+    });
+    
+    if (error) {
+      console.error('[pipeline] Validation invoke error:', error);
+    } else {
+      console.info(`[pipeline] Validation complete:`, data?.summary);
+    }
+  } catch (err) {
+    console.error('[pipeline] Validation failed:', err);
+  }
 }
 
 async function readCachedPatternsFromDb(
@@ -485,6 +562,7 @@ async function readCachedPatternsFromDb(
     const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
       .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
       .in('pattern_id', allowedPatterns).in('instrument', instruments)
+      .in('validation_status', ['confirmed', 'pending']) // Pipeline filter: exclude rejected patterns
       .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
     
     if (error) {

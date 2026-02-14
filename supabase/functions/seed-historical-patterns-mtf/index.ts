@@ -1663,11 +1663,12 @@ serve(async (req) => {
     // Insert into database in chunks (use upsert to avoid duplicates)
     const CHUNK_SIZE = 50;
     let insertedCount = 0;
+    const allInsertedIds: string[] = [];
     
     for (let i = 0; i < allOccurrences.length; i += CHUNK_SIZE) {
       const chunk = allOccurrences.slice(i, i + CHUNK_SIZE);
       
-      const { error: insertError } = await supabase
+      const { data: upsertedData, error: insertError } = await supabase
         .from('historical_pattern_occurrences')
         .upsert(chunk.map(occ => ({
           symbol: occ.symbol,
@@ -1693,16 +1694,64 @@ serve(async (req) => {
           outcome_pnl_percent: occ.outcome_pnl_percent,
           bars_to_outcome: occ.bars_to_outcome,
           trend_alignment: occ.trend_alignment,
-          trend_indicators: occ.trend_indicators
+          trend_indicators: occ.trend_indicators,
+          validation_status: 'pending',
+          validation_layers_passed: ['bulkowski_engine'],
         })), {
           onConflict: 'pattern_id,symbol,timeframe,pattern_end_date',
           ignoreDuplicates: true
-        });
+        })
+        .select('id');
       
       if (insertError) {
         console.error(`[seed-mtf] Insert error at chunk ${i / CHUNK_SIZE}:`, insertError);
       } else {
         insertedCount += chunk.length;
+        if (upsertedData) allInsertedIds.push(...upsertedData.map((r: any) => r.id));
+      }
+    }
+
+    // Trigger async pipeline validation (background, capped at 200 patterns)
+    if (allInsertedIds.length > 0) {
+      const validationPromise = (async () => {
+        try {
+          const VALIDATION_BATCH = 50;
+          for (let i = 0; i < Math.min(allInsertedIds.length, 200); i += VALIDATION_BATCH) {
+            const batchIds = allInsertedIds.slice(i, i + VALIDATION_BATCH);
+            const batchOccs = allOccurrences.slice(i, i + VALIDATION_BATCH);
+            
+            const detections = batchIds.map((id, idx) => {
+              const occ = batchOccs[idx];
+              if (!occ?.bars?.length) return null;
+              return {
+                detection_id: id,
+                detection_source: 'historical',
+                pattern_name: occ.pattern_id,
+                direction: occ.direction === 'long' ? 'bullish' : 'bearish',
+                entry_price: occ.entry_price,
+                stop_loss_price: occ.stop_loss_price,
+                take_profit_price: occ.take_profit_price,
+                symbol: occ.symbol,
+                timeframe: occ.timeframe,
+                bars: occ.bars.slice(-60),
+                quality_score: occ.quality_score,
+                trend_alignment: occ.trend_alignment,
+              };
+            }).filter(Boolean);
+            
+            if (detections.length) {
+              await supabase.functions.invoke('validate-pattern-context', { body: { detections } });
+            }
+          }
+          console.info(`[pipeline] MTF validation triggered for ${Math.min(allInsertedIds.length, 200)} patterns`);
+        } catch (err) {
+          console.error('[pipeline] MTF validation error:', err);
+        }
+      })();
+      
+      // @ts-ignore
+      if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+        EdgeRuntime.waitUntil(validationPromise);
       }
     }
 
