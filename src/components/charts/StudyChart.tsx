@@ -280,7 +280,7 @@ const StudyChart = memo(({
         visible: true,
         borderColor: theme.grid,
         mode: 0, // Allow manual vertical scaling
-        minimumWidth: 100,
+        minimumWidth: 65,
       },
       timeScale: {
         visible: true,
@@ -537,12 +537,13 @@ const StudyChart = memo(({
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       const rsiData = calculateRSI(bars, 14);
       if (rsiData.length > 0) {
+        const mainWidth = containerRef.current?.clientWidth || rsiContainerRef.current.clientWidth;
         const rsiChart = createChart(rsiContainerRef.current, {
-          width: rsiContainerRef.current.clientWidth,
+          width: mainWidth,
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 100 },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 65 },
           timeScale: { visible: false },
           crosshair: { mode: 0 },
         });
@@ -565,12 +566,13 @@ const StudyChart = memo(({
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
       const macdData = calculateMACD(bars, 12, 26, 9);
       if (macdData.length > 0) {
+        const mainWidthMacd = containerRef.current?.clientWidth || macdContainerRef.current.clientWidth;
         const macdChart = createChart(macdContainerRef.current, {
-          width: macdContainerRef.current.clientWidth,
+          width: mainWidthMacd,
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 100 },
+          rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 65 },
           timeScale: { visible: false },
           crosshair: { mode: 0 },
         });
@@ -637,17 +639,17 @@ const StudyChart = memo(({
     // Fit content
     chart.timeScale().fitContent();
 
-    // Sync price scale widths: after charts render, force all to use the widest price scale
-    // This ensures the plotting area (and thus crosshair) aligns across panes
+    // Sync price scale widths: force all charts to use an identical fixed-width price scale
+    // by setting a large enough minimumWidth that no label can exceed it.
+    // This guarantees all plotting areas start at the same horizontal offset.
+    const PRICE_SCALE_FIXED_WIDTH = 65;
     const syncPriceScaleWidths = () => {
       const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
       if (charts.length <= 1) return;
-      // Find the widest price scale by measuring each chart's canvas vs time scale
-      // Since we can't read price scale width directly, force a large minimumWidth
-      // that exceeds any label width to guarantee uniformity
-      const maxMinWidth = 120;
+      const mainW = containerRef.current?.clientWidth;
       charts.forEach((c) => {
-        c.priceScale('right').applyOptions({ minimumWidth: maxMinWidth });
+        if (mainW) c.applyOptions({ width: mainW });
+        c.priceScale('right').applyOptions({ minimumWidth: PRICE_SCALE_FIXED_WIDTH });
       });
     };
     // Delay slightly to allow initial render
@@ -667,13 +669,9 @@ const StudyChart = memo(({
           ? { height: Math.max(nextHeight || initialHeight, 250) }
           : {}),
       });
-      // Resize oscillator charts to their own container width
-      if (rsiChartRef.current && rsiContainerRef.current) {
-        rsiChartRef.current.applyOptions({ width: rsiContainerRef.current.clientWidth });
-      }
-      if (macdChartRef.current && macdContainerRef.current) {
-        macdChartRef.current.applyOptions({ width: macdContainerRef.current.clientWidth });
-      }
+      // Resize oscillator charts to the SAME width as main chart
+      rsiChartRef.current?.applyOptions({ width: nextWidth });
+      macdChartRef.current?.applyOptions({ width: nextWidth });
       chartRef.current.timeScale().fitContent();
       syncPriceScaleWidths();
     });
