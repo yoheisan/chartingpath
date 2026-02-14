@@ -1205,7 +1205,7 @@ export default function FullChartViewer({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const dbId = (setup as any)?.dbId;
+                  const dbId = setup?.dbId;
                   if (dbId) {
                     sharePattern(dbId, setup.instrument, setup.patternName || setup.patternId);
                   } else {

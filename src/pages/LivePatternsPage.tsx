@@ -754,6 +754,7 @@ export default function LivePatternsPage() {
     const recalculated = recalculateTradePlan(baseTradePlan, setup.direction, DEFAULT_RR);
 
     return {
+      dbId: setup.dbId,
       instrument: setup.instrument,
       patternId: setup.patternId,
       patternName: setup.patternName,
