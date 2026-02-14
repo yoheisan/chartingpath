@@ -24,14 +24,22 @@ export function useSharePattern() {
       const shareUrl = `${window.location.origin}/s/${data.shareToken}`;
 
       // Try native share API first (mobile), fallback to clipboard
+      let shared = false;
       if (navigator.share) {
-        await navigator.share({
-          title: `${patternName} on ${instrument}`,
-          text: `Check out this ${patternName} pattern on ${instrument}`,
-          url: shareUrl,
-        });
-        toast.success('Shared successfully');
-      } else {
+        try {
+          await navigator.share({
+            title: `${patternName} on ${instrument}`,
+            text: `Check out this ${patternName} pattern on ${instrument}`,
+            url: shareUrl,
+          });
+          toast.success('Shared successfully');
+          shared = true;
+        } catch (shareErr: any) {
+          if (shareErr?.name === 'AbortError') return; // User cancelled
+          // Fall through to clipboard
+        }
+      }
+      if (!shared) {
         await navigator.clipboard.writeText(shareUrl);
         toast.success('Share link copied to clipboard!');
       }
