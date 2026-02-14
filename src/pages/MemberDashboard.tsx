@@ -16,6 +16,8 @@ interface PlaybackPatternState {
     setup: SetupWithVisuals;
     enablePlayback: boolean;
   };
+  /** Symbol to pre-select on the dashboard chart (from /study/:symbol redirect) */
+  initialSymbol?: string;
 }
 
 const MemberDashboard = () => {
@@ -44,6 +46,7 @@ const MemberDashboard = () => {
     <CommandCenterLayout 
       userId={user.id} 
       initialPlaybackPattern={routeState?.playbackPattern}
+      initialSymbol={routeState?.initialSymbol}
     />
   );
 };
