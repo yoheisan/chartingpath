@@ -829,11 +829,11 @@ const StudyChart = memo(({
 
   return (
     <>
-    <div className={cn('flex flex-col overflow-hidden', autoHeight && 'h-full')}>
+    <div className={cn('flex flex-col overflow-hidden border border-border/50 rounded', autoHeight && 'h-full')}>
       <div className="relative flex-1 min-h-[150px]">
       <div
         ref={containerRef}
-        className="w-full h-full overflow-hidden border border-border/50 rounded"
+        className="w-full h-full overflow-hidden"
       />
 
       {/* Chart Analysis Toolbar */}
@@ -1080,7 +1080,7 @@ const StudyChart = memo(({
       {indicators.rsi && (
         <div
           ref={rsiContainerRef}
-          className="w-full border-x border-b border-border/50 rounded-b"
+          className="w-full border-t border-border/30"
           style={{ height: 100 }}
         />
       )}
@@ -1089,7 +1089,7 @@ const StudyChart = memo(({
       {indicators.macd && (
         <div
           ref={macdContainerRef}
-          className="w-full border-x border-b border-border/50 rounded-b"
+          className="w-full border-t border-border/30"
           style={{ height: 100 }}
         />
       )}
