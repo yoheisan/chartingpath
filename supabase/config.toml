@@ -188,3 +188,6 @@ verify_jwt = false
 
 [functions.trading-copilot]
 verify_jwt = false
+
+[functions.validate-pattern-context]
+verify_jwt = false
