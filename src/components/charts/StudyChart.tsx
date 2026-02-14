@@ -887,6 +887,44 @@ const StudyChart = memo(({
     };
   }, [bars, indicators.rsi, indicators.macd]);
 
+  // === Price Scale Width Sync ===
+  // The main chart's price scale may auto-expand beyond minimumWidth for wide labels (e.g. "7000.00").
+  // Oscillators have shorter labels and stay at minimumWidth, causing crosshair misalignment.
+  // Fix: read the main chart's actual price scale width and force oscillators to match.
+  useEffect(() => {
+    const mainChart = chartRef.current;
+    const rsiChart = rsiChartRef.current;
+    const macdChart = macdChartRef.current;
+    if (!mainChart) return;
+
+    const syncPriceScaleWidths = () => {
+      if (!chartRef.current) return;
+      const mainWidth = chartRef.current.priceScale('right').width();
+      if (mainWidth > 0) {
+        if (rsiChartRef.current) {
+          rsiChartRef.current.priceScale('right').applyOptions({ minimumWidth: mainWidth });
+        }
+        if (macdChartRef.current) {
+          macdChartRef.current.priceScale('right').applyOptions({ minimumWidth: mainWidth });
+        }
+      }
+    };
+
+    // Sync after a short delay to let layout settle
+    const timer = setTimeout(syncPriceScaleWidths, 50);
+
+    // Also sync whenever the visible range changes (which can trigger label width changes)
+    const rangeHandler = () => { setTimeout(syncPriceScaleWidths, 10); };
+    mainChart.timeScale().subscribeVisibleLogicalRangeChange(rangeHandler);
+
+    return () => {
+      clearTimeout(timer);
+      if (chartRef.current) {
+        chartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(rangeHandler);
+      }
+    };
+  }, [bars, indicators.rsi, indicators.macd]);
+
   // Effect to draw/remove analysis overlay lines
   useEffect(() => {
     if (!candleSeriesRef.current) return;
