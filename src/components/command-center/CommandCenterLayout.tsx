@@ -20,10 +20,11 @@ import FullChartViewer from '@/components/charts/FullChartViewer';
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
@@ -493,6 +494,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   // Right sidebar collapsed state
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  
+  // Study panel collapsed state
+  const [studyPanelCollapsed, setStudyPanelCollapsed] = useState(false);
 
   // Dispatch resize event after sidebar transition so charts re-fit
   const toggleSidebar = useCallback((collapsed: boolean) => {
@@ -525,8 +529,8 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
       {/* Main Content Area - Chart + Tab Bar + Content */}
       <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
-            {/* Main Chart - fixed height */}
-            <div className="h-[45%] min-h-[200px] shrink-0">
+            {/* Main Chart - expands when study panel collapsed */}
+            <div className={cn("shrink-0 relative", studyPanelCollapsed ? "flex-1" : "h-[45%] min-h-[200px]")}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -544,15 +548,35 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </div>
             
+            {/* Toggle button for study panel */}
+            <button
+              onClick={() => setStudyPanelCollapsed(prev => !prev)}
+              className="flex items-center justify-center gap-1 w-full py-1 border-t border-border bg-muted/30 hover:bg-muted/60 transition-colors text-xs text-muted-foreground shrink-0"
+            >
+              {studyPanelCollapsed ? (
+                <>
+                  <ChevronUp className="h-3.5 w-3.5" />
+                  <span>Show Patterns & Metrics</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                  <span>Hide Patterns & Metrics</span>
+                </>
+              )}
+            </button>
+
             {/* Scrollable Study-style content below chart */}
-            <div className="flex-1 min-h-0 overflow-auto border-t border-border">
-              <DashboardPatternStudy
-                symbol={selectedSymbol}
-                timeframe={selectedTimeframe}
-                onPatternSelect={handleOccurrenceSelect}
-                selectedPatternId={selectedOccurrence?.id}
-              />
-            </div>
+            {!studyPanelCollapsed && (
+              <div className="flex-1 min-h-0 overflow-auto border-t border-border">
+                <DashboardPatternStudy
+                  symbol={selectedSymbol}
+                  timeframe={selectedTimeframe}
+                  onPatternSelect={handleOccurrenceSelect}
+                  selectedPatternId={selectedOccurrence?.id}
+                />
+              </div>
+            )}
           </div>
         </div>
 
