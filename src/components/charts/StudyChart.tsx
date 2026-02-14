@@ -639,21 +639,24 @@ const StudyChart = memo(({
     // Fit content
     chart.timeScale().fitContent();
 
-    // Sync price scale widths: force all charts to use an identical fixed-width price scale
-    // by setting a large enough minimumWidth that no label can exceed it.
-    // This guarantees all plotting areas start at the same horizontal offset.
-    const PRICE_SCALE_FIXED_WIDTH = 65;
+    // Sync price scale widths: read actual rendered widths, then force all to the widest.
+    // This ensures identical plotting areas so the vertical crosshair aligns across panes.
     const syncPriceScaleWidths = () => {
       const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
       if (charts.length <= 1) return;
-      const mainW = containerRef.current?.clientWidth;
+      // Read each chart's actual rendered price scale width
+      const widths = charts.map((c) => {
+        try { return c.priceScale('right').width(); } catch { return 0; }
+      });
+      const maxW = Math.max(...widths, 50);
+      // Force all price scales to match the widest one
       charts.forEach((c) => {
-        if (mainW) c.applyOptions({ width: mainW });
-        c.priceScale('right').applyOptions({ minimumWidth: PRICE_SCALE_FIXED_WIDTH });
+        c.priceScale('right').applyOptions({ minimumWidth: maxW });
       });
     };
-    // Delay slightly to allow initial render
-    const syncTimer = setTimeout(syncPriceScaleWidths, 50);
+    // Delay to allow initial render, then sync again after labels stabilize
+    const syncTimer = setTimeout(syncPriceScaleWidths, 100);
+    const syncTimer2 = setTimeout(syncPriceScaleWidths, 300);
 
     // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
@@ -716,6 +719,7 @@ const StudyChart = memo(({
 
     return () => {
       clearTimeout(syncTimer);
+      clearTimeout(syncTimer2);
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
