@@ -128,7 +128,7 @@ const FAQ = () => {
               question: "What methodology does ChartingPath use for pattern detection?",
               answer: (
                 <div className="space-y-4">
-                  <p>ChartingPath uses a <strong>two-layer detection pipeline</strong> based on institutional-grade standards established by Thomas Bulkowski's pattern research.</p>
+                  <p>ChartingPath uses a <strong>three-layer detection pipeline</strong> based on institutional-grade standards established by Thomas Bulkowski's pattern research.</p>
                   <div className="space-y-3">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -145,12 +145,21 @@ const FAQ = () => {
                         <h4 className="font-semibold">Layer 2 — Context Validator (Probabilistic Confirmation)</h4>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        Every detection passes through a 6-factor weighted validation model analyzing trend alignment (30%), RSI (15%), MACD momentum (15%), ADX strength (15%), volume conviction (15%), and risk calibration (10%). Only patterns that score above the confirmation threshold are shown.
+                        Every detection passes through a 6-factor weighted validation model analyzing trend alignment (30%), RSI (15%), MACD momentum (15%), ADX strength (15%), volume conviction (15%), and risk calibration (10%). Patterns must score above the confirmation threshold to proceed.
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Layers className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">Layer 3 — Multi-Timeframe Confluence (Final Gate)</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Confirmed patterns are validated against the next higher timeframe (e.g., 4H pattern → Daily check). The model evaluates HTF trend direction (40%), S/R proximity (25%), HTF momentum via MACD + RSI (20%), and cross-TF volume profile (15%). Patterns trading against strong higher-timeframe opposition are rejected.
                       </p>
                     </div>
                   </div>
                   <div className="bg-muted/50 p-4 rounded-lg text-sm">
-                    <strong>Result:</strong> Patterns marked as "rejected" by the validator are automatically excluded from the Screener, Chart overlays, and all research views. Only <em>confirmed</em> patterns are displayed.
+                    <strong>Result:</strong> Patterns must pass all three layers to appear in the Screener, Chart overlays, and research views. Only <em>fully confirmed</em> patterns are displayed — significantly reducing false positives.
                   </div>
                 </div>
               )
@@ -325,25 +334,39 @@ const FAQ = () => {
               question: "What does the validation pipeline filter out?",
               answer: (
                 <div className="space-y-4">
-                  <p>The Layer 2 Context Validator evaluates 6 weighted technical factors and assigns a composite score. Patterns are classified as:</p>
+                  <p>Each detection must survive three sequential layers. Rejection at any layer removes the pattern from all views:</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                      <Scan className="h-5 w-5 text-primary flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Confirmed</strong>
-                        <p className="text-xs text-muted-foreground">Composite score ≥ 0.15 — displayed in Screener, Charts, and Research views</p>
+                        <strong className="text-sm">Layer 1 — Bulkowski Engine</strong>
+                        <p className="text-xs text-muted-foreground">Structural geometry must match Bulkowski's formation rules (prior trend, touch counts, symmetry)</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+                      <Shield className="h-5 w-5 text-primary flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Rejected</strong>
-                        <p className="text-xs text-muted-foreground">Composite score ≤ −0.15 — automatically hidden from all views</p>
+                        <strong className="text-sm">Layer 2 — Context Validator</strong>
+                        <p className="text-xs text-muted-foreground">Composite score ≥ 0.15 required (6-factor: trend, RSI, MACD, ADX, volume, risk). Rejected if ≤ −0.15</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 border rounded-lg">
+                      <Layers className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div>
+                        <strong className="text-sm">Layer 3 — MTF Confluence</strong>
+                        <p className="text-xs text-muted-foreground">Higher-timeframe trend, S/R proximity, momentum, and volume must not oppose the pattern direction. Rejected if score ≤ −0.20</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                      <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                      <div>
+                        <strong className="text-sm">Fully Confirmed</strong>
+                        <p className="text-xs text-muted-foreground">Pattern passes all 3 layers → displayed in Screener, Charts, and Research views</p>
                       </div>
                     </div>
                   </div>
                   <div className="bg-muted/50 p-4 rounded-lg text-sm">
-                    <p>This two-layer approach significantly reduces false positives compared to structural detection alone, ensuring that only patterns with supporting technical context reach the user.</p>
+                    <p>This three-layer pipeline ensures only patterns with structural validity, technical context support, and multi-timeframe alignment reach the user — providing institutional-grade signal quality.</p>
                   </div>
                 </div>
               )
