@@ -271,6 +271,7 @@ export default function TickerStudy() {
           .select('*')
           .in('symbol', symbolVariants)
           .eq('timeframe', selectedTimeframe)
+          .eq('validation_status', 'confirmed')
           .order('detected_at', { ascending: false })
           .limit(100);
 

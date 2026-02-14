@@ -279,6 +279,7 @@ export function PatternOccurrencesPanel({
           .select('id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_pnl_percent')
           .eq('symbol', symbol)
           .eq('timeframe', timeframe)
+          .eq('validation_status', 'confirmed')
           .order('detected_at', { ascending: false })
           .limit(30);
 
