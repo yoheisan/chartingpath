@@ -538,7 +538,7 @@ const StudyChart = memo(({
       const rsiData = calculateRSI(bars, 14);
       if (rsiData.length > 0) {
         const rsiChart = createChart(rsiContainerRef.current, {
-          width: containerRef.current.clientWidth,
+          width: rsiContainerRef.current.clientWidth,
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
@@ -566,7 +566,7 @@ const StudyChart = memo(({
       const macdData = calculateMACD(bars, 12, 26, 9);
       if (macdData.length > 0) {
         const macdChart = createChart(macdContainerRef.current, {
-          width: containerRef.current.clientWidth,
+          width: macdContainerRef.current.clientWidth,
           height: 100,
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
@@ -637,6 +637,22 @@ const StudyChart = memo(({
     // Fit content
     chart.timeScale().fitContent();
 
+    // Sync price scale widths: after charts render, force all to use the widest price scale
+    // This ensures the plotting area (and thus crosshair) aligns across panes
+    const syncPriceScaleWidths = () => {
+      const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
+      if (charts.length <= 1) return;
+      // Find the widest price scale by measuring each chart's canvas vs time scale
+      // Since we can't read price scale width directly, force a large minimumWidth
+      // that exceeds any label width to guarantee uniformity
+      const maxMinWidth = 120;
+      charts.forEach((c) => {
+        c.priceScale('right').applyOptions({ minimumWidth: maxMinWidth });
+      });
+    };
+    // Delay slightly to allow initial render
+    const syncTimer = setTimeout(syncPriceScaleWidths, 50);
+
     // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -651,10 +667,15 @@ const StudyChart = memo(({
           ? { height: Math.max(nextHeight || initialHeight, 250) }
           : {}),
       });
-      // Resize oscillator charts too
-      rsiChartRef.current?.applyOptions({ width: nextWidth });
-      macdChartRef.current?.applyOptions({ width: nextWidth });
+      // Resize oscillator charts to their own container width
+      if (rsiChartRef.current && rsiContainerRef.current) {
+        rsiChartRef.current.applyOptions({ width: rsiContainerRef.current.clientWidth });
+      }
+      if (macdChartRef.current && macdContainerRef.current) {
+        macdChartRef.current.applyOptions({ width: macdContainerRef.current.clientWidth });
+      }
       chartRef.current.timeScale().fitContent();
+      syncPriceScaleWidths();
     });
 
     resizeObserver.observe(containerRef.current);
@@ -696,6 +717,7 @@ const StudyChart = memo(({
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      clearTimeout(syncTimer);
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
