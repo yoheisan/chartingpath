@@ -182,10 +182,11 @@ if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
 ${detection}`;
   }).join('\n\n');
 
-  // Generate exit block that runs every bar (outside detection conditionals)
+  // Generate exit block — ONLY when in a position and SL/TP are valid (not na)
   const exitBlocks = patterns.map(p => {
     const v = p.id.replace(/-/g, '_');
-    return `strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl_level, limit=${v}_tp_level)`;
+    return `    if not na(${v}_sl_level) and not na(${v}_tp_level)
+        strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl_level, limit=${v}_tp_level)`;
   }).join('\n');
 
   const rrInput = config.takeProfitMethod === 'rr_ratio' 
@@ -193,7 +194,7 @@ ${detection}`;
     : `rrRatio = ${config.rrRatio}`;
 
   return `${header}
-strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, process_orders_on_close=true)
+strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, process_orders_on_close=true, max_bars_back=5000)
 
 // ─── INPUTS ─────────────────────────────────────────────────────────────────
 group_risk = "Risk Management"
@@ -251,14 +252,21 @@ trendPct = ((close - close[20]) / close[20]) * 100
 // ─── PATTERN DETECTION & TRADE ENTRY ────────────────────────────────────────
 ${inlineBlocks}
 
-// ─── EXIT MANAGEMENT (runs every bar) ───────────────────────────────────────
+// ─── EXIT MANAGEMENT (only when in a position) ─────────────────────────────
+if strategy.position_size != 0
 ${exitBlocks}
 
-// ─── TIME STOP ──────────────────────────────────────────────────────────────
+// ─── TIME STOP & CLEANUP ────────────────────────────────────────────────────
 if strategy.position_size != 0
     barsHeld = bar_index - strategy.opentrades.entry_bar_index(0)
     if barsHeld >= maxBarsInTrade
         strategy.close_all("Time Stop")
+else
+    // Reset SL/TP levels when flat to avoid stale order processing
+${patterns.map(p => {
+    const v = p.id.replace(/-/g, '_');
+    return `    ${v}_sl_level := na\n    ${v}_tp_level := na`;
+  }).join('\n')}
 
 // ─── DISCLAIMER ─────────────────────────────────────────────────────────────
 // EDUCATIONAL USE ONLY - NOT FINANCIAL ADVICE
