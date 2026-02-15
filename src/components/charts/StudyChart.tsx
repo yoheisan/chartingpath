@@ -597,15 +597,21 @@ const StudyChart = memo(({
       }
     }
 
-    // Sync time scales across all charts
+    // Sync time scales across all charts using TIME-based range (not logical index)
+    // This is critical because RSI/MACD have fewer data points (warmup periods),
+    // so logical indices map to different timestamps across charts.
     const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
     allCharts.forEach((src) => {
-      src.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      src.timeScale().subscribeVisibleTimeRangeChange((range) => {
         if (syncingRangeRef.current || !range) return;
         syncingRangeRef.current = true;
         allCharts.forEach((dst) => {
           if (dst !== src) {
-            dst.timeScale().setVisibleLogicalRange(range);
+            try {
+              dst.timeScale().setVisibleRange(range);
+            } catch {
+              // Ignore if range is out of bounds for this chart
+            }
           }
         });
         syncingRangeRef.current = false;
@@ -618,9 +624,6 @@ const StudyChart = memo(({
     if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
 
-    // Log container widths for diagnostics
-    console.log('[StudyChart] Container widths - main:', containerRef.current?.clientWidth,
-      'rsi:', rsiContainerRef.current?.clientWidth, 'macd:', macdContainerRef.current?.clientWidth);
 
     allCharts.forEach((src) => {
       src.subscribeCrosshairMove((param) => {
