@@ -40,6 +40,14 @@ export interface ScannerConfig {
   platform: 'pine' | 'mql4' | 'mql5';
   /** Pine Script type */
   scriptType: 'strategy' | 'indicator';
+  /** Quality filter: require ADX > threshold */
+  qualityFilterADX: boolean;
+  /** ADX threshold (default 20) */
+  adxThreshold: number;
+  /** Quality filter: require above-average volume */
+  qualityFilterVolume: boolean;
+  /** Quality filter: require trend alignment (200 EMA) */
+  qualityFilterTrend: boolean;
 }
 
 export const DEFAULT_SCANNER_CONFIG: ScannerConfig = {
@@ -54,6 +62,10 @@ export const DEFAULT_SCANNER_CONFIG: ScannerConfig = {
   maxBarsInTrade: 100,
   platform: 'pine',
   scriptType: 'strategy',
+  qualityFilterADX: true,
+  adxThreshold: 20,
+  qualityFilterVolume: true,
+  qualityFilterTrend: true,
 };
 
 /** All 17 supported scanner patterns with metadata */
@@ -121,11 +133,12 @@ export function generateScannerPineScript(config: ScannerConfig): string {
 // ════════════════════════════════════════════════════════════════════════════
 // Patterns: ${patternNames}
 // SL Method: ${config.stopLossMethod} | TP Method: ${config.takeProfitMethod}
+// Quality Filters: ${[config.qualityFilterADX && 'ADX>' + config.adxThreshold, config.qualityFilterVolume && 'Volume', config.qualityFilterTrend && '200EMA Trend'].filter(Boolean).join(', ') || 'None'}
 // Generated: ${timestamp}
 //
 // This script actively scans for chart patterns using Bulkowski-grade
-// structural detection. When a valid pattern completes, it enters a
-// trade with configurable SL/TP management.
+// structural detection with quality filters (ADX, Volume, Trend Alignment).
+// Only signals passing all quality gates trigger entries.
 // ════════════════════════════════════════════════════════════════════════════
 
 //@version=5`;
@@ -196,10 +209,11 @@ function generatePineStrategy(
     ];
     
     const detection = getInlineDetection(p.id, v, tradeLines);
+    const qualityGate = getQualityGateCondition(config, p.direction);
     
     return `// ═══ ${p.name.toUpperCase()} ═══
 ${v}_detected = false
-if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
+if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed${qualityGate}
 ${detection}`;
   }).join('\n\n');
 
@@ -230,6 +244,8 @@ pivotLen = input.int(5, "Pivot Lookback", minval=2, maxval=20, group=group_detec
 minPriorTrend = input.float(2.0, "Min Prior Trend %", minval=0.5, maxval=10, step=0.5, group=group_detect)
 peakTolerance = input.float(1.5, "Peak Similarity % Tolerance", minval=0.5, maxval=5, step=0.5, group=group_detect)
 
+${getQualityFilterInputs(config)}
+
 group_patterns = "Pattern Toggles"
 ${patternToggles}
 
@@ -237,6 +253,8 @@ ${patternToggles}
 atr14 = ta.atr(14)
 ph = ta.pivothigh(high, pivotLen, pivotLen)
 pl = ta.pivotlow(low, pivotLen, pivotLen)
+
+${getQualityFilterVariables(config)}
 
 var float ph1 = na
 var float ph2 = na
@@ -269,6 +287,7 @@ if not na(pl)
     pl1Bar := bar_index - pivotLen
 
 trendPct = ((close - close[20]) / close[20]) * 100
+${getQualityGateVariable(config)}
 
 // ─── PATTERN DETECTION & TRADE ENTRY ────────────────────────────────────────
 ${inlineBlocks}
@@ -309,9 +328,11 @@ function generatePineIndicator(
 
   const signalChecks = patterns.map(p => {
     const varName = p.id.replace(/-/g, '_');
+    const qualityGate = getQualityGateCondition(config, p.direction);
+    const qualityCheck = qualityGate ? ` and ${p.direction === 'long' ? 'qualityOkLong' : 'qualityOkShort'}` : '';
     return `if enable_${varName}
     [${varName}_det, ${varName}_e, ${varName}_s] = detect_${varName}(pivotHigh, pivotLow, pivotHighBar, pivotLowBar, atr, priorTrendPct)
-    if ${varName}_det
+    if ${varName}_det${qualityCheck}
         label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name}", 
                   color=${p.direction === 'long' ? 'color.green' : 'color.red'}, 
                   textcolor=color.white,
@@ -328,6 +349,8 @@ pivotLen = input.int(5, "Pivot Lookback", minval=2, maxval=20, group=group_detec
 minPriorTrend = input.float(2.0, "Min Prior Trend %", minval=0.5, maxval=10, step=0.5, group=group_detect)
 peakTolerance = input.float(1.5, "Peak Similarity % Tolerance", minval=0.5, maxval=5, step=0.5, group=group_detect)
 
+${getQualityFilterInputs(config)}
+
 group_patterns = "Pattern Toggles"
 ${patternToggles}
 
@@ -335,6 +358,8 @@ ${patternToggles}
 atr = ta.atr(14)
 pivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
 pivotLow  = ta.pivotlow(low, pivotLen, pivotLen)
+
+${getQualityFilterVariables(config)}
 
 var float ph1 = na
 var float ph2 = na
@@ -369,6 +394,7 @@ if not na(pivotLow)
     pl1Bar := bar_index - pivotLen
 
 priorTrendPct = ((close - close[20]) / close[20]) * 100
+${getQualityGateVariable(config)}
 
 // ─── PATTERN DETECTION FUNCTIONS ────────────────────────────────────────────
 ${detectionFunctions}
@@ -410,6 +436,79 @@ function getTPInputs(config: ScannerConfig): string {
     default:
       return '';
   }
+}
+
+// ============================================================================
+// QUALITY FILTER GENERATORS
+// ============================================================================
+
+function getQualityFilterInputs(config: ScannerConfig): string {
+  const lines: string[] = [];
+  if (config.qualityFilterADX || config.qualityFilterVolume || config.qualityFilterTrend) {
+    lines.push(`group_quality = "Quality Filters"`);
+  }
+  if (config.qualityFilterADX) {
+    lines.push(`adxThreshold = input.int(${config.adxThreshold}, "Min ADX (Trend Strength)", minval=10, maxval=50, group=group_quality)`);
+  }
+  if (config.qualityFilterVolume) {
+    lines.push(`volMultiplier = input.float(1.0, "Min Volume (× 20-bar avg)", minval=0.5, maxval=3, step=0.1, group=group_quality)`);
+  }
+  if (config.qualityFilterTrend) {
+    lines.push(`trendEmaLen = input.int(200, "Trend EMA Length", minval=50, maxval=500, group=group_quality)`);
+  }
+  return lines.join('\n');
+}
+
+function getQualityFilterVariables(config: ScannerConfig): string {
+  const lines: string[] = [];
+  if (config.qualityFilterADX) {
+    lines.push(`// ADX for trend strength confirmation`);
+    lines.push(`[diPlus, diMinus, adxValue] = ta.dmi(14, 14)`);
+  }
+  if (config.qualityFilterVolume) {
+    lines.push(`// Volume confirmation`);
+    lines.push(`avgVol20 = ta.sma(volume, 20)`);
+    lines.push(`volOk = volume >= avgVol20 * volMultiplier`);
+  }
+  if (config.qualityFilterTrend) {
+    lines.push(`// Trend alignment (200 EMA)`);
+    lines.push(`ema200 = ta.ema(close, trendEmaLen)`);
+    lines.push(`trendBullish = close > ema200`);
+    lines.push(`trendBearish = close < ema200`);
+  }
+  return lines.join('\n');
+}
+
+function getQualityGateVariable(config: ScannerConfig): string {
+  // Build per-direction quality gate conditions
+  const longConditions: string[] = [];
+  const shortConditions: string[] = [];
+
+  if (config.qualityFilterADX) {
+    longConditions.push('adxValue >= adxThreshold');
+    shortConditions.push('adxValue >= adxThreshold');
+  }
+  if (config.qualityFilterVolume) {
+    longConditions.push('volOk');
+    shortConditions.push('volOk');
+  }
+  if (config.qualityFilterTrend) {
+    longConditions.push('trendBullish');
+    shortConditions.push('trendBearish');
+  }
+
+  if (longConditions.length === 0) return '';
+
+  return `
+// ─── QUALITY GATE ───────────────────────────────────────────────────────────
+qualityOkLong = ${longConditions.join(' and ')}
+qualityOkShort = ${shortConditions.join(' and ')}`;
+}
+
+function getQualityGateCondition(config: ScannerConfig, direction: 'long' | 'short'): string {
+  const hasFilters = config.qualityFilterADX || config.qualityFilterVolume || config.qualityFilterTrend;
+  if (!hasFilters) return '';
+  return direction === 'long' ? ' and qualityOkLong' : ' and qualityOkShort';
 }
 
 // ============================================================================

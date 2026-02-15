@@ -134,6 +134,10 @@ const MemberScripts = () => {
     maxBarsInTrade,
     platform,
     scriptType,
+    qualityFilterADX: true,
+    adxThreshold: 20,
+    qualityFilterVolume: true,
+    qualityFilterTrend: true,
   });
 
   const handleGenerateDiagnostic = () => {
