@@ -14,7 +14,7 @@ const corsHeaders = {
 // ============================================
 
 interface BackfillRequest {
-  batch_size?: number;     // Default 25
+  batch_size?: number;     // Default 15 (reduced from 25 to prevent timeouts)
   offset?: number;         // For pagination
   pattern_name?: string;   // Optional filter
   symbol?: string;         // Optional filter
@@ -22,15 +22,75 @@ interface BackfillRequest {
   dry_run?: boolean;       // Preview without updating
 }
 
+// Circuit breaker: track consecutive failures to skip invocations when downstream is unhealthy
+let consecutiveFailures = 0;
+const MAX_CONSECUTIVE_FAILURES = 3;
+const CIRCUIT_RESET_MS = 5 * 60 * 1000; // 5 minutes
+let circuitOpenedAt = 0;
+
+function isCircuitOpen(): boolean {
+  if (consecutiveFailures < MAX_CONSECUTIVE_FAILURES) return false;
+  // Auto-reset after cooldown
+  if (Date.now() - circuitOpenedAt > CIRCUIT_RESET_MS) {
+    consecutiveFailures = 0;
+    return false;
+  }
+  return true;
+}
+
+function recordSuccess() { consecutiveFailures = 0; }
+function recordFailure() {
+  consecutiveFailures++;
+  if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+    circuitOpenedAt = Date.now();
+  }
+}
+
+// Retry helper with exponential backoff
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2, baseDelayMs = 500): Promise<T> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fn();
+      recordSuccess();
+      return result;
+    } catch (err: any) {
+      lastError = err;
+      const isTimeout = err?.message?.includes('statement timeout') || err?.code === '57014';
+      if (!isTimeout || attempt === maxRetries) {
+        recordFailure();
+        throw err;
+      }
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      console.warn(`[backfill-validation] Attempt ${attempt + 1} timed out, retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Circuit breaker check
+  if (isCircuitOpen()) {
+    console.warn(`[backfill-validation] Circuit breaker OPEN (${consecutiveFailures} consecutive failures). Skipping.`);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Circuit breaker open - too many consecutive failures",
+        retry_after_seconds: Math.ceil((CIRCUIT_RESET_MS - (Date.now() - circuitOpenedAt)) / 1000),
+      }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const {
-      batch_size = 25,
+      batch_size = 15, // Reduced from 25 to prevent timeouts
       offset = 0,
       pattern_name,
       symbol,
@@ -45,43 +105,33 @@ serve(async (req) => {
 
     // ============================================
     // 1. Fetch unvalidated historical patterns
+    //    Use a simpler filter to avoid complex OR scans
     // ============================================
-    let query = supabase
-      .from("historical_pattern_occurrences")
-      .select("id, pattern_name, direction, entry_price, stop_loss_price, take_profit_price, symbol, timeframe, bars, quality_score, trend_alignment, validation_status, validation_layers_passed")
-      .order("created_at", { ascending: true })
-      .range(offset, offset + batch_size - 1);
+    const fetchPatterns = async () => {
+      let query = supabase
+        .from("historical_pattern_occurrences")
+        .select("id, pattern_name, direction, entry_price, stop_loss_price, take_profit_price, symbol, timeframe, bars, quality_score, trend_alignment, validation_status, validation_layers_passed")
+        .or("validation_status.eq.pending,validation_status.is.null")
+        .order("created_at", { ascending: true })
+        .range(offset, offset + batch_size - 1);
 
-    // Only fetch patterns that haven't completed full validation
-    // Either no validation at all, or missing layers
-    query = query.or("validation_status.eq.pending,validation_status.is.null,validation_layers_passed.is.null");
+      if (pattern_name) query = query.eq("pattern_name", pattern_name);
+      if (symbol) query = query.eq("symbol", symbol);
+      if (timeframe) query = query.eq("timeframe", timeframe);
 
-    if (pattern_name) query = query.eq("pattern_name", pattern_name);
-    if (symbol) query = query.eq("symbol", symbol);
-    if (timeframe) query = query.eq("timeframe", timeframe);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    };
 
-    const { data: patterns, error: fetchError } = await query;
-
-    if (fetchError) {
-      console.error("[backfill-validation] Fetch error:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch patterns", detail: fetchError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const patterns = await withRetry(fetchPatterns);
 
     if (!patterns || patterns.length === 0) {
-      // Check total remaining
-      const { count } = await supabase
-        .from("historical_pattern_occurrences")
-        .select("id", { count: "exact", head: true })
-        .or("validation_status.eq.pending,validation_status.is.null,validation_layers_passed.is.null");
-
+      recordSuccess();
       return new Response(
         JSON.stringify({
           success: true,
           message: "No unvalidated patterns in this batch",
-          total_remaining: count || 0,
           offset,
           batch_size,
         }),
@@ -123,40 +173,28 @@ serve(async (req) => {
       );
     }
 
-    // Invoke Layer 2 — which will chain to Layer 3 for confirmed patterns
-    const { data: l2Result, error: l2Error } = await supabase.functions.invoke("validate-pattern-context", {
-      body: { detections },
-    });
+    // Invoke Layer 2 with retry
+    const invokeValidation = async () => {
+      const { data, error } = await supabase.functions.invoke("validate-pattern-context", {
+        body: { detections },
+      });
+      if (error) throw error;
+      return data;
+    };
 
-    if (l2Error) {
-      console.error("[backfill-validation] Layer 2 invoke error:", l2Error);
-      return new Response(
-        JSON.stringify({ error: "Layer 2 validation failed", detail: l2Error.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    const l2Result = await withRetry(invokeValidation, 1, 1000);
     const summary = l2Result?.summary || {};
-
-    // ============================================
-    // 3. Check how many remain
-    // ============================================
-    const { count: remaining } = await supabase
-      .from("historical_pattern_occurrences")
-      .select("id", { count: "exact", head: true })
-      .or("validation_status.eq.pending,validation_status.is.null,validation_layers_passed.is.null");
 
     const result = {
       success: true,
       batch_processed: patterns.length,
       offset,
       next_offset: offset + batch_size,
-      remaining: remaining || 0,
-      has_more: (remaining || 0) > 0,
       l2_summary: summary,
     };
 
     console.info(`[backfill-validation] Batch complete:`, result);
+    recordSuccess();
 
     return new Response(
       JSON.stringify(result),
@@ -164,10 +202,20 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("[backfill-validation] Error:", error);
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    const isTimeout = msg.includes('statement timeout') || msg.includes('57014');
+    
+    recordFailure();
+    console.error(`[backfill-validation] Error (failures: ${consecutiveFailures}):`, msg);
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: msg, 
+        is_timeout: isTimeout,
+        consecutive_failures: consecutiveFailures,
+        circuit_open: isCircuitOpen(),
+      }),
+      { status: isTimeout ? 504 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

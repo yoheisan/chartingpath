@@ -1063,6 +1063,42 @@ export type Database = {
         }
         Relationships: []
       }
+      data_seeding_status: {
+        Row: {
+          asset_class: string
+          checked_at: string
+          failed_tickers: number
+          id: string
+          last_error: string | null
+          last_seed_at: string | null
+          seeded_tickers: number
+          source: string
+          total_tickers: number
+        }
+        Insert: {
+          asset_class: string
+          checked_at?: string
+          failed_tickers?: number
+          id?: string
+          last_error?: string | null
+          last_seed_at?: string | null
+          seeded_tickers?: number
+          source: string
+          total_tickers?: number
+        }
+        Update: {
+          asset_class?: string
+          checked_at?: string
+          failed_tickers?: number
+          id?: string
+          last_error?: string | null
+          last_seed_at?: string | null
+          seeded_tickers?: number
+          source?: string
+          total_tickers?: number
+        }
+        Relationships: []
+      }
       economic_alerts: {
         Row: {
           delivery_method: string
@@ -3006,6 +3042,80 @@ export type Database = {
           },
         ]
       }
+      service_health_checks: {
+        Row: {
+          checked_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          response_body: string | null
+          service_name: string
+          status: string
+          status_code: number | null
+        }
+        Insert: {
+          checked_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          response_body?: string | null
+          service_name: string
+          status: string
+          status_code?: number | null
+        }
+        Update: {
+          checked_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          response_body?: string | null
+          service_name?: string
+          status?: string
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_health_checks_service_name_fkey"
+            columns: ["service_name"]
+            isOneToOne: false
+            referencedRelation: "service_registry"
+            referencedColumns: ["service_name"]
+          },
+        ]
+      }
+      service_registry: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_name: string
+          health_endpoint: string | null
+          id: string
+          is_active: boolean
+          service_name: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          health_endpoint?: string | null
+          id?: string
+          is_active?: boolean
+          service_name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          health_endpoint?: string | null
+          id?: string
+          is_active?: boolean
+          service_name?: string
+        }
+        Relationships: []
+      }
       site_scan_sessions: {
         Row: {
           completed_at: string | null
@@ -3965,6 +4075,7 @@ export type Database = {
       }
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
+      cleanup_old_health_checks: { Args: never; Returns: undefined }
       estimate_project_credits: {
         Args: {
           p_instruments_count: number
