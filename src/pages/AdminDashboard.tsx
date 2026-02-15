@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import UserManagement from "@/components/UserManagement";
 import { InstrumentSearchAnalytics } from "@/components/admin/InstrumentSearchAnalytics";
 import { InternalDocs } from "@/components/admin/InternalDocs";
 import { CopilotFeedbackDashboard } from "@/components/admin/CopilotFeedbackDashboard";
+import { ServiceHealthDashboard } from "@/components/admin/ServiceHealthDashboard";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -215,6 +216,14 @@ const AdminDashboard = () => {
             <BookOpen className="h-4 w-4" />
             Internal Docs
           </Button>
+          <Button
+            variant={activeTab === "service-health" ? "default" : "outline"}
+            onClick={() => setActiveTab("service-health")}
+            className="flex items-center gap-2"
+          >
+            <Activity className="h-4 w-4" />
+            Service Health
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -241,6 +250,8 @@ const AdminDashboard = () => {
         {activeTab === "docs" && <InternalDocs />}
 
         {activeTab === "copilot-feedback" && <CopilotFeedbackDashboard />}
+
+        {activeTab === "service-health" && <ServiceHealthDashboard />}
       </div>
     </div>
   );

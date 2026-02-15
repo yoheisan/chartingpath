@@ -200,3 +200,6 @@ verify_jwt = false
 
 [functions.og-share]
 verify_jwt = false
+
+[functions.service-health-ping]
+verify_jwt = false
