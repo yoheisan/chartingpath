@@ -130,7 +130,6 @@ function generatePineStrategy(
   // Generate flat inline detection + trade logic per pattern (no functions, no tuples)
   const inlineBlocks = patterns.map(p => {
     const v = p.id.replace(/-/g, '_');
-    const detection = getInlineDetection(p.id, v);
     
     // SL expression
     let slExpr: string;
@@ -143,13 +142,12 @@ function generatePineStrategy(
         ? `close - atr14 * atrMultSL`
         : `close + atr14 * atrMultSL`;
     } else {
-      // pattern-based: use ATR as fallback
       slExpr = p.direction === 'long'
         ? `close - atr14 * 2`
         : `close + atr14 * 2`;
     }
     
-    // TP expression (must come after sl_final is set)
+    // TP expression
     let tpExpr: string;
     if (config.takeProfitMethod === 'fixed_pips') {
       tpExpr = p.direction === 'long'
@@ -160,17 +158,23 @@ function generatePineStrategy(
         ? `close + math.abs(close - ${v}_sl) * rrRatio`
         : `close - math.abs(close - ${v}_sl) * rrRatio`;
     }
+
+    // Trade execution lines (will be indented by getInlineDetection at correct depth)
+    const tradeLines = [
+      `${v}_detected := true`,
+      `${v}_sl = ${slExpr}`,
+      `${v}_tp = ${tpExpr}`,
+      `strategy.entry("${p.name}", strategy.${p.direction})`,
+      `strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)`,
+      `label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`,
+    ];
+    
+    const detection = getInlineDetection(p.id, v, tradeLines);
     
     return `// ═══ ${p.name.toUpperCase()} ═══
 ${v}_detected = false
 if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
-${detection}
-            ${v}_detected := true
-            ${v}_sl = ${slExpr}
-            ${v}_tp = ${tpExpr}
-            strategy.entry("${p.name}", strategy.${p.direction})
-            strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)
-            label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`;
+${detection}`;
   }).join('\n\n');
 
   const rrInput = config.takeProfitMethod === 'rr_ratio' 
@@ -367,120 +371,144 @@ function getTPInputs(config: ScannerConfig): string {
 // ============================================================================
 // INLINE PATTERN DETECTION (flat code, no functions/tuples)
 // ============================================================================
-// Returns Pine Script code block that sets {varName}_detected and {varName}_sl_raw
-// Uses only if-blocks and direct variable assignment — no custom functions.
+// Returns Pine Script code block with detection logic AND trade execution
+// embedded at the correct indentation depth per pattern.
 
-function getInlineDetection(patternId: string, v: string): string {
+function getInlineDetection(patternId: string, v: string, tradeLines: string[]): string {
+  // Helper: indent trade lines to the correct depth
+  const indent = (spaces: number) => tradeLines.map(l => ' '.repeat(spaces) + l).join('\n');
+
+  // Most patterns: outer if (4sp) → inner work (8sp) → inner if (8sp) → trade (12sp)
+  // Donchian: outer work (4sp) → if (4sp) → trade (8sp)
+
   switch (patternId) {
     case 'double-top':
       return `    if not na(ph1) and not na(ph2) and not na(pl1)
         ${v}_peakDiff = math.abs(ph1 - ph2) / ph2 * 100
         ${v}_valleyOk = not na(pl1Bar) and not na(ph1Bar) and not na(ph2Bar)
         ${v}_valleyBtwn = ${v}_valleyOk ? pl1Bar > math.min(ph1Bar, ph2Bar) and pl1Bar < math.max(ph1Bar, ph2Bar) : false
-        if ${v}_peakDiff < peakTolerance and ${v}_valleyBtwn and trendPct > minPriorTrend and close < pl1`;
-    
+        if ${v}_peakDiff < peakTolerance and ${v}_valleyBtwn and trendPct > minPriorTrend and close < pl1
+${indent(12)}`;
+
     case 'double-bottom':
       return `    if not na(pl1) and not na(pl2) and not na(ph1)
         ${v}_troughDiff = math.abs(pl1 - pl2) / pl2 * 100
         ${v}_peakOk = not na(ph1Bar) and not na(pl1Bar) and not na(pl2Bar)
         ${v}_peakBtwn = ${v}_peakOk ? ph1Bar > math.min(pl1Bar, pl2Bar) and ph1Bar < math.max(pl1Bar, pl2Bar) : false
-        if ${v}_troughDiff < peakTolerance and ${v}_peakBtwn and trendPct < -minPriorTrend and close > ph1`;
-    
+        if ${v}_troughDiff < peakTolerance and ${v}_peakBtwn and trendPct < -minPriorTrend and close > ph1
+${indent(12)}`;
+
     case 'triple-top':
       return `    if not na(ph1) and not na(ph2) and not na(ph3)
         ${v}_d12 = math.abs(ph1 - ph2) / ph2 * 100
         ${v}_d23 = math.abs(ph2 - ph3) / ph3 * 100
         ${v}_sup = math.min(pl1, pl2)
-        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct > minPriorTrend and close < ${v}_sup`;
-    
+        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct > minPriorTrend and close < ${v}_sup
+${indent(12)}`;
+
     case 'triple-bottom':
       return `    if not na(pl1) and not na(pl2) and not na(pl3)
         ${v}_d12 = math.abs(pl1 - pl2) / pl2 * 100
         ${v}_d23 = math.abs(pl2 - pl3) / pl3 * 100
         ${v}_res = math.max(ph1, ph2)
-        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct < -minPriorTrend and close > ${v}_res`;
-    
+        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct < -minPriorTrend and close > ${v}_res
+${indent(12)}`;
+
     case 'head-shoulders':
       return `    if not na(ph1) and not na(ph2) and not na(ph3) and not na(pl1) and not na(pl2)
         ${v}_headAbove = ph2 > ph1 and ph2 > ph3
         ${v}_shoulderSym = math.abs(ph1 - ph3) / ph3 * 100 < peakTolerance * 2
         ${v}_neckline = (pl1 + pl2) / 2
-        if ${v}_headAbove and ${v}_shoulderSym and trendPct > minPriorTrend and close < ${v}_neckline`;
-    
+        if ${v}_headAbove and ${v}_shoulderSym and trendPct > minPriorTrend and close < ${v}_neckline
+${indent(12)}`;
+
     case 'inverse-head-shoulders':
       return `    if not na(pl1) and not na(pl2) and not na(pl3) and not na(ph1) and not na(ph2)
         ${v}_headBelow = pl2 < pl1 and pl2 < pl3
         ${v}_shoulderSym = math.abs(pl1 - pl3) / pl3 * 100 < peakTolerance * 2
         ${v}_neckline = (ph1 + ph2) / 2
-        if ${v}_headBelow and ${v}_shoulderSym and trendPct < -minPriorTrend and close > ${v}_neckline`;
-    
+        if ${v}_headBelow and ${v}_shoulderSym and trendPct < -minPriorTrend and close > ${v}_neckline
+${indent(12)}`;
+
     case 'rising-wedge':
       return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
         ${v}_highsRising = ph1 > ph2
         ${v}_lowsRising = pl1 > pl2
         ${v}_converging = (ph1 - pl1) < (ph2 - pl2)
-        if ${v}_highsRising and ${v}_lowsRising and ${v}_converging and close < pl1`;
-    
+        if ${v}_highsRising and ${v}_lowsRising and ${v}_converging and close < pl1
+${indent(12)}`;
+
     case 'falling-wedge':
       return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
         ${v}_highsFalling = ph1 < ph2
         ${v}_lowsFalling = pl1 < pl2
         ${v}_converging = (ph1 - pl1) < (ph2 - pl2)
-        if ${v}_highsFalling and ${v}_lowsFalling and ${v}_converging and close > ph1`;
-    
+        if ${v}_highsFalling and ${v}_lowsFalling and ${v}_converging and close > ph1
+${indent(12)}`;
+
     case 'cup-handle':
       return `    if not na(pl1) and not na(ph1) and not na(ph2)
         ${v}_rimSym = math.abs(ph1 - ph2) / ph2 * 100 < peakTolerance * 2
         ${v}_cupDepth = (math.max(ph1, ph2) - pl1) / math.max(ph1, ph2) * 100
-        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct < -minPriorTrend and close > math.max(ph1, ph2)`;
-    
+        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct < -minPriorTrend and close > math.max(ph1, ph2)
+${indent(12)}`;
+
     case 'inverse-cup-handle':
       return `    if not na(ph1) and not na(pl1) and not na(pl2)
         ${v}_rimSym = math.abs(pl1 - pl2) / pl2 * 100 < peakTolerance * 2
         ${v}_cupDepth = (ph1 - math.min(pl1, pl2)) / math.min(pl1, pl2) * 100
-        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct > minPriorTrend and close < math.min(pl1, pl2)`;
-    
+        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct > minPriorTrend and close < math.min(pl1, pl2)
+${indent(12)}`;
+
     case 'bull-flag':
       return `    if not na(ph1) and not na(pl1) and not na(ph2)
         ${v}_poleMag = (ph2 - pl1) / pl1 * 100
         ${v}_flagRetr = (ph2 - close) / (ph2 - pl1)
-        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close > pl1`;
-    
+        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close > pl1
+${indent(12)}`;
+
     case 'bear-flag':
       return `    if not na(ph1) and not na(pl1) and not na(pl2)
         ${v}_poleMag = (ph1 - pl2) / pl2 * 100
         ${v}_flagRetr = (close - pl2) / (ph1 - pl2)
-        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close < ph1`;
-    
+        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close < ph1
+${indent(12)}`;
+
     case 'ascending-triangle':
       return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
         ${v}_flatTop = math.abs(ph1 - ph2) / ph2 * 100 < peakTolerance
         ${v}_risingLows = pl1 > pl2
-        if ${v}_flatTop and ${v}_risingLows and close > math.max(ph1, ph2)`;
-    
+        if ${v}_flatTop and ${v}_risingLows and close > math.max(ph1, ph2)
+${indent(12)}`;
+
     case 'descending-triangle':
       return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
         ${v}_flatBottom = math.abs(pl1 - pl2) / pl2 * 100 < peakTolerance
         ${v}_fallingHighs = ph1 < ph2
-        if ${v}_flatBottom and ${v}_fallingHighs and close < math.min(pl1, pl2)`;
-    
+        if ${v}_flatBottom and ${v}_fallingHighs and close < math.min(pl1, pl2)
+${indent(12)}`;
+
     case 'symmetric-triangle':
       return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
         ${v}_fallingHighs = ph1 < ph2
         ${v}_risingLows = pl1 > pl2
         ${v}_breakUp = close > ph1
-        if ${v}_fallingHighs and ${v}_risingLows and ${v}_breakUp`;
-    
+        if ${v}_fallingHighs and ${v}_risingLows and ${v}_breakUp
+${indent(12)}`;
+
     case 'donchian-breakout-long':
       return `    ${v}_upper = ta.highest(high, 20)
-    if close >= ${v}_upper and close > close[1]`;
-    
+    if close >= ${v}_upper and close > close[1]
+${indent(8)}`;
+
     case 'donchian-breakout-short':
       return `    ${v}_lower = ta.lowest(low, 20)
-    if close <= ${v}_lower and close < close[1]`;
-    
+    if close <= ${v}_lower and close < close[1]
+${indent(8)}`;
+
     default:
-      return `    if false`;
+      return `    if false
+${indent(8)}`;
   }
 }
 
