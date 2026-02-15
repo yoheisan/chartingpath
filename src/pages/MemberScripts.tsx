@@ -23,6 +23,7 @@ import { PlatformImportGuide } from "@/components/scripts/PlatformImportGuide";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   generateScannerScript,
+  generateDiagnosticPineScript,
   SCANNER_PATTERNS,
   DEFAULT_SCANNER_CONFIG,
   type ScannerConfig,
@@ -134,6 +135,15 @@ const MemberScripts = () => {
     platform,
     scriptType,
   });
+
+  const handleGenerateDiagnostic = () => {
+    const code = generateDiagnosticPineScript();
+    setGeneratedCode(code);
+    toast({
+      title: 'Diagnostic Script Generated',
+      description: 'Bare-minimum SMA crossover — paste into TradingView to verify Strategy Report loads.',
+    });
+  };
 
   const handleGenerate = () => {
     if (selectedPatterns.length === 0) {
@@ -517,10 +527,13 @@ const MemberScripts = () => {
                     <ScanSearch className="h-4 w-4" />
                     Generate Scanner Script
                   </Button>
-                  <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script generation" />
-                </CardContent>
-              </Card>
-            </div>
+                   <Button onClick={handleGenerateDiagnostic} variant="outline" className="w-full gap-2" size="sm">
+                     🔧 Generate Diagnostic Script (SMA Cross — tests TV)
+                   </Button>
+                   <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script generation" />
+                 </CardContent>
+               </Card>
+             </div>
 
             {/* Output Panel */}
             <Card className="lg:col-span-2">

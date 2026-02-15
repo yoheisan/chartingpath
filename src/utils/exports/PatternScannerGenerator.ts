@@ -88,6 +88,27 @@ export type ScannerPatternId = string;
 // PINE SCRIPT v5 SCANNER GENERATOR
 // ============================================================================
 
+export function generateDiagnosticPineScript(): string {
+  return `//@version=5
+strategy("Diagnostic - SMA Cross", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0)
+
+// Bare-minimum SMA crossover to verify TradingView Strategy Report loads.
+// If this hangs, the issue is TradingView, not our pattern logic.
+
+smaFast = ta.sma(close, 10)
+smaSlow = ta.sma(close, 30)
+
+if ta.crossover(smaFast, smaSlow)
+    strategy.entry("Long", strategy.long)
+
+if ta.crossunder(smaFast, smaSlow)
+    strategy.close("Long")
+
+plot(smaFast, "SMA 10", color=color.green)
+plot(smaSlow, "SMA 30", color=color.red)
+`;
+}
+
 export function generateScannerPineScript(config: ScannerConfig): string {
   const selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
   if (selected.length === 0) return '// No patterns selected';
