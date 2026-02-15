@@ -558,7 +558,7 @@ const StudyChart = memo(({
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
         rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
         rsiSeries.createPriceLine({ price: 50, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
-        rsiChart.timeScale().fitContent();
+        // Don't fitContent here — main chart will sync all ranges after setup
       }
     }
 
@@ -593,7 +593,7 @@ const StudyChart = memo(({
         macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
 
         macdHistSeries.createPriceLine({ price: 0, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
-        macdChart.timeScale().fitContent();
+        // Don't fitContent here — main chart will sync all ranges after setup
       }
     }
 
@@ -645,8 +645,23 @@ const StudyChart = memo(({
       });
     });
 
-    // Fit content
+    // Fit content on main chart, then explicitly sync oscillators to the same range
     chart.timeScale().fitContent();
+    
+    // Explicitly sync oscillator charts to the main chart's visible range
+    // This is needed because subscribeVisibleTimeRangeChange may not fire reliably on first render
+    const syncInitialRange = () => {
+      try {
+        const mainRange = chart.timeScale().getVisibleRange();
+        if (mainRange) {
+          rsiChartRef.current?.timeScale().setVisibleRange(mainRange);
+          macdChartRef.current?.timeScale().setVisibleRange(mainRange);
+        }
+      } catch { /* ignore */ }
+    };
+    // Run sync after a short delay to ensure charts have rendered
+    const initialSyncTimer = setTimeout(syncInitialRange, 50);
+    const initialSyncTimer2 = setTimeout(syncInitialRange, 200);
 
     // Sync price scale widths: read actual rendered widths, then force all to the widest.
     // minimumWidth is only a floor — if labels exceed it, the scale grows.
@@ -732,6 +747,8 @@ const StudyChart = memo(({
       clearTimeout(syncTimer1);
       clearTimeout(syncTimer2);
       clearTimeout(syncTimer3);
+      clearTimeout(initialSyncTimer);
+      clearTimeout(initialSyncTimer2);
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
