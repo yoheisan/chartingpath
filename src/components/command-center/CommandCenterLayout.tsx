@@ -569,17 +569,18 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </button>
 
-            {/* Scrollable Study-style content below chart */}
-            {!studyPanelCollapsed && (
-              <div className="flex-1 min-h-0 overflow-auto border-t border-border">
-                <DashboardPatternStudy
-                  symbol={selectedSymbol}
-                  timeframe={selectedTimeframe}
-                  onPatternSelect={handleOccurrenceSelect}
-                  selectedPatternId={selectedOccurrence?.id}
-                />
-              </div>
-            )}
+            {/* Scrollable Study-style content below chart — kept mounted to avoid refetch on toggle */}
+            <div className={cn(
+              "flex-1 min-h-0 overflow-auto border-t border-border",
+              studyPanelCollapsed && "hidden"
+            )}>
+              <DashboardPatternStudy
+                symbol={selectedSymbol}
+                timeframe={selectedTimeframe}
+                onPatternSelect={handleOccurrenceSelect}
+                selectedPatternId={selectedOccurrence?.id}
+              />
+            </div>
           </div>
         </div>
 
