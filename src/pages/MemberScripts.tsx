@@ -13,7 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { 
   Download, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
   FileCode, FlaskConical, Zap, Trash2, Clock, Save, LayoutGrid, List,
-  ChevronDown, ChevronUp, ScanSearch
+  ChevronDown, ChevronUp, ScanSearch, Shield
 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -86,6 +86,10 @@ const MemberScripts = () => {
   const [fixedTpPips, setFixedTpPips] = useState(150);
   const [riskPercent, setRiskPercent] = useState(2.0);
   const [maxBarsInTrade, setMaxBarsInTrade] = useState(100);
+  const [qualityFilterADX, setQualityFilterADX] = useState(true);
+  const [adxThreshold, setAdxThreshold] = useState(20);
+  const [qualityFilterVolume, setQualityFilterVolume] = useState(true);
+  const [qualityFilterTrend, setQualityFilterTrend] = useState(true);
   
   // UI state
   const [generatedCode, setGeneratedCode] = useState("");
@@ -134,10 +138,10 @@ const MemberScripts = () => {
     maxBarsInTrade,
     platform,
     scriptType,
-    qualityFilterADX: true,
-    adxThreshold: 20,
-    qualityFilterVolume: true,
-    qualityFilterTrend: true,
+    qualityFilterADX,
+    adxThreshold,
+    qualityFilterVolume,
+    qualityFilterTrend,
   });
 
   const handleGenerateDiagnostic = () => {
@@ -485,6 +489,96 @@ const MemberScripts = () => {
                           value={maxBarsInTrade}
                           onChange={(e) => setMaxBarsInTrade(Number(e.target.value))}
                         />
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+
+              {/* Quality Filters */}
+              <Collapsible defaultOpen={true}>
+                <Card>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          Signal Quality Filters
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          {[qualityFilterADX && `ADX>${adxThreshold}`, qualityFilterVolume && 'Volume', qualityFilterTrend && '200 EMA'].filter(Boolean).join(' · ') || 'None active'}
+                        </CardDescription>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <p className="text-xs text-muted-foreground">
+                        Approximate Grade B+ minimum — only fire signals that pass these quality checks.
+                      </p>
+
+                      {/* ADX Filter */}
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="filter-adx"
+                          checked={qualityFilterADX}
+                          onCheckedChange={(v) => setQualityFilterADX(!!v)}
+                        />
+                        <div className="space-y-1 flex-1">
+                          <Label htmlFor="filter-adx" className="text-sm font-medium cursor-pointer">
+                            ADX Trend Strength
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Require ADX above threshold to confirm trending conditions
+                          </p>
+                          {qualityFilterADX && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <span className="text-xs text-muted-foreground">Min ADX:</span>
+                              <Slider
+                                value={[adxThreshold]}
+                                onValueChange={([v]) => setAdxThreshold(v)}
+                                min={10} max={50} step={5}
+                                className="flex-1"
+                              />
+                              <span className="text-xs font-mono w-6 text-right">{adxThreshold}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Volume Filter */}
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="filter-volume"
+                          checked={qualityFilterVolume}
+                          onCheckedChange={(v) => setQualityFilterVolume(!!v)}
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="filter-volume" className="text-sm font-medium cursor-pointer">
+                            Volume Confirmation
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Signal bar volume must exceed 20-bar average
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Trend Alignment Filter */}
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="filter-trend"
+                          checked={qualityFilterTrend}
+                          onCheckedChange={(v) => setQualityFilterTrend(!!v)}
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="filter-trend" className="text-sm font-medium cursor-pointer">
+                            200 EMA Trend Alignment
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Longs only above 200 EMA, shorts only below — enforces with-trend entries
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </CollapsibleContent>
