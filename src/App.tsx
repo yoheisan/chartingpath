@@ -41,7 +41,7 @@ const StrategyDetail = lazy(() =>
 const PipCalculator = lazy(() => import("./pages/PipCalculator"));
 const RiskCalculator = lazy(() => import("./pages/RiskCalculator"));
 const MarketBreadthReport = lazy(() => import("./pages/MarketBreadthReport"));
-const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+
 const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
 const EmailPreview = lazy(() => import("./pages/EmailPreview"));
 
@@ -179,7 +179,7 @@ const App = () => (
           <Route path="/tools/pip-calculator" element={withSuspense(<PipCalculator />)} />
           <Route path="/tools/risk-calculator" element={withSuspense(<RiskCalculator />)} />
           <Route path="/tools/market-breadth" element={withSuspense(<MarketBreadthReport />)} />
-          <Route path="/tools/script-generator" element={withSuspense(<ScriptGenerator />)} />
+          <Route path="/tools/script-generator" element={<Navigate to="/members/scripts" replace />} />
           <Route path="/tools/economic-calendar" element={withSuspense(<EconomicCalendar />)} />
           <Route path="/email-preview" element={withSuspense(<EmailPreview />)} />
           <Route path="/chart-patterns/generator" element={withSuspense(<PatternGenerator />)} />
