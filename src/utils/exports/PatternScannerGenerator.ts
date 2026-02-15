@@ -131,15 +131,15 @@ function generatePineStrategy(
   
   const signalChecks = patterns.map(p => {
     const varName = p.id.replace(/-/g, '_');
-    // Route SL based on configured method
-    const slCalc = config.stopLossMethod === 'fixed_pips'
-      ? (p.direction === 'long'
-        ? `${varName}_sl_level := ${varName}_entry - fixedSLPips * syminfo.mintick`
-        : `${varName}_sl_level := ${varName}_entry + fixedSLPips * syminfo.mintick`)
-      : ''; // atr/pattern: use detection function's SL directly
-    const slOverride = slCalc ? `\n        ${slCalc}` : '';
     
-    // Route TP based on configured method
+    // Compute effective SL as a new variable (tuple vars are immutable in Pine v5)
+    const slLine = config.stopLossMethod === 'fixed_pips'
+      ? (p.direction === 'long'
+        ? `eff_sl = ${varName}_entry - fixedSLPips * syminfo.mintick`
+        : `eff_sl = ${varName}_entry + fixedSLPips * syminfo.mintick`)
+      : `eff_sl = ${varName}_sl_level`;
+    
+    // Compute TP
     const tpCalc = config.takeProfitMethod === 'fixed_pips'
       ? (p.direction === 'long'
         ? `${varName}_entry + fixedTPPips * syminfo.mintick`
@@ -151,11 +151,12 @@ function generatePineStrategy(
     return `// ${p.name}
 if enable_${varName}
     [${varName}_detected, ${varName}_entry, ${varName}_sl_level] = detect_${varName}(pivotHigh, pivotLow, pivotHighBar, pivotLowBar, atr, priorTrendPct)
-    if ${varName}_detected and strategy.position_size == 0 and barstate.isconfirmed${slOverride}
-        sl_dist = math.abs(${varName}_entry - ${varName}_sl_level)
+    if ${varName}_detected and strategy.position_size == 0 and barstate.isconfirmed
+        ${slLine}
+        sl_dist = math.abs(${varName}_entry - eff_sl)
         tp_level = ${tpCalc}
         strategy.entry("${p.name}", strategy.${p.direction})
-        strategy.exit("Exit ${p.name}", "${p.name}", stop=${varName}_sl_level, limit=tp_level)
+        strategy.exit("Exit ${p.name}", "${p.name}", stop=eff_sl, limit=tp_level)
         label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", 
                   color=${p.direction === 'long' ? 'color.green' : 'color.red'}, 
                   textcolor=color.white, 
