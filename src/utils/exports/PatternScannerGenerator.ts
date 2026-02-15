@@ -127,41 +127,55 @@ function generatePineStrategy(
     `enable_${p.id.replace(/-/g, '_')} = input.bool(true, "${p.name}")`
   ).join('\n');
 
-  const detectionFunctions = patterns.map(p => getDetectionFunction(p.id)).join('\n\n');
-  
-  const signalChecks = patterns.map(p => {
-    const varName = p.id.replace(/-/g, '_');
+  // Generate flat inline detection + trade logic per pattern (no functions, no tuples)
+  const inlineBlocks = patterns.map(p => {
+    const v = p.id.replace(/-/g, '_');
+    const detection = getInlineDetection(p.id, v);
     
-    // Compute effective SL as a new variable (tuple vars are immutable in Pine v5)
-    const slLine = config.stopLossMethod === 'fixed_pips'
-      ? (p.direction === 'long'
-        ? `eff_sl = ${varName}_entry - fixedSLPips * syminfo.mintick`
-        : `eff_sl = ${varName}_entry + fixedSLPips * syminfo.mintick`)
-      : `eff_sl = ${varName}_sl_level`;
+    // SL expression
+    let slExpr: string;
+    if (config.stopLossMethod === 'fixed_pips') {
+      slExpr = p.direction === 'long'
+        ? `close - fixedSLPips * syminfo.mintick`
+        : `close + fixedSLPips * syminfo.mintick`;
+    } else if (config.stopLossMethod === 'atr') {
+      slExpr = p.direction === 'long'
+        ? `close - atr14 * atrMultSL`
+        : `close + atr14 * atrMultSL`;
+    } else {
+      // pattern-based: use ATR as fallback
+      slExpr = p.direction === 'long'
+        ? `close - atr14 * 2`
+        : `close + atr14 * 2`;
+    }
     
-    // Compute TP
-    const tpCalc = config.takeProfitMethod === 'fixed_pips'
-      ? (p.direction === 'long'
-        ? `${varName}_entry + fixedTPPips * syminfo.mintick`
-        : `${varName}_entry - fixedTPPips * syminfo.mintick`)
-      : (p.direction === 'long'
-        ? `${varName}_entry + sl_dist * rrRatio`
-        : `${varName}_entry - sl_dist * rrRatio`);
+    // TP expression (must come after sl_final is set)
+    let tpExpr: string;
+    if (config.takeProfitMethod === 'fixed_pips') {
+      tpExpr = p.direction === 'long'
+        ? `close + fixedTPPips * syminfo.mintick`
+        : `close - fixedTPPips * syminfo.mintick`;
+    } else {
+      tpExpr = p.direction === 'long'
+        ? `close + math.abs(close - ${v}_sl) * rrRatio`
+        : `close - math.abs(close - ${v}_sl) * rrRatio`;
+    }
     
-    return `// ${p.name}
-if enable_${varName}
-    [${varName}_detected, ${varName}_entry, ${varName}_sl_level] = detect_${varName}(pivotHigh, pivotLow, pivotHighBar, pivotLowBar, atr, priorTrendPct)
-    if ${varName}_detected and strategy.position_size == 0 and barstate.isconfirmed
-        ${slLine}
-        sl_dist = math.abs(${varName}_entry - eff_sl)
-        tp_level = ${tpCalc}
+    return `// ═══ ${p.name.toUpperCase()} ═══
+${v}_detected = false
+if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
+${detection}
+        ${v}_detected := true
+        ${v}_sl = ${slExpr}
+        ${v}_tp = ${tpExpr}
         strategy.entry("${p.name}", strategy.${p.direction})
-        strategy.exit("Exit ${p.name}", "${p.name}", stop=eff_sl, limit=tp_level)
-        label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", 
-                  color=${p.direction === 'long' ? 'color.green' : 'color.red'}, 
-                  textcolor=color.white, 
-                  style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`;
+        strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)
+        label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`;
   }).join('\n\n');
+
+  const rrInput = config.takeProfitMethod === 'rr_ratio' 
+    ? `rrRatio = input.float(${config.rrRatio}, "R:R Ratio", minval=1, maxval=10, step=0.5, group=group_risk)` 
+    : `rrRatio = ${config.rrRatio}`;
 
   return `${header}
 strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0)
@@ -170,6 +184,7 @@ strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_e
 group_risk = "Risk Management"
 riskPercent = input.float(${config.riskPercent}, "Risk Per Trade %", minval=0.1, maxval=10, step=0.1, group=group_risk)
 ${slInputs}
+${rrInput}
 ${tpInputs}
 maxBarsInTrade = input.int(${config.maxBarsInTrade}, "Max Bars in Trade", minval=10, maxval=500, group=group_risk)
 
@@ -181,66 +196,50 @@ peakTolerance = input.float(1.5, "Peak Similarity % Tolerance", minval=0.5, maxv
 group_patterns = "Pattern Toggles"
 ${patternToggles}
 
-// ─── CORE DETECTION UTILITIES ───────────────────────────────────────────────
-atr = ta.atr(14)
+// ─── PIVOT TRACKING ─────────────────────────────────────────────────────────
+atr14 = ta.atr(14)
+ph = ta.pivothigh(high, pivotLen, pivotLen)
+pl = ta.pivotlow(low, pivotLen, pivotLen)
 
-// Pivot detection
-pivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
-pivotLow  = ta.pivotlow(low, pivotLen, pivotLen)
-
-// Track recent pivots
 var float ph1 = na
 var float ph2 = na
 var float ph3 = na
-var int   ph1Bar = na
-var int   ph2Bar = na
-var int   ph3Bar = na
+var int ph1Bar = na
+var int ph2Bar = na
+var int ph3Bar = na
 var float pl1 = na
 var float pl2 = na
 var float pl3 = na
-var int   pl1Bar = na
-var int   pl2Bar = na
-var int   pl3Bar = na
+var int pl1Bar = na
+var int pl2Bar = na
+var int pl3Bar = na
 
-// Store bar indices for pivots
-pivotHighBar = not na(pivotHigh) ? bar_index - pivotLen : na
-pivotLowBar  = not na(pivotLow)  ? bar_index - pivotLen : na
-
-if not na(pivotHigh)
+if not na(ph)
     ph3 := ph2
     ph3Bar := ph2Bar
     ph2 := ph1
     ph2Bar := ph1Bar
-    ph1 := pivotHigh
+    ph1 := ph
     ph1Bar := bar_index - pivotLen
 
-if not na(pivotLow)
+if not na(pl)
     pl3 := pl2
     pl3Bar := pl2Bar
     pl2 := pl1
     pl2Bar := pl1Bar
-    pl1 := pivotLow
+    pl1 := pl
     pl1Bar := bar_index - pivotLen
 
-// Prior trend calculation (% change over lookback)
-priorTrendPct = ((close - close[20]) / close[20]) * 100
+trendPct = ((close - close[20]) / close[20]) * 100
 
-// ─── PATTERN DETECTION FUNCTIONS ────────────────────────────────────────────
-${detectionFunctions}
-
-// ─── SIGNAL PROCESSING ──────────────────────────────────────────────────────
-rrRatio = ${config.takeProfitMethod === 'rr_ratio' ? `input.float(${config.rrRatio}, "R:R Ratio", minval=1, maxval=10, step=0.5, group=group_risk)` : `${config.rrRatio}`}
-
-${signalChecks}
+// ─── PATTERN DETECTION & TRADE ENTRY ────────────────────────────────────────
+${inlineBlocks}
 
 // ─── TIME STOP ──────────────────────────────────────────────────────────────
-barsInTrade = strategy.position_size != 0 ? bar_index - strategy.opentrades.entry_bar_index(0) : 0
-if barsInTrade >= maxBarsInTrade and strategy.position_size != 0
-    strategy.close_all("Time Stop")
-
-// ─── VISUALIZATION ──────────────────────────────────────────────────────────
-plotshape(not na(pivotHigh), "Pivot High", shape.triangledown, location.abovebar, color.new(color.red, 60), size=size.tiny)
-plotshape(not na(pivotLow), "Pivot Low", shape.triangleup, location.belowbar, color.new(color.green, 60), size=size.tiny)
+if strategy.position_size != 0
+    barsHeld = bar_index - strategy.opentrades.entry_bar_index(0)
+    if barsHeld >= maxBarsInTrade
+        strategy.close_all("Time Stop")
 
 // ─── DISCLAIMER ─────────────────────────────────────────────────────────────
 // EDUCATIONAL USE ONLY - NOT FINANCIAL ADVICE
@@ -366,7 +365,127 @@ function getTPInputs(config: ScannerConfig): string {
 }
 
 // ============================================================================
-// PATTERN DETECTION FUNCTIONS (Pine Script v5)
+// INLINE PATTERN DETECTION (flat code, no functions/tuples)
+// ============================================================================
+// Returns Pine Script code block that sets {varName}_detected and {varName}_sl_raw
+// Uses only if-blocks and direct variable assignment — no custom functions.
+
+function getInlineDetection(patternId: string, v: string): string {
+  switch (patternId) {
+    case 'double-top':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1)
+        ${v}_peakDiff = math.abs(ph1 - ph2) / ph2 * 100
+        ${v}_valleyOk = not na(pl1Bar) and not na(ph1Bar) and not na(ph2Bar)
+        ${v}_valleyBtwn = ${v}_valleyOk ? pl1Bar > math.min(ph1Bar, ph2Bar) and pl1Bar < math.max(ph1Bar, ph2Bar) : false
+        if ${v}_peakDiff < peakTolerance and ${v}_valleyBtwn and trendPct > minPriorTrend and close < pl1`;
+    
+    case 'double-bottom':
+      return `    if not na(pl1) and not na(pl2) and not na(ph1)
+        ${v}_troughDiff = math.abs(pl1 - pl2) / pl2 * 100
+        ${v}_peakOk = not na(ph1Bar) and not na(pl1Bar) and not na(pl2Bar)
+        ${v}_peakBtwn = ${v}_peakOk ? ph1Bar > math.min(pl1Bar, pl2Bar) and ph1Bar < math.max(pl1Bar, pl2Bar) : false
+        if ${v}_troughDiff < peakTolerance and ${v}_peakBtwn and trendPct < -minPriorTrend and close > ph1`;
+    
+    case 'triple-top':
+      return `    if not na(ph1) and not na(ph2) and not na(ph3)
+        ${v}_d12 = math.abs(ph1 - ph2) / ph2 * 100
+        ${v}_d23 = math.abs(ph2 - ph3) / ph3 * 100
+        ${v}_sup = math.min(pl1, pl2)
+        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct > minPriorTrend and close < ${v}_sup`;
+    
+    case 'triple-bottom':
+      return `    if not na(pl1) and not na(pl2) and not na(pl3)
+        ${v}_d12 = math.abs(pl1 - pl2) / pl2 * 100
+        ${v}_d23 = math.abs(pl2 - pl3) / pl3 * 100
+        ${v}_res = math.max(ph1, ph2)
+        if ${v}_d12 < peakTolerance and ${v}_d23 < peakTolerance and trendPct < -minPriorTrend and close > ${v}_res`;
+    
+    case 'head-shoulders':
+      return `    if not na(ph1) and not na(ph2) and not na(ph3) and not na(pl1) and not na(pl2)
+        ${v}_headAbove = ph2 > ph1 and ph2 > ph3
+        ${v}_shoulderSym = math.abs(ph1 - ph3) / ph3 * 100 < peakTolerance * 2
+        ${v}_neckline = (pl1 + pl2) / 2
+        if ${v}_headAbove and ${v}_shoulderSym and trendPct > minPriorTrend and close < ${v}_neckline`;
+    
+    case 'inverse-head-shoulders':
+      return `    if not na(pl1) and not na(pl2) and not na(pl3) and not na(ph1) and not na(ph2)
+        ${v}_headBelow = pl2 < pl1 and pl2 < pl3
+        ${v}_shoulderSym = math.abs(pl1 - pl3) / pl3 * 100 < peakTolerance * 2
+        ${v}_neckline = (ph1 + ph2) / 2
+        if ${v}_headBelow and ${v}_shoulderSym and trendPct < -minPriorTrend and close > ${v}_neckline`;
+    
+    case 'rising-wedge':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
+        ${v}_highsRising = ph1 > ph2
+        ${v}_lowsRising = pl1 > pl2
+        ${v}_converging = (ph1 - pl1) < (ph2 - pl2)
+        if ${v}_highsRising and ${v}_lowsRising and ${v}_converging and close < pl1`;
+    
+    case 'falling-wedge':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
+        ${v}_highsFalling = ph1 < ph2
+        ${v}_lowsFalling = pl1 < pl2
+        ${v}_converging = (ph1 - pl1) < (ph2 - pl2)
+        if ${v}_highsFalling and ${v}_lowsFalling and ${v}_converging and close > ph1`;
+    
+    case 'cup-handle':
+      return `    if not na(pl1) and not na(ph1) and not na(ph2)
+        ${v}_rimSym = math.abs(ph1 - ph2) / ph2 * 100 < peakTolerance * 2
+        ${v}_cupDepth = (math.max(ph1, ph2) - pl1) / math.max(ph1, ph2) * 100
+        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct < -minPriorTrend and close > math.max(ph1, ph2)`;
+    
+    case 'inverse-cup-handle':
+      return `    if not na(ph1) and not na(pl1) and not na(pl2)
+        ${v}_rimSym = math.abs(pl1 - pl2) / pl2 * 100 < peakTolerance * 2
+        ${v}_cupDepth = (ph1 - math.min(pl1, pl2)) / math.min(pl1, pl2) * 100
+        if ${v}_rimSym and ${v}_cupDepth > 5 and ${v}_cupDepth < 35 and trendPct > minPriorTrend and close < math.min(pl1, pl2)`;
+    
+    case 'bull-flag':
+      return `    if not na(ph1) and not na(pl1) and not na(ph2)
+        ${v}_poleMag = (ph2 - pl1) / pl1 * 100
+        ${v}_flagRetr = (ph2 - close) / (ph2 - pl1)
+        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close > pl1`;
+    
+    case 'bear-flag':
+      return `    if not na(ph1) and not na(pl1) and not na(pl2)
+        ${v}_poleMag = (ph1 - pl2) / pl2 * 100
+        ${v}_flagRetr = (close - pl2) / (ph1 - pl2)
+        if ${v}_poleMag > 5 and ${v}_flagRetr > 0.2 and ${v}_flagRetr < 0.5 and close < ph1`;
+    
+    case 'ascending-triangle':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
+        ${v}_flatTop = math.abs(ph1 - ph2) / ph2 * 100 < peakTolerance
+        ${v}_risingLows = pl1 > pl2
+        if ${v}_flatTop and ${v}_risingLows and close > math.max(ph1, ph2)`;
+    
+    case 'descending-triangle':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
+        ${v}_flatBottom = math.abs(pl1 - pl2) / pl2 * 100 < peakTolerance
+        ${v}_fallingHighs = ph1 < ph2
+        if ${v}_flatBottom and ${v}_fallingHighs and close < math.min(pl1, pl2)`;
+    
+    case 'symmetric-triangle':
+      return `    if not na(ph1) and not na(ph2) and not na(pl1) and not na(pl2)
+        ${v}_fallingHighs = ph1 < ph2
+        ${v}_risingLows = pl1 > pl2
+        ${v}_breakUp = close > ph1
+        if ${v}_fallingHighs and ${v}_risingLows and ${v}_breakUp`;
+    
+    case 'donchian-breakout-long':
+      return `    ${v}_upper = ta.highest(high, 20)
+    if close >= ${v}_upper and close > close[1]`;
+    
+    case 'donchian-breakout-short':
+      return `    ${v}_lower = ta.lowest(low, 20)
+    if close <= ${v}_lower and close < close[1]`;
+    
+    default:
+      return `    if false`;
+  }
+}
+
+// ============================================================================
+// LEGACY PATTERN DETECTION FUNCTIONS (used by indicator mode)
 // ============================================================================
 // Each function returns [bool detected, float entryPrice, float stopLoss]
 // following Bulkowski structural criteria
