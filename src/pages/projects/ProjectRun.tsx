@@ -78,18 +78,20 @@ const ProjectRun = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Fetch run status
+  // Fetch run status with timeout
   const fetchRun = async () => {
     if (!runId) return;
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Redirect to auth if no session - this endpoint requires authentication
       if (!session?.access_token) {
         navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
         return;
       }
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       const response = await fetch(
         `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/result?runId=${runId}`,
@@ -98,13 +100,15 @@ const ProjectRun = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
+          signal: controller.signal,
         }
       );
+      
+      clearTimeout(timeoutId);
       
       const data = await response.json();
       
       if (!response.ok) {
-        // Handle 401 specifically - session might have expired
         if (response.status === 401) {
           navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
           return;
@@ -118,25 +122,32 @@ const ProjectRun = () => {
       setError(null);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch run');
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Request timed out. The server may be busy — click Retry.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch run');
+      }
     } finally {
       setLoading(false);
     }
   };
   
-  // Initial fetch and polling
+  // Initial fetch and polling with ref to avoid stale closure
   useEffect(() => {
     fetchRun();
     
-    // Poll while queued or running
-    const interval = setInterval(() => {
-      if (run?.status === 'queued' || run?.status === 'running') {
-        fetchRun();
-      }
+    const interval = setInterval(async () => {
+      // Re-read current status from state via functional update pattern
+      setRun(currentRun => {
+        if (currentRun?.status === 'queued' || currentRun?.status === 'running') {
+          fetchRun();
+        }
+        return currentRun;
+      });
     }, 3000);
     
     return () => clearInterval(interval);
-  }, [runId, run?.status]);
+  }, [runId]);
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -201,7 +212,12 @@ const ProjectRun = () => {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={() => { setLoading(true); setError(null); fetchRun(); }} className="ml-4 shrink-0">
+                Retry
+              </Button>
+            </AlertDescription>
           </Alert>
         </div>
       </div>
