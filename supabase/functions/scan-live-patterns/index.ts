@@ -22,6 +22,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ============================================
+// Circuit Breaker + Retry Utilities
+// ============================================
+let consecutiveDbFailures = 0;
+const MAX_DB_FAILURES = 3;
+const CIRCUIT_RESET_MS = 5 * 60 * 1000;
+let circuitOpenedAt = 0;
+
+function isDbCircuitOpen(): boolean {
+  if (consecutiveDbFailures < MAX_DB_FAILURES) return false;
+  if (Date.now() - circuitOpenedAt > CIRCUIT_RESET_MS) {
+    consecutiveDbFailures = 0;
+    return false;
+  }
+  return true;
+}
+function recordDbSuccess() { consecutiveDbFailures = 0; }
+function recordDbFailure() {
+  consecutiveDbFailures++;
+  if (consecutiveDbFailures >= MAX_DB_FAILURES) circuitOpenedAt = Date.now();
+}
+
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 1, baseDelayMs = 300): Promise<T> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fn();
+      recordDbSuccess();
+      return result;
+    } catch (err: any) {
+      lastError = err;
+      const isTimeout = err?.message?.includes('statement timeout') || err?.code === '57014';
+      if (!isTimeout || attempt === maxRetries) {
+        recordDbFailure();
+        throw err;
+      }
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      console.warn(`[scan-live-patterns] Attempt ${attempt + 1} timed out, retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
 function getInstrumentsForTier(assetType: string, maxTickers: number): string[] {
   const assetMap: Record<string, Instrument[]> = {
     fx: ALL_INSTRUMENTS.fx,
@@ -193,26 +237,43 @@ async function fetchPatternSymbolStats(
     let hasMore = true;
     
     while (hasMore) {
-      const { data: pageData, error } = await supabase
-        .from('historical_pattern_occurrences')
-        .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, detected_at`)
-        .in('pattern_id', uniquePatternIds)
-        .in('symbol', uniqueSymbols)
-        .eq('timeframe', timeframe)
-        .not(outcomeCol, 'is', null)
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-      
-      if (error) {
-        console.error('[fetchPatternSymbolStats] Query error:', error.message);
-        return statsMap;
-      }
-      
-      if (!pageData?.length) {
+      try {
+        const { data: pageData, error } = await supabase
+          .from('historical_pattern_occurrences')
+          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, detected_at`)
+          .in('pattern_id', uniquePatternIds)
+          .in('symbol', uniqueSymbols)
+          .eq('timeframe', timeframe)
+          .not(outcomeCol, 'is', null)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        
+        if (error) {
+          // If timeout, return what we have so far instead of failing completely
+          const isTimeout = error.message?.includes('statement timeout') || error.code === '57014';
+          if (isTimeout) {
+            console.warn(`[fetchPatternSymbolStats] Timeout on page ${page}, using ${allData.length} rows collected so far`);
+            hasMore = false;
+            break;
+          }
+          console.error('[fetchPatternSymbolStats] Query error:', error.message);
+          return statsMap;
+        }
+        
+        if (!pageData?.length) {
+          hasMore = false;
+        } else {
+          allData = allData.concat(pageData);
+          hasMore = pageData.length === PAGE_SIZE;
+          page++;
+          // Safety: cap at 5 pages to prevent runaway queries
+          if (page >= 5) {
+            console.warn(`[fetchPatternSymbolStats] Capped at ${page} pages (${allData.length} rows)`);
+            hasMore = false;
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[fetchPatternSymbolStats] Exception on page ${page}: ${err.message}`);
         hasMore = false;
-      } else {
-        allData = allData.concat(pageData);
-        hasMore = pageData.length === PAGE_SIZE;
-        page++;
       }
     }
     
@@ -559,14 +620,27 @@ async function readCachedPatternsFromDb(
           'last_confirmed_at',
         ].join(',');
 
-    const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
-      .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
-      .in('pattern_id', allowedPatterns).in('instrument', instruments)
-      .eq('validation_status', 'confirmed') // Pipeline filter: only show validated patterns
-      .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
+    // Circuit breaker check before expensive DB read
+    if (isDbCircuitOpen()) {
+      console.warn('[scan-live-patterns] DB circuit breaker OPEN, skipping cache read');
+      return null;
+    }
+
+    const fetchCached = async () => {
+      const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
+        .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
+        .in('pattern_id', allowedPatterns).in('instrument', instruments)
+        .eq('validation_status', 'confirmed')
+        .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
+      
+      if (error) throw new Error(error.message);
+      return cachedPatterns;
+    };
+
+    const cachedPatterns = await withRetry(fetchCached, 1, 500);
     
-    if (error) {
-      console.error('[scan-live-patterns] DB cache read error:', error.message);
+    if (!cachedPatterns) {
+      console.error('[scan-live-patterns] DB cache read returned null after retry');
       return null;
     }
     
