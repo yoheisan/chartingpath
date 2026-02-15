@@ -194,7 +194,7 @@ ${detection}`;
     : `rrRatio = ${config.rrRatio}`;
 
   return `${header}
-strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, process_orders_on_close=true, max_bars_back=5000)
+strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, process_orders_on_close=true, max_bars_back=5000, max_labels_count=50, max_lines_count=50, max_boxes_count=50)
 
 // ─── INPUTS ─────────────────────────────────────────────────────────────────
 group_risk = "Risk Management"
