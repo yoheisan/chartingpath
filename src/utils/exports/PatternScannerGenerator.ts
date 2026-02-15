@@ -128,8 +128,15 @@ function generatePineStrategy(
   ).join('\n');
 
   // Generate flat inline detection + trade logic per pattern (no functions, no tuples)
+  // Strategy mode: NO label.new() (strategies show native entry/exit arrows)
+  // SL/TP stored in var variables, strategy.exit() called outside detection block
+  const varDeclarations: string[] = [];
   const inlineBlocks = patterns.map(p => {
     const v = p.id.replace(/-/g, '_');
+    
+    // Declare persistent SL/TP variables
+    varDeclarations.push(`var float ${v}_sl_level = na`);
+    varDeclarations.push(`var float ${v}_tp_level = na`);
     
     // SL expression
     let slExpr: string;
@@ -147,7 +154,7 @@ function generatePineStrategy(
         : `close + atr14 * 2`;
     }
     
-    // TP expression
+    // TP expression (references the var SL level)
     let tpExpr: string;
     if (config.takeProfitMethod === 'fixed_pips') {
       tpExpr = p.direction === 'long'
@@ -155,18 +162,16 @@ function generatePineStrategy(
         : `close - fixedTPPips * syminfo.mintick`;
     } else {
       tpExpr = p.direction === 'long'
-        ? `close + math.abs(close - ${v}_sl) * rrRatio`
-        : `close - math.abs(close - ${v}_sl) * rrRatio`;
+        ? `close + math.abs(close - ${v}_sl_level) * rrRatio`
+        : `close - math.abs(close - ${v}_sl_level) * rrRatio`;
     }
 
-    // Trade execution lines (will be indented by getInlineDetection at correct depth)
+    // Trade execution lines — NO labels, use var SL/TP
     const tradeLines = [
       `${v}_detected := true`,
-      `${v}_sl = ${slExpr}`,
-      `${v}_tp = ${tpExpr}`,
+      `${v}_sl_level := ${slExpr}`,
+      `${v}_tp_level := ${tpExpr}`,
       `strategy.entry("${p.name}", strategy.${p.direction})`,
-      `strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)`,
-      `label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`,
     ];
     
     const detection = getInlineDetection(p.id, v, tradeLines);
@@ -176,6 +181,12 @@ ${v}_detected = false
 if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
 ${detection}`;
   }).join('\n\n');
+
+  // Generate exit block that runs every bar (outside detection conditionals)
+  const exitBlocks = patterns.map(p => {
+    const v = p.id.replace(/-/g, '_');
+    return `strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl_level, limit=${v}_tp_level)`;
+  }).join('\n');
 
   const rrInput = config.takeProfitMethod === 'rr_ratio' 
     ? `rrRatio = input.float(${config.rrRatio}, "R:R Ratio", minval=1, maxval=10, step=0.5, group=group_risk)` 
@@ -217,6 +228,7 @@ var float pl3 = na
 var int pl1Bar = na
 var int pl2Bar = na
 var int pl3Bar = na
+${varDeclarations.join('\n')}
 
 if not na(ph)
     ph3 := ph2
@@ -238,6 +250,9 @@ trendPct = ((close - close[20]) / close[20]) * 100
 
 // ─── PATTERN DETECTION & TRADE ENTRY ────────────────────────────────────────
 ${inlineBlocks}
+
+// ─── EXIT MANAGEMENT (runs every bar) ───────────────────────────────────────
+${exitBlocks}
 
 // ─── TIME STOP ──────────────────────────────────────────────────────────────
 if strategy.position_size != 0
