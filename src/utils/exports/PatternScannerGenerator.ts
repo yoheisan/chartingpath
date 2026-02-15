@@ -165,12 +165,12 @@ function generatePineStrategy(
 ${v}_detected = false
 if enable_${v} and strategy.position_size == 0 and barstate.isconfirmed
 ${detection}
-        ${v}_detected := true
-        ${v}_sl = ${slExpr}
-        ${v}_tp = ${tpExpr}
-        strategy.entry("${p.name}", strategy.${p.direction})
-        strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)
-        label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`;
+            ${v}_detected := true
+            ${v}_sl = ${slExpr}
+            ${v}_tp = ${tpExpr}
+            strategy.entry("${p.name}", strategy.${p.direction})
+            strategy.exit("X_${p.name}", "${p.name}", stop=${v}_sl, limit=${v}_tp)
+            label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", color=${p.direction === 'long' ? 'color.green' : 'color.red'}, textcolor=color.white, style=label.style_label_${p.direction === 'long' ? 'up' : 'down'}, size=size.small)`;
   }).join('\n\n');
 
   const rrInput = config.takeProfitMethod === 'rr_ratio' 
