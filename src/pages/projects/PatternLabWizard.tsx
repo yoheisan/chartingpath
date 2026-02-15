@@ -254,6 +254,7 @@ const PatternLabWizard = () => {
   const [isEstimating, setIsEstimating] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
   const [paramsOpen, setParamsOpen] = useState(false);
   const [patternsOpen, setPatternsOpen] = useState(false);
@@ -282,13 +283,17 @@ const PatternLabWizard = () => {
   
   // Fetch estimate when inputs change
   useEffect(() => {
+    let cancelled = false;
+    
     const fetchEstimate = async () => {
       if (selectedPatterns.length === 0 || selectedInstruments.length === 0 || selectedGrades.length === 0) {
         setEstimate(null);
+        setEstimateError(null);
         return;
       }
       
       setIsEstimating(true);
+      setEstimateError(null);
       try {
         const response = await fetch(
           'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
@@ -309,20 +314,37 @@ const PatternLabWizard = () => {
           }
         );
         
+        if (cancelled) return;
+        
+        if (!response.ok) {
+          throw new Error(`Server error (${response.status})`);
+        }
+        
         const data = await response.json();
-        setEstimate(data);
-        if (data.tier) {
-          setUserTier(data.tier);
+        if (!cancelled) {
+          setEstimate(data);
+          setEstimateError(null);
+          if (data.tier) {
+            setUserTier(data.tier);
+          }
         }
       } catch (error) {
         console.error('Estimate error:', error);
+        if (!cancelled) {
+          setEstimateError('Could not load estimate');
+        }
       } finally {
-        setIsEstimating(false);
+        if (!cancelled) {
+          setIsEstimating(false);
+        }
       }
     };
     
     const debounce = setTimeout(fetchEstimate, 300);
-    return () => clearTimeout(debounce);
+    return () => {
+      clearTimeout(debounce);
+      cancelled = true;
+    };
   }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades, session]);
   
   const handleInstrumentToggle = (symbol: string) => {
@@ -839,6 +861,27 @@ const PatternLabWizard = () => {
                     <Skeleton className="h-8 w-24" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : estimateError ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-destructive">{estimateError}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEstimateError(null);
+                        setEstimate(null);
+                        // Force re-trigger by toggling a value
+                        setIsEstimating(true);
+                        setTimeout(() => {
+                          setIsEstimating(false);
+                          // The useEffect will re-fire on next render cycle
+                          setSelectedInstruments(prev => [...prev]);
+                        }, 50);
+                      }}
+                    >
+                      Retry
+                    </Button>
                   </div>
                 ) : estimate ? (
                   <>
