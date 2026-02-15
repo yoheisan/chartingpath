@@ -639,16 +639,25 @@ const StudyChart = memo(({
     // Fit content
     chart.timeScale().fitContent();
 
-    // Sync price scale widths: force all to the same large minimumWidth
+    // Sync price scale widths: read actual rendered widths, then force all to the widest.
+    // minimumWidth is only a floor — if labels exceed it, the scale grows.
+    // We must read after render, find the max, then re-apply.
     const syncPriceScaleWidths = () => {
       const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
       if (charts.length <= 1) return;
+      const widths = charts.map((c) => {
+        try { return c.priceScale('right').width(); } catch { return 0; }
+      });
+      const maxW = Math.max(...widths, 60);
+      console.log('[StudyChart] Price scale widths:', widths, '→ forcing all to', maxW);
       charts.forEach((c) => {
-        c.priceScale('right').applyOptions({ minimumWidth: 85 });
+        c.priceScale('right').applyOptions({ minimumWidth: maxW });
       });
     };
-    // Delay to allow initial render
-    const syncTimer = setTimeout(syncPriceScaleWidths, 100);
+    // Multiple passes: labels may not stabilize immediately
+    const syncTimer1 = setTimeout(syncPriceScaleWidths, 50);
+    const syncTimer2 = setTimeout(syncPriceScaleWidths, 200);
+    const syncTimer3 = setTimeout(syncPriceScaleWidths, 500);
 
     // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
@@ -668,7 +677,8 @@ const StudyChart = memo(({
       rsiChartRef.current?.applyOptions({ width: nextWidth });
       macdChartRef.current?.applyOptions({ width: nextWidth });
       chartRef.current.timeScale().fitContent();
-      syncPriceScaleWidths();
+      // Delay sync so labels re-render at new width first
+      setTimeout(syncPriceScaleWidths, 100);
     });
 
     resizeObserver.observe(containerRef.current);
@@ -710,8 +720,9 @@ const StudyChart = memo(({
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      clearTimeout(syncTimer);
-      
+      clearTimeout(syncTimer1);
+      clearTimeout(syncTimer2);
+      clearTimeout(syncTimer3);
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
