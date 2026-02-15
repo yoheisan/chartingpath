@@ -633,10 +633,9 @@ const StudyChart = memo(({
           const dstSeries = chartSeriesMap.get(dst);
           if (dst !== src && dstSeries) {
             if (param.time) {
-              // Get the data point value from the destination series at this time
-              const dstData = param.seriesData?.get(dstSeries) as any;
-              const price = dstData?.value ?? dstData?.close ?? NaN;
-              dst.setCrosshairPosition(price, param.time, dstSeries);
+              // Pass NaN as price to show only the vertical crosshair line
+              // We cannot look up dst series data from src chart's param.seriesData
+              dst.setCrosshairPosition(NaN, param.time, dstSeries);
             } else {
               dst.clearCrosshairPosition();
             }
