@@ -97,8 +97,10 @@ export function DashboardPatternStudy({
 
   // Fetch data
   useEffect(() => {
+    let cancelled = false;
     async function fetchData() {
       setLoading(true);
+      console.log('[DashboardPatternStudy] fetchData START', { symbol, timeframe });
       try {
         // Fetch active and historical in parallel
         const [activeRes, historicalRes] = await Promise.all([
@@ -119,6 +121,14 @@ export function DashboardPatternStudy({
             .order('detected_at', { ascending: false })
             .limit(50),
         ]);
+
+        if (cancelled) return;
+        console.log('[DashboardPatternStudy] fetchData OK', {
+          active: activeRes.data?.length ?? 0,
+          activeError: activeRes.error?.message,
+          historical: historicalRes.data?.length ?? 0,
+          historicalError: historicalRes.error?.message,
+        });
 
         if (activeRes.data) {
           setActivePatterns(activeRes.data.map((p: any) => ({
@@ -152,11 +162,15 @@ export function DashboardPatternStudy({
       } catch (err) {
         console.error('[DashboardPatternStudy] Error:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          console.log('[DashboardPatternStudy] setLoading(false)');
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
+    return () => { cancelled = true; };
   }, [symbol, timeframe]);
 
   // Performance stats
