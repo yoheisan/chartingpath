@@ -288,6 +288,7 @@ const StudyChart = memo(({
         borderColor: theme.grid,
         timeVisible: true,
         secondsVisible: false,
+        rightOffset: 0,
       },
       localization: {
         locale: getChartLocale(i18n.language),
@@ -544,7 +545,7 @@ const StudyChart = memo(({
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
           rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 85 },
-          timeScale: { visible: false },
+          timeScale: { visible: false, rightOffset: 0 },
           crosshair: { mode: 0 },
         });
         rsiChartRef.current = rsiChart;
@@ -573,7 +574,7 @@ const StudyChart = memo(({
           layout: { background: { color: theme.background }, textColor: theme.text },
           grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
           rightPriceScale: { visible: true, borderColor: theme.grid, minimumWidth: 85 },
-          timeScale: { visible: false },
+          timeScale: { visible: false, rightOffset: 0 },
           crosshair: { mode: 0 },
         });
         macdChartRef.current = macdChart;
@@ -611,12 +612,15 @@ const StudyChart = memo(({
       });
     });
 
-    // Sync crosshairs via time-based positioning
-    // Note: setCrosshairPosition requires a series reference, so we track series per chart
+    // Sync crosshairs using official pattern: pass actual data point values
     const chartSeriesMap = new Map<IChartApi, ReturnType<IChartApi['addSeries']>>();
     chartSeriesMap.set(chart, candleSeries);
     if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
+
+    // Log container widths for diagnostics
+    console.log('[StudyChart] Container widths - main:', containerRef.current?.clientWidth,
+      'rsi:', rsiContainerRef.current?.clientWidth, 'macd:', macdContainerRef.current?.clientWidth);
 
     allCharts.forEach((src) => {
       src.subscribeCrosshairMove((param) => {
@@ -626,7 +630,10 @@ const StudyChart = memo(({
           const dstSeries = chartSeriesMap.get(dst);
           if (dst !== src && dstSeries) {
             if (param.time) {
-              dst.setCrosshairPosition(NaN, param.time, dstSeries);
+              // Get the data point value from the destination series at this time
+              const dstData = param.seriesData?.get(dstSeries) as any;
+              const price = dstData?.value ?? dstData?.close ?? NaN;
+              dst.setCrosshairPosition(price, param.time, dstSeries);
             } else {
               dst.clearCrosshairPosition();
             }
