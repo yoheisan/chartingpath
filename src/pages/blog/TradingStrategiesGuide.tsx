@@ -1567,7 +1567,7 @@ const TradingStrategiesGuide = () => {
           </h2>
           
           <p className="text-muted-foreground mb-6">
-            These strategies use computer programs, mathematical models, and AI to execute trades. Many require programming skills or access to specialized platforms. Explore our <Link to="/tools/script-generator" className="text-primary hover:underline">Script Generator</Link> to create automated trading scripts.
+            These strategies use computer programs, mathematical models, and AI to execute trades. Many require programming skills or access to specialized platforms. Explore our <Link to="/members/scripts" className="text-primary hover:underline">Script Generator</Link> to create automated trading scripts.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -1728,7 +1728,7 @@ const TradingStrategiesGuide = () => {
                   <p><strong>Platform:</strong> TradingView</p>
                   <p><strong>Use:</strong> Custom indicators, alerts</p>
                 </div>
-                <Link to="/tools/script-generator" className="inline-flex items-center text-primary text-sm mt-2 hover:underline">
+                <Link to="/members/scripts" className="inline-flex items-center text-primary text-sm mt-2 hover:underline">
                   Try our Script Generator <ChevronRight className="h-4 w-4" />
                 </Link>
               </CardContent>
@@ -1823,7 +1823,7 @@ const TradingStrategiesGuide = () => {
                     Backtest Strategies
                   </button>
                 </Link>
-                <Link to="/tools/script-generator">
+                <Link to="/members/scripts">
                   <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
                     Generate Trading Scripts
                   </button>
