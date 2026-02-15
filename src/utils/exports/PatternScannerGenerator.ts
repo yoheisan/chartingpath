@@ -188,24 +188,38 @@ pivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
 pivotLow  = ta.pivotlow(low, pivotLen, pivotLen)
 
 // Track recent pivots
-var float ph1 = na, var float ph2 = na, var float ph3 = na
-var int   ph1Bar = na, var int ph2Bar = na, var int ph3Bar = na
-var float pl1 = na, var float pl2 = na, var float pl3 = na
-var int   pl1Bar = na, var int pl2Bar = na, var int pl3Bar = na
+var float ph1 = na
+var float ph2 = na
+var float ph3 = na
+var int   ph1Bar = na
+var int   ph2Bar = na
+var int   ph3Bar = na
+var float pl1 = na
+var float pl2 = na
+var float pl3 = na
+var int   pl1Bar = na
+var int   pl2Bar = na
+var int   pl3Bar = na
 
 // Store bar indices for pivots
 pivotHighBar = not na(pivotHigh) ? bar_index - pivotLen : na
 pivotLowBar  = not na(pivotLow)  ? bar_index - pivotLen : na
 
 if not na(pivotHigh)
-    ph3 := ph2, ph3Bar := ph2Bar
-    ph2 := ph1, ph2Bar := ph1Bar
-    ph1 := pivotHigh, ph1Bar := bar_index - pivotLen
+    ph3 := ph2
+    ph3Bar := ph2Bar
+    ph2 := ph1
+    ph2Bar := ph1Bar
+    ph1 := pivotHigh
+    ph1Bar := bar_index - pivotLen
 
 if not na(pivotLow)
-    pl3 := pl2, pl3Bar := pl2Bar
-    pl2 := pl1, pl2Bar := pl1Bar
-    pl1 := pivotLow, pl1Bar := bar_index - pivotLen
+    pl3 := pl2
+    pl3Bar := pl2Bar
+    pl2 := pl1
+    pl2Bar := pl1Bar
+    pl1 := pivotLow
+    pl1Bar := bar_index - pivotLen
 
 // Prior trend calculation (% change over lookback)
 priorTrendPct = ((close - close[20]) / close[20]) * 100
@@ -274,23 +288,37 @@ atr = ta.atr(14)
 pivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
 pivotLow  = ta.pivotlow(low, pivotLen, pivotLen)
 
-var float ph1 = na, var float ph2 = na, var float ph3 = na
-var int   ph1Bar = na, var int ph2Bar = na, var int ph3Bar = na
-var float pl1 = na, var float pl2 = na, var float pl3 = na
-var int   pl1Bar = na, var int pl2Bar = na, var int pl3Bar = na
+var float ph1 = na
+var float ph2 = na
+var float ph3 = na
+var int   ph1Bar = na
+var int   ph2Bar = na
+var int   ph3Bar = na
+var float pl1 = na
+var float pl2 = na
+var float pl3 = na
+var int   pl1Bar = na
+var int   pl2Bar = na
+var int   pl3Bar = na
 
 pivotHighBar = not na(pivotHigh) ? bar_index - pivotLen : na
 pivotLowBar  = not na(pivotLow)  ? bar_index - pivotLen : na
 
 if not na(pivotHigh)
-    ph3 := ph2, ph3Bar := ph2Bar
-    ph2 := ph1, ph2Bar := ph1Bar
-    ph1 := pivotHigh, ph1Bar := bar_index - pivotLen
+    ph3 := ph2
+    ph3Bar := ph2Bar
+    ph2 := ph1
+    ph2Bar := ph1Bar
+    ph1 := pivotHigh
+    ph1Bar := bar_index - pivotLen
 
 if not na(pivotLow)
-    pl3 := pl2, pl3Bar := pl2Bar
-    pl2 := pl1, pl2Bar := pl1Bar
-    pl1 := pivotLow, pl1Bar := bar_index - pivotLen
+    pl3 := pl2
+    pl3Bar := pl2Bar
+    pl2 := pl1
+    pl2Bar := pl1Bar
+    pl1 := pivotLow
+    pl1Bar := bar_index - pivotLen
 
 priorTrendPct = ((close - close[20]) / close[20]) * 100
 
