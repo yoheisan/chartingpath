@@ -131,14 +131,29 @@ function generatePineStrategy(
   
   const signalChecks = patterns.map(p => {
     const varName = p.id.replace(/-/g, '_');
+    // Route SL based on configured method
+    const slCalc = config.stopLossMethod === 'fixed_pips'
+      ? (p.direction === 'long'
+        ? `${varName}_sl_level := ${varName}_entry - fixedSLPips * syminfo.mintick`
+        : `${varName}_sl_level := ${varName}_entry + fixedSLPips * syminfo.mintick`)
+      : ''; // atr/pattern: use detection function's SL directly
+    const slOverride = slCalc ? `\n        ${slCalc}` : '';
+    
+    // Route TP based on configured method
+    const tpCalc = config.takeProfitMethod === 'fixed_pips'
+      ? (p.direction === 'long'
+        ? `${varName}_entry + fixedTPPips * syminfo.mintick`
+        : `${varName}_entry - fixedTPPips * syminfo.mintick`)
+      : (p.direction === 'long'
+        ? `${varName}_entry + sl_dist * rrRatio`
+        : `${varName}_entry - sl_dist * rrRatio`);
+    
     return `// ${p.name}
 if enable_${varName}
     [${varName}_detected, ${varName}_entry, ${varName}_sl_level] = detect_${varName}(pivotHigh, pivotLow, pivotHighBar, pivotLowBar, atr, priorTrendPct)
-    if ${varName}_detected and strategy.position_size == 0 and barstate.isconfirmed
+    if ${varName}_detected and strategy.position_size == 0 and barstate.isconfirmed${slOverride}
         sl_dist = math.abs(${varName}_entry - ${varName}_sl_level)
-        tp_level = ${p.direction === 'long' 
-          ? `${varName}_entry + sl_dist * rrRatio` 
-          : `${varName}_entry - sl_dist * rrRatio`}
+        tp_level = ${tpCalc}
         strategy.entry("${p.name}", strategy.${p.direction})
         strategy.exit("Exit ${p.name}", "${p.name}", stop=${varName}_sl_level, limit=tp_level)
         label.new(bar_index, ${p.direction === 'long' ? 'low' : 'high'}, "${p.name} ✓", 
@@ -338,10 +353,11 @@ detect_double_top(pivH, pivL, pivHBar, pivLBar, atr, trend) =>
     float sl = na
     if not na(ph1) and not na(ph2) and not na(pl1)
         peakDiff = math.abs(ph1 - ph2) / ph2 * 100
-        valleyBetween = pl1 > math.min(ph1Bar, ph2Bar) ? false : pl1 < ph1 and pl1 < ph2
+        // Valley must sit between the two peaks (compare bar indices)
+        valleyBetween = not na(pl1Bar) and not na(ph1Bar) and not na(ph2Bar) ? (pl1Bar > math.min(ph1Bar, ph2Bar) and pl1Bar < math.max(ph1Bar, ph2Bar)) : false
         neckline = pl1
         priorUp = trend > minPriorTrend
-        if peakDiff < peakTolerance and priorUp and close < neckline
+        if peakDiff < peakTolerance and valleyBetween and priorUp and close < neckline
             detected := true
             entry := close
             sl := math.max(ph1, ph2) + atr * 0.5
@@ -356,9 +372,11 @@ detect_double_bottom(pivH, pivL, pivHBar, pivLBar, atr, trend) =>
     float sl = na
     if not na(pl1) and not na(pl2) and not na(ph1)
         troughDiff = math.abs(pl1 - pl2) / pl2 * 100
+        // Peak must sit between the two troughs (compare bar indices)
+        peakBetween = not na(ph1Bar) and not na(pl1Bar) and not na(pl2Bar) ? (ph1Bar > math.min(pl1Bar, pl2Bar) and ph1Bar < math.max(pl1Bar, pl2Bar)) : false
         neckline = ph1
         priorDown = trend < -minPriorTrend
-        if troughDiff < peakTolerance and priorDown and close > neckline
+        if troughDiff < peakTolerance and peakBetween and priorDown and close > neckline
             detected := true
             entry := close
             sl := math.min(pl1, pl2) - atr * 0.5
