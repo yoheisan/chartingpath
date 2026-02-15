@@ -182,7 +182,7 @@ ${detection}`;
     : `rrRatio = ${config.rrRatio}`;
 
   return `${header}
-strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, max_bars_back=500)
+strategy("Pattern Scanner", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, pyramiding=0, calc_on_every_tick=false, process_orders_on_close=true)
 
 // ─── INPUTS ─────────────────────────────────────────────────────────────────
 group_risk = "Risk Management"
