@@ -49,6 +49,8 @@ import ExitEquityOverlay, { type ExitEquitySeries } from './ExitEquityOverlay';
 import BenchmarkSelector from './BenchmarkSelector';
 import { BacktestAlertDialog } from './BacktestAlertDialog';
 import { BacktestScriptDialog } from './BacktestScriptDialog';
+import { TradeExcursionChart } from './TradeExcursionChart';
+import { ProfitStructureWaterfall } from './ProfitStructureWaterfall';
 
 interface BenchmarkData {
   symbol: string;
@@ -358,17 +360,32 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
       if (!outcome) return { ...t, tierOutcome: null as null | typeof outcome };
       return {
         ...t,
-        // Prefer per-tier exit date when present (backend may provide)
         exitDate: outcome.exitDate ?? t.exitDate,
         rMultiple: outcome.rMultiple,
-        // Fix: isWin must be based on hitting TP, not just positive R-multiple
-        // Timeouts with positive R are not "wins" for statistical accuracy
         isWin: outcome.outcome === 'hit_tp',
         exitReason: outcome.outcome === 'hit_tp' ? 'tp' : outcome.outcome === 'hit_sl' ? 'sl' : 'time_stop',
         tierOutcome: outcome,
       };
     });
   }, [artifact.trades, selectedRRTier]);
+
+  // Compute aggregate Sharpe Ratio and Profit Factor from trades
+  const aggregateKPIs = useMemo(() => {
+    const trades = displayedTrades.length > 0 ? displayedTrades : artifact.trades;
+    if (trades.length === 0) return { sharpe: 0, profitFactor: 0 };
+    
+    const rMultiples = trades.map(t => t.rMultiple);
+    const mean = rMultiples.reduce((a, b) => a + b, 0) / rMultiples.length;
+    const variance = rMultiples.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / rMultiples.length;
+    const std = Math.sqrt(variance);
+    const sharpe = std > 0 ? mean / std : 0;
+    
+    const grossProfit = rMultiples.filter(r => r > 0).reduce((s, r) => s + r, 0);
+    const grossLoss = Math.abs(rMultiples.filter(r => r < 0).reduce((s, r) => s + r, 0));
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
+    
+    return { sharpe: Math.round(sharpe * 100) / 100, profitFactor: Math.round(profitFactor * 100) / 100 };
+  }, [displayedTrades, artifact.trades]);
 
   return (
     <div className="space-y-6">
@@ -412,7 +429,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold">{artifact.summary.totalTrades}</div>
@@ -433,6 +450,22 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 <p className="text-sm text-muted-foreground">
                   Expectancy {artifact.rrComparison && artifact.rrComparison.length > 0 && <span className="text-xs opacity-70">(1:{selectedRRTier})</span>}
                 </p>
+              </CardContent>
+            </Card>
+            <Card className="border-border/50 bg-card/50">
+              <CardContent className="pt-6">
+                <div className={`text-2xl font-bold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+                  {aggregateKPIs.sharpe.toFixed(2)}
+                </div>
+                <p className="text-sm text-muted-foreground">Sharpe Ratio</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border/50 bg-card/50">
+              <CardContent className="pt-6">
+                <div className={`text-2xl font-bold ${aggregateKPIs.profitFactor >= 1.5 ? 'text-green-500' : aggregateKPIs.profitFactor >= 1 ? 'text-yellow-500' : 'text-red-500'}`}>
+                  {aggregateKPIs.profitFactor === Infinity ? '∞' : aggregateKPIs.profitFactor.toFixed(2)}
+                </div>
+                <p className="text-sm text-muted-foreground">Profit Factor</p>
               </CardContent>
             </Card>
             {selectedTierMaxDrawdownPercent !== undefined && (
@@ -605,6 +638,12 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               </CardContent>
             </Card>
           )}
+
+          {/* Trade Excursion Chart */}
+          <TradeExcursionChart trades={displayedTrades} />
+
+          {/* Profit Structure Waterfall */}
+          <ProfitStructureWaterfall trades={displayedTrades} />
         </TabsContent>
 
         {/* Patterns Tab */}
