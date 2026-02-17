@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -164,6 +165,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('best');
+  const [excludedSetups, setExcludedSetups] = useState<Set<string>>(new Set());
+
+  const toggleSetupExclusion = useCallback((key: string) => {
+    setExcludedSetups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
     setBenchmarks(newBenchmarks);
@@ -367,9 +378,20 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return mapped.filter(t => t.direction === directionFilter);
   }, [artifact.trades, selectedRRTier, directionFilter]);
 
+  // Optimized trades: exclude trades matching excluded setups
+  const optimizedTrades = useMemo(() => {
+    if (excludedSetups.size === 0) return displayedTrades;
+    return displayedTrades.filter(t => {
+      const key = `${t.instrument}|${t.patternId}`;
+      return !excludedSetups.has(key);
+    });
+  }, [displayedTrades, excludedSetups]);
+
+  const hasExclusions = excludedSetups.size > 0;
+
   // Compute aggregate Sharpe Ratio and Profit Factor from trades
   const aggregateKPIs = useMemo(() => {
-    const trades = displayedTrades.length > 0 ? displayedTrades : artifact.trades;
+    const trades = (hasExclusions ? optimizedTrades : displayedTrades).length > 0 ? (hasExclusions ? optimizedTrades : displayedTrades) : artifact.trades;
     if (trades.length === 0) return { sharpe: 0, profitFactor: 0 };
     
     const rMultiples = trades.map(t => t.rMultiple);
@@ -385,9 +407,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return { sharpe: Math.round(sharpe * 100) / 100, profitFactor: Math.round(profitFactor * 100) / 100 };
   }, [displayedTrades, artifact.trades]);
 
-  // Direction-filtered summary stats
+  // Direction-filtered summary stats (uses optimized trades when exclusions active)
   const filteredSummary = useMemo(() => {
-    const trades = displayedTrades;
+    const trades = hasExclusions ? optimizedTrades : displayedTrades;
     const total = trades.length;
     if (total === 0) return { totalTrades: 0, winRate: 0, expectancy: 0 };
     const wins = trades.filter(t => t.isWin).length;
@@ -395,23 +417,22 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     const rMultiples = trades.map(t => t.rMultiple);
     const expectancy = rMultiples.reduce((a, b) => a + b, 0) / total;
     return { totalTrades: total, winRate, expectancy };
-  }, [displayedTrades]);
+  }, [displayedTrades, optimizedTrades, hasExclusions]);
 
   const isFiltered = directionFilter !== 'all';
 
-  // Direction-filtered equity curve: recompute from displayedTrades when filtered
+  // Direction-filtered equity curve: recompute from trades when filtered or exclusions active
   const directionFilteredEquity: EquityPoint[] = useMemo(() => {
-    if (directionFilter === 'all') return effectiveEquity;
+    if (directionFilter === 'all' && !hasExclusions) return effectiveEquity;
     
-    const trades = displayedTrades;
+    const trades = hasExclusions ? optimizedTrades : displayedTrades;
     if (trades.length === 0) return [];
     
     const initialCapital = 10000;
-    const positionSize = initialCapital; // Fixed position sizing
+    const positionSize = initialCapital;
     let equity = initialCapital;
     let peak = initialCapital;
     
-    // Sort trades by entry date
     const sorted = [...trades].sort((a, b) => 
       new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
     );
@@ -423,7 +444,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     }];
     
     sorted.forEach(trade => {
-      const pnl = trade.rMultiple * (positionSize * 0.02); // 2% risk per trade
+      const pnl = trade.rMultiple * (positionSize * 0.02);
       equity += pnl;
       peak = Math.max(peak, equity);
       const drawdown = peak > 0 ? (peak - equity) / peak : 0;
@@ -435,7 +456,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     });
     
     return points;
-  }, [directionFilter, displayedTrades, effectiveEquity]);
+  }, [directionFilter, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity]);
 
   return (
     <div className="space-y-6">
@@ -592,7 +613,59 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             ))}
           </div>
 
-          {/* Best & Worst Pattern */}
+          {/* Optimized Performance Card — shows when setups are excluded */}
+          {hasExclusions && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">Optimized Performance</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {excludedSetups.size} setup{excludedSetups.size > 1 ? 's' : ''} excluded — metrics recalculated
+                    </p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-auto text-xs"
+                    onClick={() => setExcludedSetups(new Set())}
+                  >
+                    Reset
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Trades</p>
+                    <p className="text-lg font-bold">{filteredSummary.totalTrades}</p>
+                    <p className="text-xs text-muted-foreground">
+                      was {displayedTrades.length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Win Rate</p>
+                    <p className={`text-lg font-bold ${filteredSummary.winRate >= (isFiltered ? filteredSummary.winRate : selectedTierWinRate) ? 'text-green-500' : ''}`}>
+                      {formatPercent(filteredSummary.winRate)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Expectancy</p>
+                    <p className={`text-lg font-bold ${filteredSummary.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatR(filteredSummary.expectancy)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Sharpe</p>
+                    <p className={`text-lg font-bold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+                      {aggregateKPIs.sharpe.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <div className="space-y-4">
             {/* Best & Worst Pattern Cards - only show if more than 1 pattern */}
             {effectivePatterns.length > 1 && bestPattern && worstPattern ? (
@@ -748,6 +821,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             params.set('patterns', scriptPatterns.map(p => p.patternId).join(','));
                             if (winners.length > 0) params.set('winners', winners.join(','));
                             if (losers.length > 0) params.set('losers', losers.join(','));
+                            if (excludedSetups.size > 0) params.set('excluded', [...excludedSetups].join(','));
                             
                             return (
                               <DropdownMenuItem
@@ -1082,6 +1156,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         <Table>
                           <TableHeader>
                             <TableRow>
+                              <TableHead className="w-10">
+                                <span className="sr-only">Include</span>
+                              </TableHead>
                               <TableHead>Instrument</TableHead>
                               <TableHead>Pattern</TableHead>
                               <TableHead className="text-right">{repeatableMode === 'best' ? 'Wins' : 'Losses'}</TableHead>
@@ -1090,21 +1167,32 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {setups.map((setup, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell className="font-medium">{setup.instrument}</TableCell>
-                                <TableCell className="text-xs">{setup.patternId}</TableCell>
-                                <TableCell className="text-right font-semibold">{setup.count}</TableCell>
-                                <TableCell className={`text-right font-semibold ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                  {formatR(setup.avgR)}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
-                                    {setup.bestGrade}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {setups.map((setup, idx) => {
+                              const setupKey = `${setup.instrument}|${setup.patternId}`;
+                              const isExcluded = excludedSetups.has(setupKey);
+                              return (
+                                <TableRow key={idx} className={isExcluded ? 'opacity-40' : ''}>
+                                  <TableCell>
+                                    <Checkbox
+                                      checked={!isExcluded}
+                                      onCheckedChange={() => toggleSetupExclusion(setupKey)}
+                                      aria-label={`${isExcluded ? 'Include' : 'Exclude'} ${setup.instrument} ${setup.patternId}`}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="font-medium">{setup.instrument}</TableCell>
+                                  <TableCell className="text-xs">{setup.patternId}</TableCell>
+                                  <TableCell className="text-right font-semibold">{setup.count}</TableCell>
+                                  <TableCell className={`text-right font-semibold ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {formatR(setup.avgR)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
+                                      {setup.bestGrade}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                       );
