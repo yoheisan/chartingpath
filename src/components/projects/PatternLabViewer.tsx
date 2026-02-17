@@ -158,6 +158,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
     setBenchmarks(newBenchmarks);
@@ -356,7 +357,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   const displayedTrades = useMemo(() => {
     const tierKey = `rr${selectedRRTier}` as 'rr2' | 'rr3' | 'rr4' | 'rr5';
-    return artifact.trades.map(t => {
+    const mapped = artifact.trades.map(t => {
       const outcome = t.rrOutcomes?.[tierKey];
       if (!outcome) return { ...t, tierOutcome: null as null | typeof outcome };
       return {
@@ -368,7 +369,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         tierOutcome: outcome,
       };
     });
-  }, [artifact.trades, selectedRRTier]);
+    if (directionFilter === 'all') return mapped;
+    return mapped.filter(t => t.direction === directionFilter);
+  }, [artifact.trades, selectedRRTier, directionFilter]);
 
   // Compute aggregate Sharpe Ratio and Profit Factor from trades
   const aggregateKPIs = useMemo(() => {
@@ -388,32 +391,87 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return { sharpe: Math.round(sharpe * 100) / 100, profitFactor: Math.round(profitFactor * 100) / 100 };
   }, [displayedTrades, artifact.trades]);
 
+  // Direction-filtered summary stats
+  const filteredSummary = useMemo(() => {
+    const trades = displayedTrades;
+    const total = trades.length;
+    if (total === 0) return { totalTrades: 0, winRate: 0, expectancy: 0 };
+    const wins = trades.filter(t => t.isWin).length;
+    const winRate = wins / total;
+    const rMultiples = trades.map(t => t.rMultiple);
+    const expectancy = rMultiples.reduce((a, b) => a + b, 0) / total;
+    return { totalTrades: total, winRate, expectancy };
+  }, [displayedTrades]);
+
+  const isFiltered = directionFilter !== 'all';
+
   return (
     <div className="space-y-6">
-      {/* R:R Tier Selector (global for all tabs) */}
-      {hasMultiRR && (
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">R:R Target:</span>
-            <div className="flex gap-1">
-              {[2, 3, 4, 5].map(tier => (
-                <Button
-                  key={tier}
-                  variant={selectedRRTier === tier ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedRRTier(tier)}
-                  className="font-mono"
-                >
-                  1:{tier}
-                </Button>
-              ))}
+      {/* Global Filters: R:R Tier + Direction */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Direction Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Direction:</span>
+            <div className="flex rounded-lg border border-border/50 overflow-hidden">
+              <Button
+                variant={directionFilter === 'all' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="rounded-none h-8 px-3"
+                onClick={() => setDirectionFilter('all')}
+              >
+                Both
+              </Button>
+              <Button
+                variant={directionFilter === 'long' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="rounded-none h-8 px-3 border-x border-border/50"
+                onClick={() => setDirectionFilter('long')}
+              >
+                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                Long
+              </Button>
+              <Button
+                variant={directionFilter === 'short' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="rounded-none h-8 px-3"
+                onClick={() => setDirectionFilter('short')}
+              >
+                <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
+                Short
+              </Button>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Metrics update across Overview / Patterns / Trades / Equity
-          </div>
+
+          {/* R:R Tier Selector */}
+          {hasMultiRR && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">R:R Target:</span>
+              <div className="flex gap-1">
+                {[2, 3, 4, 5].map(tier => (
+                  <Button
+                    key={tier}
+                    variant={selectedRRTier === tier ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedRRTier(tier)}
+                    className="font-mono"
+                  >
+                    1:{tier}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        <div className="text-xs text-muted-foreground">
+          {directionFilter !== 'all' && (
+            <Badge variant="outline" className="mr-2 text-xs">
+              {displayedTrades.length} of {artifact.trades.length} trades
+            </Badge>
+          )}
+          Metrics update across all tabs
+        </div>
+      </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
@@ -433,20 +491,25 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
           <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{artifact.summary.totalTrades}</div>
-                <p className="text-sm text-muted-foreground">Total Trades</p>
+                <div className="text-2xl font-bold">
+                  {isFiltered ? filteredSummary.totalTrades : artifact.summary.totalTrades}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Total Trades
+                  {isFiltered && <span className="text-xs opacity-70"> ({directionFilter})</span>}
+                </p>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatPercent(selectedTierWinRate)}</div>
+                <div className="text-2xl font-bold">{formatPercent(isFiltered ? filteredSummary.winRate : selectedTierWinRate)}</div>
                 <p className="text-sm text-muted-foreground">Win Rate</p>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className={`text-2xl font-bold ${selectedTierExpectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {formatR(selectedTierExpectancy)}
+                <div className={`text-2xl font-bold ${(isFiltered ? filteredSummary.expectancy : selectedTierExpectancy) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatR(isFiltered ? filteredSummary.expectancy : selectedTierExpectancy)}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Expectancy {artifact.rrComparison && artifact.rrComparison.length > 0 && <span className="text-xs opacity-70">(1:{selectedRRTier})</span>}
