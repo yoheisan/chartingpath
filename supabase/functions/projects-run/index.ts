@@ -707,25 +707,49 @@ async function estimateCacheHitRatio(
 }
 
 async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
-  const period1 = Math.floor(new Date(startDate).getTime() / 1000);
+  // Yahoo Finance intraday limits: 1h data max ~730 days
+  const MAX_INTRADAY_DAYS = 729;
+  const isIntraday = ['1h', '4h', '8h'].includes(interval);
+  
+  let period1 = Math.floor(new Date(startDate).getTime() / 1000);
   const period2 = Math.floor(new Date(endDate).getTime() / 1000);
+  
+  // Cap intraday lookback to Yahoo's maximum
+  if (isIntraday) {
+    const maxStart = Math.floor((Date.now() - MAX_INTRADAY_DAYS * 86400000) / 1000);
+    if (period1 < maxStart) {
+      console.log(`[fetchYahoo] Capping ${symbol} ${interval} start from ${new Date(period1*1000).toISOString().slice(0,10)} to ${new Date(maxStart*1000).toISOString().slice(0,10)} (Yahoo ${MAX_INTRADAY_DAYS}d limit)`);
+      period1 = maxStart;
+    }
+  }
+  
   const yahooInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '1d' ? '1d' : interval === '1wk' ? '1wk' : '1h';
   
   const encodedSymbol = encodeURIComponent(symbol);
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
   
+  console.log(`[fetchYahoo] ${symbol} interval=${interval} yahooInterval=${yahooInterval} range=${new Date(period1*1000).toISOString().slice(0,10)}..${new Date(period2*1000).toISOString().slice(0,10)}`);
+  
   const response = await fetch(yahooUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
   });
   
-  if (!response.ok) return [];
+  if (!response.ok) {
+    console.error(`[fetchYahoo] HTTP ${response.status} for ${symbol}`);
+    return [];
+  }
   
   const data = await response.json();
-  if (!data.chart?.result?.[0]) return [];
+  if (!data.chart?.result?.[0]) {
+    console.error(`[fetchYahoo] No chart result for ${symbol}`, JSON.stringify(data.chart?.error || 'unknown'));
+    return [];
+  }
   
   const result = data.chart.result[0];
   const timestamps = result.timestamp || [];
   const quotes = result.indicators?.quote?.[0] || {};
+  
+  console.log(`[fetchYahoo] ${symbol}: ${timestamps.length} raw bars received`);
   
   const bars = timestamps.map((ts: number, idx: number) => ({
     timestamp: ts * 1000,
@@ -754,6 +778,7 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
         volume: chunk.reduce((sum: number, c: any) => sum + c.volume, 0),
       });
     }
+    console.log(`[fetchYahoo] ${symbol}: aggregated ${bars.length} 1h bars → ${aggregated.length} ${interval} bars`);
     return aggregated;
   }
   
