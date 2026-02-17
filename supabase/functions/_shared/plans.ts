@@ -14,7 +14,7 @@
  */
 
 export type PlanTier = 'FREE' | 'LITE' | 'PLUS' | 'PRO' | 'TEAM';
-export type ProjectType = 'setup_finder' | 'pattern_lab' | 'portfolio_checkup' | 'portfolio_sim';
+export type ProjectType = 'pattern_lab' | 'setup_finder' | 'portfolio_checkup' | 'portfolio_sim'; // legacy types kept for DB compat
 
 export interface SetupFinderCaps {
   maxInstruments: number;
