@@ -2283,8 +2283,8 @@ serve(async (req) => {
             patterns: patternResults,
             patternsByTier,
             trades: allTrades.slice(0, 500).map((t: any) => {
-              // Remove exitOutcomes from trades to reduce payload size
-              const { exitOutcomes, entryBarIndex, ...rest } = t;
+              // Keep exitOutcomes for client-side optimizer recalculation, remove entryBarIndex
+              const { entryBarIndex, ...rest } = t;
               return rest;
             }),
             equity: baselineEquity,

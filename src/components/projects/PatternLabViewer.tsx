@@ -88,6 +88,13 @@ interface PatternResult {
   doNotTradeRules: string[];
 }
 
+interface ExitOutcome {
+  rMultiple: number;
+  bars: number;
+  exitDate: string;
+  exitPrice?: number;
+}
+
 interface TradeEntry {
   entryDate: string;
   exitDate: string;
@@ -101,6 +108,7 @@ interface TradeEntry {
   regime: string;
   exitReason: 'tp' | 'sl' | 'time_stop';
   grade?: 'A' | 'B' | 'C' | 'D' | 'F';
+  exitOutcomes?: Record<string, ExitOutcome>;
   rrOutcomes?: {
     rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
     rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
@@ -119,12 +127,14 @@ interface PatternLabArtifact {
   projectType: 'pattern_lab';
   timeframe: string;
   lookbackYears: number;
+  riskPerTrade?: number;
   generatedAt: string;
   executionAssumptions: {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
     maxBarsInTrade?: number;
     fillRule?: string;
+    riskPerTrade?: number;
   };
   summary: {
     totalPatterns: number;
@@ -514,6 +524,102 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     [...repeatableWinSetups, ...repeatableLossSetups],
     [repeatableWinSetups, repeatableLossSetups]
   );
+
+  // Recalculate exit strategy equity curves and comparison stats when optimizer exclusions are active
+  const { optimizedExitComparison, optimizedExitEquity, optimizedOptimalExit } = useMemo(() => {
+    if (!hasExclusions || !artifact.exitComparison || artifact.exitComparison.length === 0) {
+      return {
+        optimizedExitComparison: artifact.exitComparison || [],
+        optimizedExitEquity: artifact.exitEquityByStrategy || {},
+        optimizedOptimalExit: artifact.optimalExitStrategy || '',
+      };
+    }
+
+    const riskPerTrade = artifact.riskPerTrade ?? artifact.executionAssumptions?.riskPerTrade ?? 2;
+    const riskFraction = riskPerTrade / 100;
+    const activeTrades = optimizedTrades;
+
+    // Check if trades have exitOutcomes data
+    const hasExitData = activeTrades.some(t => t.exitOutcomes && Object.keys(t.exitOutcomes).length > 0);
+    if (!hasExitData) {
+      // Fallback: can't recalculate without exit outcomes data
+      return {
+        optimizedExitComparison: artifact.exitComparison || [],
+        optimizedExitEquity: artifact.exitEquityByStrategy || {},
+        optimizedOptimalExit: artifact.optimalExitStrategy || '',
+      };
+    }
+
+    const sorted = [...activeTrades].sort((a, b) =>
+      new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    );
+
+    // Get strategy IDs from existing comparison
+    const strategyIds = artifact.exitComparison.map(e => e.strategyId);
+
+    // Rebuild equity curves and stats per strategy
+    const newExitEquity: Record<string, EquityPoint[]> = {};
+    const newExitComparison: ExitStrategyStats[] = artifact.exitComparison.map(origStrategy => {
+      const strategyId = origStrategy.strategyId;
+      const outcomes: ExitOutcome[] = [];
+      const points: EquityPoint[] = [];
+      let cumulativeR = 0;
+      let peakValue = 10000;
+
+      for (const trade of sorted) {
+        const outcome = trade.exitOutcomes?.[strategyId];
+        if (!outcome) continue;
+        outcomes.push(outcome);
+        cumulativeR += outcome.rMultiple;
+        const value = 10000 * (1 + cumulativeR * riskFraction);
+        peakValue = Math.max(peakValue, value);
+        const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
+        points.push({ date: outcome.exitDate, value: Math.max(0, value), drawdown: dd });
+      }
+
+      newExitEquity[strategyId] = points;
+
+      if (outcomes.length === 0) {
+        return { ...origStrategy, winRate: 0, expectancy: 0, maxDrawdown: 0, sampleSize: 0, avgWinR: 0, avgLossR: 0, avgHoldBars: 0 };
+      }
+
+      const wins = outcomes.filter(o => o.rMultiple > 0);
+      const losses = outcomes.filter(o => o.rMultiple <= 0);
+      const winRate = wins.length / outcomes.length;
+      const avgHoldBars = Math.round(outcomes.reduce((s, o) => s + o.bars, 0) / outcomes.length);
+      const totalR = outcomes.reduce((s, o) => s + o.rMultiple, 0);
+      const expectancy = totalR / outcomes.length;
+      const avgWinR = wins.length > 0 ? wins.reduce((s, o) => s + o.rMultiple, 0) / wins.length : 0;
+      const avgLossR = losses.length > 0 ? Math.abs(losses.reduce((s, o) => s + o.rMultiple, 0) / losses.length) : 1;
+
+      // Max drawdown in R then convert to %
+      let cumR = 0, peakR = 0, maxDDinR = 0;
+      for (const trade of sorted) {
+        const outcome = trade.exitOutcomes?.[strategyId];
+        if (!outcome) continue;
+        cumR += outcome.rMultiple;
+        peakR = Math.max(peakR, cumR);
+        maxDDinR = Math.max(maxDDinR, peakR - cumR);
+      }
+
+      return {
+        ...origStrategy,
+        winRate,
+        avgHoldBars,
+        expectancy,
+        maxDrawdown: maxDDinR * riskPerTrade,
+        sampleSize: outcomes.length,
+        avgWinR,
+        avgLossR,
+      };
+    });
+
+    const optimizedOptimalExit = newExitComparison.reduce((best, curr) =>
+      curr.expectancy > best.expectancy ? curr : best, newExitComparison[0]
+    ).strategyId;
+
+    return { optimizedExitComparison: newExitComparison, optimizedExitEquity: newExitEquity, optimizedOptimalExit };
+  }, [hasExclusions, optimizedTrades, artifact.exitComparison, artifact.exitEquityByStrategy, artifact.optimalExitStrategy, artifact.riskPerTrade, artifact.executionAssumptions]);
 
   return (
     <div className="space-y-6">
@@ -1557,10 +1663,10 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
         {/* Exit Optimizer Tab */}
         <TabsContent value="exits" className="space-y-6">
-          {artifact.exitComparison && artifact.exitComparison.length > 0 ? (
+          {optimizedExitComparison && optimizedExitComparison.length > 0 ? (
             <>
               {/* Optimal Strategy Highlight */}
-              {artifact.optimalExitStrategy && (
+              {optimizedOptimalExit && (
                 <Card className="border-primary/30 bg-primary/5">
                   <CardContent className="py-4">
                     <div className="flex items-center gap-3">
@@ -1568,9 +1674,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         <Star className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">Optimal Exit Strategy</h3>
+                        <h3 className="font-semibold">Optimal Exit Strategy{hasExclusions ? ' (Optimized)' : ''}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {artifact.exitComparison.find(e => e.strategyId === artifact.optimalExitStrategy)?.strategyName || artifact.optimalExitStrategy}
+                          {optimizedExitComparison.find(e => e.strategyId === optimizedOptimalExit)?.strategyName || optimizedOptimalExit}
                           {' '}delivers the highest expectancy for your pattern selection
                         </p>
                       </div>
@@ -1581,16 +1687,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
               {/* Exit Comparison Table */}
               <ExitComparisonTable 
-                stats={artifact.exitComparison}
+                stats={optimizedExitComparison}
                 title="Exit Strategy Comparison"
                 description="Compare performance metrics across different exit methods to optimize your trading system"
               />
 
               {/* Exit Equity Overlay Chart */}
-              {artifact.exitEquityByStrategy && Object.keys(artifact.exitEquityByStrategy).length > 0 && (
+              {optimizedExitEquity && Object.keys(optimizedExitEquity).length > 0 && (
                 <ExitEquityOverlay
-                  series={artifact.exitComparison
-                    .filter(e => artifact.exitEquityByStrategy?.[e.strategyId]?.length)
+                  series={optimizedExitComparison
+                    .filter(e => optimizedExitEquity?.[e.strategyId]?.length)
                     .map((e, idx) => ({
                       strategyId: e.strategyId,
                       strategyName: e.strategyName,
@@ -1604,9 +1710,9 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         'hsl(173, 80%, 40%)',
                         'hsl(340, 82%, 52%)',
                       ][idx % 8],
-                      data: artifact.exitEquityByStrategy![e.strategyId] || [],
-                      finalValue: artifact.exitEquityByStrategy![e.strategyId]?.slice(-1)[0]?.value || 10000,
-                      returnPercent: ((artifact.exitEquityByStrategy![e.strategyId]?.slice(-1)[0]?.value || 10000) - 10000) / 100,
+                      data: optimizedExitEquity![e.strategyId] || [],
+                      finalValue: optimizedExitEquity![e.strategyId]?.slice(-1)[0]?.value || 10000,
+                      returnPercent: ((optimizedExitEquity![e.strategyId]?.slice(-1)[0]?.value || 10000) - 10000) / 100,
                     }))
                     .filter(s => s.data.length > 0)
                   }
@@ -1632,7 +1738,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <p className="text-xs text-muted-foreground mb-3">
                         Simple profit targets at fixed risk multiples
                       </p>
-                      {artifact.exitComparison
+                      {optimizedExitComparison
                         .filter(e => e.strategyId.startsWith('fixed'))
                         .map(e => (
                           <div key={e.strategyId} className="flex justify-between text-sm py-1">
@@ -1650,7 +1756,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <p className="text-xs text-muted-foreground mb-3">
                         Dynamic stops that follow price movement
                       </p>
-                      {artifact.exitComparison
+                      {optimizedExitComparison
                         .filter(e => e.strategyId.includes('atr') || e.strategyId.includes('scale'))
                         .map(e => (
                           <div key={e.strategyId} className="flex justify-between text-sm py-1">
@@ -1668,7 +1774,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <p className="text-xs text-muted-foreground mb-3">
                         Exits based on technical indicators
                       </p>
-                      {artifact.exitComparison
+                      {optimizedExitComparison
                         .filter(e => e.strategyId.includes('rsi') || e.strategyId.includes('macd') || e.strategyId.includes('fib'))
                         .map(e => (
                           <div key={e.strategyId} className="flex justify-between text-sm py-1">
