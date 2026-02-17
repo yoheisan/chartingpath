@@ -143,7 +143,7 @@ const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
-const StudyRedirect = lazy(() => import("./pages/StudyRedirect"));
+
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 const OutcomeAnalytics = lazy(() => import("./pages/admin/OutcomeAnalytics"));
@@ -186,7 +186,7 @@ const App = () => (
           <Route path="/chart-patterns/library" element={withSuspense(<PatternLibraryPage />)} />
           <Route path="/patterns/live" element={withSuspense(<LivePatternsPage />)} />
           <Route path="/study" element={<Navigate to="/members/dashboard" replace />} />
-          <Route path="/study/:symbol" element={withSuspense(<StudyRedirect />)} />
+          <Route path="/study/:symbol" element={<Navigate to="/members/dashboard" replace />} />
           <Route path="/chart-patterns/strategies" element={withSuspense(<TradingStrategiesPage />)} />
           <Route path="/chart-patterns/quiz" element={withSuspense(<PatternQuizPage />)} />
           <Route path="/quiz/pattern-identification" element={withSuspense(<PatternIdentificationQuizPage />)} />
