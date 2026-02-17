@@ -272,9 +272,9 @@ const MemberScripts = () => {
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Back Navigation */}
       <div className="mb-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link to={isFromPatternLab ? "/projects/pattern-lab/new" : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to Home
+          {isFromPatternLab ? "Back to Pattern Lab" : "Back to Home"}
         </Link>
       </div>
 
