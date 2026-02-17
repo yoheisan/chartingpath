@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
@@ -84,6 +85,7 @@ const ProjectRun = () => {
   const [artifact, setArtifact] = useState<SetupArtifact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   
   // Fetch run status with timeout
   const fetchRun = async () => {
@@ -155,6 +157,16 @@ const ProjectRun = () => {
     
     return () => clearInterval(interval);
   }, [runId]);
+  
+  // Live-ticking elapsed timer
+  useEffect(() => {
+    if (!run?.startedAt || (run.status !== 'queued' && run.status !== 'running')) return;
+    const start = new Date(run.startedAt).getTime();
+    const tick = () => setElapsed(Math.round((Date.now() - start) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [run?.startedAt, run?.status]);
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -276,47 +288,41 @@ const ProjectRun = () => {
           <Card className="border-primary/20 bg-primary/5 mb-8">
             <CardContent className="py-8">
               <div className="flex flex-col items-center justify-center text-center">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
+                <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+                <h3 className="text-lg font-semibold mb-1">
                   {run.status === 'queued' ? 'Waiting in queue...' : 'Scanning markets...'}
                 </h3>
-                
-                {/* Progress indicator */}
-                {run.status === 'running' && run.executionMetadata && (
-                  <div className="w-full max-w-md mt-4 space-y-3">
+
+                {run.status === 'running' && run.executionMetadata ? (
+                  <div className="w-full max-w-lg mt-4 space-y-4">
                     {/* Progress bar */}
-                    <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
-                      <div 
-                        className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${Math.max(run.executionMetadata.progress ?? 0, 2)}%` }}
-                      />
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-foreground">{run.executionMetadata.currentStep || 'Processing...'}</span>
+                        <span className="text-primary">{run.executionMetadata.progress ?? 0}%</span>
+                      </div>
+                      <Progress value={Math.max(run.executionMetadata.progress ?? 0, 2)} className="h-2.5" />
                     </div>
                     
-                    {/* Progress text */}
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{run.executionMetadata.currentStep || 'Processing...'}</span>
-                      <span>{run.executionMetadata.progress ?? 0}%</span>
+                    {/* Stats row */}
+                    <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+                      {run.executionMetadata.instrumentsTotal && (
+                        <span>
+                          <span className="font-medium text-foreground">{run.executionMetadata.instrumentsProcessed ?? 0}</span>
+                          /{run.executionMetadata.instrumentsTotal} instruments
+                          {run.executionMetadata.patternsTotal ? ` × ${run.executionMetadata.patternsTotal} patterns` : ''}
+                        </span>
+                      )}
+                      {run.startedAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {elapsed >= 60 ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s` : `${elapsed}s`}
+                        </span>
+                      )}
                     </div>
-                    
-                    {/* Instrument count */}
-                    {run.executionMetadata.instrumentsTotal && (
-                      <p className="text-xs text-muted-foreground">
-                        {run.executionMetadata.instrumentsProcessed ?? 0} of {run.executionMetadata.instrumentsTotal} instruments
-                        {run.executionMetadata.patternsTotal ? ` × ${run.executionMetadata.patternsTotal} patterns` : ''}
-                      </p>
-                    )}
-                    
-                    {/* Elapsed time */}
-                    {run.startedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        Elapsed: {Math.round((Date.now() - new Date(run.startedAt).getTime()) / 1000)}s
-                      </p>
-                    )}
                   </div>
-                )}
-                
-                {!run.executionMetadata && (
-                  <p className="text-muted-foreground">
+                ) : (
+                  <p className="text-muted-foreground text-sm mt-1">
                     This may take a few moments depending on the number of instruments
                   </p>
                 )}
@@ -335,7 +341,6 @@ const ProjectRun = () => {
             </AlertDescription>
           </Alert>
         )}
-        
         {/* Run Stats */}
         {run && (
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm mb-8">
