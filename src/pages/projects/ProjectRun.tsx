@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +76,8 @@ interface SetupArtifact {
   }>;
 }
 
+const TERMINAL_STATUSES = new Set(['succeeded', 'failed']);
+
 const ProjectRun = () => {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
@@ -87,9 +89,19 @@ const ProjectRun = () => {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   
-  // Fetch run status with timeout
-  const fetchRun = async () => {
-    if (!runId) return;
+  // Refs to avoid stale closures and track polling state
+  const runRef = useRef<ProjectRun | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const pollIntervalMs = useRef(2000);
+  const isMountedRef = useRef(true);
+  const fetchCountRef = useRef(0);
+  
+  // Keep ref in sync
+  useEffect(() => { runRef.current = run; }, [run]);
+  
+  // Core fetch function — always reads latest runId from params
+  const fetchRun = useCallback(async (isInitial = false) => {
+    if (!runId || !isMountedRef.current) return;
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -115,6 +127,8 @@ const ProjectRun = () => {
       
       clearTimeout(timeoutId);
       
+      if (!isMountedRef.current) return;
+      
       const data = await response.json();
       
       if (!response.ok) {
@@ -125,38 +139,101 @@ const ProjectRun = () => {
         throw new Error(data.error || 'Failed to fetch run');
       }
       
+      fetchCountRef.current += 1;
+      
+      // Always update state with latest data
       setRun(data.run);
       setProject(data.project);
       setArtifact(data.artifact);
       setError(null);
+      
+      // Reset poll interval on successful fetch
+      pollIntervalMs.current = 2000;
+      
+      console.log(`[ProjectRun] fetch #${fetchCountRef.current}: status=${data.run?.status}, progress=${data.run?.executionMetadata?.progress ?? '-'}`);
+      
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('[ProjectRun] Fetch error:', err);
+      if (!isMountedRef.current) return;
+      
       if (err instanceof DOMException && err.name === 'AbortError') {
-        setError('Request timed out. The server may be busy — click Retry.');
-      } else {
+        // On timeout, back off but don't show error for background polls
+        if (isInitial) {
+          setError('Request timed out. The server may be busy — click Retry.');
+        }
+        // Exponential backoff on timeout
+        pollIntervalMs.current = Math.min(pollIntervalMs.current * 1.5, 15000);
+      } else if (isInitial) {
         setError(err instanceof Error ? err.message : 'Failed to fetch run');
       }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [runId, navigate]);
   
-  // Initial fetch and polling with ref to avoid stale closure
+  // Schedule next poll (only if not in terminal state)
+  const scheduleNextPoll = useCallback(() => {
+    if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    
+    const currentRun = runRef.current;
+    if (currentRun && TERMINAL_STATUSES.has(currentRun.status)) {
+      console.log(`[ProjectRun] Terminal status "${currentRun.status}" — stopping polls`);
+      return;
+    }
+    
+    pollTimeoutRef.current = setTimeout(async () => {
+      await fetchRun(false);
+      if (isMountedRef.current) {
+        scheduleNextPoll();
+      }
+    }, pollIntervalMs.current);
+  }, [fetchRun]);
+  
+  // Primary: Supabase Realtime subscription + fallback polling
   useEffect(() => {
-    fetchRun();
+    if (!runId) return;
     
-    const interval = setInterval(async () => {
-      // Re-read current status from state via functional update pattern
-      setRun(currentRun => {
-        if (currentRun?.status === 'queued' || currentRun?.status === 'running') {
-          fetchRun();
+    isMountedRef.current = true;
+    fetchCountRef.current = 0;
+    pollIntervalMs.current = 2000;
+    
+    // Initial fetch
+    fetchRun(true).then(() => {
+      if (isMountedRef.current) {
+        scheduleNextPoll();
+      }
+    });
+    
+    // Realtime subscription for instant updates
+    const channel = supabase
+      .channel(`project_run:${runId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'project_runs',
+          filter: `id=eq.${runId}`,
+        },
+        (payload) => {
+          console.log('[ProjectRun] Realtime update received:', payload.new?.status);
+          // On realtime update, immediately fetch full data (includes artifact)
+          fetchRun(false);
+          pollIntervalMs.current = 2000; // Reset backoff
         }
-        return currentRun;
+      )
+      .subscribe((status) => {
+        console.log('[ProjectRun] Realtime channel status:', status);
       });
-    }, 3000);
     
-    return () => clearInterval(interval);
-  }, [runId]);
+    return () => {
+      isMountedRef.current = false;
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [runId, fetchRun, scheduleNextPoll]);
   
   // Live-ticking elapsed timer
   useEffect(() => {
@@ -233,7 +310,7 @@ const ProjectRun = () => {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
               <span>{error}</span>
-              <Button variant="outline" size="sm" onClick={() => { setLoading(true); setError(null); fetchRun(); }} className="ml-4 shrink-0">
+              <Button variant="outline" size="sm" onClick={() => { setLoading(true); setError(null); fetchRun(true); }} className="ml-4 shrink-0">
                 Retry
               </Button>
             </AlertDescription>
@@ -251,7 +328,6 @@ const ProjectRun = () => {
           <Button 
             variant="ghost" 
             onClick={() => {
-              // Pass artifact inputs to pre-fill the form for easy re-runs
               const inputs = artifact?.inputs;
               navigate('/projects/pattern-lab/new', {
                 state: inputs ? {
@@ -295,7 +371,6 @@ const ProjectRun = () => {
 
                 {run.status === 'running' && run.executionMetadata ? (
                   <div className="w-full max-w-lg mt-4 space-y-4">
-                    {/* Progress bar */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm font-medium">
                         <span className="text-foreground">{run.executionMetadata.currentStep || 'Processing...'}</span>
@@ -304,7 +379,6 @@ const ProjectRun = () => {
                       <Progress value={Math.max(run.executionMetadata.progress ?? 0, 2)} className="h-2.5" />
                     </div>
                     
-                    {/* Stats row */}
                     <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
                       {run.executionMetadata.instrumentsTotal && (
                         <span>
@@ -378,8 +452,6 @@ const ProjectRun = () => {
         {run?.status === 'succeeded' && artifact && (
           <>
             <PatternLabViewer artifact={artifact as any} runId={runId!} />
-            
-            {/* Compliance: Disclaimer Banner */}
             <DisclaimerBanner className="mt-8" />
           </>
         )}
