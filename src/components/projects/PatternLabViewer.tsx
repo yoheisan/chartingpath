@@ -66,6 +66,7 @@ import {
 } from '@/components/ui/select';
 import { TradeExcursionChart } from './TradeExcursionChart';
 import { ProfitStructureWaterfall } from './ProfitStructureWaterfall';
+import ComparisonBanner from './ComparisonBanner';
 
 interface BenchmarkData {
   symbol: string;
@@ -173,12 +174,21 @@ interface PatternLabArtifact {
   exitEquityByStrategy?: Record<string, EquityPoint[]>;
 }
 
+interface PreviousMetrics {
+  winRate: number;
+  expectancy: number;
+  sharpe: number;
+  profitFactor: number;
+  totalTrades: number;
+}
+
 interface PatternLabViewerProps {
   artifact: PatternLabArtifact;
   runId: string;
+  previousMetrics?: PreviousMetrics | null;
 }
 
-const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
+const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewerProps) => {
   const navigate = useNavigate();
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -656,6 +666,20 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     <div className="space-y-6">
       {/* Hero: Equity Curve + Drawdown — always visible baseline */}
       <div className="grid gap-4">
+        {/* Comparison Banner (shown when this is a rerun) */}
+        {previousMetrics && (
+          <ComparisonBanner
+            previous={previousMetrics}
+            current={{
+              winRate: filteredSummary.winRate || artifact.summary.overallWinRate,
+              expectancy: filteredSummary.expectancy || artifact.summary.overallExpectancy,
+              sharpe: aggregateKPIs.sharpe,
+              profitFactor: aggregateKPIs.profitFactor,
+              totalTrades: filteredSummary.totalTrades || artifact.summary.totalTrades,
+            }}
+          />
+        )}
+
         {/* Compact KPI row */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 text-sm">
@@ -1650,7 +1674,17 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       const data = await response.json();
                       if (!response.ok) throw new Error(data.error || 'Failed to start run');
                       toast.success('Optimized backtest started!');
-                      navigate(`/projects/runs/${data.runId}`);
+                      navigate(`/projects/runs/${data.runId}`, {
+                        state: {
+                          previousMetrics: {
+                            winRate: filteredSummary.winRate || artifact.summary.overallWinRate,
+                            expectancy: filteredSummary.expectancy || artifact.summary.overallExpectancy,
+                            sharpe: aggregateKPIs.sharpe,
+                            profitFactor: aggregateKPIs.profitFactor,
+                            totalTrades: filteredSummary.totalTrades || artifact.summary.totalTrades,
+                          },
+                        },
+                      });
                     } catch (error) {
                       console.error('Rerun error:', error);
                       toast.error(error instanceof Error ? error.message : 'Failed to start rerun');
