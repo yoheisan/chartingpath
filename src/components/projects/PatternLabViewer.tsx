@@ -1472,6 +1472,27 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium">Setup Optimizer</label>
                     <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => {
+                        const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
+                        const allKeys = new Set(setups.map(s => `${s.instrument}|${s.patternId}`));
+                        // If all are currently excluded, select all (clear exclusions); otherwise exclude all
+                        const allExcluded = setups.every(s => excludedSetups.has(`${s.instrument}|${s.patternId}`));
+                        if (allExcluded) {
+                          setExcludedSetups(prev => {
+                            const next = new Set(prev);
+                            allKeys.forEach(k => next.delete(k));
+                            return next;
+                          });
+                        } else {
+                          setExcludedSetups(prev => new Set([...prev, ...allKeys]));
+                        }
+                      }}>
+                        {(() => {
+                          const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
+                          const allExcluded = setups.length > 0 && setups.every(s => excludedSetups.has(`${s.instrument}|${s.patternId}`));
+                          return allExcluded ? 'Select All' : 'Clear All';
+                        })()}
+                      </Button>
                       {hasExclusions && (
                         <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => setExcludedSetups(new Set())}>Reset</Button>
                       )}
