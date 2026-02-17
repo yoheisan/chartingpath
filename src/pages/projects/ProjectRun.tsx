@@ -96,7 +96,7 @@ const ProjectRun = () => {
   const isMountedRef = useRef(true);
   const fetchCountRef = useRef(0);
   
-  // Keep ref in sync
+  // Keep ref in sync (backup for external state changes)
   useEffect(() => { runRef.current = run; }, [run]);
   
   // Core fetch function — always reads latest runId from params
@@ -141,7 +141,8 @@ const ProjectRun = () => {
       
       fetchCountRef.current += 1;
       
-      // Always update state with latest data
+      // Always update state and ref with latest data
+      runRef.current = data.run; // Update ref immediately so scheduleNextPoll sees terminal status
       setRun(data.run);
       setProject(data.project);
       setArtifact(data.artifact);
