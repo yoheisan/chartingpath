@@ -405,6 +405,44 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   const isFiltered = directionFilter !== 'all';
 
+  // Direction-filtered equity curve: recompute from displayedTrades when filtered
+  const directionFilteredEquity: EquityPoint[] = useMemo(() => {
+    if (directionFilter === 'all') return effectiveEquity;
+    
+    const trades = displayedTrades;
+    if (trades.length === 0) return [];
+    
+    const initialCapital = 10000;
+    const positionSize = initialCapital; // Fixed position sizing
+    let equity = initialCapital;
+    let peak = initialCapital;
+    
+    // Sort trades by entry date
+    const sorted = [...trades].sort((a, b) => 
+      new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    );
+    
+    const points: EquityPoint[] = [{ 
+      date: sorted[0].entryDate, 
+      value: initialCapital, 
+      drawdown: 0 
+    }];
+    
+    sorted.forEach(trade => {
+      const pnl = trade.rMultiple * (positionSize * 0.02); // 2% risk per trade
+      equity += pnl;
+      peak = Math.max(peak, equity);
+      const drawdown = peak > 0 ? (peak - equity) / peak : 0;
+      points.push({
+        date: trade.exitDate || trade.entryDate,
+        value: Math.round(equity * 100) / 100,
+        drawdown,
+      });
+    });
+    
+    return points;
+  }, [directionFilter, displayedTrades, effectiveEquity]);
+
   return (
     <div className="space-y-6">
       {/* Global Filters: R:R Tier + Direction */}
@@ -1053,10 +1091,10 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         {/* Equity Tab */}
         <TabsContent value="equity" className="space-y-6">
           {/* Benchmark Selector */}
-          {effectiveEquity.length > 0 && (
+          {directionFilteredEquity.length > 0 && (
             <BenchmarkSelector
-              startDate={effectiveEquity[0]?.date}
-              endDate={effectiveEquity[effectiveEquity.length - 1]?.date}
+              startDate={directionFilteredEquity[0]?.date}
+              endDate={directionFilteredEquity[directionFilteredEquity.length - 1]?.date}
               initialCapital={10000}
               onBenchmarkChange={handleBenchmarkChange}
             />
@@ -1077,16 +1115,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </CardHeader>
             <CardContent>
               {/* Performance summary when benchmarks are active */}
-              {benchmarks.length > 0 && effectiveEquity.length > 0 && (
+              {benchmarks.length > 0 && directionFilteredEquity.length > 0 && (
                 <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/50">
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Strategy:</span>{' '}
                       <span className={`font-semibold ${
-                        ((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) >= 0 
+                        ((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) >= 0 
                           ? 'text-green-500' : 'text-red-500'
                       }`}>
-                        {(((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) / 100).toFixed(1)}%
+                        {(((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) / 100).toFixed(1)}%
                       </span>
                     </div>
                     {benchmarks.map(b => (
@@ -1102,7 +1140,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <div className="border-l border-border pl-4">
                         <span className="text-muted-foreground">Alpha:</span>{' '}
                         {(() => {
-                          const strategyReturn = ((effectiveEquity[effectiveEquity.length - 1]?.value ?? 10000) - 10000) / 100;
+                          const strategyReturn = ((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) / 100;
                           const alpha = strategyReturn - benchmarks[0].returnPercent;
                           return (
                             <span className={`font-semibold ${alpha >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -1121,12 +1159,12 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                   <RechartsLineChart 
                     data={(() => {
                       // Merge equity data with benchmark data by date
-                      if (benchmarks.length === 0) return effectiveEquity;
+                      if (benchmarks.length === 0) return directionFilteredEquity;
                       
                       // Collect all unique dates from strategy + all benchmarks
                       const allDates = new Set<string>();
                       
-                      effectiveEquity.forEach(point => {
+                      directionFilteredEquity.forEach(point => {
                         allDates.add(point.date.split('T')[0]);
                       });
                       
@@ -1141,7 +1179,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       
                       // Create lookup maps for each data source
                       const strategyMap = new Map<string, { value: number; drawdown?: number }>();
-                      effectiveEquity.forEach(point => {
+                      directionFilteredEquity.forEach(point => {
                         strategyMap.set(point.date.split('T')[0], { value: point.value, drawdown: point.drawdown });
                       });
                       
@@ -1244,7 +1282,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             <CardContent>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={effectiveEquity}>
+                  <AreaChart data={directionFilteredEquity}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis 
                       dataKey="date" 
