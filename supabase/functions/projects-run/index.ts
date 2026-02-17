@@ -709,7 +709,7 @@ async function estimateCacheHitRatio(
 async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
   const period1 = Math.floor(new Date(startDate).getTime() / 1000);
   const period2 = Math.floor(new Date(endDate).getTime() / 1000);
-  const yahooInterval = interval === '4h' ? '1h' : interval === '1d' ? '1d' : '1h';
+  const yahooInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '1d' ? '1d' : interval === '1wk' ? '1wk' : '1h';
   
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
   
@@ -736,10 +736,12 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
     volume: quotes.volume?.[idx] || 0,
   })).filter((b: any) => b.close > 0);
   
-  if (interval === '4h' && bars.length > 0) {
+  // Aggregate 1h bars to 4h or 8h if needed
+  const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
+  if (aggregateSize > 0 && bars.length > 0) {
     const aggregated: any[] = [];
-    for (let i = 0; i < bars.length; i += 4) {
-      const chunk = bars.slice(i, i + 4);
+    for (let i = 0; i < bars.length; i += aggregateSize) {
+      const chunk = bars.slice(i, i + aggregateSize);
       if (chunk.length === 0) continue;
       aggregated.push({
         timestamp: chunk[0].timestamp,
