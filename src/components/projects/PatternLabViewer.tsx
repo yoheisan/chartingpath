@@ -648,210 +648,123 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Global Filters: R:R Tier + Direction */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Direction Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Direction:</span>
-            <div className="flex rounded-lg border border-border/50 overflow-hidden">
-              <Button
-                variant={directionFilter === 'all' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="rounded-none h-8 px-3"
-                onClick={() => setDirectionFilter('all')}
-              >
-                Both
-              </Button>
-              <Button
-                variant={directionFilter === 'long' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="rounded-none h-8 px-3 border-x border-border/50"
-                onClick={() => setDirectionFilter('long')}
-              >
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                Long
-              </Button>
-              <Button
-                variant={directionFilter === 'short' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="rounded-none h-8 px-3"
-                onClick={() => setDirectionFilter('short')}
-              >
-                <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                Short
-              </Button>
-            </div>
+      {/* Hero: Equity Curve + Drawdown — always visible baseline */}
+      <div className="grid gap-4">
+        {/* Compact KPI row */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Trades:</span>
+            <span className="font-semibold">{artifact.summary.totalTrades}</span>
           </div>
-
-          {/* R:R Tier Selector */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Win Rate:</span>
+            <span className="font-semibold">{formatPercent(selectedTierWinRate)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Expectancy:</span>
+            <span className={`font-semibold ${selectedTierExpectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {formatR(selectedTierExpectancy)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Sharpe:</span>
+            <span className={`font-semibold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+              {aggregateKPIs.sharpe.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Max DD:</span>
+            <span className="font-semibold text-red-500">
+              {(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
+            </span>
+          </div>
           {hasMultiRR && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">R:R Target:</span>
-              <div className="flex gap-1">
-                {[2, 3, 4, 5].map(tier => (
-                  <Button
-                    key={tier}
-                    variant={selectedRRTier === tier ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedRRTier(tier)}
-                    className="font-mono"
-                  >
-                    1:{tier}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Exit Model Selector */}
-          {artifact.exitComparison && artifact.exitComparison.length > 0 && (
-            <div className="flex items-center gap-2 border-l border-border/50 pl-4">
-              <span className="text-sm text-muted-foreground">Exit Model:</span>
-              <Select value={selectedExitModel} onValueChange={setSelectedExitModel}>
-                <SelectTrigger className="h-8 w-[180px] text-xs">
-                  <Crosshair className="h-3 w-3 mr-1.5 shrink-0" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">
-                    <span className="flex items-center gap-1.5">
-                      Fixed R:R ({tierLabel})
-                    </span>
-                  </SelectItem>
-                  {artifact.exitComparison.map(e => (
-                    <SelectItem key={e.strategyId} value={e.strategyId}>
-                      <span className="flex items-center gap-1.5">
-                        {e.strategyName}
-                        <span className={`text-xs tabular-nums ${e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                          {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
-                        </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {(repeatableWinSetups.length > 0 || repeatableLossSetups.length > 0) && (
-            <div className="flex items-center gap-2 border-l border-border/50 pl-4">
-              <span className="text-sm text-muted-foreground">Optimize:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant={hasExclusions ? "default" : "outline"} size="sm" className="gap-1.5 h-8">
-                    <Award className="h-3 w-3" />
-                    {hasExclusions ? `${excludedSetups.size} excluded` : 'Setups'}
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[420px] p-0">
-                  <div className="p-3 border-b border-border/50">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Setup Optimizer</p>
-                      <div className="flex items-center gap-2">
-                        {hasExclusions && (
-                          <Button variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => setExcludedSetups(new Set())}>
-                            Reset
-                          </Button>
-                        )}
-                        <div className="flex rounded-md border border-border/50 overflow-hidden">
-                          <Button
-                            variant={repeatableMode === 'best' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className="rounded-none h-6 px-2 text-xs"
-                            onClick={() => setRepeatableMode('best')}
-                          >
-                            <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" />
-                            Winners
-                          </Button>
-                          <Button
-                            variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className="rounded-none h-6 px-2 text-xs border-l border-border/50"
-                            onClick={() => setRepeatableMode('worst')}
-                          >
-                            <TrendingDown className="h-3 w-3 mr-1 text-red-400" />
-                            Losers
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Uncheck setups to exclude — metrics update everywhere</p>
-                  </div>
-                  <div className="p-2 max-h-[300px] overflow-y-auto">
-                    {(() => {
-                      const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
-                      if (setups.length === 0) return (
-                        <p className="text-sm text-muted-foreground py-3 text-center">
-                          No repeatable {repeatableMode === 'best' ? 'winning' : 'losing'} setups
-                        </p>
-                      );
-                      return setups.map((setup, idx) => {
-                        const setupKey = `${setup.instrument}|${setup.patternId}`;
-                        const isExcluded = excludedSetups.has(setupKey);
-                        return (
-                          <div 
-                            key={idx}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted/50 transition-opacity ${isExcluded ? 'opacity-40' : ''}`}
-                            onClick={() => toggleSetupExclusion(setupKey)}
-                          >
-                            <Checkbox checked={!isExcluded} tabIndex={-1} className="pointer-events-none" />
-                            <span className="font-medium text-sm">{setup.instrument}</span>
-                            <span className="text-xs text-muted-foreground truncate flex-1">{setup.patternId}</span>
-                            <span className="text-xs text-muted-foreground">{setup.count}×</span>
-                            <span className={`text-xs font-semibold tabular-nums ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {formatR(setup.avgR)}
-                            </span>
-                            <Badge variant="outline" className={`text-xs py-0 ${gradeColor[setup.bestGrade]}`}>
-                              {setup.bestGrade}
-                            </Badge>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                  {hasExclusions && (
-                    <div className="p-3 border-t border-border/50 bg-muted/20">
-                      <div className="grid grid-cols-4 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground">Trades</span>
-                          <p className="font-semibold">{filteredSummary.totalTrades}<span className="text-muted-foreground font-normal">/{displayedTrades.length}</span></p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Win Rate</span>
-                          <p className="font-semibold">{formatPercent(filteredSummary.winRate)}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Expectancy</span>
-                          <p className={`font-semibold ${filteredSummary.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(filteredSummary.expectancy)}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Sharpe</span>
-                          <p className={`font-semibold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>{aggregateKPIs.sharpe.toFixed(2)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="flex items-center gap-1.5 ml-auto">
+              <span className="text-xs text-muted-foreground">R:R:</span>
+              {[2, 3, 4, 5].map(tier => (
+                <Button
+                  key={tier}
+                  variant={selectedRRTier === tier ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRRTier(tier)}
+                  className="font-mono h-7 px-2 text-xs"
+                >
+                  1:{tier}
+                </Button>
+              ))}
             </div>
           )}
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-          {(directionFilter !== 'all' || hasExclusions) && (
-            <Badge variant="outline" className="text-xs">
-              {hasExclusions ? optimizedTrades.length : displayedTrades.length} of {artifact.trades.length} trades
-            </Badge>
-          )}
-          {useExitModel && (
-            <Badge variant="secondary" className="text-xs gap-1">
-              <Crosshair className="h-3 w-3" />
-              {artifact.exitComparison?.find(e => e.strategyId === selectedExitModel)?.strategyName || selectedExitModel}
-            </Badge>
-          )}
-          Metrics update across all tabs
-        </div>
+
+        {/* Equity Curve */}
+        <Card className="border-border/50 bg-card/50">
+          <CardContent className="pt-4 pb-2">
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsLineChart data={directionFilteredEquity}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(val) => new Date(val).toLocaleDateString()}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    labelFormatter={(val) => new Date(val).toLocaleDateString()}
+                    formatter={(val: number) => {
+                      const roi = ((val - 10000) / 10000) * 100;
+                      return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
+                    }}
+                  />
+                  <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value"
+                    name="Equity"
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </RechartsLineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Drawdown */}
+        <Card className="border-border/50 bg-card/50">
+          <CardContent className="pt-4 pb-2">
+            <div className="h-[140px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={directionFilteredEquity}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(val) => new Date(val).toLocaleDateString()}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(val) => `${(val * 100).toFixed(0)}%`}
+                  />
+                  <Tooltip 
+                    labelFormatter={(val) => new Date(val).toLocaleDateString()}
+                    formatter={(val: number) => [`${(val * 100).toFixed(2)}%`, 'Drawdown']}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="drawdown" 
+                    stroke="hsl(var(--destructive))" 
+                    fill="hsl(var(--destructive) / 0.2)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
@@ -859,10 +772,12 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="patterns">Patterns</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
-          <TabsTrigger value="equity">Equity</TabsTrigger>
-          <TabsTrigger value="exits" className="gap-1">
+          <TabsTrigger value="optimization" className="gap-1">
             <Zap className="h-3 w-3" />
-            Exit Optimizer
+            Optimization
+          </TabsTrigger>
+          <TabsTrigger value="exits" className="gap-1">
+            Exits
           </TabsTrigger>
         </TabsList>
 
@@ -1498,11 +1413,173 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
           </Card>
         </TabsContent>
 
-        {/* Equity Tab */}
-        <TabsContent value="equity" className="space-y-6">
+        {/* Optimization Tab */}
+        <TabsContent value="optimization" className="space-y-6">
+          <Card className="border-primary/20 bg-card/50">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Strategy Optimization
+              </CardTitle>
+              <CardDescription>
+                Fine-tune your strategy with filters and exclusions. Changes here are isolated — use <strong>Rerun</strong> to apply to results.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Direction Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Direction Filter</label>
+                <div className="flex rounded-lg border border-border/50 overflow-hidden w-fit">
+                  <Button variant={directionFilter === 'all' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-8 px-4" onClick={() => setDirectionFilter('all')}>Both</Button>
+                  <Button variant={directionFilter === 'long' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-8 px-4 border-x border-border/50" onClick={() => setDirectionFilter('long')}>
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" /> Long
+                  </Button>
+                  <Button variant={directionFilter === 'short' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-8 px-4" onClick={() => setDirectionFilter('short')}>
+                    <TrendingDown className="h-3 w-3 mr-1 text-red-500" /> Short
+                  </Button>
+                </div>
+              </div>
 
+              {/* Exit Model */}
+              {artifact.exitComparison && artifact.exitComparison.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Exit Model</label>
+                  <Select value={selectedExitModel} onValueChange={setSelectedExitModel}>
+                    <SelectTrigger className="h-9 w-[260px]">
+                      <Crosshair className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed R:R ({tierLabel})</SelectItem>
+                      {artifact.exitComparison.map(e => (
+                        <SelectItem key={e.strategyId} value={e.strategyId}>
+                          <span className="flex items-center gap-1.5">
+                            {e.strategyName}
+                            <span className={`text-xs tabular-nums ${e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          {/* Benchmark Selector */}
+              {/* Setup Optimizer */}
+              {(repeatableWinSetups.length > 0 || repeatableLossSetups.length > 0) && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Setup Optimizer</label>
+                    <div className="flex items-center gap-2">
+                      {hasExclusions && (
+                        <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => setExcludedSetups(new Set())}>Reset</Button>
+                      )}
+                      <div className="flex rounded-md border border-border/50 overflow-hidden">
+                        <Button variant={repeatableMode === 'best' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs" onClick={() => setRepeatableMode('best')}>
+                          <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" /> Winners
+                        </Button>
+                        <Button variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs border-l border-border/50" onClick={() => setRepeatableMode('worst')}>
+                          <TrendingDown className="h-3 w-3 mr-1 text-red-400" /> Losers
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Uncheck setups to exclude from the optimized analysis</p>
+                  <div className="border border-border/50 rounded-lg p-2 max-h-[300px] overflow-y-auto space-y-0.5">
+                    {(() => {
+                      const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
+                      if (setups.length === 0) return (
+                        <p className="text-sm text-muted-foreground py-3 text-center">
+                          No repeatable {repeatableMode === 'best' ? 'winning' : 'losing'} setups
+                        </p>
+                      );
+                      return setups.map((setup, idx) => {
+                        const setupKey = `${setup.instrument}|${setup.patternId}`;
+                        const isExcluded = excludedSetups.has(setupKey);
+                        return (
+                          <div 
+                            key={idx}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted/50 transition-opacity ${isExcluded ? 'opacity-40' : ''}`}
+                            onClick={() => toggleSetupExclusion(setupKey)}
+                          >
+                            <Checkbox checked={!isExcluded} tabIndex={-1} className="pointer-events-none" />
+                            <span className="font-medium text-sm">{setup.instrument}</span>
+                            <span className="text-xs text-muted-foreground truncate flex-1">{setup.patternId}</span>
+                            <span className="text-xs text-muted-foreground">{setup.count}×</span>
+                            <span className={`text-xs font-semibold tabular-nums ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {formatR(setup.avgR)}
+                            </span>
+                            <Badge variant="outline" className={`text-xs py-0 ${gradeColor[setup.bestGrade]}`}>
+                              {setup.bestGrade}
+                            </Badge>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Optimized Preview */}
+              {(directionFilter !== 'all' || hasExclusions || useExitModel) && (
+                <div className="p-4 rounded-lg bg-muted/30 border border-primary/20">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    Optimized Preview
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Trades</span>
+                      <p className="font-semibold">{filteredSummary.totalTrades}<span className="text-muted-foreground font-normal">/{artifact.trades.length}</span></p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Win Rate</span>
+                      <p className="font-semibold">{formatPercent(filteredSummary.winRate)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Expectancy</span>
+                      <p className={`font-semibold ${filteredSummary.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(filteredSummary.expectancy)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Sharpe</span>
+                      <p className={`font-semibold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>{aggregateKPIs.sharpe.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Profit Factor</span>
+                      <p className={`font-semibold ${aggregateKPIs.profitFactor >= 1.5 ? 'text-green-500' : aggregateKPIs.profitFactor >= 1 ? 'text-yellow-500' : 'text-red-500'}`}>{aggregateKPIs.profitFactor === Infinity ? '∞' : aggregateKPIs.profitFactor.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Rerun Button */}
+              <div className="flex items-center gap-3 pt-2">
+                <Button 
+                  size="lg" 
+                  className="gap-2"
+                  onClick={() => {
+                    // Navigate to pattern lab with current optimization params pre-filled
+                    const params = new URLSearchParams();
+                    params.set('rerun', runId);
+                    if (directionFilter !== 'all') params.set('direction', directionFilter);
+                    params.set('rr', String(selectedRRTier));
+                    if (selectedExitModel !== 'fixed') params.set('exitModel', selectedExitModel);
+                    if (excludedSetups.size > 0) params.set('excluded', [...excludedSetups].join(','));
+                    navigate(`/projects/pattern-lab/new?${params.toString()}`);
+                  }}
+                >
+                  <Zap className="h-4 w-4" />
+                  Rerun with Optimizations
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Launches a new backtest with your selected filters applied server-side for accurate results
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Benchmark Comparison (moved from old Equity tab) */}
           {directionFilteredEquity.length > 0 && (
             <BenchmarkSelector
               startDate={directionFilteredEquity[0]?.date}
@@ -1512,30 +1589,20 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             />
           )}
 
-          {/* Equity Curve with Benchmarks */}
-          <Card className="border-border/50 bg-card/50">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <LineChart className="h-5 w-5" />
-                Equity Curve
-                {benchmarks.length > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
-                    vs. {benchmarks.map(b => b.symbol).join(', ')}
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Performance summary when benchmarks are active */}
-              {benchmarks.length > 0 && directionFilteredEquity.length > 0 && (
+          {benchmarks.length > 0 && directionFilteredEquity.length > 0 && (
+            <Card className="border-border/50 bg-card/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <LineChart className="h-5 w-5" />
+                  Strategy vs. Benchmarks
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/50">
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Strategy:</span>{' '}
-                      <span className={`font-semibold ${
-                        ((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) >= 0 
-                          ? 'text-green-500' : 'text-red-500'
-                      }`}>
+                      <span className={`font-semibold ${((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {(((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) / 100).toFixed(1)}%
                       </span>
                     </div>
@@ -1547,318 +1614,57 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         </span>
                       </div>
                     ))}
-                    {/* Alpha calculation */}
-                    {benchmarks.length === 1 && (
-                      <div className="border-l border-border pl-4">
-                        <span className="text-muted-foreground">Alpha:</span>{' '}
-                        {(() => {
-                          const strategyReturn = ((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) / 100;
-                          const alpha = strategyReturn - benchmarks[0].returnPercent;
-                          return (
-                            <span className={`font-semibold ${alpha >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                              {alpha >= 0 ? '+' : ''}{alpha.toFixed(1)}%
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    )}
                   </div>
                 </div>
-              )}
-
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart 
-                    data={(() => {
-                      // Merge equity data with benchmark data by date
-                      if (benchmarks.length === 0) return directionFilteredEquity;
-                      
-                      // Collect all unique dates from strategy + all benchmarks
-                      const allDates = new Set<string>();
-                      
-                      directionFilteredEquity.forEach(point => {
-                        allDates.add(point.date.split('T')[0]);
-                      });
-                      
-                      benchmarks.forEach(benchmark => {
-                        benchmark.data.forEach(point => {
-                          allDates.add(point.date.split('T')[0]);
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart 
+                      data={(() => {
+                        const allDates = new Set<string>();
+                        directionFilteredEquity.forEach(point => allDates.add(point.date.split('T')[0]));
+                        benchmarks.forEach(benchmark => benchmark.data.forEach(point => allDates.add(point.date.split('T')[0])));
+                        const sortedDates = Array.from(allDates).sort();
+                        const strategyMap = new Map<string, { value: number; drawdown?: number }>();
+                        directionFilteredEquity.forEach(point => strategyMap.set(point.date.split('T')[0], { value: point.value, drawdown: point.drawdown }));
+                        const benchmarkMaps = benchmarks.map(b => {
+                          const map = new Map<string, number>();
+                          b.data.forEach(point => map.set(point.date.split('T')[0], point.value));
+                          return { symbol: b.symbol, map };
                         });
-                      });
-                      
-                      // Sort dates chronologically
-                      const sortedDates = Array.from(allDates).sort();
-                      
-                      // Create lookup maps for each data source
-                      const strategyMap = new Map<string, { value: number; drawdown?: number }>();
-                      directionFilteredEquity.forEach(point => {
-                        strategyMap.set(point.date.split('T')[0], { value: point.value, drawdown: point.drawdown });
-                      });
-                      
-                      const benchmarkMaps = benchmarks.map(b => {
-                        const map = new Map<string, number>();
-                        b.data.forEach(point => map.set(point.date.split('T')[0], point.value));
-                        return { symbol: b.symbol, map };
-                      });
-                      
-                      // Forward-fill interpolation to create continuous curves
-                      let lastStrategy: { value: number; drawdown: number } = { value: 10000, drawdown: 0 };
-                      const lastBenchmark: Record<string, number> = {};
-                      benchmarks.forEach(b => { lastBenchmark[b.symbol] = 10000; });
-                      
-                      return sortedDates.map(dateKey => {
-                        // Get or forward-fill strategy value
-                        const strategyPoint = strategyMap.get(dateKey);
-                        if (strategyPoint) {
-                          lastStrategy = { value: strategyPoint.value, drawdown: strategyPoint.drawdown ?? 0 };
-                        }
-                        
-                        // Build the data point
-                        const point: Record<string, any> = {
-                          date: dateKey,
-                          strategy: lastStrategy.value,
-                          drawdown: lastStrategy.drawdown,
-                        };
-                        
-                        // Get or forward-fill each benchmark value
-                        benchmarkMaps.forEach(({ symbol, map }) => {
-                          const val = map.get(dateKey);
-                          if (val !== undefined) {
-                            lastBenchmark[symbol] = val;
-                          }
-                          point[symbol] = lastBenchmark[symbol];
+                        let lastStrategy: { value: number; drawdown: number } = { value: 10000, drawdown: 0 };
+                        const lastBenchmark: Record<string, number> = {};
+                        benchmarks.forEach(b => { lastBenchmark[b.symbol] = 10000; });
+                        return sortedDates.map(dateKey => {
+                          const strategyPoint = strategyMap.get(dateKey);
+                          if (strategyPoint) lastStrategy = { value: strategyPoint.value, drawdown: strategyPoint.drawdown ?? 0 };
+                          const point: Record<string, any> = { date: dateKey, strategy: lastStrategy.value };
+                          benchmarkMaps.forEach(({ symbol, map }) => {
+                            const val = map.get(dateKey);
+                            if (val !== undefined) lastBenchmark[symbol] = val;
+                            point[symbol] = lastBenchmark[symbol];
+                          });
+                          return point;
                         });
-                        
-                        return point;
-                      });
-                    })()}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(val) => new Date(val).toLocaleDateString()}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip 
-                      labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                      formatter={(val: number, name: string) => {
-                        const roi = ((val - 10000) / 10000) * 100;
-                        const roiSign = roi >= 0 ? '+' : '';
-                        return [
-                          `$${val.toFixed(2)} (${roiSign}${roi.toFixed(1)}%)`, 
-                          name === 'strategy' ? 'Strategy' : name
-                        ];
-                      }}
-                    />
-                    {benchmarks.length > 0 && <Legend />}
-                    <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                    
-                    {/* Strategy line */}
-                    <Line 
-                      type="monotone" 
-                      dataKey={benchmarks.length > 0 ? "strategy" : "value"}
-                      name="Strategy"
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    
-                    {/* Benchmark lines */}
-                    {benchmarks.map(benchmark => (
-                      <Line
-                        key={benchmark.symbol}
-                        type="monotone"
-                        dataKey={benchmark.symbol}
-                        name={benchmark.symbol}
-                        stroke={benchmark.color}
-                        strokeWidth={1.5}
-                        strokeDasharray="5 5"
-                        dot={false}
+                      })()}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(val) => new Date(val).toLocaleDateString()} />
+                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`} />
+                      <Tooltip 
+                        labelFormatter={(val) => new Date(val).toLocaleDateString()}
+                        formatter={(val: number, name: string) => {
+                          const roi = ((val - 10000) / 10000) * 100;
+                          return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, name === 'strategy' ? 'Strategy' : name];
+                        }}
                       />
-                    ))}
-                  </RechartsLineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Drawdown Chart */}
-          <Card className="border-border/50 bg-card/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Drawdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={directionFilteredEquity}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(val) => new Date(val).toLocaleDateString()}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(val) => `${(val * 100).toFixed(0)}%`}
-                    />
-                    <Tooltip 
-                      labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                      formatter={(val: number) => [`${(val * 100).toFixed(2)}%`, 'Drawdown']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="drawdown" 
-                      stroke="hsl(var(--destructive))" 
-                      fill="hsl(var(--destructive) / 0.2)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Exit Optimizer Tab */}
-        <TabsContent value="exits" className="space-y-6">
-          {optimizedExitComparison && optimizedExitComparison.length > 0 ? (
-            <>
-              {/* Optimal Strategy Highlight */}
-              {optimizedOptimalExit && (
-                <Card className="border-primary/30 bg-primary/5">
-                  <CardContent className="py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Star className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">Optimal Exit Strategy{hasExclusions ? ' (Optimized)' : ''}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {optimizedExitComparison.find(e => e.strategyId === optimizedOptimalExit)?.strategyName || optimizedOptimalExit}
-                          {' '}delivers the highest expectancy for your pattern selection
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Exit Comparison Table */}
-              <ExitComparisonTable 
-                stats={optimizedExitComparison}
-                title="Exit Strategy Comparison"
-                description="Compare performance metrics across different exit methods to optimize your trading system"
-              />
-
-              {/* Exit Equity Overlay Chart */}
-              {optimizedExitEquity && Object.keys(optimizedExitEquity).length > 0 && (
-                <ExitEquityOverlay
-                  series={optimizedExitComparison
-                    .filter(e => optimizedExitEquity?.[e.strategyId]?.length)
-                    .map((e, idx) => ({
-                      strategyId: e.strategyId,
-                      strategyName: e.strategyName,
-                      color: [
-                        'hsl(var(--primary))',
-                        'hsl(142, 76%, 36%)',
-                        'hsl(221, 83%, 53%)',
-                        'hsl(45, 93%, 47%)',
-                        'hsl(280, 67%, 50%)',
-                        'hsl(12, 76%, 61%)',
-                        'hsl(173, 80%, 40%)',
-                        'hsl(340, 82%, 52%)',
-                      ][idx % 8],
-                      data: optimizedExitEquity![e.strategyId] || [],
-                      finalValue: optimizedExitEquity![e.strategyId]?.slice(-1)[0]?.value || 10000,
-                      returnPercent: ((optimizedExitEquity![e.strategyId]?.slice(-1)[0]?.value || 10000) - 10000) / 100,
-                    }))
-                    .filter(s => s.data.length > 0)
-                  }
-                />
-              )}
-
-              {/* Strategy Breakdown */}
-              <Card className="border-border/50 bg-card/50">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Strategy Categories
-                  </CardTitle>
-                  <CardDescription>
-                    Exit strategies grouped by type
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {/* Fixed Targets */}
-                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
-                      <h4 className="font-semibold mb-2">Fixed R:R Targets</h4>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Simple profit targets at fixed risk multiples
-                      </p>
-                      {optimizedExitComparison
-                        .filter(e => e.strategyId.startsWith('fixed'))
-                        .map(e => (
-                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
-                            <span>{e.strategyName}</span>
-                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
-                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-
-                    {/* Trailing Stops */}
-                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
-                      <h4 className="font-semibold mb-2">Trailing Stops</h4>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Dynamic stops that follow price movement
-                      </p>
-                      {optimizedExitComparison
-                        .filter(e => e.strategyId.includes('atr') || e.strategyId.includes('scale'))
-                        .map(e => (
-                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
-                            <span>{e.strategyName}</span>
-                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
-                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-
-                    {/* Indicator-Based */}
-                    <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
-                      <h4 className="font-semibold mb-2">Indicator Exits</h4>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Exits based on technical indicators
-                      </p>
-                      {optimizedExitComparison
-                        .filter(e => e.strategyId.includes('rsi') || e.strategyId.includes('macd') || e.strategyId.includes('fib'))
-                        .map(e => (
-                          <div key={e.strategyId} className="flex justify-between text-sm py-1">
-                            <span>{e.strategyName}</span>
-                            <span className={e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}>
-                              {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <Card className="border-border/50 bg-card/50">
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Exit Optimizer Coming Soon</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Run a new Pattern Lab analysis to see exit strategy comparisons.
-                  </p>
+                      <Legend />
+                      <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      <Line type="monotone" dataKey="strategy" name="Strategy" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      {benchmarks.map(benchmark => (
+                        <Line key={benchmark.symbol} type="monotone" dataKey={benchmark.symbol} name={benchmark.symbol} stroke={benchmark.color} strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
+                      ))}
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
