@@ -431,13 +431,6 @@ const PatternLabWizard = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/projects')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Projects
-            </Button>
             <Link to="/projects/pattern-lab/audit">
               <Button variant="outline" size="sm">
                 <Eye className="h-4 w-4 mr-2" />
