@@ -163,6 +163,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
+  const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('best');
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
     setBenchmarks(newBenchmarks);
@@ -947,16 +948,36 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
               })
               .slice(0, 10);
             // Repeatable setups: instrument+pattern combos with 2+ wins
-            const repeatableSetups = [...grouped.entries()]
+            const repeatableWinSetups = [...grouped.entries()]
               .filter(([, trades]) => trades.length >= 2)
               .map(([key, trades]) => {
                 const [instrument, patternId] = key.split('|');
                 const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
                 const grades = trades.map(t => t.grade || 'F');
                 const bestGrade = grades.sort((a, b) => (gradeOrder[a] ?? 4) - (gradeOrder[b] ?? 4))[0];
-                return { instrument, patternId, wins: trades.length, avgR, bestGrade, trades };
+                return { instrument, patternId, count: trades.length, avgR, bestGrade, trades };
               })
-              .sort((a, b) => b.wins - a.wins || b.avgR - a.avgR)
+              .sort((a, b) => b.count - a.count || b.avgR - a.avgR)
+              .slice(0, 5);
+
+            // Worst repeatable setups: instrument+pattern combos with 2+ losses
+            const losingTrades = displayedTrades.filter(t => t.rMultiple < 0);
+            const losingGrouped = new Map<string, typeof losingTrades>();
+            losingTrades.forEach(t => {
+              const key = `${t.instrument}|${t.patternId}`;
+              if (!losingGrouped.has(key)) losingGrouped.set(key, []);
+              losingGrouped.get(key)!.push(t);
+            });
+            const repeatableLossSetups = [...losingGrouped.entries()]
+              .filter(([, trades]) => trades.length >= 2)
+              .map(([key, trades]) => {
+                const [instrument, patternId] = key.split('|');
+                const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
+                const grades = trades.map(t => t.grade || 'F');
+                const worstGrade = grades.sort((a, b) => (gradeOrder[b] ?? 4) - (gradeOrder[a] ?? 4))[0];
+                return { instrument, patternId, count: trades.length, avgR, bestGrade: worstGrade, trades };
+              })
+              .sort((a, b) => b.count - a.count || a.avgR - b.avgR)
               .slice(0, 5);
 
             return (
@@ -1009,43 +1030,75 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 {/* Repeatable Setups */}
                 <Card className="border-primary/20 bg-card/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Award className="h-4 w-4 text-primary" />
-                      Repeatable Setups
-                    </CardTitle>
-                    <CardDescription>Instrument + pattern combos that won 2+ times — your most reliable edge</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Award className="h-4 w-4 text-primary" />
+                          Repeatable Setups
+                        </CardTitle>
+                        <CardDescription className="mt-1">Instrument + pattern combos that repeated 2+ times</CardDescription>
+                      </div>
+                      <div className="flex rounded-lg border border-border/50 overflow-hidden">
+                        <Button
+                          variant={repeatableMode === 'best' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          className="rounded-none h-7 px-3 text-xs"
+                          onClick={() => setRepeatableMode('best')}
+                        >
+                          <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" />
+                          Best
+                        </Button>
+                        <Button
+                          variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          className="rounded-none h-7 px-3 text-xs border-l border-border/50"
+                          onClick={() => setRepeatableMode('worst')}
+                        >
+                          <TrendingDown className="h-3 w-3 mr-1 text-red-400" />
+                          Worst
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    {repeatableSetups.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4 text-center">No repeatable winning setups found at this tier</p>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Instrument</TableHead>
-                            <TableHead>Pattern</TableHead>
-                            <TableHead className="text-right">Wins</TableHead>
-                            <TableHead className="text-right">Avg R</TableHead>
-                            <TableHead>Best Grade</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {repeatableSetups.map((setup, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-medium">{setup.instrument}</TableCell>
-                              <TableCell className="text-xs">{setup.patternId}</TableCell>
-                              <TableCell className="text-right font-semibold">{setup.wins}</TableCell>
-                              <TableCell className="text-right font-semibold text-emerald-400">{formatR(setup.avgR)}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
-                                  {setup.bestGrade}
-                                </Badge>
-                              </TableCell>
+                    {(() => {
+                      const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
+                      const emptyMsg = repeatableMode === 'best' 
+                        ? 'No repeatable winning setups found at this tier'
+                        : 'No repeatable losing setups found at this tier';
+                      return setups.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">{emptyMsg}</p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Instrument</TableHead>
+                              <TableHead>Pattern</TableHead>
+                              <TableHead className="text-right">{repeatableMode === 'best' ? 'Wins' : 'Losses'}</TableHead>
+                              <TableHead className="text-right">Avg R</TableHead>
+                              <TableHead>{repeatableMode === 'best' ? 'Best' : 'Worst'} Grade</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
+                          </TableHeader>
+                          <TableBody>
+                            {setups.map((setup, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium">{setup.instrument}</TableCell>
+                                <TableCell className="text-xs">{setup.patternId}</TableCell>
+                                <TableCell className="text-right font-semibold">{setup.count}</TableCell>
+                                <TableCell className={`text-right font-semibold ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {formatR(setup.avgR)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
+                                    {setup.bestGrade}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </div>
