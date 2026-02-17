@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +81,8 @@ const TERMINAL_STATUSES = new Set(['succeeded', 'failed']);
 const ProjectRun = () => {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const previousMetrics = (location.state as any)?.previousMetrics ?? null;
   
   const [run, setRun] = useState<ProjectRun | null>(null);
   const [project, setProject] = useState<Project | null>(null);
@@ -452,7 +454,7 @@ const ProjectRun = () => {
         {/* Artifact Viewer */}
         {run?.status === 'succeeded' && artifact && (
           <>
-            <PatternLabViewer artifact={artifact as any} runId={runId!} />
+            <PatternLabViewer artifact={artifact as any} runId={runId!} previousMetrics={previousMetrics} />
             <DisclaimerBanner className="mt-8" />
           </>
         )}
