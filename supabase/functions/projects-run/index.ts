@@ -1807,11 +1807,17 @@ serve(async (req) => {
         });
       }
       
+      // Return immediately so the user can see the progress page
+      const runId = run.id;
+      const projectId = project.id;
+      
+      // Fire-and-forget: process the backtest in the background
+      const backgroundTask = (async () => {
       // Update to running
       await supabase
         .from('project_runs')
         .update({ status: 'running', started_at: new Date().toISOString() })
-        .eq('id', run.id);
+        .eq('id', runId);
       
       try {
         // Validate and clamp lookback against data coverage contract
@@ -2323,18 +2329,9 @@ serve(async (req) => {
             finished_at: new Date().toISOString(),
             credits_used: creditsEstimated,
           })
-          .eq('id', run.id);
+          .eq('id', runId);
         
         console.log(`[${projectType}] Completed successfully`);
-        
-        return new Response(JSON.stringify({
-          runId: run.id,
-          projectId: project.id,
-          status: 'succeeded',
-          setupsFound: artifactJson?.setups?.length || artifactJson?.trades?.length || artifactJson?.holdings?.length || 0,
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
         
       } catch (execError: any) {
         console.error('Execution error:', execError);
@@ -2346,17 +2343,23 @@ serve(async (req) => {
             finished_at: new Date().toISOString(),
             error_message: execError.message,
           })
-          .eq('id', run.id);
-        
-        return new Response(JSON.stringify({
-          runId: run.id,
-          status: 'failed',
-          error: execError.message,
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          .eq('id', runId);
       }
+      })(); // end of background task IIFE
+
+      // Keep the edge function alive until the background task completes
+      if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
+        (globalThis as any).EdgeRuntime.waitUntil(backgroundTask);
+      }
+
+      // Return immediately so the frontend can navigate to the progress page
+      return new Response(JSON.stringify({
+        runId,
+        projectId,
+        status: 'queued',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
     // ============= RESULT ENDPOINT =============
