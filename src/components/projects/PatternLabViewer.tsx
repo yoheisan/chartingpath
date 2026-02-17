@@ -94,6 +94,7 @@ interface TradeEntry {
   isWin: boolean;
   regime: string;
   exitReason: 'tp' | 'sl' | 'time_stop';
+  grade?: 'A' | 'B' | 'C' | 'D' | 'F';
   rrOutcomes?: {
     rr2: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
     rr3: { outcome: 'hit_tp' | 'hit_sl' | 'timeout'; bars: number; rMultiple: number; exitDate?: string; exitPrice?: number };
@@ -773,7 +774,141 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         </TabsContent>
 
         {/* Trades Tab */}
-        <TabsContent value="trades">
+        <TabsContent value="trades" className="space-y-6">
+          {/* Best Trades — Quality & Repeatability */}
+          {(() => {
+            const gradeOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
+            const gradeColor: Record<string, string> = {
+              A: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+              B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+              C: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+              D: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+              F: 'bg-red-500/15 text-red-400 border-red-500/30',
+            };
+            // Group winning trades by instrument+pattern to find repeatable setups
+            const winningTrades = displayedTrades.filter(t => t.rMultiple > 0);
+            const grouped = new Map<string, typeof winningTrades>();
+            winningTrades.forEach(t => {
+              const key = `${t.instrument}|${t.patternId}`;
+              if (!grouped.has(key)) grouped.set(key, []);
+              grouped.get(key)!.push(t);
+            });
+            // Best individual trades: sorted by grade then R-multiple
+            const bestTrades = [...winningTrades]
+              .sort((a, b) => {
+                const gA = gradeOrder[a.grade || 'F'] ?? 4;
+                const gB = gradeOrder[b.grade || 'F'] ?? 4;
+                if (gA !== gB) return gA - gB;
+                return b.rMultiple - a.rMultiple;
+              })
+              .slice(0, 10);
+            // Repeatable setups: instrument+pattern combos with 2+ wins
+            const repeatableSetups = [...grouped.entries()]
+              .filter(([, trades]) => trades.length >= 2)
+              .map(([key, trades]) => {
+                const [instrument, patternId] = key.split('|');
+                const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
+                const grades = trades.map(t => t.grade || 'F');
+                const bestGrade = grades.sort((a, b) => (gradeOrder[a] ?? 4) - (gradeOrder[b] ?? 4))[0];
+                return { instrument, patternId, wins: trades.length, avgR, bestGrade, trades };
+              })
+              .sort((a, b) => b.wins - a.wins || b.avgR - a.avgR)
+              .slice(0, 5);
+
+            return (
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Top 10 Best Trades */}
+                <Card className="border-emerald-500/20 bg-card/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Star className="h-4 w-4 text-emerald-400" />
+                      Top 10 Best Trades
+                    </CardTitle>
+                    <CardDescription>Highest quality winning trades ranked by grade &amp; R-multiple</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {bestTrades.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">No winning trades in this tier</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>Grade</TableHead>
+                            <TableHead>Instrument</TableHead>
+                            <TableHead>Entry</TableHead>
+                            <TableHead className="text-right">R-Multiple</TableHead>
+                            <TableHead>Regime</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bestTrades.map((trade, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-mono text-muted-foreground">{idx + 1}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={gradeColor[trade.grade || 'F']}>
+                                  {trade.grade || '—'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{trade.instrument}</TableCell>
+                              <TableCell className="font-mono text-xs">{new Date(trade.entryDate).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-right font-semibold text-emerald-400">{formatR(trade.rMultiple)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{getRegimeDescription(trade.regime)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Repeatable Setups */}
+                <Card className="border-primary/20 bg-card/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Award className="h-4 w-4 text-primary" />
+                      Repeatable Setups
+                    </CardTitle>
+                    <CardDescription>Instrument + pattern combos that won 2+ times — your most reliable edge</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {repeatableSetups.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">No repeatable winning setups found at this tier</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Instrument</TableHead>
+                            <TableHead>Pattern</TableHead>
+                            <TableHead className="text-right">Wins</TableHead>
+                            <TableHead className="text-right">Avg R</TableHead>
+                            <TableHead>Best Grade</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {repeatableSetups.map((setup, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium">{setup.instrument}</TableCell>
+                              <TableCell className="text-xs">{setup.patternId}</TableCell>
+                              <TableCell className="text-right font-semibold">{setup.wins}</TableCell>
+                              <TableCell className="text-right font-semibold text-emerald-400">{formatR(setup.avgR)}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
+                                  {setup.bestGrade}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+
+          {/* Full Trade Log */}
           <Card className="border-border/50 bg-card/50">
             <CardHeader>
               <CardTitle className="text-lg">Trade Log</CardTitle>
@@ -789,6 +924,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                       <TableHead>Entry</TableHead>
                       <TableHead>Instrument</TableHead>
                       <TableHead>Pattern</TableHead>
+                      <TableHead>Grade</TableHead>
                       <TableHead>Direction</TableHead>
                       <TableHead className="text-right">R-Multiple</TableHead>
                       <TableHead className="text-right">Bars</TableHead>
@@ -797,34 +933,48 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {displayedTrades.slice(0, 100).map((trade, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-mono text-xs">
-                          {new Date(trade.entryDate).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="font-medium">{trade.instrument}</TableCell>
-                        <TableCell className="text-xs">{trade.patternId}</TableCell>
-                        <TableCell>
-                          {trade.direction === 'long' ? (
-                            <Badge variant="outline" className="text-green-500 border-green-500/30">Long</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-red-500 border-red-500/30">Short</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className={`text-right font-semibold ${(trade.rMultiple ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {formatR(trade.rMultiple ?? 0)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-muted-foreground">
-                          {trade.tierOutcome?.bars ?? '-'}
-                        </TableCell>
-                        <TableCell className="text-xs">{getRegimeDescription(trade.regime)}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs">
-                            {trade.tierOutcome?.outcome === 'hit_tp' ? 'TP' : trade.tierOutcome?.outcome === 'hit_sl' ? 'SL' : 'Time'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {displayedTrades.slice(0, 100).map((trade, idx) => {
+                      const gc: Record<string, string> = {
+                        A: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+                        B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+                        C: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+                        D: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+                        F: 'bg-red-500/15 text-red-400 border-red-500/30',
+                      };
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell className="font-mono text-xs">
+                            {new Date(trade.entryDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="font-medium">{trade.instrument}</TableCell>
+                          <TableCell className="text-xs">{trade.patternId}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={gc[trade.grade || 'F'] || gc.F}>
+                              {trade.grade || '—'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {trade.direction === 'long' ? (
+                              <Badge variant="outline" className="text-green-500 border-green-500/30">Long</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-red-500 border-red-500/30">Short</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className={`text-right font-semibold ${(trade.rMultiple ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {formatR(trade.rMultiple ?? 0)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-muted-foreground">
+                            {trade.tierOutcome?.bars ?? '-'}
+                          </TableCell>
+                          <TableCell className="text-xs">{getRegimeDescription(trade.regime)}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">
+                              {trade.tierOutcome?.outcome === 'hit_tp' ? 'TP' : trade.tierOutcome?.outcome === 'hit_sl' ? 'SL' : 'Time'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 {displayedTrades.length > 100 && (
