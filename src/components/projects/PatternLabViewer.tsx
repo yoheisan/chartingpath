@@ -54,7 +54,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileCode } from 'lucide-react';
+import { FileCode, Crosshair } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { TradeExcursionChart } from './TradeExcursionChart';
 import { ProfitStructureWaterfall } from './ProfitStructureWaterfall';
 
@@ -176,6 +183,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('best');
   const [excludedSetups, setExcludedSetups] = useState<Set<string>>(new Set());
+  const [selectedExitModel, setSelectedExitModel] = useState<string>('fixed'); // 'fixed' = use R:R tier baseline
 
   const toggleSetupExclusion = useCallback((key: string) => {
     setExcludedSetups(prev => {
@@ -372,7 +380,22 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   const displayedTrades = useMemo(() => {
     const tierKey = `rr${selectedRRTier}` as 'rr2' | 'rr3' | 'rr4' | 'rr5';
+    const useExitModel = selectedExitModel !== 'fixed';
+    
     const mapped = artifact.trades.map(t => {
+      // If an exit strategy is selected, use its R-multiples
+      if (useExitModel && t.exitOutcomes?.[selectedExitModel]) {
+        const exitOutcome = t.exitOutcomes[selectedExitModel];
+        return {
+          ...t,
+          exitDate: exitOutcome.exitDate ?? t.exitDate,
+          rMultiple: exitOutcome.rMultiple,
+          isWin: exitOutcome.rMultiple > 0,
+          exitReason: exitOutcome.rMultiple > 0 ? 'tp' as const : 'sl' as const,
+          tierOutcome: null as null,
+        };
+      }
+      // Otherwise use R:R tier
       const outcome = t.rrOutcomes?.[tierKey];
       if (!outcome) return { ...t, tierOutcome: null as null | typeof outcome };
       return {
@@ -386,7 +409,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     });
     if (directionFilter === 'all') return mapped;
     return mapped.filter(t => t.direction === directionFilter);
-  }, [artifact.trades, selectedRRTier, directionFilter]);
+  }, [artifact.trades, selectedRRTier, directionFilter, selectedExitModel]);
 
   // Optimized trades: exclude trades matching excluded setups
   const optimizedTrades = useMemo(() => {
@@ -431,15 +454,17 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
   const isFiltered = directionFilter !== 'all';
 
-  // Direction-filtered equity curve: recompute from trades when filtered or exclusions active
+  // Direction-filtered equity curve: recompute from trades when filtered, exclusions active, or exit model selected
+  const useExitModel = selectedExitModel !== 'fixed';
   const directionFilteredEquity: EquityPoint[] = useMemo(() => {
-    if (directionFilter === 'all' && !hasExclusions) return effectiveEquity;
+    if (directionFilter === 'all' && !hasExclusions && !useExitModel) return effectiveEquity;
     
     const trades = hasExclusions ? optimizedTrades : displayedTrades;
     if (trades.length === 0) return [];
     
+    const riskPerTrade = artifact.riskPerTrade ?? artifact.executionAssumptions?.riskPerTrade ?? 2;
+    const riskFraction = riskPerTrade / 100;
     const initialCapital = 10000;
-    const positionSize = initialCapital;
     let equity = initialCapital;
     let peak = initialCapital;
     
@@ -454,7 +479,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     }];
     
     sorted.forEach(trade => {
-      const pnl = trade.rMultiple * (positionSize * 0.02);
+      const pnl = trade.rMultiple * (initialCapital * riskFraction);
       equity += pnl;
       peak = Math.max(peak, equity);
       const drawdown = peak > 0 ? (peak - equity) / peak : 0;
@@ -466,7 +491,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     });
     
     return points;
-  }, [directionFilter, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity]);
+  }, [directionFilter, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity, useExitModel, artifact.riskPerTrade, artifact.executionAssumptions]);
 
   // Lift repeatable setup computation so it can be shared across tabs
   const gradeOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
@@ -679,7 +704,36 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </div>
           )}
 
-          {/* Setup Optimizer — inline in global filters */}
+          {/* Exit Model Selector */}
+          {artifact.exitComparison && artifact.exitComparison.length > 0 && (
+            <div className="flex items-center gap-2 border-l border-border/50 pl-4">
+              <span className="text-sm text-muted-foreground">Exit Model:</span>
+              <Select value={selectedExitModel} onValueChange={setSelectedExitModel}>
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <Crosshair className="h-3 w-3 mr-1.5 shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">
+                    <span className="flex items-center gap-1.5">
+                      Fixed R:R ({tierLabel})
+                    </span>
+                  </SelectItem>
+                  {artifact.exitComparison.map(e => (
+                    <SelectItem key={e.strategyId} value={e.strategyId}>
+                      <span className="flex items-center gap-1.5">
+                        {e.strategyName}
+                        <span className={`text-xs tabular-nums ${e.expectancy >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                          {e.expectancy >= 0 ? '+' : ''}{e.expectancy.toFixed(2)}R
+                        </span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {(repeatableWinSetups.length > 0 || repeatableLossSetups.length > 0) && (
             <div className="flex items-center gap-2 border-l border-border/50 pl-4">
               <span className="text-sm text-muted-foreground">Optimize:</span>
@@ -784,10 +838,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </div>
           )}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
           {(directionFilter !== 'all' || hasExclusions) && (
-            <Badge variant="outline" className="mr-2 text-xs">
+            <Badge variant="outline" className="text-xs">
               {hasExclusions ? optimizedTrades.length : displayedTrades.length} of {artifact.trades.length} trades
+            </Badge>
+          )}
+          {useExitModel && (
+            <Badge variant="secondary" className="text-xs gap-1">
+              <Crosshair className="h-3 w-3" />
+              {artifact.exitComparison?.find(e => e.strategyId === selectedExitModel)?.strategyName || selectedExitModel}
             </Badge>
           )}
           Metrics update across all tabs
@@ -1038,6 +1098,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             if (winners.length > 0) params.set('winners', winners.join(','));
                             if (losers.length > 0) params.set('losers', losers.join(','));
                             if (excludedSetups.size > 0) params.set('excluded', [...excludedSetups].join(','));
+                            if (selectedExitModel !== 'fixed') params.set('exitModel', selectedExitModel);
                             
                             return (
                               <DropdownMenuItem
