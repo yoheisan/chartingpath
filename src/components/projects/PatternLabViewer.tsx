@@ -1,4 +1,6 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,6 +138,12 @@ interface PatternLabArtifact {
   lookbackYears: number;
   riskPerTrade?: number;
   generatedAt: string;
+  inputs?: {
+    instruments: string[];
+    patterns: string[];
+    gradeFilter: string[];
+    riskPerTrade?: number;
+  };
   executionAssumptions: {
     bracketLevelsVersion: string;
     priceRounding: { priceDecimals: number; rrDecimals: number };
@@ -148,21 +156,18 @@ interface PatternLabArtifact {
     totalTrades: number;
     overallWinRate: number;
     overallExpectancy: number;
-    overallMaxDrawdown?: number; // Now properly calculated as percentage
+    overallMaxDrawdown?: number;
     bestPattern: { id: string; name: string; expectancy: number; winRate?: number; totalTrades?: number };
     worstPattern: { id: string; name: string; expectancy: number; winRate?: number; totalTrades?: number };
   };
   patterns: PatternResult[];
   trades: TradeEntry[];
   equity: EquityPoint[];
-  /** Multi-RR comparison stats from historical simulations */
   rrComparison?: RRTierStats[];
   optimalTier?: string;
-  /** Tier-aware computed stats (preferred when present) */
   patternsByTier?: Record<string, PatternResult[]>;
   equityByTier?: Record<string, EquityPoint[]>;
-  maxDrawdownByTier?: Record<string, number>; // percentage (0-100)
-  /** Exit Strategy Optimizer data */
+  maxDrawdownByTier?: Record<string, number>;
   exitComparison?: ExitStrategyStats[];
   optimalExitStrategy?: string;
   exitEquityByStrategy?: Record<string, EquityPoint[]>;
@@ -183,7 +188,8 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
   const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('worst');
   const [excludedSetups, setExcludedSetups] = useState<Set<string>>(new Set());
-  const [selectedExitModel, setSelectedExitModel] = useState<string>('fixed'); // 'fixed' = use R:R tier baseline
+  const [selectedExitModel, setSelectedExitModel] = useState<string>('fixed');
+  const [isRerunning, setIsRerunning] = useState(false);
 
   const toggleSetupExclusion = useCallback((key: string) => {
     setExcludedSetups(prev => {
@@ -1605,19 +1611,65 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 <Button 
                   size="lg" 
                   className="gap-2"
-                  onClick={() => {
-                    // Navigate to pattern lab with current optimization params pre-filled
-                    const params = new URLSearchParams();
-                    params.set('rerun', runId);
-                    if (directionFilter !== 'all') params.set('direction', directionFilter);
-                    params.set('rr', String(selectedRRTier));
-                    if (selectedExitModel !== 'fixed') params.set('exitModel', selectedExitModel);
-                    if (excludedSetups.size > 0) params.set('excluded', [...excludedSetups].join(','));
-                    navigate(`/projects/pattern-lab/new?${params.toString()}`);
+                  disabled={isRerunning}
+                  onClick={async () => {
+                    if (!artifact.inputs) {
+                      toast.error('Missing input data — cannot rerun');
+                      return;
+                    }
+                    setIsRerunning(true);
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.access_token) {
+                        toast.error('Please log in to rerun');
+                        return;
+                      }
+                      const response = await fetch(
+                        'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${session.access_token}`,
+                          },
+                          body: JSON.stringify({
+                            projectType: 'pattern_lab',
+                            inputs: {
+                              ...artifact.inputs,
+                              timeframe: artifact.timeframe,
+                              lookbackYears: artifact.lookbackYears,
+                              riskPerTrade: artifact.inputs.riskPerTrade ?? artifact.riskPerTrade ?? 1,
+                              // Optimization params
+                              ...(directionFilter !== 'all' && { directionFilter }),
+                              ...(selectedExitModel !== 'fixed' && { exitModel: selectedExitModel }),
+                              ...(excludedSetups.size > 0 && { excludedSetups: [...excludedSetups] }),
+                            },
+                          }),
+                        }
+                      );
+                      const data = await response.json();
+                      if (!response.ok) throw new Error(data.error || 'Failed to start run');
+                      toast.success('Optimized backtest started!');
+                      navigate(`/projects/runs/${data.runId}`);
+                    } catch (error) {
+                      console.error('Rerun error:', error);
+                      toast.error(error instanceof Error ? error.message : 'Failed to start rerun');
+                    } finally {
+                      setIsRerunning(false);
+                    }
                   }}
                 >
-                  <Zap className="h-4 w-4" />
-                  Rerun with Optimizations
+                  {isRerunning ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Starting...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4" />
+                      Rerun with Optimizations
+                    </>
+                  )}
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   Launches a new backtest with your selected filters applied server-side for accurate results
