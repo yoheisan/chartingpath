@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchMarketBars } from '@/lib/fetchMarketBars';
 import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
@@ -199,43 +200,22 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars, hasEnoughData=${hasEnoughData}`);
 
       if (!hasEnoughData) {
-        // Fallback to Yahoo Finance
-        // IMPORTANT: Yahoo limits hourly data to ~60 days, so for 4h/8h (aggregated from 1h)
-        // we must use a shorter lookback to avoid API errors
+        // EODHD-first, Yahoo-fallback
         const isHourlyAggregated = ['4h', '8h'].includes(timeframe);
-        const yahooLookbackDays = isHourlyAggregated ? 60 : daysBack;
+        const lookbackDays = isHourlyAggregated ? 60 : daysBack;
         
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(endDate.getDate() - yahooLookbackDays);
+        startDate.setDate(endDate.getDate() - lookbackDays);
         
-        console.log(`[CommandCenterChart] Using Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${yahooLookbackDays} days)`);
+        console.log(`[CommandCenterChart] Using EODHD→Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${lookbackDays} days)`);
 
-        const { data: fnData, error: fnError } = await supabase.functions.invoke('fetch-yahoo-finance', {
-          body: { 
-            symbol, 
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0],
-            interval: timeframe,
-            includeOhlc: true,
-          },
+        const fetchedBars = await fetchMarketBars({
+          symbol,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          interval: timeframe,
         });
-
-        if (fnError) {
-          console.error('[CommandCenterChart] Yahoo fallback error:', fnError);
-          throw new Error(fnError.message || 'Failed to fetch chart data');
-        }
-        
-        console.log(`[CommandCenterChart] Yahoo returned ${fnData?.bars?.length || 0} bars`);
-        
-        const fetchedBars: CompressedBar[] = (fnData?.bars || []).map((b: any) => ({
-          t: b.date || (typeof b.t === 'number' ? new Date(b.t * 1000).toISOString() : b.t),
-          o: b.open || b.o,
-          h: b.high || b.h,
-          l: b.low || b.l,
-          c: b.close || b.c,
-          v: b.volume || b.v,
-        }));
 
         if (fetchedBars.length === 0) {
           throw new Error('No data available for this symbol/timeframe');

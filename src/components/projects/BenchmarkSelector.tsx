@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Plus, X, TrendingUp, Loader2, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchMarketBars } from '@/lib/fetchMarketBars';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 
 interface BenchmarkData {
@@ -65,24 +66,26 @@ const BenchmarkSelector = ({
       // Extend start date back a bit to ensure we capture first equity point
       start.setDate(start.getDate() - 7);
       
-      // Use Yahoo Finance for benchmark data (free, reliable, includes adjusted close)
-      const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
-        body: {
+      // EODHD-first, Yahoo-fallback
+      let bars: any[];
+      try {
+        bars = await fetchMarketBars({
           symbol,
           startDate: start.toISOString().split('T')[0],
           endDate: end.toISOString().split('T')[0],
           interval: '1d',
-          includeOhlc: true,
-        }
-      });
-      
-      if (error || !data?.bars?.length) {
-        console.error('Failed to fetch benchmark:', symbol, error);
+        });
+      } catch (e) {
+        console.error('Failed to fetch benchmark:', symbol, e);
         setSelectedBenchmarks(prev => prev.filter(s => s !== symbol));
         return;
       }
       
-      const bars = data.bars;
+      if (bars.length === 0) {
+        console.error('No data returned for benchmark:', symbol);
+        setSelectedBenchmarks(prev => prev.filter(s => s !== symbol));
+        return;
+      }
 
       // Filter to date range and normalize to initial capital
       const startTs = new Date(startDate).getTime();
