@@ -326,8 +326,10 @@ const ProjectRun = () => {
   
   return (
     <div className="min-h-screen bg-background">
-      <RunHistory currentRunId={runId!} />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Run History */}
+        <RunHistory currentRunId={runId!} />
+        
         {/* Header */}
         <div className="mb-8">
           <Button 
