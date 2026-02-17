@@ -1882,6 +1882,20 @@ serve(async (req) => {
             }
           }
           
+          // Update progress to 100% after all instruments processed
+          await supabase
+            .from('project_runs')
+            .update({ 
+              execution_metadata: { 
+                progress: 100,
+                currentStep: 'Computing results',
+                instrumentsProcessed: instruments.length,
+                instrumentsTotal: instruments.length,
+                patternsTotal: patterns.length,
+              } 
+            })
+            .eq('id', run.id);
+          
           console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
           
           // Calculate pattern-level stats
@@ -2388,7 +2402,7 @@ serve(async (req) => {
 
       const { data: runRow, error: runError } = await supabaseAdmin
         .from('project_runs')
-        .select('id,status,credits_estimated,credits_used,error_message,started_at,finished_at,project_id, projects(id,name,type,user_id)')
+        .select('id,status,credits_estimated,credits_used,error_message,started_at,finished_at,execution_metadata,project_id, projects(id,name,type,user_id)')
         .eq('id', runId)
         .single();
 
