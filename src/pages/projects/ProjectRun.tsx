@@ -12,6 +12,14 @@ import PatternLabViewer from '@/components/projects/PatternLabViewer';
 import PortfolioSimViewer from '@/components/projects/PortfolioSimViewer';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
+interface ExecutionMetadata {
+  progress?: number;
+  currentStep?: string;
+  instrumentsProcessed?: number;
+  instrumentsTotal?: number;
+  patternsTotal?: number;
+}
+
 interface ProjectRun {
   id: string;
   status: 'queued' | 'running' | 'succeeded' | 'failed';
@@ -20,6 +28,7 @@ interface ProjectRun {
   errorMessage: string | null;
   startedAt: string | null;
   finishedAt: string | null;
+  executionMetadata: ExecutionMetadata | null;
 }
 
 interface Project {
@@ -278,9 +287,46 @@ const ProjectRun = () => {
                 <h3 className="text-lg font-semibold mb-2">
                   {run.status === 'queued' ? 'Waiting in queue...' : 'Scanning markets...'}
                 </h3>
-                <p className="text-muted-foreground">
-                  This may take a few moments depending on the number of instruments
-                </p>
+                
+                {/* Progress indicator */}
+                {run.status === 'running' && run.executionMetadata && (
+                  <div className="w-full max-w-md mt-4 space-y-3">
+                    {/* Progress bar */}
+                    <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                      <div 
+                        className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${Math.max(run.executionMetadata.progress ?? 0, 2)}%` }}
+                      />
+                    </div>
+                    
+                    {/* Progress text */}
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{run.executionMetadata.currentStep || 'Processing...'}</span>
+                      <span>{run.executionMetadata.progress ?? 0}%</span>
+                    </div>
+                    
+                    {/* Instrument count */}
+                    {run.executionMetadata.instrumentsTotal && (
+                      <p className="text-xs text-muted-foreground">
+                        {run.executionMetadata.instrumentsProcessed ?? 0} of {run.executionMetadata.instrumentsTotal} instruments
+                        {run.executionMetadata.patternsTotal ? ` × ${run.executionMetadata.patternsTotal} patterns` : ''}
+                      </p>
+                    )}
+                    
+                    {/* Elapsed time */}
+                    {run.startedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Elapsed: {Math.round((Date.now() - new Date(run.startedAt).getTime()) / 1000)}s
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                {!run.executionMetadata && (
+                  <p className="text-muted-foreground">
+                    This may take a few moments depending on the number of instruments
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

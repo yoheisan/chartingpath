@@ -711,7 +711,8 @@ async function fetchYahooData(symbol: string, startDate: string, endDate: string
   const period2 = Math.floor(new Date(endDate).getTime() / 1000);
   const yahooInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '1d' ? '1d' : interval === '1wk' ? '1wk' : '1h';
   
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+  const encodedSymbol = encodeURIComponent(symbol);
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
   
   const response = await fetch(yahooUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
@@ -2105,8 +2106,23 @@ serve(async (req) => {
           const equity: { date: string; value: number; drawdown: number }[] = [];
           
           // Fetch data and run backtests
-          for (const instrument of instruments) {
-            console.log(`[PatternLab] Processing ${instrument}...`);
+          for (let instIdx = 0; instIdx < instruments.length; instIdx++) {
+            const instrument = instruments[instIdx];
+            console.log(`[PatternLab] Processing ${instrument}... (${instIdx + 1}/${instruments.length})`);
+            
+            // Update progress in execution_metadata
+            await supabase
+              .from('project_runs')
+              .update({ 
+                execution_metadata: { 
+                  progress: Math.round(((instIdx) / instruments.length) * 100),
+                  currentStep: `Scanning ${instrument}`,
+                  instrumentsProcessed: instIdx,
+                  instrumentsTotal: instruments.length,
+                  patternsTotal: patterns.length,
+                } 
+              })
+              .eq('id', run.id);
             
             const bars = await fetchYahooData(
               instrument,
@@ -2849,6 +2865,7 @@ serve(async (req) => {
           errorMessage: runRow.error_message,
           startedAt: runRow.started_at,
           finishedAt: runRow.finished_at,
+          executionMetadata: runRow.execution_metadata,
         },
         project: {
           id: projectRow.id,
