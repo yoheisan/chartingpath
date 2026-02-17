@@ -24,7 +24,7 @@ const PARTITIONS = [
   'commodities', 'indices', 'etfs'
 ];
 
-const DEFAULT_TIMEFRAMES = ['1h', '4h', '1d', '1wk'];
+const DEFAULT_TIMEFRAMES = ['1h', '4h', '8h', '1d', '1wk'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
