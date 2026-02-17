@@ -458,6 +458,63 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
     return points;
   }, [directionFilter, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity]);
 
+  // Lift repeatable setup computation so it can be shared across tabs
+  const gradeOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
+  const gradeColor: Record<string, string> = {
+    A: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    C: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    D: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+    F: 'bg-red-500/15 text-red-400 border-red-500/30',
+  };
+
+  const { repeatableWinSetups, repeatableLossSetups } = useMemo(() => {
+    const winningTrades = displayedTrades.filter(t => t.rMultiple > 0);
+    const grouped = new Map<string, typeof winningTrades>();
+    winningTrades.forEach(t => {
+      const key = `${t.instrument}|${t.patternId}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(t);
+    });
+    const repeatableWinSetups = [...grouped.entries()]
+      .filter(([, trades]) => trades.length >= 2)
+      .map(([key, trades]) => {
+        const [instrument, patternId] = key.split('|');
+        const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
+        const grades = trades.map(t => t.grade || 'F');
+        const bestGrade = grades.sort((a, b) => (gradeOrder[a] ?? 4) - (gradeOrder[b] ?? 4))[0];
+        return { instrument, patternId, count: trades.length, avgR, bestGrade, trades };
+      })
+      .sort((a, b) => b.count - a.count || b.avgR - a.avgR)
+      .slice(0, 10);
+
+    const losingTrades = displayedTrades.filter(t => t.rMultiple < 0);
+    const losingGrouped = new Map<string, typeof losingTrades>();
+    losingTrades.forEach(t => {
+      const key = `${t.instrument}|${t.patternId}`;
+      if (!losingGrouped.has(key)) losingGrouped.set(key, []);
+      losingGrouped.get(key)!.push(t);
+    });
+    const repeatableLossSetups = [...losingGrouped.entries()]
+      .filter(([, trades]) => trades.length >= 2)
+      .map(([key, trades]) => {
+        const [instrument, patternId] = key.split('|');
+        const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
+        const grades = trades.map(t => t.grade || 'F');
+        const worstGrade = grades.sort((a, b) => (gradeOrder[b] ?? 4) - (gradeOrder[a] ?? 4))[0];
+        return { instrument, patternId, count: trades.length, avgR, bestGrade: worstGrade, trades };
+      })
+      .sort((a, b) => b.count - a.count || a.avgR - b.avgR)
+      .slice(0, 10);
+
+    return { repeatableWinSetups, repeatableLossSetups };
+  }, [displayedTrades]);
+
+  const allRepeatableSetups = useMemo(() => 
+    [...repeatableWinSetups, ...repeatableLossSetups],
+    [repeatableWinSetups, repeatableLossSetups]
+  );
+
   return (
     <div className="space-y-6">
       {/* Global Filters: R:R Tier + Direction */}
@@ -613,59 +670,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             ))}
           </div>
 
-          {/* Optimized Performance Card — shows when setups are excluded */}
-          {hasExclusions && (
-            <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="py-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm">Optimized Performance</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {excludedSetups.size} setup{excludedSetups.size > 1 ? 's' : ''} excluded — metrics recalculated
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-auto text-xs"
-                    onClick={() => setExcludedSetups(new Set())}
-                  >
-                    Reset
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Trades</p>
-                    <p className="text-lg font-bold">{filteredSummary.totalTrades}</p>
-                    <p className="text-xs text-muted-foreground">
-                      was {displayedTrades.length}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Win Rate</p>
-                    <p className={`text-lg font-bold ${filteredSummary.winRate >= (isFiltered ? filteredSummary.winRate : selectedTierWinRate) ? 'text-green-500' : ''}`}>
-                      {formatPercent(filteredSummary.winRate)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Expectancy</p>
-                    <p className={`text-lg font-bold ${filteredSummary.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {formatR(filteredSummary.expectancy)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Sharpe</p>
-                    <p className={`text-lg font-bold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
-                      {aggregateKPIs.sharpe.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Best & Worst Pattern */}
           <div className="space-y-4">
             {/* Best & Worst Pattern Cards - only show if more than 1 pattern */}
             {effectivePatterns.length > 1 && bestPattern && worstPattern ? (
@@ -1006,23 +1011,8 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         <TabsContent value="trades" className="space-y-6">
           {/* Best Trades — Quality & Repeatability */}
           {(() => {
-            const gradeOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
-            const gradeColor: Record<string, string> = {
-              A: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-              B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-              C: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-              D: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-              F: 'bg-red-500/15 text-red-400 border-red-500/30',
-            };
-            // Group winning trades by instrument+pattern to find repeatable setups
-            const winningTrades = displayedTrades.filter(t => t.rMultiple > 0);
-            const grouped = new Map<string, typeof winningTrades>();
-            winningTrades.forEach(t => {
-              const key = `${t.instrument}|${t.patternId}`;
-              if (!grouped.has(key)) grouped.set(key, []);
-              grouped.get(key)!.push(t);
-            });
             // Best individual trades: sorted by grade then R-multiple
+            const winningTrades = displayedTrades.filter(t => t.rMultiple > 0);
             const bestTrades = [...winningTrades]
               .sort((a, b) => {
                 const gA = gradeOrder[a.grade || 'F'] ?? 4;
@@ -1031,38 +1021,6 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                 return b.rMultiple - a.rMultiple;
               })
               .slice(0, 10);
-            // Repeatable setups: instrument+pattern combos with 2+ wins
-            const repeatableWinSetups = [...grouped.entries()]
-              .filter(([, trades]) => trades.length >= 2)
-              .map(([key, trades]) => {
-                const [instrument, patternId] = key.split('|');
-                const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
-                const grades = trades.map(t => t.grade || 'F');
-                const bestGrade = grades.sort((a, b) => (gradeOrder[a] ?? 4) - (gradeOrder[b] ?? 4))[0];
-                return { instrument, patternId, count: trades.length, avgR, bestGrade, trades };
-              })
-              .sort((a, b) => b.count - a.count || b.avgR - a.avgR)
-              .slice(0, 5);
-
-            // Worst repeatable setups: instrument+pattern combos with 2+ losses
-            const losingTrades = displayedTrades.filter(t => t.rMultiple < 0);
-            const losingGrouped = new Map<string, typeof losingTrades>();
-            losingTrades.forEach(t => {
-              const key = `${t.instrument}|${t.patternId}`;
-              if (!losingGrouped.has(key)) losingGrouped.set(key, []);
-              losingGrouped.get(key)!.push(t);
-            });
-            const repeatableLossSetups = [...losingGrouped.entries()]
-              .filter(([, trades]) => trades.length >= 2)
-              .map(([key, trades]) => {
-                const [instrument, patternId] = key.split('|');
-                const avgR = trades.reduce((s, t) => s + t.rMultiple, 0) / trades.length;
-                const grades = trades.map(t => t.grade || 'F');
-                const worstGrade = grades.sort((a, b) => (gradeOrder[b] ?? 4) - (gradeOrder[a] ?? 4))[0];
-                return { instrument, patternId, count: trades.length, avgR, bestGrade: worstGrade, trades };
-              })
-              .sort((a, b) => b.count - a.count || a.avgR - b.avgR)
-              .slice(0, 5);
 
             return (
               <div className="grid gap-6 lg:grid-cols-2">
@@ -1111,7 +1069,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                   </CardContent>
                 </Card>
 
-                {/* Repeatable Setups */}
+                {/* Repeatable Setups (read-only view in Trades tab) */}
                 <Card className="border-primary/20 bg-card/50">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -1156,9 +1114,6 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-10">
-                                <span className="sr-only">Include</span>
-                              </TableHead>
                               <TableHead>Instrument</TableHead>
                               <TableHead>Pattern</TableHead>
                               <TableHead className="text-right">{repeatableMode === 'best' ? 'Wins' : 'Losses'}</TableHead>
@@ -1167,32 +1122,21 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {setups.map((setup, idx) => {
-                              const setupKey = `${setup.instrument}|${setup.patternId}`;
-                              const isExcluded = excludedSetups.has(setupKey);
-                              return (
-                                <TableRow key={idx} className={isExcluded ? 'opacity-40' : ''}>
-                                  <TableCell>
-                                    <Checkbox
-                                      checked={!isExcluded}
-                                      onCheckedChange={() => toggleSetupExclusion(setupKey)}
-                                      aria-label={`${isExcluded ? 'Include' : 'Exclude'} ${setup.instrument} ${setup.patternId}`}
-                                    />
-                                  </TableCell>
-                                  <TableCell className="font-medium">{setup.instrument}</TableCell>
-                                  <TableCell className="text-xs">{setup.patternId}</TableCell>
-                                  <TableCell className="text-right font-semibold">{setup.count}</TableCell>
-                                  <TableCell className={`text-right font-semibold ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                    {formatR(setup.avgR)}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
-                                      {setup.bestGrade}
-                                    </Badge>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
+                            {setups.map((setup, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium">{setup.instrument}</TableCell>
+                                <TableCell className="text-xs">{setup.patternId}</TableCell>
+                                <TableCell className="text-right font-semibold">{setup.count}</TableCell>
+                                <TableCell className={`text-right font-semibold ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {formatR(setup.avgR)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className={gradeColor[setup.bestGrade]}>
+                                    {setup.bestGrade}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
                           </TableBody>
                         </Table>
                       );
@@ -1284,6 +1228,126 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
 
         {/* Equity Tab */}
         <TabsContent value="equity" className="space-y-6">
+          {/* Setup Optimizer — toggle setups to see equity curve impact */}
+          {(repeatableWinSetups.length > 0 || repeatableLossSetups.length > 0) && (
+            <Card className="border-primary/20 bg-card/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Award className="h-4 w-4 text-primary" />
+                      Setup Optimizer
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Uncheck setups to exclude them and see the equity curve update in real-time
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hasExclusions && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs h-7"
+                        onClick={() => setExcludedSetups(new Set())}
+                      >
+                        Reset All
+                      </Button>
+                    )}
+                    <div className="flex rounded-lg border border-border/50 overflow-hidden">
+                      <Button
+                        variant={repeatableMode === 'best' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className="rounded-none h-7 px-3 text-xs"
+                        onClick={() => setRepeatableMode('best')}
+                      >
+                        <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" />
+                        Winners
+                      </Button>
+                      <Button
+                        variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className="rounded-none h-7 px-3 text-xs border-l border-border/50"
+                        onClick={() => setRepeatableMode('worst')}
+                      >
+                        <TrendingDown className="h-3 w-3 mr-1 text-red-400" />
+                        Losers
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
+                  if (setups.length === 0) return (
+                    <p className="text-sm text-muted-foreground py-2 text-center">
+                      No repeatable {repeatableMode === 'best' ? 'winning' : 'losing'} setups found
+                    </p>
+                  );
+                  return (
+                    <div className="space-y-3">
+                      <div className="grid gap-2">
+                        {setups.map((setup, idx) => {
+                          const setupKey = `${setup.instrument}|${setup.patternId}`;
+                          const isExcluded = excludedSetups.has(setupKey);
+                          return (
+                            <div 
+                              key={idx} 
+                              className={`flex items-center gap-3 p-2 rounded-lg border border-border/30 transition-opacity ${isExcluded ? 'opacity-40 bg-muted/20' : 'bg-card'}`}
+                            >
+                              <Checkbox
+                                checked={!isExcluded}
+                                onCheckedChange={() => toggleSetupExclusion(setupKey)}
+                              />
+                              <div className="flex-1 flex items-center gap-3 min-w-0">
+                                <span className="font-medium text-sm">{setup.instrument}</span>
+                                <span className="text-xs text-muted-foreground truncate">{setup.patternId}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">{setup.count}×</span>
+                              <span className={`text-sm font-semibold tabular-nums ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {formatR(setup.avgR)}
+                              </span>
+                              <Badge variant="outline" className={`text-xs ${gradeColor[setup.bestGrade]}`}>
+                                {setup.bestGrade}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {hasExclusions && (
+                        <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground text-xs">Trades</span>
+                              <p className="font-semibold">{filteredSummary.totalTrades} <span className="text-xs text-muted-foreground font-normal">/ {displayedTrades.length}</span></p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Win Rate</span>
+                              <p className="font-semibold">{formatPercent(filteredSummary.winRate)}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Expectancy</span>
+                              <p className={`font-semibold ${filteredSummary.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {formatR(filteredSummary.expectancy)}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Sharpe</span>
+                              <p className={`font-semibold ${aggregateKPIs.sharpe >= 0.5 ? 'text-green-500' : aggregateKPIs.sharpe >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+                                {aggregateKPIs.sharpe.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Benchmark Selector */}
           {directionFilteredEquity.length > 0 && (
             <BenchmarkSelector
