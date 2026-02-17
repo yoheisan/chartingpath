@@ -46,6 +46,22 @@ const PREDEFINED_UNIVERSES: Record<string, Record<string, string[]>> = {
   },
 };
 
+// ============= ASSET-CLASS THRESHOLD SCALING =============
+// FX and crypto have much smaller percentage moves than stocks.
+// Detectors use percentage-based thresholds calibrated for equities (~3-10%).
+// This scaling factor adjusts those thresholds for other asset classes.
+function getAssetThresholdScale(symbol: string): number {
+  const s = symbol.toUpperCase();
+  // FX pairs: typical daily move 0.3-1%, need ~5x smaller thresholds
+  if (s.endsWith('=X') || /^[A-Z]{6}$/.test(s)) return 0.2;
+  // Crypto: volatile but still smaller than stock % thresholds for structural patterns
+  if (s.endsWith('-USD') || s.includes('BTC') || s.includes('ETH')) return 0.6;
+  // Commodities
+  if (s.endsWith('=F')) return 0.4;
+  // Stocks / indices: default calibration
+  return 1.0;
+}
+
 // ============= PATTERN PIVOT DATA =============
 interface PatternPivot {
   index: number;
@@ -61,10 +77,11 @@ interface PatternDetectionResult {
 }
 
 // Pattern registry with detection logic - now returns pivots for chart annotation
-const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult }> = {
+// Detectors accept an optional `scale` (0-1) that shrinks %-based thresholds for FX/commodities.
+const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; displayName: string; detector: (w: any[], scale?: number) => PatternDetectionResult }> = {
   'donchian-breakout-long': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 10) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const closes = window.map(d => d.close);
@@ -73,7 +90,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const recentHighIdx = lookbackHighs.indexOf(recentHigh);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      const detected = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
+      const thresh = 1 + 0.001 * scale;
+      const detected = currentClose > recentHigh * thresh || prevClose > recentHigh * thresh;
       const pivots: PatternPivot[] = detected ? [
         { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
         { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
@@ -84,7 +102,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'donchian-breakout-short': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 10) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
@@ -93,7 +111,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const recentLowIdx = lookbackLows.indexOf(recentLow);
       const currentClose = closes[closes.length - 1];
       const prevClose = closes[closes.length - 2];
-      const detected = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
+      const thresh = 1 - 0.001 * scale;
+      const detected = currentClose < recentLow * thresh || prevClose < recentLow * thresh;
       const pivots: PatternPivot[] = detected ? [
         { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
         { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
@@ -104,7 +123,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'double-top': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const peaks = findPeaks(highs);
@@ -112,8 +131,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastTwoIdx = peaks.slice(-2);
       const lastTwo = lastTwoIdx.map(i => highs[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      // Bulkowski standard: peaks within 3% tolerance (highs, not closes)
-      const detected = diff < 0.03;
+      // Bulkowski standard: peaks within 3% tolerance, scaled for asset class
+      const detected = diff < 0.03 * scale;
       const pivots: PatternPivot[] = detected ? [
         { index: lastTwoIdx[0], price: lastTwo[0], type: 'high', label: 'Top 1' },
         { index: lastTwoIdx[1], price: lastTwo[1], type: 'high', label: 'Top 2' }
@@ -124,7 +143,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'double-bottom': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const troughs = findTroughs(lows);
@@ -132,8 +151,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastTwoIdx = troughs.slice(-2);
       const lastTwo = lastTwoIdx.map(i => lows[i]);
       const diff = Math.abs(lastTwo[0] - lastTwo[1]) / lastTwo[0];
-      // Bulkowski standard: troughs within 3% tolerance (lows, not closes)
-      const detected = diff < 0.03;
+      // Bulkowski standard: troughs within 3% tolerance, scaled for asset class
+      const detected = diff < 0.03 * scale;
       const pivots: PatternPivot[] = detected ? [
         { index: lastTwoIdx[0], price: lastTwo[0], type: 'low', label: 'Bottom 1' },
         { index: lastTwoIdx[1], price: lastTwo[1], type: 'low', label: 'Bottom 2' }
@@ -144,13 +163,14 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'ascending-triangle': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const highs = window.map(d => d.high);
       const trend = calculateTrend(lows.slice(-15));
       const highRange = Math.max(...highs.slice(-15)) / Math.min(...highs.slice(-15));
-      const detected = trend > 0 && highRange < 1.08;
+      // Flat resistance (range scaled), rising lows (any positive trend)
+      const detected = trend > 0 && highRange < (1 + 0.08 * scale);
       const pivots: PatternPivot[] = [];
       if (detected) {
         const maxHigh = Math.max(...highs.slice(-15));
@@ -170,13 +190,13 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'descending-triangle': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const highTrend = calculateTrend(highs.slice(-15));
       const lowRange = Math.max(...lows.slice(-15)) / Math.min(...lows.slice(-15));
-      const detected = highTrend < -0.005 && lowRange < 1.06;
+      const detected = highTrend < -0.005 * scale && lowRange < (1 + 0.06 * scale);
       const pivots: PatternPivot[] = [];
       if (detected) {
         const minLow = Math.min(...lows.slice(-15));
@@ -197,7 +217,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === HEAD & SHOULDERS (Bulkowski-grade) ===
   'head-and-shoulders': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -227,7 +247,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
       const range = head.value - Math.min(leftShoulder.value, rightShoulder.value);
       const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
-      const headHigherOk = head.value > leftShoulder.value * 1.02 && head.value > rightShoulder.value * 1.02;
+      const headHigherOk = head.value > leftShoulder.value * (1 + 0.02 * scale) && head.value > rightShoulder.value * (1 + 0.02 * scale);
       
       if (!symmetryOk || !headHigherOk) return { detected: false, pivots: [] };
       
@@ -238,7 +258,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       }
       
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose < neckline * 0.998;
+      const detected = lastClose < neckline * (1 - 0.002 * scale);
       
       return {
         detected,
@@ -254,7 +274,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'inverse-head-and-shoulders': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -284,7 +304,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const shoulderDiff = Math.abs(leftShoulder.value - rightShoulder.value);
       const range = Math.max(leftShoulder.value, rightShoulder.value) - head.value;
       const symmetryOk = range > 0 && shoulderDiff / range < 0.25;
-      const headLowerOk = head.value < leftShoulder.value * 0.98 && head.value < rightShoulder.value * 0.98;
+      const headLowerOk = head.value < leftShoulder.value * (1 - 0.02 * scale) && head.value < rightShoulder.value * (1 - 0.02 * scale);
       
       if (!symmetryOk || !headLowerOk) return { detected: false, pivots: [] };
       
@@ -295,7 +315,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       }
       
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose > neckline * 1.002;
+      const detected = lastClose > neckline * (1 + 0.002 * scale);
       
       return {
         detected,
@@ -312,7 +332,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === WEDGE PATTERNS (Bulkowski-grade) ===
   'rising-wedge': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
@@ -331,7 +351,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
-      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
+      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * (1 - 0.002 * scale);
       
       return {
         detected,
@@ -347,7 +367,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'falling-wedge': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
@@ -366,7 +386,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const converging = firstRange > 0 && secondRange < firstRange * 0.85;
       
       const lastClose = closes[closes.length - 1];
-      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
+      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * (1 + 0.002 * scale);
       
       return {
         detected,
@@ -383,7 +403,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === TRIPLE TOP/BOTTOM ===
   'triple-top': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 25) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const peaks = findPeaks(highs);
@@ -393,7 +413,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastThree = lastThreeIdx.map(i => highs[i]);
       const maxPeak = Math.max(...lastThree);
       const minPeak = Math.min(...lastThree);
-      const tolerance = maxPeak * 0.03;
+      const tolerance = maxPeak * 0.03 * scale;
       
       const detected = (maxPeak - minPeak) < tolerance;
       const pivots: PatternPivot[] = detected ? lastThreeIdx.map((idx, i) => ({
@@ -409,7 +429,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'triple-bottom': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 25) return { detected: false, pivots: [] };
       const lows = window.map(d => d.low);
       const troughs = findTroughs(lows);
@@ -419,7 +439,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lastThree = lastThreeIdx.map(i => lows[i]);
       const maxTrough = Math.max(...lastThree);
       const minTrough = Math.min(...lastThree);
-      const tolerance = minTrough * 0.03;
+      const tolerance = minTrough * 0.03 * scale;
       
       const detected = (maxTrough - minTrough) < tolerance;
       const pivots: PatternPivot[] = detected ? lastThreeIdx.map((idx, i) => ({
@@ -436,7 +456,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === SYMMETRICAL TRIANGLE ===
   'symmetrical-triangle': {
     direction: 'long', // Default to long, can break either way
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -445,7 +465,10 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const lowTrend = calculateTrend(lows.slice(-15));
       
       // Symmetrical: highs descending, lows ascending (converging)
-      const detected = highTrend < -0.003 && lowTrend > 0.003;
+      // Use absolute price-based threshold scaled by average price level
+      const avgPrice = (highs[highs.length - 1] + lows[lows.length - 1]) / 2;
+      const trendThreshold = avgPrice * 0.00002 * scale; // Normalized for price level
+      const detected = highTrend < -trendThreshold && lowTrend > trendThreshold;
       const pivots: PatternPivot[] = [];
       
       if (detected) {
@@ -466,7 +489,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === FLAGS ===
   'bullish-flag': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
@@ -480,8 +503,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const flagHighTrend = calculateTrend(flagHighs);
       const flagLowTrend = calculateTrend(flagLows);
       
-      // Pole must be strong up (>3%), flag should drift down slightly
-      const detected = poleMove > 0.03 && flagHighTrend < 0 && flagLowTrend < 0;
+      // Pole must be strong up, scaled for asset class (3% for stocks, 0.6% for FX)
+      const detected = poleMove > 0.03 * scale && flagHighTrend < 0 && flagLowTrend < 0;
       
       return {
         detected,
@@ -496,7 +519,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'bearish-flag': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       
@@ -509,8 +532,8 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const flagHighTrend = calculateTrend(flagHighs);
       const flagLowTrend = calculateTrend(flagLows);
       
-      // Pole must be strong down (<-3%), flag should drift up slightly
-      const detected = poleMove < -0.03 && flagHighTrend > 0 && flagLowTrend > 0;
+      // Pole must be strong down, scaled for asset class (-3% for stocks, -0.6% for FX)
+      const detected = poleMove < -0.03 * scale && flagHighTrend > 0 && flagLowTrend > 0;
       
       return {
         detected,
@@ -526,7 +549,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   // === CUP & HANDLE ===
   'cup-and-handle': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 25) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -540,12 +563,12 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const middleAvgLow = middleThird.reduce((s, d) => s + d.low, 0) / middleThird.length;
       const lastAvgHigh = lastThird.reduce((s, d) => s + d.high, 0) / lastThird.length;
       
-      // Cup rim should be at similar levels
-      const rimSimilar = Math.abs(firstAvgHigh - lastAvgHigh) / firstAvgHigh < 0.05;
-      // Bottom should be at least 10% below rims
+      // Cup rim should be at similar levels, scaled for asset class
+      const rimSimilar = Math.abs(firstAvgHigh - lastAvgHigh) / firstAvgHigh < 0.05 * scale;
+      // Bottom depth scaled: 10-35% for stocks, 2-7% for FX
       const cupDepth = ((firstAvgHigh + lastAvgHigh) / 2 - middleAvgLow) / firstAvgHigh;
       
-      const detected = rimSimilar && cupDepth > 0.10 && cupDepth < 0.35;
+      const detected = rimSimilar && cupDepth > 0.10 * scale && cupDepth < 0.35 * scale;
       
       return {
         detected,
@@ -560,7 +583,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
   },
   'inverse-cup-and-handle': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, scale = 1) => {
       if (window.length < 25) return { detected: false, pivots: [] };
       
       const firstThird = window.slice(0, 8);
@@ -571,11 +594,11 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const middleAvgHigh = middleThird.reduce((s, d) => s + d.high, 0) / middleThird.length;
       const lastAvgLow = lastThird.reduce((s, d) => s + d.low, 0) / lastThird.length;
       
-      // Inverted: lows form the rim, peak in middle
-      const rimSimilar = Math.abs(firstAvgLow - lastAvgLow) / firstAvgLow < 0.05;
+      // Inverted: lows form the rim, peak in middle, scaled for asset class
+      const rimSimilar = Math.abs(firstAvgLow - lastAvgLow) / firstAvgLow < 0.05 * scale;
       const cupHeight = (middleAvgHigh - (firstAvgLow + lastAvgLow) / 2) / firstAvgLow;
       
-      const detected = rimSimilar && cupHeight > 0.10 && cupHeight < 0.35;
+      const detected = rimSimilar && cupHeight > 0.10 * scale && cupHeight < 0.35 * scale;
       
       return {
         detected,
@@ -1361,17 +1384,18 @@ function computeExitOutcomes(
 function runPatternBacktest(
   bars: any[],
   patternId: string,
-  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[]) => PatternDetectionResult },
+  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[], scale?: number) => PatternDetectionResult },
   instrument: string,
   gradeFilter: string[] = ['A', 'B', 'C', 'D', 'F']
 ): BacktestTrade[] {
   const trades: BacktestTrade[] = [];
   const lookback = 20;
   const maxBarsInTrade = 50;
+  const scale = getAssetThresholdScale(instrument);
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
-    const detectionResult = pattern.detector(window);
+    const detectionResult = pattern.detector(window, scale);
     
     if (!detectionResult.detected) continue;
     
