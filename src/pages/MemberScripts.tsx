@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,18 +71,36 @@ const MemberScripts = () => {
   
   // URL params from Pattern Lab / Screener
   const patternParam = searchParams.get('pattern');
+  const patternsParam = searchParams.get('patterns');
+  const platformParam = searchParams.get('platform') as Platform | null;
+  const directionParam = searchParams.get('direction'); // 'all' | 'long' | 'short'
+  const rrParam = searchParams.get('rr');
+  const timeframeParam = searchParams.get('timeframe');
+  const instrumentsParam = searchParams.get('instruments');
+  const winnersParam = searchParams.get('winners');
+  const losersParam = searchParams.get('losers');
+  
+  // Determine initial patterns from URL
+  const initialPatterns = useMemo(() => {
+    if (patternsParam) return patternsParam.split(',').filter(Boolean);
+    if (patternParam) return [patternParam];
+    return DEFAULT_SCANNER_CONFIG.selectedPatterns;
+  }, [patternsParam, patternParam]);
+  
+  const isFromPatternLab = !!(patternsParam || platformParam || directionParam);
   
   // Scanner config state
-  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(
-    patternParam ? [patternParam] : DEFAULT_SCANNER_CONFIG.selectedPatterns
-  );
-  const [platform, setPlatform] = useState<Platform>('pine');
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>(initialPatterns);
+  const [platform, setPlatform] = useState<Platform>(platformParam || 'pine');
   const [scriptType, setScriptType] = useState<ScriptType>('strategy');
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>(
+    (directionParam as 'all' | 'long' | 'short') || 'all'
+  );
   const [slMethod, setSLMethod] = useState<ScannerConfig['stopLossMethod']>('atr');
   const [atrMultiplier, setAtrMultiplier] = useState(2.0);
   const [fixedSlPips, setFixedSlPips] = useState(50);
   const [tpMethod, setTPMethod] = useState<ScannerConfig['takeProfitMethod']>('rr_ratio');
-  const [rrRatio, setRrRatio] = useState(3);
+  const [rrRatio, setRrRatio] = useState(rrParam ? parseInt(rrParam) : 3);
   const [fixedTpPips, setFixedTpPips] = useState(150);
   const [riskPercent, setRiskPercent] = useState(2.0);
   const [maxBarsInTrade, setMaxBarsInTrade] = useState(100);
@@ -91,13 +109,19 @@ const MemberScripts = () => {
   const [qualityFilterVolume, setQualityFilterVolume] = useState(true);
   const [qualityFilterTrend, setQualityFilterTrend] = useState(true);
   
+  // Pattern Lab context
+  const [repeatableWinners] = useState<string[]>(winnersParam ? winnersParam.split(',') : []);
+  const [repeatableLosers] = useState<string[]>(losersParam ? losersParam.split(',') : []);
+  const [labInstruments] = useState<string[]>(instrumentsParam ? instrumentsParam.split(',') : []);
+  const [labTimeframe] = useState<string>(timeframeParam || '');
+  
   // UI state
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [savedScripts, setSavedScripts] = useState<SavedScript[]>([]);
   const [activeTab, setActiveTab] = useState("generate");
   const [scriptsView, setScriptsView] = useState<'grid' | 'list'>('grid');
-  const [patternsOpen, setPatternsOpen] = useState(true);
+  const [patternsOpen, setPatternsOpen] = useState(!isFromPatternLab); // Collapse if pre-filled
   const [riskOpen, setRiskOpen] = useState(false);
   
   // Load saved scripts
@@ -142,6 +166,9 @@ const MemberScripts = () => {
     adxThreshold,
     qualityFilterVolume,
     qualityFilterTrend,
+    directionFilter,
+    repeatableWinners: repeatableWinners.length > 0 ? repeatableWinners : undefined,
+    repeatableLosers: repeatableLosers.length > 0 ? repeatableLosers : undefined,
   });
 
   const handleGenerateDiagnostic = () => {
@@ -264,29 +291,80 @@ const MemberScripts = () => {
         </p>
       </div>
 
-      {/* CTA: Go to Pattern Lab */}
-      <Card className="mb-8 border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardContent className="py-5">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FlaskConical className="h-5 w-5 text-primary" />
+      {/* Pattern Lab Context Banner */}
+      {isFromPatternLab ? (
+        <Card className="mb-8 border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardContent className="py-5">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FlaskConical className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Imported from Pattern Lab</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your backtest optimizations have been applied to this script
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Validate with Pattern Lab</h3>
-                <p className="text-sm text-muted-foreground">
-                  Backtest pattern performance before deploying scanner scripts
-                </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="text-xs">
+                  Platform: {platform === 'pine' ? 'TradingView' : platform === 'mql4' ? 'MT4' : 'MT5'}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  Direction: {directionFilter === 'all' ? 'Both' : directionFilter === 'long' ? 'Long Only' : 'Short Only'}
+                </Badge>
+                <Badge variant="outline" className="text-xs font-mono">
+                  R:R 1:{rrRatio}
+                </Badge>
+                {labTimeframe && (
+                  <Badge variant="outline" className="text-xs">
+                    TF: {labTimeframe}
+                  </Badge>
+                )}
+                {labInstruments.length > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {labInstruments.length} instrument{labInstruments.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {repeatableWinners.length > 0 && (
+                  <Badge variant="secondary" className="text-xs text-emerald-500 border-emerald-500/30">
+                    {repeatableWinners.length} repeatable winner{repeatableWinners.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {repeatableLosers.length > 0 && (
+                  <Badge variant="secondary" className="text-xs text-destructive border-destructive/30">
+                    {repeatableLosers.length} excluded loser{repeatableLosers.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
               </div>
             </div>
-            <Button onClick={() => navigate('/projects/pattern-lab')} className="gap-2">
-              <FlaskConical className="h-4 w-4" />
-              Open Pattern Lab
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-8 border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardContent className="py-5">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FlaskConical className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Validate with Pattern Lab</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Backtest pattern performance before deploying scanner scripts
+                  </p>
+                </div>
+              </div>
+              <Button onClick={() => navigate('/projects/pattern-lab')} className="gap-2">
+                <FlaskConical className="h-4 w-4" />
+                Open Pattern Lab
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -612,6 +690,24 @@ const MemberScripts = () => {
                       </Select>
                     </div>
                   )}
+
+                  {/* Direction Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Direction</Label>
+                    <div className="flex rounded-lg border border-border/50 overflow-hidden">
+                      {(['all', 'long', 'short'] as const).map(dir => (
+                        <Button
+                          key={dir}
+                          variant={directionFilter === dir ? 'secondary' : 'ghost'}
+                          size="sm"
+                          className="rounded-none h-8 px-3 flex-1"
+                          onClick={() => setDirectionFilter(dir)}
+                        >
+                          {dir === 'all' ? 'Both' : dir === 'long' ? '↑ Long' : '↓ Short'}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div className="p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
                     <p className="font-medium text-foreground">Scanner Contract:</p>

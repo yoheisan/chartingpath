@@ -28,7 +28,6 @@ import {
   Zap,
   Star,
   Bell,
-  Code,
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
@@ -48,7 +47,13 @@ import { ExitComparisonTable, type ExitStrategyStats } from './ExitComparisonTab
 import ExitEquityOverlay, { type ExitEquitySeries } from './ExitEquityOverlay';
 import BenchmarkSelector from './BenchmarkSelector';
 import { BacktestAlertDialog } from './BacktestAlertDialog';
-import { BacktestScriptDialog } from './BacktestScriptDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { FileCode } from 'lucide-react';
 import { TradeExcursionChart } from './TradeExcursionChart';
 import { ProfitStructureWaterfall } from './ProfitStructureWaterfall';
 
@@ -157,7 +162,6 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [selectedRRTier, setSelectedRRTier] = useState<number>(2);
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
 
   const handleBenchmarkChange = useCallback((newBenchmarks: BenchmarkData[]) => {
@@ -181,17 +185,6 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
       direction: p.direction 
     })),
     [artifact.patterns]
-  );
-  // Trade data for script generation
-  const scriptTrades = useMemo(() => 
-    artifact.trades.map(t => ({
-      instrument: t.instrument,
-      entryPrice: t.entryPrice,
-      stopLossPrice: t.entryPrice * (t.direction === 'long' ? 0.98 : 1.02), // Approximate if not stored
-      takeProfitPrice: t.exitPrice,
-      atrValue: Math.abs(t.entryPrice - t.exitPrice) / 2, // Approximate
-    })),
-    [artifact.trades]
   );
 
   const formatPercent = (value: number | undefined | null) => 
@@ -699,14 +692,64 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                         Set Alert
                         <ArrowRight className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        onClick={() => setScriptDialogOpen(true)}
-                        className="gap-2 flex-1"
-                      >
-                        <Code className="h-4 w-4" />
-                        Generate Script
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button className="gap-2 flex-1">
+                            <FileCode className="h-4 w-4" />
+                            Export Script
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {[
+                            { platform: 'pine', label: 'TradingView (Pine Script)' },
+                            { platform: 'mql4', label: 'MetaTrader 4 (MQL4)' },
+                            { platform: 'mql5', label: 'MetaTrader 5 (MQL5)' },
+                          ].map(({ platform, label }) => {
+                            // Build repeatable winners (instrument+pattern combos with 2+ wins)
+                            const winningTrades = displayedTrades.filter(t => t.rMultiple > 0);
+                            const winGrouped = new Map<string, number>();
+                            winningTrades.forEach(t => {
+                              const key = `${t.instrument}|${t.patternId}`;
+                              winGrouped.set(key, (winGrouped.get(key) || 0) + 1);
+                            });
+                            const winners = [...winGrouped.entries()]
+                              .filter(([, count]) => count >= 2)
+                              .map(([key]) => key);
+                            
+                            // Build repeatable losers
+                            const losingTrades = displayedTrades.filter(t => t.rMultiple < 0);
+                            const loseGrouped = new Map<string, number>();
+                            losingTrades.forEach(t => {
+                              const key = `${t.instrument}|${t.patternId}`;
+                              loseGrouped.set(key, (loseGrouped.get(key) || 0) + 1);
+                            });
+                            const losers = [...loseGrouped.entries()]
+                              .filter(([, count]) => count >= 2)
+                              .map(([key]) => key);
+
+                            const params = new URLSearchParams();
+                            params.set('platform', platform);
+                            params.set('direction', directionFilter);
+                            params.set('rr', String(selectedRRTier));
+                            params.set('timeframe', artifact.timeframe);
+                            params.set('instruments', alertInstruments.join(','));
+                            params.set('patterns', scriptPatterns.map(p => p.patternId).join(','));
+                            if (winners.length > 0) params.set('winners', winners.join(','));
+                            if (losers.length > 0) params.set('losers', losers.join(','));
+                            
+                            return (
+                              <DropdownMenuItem
+                                key={platform}
+                                onClick={() => navigate(`/members/scripts?${params.toString()}`)}
+                              >
+                                <FileCode className="h-4 w-4 mr-2" />
+                                {label}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardContent>
@@ -1463,17 +1506,6 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
         timeframe={artifact.timeframe}
       />
       
-      {/* Script Generation Dialog */}
-      <BacktestScriptDialog
-        open={scriptDialogOpen}
-        onOpenChange={setScriptDialogOpen}
-        instruments={alertInstruments}
-        patterns={scriptPatterns}
-        timeframe={artifact.timeframe}
-        trades={scriptTrades}
-        rrTarget={selectedRRTier}
-        optimalExitStrategy={artifact.optimalExitStrategy}
-      />
     </div>
   );
 };

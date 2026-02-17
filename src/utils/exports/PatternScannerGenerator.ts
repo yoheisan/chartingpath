@@ -48,6 +48,12 @@ export interface ScannerConfig {
   qualityFilterVolume: boolean;
   /** Quality filter: require trend alignment (200 EMA) */
   qualityFilterTrend: boolean;
+  /** Direction filter: 'all' | 'long' | 'short' */
+  directionFilter?: 'all' | 'long' | 'short';
+  /** Repeatable winner instrument|pattern combos to prioritize */
+  repeatableWinners?: string[];
+  /** Repeatable loser instrument|pattern combos to exclude */
+  repeatableLosers?: string[];
 }
 
 export const DEFAULT_SCANNER_CONFIG: ScannerConfig = {
@@ -122,8 +128,14 @@ plot(smaSlow, "SMA 30", color=color.red)
 }
 
 export function generateScannerPineScript(config: ScannerConfig): string {
-  const selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
-  if (selected.length === 0) return '// No patterns selected';
+  let selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
+  
+  // Apply direction filter from Pattern Lab
+  if (config.directionFilter && config.directionFilter !== 'all') {
+    selected = selected.filter(p => p.direction === config.directionFilter);
+  }
+  
+  if (selected.length === 0) return '// No patterns selected (check direction filter)';
 
   const patternNames = selected.map(p => p.name).join(', ');
   const timestamp = new Date().toISOString();
@@ -133,7 +145,8 @@ export function generateScannerPineScript(config: ScannerConfig): string {
 // ════════════════════════════════════════════════════════════════════════════
 // Patterns: ${patternNames}
 // SL Method: ${config.stopLossMethod} | TP Method: ${config.takeProfitMethod}
-// Quality Filters: ${[config.qualityFilterADX && 'ADX>' + config.adxThreshold, config.qualityFilterVolume && 'Volume', config.qualityFilterTrend && '200EMA Trend'].filter(Boolean).join(', ') || 'None'}
+// Direction: ${config.directionFilter && config.directionFilter !== 'all' ? config.directionFilter.toUpperCase() + ' only' : 'Both'}
+// Quality Filters: ${[config.qualityFilterADX && 'ADX>' + config.adxThreshold, config.qualityFilterVolume && 'Volume', config.qualityFilterTrend && '200EMA Trend'].filter(Boolean).join(', ') || 'None'}${config.repeatableWinners?.length ? `\n// Repeatable Winners: ${config.repeatableWinners.length} setups prioritized` : ''}${config.repeatableLosers?.length ? `\n// Repeatable Losers: ${config.repeatableLosers.length} setups excluded` : ''}
 // Generated: ${timestamp}
 //
 // This script actively scans for chart patterns using Bulkowski-grade
@@ -995,7 +1008,10 @@ detect_donchian_breakout_short(pivH, pivL, pivHBar, pivLBar, atr, trend) =>
 // ============================================================================
 
 export function generateScannerMQL4(config: ScannerConfig): string {
-  const selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
+  let selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
+  if (config.directionFilter && config.directionFilter !== 'all') {
+    selected = selected.filter(p => p.direction === config.directionFilter);
+  }
   const patternNames = selected.map(p => p.name).join(', ');
 
   return `//+------------------------------------------------------------------+
@@ -1200,7 +1216,10 @@ function getPatternMQL4Logic(pattern: typeof SCANNER_PATTERNS[number]): string {
 // ============================================================================
 
 export function generateScannerMQL5(config: ScannerConfig): string {
-  const selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
+  let selected = SCANNER_PATTERNS.filter(p => config.selectedPatterns.includes(p.id));
+  if (config.directionFilter && config.directionFilter !== 'all') {
+    selected = selected.filter(p => p.direction === config.directionFilter);
+  }
   const patternNames = selected.map(p => p.name).join(', ');
 
   return `//+------------------------------------------------------------------+
