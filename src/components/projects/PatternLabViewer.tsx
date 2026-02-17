@@ -181,7 +181,7 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
   const [benchmarks, setBenchmarks] = useState<BenchmarkData[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all');
-  const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('best');
+  const [repeatableMode, setRepeatableMode] = useState<'best' | 'worst'>('worst');
   const [excludedSetups, setExcludedSetups] = useState<Set<string>>(new Set());
   const [selectedExitModel, setSelectedExitModel] = useState<string>('fixed'); // 'fixed' = use R:R tier baseline
 
@@ -1473,88 +1473,98 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
                     <label className="text-sm font-medium">Setup Optimizer</label>
                     <div className="flex items-center gap-2">
                       <div className="flex rounded-md border border-border/50 overflow-hidden">
-                        <Button variant={repeatableMode === 'best' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs" onClick={() => setRepeatableMode('best')}>
-                          <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" /> Winners
+                        <Button variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs" onClick={() => setRepeatableMode('worst')}>
+                          <TrendingDown className="h-3 w-3 mr-1 text-red-400" /> Exclude Losers
                         </Button>
-                        <Button variant={repeatableMode === 'worst' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs border-l border-border/50" onClick={() => setRepeatableMode('worst')}>
-                          <TrendingDown className="h-3 w-3 mr-1 text-red-400" /> Losers
+                        <Button variant={repeatableMode === 'best' ? 'secondary' : 'ghost'} size="sm" className="rounded-none h-7 px-3 text-xs border-l border-border/50" onClick={() => setRepeatableMode('best')}>
+                          <TrendingUp className="h-3 w-3 mr-1 text-emerald-400" /> View Winners
                         </Button>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Uncheck setups to exclude from the optimized analysis
-                      <span className="text-muted-foreground/60"> · Exclusions apply across both winners &amp; losers</span>
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs h-7 px-2.5"
-                        onClick={() => {
-                          const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
-                          const allKeys = setups.map(s => `${s.instrument}|${s.patternId}`);
-                          setExcludedSetups(prev => {
-                            const next = new Set(prev);
-                            allKeys.forEach(k => next.delete(k));
-                            return next;
-                          });
-                        }}
-                      >
-                        Select All
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs h-7 px-2.5"
-                        onClick={() => {
-                          const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
-                          const allKeys = setups.map(s => `${s.instrument}|${s.patternId}`);
-                          setExcludedSetups(prev => new Set([...prev, ...allKeys]));
-                        }}
-                      >
-                        Clear All
-                      </Button>
-                      {hasExclusions && (
-                        <Button variant="ghost" size="sm" className="text-xs h-7 px-2 text-destructive" onClick={() => setExcludedSetups(new Set())}>
-                          Reset All
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="border border-border/50 rounded-lg p-2 max-h-[300px] overflow-y-auto space-y-0.5">
-                    {(() => {
-                      const setups = repeatableMode === 'best' ? repeatableWinSetups : repeatableLossSetups;
-                      if (setups.length === 0) return (
-                        <p className="text-sm text-muted-foreground py-3 text-center">
-                          No repeatable {repeatableMode === 'best' ? 'winning' : 'losing'} setups
+
+                  {repeatableMode === 'worst' ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Exclude underperforming setups to improve expectancy
                         </p>
-                      );
-                      return setups.map((setup, idx) => {
-                        const setupKey = `${setup.instrument}|${setup.patternId}`;
-                        const isExcluded = excludedSetups.has(setupKey);
-                        return (
-                          <div 
-                            key={idx}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted/50 transition-opacity ${isExcluded ? 'opacity-40' : ''}`}
-                            onClick={() => toggleSetupExclusion(setupKey)}
+                        <div className="flex items-center gap-1.5">
+                          <Button 
+                            variant="outline" size="sm" className="text-xs h-7 px-2.5"
+                            onClick={() => {
+                              const allKeys = repeatableLossSetups.map(s => `${s.instrument}|${s.patternId}`);
+                              setExcludedSetups(prev => new Set([...prev, ...allKeys]));
+                            }}
                           >
-                            <Checkbox checked={!isExcluded} tabIndex={-1} className="pointer-events-none" />
-                            <span className="font-medium text-sm">{setup.instrument}</span>
-                            <span className="text-xs text-muted-foreground truncate flex-1">{setup.patternId}</span>
-                            <span className="text-xs text-muted-foreground">{setup.count}×</span>
-                            <span className={`text-xs font-semibold tabular-nums ${repeatableMode === 'best' ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {formatR(setup.avgR)}
-                            </span>
-                            <Badge variant="outline" className={`text-xs py-0 ${gradeColor[setup.bestGrade]}`}>
-                              {setup.bestGrade}
-                            </Badge>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
+                            Exclude All
+                          </Button>
+                          {hasExclusions && (
+                            <Button variant="ghost" size="sm" className="text-xs h-7 px-2 text-destructive" onClick={() => setExcludedSetups(new Set())}>
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="border border-border/50 rounded-lg p-2 max-h-[300px] overflow-y-auto space-y-0.5">
+                        {repeatableLossSetups.length === 0 ? (
+                          <p className="text-sm text-muted-foreground py-3 text-center">No repeatable losing setups found</p>
+                        ) : (
+                          repeatableLossSetups.map((setup, idx) => {
+                            const setupKey = `${setup.instrument}|${setup.patternId}`;
+                            const isExcluded = excludedSetups.has(setupKey);
+                            return (
+                              <div 
+                                key={idx}
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted/50 transition-opacity ${isExcluded ? 'opacity-40 line-through' : ''}`}
+                                onClick={() => toggleSetupExclusion(setupKey)}
+                              >
+                                <Checkbox checked={!isExcluded} tabIndex={-1} className="pointer-events-none" />
+                                <span className="font-medium text-sm">{setup.instrument}</span>
+                                <span className="text-xs text-muted-foreground truncate flex-1">{setup.patternId}</span>
+                                <span className="text-xs text-muted-foreground">{setup.count}×</span>
+                                <span className="text-xs font-semibold tabular-nums text-red-400">
+                                  {formatR(setup.avgR)}
+                                </span>
+                                <Badge variant="outline" className={`text-xs py-0 ${gradeColor[setup.bestGrade]}`}>
+                                  {setup.bestGrade}
+                                </Badge>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Your best repeatable setups — these drive your edge (read-only)
+                      </p>
+                      <div className="border border-border/50 rounded-lg p-2 max-h-[300px] overflow-y-auto space-y-0.5">
+                        {repeatableWinSetups.length === 0 ? (
+                          <p className="text-sm text-muted-foreground py-3 text-center">No repeatable winning setups found</p>
+                        ) : (
+                          repeatableWinSetups.map((setup, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded-md"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                              <span className="font-medium text-sm">{setup.instrument}</span>
+                              <span className="text-xs text-muted-foreground truncate flex-1">{setup.patternId}</span>
+                              <span className="text-xs text-muted-foreground">{setup.count}×</span>
+                              <span className="text-xs font-semibold tabular-nums text-emerald-400">
+                                {formatR(setup.avgR)}
+                              </span>
+                              <Badge variant="outline" className={`text-xs py-0 ${gradeColor[setup.bestGrade]}`}>
+                                {setup.bestGrade}
+                              </Badge>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
