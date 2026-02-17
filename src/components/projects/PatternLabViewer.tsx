@@ -582,6 +582,16 @@ const PatternLabViewer = ({ artifact, runId }: PatternLabViewerProps) => {
             </Card>
           </div>
 
+          {/* Tickers Included */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground font-medium">Tickers:</span>
+            {alertInstruments.map(ticker => (
+              <Badge key={ticker} variant="outline" className="text-xs font-mono">
+                {ticker}
+              </Badge>
+            ))}
+          </div>
+
           {/* Best & Worst Pattern */}
           <div className="space-y-4">
             {/* Best & Worst Pattern Cards - only show if more than 1 pattern */}
