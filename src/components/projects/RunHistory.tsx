@@ -43,21 +43,36 @@ const RunHistory = ({ currentRunId }: RunHistoryProps) => {
 
   useEffect(() => {
     const fetchRuns = async () => {
-      const { data, error } = await supabase
-        .from('project_runs')
-        .select('id, status, created_at, finished_at, credits_used')
-        .order('created_at', { ascending: false })
-        .limit(30);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log('[RunHistory] No session, skipping');
+          setLoading(false);
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from('project_runs')
+          .select('id, status, created_at, finished_at, credits_used')
+          .order('created_at', { ascending: false })
+          .limit(30);
 
-      if (!error && data) {
-        setRuns(data as RunHistoryEntry[]);
+        console.log('[RunHistory] fetched:', data?.length ?? 0, 'error:', error?.message ?? 'none');
+        
+        if (!error && data) {
+          setRuns(data as RunHistoryEntry[]);
+        }
+      } catch (e) {
+        console.error('[RunHistory] exception:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchRuns();
   }, [currentRunId]);
 
-  if (loading || runs.length <= 1) return null;
+  if (loading) return <div className="mb-4 text-xs text-muted-foreground">Loading run history...</div>;
+  if (runs.length <= 1) return null;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="mb-6">
