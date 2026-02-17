@@ -13,6 +13,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchMarketBars } from '@/lib/fetchMarketBars';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
@@ -175,6 +176,7 @@ async function fetchMarketDataFn(): Promise<MarketDataResponse> {
     }
 
     // If the DB has no rows, fall back to Yahoo Finance via edge function
+    // EODHD-first, Yahoo-fallback for remaining missing indices
     missingIndices = indicesSymbols.filter((s) => !indicesMap[s]);
     if (missingIndices.length > 0) {
       const endDate = new Date();
@@ -186,14 +188,11 @@ async function fetchMarketDataFn(): Promise<MarketDataResponse> {
 
       const results = await Promise.allSettled(
         missingIndices.map((symbol) =>
-          supabase.functions.invoke('fetch-yahoo-finance', {
-            body: {
-              symbol,
-              startDate: startStr,
-              endDate: endStr,
-              interval: '1d',
-              includeOhlc: true,
-            },
+          fetchMarketBars({
+            symbol,
+            startDate: startStr,
+            endDate: endStr,
+            interval: '1d',
           })
         )
       );
@@ -202,10 +201,7 @@ async function fetchMarketDataFn(): Promise<MarketDataResponse> {
         const symbol = missingIndices[idx];
         if (res.status !== 'fulfilled') return;
 
-        const { data, error } = res.value as any;
-        if (error) return;
-
-        const bars = (data as any)?.bars as Array<{ c: number }> | undefined;
+        const bars = res.value;
         if (!Array.isArray(bars) || bars.length < 1) return;
 
         const last = bars[bars.length - 1];
