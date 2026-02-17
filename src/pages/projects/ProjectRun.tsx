@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Search, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import SetupListViewer from '@/components/projects/SetupListViewer';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
-import PortfolioSimViewer from '@/components/projects/PortfolioSimViewer';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
 interface ExecutionMetadata {
@@ -263,14 +261,9 @@ const ProjectRun = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-3">
-                {project?.type === 'pattern_lab' && <FlaskConical className="h-8 w-8 text-primary" />}
-                {project?.type === 'setup_finder' && <Search className="h-8 w-8 text-primary" />}
-                {project?.type === 'portfolio_sim' && <TrendingUp className="h-8 w-8 text-primary" />}
+                <FlaskConical className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold text-foreground">
-                  {project?.type === 'pattern_lab' ? 'Pattern Lab' : 
-                   project?.type === 'setup_finder' ? 'Setup Finder' : 
-                   project?.type === 'portfolio_sim' ? 'Portfolio Simulator' :
-                   project?.name || 'Project Run'}
+                  {project?.type === 'pattern_lab' ? 'Pattern Lab' : project?.name || 'Project Run'}
                 </h1>
               </div>
             </div>
@@ -379,37 +372,11 @@ const ProjectRun = () => {
         {/* Artifact Viewer */}
         {run?.status === 'succeeded' && artifact && (
           <>
-            {artifact.projectType === 'pattern_lab' && (
-              <PatternLabViewer artifact={artifact as any} runId={runId!} />
-            )}
-            {artifact.projectType === 'portfolio_sim' && (
-              <PortfolioSimViewer artifact={artifact as any} runId={runId!} />
-            )}
-            {(artifact.projectType === 'setup_finder' || !artifact.projectType) && (
-              <SetupListViewer artifact={artifact} runId={runId!} />
-            )}
+            <PatternLabViewer artifact={artifact as any} runId={runId!} />
             
             {/* Compliance: Disclaimer Banner */}
             <DisclaimerBanner className="mt-8" />
           </>
-        )}
-        
-        {/* Empty State - only show for setup_finder with no setups */}
-        {run?.status === 'succeeded' && artifact?.projectType === 'setup_finder' && (!artifact.setups || artifact.setups.length === 0) && (
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="py-12">
-              <div className="text-center">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Setups Found</h3>
-                <p className="text-muted-foreground mb-4">
-                  No patterns were detected in the selected universe and timeframe.
-                </p>
-                <Button onClick={() => navigate('/projects/pattern-lab/new')}>
-                  Try Different Parameters
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>
