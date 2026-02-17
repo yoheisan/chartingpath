@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
+import RunHistory from '@/components/projects/RunHistory';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 
 interface ExecutionMetadata {
@@ -325,6 +326,7 @@ const ProjectRun = () => {
   
   return (
     <div className="min-h-screen bg-background">
+      <RunHistory currentRunId={runId!} />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
