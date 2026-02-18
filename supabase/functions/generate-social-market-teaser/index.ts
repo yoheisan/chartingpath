@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { reportType, timezone, markets, tone, linkBackUrl } = await req.json(); // reportType: "pre_market" | "post_market"
+    const { reportType, timezone, markets, tone, linkBackUrl, timeSpan } = await req.json(); // reportType: "pre_market" | "post_market"
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -40,7 +40,10 @@ serve(async (req) => {
       const { data: newReport, error: generateError } = await supabaseClient.functions.invoke('get-cached-market-report', {
         body: { 
           timezone: timezone || 'America/New_York',
-          forceGenerate: false 
+          markets: markets || ['stocks', 'forex', 'crypto', 'commodities'],
+          timeSpan: timeSpan || 'previous_day',
+          tone: tone || 'professional',
+          forceGenerate: true 
         }
       });
 

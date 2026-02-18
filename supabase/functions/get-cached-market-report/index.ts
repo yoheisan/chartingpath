@@ -13,7 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { timezone, markets: requestMarkets, timeSpan, tone, forceGenerate } = await req.json();
+    const { timezone, markets: requestMarkets, timeSpan: requestTimeSpan, tone: requestTone, forceGenerate } = await req.json();
+    const timeSpan = requestTimeSpan || 'previous_day';
+    const tone = requestTone || 'professional';
     
     // Default to all markets if not specified
     const markets = requestMarkets || ["stocks", "forex", "crypto", "commodities"];
@@ -101,12 +103,12 @@ serve(async (req) => {
     // Generate new report using OpenAI
     console.log("Generating new report using OpenAI...");
     
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
     
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
     
     if (!FINNHUB_API_KEY) {
@@ -359,14 +361,14 @@ serve(async (req) => {
     const newsSummaries = await Promise.all(
       allNewsArticles.map(async (article) => {
         try {
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4o-mini',
+              model: 'google/gemini-3-flash-preview',
               messages: [
                 { 
                   role: 'system', 
@@ -378,12 +380,11 @@ serve(async (req) => {
                 }
               ],
               max_tokens: 150,
-              temperature: 0.7,
             }),
           });
 
           if (!response.ok) {
-            console.error(`OpenAI error for article "${article.headline}":`, response.status);
+            console.error(`Lovable AI error for article "${article.headline}":`, response.status);
             return `${article.headline} (${article.source})`;
           }
 
@@ -658,102 +659,50 @@ ${marketDataSummary}`;
       }
     }
     
-    // Budget OK - proceed with GPT-5 generation
-    console.log("Budget OK, generating final report with GPT-5...");
+    // Proceed with Lovable AI (Gemini) generation
+    console.log("Generating final report with Lovable AI...");
     
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          max_completion_tokens: 8000,
+          max_tokens: 4000,
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("OpenAI API error:", response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(
-            JSON.stringify({ 
-              error: "OpenAI rate limit exceeded. Please try again in a moment.",
-              rateLimited: true
-            }),
-            {
-              status: 429,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            }
-          );
-        }
-        
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({ 
-              error: "OpenAI credits depleted. Please check your OpenAI account.",
-              needsCredits: true
-            }),
-            {
-              status: 402,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            }
-          );
-        }
-        
-        throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+        console.error("Lovable AI error:", response.status, errorText);
+        throw new Error(`Lovable AI error: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
       const generatedReport = data.choices[0].message.content;
 
-      console.log("Report generated successfully with OpenAI");
+      console.log("Report generated successfully with Lovable AI");
       console.log("Report length:", generatedReport?.length || 0);
       
       if (!generatedReport || generatedReport.trim().length === 0) {
-        console.error("Generated report is empty! Full response:", JSON.stringify(data));
-        throw new Error("OpenAI returned an empty report");
-      }
-
-      // Record the actual cost in the database
-      const actualInputTokens = data.usage?.prompt_tokens || estimatedInputTokens;
-      const actualOutputTokens = data.usage?.completion_tokens || maxOutputTokens;
-      const actualCost = (actualInputTokens / 1000000) * 3 + (actualOutputTokens / 1000000) * 15;
-      
-      console.log(`Actual cost: $${actualCost.toFixed(4)} (${actualInputTokens} input + ${actualOutputTokens} output tokens)`);
-      
-      // Update daily usage
-      const { error: upsertError } = await supabaseClient
-        .from('daily_ai_usage')
-        .upsert({
-          date: today,
-          usd_spent: currentSpend + actualCost,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'date'
-        });
-      
-      if (upsertError) {
-        console.error("Error updating daily AI usage:", upsertError);
-      } else {
-        console.log(`Updated daily spend to $${(currentSpend + actualCost).toFixed(4)}`);
+        throw new Error("Lovable AI returned an empty report");
       }
 
       // Cache the new report (expires in 2 hours)
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 120);
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 120);
 
       await supabaseClient
         .from("cached_market_reports")
         .insert({
-          timezone: region, // Store by region for cache sharing
+          timezone: region,
           markets,
           time_span: timeSpan,
           tone,
@@ -775,7 +724,7 @@ ${marketDataSummary}`;
         }
       );
     } catch (error) {
-      console.error("Error generating report with OpenAI:", error);
+      console.error("Error generating report with Lovable AI:", error);
       throw error;
     }
 
