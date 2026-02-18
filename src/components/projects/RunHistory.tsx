@@ -4,15 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   History, 
   CheckCircle2, 
   XCircle, 
   Loader2, 
   Clock, 
-  ChevronDown,
-  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -29,17 +28,17 @@ interface RunHistoryProps {
 }
 
 const statusIcon: Record<string, React.ReactNode> = {
-  succeeded: <CheckCircle2 className="h-3 w-3 text-green-500" />,
-  failed: <XCircle className="h-3 w-3 text-destructive" />,
-  running: <Loader2 className="h-3 w-3 text-primary animate-spin" />,
-  queued: <Clock className="h-3 w-3 text-muted-foreground" />,
+  succeeded: <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />,
+  failed: <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />,
+  running: <Loader2 className="h-3.5 w-3.5 text-primary animate-spin shrink-0" />,
+  queued: <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />,
 };
 
 const RunHistory = ({ currentRunId }: RunHistoryProps) => {
   const navigate = useNavigate();
   const [runs, setRuns] = useState<RunHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchRuns = async () => {
@@ -71,64 +70,99 @@ const RunHistory = ({ currentRunId }: RunHistoryProps) => {
     fetchRuns();
   }, [currentRunId]);
 
-  if (loading) return <div className="mb-4 text-xs text-muted-foreground">Loading run history...</div>;
-  if (runs.length <= 1) return null;
+  if (loading || runs.length <= 1) return null;
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="mb-6">
-      <CollapsibleTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 w-full justify-between">
-          <div className="flex items-center gap-2">
-            <History className="h-3.5 w-3.5" />
-            <span>Run History</span>
-            <Badge variant="secondary" className="h-5 px-1.5 text-xs">{runs.length}</Badge>
+    <div
+      className={`relative flex flex-col border-r border-border bg-card/50 transition-all duration-300 shrink-0 ${
+        collapsed ? 'w-10' : 'w-56'
+      }`}
+      style={{ minHeight: '100%' }}
+    >
+      {/* Collapse toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setCollapsed(!collapsed)}
+        className="absolute -right-3.5 top-4 z-10 h-7 w-7 rounded-full border border-border bg-card shadow-sm hover:bg-muted"
+      >
+        {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+      </Button>
+
+      {/* Header */}
+      <div className={`flex items-center gap-2 px-3 py-3 border-b border-border ${collapsed ? 'justify-center' : ''}`}>
+        <History className="h-4 w-4 text-muted-foreground shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="text-sm font-medium text-foreground">Run History</span>
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs ml-auto">{runs.length}</Badge>
+          </>
+        )}
+      </div>
+
+      {/* Run list */}
+      {!collapsed && (
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-0.5">
+            {runs.map((run, idx) => {
+              const isCurrent = run.id === currentRunId;
+              const timeAgo = formatDistanceToNow(new Date(run.created_at), { addSuffix: true });
+
+              return (
+                <button
+                  key={run.id}
+                  onClick={() => {
+                    if (!isCurrent) navigate(`/projects/runs/${run.id}`);
+                  }}
+                  className={`w-full text-left rounded-md px-2.5 py-2 text-sm transition-colors ${
+                    isCurrent
+                      ? 'bg-primary/10 border border-primary/20'
+                      : 'hover:bg-muted/60 border border-transparent cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {statusIcon[run.status] ?? <Clock className="h-3.5 w-3.5 shrink-0" />}
+                    <span className={`flex-1 truncate text-xs ${isCurrent ? 'font-semibold text-primary' : 'text-foreground'}`}>
+                      Run #{runs.length - idx}
+                    </span>
+                    {isCurrent && (
+                      <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0">now</Badge>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5 pl-5 truncate">
+                    {timeAgo}
+                    {run.credits_used > 0 && ` · ${run.credits_used}cr`}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="mt-2 rounded-lg border border-border bg-card/50 overflow-hidden">
-          <ScrollArea className="max-h-64">
-            <div className="p-2 space-y-0.5">
-              {runs.map((run, idx) => {
-                const isCurrent = run.id === currentRunId;
-                const timeAgo = formatDistanceToNow(new Date(run.created_at), { addSuffix: true });
-                
-                return (
-                  <button
-                    key={run.id}
-                    onClick={() => {
-                      if (!isCurrent) navigate(`/projects/runs/${run.id}`);
-                    }}
-                    className={`w-full text-left rounded-md px-3 py-2 text-sm transition-colors ${
-                      isCurrent 
-                        ? 'bg-primary/10 border border-primary/20' 
-                        : 'hover:bg-muted/50 border border-transparent cursor-pointer'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {statusIcon[run.status] ?? <Clock className="h-3 w-3" />}
-                      <span className={`flex-1 truncate ${isCurrent ? 'font-semibold text-primary' : 'text-foreground'}`}>
-                        Run #{runs.length - idx}
-                      </span>
-                      {isCurrent && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 h-4">current</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground pl-5">
-                      <span>{timeAgo}</span>
-                      {run.credits_used > 0 && (
-                        <span>· {run.credits_used} credits</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+        </ScrollArea>
+      )}
+
+      {/* Collapsed: show only status dots */}
+      {collapsed && (
+        <ScrollArea className="flex-1">
+          <div className="py-2 flex flex-col items-center gap-1.5">
+            {runs.map((run) => {
+              const isCurrent = run.id === currentRunId;
+              return (
+                <button
+                  key={run.id}
+                  onClick={() => { if (!isCurrent) navigate(`/projects/runs/${run.id}`); }}
+                  title={`Run · ${run.status}`}
+                  className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors ${
+                    isCurrent ? 'bg-primary/20 ring-1 ring-primary/40' : 'hover:bg-muted/60'
+                  }`}
+                >
+                  {statusIcon[run.status] ?? <Clock className="h-3.5 w-3.5 text-muted-foreground" />}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      )}
+    </div>
   );
 };
 

@@ -325,11 +325,13 @@ const ProjectRun = () => {
   }
   
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Run History */}
-        <RunHistory currentRunId={runId!} />
-        
+    <div className="min-h-screen bg-background flex">
+      {/* Run History Sidebar */}
+      <RunHistory currentRunId={runId!} />
+
+      {/* Main content */}
+      <div className="flex-1 min-w-0 overflow-auto">
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="mb-8">
           <Button 
@@ -463,8 +465,10 @@ const ProjectRun = () => {
           </>
         )}
       </div>
+      </div>
     </div>
   );
 };
 
 export default ProjectRun;
+
