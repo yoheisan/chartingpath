@@ -1807,6 +1807,44 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
             </Card>
           )}
         </TabsContent>
+
+        {/* Exits Tab */}
+        <TabsContent value="exits" className="space-y-6">
+          {optimizedExitComparison.length > 0 ? (
+            <>
+              <ExitComparisonTable stats={optimizedExitComparison} />
+              {(() => {
+                const exitSeries: ExitEquitySeries[] = optimizedExitComparison
+                  .map((stat, idx) => {
+                    const points = optimizedExitEquity[stat.strategyId] ?? [];
+                    if (points.length === 0) return null;
+                    const finalValue = points[points.length - 1]?.value ?? 10000;
+                    const returnPercent = ((finalValue - 10000) / 10000) * 100;
+                    return {
+                      strategyId: stat.strategyId,
+                      strategyName: stat.strategyName,
+                      color: '',
+                      data: points,
+                      finalValue,
+                      returnPercent,
+                    };
+                  })
+                  .filter(Boolean) as ExitEquitySeries[];
+
+                return exitSeries.length > 0 ? (
+                  <ExitEquityOverlay series={exitSeries} initialCapital={10000} />
+                ) : null;
+              })()}
+            </>
+          ) : (
+            <Card className="border-border/50 bg-card/50">
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                <p>No exit strategy data available for this run.</p>
+                <p className="text-sm mt-1">Re-run the backtest to generate exit scenario comparisons.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
       
       {/* Alert Creation Dialog */}
