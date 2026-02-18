@@ -4143,6 +4143,13 @@ export type Database = {
         }[]
       }
       get_user_language: { Args: { p_user_id?: string }; Returns: string }
+      get_user_org_ids: {
+        Args: never
+        Returns: {
+          org_id: string
+          role: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
