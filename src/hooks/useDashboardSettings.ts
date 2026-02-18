@@ -32,7 +32,7 @@ export interface DashboardSettings {
 const DEFAULT_SETTINGS: DashboardSettings = {
   selectedSymbol: '^GSPC',
   selectedTimeframe: '1d',
-  bottomPanelAccordion: 'pattern-history',
+  bottomPanelAccordion: null, // patterns & metrics closed by default
   watchlistTab: 'watchlist',
   marketOverviewTab: 'indices',
   calendarRegions: ['US', 'EU', 'UK', 'JP'],
@@ -42,8 +42,8 @@ const DEFAULT_SETTINGS: DashboardSettings = {
   rightPanelSize: 25, // right sidebar (watchlist/alerts + market overview)
   topChartSize: 70,
   bottomPanelSize: 30,
-  alertsPanelSize: 50,
-  marketOverviewSize: 50,
+  alertsPanelSize: 50, // equal split with market overview
+  marketOverviewSize: 50, // equal split with alerts/watchlist
 };
 
 /**
