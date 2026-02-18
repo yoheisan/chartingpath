@@ -30,7 +30,7 @@ export interface DashboardSettings {
 }
 
 const DEFAULT_SETTINGS: DashboardSettings = {
-  selectedSymbol: 'AAPL',
+  selectedSymbol: '^GSPC',
   selectedTimeframe: '1d',
   bottomPanelAccordion: 'pattern-history',
   watchlistTab: 'watchlist',
