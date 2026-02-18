@@ -497,8 +497,8 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   // Right sidebar collapsed state
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   
-  // Study panel collapsed state
-  const [studyPanelCollapsed, setStudyPanelCollapsed] = useState(false);
+  // Study panel collapsed state — closed by default
+  const [studyPanelCollapsed, setStudyPanelCollapsed] = useState(true);
 
   // Dispatch resize event after sidebar transition so charts re-fit
   const toggleSidebar = useCallback((collapsed: boolean) => {
