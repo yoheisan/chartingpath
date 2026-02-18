@@ -165,7 +165,7 @@ export const ExitComparisonTable = ({
                       {formatExpectancy(stat.expectancy)}
                     </TableCell>
                     <TableCell className="text-right font-mono text-red-500">
-                      {stat.maxDrawdown.toFixed(1)}%
+                      -{stat.maxDrawdown.toFixed(1)}%
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
                       {stat.sampleSize}
