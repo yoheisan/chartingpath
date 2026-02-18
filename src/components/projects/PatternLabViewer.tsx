@@ -824,12 +824,12 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="patterns">Patterns</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
+          <TabsTrigger value="exits" className="gap-1">
+            Exits
+          </TabsTrigger>
           <TabsTrigger value="optimization" className="gap-1">
             <Zap className="h-3 w-3" />
             Optimization
-          </TabsTrigger>
-          <TabsTrigger value="exits" className="gap-1">
-            Exits
           </TabsTrigger>
         </TabsList>
 
