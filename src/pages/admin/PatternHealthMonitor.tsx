@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RefreshCw, AlertTriangle, TrendingDown, Clock, Activity, ArrowUpRight, CheckCircle } from "lucide-react";
+import { RefreshCw, AlertTriangle, TrendingDown, Clock, Activity, ArrowUpRight, CheckCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -152,6 +153,11 @@ export default function PatternHealthMonitor() {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div>
+        <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Admin Dashboard
+        </Link>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Pattern Health Monitor</h1>

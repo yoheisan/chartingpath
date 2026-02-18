@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { ContentLibraryManager } from "@/components/cms/ContentLibraryManager";
@@ -6,7 +7,7 @@ import { ScheduledPostsManager } from "@/components/cms/ScheduledPostsManager";
 import { SocialAccountsManager } from "@/components/cms/SocialAccountsManager";
 import { PostAnalytics } from "@/components/cms/PostAnalytics";
 import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
-import { Calendar, Library, Settings, TrendingUp } from "lucide-react";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -14,6 +15,9 @@ export default function SocialMediaCMS() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
+        <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Admin Dashboard
+        </Link>
         <h1 className="text-4xl font-bold mb-2">Social Media CMS</h1>
         <p className="text-muted-foreground">
           Manage automated Market Breadth Reports and Q&A content distribution across X and Instagram
