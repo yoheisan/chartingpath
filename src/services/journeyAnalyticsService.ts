@@ -229,23 +229,25 @@ function buildJourneyFlow(events: Array<{
   session_id: string;
   created_at: string;
 }>): JourneyFlow {
-  // Count events by type
-  const eventCounts: Record<string, number> = {};
+  // Count unique users (or sessions for anonymous) per event type
+  const eventUniqueUsers: Record<string, Set<string>> = {};
   const uniqueUsers = new Set<string>();
   const uniqueSessions = new Set<string>();
   
   for (const event of events) {
-    eventCounts[event.event_name] = (eventCounts[event.event_name] || 0) + 1;
+    const key = event.user_id || event.session_id;
+    if (!eventUniqueUsers[event.event_name]) eventUniqueUsers[event.event_name] = new Set();
+    eventUniqueUsers[event.event_name].add(key);
     if (event.user_id) uniqueUsers.add(event.user_id);
     uniqueSessions.add(event.session_id);
   }
   
-  // Build nodes
+  // Build nodes — count = unique users who triggered this event (not total firings)
   const nodes: JourneyNode[] = Object.entries(JOURNEY_STAGES).map(([id, config]) => ({
     id,
     name: id,
     displayName: config.displayName,
-    count: eventCounts[id] || 0,
+    count: eventUniqueUsers[id]?.size || 0,
     category: config.category,
     isRequired: config.isRequired,
   })).filter(node => node.count > 0);
@@ -280,7 +282,7 @@ function buildJourneyFlow(events: Array<{
   
   for (const [key, data] of Object.entries(transitionCounts)) {
     const [source, target] = key.split('->');
-    const sourceCount = eventCounts[source] || 1;
+    const sourceCount = eventUniqueUsers[source]?.size || 1;
     const conversionRate = (data.count / sourceCount) * 100;
     
     const isCriticalPath = criticalPathEvents.includes(source) && criticalPathEvents.includes(target);
@@ -301,7 +303,7 @@ function buildJourneyFlow(events: Array<{
   return {
     nodes,
     edges,
-    criticalPath: criticalPathEvents.filter(e => eventCounts[e] > 0),
+    criticalPath: criticalPathEvents.filter(e => (eventUniqueUsers[e]?.size || 0) > 0),
     totalSessions: uniqueSessions.size,
     uniqueUsers: uniqueUsers.size,
   };
