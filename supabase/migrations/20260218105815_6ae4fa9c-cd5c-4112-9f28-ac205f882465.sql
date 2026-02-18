@@ -1,0 +1,1 @@
+ALTER TABLE public.project_runs ADD COLUMN IF NOT EXISTS name TEXT;
