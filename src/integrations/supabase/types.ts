@@ -2625,6 +2625,7 @@ export type Database = {
           finished_at: string | null
           id: string
           input_id: string
+          name: string | null
           project_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["project_run_status"]
@@ -2639,6 +2640,7 @@ export type Database = {
           finished_at?: string | null
           id?: string
           input_id: string
+          name?: string | null
           project_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["project_run_status"]
@@ -2653,6 +2655,7 @@ export type Database = {
           finished_at?: string | null
           id?: string
           input_id?: string
+          name?: string | null
           project_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["project_run_status"]
