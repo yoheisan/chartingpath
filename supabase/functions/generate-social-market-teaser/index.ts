@@ -15,9 +15,9 @@ serve(async (req) => {
   try {
     const { reportType, timezone, markets, tone, linkBackUrl, timeSpan } = await req.json(); // reportType: "pre_market" | "post_market"
     
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     const supabaseClient = createClient(
@@ -82,39 +82,25 @@ serve(async (req) => {
         
         Example: ✅ S&P closed at 5,195 (+0.8%) - Bullish engulfing confirmed. Full Analysis + Free Scripts → ${link} 🚀`;
 
-      console.log('Generating social teaser with OpenAI...');
+      console.log('Generating social teaser with Gemini...');
       
-      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.'
-            },
-            {
-              role: 'user',
-              content: `${teaserPrompt}\n\nFull Report:\n${report}`
-            }
-          ],
-          max_tokens: 180,
-          temperature: 0.8,
+          contents: [{ parts: [{ text: `You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.\n\n${teaserPrompt}\n\nFull Report:\n${report}` }] }],
+          generationConfig: { maxOutputTokens: 180 },
         }),
       });
 
-      if (!openAIResponse.ok) {
-        const errorText = await openAIResponse.text();
-        console.error('OpenAI API error:', errorText);
-        throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error('Gemini API error:', errorText);
+        throw new Error(`Gemini API error: ${geminiResponse.status}`);
       }
 
-      const openAIData = await openAIResponse.json();
-      const teaser = openAIData.choices[0].message.content.trim();
+      const geminiData = await geminiResponse.json();
+      const teaser = (geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
 
       console.log('Generated teaser:', teaser);
 
@@ -167,37 +153,23 @@ serve(async (req) => {
 
     console.log('Generating social teaser with OpenAI...');
     
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const geminiResponse2 = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.'
-          },
-          {
-            role: 'user',
-            content: `${teaserPrompt}\n\nFull Report:\n${latestReport.report}`
-          }
-        ],
-        max_tokens: 180,
-        temperature: 0.8,
+        contents: [{ parts: [{ text: `You are an expert financial social media content creator. Your posts ALWAYS include specific market data (exact prices, percentages, levels) and ALWAYS end with the provided link. Never skip the call-to-action link. Focus on actionable insights that traders can use immediately.\n\n${teaserPrompt}\n\nFull Report:\n${latestReport.report}` }] }],
+        generationConfig: { maxOutputTokens: 180 },
       }),
     });
 
-    if (!openAIResponse.ok) {
-      const errorText = await openAIResponse.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+    if (!geminiResponse2.ok) {
+      const errorText = await geminiResponse2.text();
+      console.error('Gemini API error:', errorText);
+      throw new Error(`Gemini API error: ${geminiResponse2.status}`);
     }
 
-    const openAIData = await openAIResponse.json();
-    const teaser = openAIData.choices[0].message.content.trim();
+    const geminiData2 = await geminiResponse2.json();
+    const teaser = (geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
 
     console.log('Generated teaser:', teaser);
 

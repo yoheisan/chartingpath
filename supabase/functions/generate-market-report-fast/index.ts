@@ -15,12 +15,12 @@ serve(async (req) => {
     
     console.log("Generating fast market report using Lovable AI:", { timezone, markets, timeSpan, tone });
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
     
     if (!FINNHUB_API_KEY) {
@@ -228,34 +228,25 @@ Keep it under 400 words. Use **bold** for key numbers and terms. Be precise and 
 
     const userPrompt = `Analyze this market data and write a concise report:\n\n${marketDataSummary}`;
 
-    console.log("Calling Lovable AI (google/gemini-2.5-flash)...");
+    console.log("Calling Gemini API (gemini-2.0-flash)...");
 
-    // Call Lovable AI using Gemini Flash (faster and cheaper)
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 800,
+        contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+        generationConfig: { maxOutputTokens: 800 },
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("Lovable AI error:", aiResponse.status, errorText);
-      throw new Error(`Lovable AI request failed: ${aiResponse.status}`);
+      console.error("Gemini error:", aiResponse.status, errorText);
+      throw new Error(`Gemini request failed: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const report = aiData.choices[0].message.content;
+    const report = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     console.log("Fast report generated successfully");
 

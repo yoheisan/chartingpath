@@ -103,12 +103,12 @@ serve(async (req) => {
     // Generate new report using OpenAI
     console.log("Generating new report using OpenAI...");
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
     const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
     
     if (!FINNHUB_API_KEY) {
@@ -361,35 +361,24 @@ serve(async (req) => {
     const newsSummaries = await Promise.all(
       allNewsArticles.map(async (article) => {
         try {
-          const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'google/gemini-3-flash-preview',
-              messages: [
-                { 
-                  role: 'system', 
-                  content: 'You are a financial analyst. Summarize the following news article in 2-3 sentences, focusing on market impact and key facts.' 
-                },
-                { 
-                  role: 'user', 
-                  content: `Headline: ${article.headline}\nSummary: ${article.summary || 'No summary available'}\nSource: ${article.source}` 
-                }
-              ],
-              max_tokens: 150,
+              contents: [{ 
+                parts: [{ text: `You are a financial analyst. Summarize the following news article in 2-3 sentences, focusing on market impact and key facts.\n\nHeadline: ${article.headline}\nSummary: ${article.summary || 'No summary available'}\nSource: ${article.source}` }] 
+              }],
+              generationConfig: { maxOutputTokens: 150 },
             }),
           });
 
           if (!response.ok) {
-            console.error(`Lovable AI error for article "${article.headline}":`, response.status);
+            console.error(`Gemini error for article "${article.headline}":`, response.status);
             return `${article.headline} (${article.source})`;
           }
 
           const data = await response.json();
-          return data.choices[0].message.content;
+          return data.candidates?.[0]?.content?.parts?.[0]?.text || `${article.headline} (${article.source})`;
         } catch (error) {
           console.error(`Error summarizing article "${article.headline}":`, error);
           return `${article.headline} (${article.source})`;
@@ -663,36 +652,29 @@ ${marketDataSummary}`;
     console.log("Generating final report with Lovable AI...");
     
     try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'google/gemini-3-flash-preview',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          max_tokens: 4000,
+          contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+          generationConfig: { maxOutputTokens: 4000 },
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Lovable AI error:", response.status, errorText);
-        throw new Error(`Lovable AI error: ${response.status} ${errorText}`);
+        console.error("Gemini error:", response.status, errorText);
+        throw new Error(`Gemini error: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      const generatedReport = data.choices[0].message.content;
+      const generatedReport = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      console.log("Report generated successfully with Lovable AI");
+      console.log("Report generated successfully with Gemini");
       console.log("Report length:", generatedReport?.length || 0);
       
       if (!generatedReport || generatedReport.trim().length === 0) {
-        throw new Error("Lovable AI returned an empty report");
+        throw new Error("Gemini returned an empty report");
       }
 
       // Cache the new report (expires in 2 hours)
