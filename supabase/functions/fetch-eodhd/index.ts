@@ -30,7 +30,7 @@ function toEODHDInterval(interval: string): string {
   const mapping: Record<string, string> = {
     '1m': '1m',
     '5m': '5m',
-    '15m': '5m', // EODHD doesn't have 15m, we'll aggregate from 5m
+    '15m': '5m', // EODHD doesn't have 15m, aggregate from 5m
     '1h': '1h',
     '4h': '1h', // Aggregate from 1h
     '1d': 'd',
@@ -95,7 +95,7 @@ function toEODHDSymbol(symbol: string): { eodhSymbol: string; exchange: string }
   // Crypto: BTC-USD format
   if (symbol.includes('-USD')) {
     const crypto = symbol.replace('-USD', '');
-    return { eodhSymbol: `${crypto}-USD`, exchange: 'CC' }; // Crypto exchange
+    return { eodhSymbol: `${crypto}-USD`, exchange: 'CC' };
   }
   
   // Forex: EURUSD=X format -> EURUSD.FOREX
@@ -104,24 +104,35 @@ function toEODHDSymbol(symbol: string): { eodhSymbol: string; exchange: string }
     return { eodhSymbol: `${pair}.FOREX`, exchange: 'FOREX' };
   }
   
-  // Futures/Commodities: GC=F format
+  // Futures/Commodities: GC=F format -> GC.COMM
   if (symbol.includes('=F')) {
     const commodity = symbol.replace('=F', '');
     return { eodhSymbol: `${commodity}.COMM`, exchange: 'COMM' };
   }
   
-  // Indices: ^GSPC format
+  // Indices: ^GSPC format -> GSPC.INDX
   if (symbol.startsWith('^')) {
     const index = symbol.replace('^', '');
     const indexMapping: Record<string, string> = {
       'GSPC': 'GSPC.INDX',
       'DJI': 'DJI.INDX',
       'IXIC': 'IXIC.INDX',
-      'VIX': 'VIX.INDX'
+      'NDX': 'NDX.INDX',
+      'RUT': 'RUT.INDX',
+      'VIX': 'VIX.INDX',
+      'FTSE': 'FTSE.INDX',
+      'GDAXI': 'GDAXI.INDX',
+      'N225': 'N225.INDX',
+      'HSI': 'HSI.INDX',
     };
     return { eodhSymbol: indexMapping[index] || `${index}.INDX`, exchange: 'INDX' };
   }
-  
+
+  // Dollar Index: DX-Y.NYB (Yahoo) -> DX-Y.NYB (EODHD)
+  if (symbol.includes('DX-Y')) {
+    return { eodhSymbol: 'DX-Y.NYB', exchange: 'NYB' };
+  }
+
   // Default: US stocks
   return { eodhSymbol: `${symbol}.US`, exchange: 'US' };
 }
@@ -153,33 +164,50 @@ serve(async (req) => {
     const needs4hAggregation = interval === '4h';
     const eodhInterval = toEODHDInterval(interval);
     const { eodhSymbol, exchange } = toEODHDSymbol(symbol);
-    
-    console.log(`[fetch-eodhd] Fetching ${eodhSymbol} from ${startDate} to ${endDate} @ ${eodhInterval}${needs4hAggregation ? ' (fetching 1h for aggregation)' : ''}`);
 
-    // Determine if intraday or EOD
+    // Ensure minimum 30-day window — EODHD returns 404 for very short ranges on some instruments
     const isIntraday = ['1m', '5m', '1h'].includes(eodhInterval);
+    let effectiveStartDate = startDate;
+    if (!isIntraday) {
+      const end = new Date(endDate);
+      const start = new Date(startDate);
+      const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays < 30) {
+        const minStart = new Date(end);
+        minStart.setDate(minStart.getDate() - 30);
+        effectiveStartDate = minStart.toISOString().split('T')[0];
+        console.log(`[fetch-eodhd] Expanded date range from ${startDate} to ${effectiveStartDate} (min 30d window)`);
+      }
+    }
     
+    console.log(`[fetch-eodhd] Fetching ${eodhSymbol} from ${effectiveStartDate} to ${endDate} @ ${eodhInterval}${needs4hAggregation ? ' (will aggregate to 4h)' : ''}`);
+
     let eodhUrl: string;
     if (isIntraday) {
-      // Intraday API endpoint
-      eodhUrl = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${startDate}&to=${endDate}&fmt=json`;
+      eodhUrl = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${effectiveStartDate}&to=${endDate}&fmt=json`;
     } else {
-      // EOD API endpoint
-      eodhUrl = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startDate}&to=${endDate}&period=${eodhInterval}&fmt=json`;
+      eodhUrl = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${effectiveStartDate}&to=${endDate}&period=${eodhInterval}&fmt=json`;
     }
 
     const response = await fetch(eodhUrl);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[fetch-eodhd] API error: ${response.status} - ${errorText}`);
-      throw new Error(`EODHD API error: ${response.statusText}`);
+      console.error(`[fetch-eodhd] API error ${response.status} for ${eodhSymbol}: ${errorText}`);
+      // Return 404 so calling code can fall back to Yahoo Finance
+      return new Response(
+        JSON.stringify({ 
+          error: `EODHD API error: ${response.statusText}`,
+          details: `Symbol: ${eodhSymbol}, HTTP ${response.status}`
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
     
     if (!Array.isArray(data) || data.length === 0) {
-      console.log(`[fetch-eodhd] No data returned for ${symbol}`);
+      console.log(`[fetch-eodhd] No data returned for ${eodhSymbol}`);
       return new Response(
         JSON.stringify({ 
           error: 'No data returned from EODHD',
@@ -225,7 +253,7 @@ serve(async (req) => {
       console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 4h bars`);
     }
     
-    // Format response similar to Yahoo Finance format for compatibility
+    // Format response compatible with Yahoo Finance format
     const priceFrame: Record<string, unknown> = {
       index: ohlcBars.map(bar => bar.t.split('T')[0]),
       columns: [symbol],
