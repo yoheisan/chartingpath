@@ -21,144 +21,100 @@ serve(async (req) => {
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     console.log(`Generating image for question: ${questionId}`);
 
-    // Create a prompt based on the category and question
     const imagePrompt = generateImagePrompt(questionText, category);
     console.log(`Using prompt: ${imagePrompt}`);
 
-    // Create AbortController with timeout (reduced for faster model)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
+    // Generate image using Gemini via Lovable AI gateway
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'user',
+            content: imagePrompt
+          }
+        ],
+        modalities: ['image', 'text']
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini generation error:', response.status, errorText);
+      throw new Error(`Image generation failed (${response.status}): ${errorText.substring(0, 200)}`);
+    }
+
+    const data = await response.json();
+    const imageBase64 = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageBase64) {
+      throw new Error('No image in Gemini response');
+    }
+
+    console.log('Image generated via Gemini, uploading to Supabase Storage...');
+
+    // Convert base64 data URL to buffer
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const binaryStr = atob(base64Data);
+    const imageBuffer = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      imageBuffer[i] = binaryStr.charCodeAt(i);
+    }
+
+    // Upload to Supabase Storage
+    const fileName = `${questionId}-${Date.now()}.png`;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('quiz-images')
+      .upload(fileName, imageBuffer.buffer, {
+        contentType: 'image/png',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    }
+
+    const { data: urlData } = supabaseClient.storage
+      .from('quiz-images')
+      .getPublicUrl(fileName);
     
-    let permanentImageUrl: string;
+    const permanentImageUrl = urlData.publicUrl;
+    console.log('Image uploaded successfully to:', permanentImageUrl);
 
-    try {
-      // Generate image using OpenAI with retry logic
-      let response;
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          response = await fetch('https://api.openai.com/v1/images/generations', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'dall-e-3',
-              prompt: imagePrompt,
-              n: 1,
-              size: '1024x1024',
-              quality: 'standard'
-            }),
-            signal: controller.signal
-          });
-
-          if (response.ok) {
-            break;
-          }
-
-          if (response.status === 500 && retryCount < maxRetries - 1) {
-            console.log(`OpenAI 500 error, retrying (attempt ${retryCount + 1}/${maxRetries})...`);
-            retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-            continue;
-          }
-
-          const errorText = await response.text();
-          console.error('OpenAI generation error:', response.status, errorText);
-          throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
-        } catch (error) {
-          if (error.name === 'AbortError' || retryCount >= maxRetries - 1) {
-            throw error;
-          }
-          retryCount++;
-          console.log(`Request error, retrying (attempt ${retryCount}/${maxRetries})...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+    const { error: updateError } = await supabaseClient
+      .from('quiz_questions')
+      .update({ 
+        image_url: permanentImageUrl,
+        image_metadata: {
+          generated_at: new Date().toISOString(),
+          prompt: imagePrompt,
+          model: 'google/gemini-2.5-flash-image',
+          storage_path: fileName
         }
-      }
+      })
+      .eq('id', questionId);
 
-      const data = await response.json();
-      const tempImageUrl = data.data?.[0]?.url;
-      
-      if (!tempImageUrl) {
-        throw new Error('No image URL in OpenAI response');
-      }
-
-      console.log('Image generated, downloading from OpenAI...');
-
-      // Download the image from OpenAI's temporary URL
-      const imageResponse = await fetch(tempImageUrl, { signal: controller.signal });
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`);
-      }
-      
-      const imageBlob = await imageResponse.blob();
-      const imageBuffer = await imageBlob.arrayBuffer();
-      
-      console.log(`Image downloaded (${imageBuffer.byteLength} bytes), uploading to Supabase Storage...`);
-
-      // Upload to Supabase Storage
-      const fileName = `${questionId}-${Date.now()}.png`;
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      const { data: uploadData, error: uploadError } = await supabaseClient.storage
-        .from('quiz-images')
-        .upload(fileName, imageBuffer, {
-          contentType: 'image/png',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
-      }
-
-      // Get public URL
-      const { data: urlData } = supabaseClient.storage
-        .from('quiz-images')
-        .getPublicUrl(fileName);
-      
-      permanentImageUrl = urlData.publicUrl;
-      console.log('Image uploaded successfully to:', permanentImageUrl);
-
-      const { error: updateError } = await supabaseClient
-        .from('quiz_questions')
-        .update({ 
-          image_url: permanentImageUrl,
-          image_metadata: {
-            generated_at: new Date().toISOString(),
-            prompt: imagePrompt,
-            model: 'dall-e-3',
-            storage_path: fileName
-          }
-        })
-        .eq('id', questionId);
-
-      if (updateError) {
-        console.error('Database update error:', updateError);
-        throw new Error(`Database update failed: ${updateError.message}`);
-      }
-
-      clearTimeout(timeoutId);
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        console.error('Request timeout after 45 seconds');
-        throw new Error('Image generation timeout - please try again');
-      }
-      throw error;
+    if (updateError) {
+      console.error('Database update error:', updateError);
+      throw new Error(`Database update failed: ${updateError.message}`);
     }
 
     return new Response(
@@ -189,7 +145,6 @@ serve(async (req) => {
 });
 
 function generateImagePrompt(questionText: string, category: string): string {
-  // Create contextual prompts based on category
   const categoryPrompts: Record<string, string> = {
     'characteristics': 'Create a professional financial chart illustration showing ',
     'statistics': 'Create a modern infographic style illustration representing ',
@@ -199,7 +154,6 @@ function generateImagePrompt(questionText: string, category: string): string {
 
   const basePrompt = categoryPrompts[category] || 'Create a professional trading-related illustration showing ';
   
-  // Extract key concepts from the question
   let conceptPrompt = '';
   
   if (questionText.includes('pip')) {
@@ -229,7 +183,6 @@ function generateImagePrompt(questionText: string, category: string): string {
   } else if (questionText.includes('triangle')) {
     conceptPrompt = 'triangle chart pattern with converging trendlines';
   } else {
-    // Generic trading concept
     conceptPrompt = 'abstract financial trading concept with charts and market data';
   }
 
