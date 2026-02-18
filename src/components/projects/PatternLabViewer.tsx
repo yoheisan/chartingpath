@@ -780,14 +780,40 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                         reversed
                         domain={[0, 'auto']}
                       />
-                      <Tooltip 
-                        labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                        formatter={(val: number, name: string) => {
-                          if (name === 'Equity') {
-                            const roi = ((val - initialCapital) / initialCapital) * 100;
-                            return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
-                          }
-                          return [`-${(val * 100).toFixed(2)}%`, 'Drawdown'];
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload || !payload.length) return null;
+                          const equityEntry = payload.find(p => p.name === 'Equity');
+                          const ddEntry = payload.find(p => p.name === 'Drawdown');
+                          const equityVal = equityEntry?.value as number | undefined;
+                          const ddVal = ddEntry?.value as number | undefined;
+                          const roi = equityVal != null ? ((equityVal - initialCapital) / initialCapital) * 100 : null;
+                          return (
+                            <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[180px]">
+                              <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
+                                {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </p>
+                              {equityVal != null && (
+                                <div className="flex items-center justify-between gap-4 mb-1">
+                                  <span className="text-[11px] text-muted-foreground">Equity</span>
+                                  <div className="text-right">
+                                    <span className="text-[13px] font-semibold text-foreground">${equityVal.toFixed(2)}</span>
+                                    {roi != null && (
+                                      <span className={`ml-1.5 text-[11px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {ddVal != null && ddVal > 0 && (
+                                <div className="flex items-center justify-between gap-4">
+                                  <span className="text-[11px] text-muted-foreground">Drawdown</span>
+                                  <span className="text-[13px] font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
+                                </div>
+                              )}
+                            </div>
+                          );
                         }}
                       />
                       <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
