@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { ArticleManager } from "@/components/admin/ArticleManager";
@@ -17,6 +19,9 @@ const AdminContentManagement = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         <div className="mb-8">
+          <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Admin Dashboard
+          </Link>
           <h1 className="text-4xl font-bold mb-2">Content Management System</h1>
           <p className="text-muted-foreground text-lg">
             Manage learning articles, quiz questions, and pattern images
