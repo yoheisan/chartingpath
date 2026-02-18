@@ -705,7 +705,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Max DD:</span>
             <span className="font-semibold text-red-500">
-              {(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
+              -{(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
             </span>
           </div>
           {hasMultiRR && (
@@ -862,7 +862,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
               <Card className="border-border/50 bg-card/50">
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-red-500">
-                    {(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
+                    -{(selectedTierMaxDrawdownPercent ?? 0).toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground">Max Drawdown</p>
                 </CardContent>
