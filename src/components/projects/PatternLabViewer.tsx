@@ -741,60 +741,78 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
             </div>
             <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsLineChart data={directionFilteredEquity}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(val) => new Date(val).toLocaleDateString()}
-                  />
-                  {/* Left Y-axis: money */}
-                  <YAxis 
-                    yAxisId="equity"
-                    orientation="left"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
-                  />
-                  {/* Right Y-axis: drawdown % — inverted so 0% is at top */}
-                  <YAxis 
-                    yAxisId="drawdown"
-                    orientation="right"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(val) => `-${(val * 100).toFixed(0)}%`}
-                    reversed
-                    domain={[0, 'auto']}
-                  />
-                  <Tooltip 
-                    labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                    formatter={(val: number, name: string) => {
-                      if (name === 'Equity') {
-                        const roi = ((val - 10000) / 10000) * 100;
-                        return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
-                      }
-                      return [`-${(val * 100).toFixed(2)}%`, 'Drawdown'];
-                    }}
-                  />
-                  <ReferenceLine yAxisId="equity" y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                  <Line 
-                    yAxisId="equity"
-                    type="monotone" 
-                    dataKey="value"
-                    name="Equity"
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line 
-                    yAxisId="drawdown"
-                    type="monotone" 
-                    dataKey="drawdown"
-                    name="Drawdown"
-                    stroke="hsl(var(--destructive))"
-                    strokeWidth={1.5}
-                    dot={false}
-                    strokeDasharray="4 2"
-                  />
-                </RechartsLineChart>
+                {(() => {
+                  const initialCapital = 10000;
+                  const values = directionFilteredEquity.map(d => d.value as number).filter(Boolean);
+                  const minVal = values.length ? Math.min(...values) : 0;
+                  const maxVal = values.length ? Math.max(...values) : initialCapital * 1.2;
+                  const range = maxVal - minVal || 1;
+                  // Breakeven offset from top as fraction (0=top=max, 1=bottom=min)
+                  const breakevenOffset = Math.max(0, Math.min(1, (maxVal - initialCapital) / range));
+
+                  return (
+                    <RechartsLineChart data={directionFilteredEquity}>
+                      <defs>
+                        <linearGradient id="equityColorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset={`${breakevenOffset * 100}%`} stopColor="#22c55e" stopOpacity={1} />
+                          <stop offset={`${breakevenOffset * 100}%`} stopColor="#ef4444" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(val) => new Date(val).toLocaleDateString()}
+                      />
+                      {/* Left Y-axis: money */}
+                      <YAxis 
+                        yAxisId="equity"
+                        orientation="left"
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+                      />
+                      {/* Right Y-axis: drawdown % — inverted so 0% is at top */}
+                      <YAxis 
+                        yAxisId="drawdown"
+                        orientation="right"
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(val) => `-${(val * 100).toFixed(0)}%`}
+                        reversed
+                        domain={[0, 'auto']}
+                      />
+                      <Tooltip 
+                        labelFormatter={(val) => new Date(val).toLocaleDateString()}
+                        formatter={(val: number, name: string) => {
+                          if (name === 'Equity') {
+                            const roi = ((val - initialCapital) / initialCapital) * 100;
+                            return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
+                          }
+                          return [`-${(val * 100).toFixed(2)}%`, 'Drawdown'];
+                        }}
+                      />
+                      <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                      <Line 
+                        yAxisId="equity"
+                        type="monotone" 
+                        dataKey="value"
+                        name="Equity"
+                        stroke="url(#equityColorGradient)"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line 
+                        yAxisId="drawdown"
+                        type="monotone" 
+                        dataKey="drawdown"
+                        name="Drawdown"
+                        stroke="hsl(var(--destructive))"
+                        strokeWidth={1.5}
+                        dot={false}
+                        strokeDasharray="4 2"
+                      />
+                    </RechartsLineChart>
+                  );
+                })()}
               </ResponsiveContainer>
             </div>
           </CardContent>
