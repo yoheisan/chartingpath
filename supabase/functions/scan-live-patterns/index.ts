@@ -591,7 +591,7 @@ async function readCachedPatternsFromDb(
   try {
     const instruments = getInstrumentsForTier(assetType, maxTickers);
     // Extend staleness window to 24 hours for reliability - patterns don't change that fast on daily timeframe
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const twentyFourHoursAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); // 7-day window to serve cached patterns during seeding gaps
     
     // IMPORTANT: Large JSON payloads (bars, visual_spec) can cause client timeouts.
     // For the screener list we allow a lightweight response to keep loads <1s.
@@ -630,7 +630,6 @@ async function readCachedPatternsFromDb(
       const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
         .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
         .in('pattern_id', allowedPatterns).in('instrument', instruments)
-        .eq('validation_status', 'confirmed')
         .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
       
       if (error) throw new Error(error.message);
