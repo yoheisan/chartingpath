@@ -92,10 +92,10 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
  * EODHD uses: AAPL.US for stocks, BTC-USD for crypto, EURUSD.FOREX for forex
  */
 function toEODHDSymbol(symbol: string): { eodhSymbol: string; exchange: string } {
-  // Crypto: BTC-USD format
-  if (symbol.includes('-USD')) {
+  // Crypto: BTC-USD format → BTC-USD.CC (CryptoCompare exchange on EODHD)
+  if (symbol.includes('-USD') && !symbol.startsWith('^') && !symbol.includes('=')) {
     const crypto = symbol.replace('-USD', '');
-    return { eodhSymbol: `${crypto}-USD`, exchange: 'CC' };
+    return { eodhSymbol: `${crypto}-USD.CC`, exchange: 'CC' };
   }
   
   // Forex: EURUSD=X format -> EURUSD.FOREX
@@ -128,9 +128,9 @@ function toEODHDSymbol(symbol: string): { eodhSymbol: string; exchange: string }
     return { eodhSymbol: indexMapping[index] || `${index}.INDX`, exchange: 'INDX' };
   }
 
-  // Dollar Index: DX-Y.NYB (Yahoo) -> DX-Y.NYB (EODHD)
+  // Dollar Index: DX-Y.NYB is not supported by EODHD — signal 404 to fall back to Yahoo
   if (symbol.includes('DX-Y')) {
-    return { eodhSymbol: 'DX-Y.NYB', exchange: 'NYB' };
+    return { eodhSymbol: '__UNSUPPORTED__', exchange: 'NYB' };
   }
 
   // Default: US stocks
@@ -164,6 +164,15 @@ serve(async (req) => {
     const needs4hAggregation = interval === '4h';
     const eodhInterval = toEODHDInterval(interval);
     const { eodhSymbol, exchange } = toEODHDSymbol(symbol);
+
+    // Symbol explicitly marked as unsupported — skip to Yahoo fallback
+    if (eodhSymbol === '__UNSUPPORTED__') {
+      console.log(`[fetch-eodhd] Symbol ${symbol} not supported by EODHD, signalling fallback`);
+      return new Response(
+        JSON.stringify({ error: 'Symbol not supported by EODHD', details: `Symbol: ${symbol}` }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Ensure minimum 30-day window — EODHD returns 404 for very short ranges on some instruments
     const isIntraday = ['1m', '5m', '1h'].includes(eodhInterval);
