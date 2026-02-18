@@ -165,12 +165,12 @@ serve(async (req) => {
     const eodhInterval = toEODHDInterval(interval);
     const { eodhSymbol, exchange } = toEODHDSymbol(symbol);
 
-    // Symbol explicitly marked as unsupported — skip to Yahoo fallback
+    // Symbol explicitly marked as unsupported — return empty 200 so caller falls through to Yahoo
     if (eodhSymbol === '__UNSUPPORTED__') {
-      console.log(`[fetch-eodhd] Symbol ${symbol} not supported by EODHD, signalling fallback`);
+      console.log(`[fetch-eodhd] Symbol ${symbol} not supported by EODHD, returning empty for Yahoo fallback`);
       return new Response(
-        JSON.stringify({ error: 'Symbol not supported by EODHD', details: `Symbol: ${symbol}` }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ bars: [], index: [], columns: [symbol], data: [], meta: { provider: 'eodhd', unsupported: true } }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -203,26 +203,20 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[fetch-eodhd] API error ${response.status} for ${eodhSymbol}: ${errorText}`);
-      // Return 404 so calling code can fall back to Yahoo Finance
+      // Return 200 with empty bars so calling code can fall back to Yahoo Finance without error tracking noise
       return new Response(
-        JSON.stringify({ 
-          error: `EODHD API error: ${response.statusText}`,
-          details: `Symbol: ${eodhSymbol}, HTTP ${response.status}`
-        }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ bars: [], index: [], columns: [symbol], data: [], meta: { provider: 'eodhd', apiError: response.status } }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
     
     if (!Array.isArray(data) || data.length === 0) {
-      console.log(`[fetch-eodhd] No data returned for ${eodhSymbol}`);
+      console.log(`[fetch-eodhd] No data returned for ${eodhSymbol}, signalling empty for Yahoo fallback`);
       return new Response(
-        JSON.stringify({ 
-          error: 'No data returned from EODHD',
-          details: `Symbol: ${eodhSymbol}`
-        }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ bars: [], index: [], columns: [symbol], data: [], meta: { provider: 'eodhd', noData: true } }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
