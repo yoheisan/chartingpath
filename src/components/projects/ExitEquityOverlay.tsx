@@ -225,13 +225,38 @@ export const ExitEquityOverlay = ({
                 tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
                 domain={['auto', 'auto']}
               />
-              <Tooltip 
-                labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                formatter={(val: number, name: string) => {
-                  const strategy = series.find(s => s.strategyId === name);
-                  const roi = ((val - initialCapital) / initialCapital) * 100;
-                  const roiSign = roi >= 0 ? '+' : '';
-                  return [`$${val.toFixed(2)} (${roiSign}${roi.toFixed(1)}%)`, strategy?.strategyName || name];
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const sorted = [...payload].sort((a, b) => (b.value as number) - (a.value as number));
+                  return (
+                    <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[220px] max-h-[280px] overflow-y-auto">
+                      <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
+                        {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                      <div className="space-y-1.5">
+                        {sorted.map((entry) => {
+                          const s = series.find(s => s.strategyId === entry.dataKey);
+                          const val = entry.value as number;
+                          const roi = ((val - initialCapital) / initialCapital) * 100;
+                          return (
+                            <div key={entry.dataKey as string} className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+                                <span className="text-[11px] text-muted-foreground truncate">{s?.strategyName || entry.dataKey}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <span className="text-[12px] font-semibold text-foreground">${val.toFixed(0)}</span>
+                                <span className={`text-[10px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
                 }}
               />
               <Legend 
