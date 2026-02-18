@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Trash2, Edit, Clock, CheckCircle, XCircle, Globe, ChevronDown, ChevronUp, RefreshCw, Sparkles, Copy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,6 +48,8 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
   const [editedContent, setEditedContent] = useState("");
   const [editedScheduledTime, setEditedScheduledTime] = useState("");
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [generatingPreview, setGeneratingPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
 
   const handleEditClick = (post: ScheduledPost) => {
     setEditingPost(post);
@@ -122,6 +124,38 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
     }
   };
 
+  const handleGeneratePreview = async (post: ScheduledPost) => {
+    setGeneratingPreview(post.id);
+    try {
+      const reportConfig = (post as any).report_config || {};
+      const { data, error } = await supabase.functions.invoke("generate-social-market-teaser", {
+        body: {
+          reportType: reportConfig.timeSpan || "post_market",
+          timezone: post.timezone || "America/New_York",
+          markets: reportConfig.markets || ["stocks", "forex", "crypto", "commodities"],
+          tone: reportConfig.tone || "professional",
+          linkBackUrl: post.link_back_url || "https://chartingpath.com/tools/market-breadth",
+        },
+      });
+
+      if (error) throw error;
+
+      const teaser: string = data.teaser;
+
+      // Save to DB so it persists
+      await supabase.from("scheduled_posts").update({ content: teaser }).eq("id", post.id);
+
+      setPreviews((prev) => ({ ...prev, [post.id]: teaser }));
+      toast.success("Preview generated and saved!");
+      if (onRetry) onRetry(post.id);
+    } catch (err: any) {
+      console.error("Error generating preview:", err);
+      toast.error(err.message || "Failed to generate preview");
+    } finally {
+      setGeneratingPreview(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -147,11 +181,11 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "posted":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-emerald-500" />;
       case "failed":
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Clock className="h-4 w-4 text-blue-500" />;
+        return <Clock className="h-4 w-4 text-primary" />;
     }
   };
 
@@ -249,19 +283,56 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
               {isExpanded && (
                 <div className="mt-4 pt-4 border-t space-y-3">
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">Content Preview:</h4>
-                    <div className="p-3 bg-muted rounded-lg text-sm whitespace-pre-wrap">
-                      {post.content || post.post_type === 'market_report' 
-                        ? "Content will be generated fresh at posting time based on current market data"
-                        : "No content available"}
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold">Content Preview:</h4>
+                      <div className="flex gap-2">
+                        {(previews[post.id] || post.content) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              navigator.clipboard.writeText(previews[post.id] || post.content || "");
+                              toast.success("Copied to clipboard!");
+                            }}
+                          >
+                            <Copy className="h-3 w-3 mr-1" /> Copy
+                          </Button>
+                        )}
+                        {post.post_type === "market_report" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => handleGeneratePreview(post)}
+                            disabled={generatingPreview === post.id}
+                          >
+                            {generatingPreview === post.id ? (
+                              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3 w-3 mr-1" />
+                            )}
+                            {generatingPreview === post.id ? "Generating..." : "Generate Preview"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg text-sm whitespace-pre-wrap font-medium">
+                      {previews[post.id] || post.content
+                        ? (previews[post.id] || post.content)
+                        : (
+                          <span className="text-muted-foreground italic">
+                            No preview yet — click "Generate Preview" to see the actual AI-generated X post content.
+                          </span>
+                        )}
                     </div>
                   </div>
                   {post.image_url && (
                     <div>
                       <h4 className="text-sm font-semibold mb-2">Image:</h4>
-                      <img 
-                        src={post.image_url} 
-                        alt="Post image" 
+                      <img
+                        src={post.image_url}
+                        alt="Post image"
                         className="rounded-lg max-w-xs"
                       />
                     </div>
@@ -269,9 +340,9 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
                   {post.link_back_url && (
                     <div>
                       <h4 className="text-sm font-semibold mb-2">Link:</h4>
-                      <a 
-                        href={post.link_back_url} 
-                        target="_blank" 
+                      <a
+                        href={post.link_back_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
@@ -293,8 +364,8 @@ export function ScheduledPostsList({ posts, isLoading, onDelete, onRetry }: Sche
           </DialogHeader>
           <div className="space-y-4">
             {editingPost?.post_type === 'market_report' && (
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <div className="p-3 bg-muted border rounded-lg">
+                <p className="text-sm text-muted-foreground">
                   ⚠️ Market report content is generated fresh at posting time. Editing here will set static content instead.
                 </p>
               </div>
