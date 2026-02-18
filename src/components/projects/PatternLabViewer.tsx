@@ -726,10 +726,20 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
           )}
         </div>
 
-        {/* Equity Curve */}
+        {/* Equity Curve + Drawdown — combined dual-axis chart */}
         <Card className="border-border/50 bg-card/50">
           <CardContent className="pt-4 pb-2">
-            <div className="h-[280px]">
+            <div className="flex items-center gap-4 mb-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-0.5 bg-primary rounded" />
+                Equity
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-0.5 bg-destructive rounded" />
+                Drawdown
+              </span>
+            </div>
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsLineChart data={directionFilteredEquity}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
@@ -738,19 +748,35 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     tick={{ fontSize: 11 }}
                     tickFormatter={(val) => new Date(val).toLocaleDateString()}
                   />
+                  {/* Left Y-axis: money */}
                   <YAxis 
+                    yAxisId="equity"
+                    orientation="left"
                     tick={{ fontSize: 11 }}
                     tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
                   />
+                  {/* Right Y-axis: drawdown % — inverted so 0% is at top */}
+                  <YAxis 
+                    yAxisId="drawdown"
+                    orientation="right"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(val) => `-${(val * 100).toFixed(0)}%`}
+                    reversed
+                    domain={[0, 'auto']}
+                  />
                   <Tooltip 
                     labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                    formatter={(val: number) => {
-                      const roi = ((val - 10000) / 10000) * 100;
-                      return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
+                    formatter={(val: number, name: string) => {
+                      if (name === 'Equity') {
+                        const roi = ((val - 10000) / 10000) * 100;
+                        return [`$${val.toFixed(2)} (${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%)`, 'Equity'];
+                      }
+                      return [`-${(val * 100).toFixed(2)}%`, 'Drawdown'];
                     }}
                   />
-                  <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                  <ReferenceLine yAxisId="equity" y={10000} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
                   <Line 
+                    yAxisId="equity"
                     type="monotone" 
                     dataKey="value"
                     name="Equity"
@@ -758,39 +784,17 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     strokeWidth={2}
                     dot={false}
                   />
-                </RechartsLineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Drawdown */}
-        <Card className="border-border/50 bg-card/50">
-          <CardContent className="pt-4 pb-2">
-            <div className="h-[140px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={directionFilteredEquity}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(val) => new Date(val).toLocaleDateString()}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(val) => `${(val * 100).toFixed(0)}%`}
-                  />
-                  <Tooltip 
-                    labelFormatter={(val) => new Date(val).toLocaleDateString()}
-                    formatter={(val: number) => [`${(val * 100).toFixed(2)}%`, 'Drawdown']}
-                  />
-                  <Area 
+                  <Line 
+                    yAxisId="drawdown"
                     type="monotone" 
-                    dataKey="drawdown" 
-                    stroke="hsl(var(--destructive))" 
-                    fill="hsl(var(--destructive) / 0.2)"
+                    dataKey="drawdown"
+                    name="Drawdown"
+                    stroke="hsl(var(--destructive))"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="4 2"
                   />
-                </AreaChart>
+                </RechartsLineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
