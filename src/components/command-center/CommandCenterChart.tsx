@@ -280,7 +280,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
           .eq('symbol', upperSymbol)
           .eq('pattern_id', selectedPattern)
-          .eq('validation_status', 'confirmed')
           .order('detected_at', { ascending: true })
           .limit(100);
 
@@ -313,17 +312,19 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       
       if (pivots && pivots.length > 0) {
         pivots.forEach((pivot) => {
+          if (!pivot?.timestamp || !pivot?.type) return;
           const isHigh = pivot.type === 'high';
-          const shortLabel = pivot.label
-            .replace('Top ', 'T').replace('Bottom ', 'B')
-            .replace('Neckline', 'NL').replace('Head', 'H')
-            .replace('Shoulder ', 'S');
+          // Shorten verbose labels; short labels (R1, S1, NL, etc.) pass through as-is
+          const shortLabel = (pivot.label ?? '')
+            .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
+            .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
+            .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
           markers.push({
             time: pivot.timestamp,
             position: isHigh ? 'aboveBar' : 'belowBar',
             color,
             shape: isHigh ? 'arrowDown' : 'arrowUp',
-            text: shortLabel,
+            text: shortLabel || pivot.label,
           });
         });
       }
