@@ -21,9 +21,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     console.log(`Generating image for question: ${questionId}`);
@@ -31,61 +31,58 @@ serve(async (req) => {
     const imagePrompt = generateImagePrompt(questionText, category);
     console.log(`Using prompt: ${imagePrompt}`);
 
-    // Generate image using Gemini via Lovable AI gateway
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [
-          {
-            role: 'user',
-            content: imagePrompt
-          }
-        ],
-        modalities: ['image', 'text']
-      })
-    });
+    // Generate image using Gemini image generation model
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: imagePrompt }] }],
+          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+        })
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini generation error:', response.status, errorText);
-      throw new Error(`Image generation failed (${response.status}): ${errorText.substring(0, 200)}`);
+      throw new Error(`Gemini API error (${response.status}): ${errorText.substring(0, 200)}`);
     }
 
     const data = await response.json();
-    const imageBase64 = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageBase64) {
+    // Extract base64 image from response
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith('image/'));
+
+    if (!imagePart?.inlineData?.data) {
       throw new Error('No image in Gemini response');
     }
 
-    console.log('Image generated via Gemini, uploading to Supabase Storage...');
+    const base64Data = imagePart.inlineData.data;
+    const mimeType = imagePart.inlineData.mimeType ?? 'image/png';
 
-    // Convert base64 data URL to buffer
-    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    console.log('Image generated, uploading to Supabase Storage...');
+
+    // Decode base64 to buffer
     const binaryStr = atob(base64Data);
     const imageBuffer = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) {
       imageBuffer[i] = binaryStr.charCodeAt(i);
     }
 
-    // Upload to Supabase Storage
-    const fileName = `${questionId}-${Date.now()}.png`;
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const ext = mimeType.split('/')[1] || 'png';
+    const fileName = `${questionId}-${Date.now()}.${ext}`;
+
     const { error: uploadError } = await supabaseClient.storage
       .from('quiz-images')
-      .upload(fileName, imageBuffer.buffer, {
-        contentType: 'image/png',
-        upsert: false
-      });
+      .upload(fileName, imageBuffer.buffer, { contentType: mimeType, upsert: false });
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
@@ -95,18 +92,18 @@ serve(async (req) => {
     const { data: urlData } = supabaseClient.storage
       .from('quiz-images')
       .getPublicUrl(fileName);
-    
+
     const permanentImageUrl = urlData.publicUrl;
     console.log('Image uploaded successfully to:', permanentImageUrl);
 
     const { error: updateError } = await supabaseClient
       .from('quiz_questions')
-      .update({ 
+      .update({
         image_url: permanentImageUrl,
         image_metadata: {
           generated_at: new Date().toISOString(),
           prompt: imagePrompt,
-          model: 'google/gemini-2.5-flash-image',
+          model: 'gemini-2.0-flash-exp-image-generation',
           storage_path: fileName
         }
       })
@@ -118,28 +115,15 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        imageUrl: permanentImageUrl,
-        questionId 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      JSON.stringify({ success: true, imageUrl: permanentImageUrl, questionId }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     console.error('Error in generate-quiz-image:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Failed to generate image',
-        details: error.toString()
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      JSON.stringify({ error: error.message || 'Failed to generate image', details: error.toString() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
@@ -153,9 +137,8 @@ function generateImagePrompt(questionText: string, category: string): string {
   };
 
   const basePrompt = categoryPrompts[category] || 'Create a professional trading-related illustration showing ';
-  
+
   let conceptPrompt = '';
-  
   if (questionText.includes('pip')) {
     conceptPrompt = 'forex trading pips on a currency chart with price movements and pip measurements';
   } else if (questionText.includes('lot')) {
