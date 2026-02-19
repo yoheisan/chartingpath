@@ -230,9 +230,27 @@ export function MarketReportScheduler() {
         throw new Error("No active social media account found");
       }
 
-      // Schedule for 2 minutes from now
-      const scheduledTime = new Date();
-      scheduledTime.setMinutes(scheduledTime.getMinutes() + 2);
+      // Check how many test posts are already queued in the next 10 minutes
+      // to stagger them so the scheduler processes them one at a time
+      const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
+      const { data: existingTestPosts } = await supabase
+        .from("scheduled_posts")
+        .select("scheduled_time")
+        .eq("status", "scheduled")
+        .eq("post_type", "market_report")
+        .gte("scheduled_time", new Date().toISOString())
+        .lte("scheduled_time", tenMinutesFromNow.toISOString())
+        .order("scheduled_time", { ascending: false })
+        .limit(1);
+
+      // Find the latest scheduled time and add 3 minutes buffer after it
+      let scheduledTime: Date;
+      if (existingTestPosts && existingTestPosts.length > 0) {
+        const latestTime = new Date(existingTestPosts[0].scheduled_time);
+        scheduledTime = new Date(latestTime.getTime() + 3 * 60 * 1000);
+      } else {
+        scheduledTime = new Date(Date.now() + 2 * 60 * 1000);
+      }
 
       const { error: insertError } = await supabase
         .from("scheduled_posts")
@@ -256,7 +274,8 @@ export function MarketReportScheduler() {
 
       if (insertError) throw insertError;
 
-      toast.success(`Test post scheduled for ${marketName} in 2 minutes!`, {
+      const minutesUntil = Math.round((scheduledTime.getTime() - Date.now()) / 60000);
+      toast.success(`Test post scheduled for ${marketName} in ~${minutesUntil} minute${minutesUntil !== 1 ? "s" : ""}!`, {
         description: "Will auto-generate AI content and publish to X"
       });
 
