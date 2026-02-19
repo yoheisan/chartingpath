@@ -627,13 +627,29 @@ async function readCachedPatternsFromDb(
     }
 
     const fetchCached = async () => {
-      const { data: cachedPatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
+      // First try active patterns within the time window
+      const { data: activePatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
         .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
         .in('pattern_id', allowedPatterns).in('instrument', instruments)
         .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
       
       if (error) throw new Error(error.message);
-      return cachedPatterns;
+
+      // If active patterns found, return them
+      if (activePatterns?.length) return activePatterns;
+
+      // Fallback: serve recently-expired patterns when detector hasn't run recently.
+      // This prevents a blank screener during seeding gaps (patterns are still valid signals
+      // even if not re-confirmed today).
+      console.info(`[scan-live-patterns] No active patterns for ${assetType}, falling back to recent expired patterns`);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: expiredPatterns, error: expiredError } = await supabase.from('live_pattern_detections').select(selectColumns)
+        .eq('asset_type', assetType).eq('timeframe', timeframe).in('status', ['expired', 'active'])
+        .in('pattern_id', allowedPatterns).in('instrument', instruments)
+        .gte('last_confirmed_at', sevenDaysAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
+      
+      if (expiredError) throw new Error(expiredError.message);
+      return expiredPatterns || [];
     };
 
     const cachedPatterns = await withRetry(fetchCached, 1, 500);
@@ -645,13 +661,13 @@ async function readCachedPatternsFromDb(
     
     // Always return cached data if available, even if empty
     if (!cachedPatterns?.length) {
-      // Check if we have ANY recent data for this asset type
-      const { data: anyRecent } = await supabase.from('live_pattern_detections').select('last_confirmed_at')
-        .eq('asset_type', assetType).eq('timeframe', timeframe).gte('updated_at', twentyFourHoursAgo).limit(1);
-      if (anyRecent?.length) {
+      // Check if we have ANY active data for this asset type (not just any updated row)
+      const { data: anyActive } = await supabase.from('live_pattern_detections').select('last_confirmed_at')
+        .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active').limit(1);
+      if (anyActive?.length) {
         return { patterns: [], instrumentsScanned: instruments.length, isFresh: true };
       }
-      // No data at all - trigger background scan but still return empty for fast response
+      // No active data - trigger background scan but still return empty for fast response
       console.info('[scan-live-patterns] No cached data, returning empty and triggering background scan');
       return { patterns: [], instrumentsScanned: instruments.length, isFresh: true, needsBackgroundScan: true };
     }
