@@ -220,9 +220,10 @@ export default function LivePatternsPage() {
   const [searchParams] = useSearchParams();
   const highlightSymbol = searchParams.get('highlight');
   const openPatternId = searchParams.get('openPattern');
+  const urlAssetType = searchParams.get('assetType') as AssetType | null;
   
-  // Detect initial asset type from highlight symbol if present
-  const initialAssetType = highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx';
+  // Detect initial asset type: prefer explicit URL param, then detect from highlight symbol, then default to 'fx'
+  const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
   const navigate = useNavigate();
   
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
