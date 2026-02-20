@@ -1,209 +1,101 @@
 
+# System Architecture — Global Operations
 
-# Multi-Channel Notification System: Email + Push
+## Validation Pipeline (Implemented)
 
-## Overview
+### 5-Shard Parallel Architecture
+Replaces single-worker (3,000 records/hr) with 5 concurrent shards totalling **150,000 records/hr**.
 
-Upgrade the notification system so that when a pattern is detected, the user receives both an **email** and a **browser push notification** (respecting their preferences). This ensures minimum latency between detection and user awareness.
+| Shard | Asset Types | Cron Job | Throughput |
+|-------|------------|----------|------------|
+| stocks | stocks, stock, equity | backfill-validation-stocks | 30,000/hr |
+| etf | etf, ETF | backfill-validation-etf | 30,000/hr |
+| crypto | crypto, cryptocurrency | backfill-validation-crypto | 30,000/hr |
+| forex | forex, fx, currency | backfill-validation-forex | 30,000/hr |
+| indices | indices, index, indice | backfill-validation-indices | 30,000/hr |
+
+Each shard has its own:
+- **Advisory lock** (`pg_try_advisory_lock`) — prevents duplicate execution per shard
+- **Watermark** (`last_watermark` in `worker_runs`) — enables resumable, gap-free processing
+- **Circuit breaker** — opens for 30 min after 3 consecutive failures; one shard failing does not block others
+
+### Global Market Windows
+
+```
+UTC  00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+     ──────────────────────────────────────────────────────────────────────
+     [  APAC session          ]
+                    [  EU session             ]
+                                        [  US session                    ]
+     [VALIDATE]────────────────────────[SEED GATE]──[VALIDATE]───────────
+     ^04:00 purge                      ^05:00-12:00  ^12:00 gate opens
+```
+
+- **04:00 UTC** — `purge-stale-patterns` truncates historical tables
+- **05:00–12:00 UTC** — Seeding gate: validation workers no-op (seeder runs)
+- **12:00 UTC** — Gate re-opens; all 5 shards resume at 150,000 records/hr
+- **Backlog clearance** — ~300k daily patterns cleared in ~2 hours vs prior 96+ hours
+
+### Shard Isolation & Fault Tolerance
+
+```
+pg_cron (every minute)
+  │
+  ├─► backfill-validation-stocks  ──► lock:stocks  ──► watermark:stocks
+  ├─► backfill-validation-etf     ──► lock:etf     ──► watermark:etf
+  ├─► backfill-validation-crypto  ──► lock:crypto  ──► watermark:crypto
+  ├─► backfill-validation-forex   ──► lock:forex   ──► watermark:forex
+  └─► backfill-validation-indices ──► lock:indices ──► watermark:indices
+         │
+         └─► validate-pattern-context (Layer 2, batch 500)
+               └─► historical_pattern_occurrences (indexed: validation_status, created_at)
+```
 
 ---
 
-## Current State
+## Seeding Pipeline
 
-| Component | Status |
-|-----------|--------|
-| Email sending | Working (Resend via `send-pattern-alert`) |
-| Push subscriptions table | Exists (`push_subscriptions`) |
-| Service Worker | Ready (`public/sw.js`) |
-| Push dispatch from backend | **Missing** |
-| User notification preferences | **Missing** (no DB columns) |
-| VAPID keys | **Missing** (required for Web Push) |
+40 isolated, staggered cron jobs run daily using Timeframe Isolation strategy.
+Gated 05:00–12:00 UTC to avoid conflicts with the validation workers.
 
 ---
 
-## Implementation Plan
+## Notification System Plan (Next)
 
-### Phase 1: Add VAPID Keys (Required for Web Push)
+### Phase 1 — VAPID Keys ✅ (secrets already exist)
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` configured
 
-VAPID (Voluntary Application Server Identification) keys are required for the Web Push protocol.
-
-**Action**: Add two new secrets:
-- `VAPID_PUBLIC_KEY` - Used in frontend to subscribe
-- `VAPID_PRIVATE_KEY` - Used in edge function to sign push messages
-
-You can generate these keys at: https://vapidkeys.com/ or using the `web-push` library.
-
----
-
-### Phase 2: Add Notification Preferences to Database
-
-**New Migration**: Add columns to `profiles` table
-
+### Phase 2 — Notification Preferences DB
 ```sql
 ALTER TABLE profiles 
 ADD COLUMN email_notifications_enabled BOOLEAN DEFAULT true,
 ADD COLUMN push_notifications_enabled BOOLEAN DEFAULT true;
 ```
 
-This allows users to independently toggle email and push notifications.
+### Phase 3 — Upgrade `send-pattern-alert`
+Parallel dispatch using `Promise.allSettled`:
+- Email via Resend
+- Web Push via `npm:web-push@3.6.6` + VAPID
 
----
-
-### Phase 3: Upgrade `send-pattern-alert` Edge Function
-
-Modify the function to handle both channels:
-
-```text
-+-------------------------------------------------------+
-|              send-pattern-alert                       |
-+-------------------------------------------------------+
-|  Input: alert, patternResult, marketData              |
-+-------------------------------------------------------+
-          |
-          v
-  +-------------------+
-  | Get user's prefs  |  (email_enabled, push_enabled)
-  +-------------------+
-          |
-          +-----------------------------+
-          |                             |
-          v                             v
-  +----------------+           +------------------+
-  | Email enabled? |           | Push enabled?    |
-  +----------------+           +------------------+
-          |                             |
-          v                             v
-  +----------------+           +------------------+
-  | Send via Resend|           | Query push_subs  |
-  +----------------+           +------------------+
-                                        |
-                                        v
-                               +------------------+
-                               | Send Web Push    |
-                               | (using web-push) |
-                               +------------------+
-```
-
-**Key changes to the edge function:**
-
-1. Import `web-push` library for sending push notifications
-2. Query `profiles` table for notification preferences
-3. Query `push_subscriptions` table for user's push endpoints
-4. Send push notification with pattern details (title, body, action URL)
-5. Track which channels were used in the response
-
-**Push notification payload structure:**
+### Push Payload
 ```json
 {
   "title": "Pattern Alert: Hammer on AAPL",
   "body": "Bullish reversal detected (80% confidence) - $185.42",
   "tag": "pattern-alert-{alertId}",
   "url": "/members/alerts",
-  "alertId": "uuid",
-  "requireInteraction": true,
-  "actions": [
-    { "action": "view", "title": "View Chart" },
-    { "action": "dismiss", "title": "Dismiss" }
-  ]
+  "requireInteraction": true
 }
 ```
 
----
+### Phase 4 — NotificationSettings UI
+Connect to DB: load/save `email_notifications_enabled` and `push_notifications_enabled` from profiles.
 
-### Phase 4: Connect NotificationSettings UI to Database
+### Phase 5 — Pass user_id through pattern-detector → send-pattern-alert
 
-Update `NotificationSettings.tsx` to:
-
-1. Load current preferences from `profiles` table on mount
-2. Save changes when toggles are flipped
-3. Show loading states during save operations
-
-**Props change:**
-```tsx
-interface NotificationSettingsProps {
-  userId?: string;
-  // Remove emailEnabled/onEmailChange props
-  // Component will manage its own state from DB
-}
-```
-
----
-
-### Phase 5: Update pattern-detector to Pass User ID
-
-The `pattern-detector` already fetches user profiles. Ensure it passes the `user_id` to `send-pattern-alert` so the function can look up preferences and push subscriptions.
-
----
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `supabase/migrations/xxx_add_notification_prefs.sql` | Create | Add preference columns to profiles |
-| `supabase/functions/send-pattern-alert/index.ts` | Modify | Add push notification dispatch |
-| `src/components/settings/NotificationSettings.tsx` | Modify | Connect to database for preferences |
-| `src/hooks/usePushNotifications.ts` | Modify | Update VAPID public key from env |
-
----
-
-## Technical Details
-
-### Web Push Library Usage
-
-```typescript
-import webpush from 'npm:web-push@3.6.6';
-
-webpush.setVapidDetails(
-  'mailto:alerts@chartingpath.com',
-  Deno.env.get('VAPID_PUBLIC_KEY')!,
-  Deno.env.get('VAPID_PRIVATE_KEY')!
-);
-
-// For each subscription
-await webpush.sendNotification(
-  {
-    endpoint: subscription.endpoint,
-    keys: {
-      p256dh: subscription.p256dh_key,
-      auth: subscription.auth_key
-    }
-  },
-  JSON.stringify(payload)
-);
-```
-
-### Parallel Notification Dispatch
-
-Both email and push will be sent in parallel using `Promise.all()` to minimize latency:
-
-```typescript
-const results = await Promise.allSettled([
-  emailEnabled ? sendEmail(...) : Promise.resolve(null),
-  pushEnabled ? sendPushNotifications(...) : Promise.resolve(null),
-]);
-```
-
----
-
-## Required Secrets
-
-Before implementation, you'll need to add these secrets:
-
-| Secret | Description |
-|--------|-------------|
-| `VAPID_PUBLIC_KEY` | Public key for Web Push subscription |
-| `VAPID_PRIVATE_KEY` | Private key for signing push messages |
-
-Generate at: https://vapidkeys.com/
-
----
-
-## Expected Outcome
-
-After implementation:
-- Pattern detection triggers both email AND push notification simultaneously
-- Users receive instant browser notifications even when not on the site
-- Users can independently toggle email and push from settings
-- Notification preferences persist in database
-- UI badges update in real-time when new alerts arrive
-
+### Files to Modify
+| File | Action |
+|------|--------|
+| `supabase/functions/send-pattern-alert/index.ts` | Add push dispatch |
+| `src/components/settings/NotificationSettings.tsx` | Connect to DB |
+| `src/hooks/usePushNotifications.ts` | Update VAPID public key |
