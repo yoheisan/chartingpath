@@ -2452,12 +2452,14 @@ export type Database = {
           image_url: string | null
           likes: number | null
           link_back_url: string | null
+          pattern_id: string | null
           platform: string
           platform_post_id: string | null
           platform_response: Json | null
           post_type: string
           posted_at: string
           scheduled_post_id: string | null
+          session_window: string | null
           shares: number | null
         }
         Insert: {
@@ -2470,12 +2472,14 @@ export type Database = {
           image_url?: string | null
           likes?: number | null
           link_back_url?: string | null
+          pattern_id?: string | null
           platform: string
           platform_post_id?: string | null
           platform_response?: Json | null
           post_type: string
           posted_at?: string
           scheduled_post_id?: string | null
+          session_window?: string | null
           shares?: number | null
         }
         Update: {
@@ -2488,12 +2492,14 @@ export type Database = {
           image_url?: string | null
           likes?: number | null
           link_back_url?: string | null
+          pattern_id?: string | null
           platform?: string
           platform_post_id?: string | null
           platform_response?: Json | null
           post_type?: string
           posted_at?: string
           scheduled_post_id?: string | null
+          session_window?: string | null
           shares?: number | null
         }
         Relationships: [
