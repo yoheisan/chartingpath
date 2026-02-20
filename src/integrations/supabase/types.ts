@@ -4013,6 +4013,45 @@ export type Database = {
         }
         Relationships: []
       }
+      worker_runs: {
+        Row: {
+          circuit_open_until: string | null
+          consecutive_failures: number
+          created_at: string
+          last_run_at: string | null
+          last_success_at: string | null
+          last_watermark: string | null
+          metadata: Json
+          status: string
+          updated_at: string
+          worker_name: string
+        }
+        Insert: {
+          circuit_open_until?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          last_run_at?: string | null
+          last_success_at?: string | null
+          last_watermark?: string | null
+          metadata?: Json
+          status?: string
+          updated_at?: string
+          worker_name: string
+        }
+        Update: {
+          circuit_open_until?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          last_run_at?: string | null
+          last_success_at?: string | null
+          last_watermark?: string | null
+          metadata?: Json
+          status?: string
+          updated_at?: string
+          worker_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       article_analytics: {
@@ -4049,6 +4088,7 @@ export type Database = {
       }
     }
     Functions: {
+      acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }
       calculate_prorata_amount: {
         Args: {
           billing_cycle_days?: number
@@ -4074,6 +4114,14 @@ export type Database = {
       }
       check_refund_eligibility: {
         Args: { p_subscription_id: string; p_user_id: string }
+        Returns: Json
+      }
+      check_worker_can_run: {
+        Args: {
+          p_seeding_end_utc?: number
+          p_seeding_start_utc?: number
+          p_worker_name: string
+        }
         Returns: Json
       }
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
@@ -4168,6 +4216,10 @@ export type Database = {
       is_org_member: { Args: { p_org_id: string }; Returns: boolean }
       is_service_role: { Args: never; Returns: boolean }
       make_first_user_admin: { Args: never; Returns: undefined }
+      mark_worker_running: {
+        Args: { p_worker_name: string }
+        Returns: undefined
+      }
       process_plan_change: {
         Args: {
           p_billing_cycle?: string
@@ -4180,6 +4232,27 @@ export type Database = {
       purge_all_historical_patterns: { Args: never; Returns: Json }
       recalculate_pattern_stats: {
         Args: { p_hit_rate_id: string }
+        Returns: undefined
+      }
+      record_worker_failure: {
+        Args: {
+          p_circuit_open_mins?: number
+          p_circuit_threshold?: number
+          p_error?: string
+          p_worker_name: string
+        }
+        Returns: Json
+      }
+      record_worker_success: {
+        Args: {
+          p_metadata?: Json
+          p_new_watermark?: string
+          p_worker_name: string
+        }
+        Returns: undefined
+      }
+      release_worker_lock: {
+        Args: { p_worker_name: string }
         Returns: undefined
       }
       set_user_language: {
@@ -4199,6 +4272,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      worker_lock_key: { Args: { p_worker_name: string }; Returns: number }
     }
     Enums: {
       alert_status: "active" | "paused" | "deleted"
