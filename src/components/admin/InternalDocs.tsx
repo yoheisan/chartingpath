@@ -161,7 +161,7 @@ const CronTab = () => (
                 ["every min, 12:00–04:45", "backfill-validation-crypto", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-forex", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-indices", "backfill-validation", "active"],
-                ["every 15 min, 12:00–04:45", "scan-live-patterns-scheduled", "scan-live-patterns", "pending"],
+                ["every 15 min, 12:00–04:45", "scan-live-patterns-scheduled (ID: 134)", "scan-live-patterns", "active"],
               ].map(([time, job, fn, status]) => (
                 <tr key={job}>
                   <td className="px-3 py-2 border-b text-muted-foreground">{time}</td>
@@ -176,24 +176,28 @@ const CronTab = () => (
           </table>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          ⚠️ <strong>scan-live-patterns-scheduled</strong> is PENDING — paste the SQL below in Supabase SQL Editor to activate.
+          ✅ <strong>scan-live-patterns-scheduled</strong> is ACTIVE — registered 2026-02-20, pg_cron ID: 134. Runs every 15 min outside the seeding window (05:00–11:59 UTC).
         </p>
 
-        <SectionHeader icon={Database} title="SQL to Register scan-live-patterns Cron" />
-        <CodeBlock>{`-- Run this in Supabase SQL Editor (not a migration — contains project secrets)
--- Schedules scan-live-patterns every 15 min during non-seeding window (12:00–04:45 UTC)
+        <SectionHeader icon={Database} title="Registered Cron SQL (Reference)" />
+        <CodeBlock>{`-- Registered 2026-02-20 via Supabase SQL Editor (pg_cron job ID: 134)
+-- Runs every 15 min during non-seeding window: hours 0–4 and 12–23 UTC
+-- Seeding window (05:00–11:59 UTC) is excluded to prevent OOM on Medium instance
 
 SELECT cron.schedule(
   'scan-live-patterns-scheduled',
-  '*/15 0-4,12-23 * * *',   -- every 15 min, hours 0–4 and 12–23 UTC
+  '*/15 0-4,12-23 * * *',
   $$
   SELECT net.http_post(
     url     := 'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/scan-live-patterns',
-    headers := '{"Content-Type":"application/json","Authorization":"Bearer <YOUR_ANON_KEY>"}'::jsonb,
+    headers := '{"Content-Type":"application/json","Authorization":"Bearer <ANON_KEY>"}'::jsonb,
     body    := concat('{"time":"', now(), '"}')::jsonb
   ) AS request_id;
   $$
-);`}</CodeBlock>
+);
+
+-- To verify: SELECT * FROM cron.job WHERE jobname = 'scan-live-patterns-scheduled';
+-- To remove: SELECT cron.unschedule('scan-live-patterns-scheduled');`}</CodeBlock>
       </CardContent>
     </Card>
   </div>
