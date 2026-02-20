@@ -203,7 +203,7 @@ export function EdgeAtlasSection() {
   };
 
   const handleBacktest = (r: EdgeRanking) => {
-    navigate(`/pattern-lab?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
+    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
   };
 
   return (
@@ -356,11 +356,11 @@ export function EdgeAtlasSection() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
-                      Active Signals
+                      Live Setups
                     </Button>
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleBacktest(r)}>
                       <FlaskConical className="h-3 w-3" />
-                      Backtest
+                      Validate
                     </Button>
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export function EdgeAtlasSection() {
         {/* Footer */}
         {!loading && rankings.length > 0 && (
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Use <strong>Active Signals</strong> to see what's tradable now · Use <strong>Backtest</strong> to validate on a specific instrument
+            Use <strong>Live Setups</strong> to see current formations of this pattern · Use <strong>Validate</strong> to backtest on a specific instrument
           </p>
         )}
       </div>
