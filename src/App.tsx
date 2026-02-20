@@ -99,6 +99,7 @@ const TranslationManagement = lazy(() =>
 );
 
 const Terms = lazy(() => import("./pages/Terms"));
+const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
 // Lazy-load blog pages - reduces initial bundle by ~60-80%
@@ -296,6 +297,7 @@ const App = () => (
           <Route path="/terms" element={withSuspense(<Terms />)} />
           <Route path="/privacy" element={withSuspense(<Privacy />)} />
           <Route path="/faq" element={withSuspense(<FAQ />)} />
+          <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={withSuspense(<NotFound />)} />
         </Routes>
