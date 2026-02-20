@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -209,6 +209,7 @@ interface EstimateResult {
 const PatternLabWizard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   
   // Check if we have prefilled state from a previous run
@@ -220,18 +221,26 @@ const PatternLabWizard = () => {
     lookbackYears?: number;
     riskPerTrade?: number;
   } | null;
+
+  // Also support URL query params from "Run Backtest" CTAs in chart viewers
+  // ?instrument=EURUSD=X&pattern=donchian-breakout-long&timeframe=1d
+  const urlInstrument = searchParams.get('instrument');
+  const urlPattern = searchParams.get('pattern');
+  const urlTimeframe = searchParams.get('timeframe');
   
-  // Form state - use prefilled values from previous run if available
+  // Form state - prefer URL params > location state > defaults
   const [assetClass, setAssetClass] = useState('fx');
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>(
-    prefilledState?.instruments ?? ['EURUSD=X']
+    urlInstrument ? [urlInstrument] : (prefilledState?.instruments ?? ['EURUSD=X'])
   );
-  const [timeframe, setTimeframe] = useState(prefilledState?.timeframe ?? '1d');
+  const [timeframe, setTimeframe] = useState(
+    urlTimeframe ?? prefilledState?.timeframe ?? '1d'
+  );
   const [lookbackYears, setLookbackYears] = useState(prefilledState?.lookbackYears ?? 3);
   // Professional risk per trade tiers: 0.5% (conservative), 1% (standard), 2% (aggressive)
   const [riskPerTrade, setRiskPerTrade] = useState(prefilledState?.riskPerTrade ?? 1);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(
-    prefilledState?.patterns ?? ['double-bottom']
+    urlPattern ? [urlPattern] : (prefilledState?.patterns ?? ['double-bottom'])
   );
   
   // Grade filter state - derive preset from gradeFilter if available
