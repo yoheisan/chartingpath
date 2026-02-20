@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import {
   LineChart as RechartsLineChart,
+  ComposedChart as RechartsComposedChart,
   Line,
   XAxis,
   YAxis,
@@ -743,42 +744,78 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
               <ResponsiveContainer width="100%" height="100%">
                 {(() => {
                   const initialCapital = 10000;
-                  const values = directionFilteredEquity.map(d => d.value as number).filter(Boolean);
-                  const minVal = values.length ? Math.min(...values) : 0;
+                  const values = directionFilteredEquity.map(d => d.value as number).filter(v => v != null && !isNaN(v));
+                  const ddValues = directionFilteredEquity.map(d => d.drawdown as number).filter(v => v != null && !isNaN(v));
+
+                  const minVal = values.length ? Math.min(...values) : initialCapital * 0.9;
                   const maxVal = values.length ? Math.max(...values) : initialCapital * 1.2;
-                  const range = maxVal - minVal || 1;
-                  // Breakeven offset from top as fraction (0=top=max, 1=bottom=min)
-                  const breakevenOffset = Math.max(0, Math.min(1, (maxVal - initialCapital) / range));
+                  const valuePad = Math.max((maxVal - minVal) * 0.12, initialCapital * 0.02);
+                  const equityDomainMin = Math.max(0, minVal - valuePad);
+                  const equityDomainMax = maxVal + valuePad;
+
+                  // Dynamic drawdown domain: tight to actual max, minimum 5% headroom
+                  const maxDD = ddValues.length ? Math.max(...ddValues) : 0;
+                  const ddDomainMax = Math.max(maxDD * 1.4, 0.05);
+
+                  // Breakeven offset within the equity domain
+                  const totalRange = equityDomainMax - equityDomainMin || 1;
+                  const breakevenOffset = Math.max(0, Math.min(1, (equityDomainMax - initialCapital) / totalRange));
+
+                  // Tick formatter: show decimal when range is small
+                  const kRange = (equityDomainMax - equityDomainMin) / 1000;
+                  const equityTickFmt = (val: number) =>
+                    kRange < 2 ? `$${(val / 1000).toFixed(1)}k` : `$${Math.round(val / 1000)}k`;
+
+                  // DD tick: show as % with 1 decimal when range is tiny
+                  const ddTickFmt = (val: number) =>
+                    ddDomainMax < 0.05 ? `-${(val * 100).toFixed(1)}%` : `-${Math.round(val * 100)}%`;
 
                   return (
-                    <RechartsLineChart data={directionFilteredEquity}>
+                    <RechartsComposedChart data={directionFilteredEquity}>
                       <defs>
                         <linearGradient id="equityColorGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset={`${breakevenOffset * 100}%`} stopColor="#22c55e" stopOpacity={1} />
                           <stop offset={`${breakevenOffset * 100}%`} stopColor="#ef4444" stopOpacity={1} />
                         </linearGradient>
+                        <linearGradient id="equityAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.18} />
+                          <stop offset="100%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.02} />
+                        </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 11 }}
-                        tickFormatter={(val) => new Date(val).toLocaleDateString()}
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(val) => {
+                          const d = new Date(val);
+                          return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                        }}
+                        minTickGap={60}
                       />
-                      {/* Left Y-axis: money */}
-                      <YAxis 
+                      {/* Left Y-axis: equity — tightly padded around actual range */}
+                      <YAxis
                         yAxisId="equity"
                         orientation="left"
-                        tick={{ fontSize: 11 }}
-                        tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={equityTickFmt}
+                        domain={[equityDomainMin, equityDomainMax]}
+                        width={58}
                       />
-                      {/* Right Y-axis: drawdown % — inverted so 0% is at top */}
-                      <YAxis 
+                      {/* Right Y-axis: drawdown — tightly scaled to actual max DD */}
+                      <YAxis
                         yAxisId="drawdown"
                         orientation="right"
-                        tick={{ fontSize: 11 }}
-                        tickFormatter={(val) => `-${(val * 100).toFixed(0)}%`}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={ddTickFmt}
                         reversed
-                        domain={[0, 'auto']}
+                        domain={[0, ddDomainMax]}
+                        width={52}
                       />
                       <Tooltip
                         content={({ active, payload, label }) => {
@@ -816,27 +853,31 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                           );
                         }}
                       />
-                      <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-                      <Line 
+                      <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 3" strokeOpacity={0.5} />
+                      {/* Area fill for equity */}
+                      <Area
                         yAxisId="equity"
-                        type="monotone" 
+                        type="monotone"
                         dataKey="value"
                         name="Equity"
                         stroke="url(#equityColorGradient)"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
+                        fill="url(#equityAreaGradient)"
                         dot={false}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                       />
-                      <Line 
+                      <Line
                         yAxisId="drawdown"
-                        type="monotone" 
+                        type="monotone"
                         dataKey="drawdown"
                         name="Drawdown"
                         stroke="hsl(var(--destructive))"
                         strokeWidth={1.5}
                         dot={false}
                         strokeDasharray="4 2"
+                        strokeOpacity={0.7}
                       />
-                    </RechartsLineChart>
+                    </RechartsComposedChart>
                   );
                 })()}
               </ResponsiveContainer>
