@@ -212,7 +212,7 @@ export function EdgeAtlasSection() {
 
   const handleFindSignals = (r: EdgeRanking) => {
     const screenerId = PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id;
-    navigate(`/patterns/live?pattern=${encodeURIComponent(screenerId)}&timeframe=${r.timeframe}`);
+    navigate(`/patterns/live?pattern=${encodeURIComponent(screenerId)}&timeframe=${r.timeframe}&assetType=${activeTab}`);
   };
 
   const handleBacktest = (r: EdgeRanking) => {
