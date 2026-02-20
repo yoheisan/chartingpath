@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, TrendingUp, FlaskConical, ArrowRight, Info, Zap } from 'lucide-react';
+import { Trophy, FlaskConical, Info, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Tooltip,
@@ -24,6 +24,17 @@ interface EdgeRanking {
   avg_bars: number;
 }
 
+interface RawRow {
+  pattern_id: string;
+  pattern_name: string;
+  timeframe: string;
+  outcome: string;
+  risk_reward_ratio: number;
+  bars_to_outcome: number;
+  asset_type: string;
+  symbol: string;
+}
+
 const BARS_PER_YEAR: Record<string, number> = {
   '1wk': 52,
   '1d': 252,
@@ -34,7 +45,6 @@ const BARS_PER_YEAR: Record<string, number> = {
 
 const CONFIDENCE_THRESHOLD = 200;
 
-// Map pattern_id to screener pattern filter value
 const PATTERN_ID_TO_SCREENER: Record<string, string> = {
   'bullish-flag': 'bullish-flag',
   'bearish-flag': 'bearish-flag',
@@ -63,86 +73,132 @@ const TF_LABEL: Record<string, string> = {
   '1h': '1H',
 };
 
+// FX Major pairs (G7 + NZD vs USD)
+const FX_MAJORS = new Set([
+  'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X',
+  'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X',
+]);
+
+type AssetTab = 'all' | 'stocks' | 'crypto' | 'fx' | 'indices' | 'commodities';
+type FxSubFilter = 'all' | 'majors' | 'crosses';
+
+const ASSET_TABS: { key: AssetTab; label: string; assetType?: string }[] = [
+  { key: 'all', label: 'All Assets' },
+  { key: 'stocks', label: 'Stocks', assetType: 'stocks' },
+  { key: 'crypto', label: 'Crypto', assetType: 'crypto' },
+  { key: 'fx', label: 'FX', assetType: 'fx' },
+  { key: 'indices', label: 'Indices', assetType: 'indices' },
+  { key: 'commodities', label: 'Commodities', assetType: 'commodities' },
+];
+
+const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
+  all: 'Ranked across all asset classes — useful for discovering patterns, but treat with caution across mixed markets.',
+  stocks: 'Aggregated across 300+ equities. Pattern behaviour is consistent within this universe.',
+  crypto: 'Aggregated across top-cap coins. High BTC-beta correlation makes cross-coin analysis defensible.',
+  fx: 'Segmented by pair type. Major pairs share liquidity structure; crosses behave differently.',
+  indices: 'Broad market indices share similar mechanics — suitable for cross-index aggregation.',
+  commodities: 'Aggregated across energy, metals and softs. Use as directional signal only.',
+};
+
+function computeRankings(rows: RawRow[]): EdgeRanking[] {
+  const groups: Record<string, {
+    pattern_name: string; pattern_id: string; timeframe: string;
+    total: number; wins: number; losses: number; sum_rr: number; sum_bars: number;
+  }> = {};
+
+  for (const row of rows) {
+    const key = `${row.pattern_id}|${row.timeframe}`;
+    if (!groups[key]) {
+      groups[key] = {
+        pattern_name: row.pattern_name, pattern_id: row.pattern_id,
+        timeframe: row.timeframe, total: 0, wins: 0, losses: 0, sum_rr: 0, sum_bars: 0,
+      };
+    }
+    const g = groups[key];
+    g.total += 1;
+    if (row.outcome === 'hit_tp') g.wins += 1;
+    else g.losses += 1;
+    g.sum_rr += (row.risk_reward_ratio ?? 2);
+    g.sum_bars += (row.bars_to_outcome ?? 0);
+  }
+
+  return Object.values(groups)
+    .filter(g => g.total >= 50)
+    .map(g => {
+      const win_rate = g.wins / g.total;
+      const loss_rate = g.losses / g.total;
+      const avg_rr = g.sum_rr / g.total;
+      const avg_bars = g.sum_bars / g.total;
+      const expectancy_r = win_rate * avg_rr - loss_rate;
+      const bpy = BARS_PER_YEAR[g.timeframe] ?? 252;
+      const trades_per_year = bpy / Math.max(avg_bars, 1);
+      const est_annualized_pct = trades_per_year * expectancy_r * 1.0;
+      return {
+        pattern_name: g.pattern_name, pattern_id: g.pattern_id, timeframe: g.timeframe,
+        total_trades: g.total,
+        win_rate_pct: Math.round(win_rate * 1000) / 10,
+        expectancy_r: Math.round(expectancy_r * 1000) / 1000,
+        trades_per_year: Math.round(trades_per_year * 10) / 10,
+        est_annualized_pct: Math.round(est_annualized_pct * 10) / 10,
+        avg_bars: Math.round(avg_bars * 10) / 10,
+      };
+    })
+    .filter(r => r.expectancy_r > 0)
+    .sort((a, b) => b.est_annualized_pct - a.est_annualized_pct)
+    .slice(0, 8);
+}
+
+const RANK_ICONS = ['🥇', '🥈', '🥉'];
+
 export function EdgeAtlasSection() {
-  const [rankings, setRankings] = useState<EdgeRanking[]>([]);
+  const [allData, setAllData] = useState<RawRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<AssetTab>('stocks');
+  const [fxSubFilter, setFxSubFilter] = useState<FxSubFilter>('majors');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchRankings = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       try {
         const PAGE_SIZE = 1000;
-        let allData: { pattern_id: string; pattern_name: string; timeframe: string; outcome: string; risk_reward_ratio: number; bars_to_outcome: number }[] = [];
+        let data: RawRow[] = [];
         let page = 0;
         while (true) {
-          const { data, error } = await supabase
+          const { data: batch, error } = await supabase
             .from('historical_pattern_occurrences')
-            .select('pattern_id, pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome')
+            .select('pattern_id, pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome, asset_type, symbol')
             .in('outcome', ['hit_tp', 'hit_sl'])
             .not('bars_to_outcome', 'is', null)
             .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-          if (error || !data || data.length === 0) break;
-          allData = allData.concat(data as typeof allData);
-          if (data.length < PAGE_SIZE) break;
+          if (error || !batch || batch.length === 0) break;
+          data = data.concat(batch as RawRow[]);
+          if (batch.length < PAGE_SIZE) break;
           page++;
         }
-
-        if (!allData.length) return;
-
-        const groups: Record<string, {
-          pattern_name: string; pattern_id: string; timeframe: string;
-          total: number; wins: number; losses: number; sum_rr: number; sum_bars: number;
-        }> = {};
-
-        for (const row of allData) {
-          const key = `${row.pattern_id}|${row.timeframe}`;
-          if (!groups[key]) {
-            groups[key] = { pattern_name: row.pattern_name, pattern_id: row.pattern_id, timeframe: row.timeframe, total: 0, wins: 0, losses: 0, sum_rr: 0, sum_bars: 0 };
-          }
-          const g = groups[key];
-          g.total += 1;
-          if (row.outcome === 'hit_tp') g.wins += 1;
-          else g.losses += 1;
-          g.sum_rr += (row.risk_reward_ratio ?? 2);
-          g.sum_bars += (row.bars_to_outcome ?? 0);
-        }
-
-        const ranked: EdgeRanking[] = Object.values(groups)
-          .filter(g => g.total >= 50)
-          .map(g => {
-            const win_rate = g.wins / g.total;
-            const loss_rate = g.losses / g.total;
-            const avg_rr = g.sum_rr / g.total;
-            const avg_bars = g.sum_bars / g.total;
-            const expectancy_r = win_rate * avg_rr - loss_rate;
-            const bpy = BARS_PER_YEAR[g.timeframe] ?? 252;
-            const trades_per_year = bpy / Math.max(avg_bars, 1);
-            const est_annualized_pct = trades_per_year * expectancy_r * 1.0;
-            return {
-              pattern_name: g.pattern_name, pattern_id: g.pattern_id, timeframe: g.timeframe,
-              total_trades: g.total,
-              win_rate_pct: Math.round(win_rate * 1000) / 10,
-              expectancy_r: Math.round(expectancy_r * 1000) / 1000,
-              trades_per_year: Math.round(trades_per_year * 10) / 10,
-              est_annualized_pct: Math.round(est_annualized_pct * 10) / 10,
-              avg_bars: Math.round(avg_bars * 10) / 10,
-            };
-          })
-          .filter(r => r.expectancy_r > 0)
-          .sort((a, b) => b.est_annualized_pct - a.est_annualized_pct)
-          .slice(0, 8);
-
-        setRankings(ranked);
+        setAllData(data);
       } catch (e) {
         console.error('EdgeAtlas fetch error:', e);
       } finally {
         setLoading(false);
       }
     };
-    fetchRankings();
+    fetchAll();
   }, []);
+
+  const filteredRows = (() => {
+    if (activeTab === 'all') return allData;
+    const tabDef = ASSET_TABS.find(t => t.key === activeTab);
+    if (!tabDef?.assetType) return allData;
+    const byAsset = allData.filter(r => r.asset_type === tabDef.assetType);
+    if (activeTab === 'fx') {
+      if (fxSubFilter === 'majors') return byAsset.filter(r => FX_MAJORS.has(r.symbol));
+      if (fxSubFilter === 'crosses') return byAsset.filter(r => !FX_MAJORS.has(r.symbol));
+    }
+    return byAsset;
+  })();
+
+  const rankings = loading ? [] : computeRankings(filteredRows);
 
   const handleFindSignals = (r: EdgeRanking) => {
     const screenerId = PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id;
@@ -153,13 +209,12 @@ export function EdgeAtlasSection() {
     navigate(`/pattern-lab?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
   };
 
-  const RANK_ICONS = ['🥇', '🥈', '🥉'];
-
   return (
     <section className="py-14 px-6 bg-background border-t border-border/40">
       <div className="container mx-auto max-w-5xl">
+
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <div className="p-1.5 rounded-lg bg-amber-500/10">
@@ -169,7 +224,7 @@ export function EdgeAtlasSection() {
             </div>
             <h2 className="text-2xl font-bold">Patterns with Proven Edge</h2>
             <p className="text-muted-foreground text-sm mt-1">
-              Ranked by estimated annualized return from historical data. Start here — not with guesswork.
+              Ranked by estimated annualized return. Filter by asset class for meaningful comparisons.
             </p>
           </div>
           <TooltipProvider>
@@ -186,6 +241,58 @@ export function EdgeAtlasSection() {
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {/* Asset Class Tabs */}
+        <div className="flex items-center gap-1 flex-wrap mb-2">
+          {ASSET_TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* FX Sub-filter */}
+        {activeTab === 'fx' && (
+          <div className="flex items-center gap-2 mb-3 pl-1">
+            <span className="text-xs text-muted-foreground">Pair type:</span>
+            {(['all', 'majors', 'crosses'] as FxSubFilter[]).map(f => (
+              <button
+                key={f}
+                onClick={() => setFxSubFilter(f)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors border ${
+                  fxSubFilter === f
+                    ? 'border-primary/60 bg-primary/10 text-primary'
+                    : 'border-border/40 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {f === 'all' ? 'All FX' : f === 'majors' ? 'Majors (G7+NZD)' : 'Crosses'}
+              </button>
+            ))}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs"><strong>Majors:</strong> EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD — all vs USD, tightest spreads.<br /><strong>Crosses:</strong> Everything else (EUR/GBP, GBP/JPY, AUD/JPY, etc.).</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
+
+        {/* Context note */}
+        <p className="text-xs text-muted-foreground/70 mb-4 pl-1 italic">
+          {TAB_DESCRIPTIONS[activeTab]}
+        </p>
 
         {/* Table */}
         {loading ? (
@@ -204,7 +311,7 @@ export function EdgeAtlasSection() {
           </div>
         ) : rankings.length === 0 ? (
           <div className="rounded-xl border border-border/40 bg-card/40 p-10 text-center text-muted-foreground">
-            Not enough historical data yet to rank patterns.
+            Not enough historical data for this filter combination.
           </div>
         ) : (
           <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
@@ -250,21 +357,11 @@ export function EdgeAtlasSection() {
 
                   {/* CTAs */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-8 gap-1.5"
-                      onClick={() => handleFindSignals(r)}
-                    >
+                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
                       Active Signals
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-8 gap-1.5"
-                      onClick={() => handleBacktest(r)}
-                    >
+                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleBacktest(r)}>
                       <FlaskConical className="h-3 w-3" />
                       Backtest
                     </Button>
@@ -275,10 +372,10 @@ export function EdgeAtlasSection() {
           </div>
         )}
 
-        {/* Footer CTA */}
+        {/* Footer */}
         {!loading && rankings.length > 0 && (
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Use <strong>Active Signals</strong> to see what's tradable now · Use <strong>Backtest</strong> to validate on a specific instrument and export a script
+            Use <strong>Active Signals</strong> to see what's tradable now · Use <strong>Backtest</strong> to validate on a specific instrument
           </p>
         )}
       </div>
