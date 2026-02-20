@@ -1545,8 +1545,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
               )}
 
               {/* Setup Optimizer */}
-              {(repeatableWinSetups.length > 0 || repeatableLossSetups.length > 0) && (
-                <div className="space-y-3">
+              <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium">Setup Optimizer</label>
                     <div className="flex items-center gap-2">
@@ -1644,7 +1643,6 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     </>
                   )}
                 </div>
-              )}
 
               {/* Optimized Preview */}
               {(directionFilter !== 'all' || hasExclusions || useExitModel) && (
