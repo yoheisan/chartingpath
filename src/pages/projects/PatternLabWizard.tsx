@@ -226,7 +226,14 @@ const PatternLabWizard = () => {
   // ?instrument=EURUSD=X&pattern=donchian-breakout-long&timeframe=1d
   const urlInstrument = searchParams.get('instrument');
   const urlPattern = searchParams.get('pattern');
-  const urlTimeframe = searchParams.get('timeframe');
+  // Normalize timeframe to lowercase to match DATA_COVERAGE keys (e.g. '1D' -> '1d', '1W' -> '1wk')
+  const rawUrlTimeframe = searchParams.get('timeframe');
+  const normalizeTimeframe = (tf: string | null): string | null => {
+    if (!tf) return null;
+    const map: Record<string, string> = { '1D': '1d', '1W': '1wk', '1H': '1h', '4H': '4h', '8H': '8h', '15M': '15m', '5M': '5m', '1M': '1M' };
+    return map[tf] ?? tf.toLowerCase();
+  };
+  const urlTimeframe = normalizeTimeframe(rawUrlTimeframe);
   
   // Form state - prefer URL params > location state > defaults
   const [assetClass, setAssetClass] = useState('fx');
