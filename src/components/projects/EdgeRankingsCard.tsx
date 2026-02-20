@@ -40,14 +40,27 @@ export const EdgeRankingsCard = () => {
     const fetchRankings = async () => {
       setLoading(true);
       try {
-        // Fetch all resolved outcomes in one pass
-        const { data, error } = await supabase
-          .from('historical_pattern_occurrences')
-          .select('pattern_id, pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome')
-          .in('outcome', ['hit_tp', 'hit_sl'])
-          .not('bars_to_outcome', 'is', null);
+        // Paginate through all resolved outcomes (Supabase default limit is 1000)
+        const PAGE_SIZE = 1000;
+        let allData: { pattern_id: string; pattern_name: string; timeframe: string; outcome: string; risk_reward_ratio: number; bars_to_outcome: number }[] = [];
+        let page = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('historical_pattern_occurrences')
+            .select('pattern_id, pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome')
+            .in('outcome', ['hit_tp', 'hit_sl'])
+            .not('bars_to_outcome', 'is', null)
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-        if (error || !data) return;
+          if (error) break;
+          if (!data || data.length === 0) break;
+          allData = allData.concat(data as typeof allData);
+          if (data.length < PAGE_SIZE) break;
+          page++;
+        }
+
+        const data = allData;
+        if (!data.length) return;
 
         // Aggregate per (pattern_id, timeframe)
         const groups: Record<string, {
