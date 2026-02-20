@@ -346,7 +346,7 @@ export function EdgeAtlasSection() {
 
                   {/* Est Annual */}
                   <div className="shrink-0 text-right sm:text-left sm:w-20">
-                    <div className={`text-lg font-bold ${r.est_annualized_pct >= 20 ? 'text-green-500' : r.est_annualized_pct >= 8 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <div className={`text-lg font-bold ${r.est_annualized_pct >= 20 ? 'text-green-400' : r.est_annualized_pct >= 8 ? 'text-green-500' : 'text-green-600'}`}>
                       +{r.est_annualized_pct.toFixed(1)}%
                     </div>
                     <div className="text-[10px] text-muted-foreground">est. annual</div>
