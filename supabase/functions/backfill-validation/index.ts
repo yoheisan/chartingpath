@@ -114,7 +114,8 @@ serve(async (req) => {
       .select(
         "id, pattern_name, direction, entry_price, stop_loss_price, take_profit_price, symbol, timeframe, bars, quality_score, trend_alignment, validation_status, created_at",
       )
-      .or("validation_status.eq.pending,validation_status.is.null")
+      // Only query 'pending' — no OR with IS NULL (zero null rows exist, OR kills index usage)
+      .eq("validation_status", "pending")
       .order("created_at", { ascending: true })
       .limit(batch_size);
 
