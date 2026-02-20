@@ -51,6 +51,7 @@ serve(async (req) => {
   if (!force) {
     const { data: gateData, error: gateError } = await supabase.rpc("check_worker_can_run", {
       p_worker_name: WORKER_NAME,
+      p_seeding_end_utc: 13,  // ETFs seed 12:00-12:50 UTC; keep gate closed until 13:00
     });
 
     if (gateError) {
