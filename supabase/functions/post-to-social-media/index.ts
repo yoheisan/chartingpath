@@ -160,7 +160,57 @@ serve(async (req) => {
       throw new Error('Scheduled post not found');
     }
 
-    const { content, image_url, link_back_url, social_media_accounts: account } = post;
+    const { image_url, link_back_url, social_media_accounts: account } = post;
+
+    // Helper: real AI-generated tweet is >80 chars with emoji or URL
+    const isRealContent = (text: string | null): boolean => {
+      if (!text || text.trim().length < 80) return false;
+      return /[\u{1F300}-\u{1FFFF}]|https?:\/\//u.test(text);
+    };
+
+    // If content is a placeholder, generate AI teaser now (self-healing fallback)
+    let content = post.content;
+    if (post.post_type === 'market_report' && !isRealContent(content)) {
+      console.log('[post-to-social-media] Placeholder content detected, generating AI teaser...');
+      const reportConfig = post.report_config || {};
+      const reportType = reportConfig.timeSpan || 'post_market';
+      const timezone = post.timezone || 'America/New_York';
+      const linkUrl = link_back_url || 'https://chartingpath.com/tools/market-breadth';
+
+      try {
+        const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(
+          'generate-social-market-teaser',
+          {
+            body: {
+              reportType,
+              timezone,
+              markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
+              tone: reportConfig.tone || 'professional',
+              linkBackUrl: linkUrl,
+            }
+          }
+        );
+
+        if (teaserError) throw teaserError;
+        if (teaserData?.teaser && isRealContent(teaserData.teaser)) {
+          content = teaserData.teaser;
+          console.log('[post-to-social-media] AI teaser generated:', content.substring(0, 80));
+          // Update DB content so history records the real content
+          await supabaseClient
+            .from('scheduled_posts')
+            .update({ content })
+            .eq('id', scheduledPostId);
+        } else {
+          throw new Error('Generated teaser failed quality check');
+        }
+      } catch (genErr: any) {
+        console.error('[post-to-social-media] AI generation failed, using fallback:', genErr.message);
+        const marketName = timezone.includes('Tokyo') ? 'Tokyo' :
+                           timezone.includes('London') ? 'London' : 'US';
+        const timeLabel = reportType === 'pre_market' ? 'Pre-Market' : 'Post-Market';
+        content = `📊 ${marketName} ${timeLabel} Analysis — key levels & setups to watch today.\n\n🚀 Full Report + Free Trading Scripts → ${linkUrl}`;
+      }
+    }
 
     if (!account || !account.is_active) {
       throw new Error('Social media account not found or inactive');
@@ -202,10 +252,7 @@ serve(async (req) => {
     // Update the scheduled post status
     const { error: updateError } = await supabaseClient
       .from('scheduled_posts')
-      .update({ 
-        status: 'posted',
-        last_posted_at: new Date().toISOString()
-      })
+      .update({ status: 'posted' })
       .eq('id', scheduledPostId);
 
     if (updateError) {
