@@ -13,6 +13,7 @@ import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
+import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 
 const Index = () => {
@@ -188,6 +189,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Edge Atlas — Proven patterns ranked by historical edge */}
+      <EdgeAtlasSection />
 
       {/* Pattern Screener Table - TradingView-style */}
       <PatternScreenerTeaser />
