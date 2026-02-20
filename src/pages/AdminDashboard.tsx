@@ -136,7 +136,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           <Button
             variant={activeTab === "users" ? "default" : "outline"}
             onClick={() => setActiveTab("users")}
