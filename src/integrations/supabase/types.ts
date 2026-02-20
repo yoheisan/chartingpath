@@ -4170,6 +4170,34 @@ export type Database = {
         }[]
       }
       get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
+      get_edge_atlas_rankings: {
+        Args: { p_asset_type: string; p_limit?: number; p_min_trades?: number }
+        Returns: {
+          avg_bars: number
+          est_annualized_pct: number
+          expectancy_r: number
+          pattern_id: string
+          pattern_name: string
+          timeframe: string
+          total_trades: number
+          trades_per_year: number
+          win_rate_pct: number
+        }[]
+      }
+      get_edge_atlas_rankings_fx: {
+        Args: { p_limit?: number; p_min_trades?: number; p_symbols: string[] }
+        Returns: {
+          avg_bars: number
+          est_annualized_pct: number
+          expectancy_r: number
+          pattern_id: string
+          pattern_name: string
+          timeframe: string
+          total_trades: number
+          trades_per_year: number
+          win_rate_pct: number
+        }[]
+      }
       get_quiz_questions: {
         Args: {
           p_category?: Database["public"]["Enums"]["quiz_category"]
