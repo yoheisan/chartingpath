@@ -474,7 +474,10 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
   // Direction-filtered equity curve: recompute from trades when filtered, exclusions active, or exit model selected
   const useExitModel = selectedExitModel !== 'fixed';
   const directionFilteredEquity: EquityPoint[] = useMemo(() => {
-    if (directionFilter === 'all' && !hasExclusions && !useExitModel) return effectiveEquity;
+    // Only use pre-computed server equity for the default tier (1:2) with no active filters.
+    // Any other tier must be recomputed from displayedTrades which already carry the correct R-multiples.
+    const isDefaultTier = selectedRRTier === 2;
+    if (isDefaultTier && directionFilter === 'all' && !hasExclusions && !useExitModel) return effectiveEquity;
     
     const trades = hasExclusions ? optimizedTrades : displayedTrades;
     if (trades.length === 0) return [];
@@ -508,7 +511,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
     });
     
     return points;
-  }, [directionFilter, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity, useExitModel, artifact.riskPerTrade, artifact.executionAssumptions]);
+  }, [directionFilter, selectedRRTier, displayedTrades, optimizedTrades, hasExclusions, effectiveEquity, useExitModel, artifact.riskPerTrade, artifact.executionAssumptions]);
 
   // Lift repeatable setup computation so it can be shared across tabs
   const gradeOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
