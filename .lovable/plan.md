@@ -53,10 +53,24 @@ pg_cron (every minute)
 
 ---
 
-## Seeding Pipeline
+## Seeding Pipeline ✅ (Fully Scheduled & Active)
 
-40 isolated, staggered cron jobs run daily using Timeframe Isolation strategy.
+41 cron jobs active in pg_cron (40 seeding + 1 purge). Verified via `cron.job` query.
+Timeframe Isolation strategy: each partition × timeframe runs in its own isolated job.
 Gated 05:00–12:00 UTC to avoid conflicts with the validation workers.
+
+| Window | Jobs |
+|--------|------|
+| 04:00 UTC | `purge-stale-patterns` — truncates historical tables |
+| 05:00–05:40 | FX (1h, 4h, 8h, 1d, 1wk) |
+| 05:50–06:30 | Crypto (1h, 4h, 8h, 1d, 1wk) |
+| 06:40–07:20 | Commodities (1h, 4h, 8h, 1d, 1wk) |
+| 07:30–08:00 | Indices (1h, 4h, 8h, 1d, 1wk) |
+| 08:10–09:00 | ETFs (1h, 4h, 8h, 1d, 1wk) |
+| 09:10–09:50 | Stocks A–G (1h, 4h, 8h, 1d, 1wk) |
+| 10:00–10:40 | Stocks H–O (1h, 4h, 8h, 1d, 1wk) |
+| 10:50–11:30 | Stocks P–Z (1h, 4h, 8h, 1d, 1wk) |
+| 12:00 UTC | Validation gate re-opens; all 5 shards resume |
 
 ---
 
