@@ -1839,7 +1839,8 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+                {/* Returns summary row */}
+                <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border/50">
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Strategy:</span>{' '}
@@ -1857,6 +1858,49 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     ))}
                   </div>
                 </div>
+
+                {/* Strategy Potency Insights */}
+                {(() => {
+                  const trades = displayedTrades;
+                  if (trades.length === 0) return null;
+
+                  // Time in Market: sum of all trade durations / total backtest duration
+                  const backtestDays = (artifact.lookbackYears ?? 1) * 365;
+                  const totalTradeDays = trades.reduce((sum, t) => {
+                    const entry = new Date(t.entryDate).getTime();
+                    const exit = new Date(t.exitDate).getTime();
+                    return sum + Math.max(0, (exit - entry) / (1000 * 60 * 60 * 24));
+                  }, 0);
+                  const timeInMarketPct = Math.min(100, (totalTradeDays / backtestDays) * 100);
+
+                  // Annualized return if 100% capital was deployed the whole time
+                  // = (strategy total return / time in market %) * 100, annualized
+                  const strategyTotalReturn = ((directionFilteredEquity[directionFilteredEquity.length - 1]?.value ?? 10000) - 10000) / 10000;
+                  const annualizedFullDeploy = timeInMarketPct > 0
+                    ? (strategyTotalReturn / (timeInMarketPct / 100)) / (artifact.lookbackYears ?? 1) * 100
+                    : 0;
+
+                  return (
+                    <div className="mb-4 grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg border border-border/40 bg-muted/20 flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Time in Market</span>
+                        <span className="text-2xl font-bold text-foreground">{timeInMarketPct.toFixed(1)}%</span>
+                        <span className="text-xs text-muted-foreground">
+                          of backtest period actively in trades
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-lg border border-border/40 bg-muted/20 flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Annualised (100% Deployed)</span>
+                        <span className={`text-2xl font-bold ${annualizedFullDeploy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {annualizedFullDeploy >= 0 ? '+' : ''}{annualizedFullDeploy.toFixed(1)}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          edge per year if capital was fully deployed
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsLineChart 
