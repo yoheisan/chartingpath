@@ -53,9 +53,19 @@ pg_cron (every minute)
 
 ---
 
+## Live Pattern Scanning ✅ (Scheduled & Active — 2026-02-20)
+
+- **Job**: `scan-live-patterns-scheduled` (pg_cron ID: **134**)
+- **Schedule**: `*/15 0-4,12-23 * * *` — every 15 min, outside seeding window (05:00–11:59 UTC)
+- **Rationale**: Seeding window excluded to prevent OOM on Medium instance (~93% RAM during seeding bursts)
+- **Target**: `live_pattern_detections` table — powers the live screener shown to users
+- **Edge Function**: `scan-live-patterns`
+
+---
+
 ## Seeding Pipeline ✅ (Fully Scheduled & Active)
 
-41 cron jobs active in pg_cron (40 seeding + 1 purge). Verified via `cron.job` query.
+42 cron jobs active in pg_cron (40 seeding + 1 purge + 1 live scan). Verified via `cron.job` query.
 Timeframe Isolation strategy: each partition × timeframe runs in its own isolated job.
 Gated 05:00–12:00 UTC to avoid conflicts with the validation workers.
 
