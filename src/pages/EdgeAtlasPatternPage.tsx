@@ -40,6 +40,7 @@ export default function EdgeAtlasPatternPage() {
   const [tickers, setTickers] = useState<TickerStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'est_annualized_pct' | 'win_rate_pct' | 'total_trades' | 'expectancy_r'>('est_annualized_pct');
+  const [totalSampleSize, setTotalSampleSize] = useState(0);
 
   useEffect(() => {
     if (!patternId) return;
@@ -99,6 +100,8 @@ export default function EdgeAtlasPatternPage() {
         .filter(s => s.expectancy_r > 0);
 
       stats.sort((a, b) => b[sortBy] - a[sortBy]);
+      const totalTrades = stats.reduce((sum, s) => sum + s.total_trades, 0);
+      setTotalSampleSize(totalTrades);
       setTickers(stats);
     } catch (e) {
       console.error('EdgeAtlas ticker fetch error:', e);
@@ -159,8 +162,8 @@ export default function EdgeAtlasPatternPage() {
             <Badge variant="secondary" className="text-xs capitalize">{assetType}</Badge>
           </div>
           <p className="text-muted-foreground mt-2 text-sm">
-            {loading ? '...' : `${tickers.length} instruments with positive edge on this pattern/timeframe combination.`}
-            {' '}Sorted by estimated annualised return. Min 5 resolved trades per ticker.
+            {loading ? '...' : `${tickers.length} instruments with positive edge on this pattern/timeframe combination. n=${totalSampleSize}`}
+            {' '}· Sorted by estimated annualised return. Min 5 resolved trades per ticker.
           </p>
         </div>
 
