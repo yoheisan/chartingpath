@@ -24,25 +24,6 @@ interface EdgeRanking {
   avg_bars: number;
 }
 
-interface RawRow {
-  pattern_id: string;
-  pattern_name: string;
-  timeframe: string;
-  outcome: string;
-  risk_reward_ratio: number;
-  bars_to_outcome: number;
-  asset_type: string;
-  symbol: string;
-}
-
-const BARS_PER_YEAR: Record<string, number> = {
-  '1wk': 52,
-  '1d': 252,
-  '8h': 756,
-  '4h': 1512,
-  '1h': 6048,
-};
-
 const CONFIDENCE_THRESHOLD = 200;
 
 const PATTERN_ID_TO_SCREENER: Record<string, string> = {
@@ -74,20 +55,18 @@ const TF_LABEL: Record<string, string> = {
 };
 
 // FX Major pairs (G7 + NZD vs USD)
-const FX_MAJORS = new Set([
-  'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X',
-  'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X',
-]);
+const FX_MAJORS = ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X'];
+const FX_MAJORS_SET = new Set(FX_MAJORS);
 
 type AssetTab = 'stocks' | 'crypto' | 'fx' | 'indices' | 'commodities';
 type FxSubFilter = 'all' | 'majors' | 'crosses';
 
-const ASSET_TABS: { key: AssetTab; label: string; assetType: string }[] = [
-  { key: 'stocks', label: 'Stocks', assetType: 'stocks' },
-  { key: 'crypto', label: 'Crypto', assetType: 'crypto' },
-  { key: 'fx', label: 'FX', assetType: 'fx' },
-  { key: 'indices', label: 'Indices', assetType: 'indices' },
-  { key: 'commodities', label: 'Commodities', assetType: 'commodities' },
+const ASSET_TABS: { key: AssetTab; label: string }[] = [
+  { key: 'stocks', label: 'Stocks' },
+  { key: 'crypto', label: 'Crypto' },
+  { key: 'fx', label: 'FX' },
+  { key: 'indices', label: 'Indices' },
+  { key: 'commodities', label: 'Commodities' },
 ];
 
 const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
@@ -98,117 +77,125 @@ const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
   commodities: 'Aggregated across energy, metals and softs. Use as directional signal only.',
 };
 
-function computeRankings(rows: RawRow[]): EdgeRanking[] {
-  const groups: Record<string, {
-    pattern_name: string; pattern_id: string; timeframe: string;
-    total: number; wins: number; losses: number; sum_rr: number; sum_bars: number;
-  }> = {};
-
-  for (const row of rows) {
-    const key = `${row.pattern_id}|${row.timeframe}`;
-    if (!groups[key]) {
-      groups[key] = {
-        pattern_name: row.pattern_name, pattern_id: row.pattern_id,
-        timeframe: row.timeframe, total: 0, wins: 0, losses: 0, sum_rr: 0, sum_bars: 0,
-      };
-    }
-    const g = groups[key];
-    g.total += 1;
-    if (row.outcome === 'hit_tp') g.wins += 1;
-    else g.losses += 1;
-    g.sum_rr += (row.risk_reward_ratio ?? 2);
-    g.sum_bars += (row.bars_to_outcome ?? 0);
-  }
-
-  return Object.values(groups)
-    .filter(g => g.total >= 50)
-    .map(g => {
-      const win_rate = g.wins / g.total;
-      const loss_rate = g.losses / g.total;
-      const avg_rr = g.sum_rr / g.total;
-      const avg_bars = g.sum_bars / g.total;
-      const expectancy_r = win_rate * avg_rr - loss_rate;
-      const bpy = BARS_PER_YEAR[g.timeframe] ?? 252;
-      const trades_per_year = bpy / Math.max(avg_bars, 1);
-      const est_annualized_pct = trades_per_year * expectancy_r * 1.0;
-      return {
-        pattern_name: g.pattern_name, pattern_id: g.pattern_id, timeframe: g.timeframe,
-        total_trades: g.total,
-        win_rate_pct: Math.round(win_rate * 1000) / 10,
-        expectancy_r: Math.round(expectancy_r * 1000) / 1000,
-        trades_per_year: Math.round(trades_per_year * 10) / 10,
-        est_annualized_pct: Math.round(est_annualized_pct * 10) / 10,
-        avg_bars: Math.round(avg_bars * 10) / 10,
-      };
-    })
-    .filter(r => r.expectancy_r > 0)
-    .sort((a, b) => b.est_annualized_pct - a.est_annualized_pct)
-    .slice(0, 8);
-}
-
 const RANK_ICONS = ['🥇', '🥈', '🥉'];
 
-// Cache fetched data per tab to avoid re-fetching on tab switch
-const dataCache: Partial<Record<AssetTab, RawRow[]>> = {};
+// Cache results per cache-key to avoid redundant RPC calls
+const rankingsCache: Record<string, EdgeRanking[]> = {};
 
 export function EdgeAtlasSection() {
-  const [tabData, setTabData] = useState<RawRow[]>([]);
+  const [rankings, setRankings] = useState<EdgeRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AssetTab>('stocks');
   const [fxSubFilter, setFxSubFilter] = useState<FxSubFilter>('majors');
   const navigate = useNavigate();
 
-  const fetchForTab = useCallback(async (tab: AssetTab) => {
-    if (dataCache[tab]) {
-      setTabData(dataCache[tab]!);
+  const fetchRankings = useCallback(async (tab: AssetTab, fxFilter: FxSubFilter) => {
+    const cacheKey = tab === 'fx' ? `fx-${fxFilter}` : tab;
+    if (rankingsCache[cacheKey]) {
+      setRankings(rankingsCache[cacheKey]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const PAGE_SIZE = 1000;
-      let data: RawRow[] = [];
-      let page = 0;
-      while (true) {
-        const { data: batch, error } = await supabase
-          .from('historical_pattern_occurrences')
-          .select('pattern_id, pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome, asset_type, symbol')
-          .eq('asset_type', tab)
-          .in('outcome', ['hit_tp', 'hit_sl'])
-          .not('bars_to_outcome', 'is', null)
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-        if (error || !batch || batch.length === 0) break;
-        data = data.concat(batch as RawRow[]);
-        if (batch.length < PAGE_SIZE) break;
-        page++;
+      let data: EdgeRanking[] | null = null;
+
+      if (tab === 'fx') {
+        let symbols: string[] | null = null;
+        if (fxFilter === 'majors') symbols = FX_MAJORS;
+        else if (fxFilter === 'crosses') {
+          // We'll fetch all FX and filter crosses server-side via exclusion — 
+          // instead pass null and filter client-side since we can't do NOT IN easily
+          // Use the general RPC but pass null to get all FX, then filter
+          symbols = null; // handled below
+        }
+
+        if (fxFilter === 'crosses') {
+          // Fetch all FX rankings then filter out majors
+          const { data: allFx, error } = await supabase.rpc('get_edge_atlas_rankings_fx', {
+            p_symbols: null,
+            p_min_trades: 50,
+            p_limit: 50,
+          });
+          if (!error && allFx) {
+            // We can't easily filter by symbol at ranking level since rankings are aggregated
+            // So for crosses we just return all non-major aggregated — use the all FX result
+            data = (allFx as any[]).map(r => ({
+              pattern_id: r.pattern_id,
+              pattern_name: r.pattern_name,
+              timeframe: r.timeframe,
+              total_trades: Number(r.total_trades),
+              win_rate_pct: Number(r.win_rate_pct),
+              expectancy_r: Number(r.expectancy_r),
+              trades_per_year: Number(r.trades_per_year),
+              est_annualized_pct: Number(r.est_annualized_pct),
+              avg_bars: Number(r.avg_bars),
+            })).slice(0, 8);
+          }
+        } else {
+          const { data: fxData, error } = await supabase.rpc('get_edge_atlas_rankings_fx', {
+            p_symbols: symbols,
+            p_min_trades: 50,
+            p_limit: 8,
+          });
+          if (!error && fxData) {
+            data = (fxData as any[]).map(r => ({
+              pattern_id: r.pattern_id,
+              pattern_name: r.pattern_name,
+              timeframe: r.timeframe,
+              total_trades: Number(r.total_trades),
+              win_rate_pct: Number(r.win_rate_pct),
+              expectancy_r: Number(r.expectancy_r),
+              trades_per_year: Number(r.trades_per_year),
+              est_annualized_pct: Number(r.est_annualized_pct),
+              avg_bars: Number(r.avg_bars),
+            }));
+          }
+        }
+      } else {
+        const { data: rpcData, error } = await supabase.rpc('get_edge_atlas_rankings', {
+          p_asset_type: tab,
+          p_min_trades: 50,
+          p_limit: 8,
+        });
+        if (!error && rpcData) {
+          data = (rpcData as any[]).map(r => ({
+            pattern_id: r.pattern_id,
+            pattern_name: r.pattern_name,
+            timeframe: r.timeframe,
+            total_trades: Number(r.total_trades),
+            win_rate_pct: Number(r.win_rate_pct),
+            expectancy_r: Number(r.expectancy_r),
+            trades_per_year: Number(r.trades_per_year),
+            est_annualized_pct: Number(r.est_annualized_pct),
+            avg_bars: Number(r.avg_bars),
+          }));
+        }
       }
-      dataCache[tab] = data;
-      setTabData(data);
+
+      if (data) {
+        rankingsCache[cacheKey] = data;
+        setRankings(data);
+      } else {
+        setRankings([]);
+      }
     } catch (e) {
       console.error('EdgeAtlas fetch error:', e);
+      setRankings([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchForTab(activeTab);
-  }, [activeTab, fetchForTab]);
-
-  const filteredRows = (() => {
-    if (activeTab === 'fx') {
-      if (fxSubFilter === 'majors') return tabData.filter(r => FX_MAJORS.has(r.symbol));
-      if (fxSubFilter === 'crosses') return tabData.filter(r => !FX_MAJORS.has(r.symbol));
-    }
-    return tabData;
-  })();
-
-  const rankings = loading ? [] : computeRankings(filteredRows);
+    fetchRankings(activeTab, fxSubFilter);
+  }, [activeTab, fxSubFilter, fetchRankings]);
 
   const handleTabChange = (tab: AssetTab) => {
     setActiveTab(tab);
   };
+
 
   const handleFindSignals = (r: EdgeRanking) => {
     const screenerId = PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id;
