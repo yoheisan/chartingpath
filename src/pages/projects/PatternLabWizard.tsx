@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye, ChevronDown } from 'lucide-react';
+import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye, ChevronDown, Zap, Code2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -206,6 +206,9 @@ interface EstimateResult {
   tier: PlanTier;
 }
 
+// Mode: validate = confirm a live signal; automate = full backtest → script
+type PatternLabMode = 'validate' | 'automate' | null;
+
 const PatternLabWizard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -221,6 +224,10 @@ const PatternLabWizard = () => {
     lookbackYears?: number;
     riskPerTrade?: number;
   } | null;
+
+  // Mode selection — null = show picker, otherwise proceed to form
+  const urlMode = searchParams.get('mode') as PatternLabMode;
+  const [mode, setMode] = useState<PatternLabMode>(urlMode || null);
 
   // Also support URL query params from "Run Backtest" CTAs in chart viewers
   // ?instrument=EURUSD=X&pattern=donchian-breakout-long&timeframe=1d
@@ -487,6 +494,93 @@ const PatternLabWizard = () => {
           </Alert>
         )}
         
+        {/* Mode Picker — shown when no mode selected yet */}
+        {!mode && (
+          <div className="mb-8">
+            <p className="text-sm text-muted-foreground mb-4 text-center">What's your goal for this session?</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Validate Signal */}
+              <button
+                onClick={() => setMode('validate')}
+                className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Validate a Signal</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      You found an active setup in the screener. Confirm its historical edge on this specific instrument before trading.
+                    </p>
+                    <div className="mt-3 space-y-1">
+                      {['Win rate + expectancy on this pair', 'Visual proof chart', 'Conviction to act now'].map(b => (
+                        <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+                          {b}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+                      Start validating <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Build Automation */}
+              <button
+                onClick={() => setMode('automate')}
+                className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-violet-500/50 hover:bg-card transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors shrink-0">
+                    <Code2 className="h-5 w-5 text-violet-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Build Automation</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Run a full historical backtest, optimize parameters, then export a production-ready Pine Script or MQL strategy.
+                    </p>
+                    <div className="mt-3 space-y-1">
+                      {['Full equity curve & drawdown', 'Setup optimizer', 'Export Pine Script / MQL'].map(b => (
+                        <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-3 w-3 text-violet-500 shrink-0" />
+                          {b}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-violet-500">
+                      Start building <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mode indicator when selected */}
+        {mode && (
+          <div className="mb-6 flex items-center gap-3">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${
+              mode === 'validate'
+                ? 'bg-primary/10 text-primary border-primary/20'
+                : 'bg-violet-500/10 text-violet-500 border-violet-500/20'
+            }`}>
+              {mode === 'validate' ? <Zap className="h-3 w-3" /> : <Code2 className="h-3 w-3" />}
+              {mode === 'validate' ? 'Validate Signal' : 'Build Automation'}
+            </div>
+            <button
+              onClick={() => setMode(null)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+            >
+              Change goal
+            </button>
+          </div>
+        )}
+
+        {/* Main form — always shown, mode just adds framing context */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Form */}
           <div className={`lg:col-span-2 space-y-6 ${!isEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -984,10 +1078,15 @@ const PatternLabWizard = () => {
                       <Lock className="h-4 w-4 mr-2" />
                       Upgrade to Run
                     </>
+                  ) : mode === 'automate' ? (
+                    <>
+                      <Code2 className="h-4 w-4 mr-2" />
+                      Run & Build Script
+                    </>
                   ) : (
                     <>
                       <FlaskConical className="h-4 w-4 mr-2" />
-                      Run Backtest
+                      {mode === 'validate' ? 'Validate Signal' : 'Run Backtest'}
                     </>
                   )}
                 </Button>
