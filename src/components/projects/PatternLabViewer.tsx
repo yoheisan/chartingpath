@@ -419,7 +419,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
         ...t,
         exitDate: outcome.exitDate ?? t.exitDate,
         rMultiple: outcome.rMultiple,
-        isWin: outcome.outcome === 'hit_tp',
+        isWin: outcome.rMultiple > 0,  // derive from actual R-multiple, not stored outcome label (timeout trades can be positive)
         exitReason: outcome.outcome === 'hit_tp' ? 'tp' : outcome.outcome === 'hit_sl' ? 'sl' : 'time_stop',
         tierOutcome: outcome,
       };
