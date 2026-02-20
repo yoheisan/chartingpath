@@ -1717,8 +1717,8 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                 </div>
               )}
 
-              {/* Rerun Button */}
-              <div className="flex items-center gap-3 pt-2">
+              {/* Rerun + Export Script Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Button 
                   size="lg" 
                   className="gap-2"
@@ -1791,6 +1791,27 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                       Rerun with Optimizations
                     </>
                   )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      from: 'pattern-lab',
+                      runId: runId || '',
+                      timeframe: artifact.timeframe || '',
+                      ...(directionFilter !== 'all' && { direction: directionFilter }),
+                      ...(selectedExitModel !== 'fixed' && { exitModel: selectedExitModel }),
+                      ...(excludedSetups.size > 0 && { excludedSetups: [...excludedSetups].join(',') }),
+                      ...(artifact.inputs?.patterns && { patterns: (artifact.inputs.patterns as string[]).join(',') }),
+                      ...(artifact.inputs?.instruments && { instruments: (artifact.inputs.instruments as string[]).join(',') }),
+                    });
+                    navigate(`/members/scripts?${params.toString()}`);
+                  }}
+                >
+                  <FileCode className="h-4 w-4" />
+                  Script This Strategy
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   Launches a new backtest with your selected filters applied server-side for accurate results
