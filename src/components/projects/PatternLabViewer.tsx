@@ -68,6 +68,7 @@ import {
 import { TradeExcursionChart } from './TradeExcursionChart';
 import { ProfitStructureWaterfall } from './ProfitStructureWaterfall';
 import ComparisonBanner from './ComparisonBanner';
+import { EdgeRankingsCard } from './EdgeRankingsCard';
 
 interface BenchmarkData {
   symbol: string;
@@ -1056,6 +1057,9 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
               description="Optimize your target based on historical win rates and expectancy per R:R tier"
             />
           )}
+
+          {/* Edge Rankings — cross-pattern annualized return intel */}
+          <EdgeRankingsCard />
 
           {/* Automation CTAs - Journey Stage Handoff */}
           {artifact.patterns.length > 0 && (() => {
