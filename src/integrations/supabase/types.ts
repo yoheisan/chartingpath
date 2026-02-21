@@ -4184,6 +4184,35 @@ export type Database = {
           win_rate_pct: number
         }[]
       }
+      get_edge_atlas_rankings_filtered: {
+        Args: {
+          p_asset_type?: string
+          p_direction?: string
+          p_fx_symbols?: string[]
+          p_limit?: number
+          p_min_annualized_pct?: number
+          p_min_expectancy?: number
+          p_min_trades?: number
+          p_min_win_rate?: number
+          p_pattern_name?: string
+          p_sort_by?: string
+          p_timeframe?: string
+        }
+        Returns: {
+          asset_type: string
+          avg_bars: number
+          avg_rr: number
+          direction: string
+          est_annualized_pct: number
+          expectancy_r: number
+          pattern_id: string
+          pattern_name: string
+          timeframe: string
+          total_trades: number
+          trades_per_year: number
+          win_rate_pct: number
+        }[]
+      }
       get_edge_atlas_rankings_fx: {
         Args: { p_limit?: number; p_min_trades?: number; p_symbols: string[] }
         Returns: {

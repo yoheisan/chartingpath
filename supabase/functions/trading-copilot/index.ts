@@ -130,6 +130,30 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_edge_atlas",
+      description: "Query the Edge Atlas rankings to find the best-performing pattern/timeframe combinations based on historical backtested data (320,000+ trades). Use this when users ask about annualized returns, best patterns, highest win rates, most profitable setups, edge rankings, or performance filtering across asset classes. Supports filtering by asset type, timeframe, min annualized return %, min win rate %, direction, pattern name, and sorting.",
+      parameters: {
+        type: "object",
+        properties: {
+          asset_type: { type: "string", enum: ["stocks", "crypto", "fx", "indices", "commodities"], description: "Asset class to filter. E.g. 'fx' for forex, 'stocks' for equities." },
+          timeframe: { type: "string", enum: ["1h", "4h", "8h", "1d", "1wk"], description: "Timeframe filter." },
+          pattern_name: { type: "string", description: "Pattern name filter (partial match). E.g. 'flag', 'triangle'." },
+          direction: { type: "string", enum: ["long", "short"], description: "Trade direction filter." },
+          min_trades: { type: "number", description: "Minimum sample size. Default 30." },
+          min_win_rate: { type: "number", description: "Minimum win rate percentage. E.g. 55 for 55%." },
+          min_annualized_pct: { type: "number", description: "Minimum estimated annualized return in R-multiples. E.g. 30 for 30R annualized." },
+          min_expectancy: { type: "number", description: "Minimum expectancy per trade in R. E.g. 0.3." },
+          fx_segment: { type: "string", enum: ["majors", "crosses"], description: "For FX only: filter by majors or crosses." },
+          sort_by: { type: "string", enum: ["annualized", "win_rate", "expectancy", "trades"], description: "Sort order. Default 'annualized'." },
+          limit: { type: "number", description: "Max results. Default 10." }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -150,6 +174,7 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
 - **get_market_breadth**: Get current market internals (advance/decline ratio, sentiment).
 - **analyze_chart_context**: When users send chart context with technical indicators and price data, analyze it and provide trading scenarios.
+- **query_edge_atlas**: Search 320,000+ backtested trades for the best-performing pattern/timeframe combinations. Filters include asset class, timeframe, min annualized return, min win rate, direction, FX segment (majors/crosses), and more. Use this whenever users ask about performance, returns, best patterns, edge rankings, or "what works".
 
 ## Your Personality
 - Be warm, helpful, and conversational—not robotic
@@ -208,6 +233,19 @@ When generate_pine_script returns, you MUST:
 
 ## Formatting Icons
 📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish
+
+## Edge Atlas Results Format
+When query_edge_atlas returns data, present results in a markdown table with actionable links:
+
+| # | Pattern | TF | Dir | Win Rate | Exp (R) | Ann. Return | Trades |
+|---|---------|-----|-----|----------|---------|-------------|--------|
+| 1 | [Bull Flag](/edge-atlas/bull_flag) | 1h | Long | 58.2% | 0.45R | 42.3R | 312 |
+
+After the table:
+- Summarize the key insight (e.g. "Bull Flags on 1H charts deliver the highest annualized return in FX Majors")
+- Link to [Edge Atlas](/edge-atlas) for full exploration
+- Link to [Live Setups](/patterns/live) to find currently active instances
+- Mention sample size and statistical confidence
 
 ⚠️ Always end with: "This is for educational purposes only—not financial advice."`;
 
@@ -913,6 +951,74 @@ function executeAnalyzeChartContext(args: any, messages: any[]) {
   };
 }
 
+// FX segment symbol lists
+const FX_MAJORS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+const FX_CROSSES = [
+  'EURGBP', 'EURJPY', 'EURCHF', 'EURAUD', 'EURCAD', 'EURNZD',
+  'GBPJPY', 'GBPCHF', 'GBPAUD', 'GBPCAD', 'GBPNZD',
+  'AUDJPY', 'AUDCHF', 'AUDCAD', 'AUDNZD',
+  'NZDJPY', 'NZDCHF', 'NZDCAD',
+  'CADJPY', 'CADCHF', 'CHFJPY'
+];
+
+async function executeQueryEdgeAtlas(supabase: any, args: any) {
+  console.log('[trading-copilot] Querying Edge Atlas with filters:', args);
+  
+  // Determine FX symbols filter
+  let fxSymbols: string[] | null = null;
+  if (args.asset_type === 'fx' && args.fx_segment) {
+    fxSymbols = args.fx_segment === 'majors' ? FX_MAJORS : FX_CROSSES;
+  }
+
+  const { data, error } = await supabase.rpc('get_edge_atlas_rankings_filtered', {
+    p_asset_type: args.asset_type || null,
+    p_timeframe: args.timeframe || null,
+    p_pattern_name: args.pattern_name || null,
+    p_direction: args.direction || null,
+    p_min_trades: args.min_trades || 30,
+    p_min_win_rate: args.min_win_rate || null,
+    p_min_annualized_pct: args.min_annualized_pct || null,
+    p_min_expectancy: args.min_expectancy || null,
+    p_fx_symbols: fxSymbols,
+    p_sort_by: args.sort_by || 'annualized',
+    p_limit: args.limit || 10,
+  });
+
+  if (error) {
+    console.error('[trading-copilot] Edge Atlas query error:', error);
+    return { error: 'Failed to query Edge Atlas rankings', results: [] };
+  }
+
+  if (!data?.length) {
+    return {
+      message: 'No patterns matched your filters. Try relaxing criteria (lower min trades, remove timeframe filter, or broaden asset type).',
+      results: [],
+      filters_used: args
+    };
+  }
+
+  return {
+    count: data.length,
+    results: data.map((r: any) => ({
+      patternId: r.pattern_id,
+      patternName: r.pattern_name,
+      timeframe: r.timeframe,
+      assetType: r.asset_type,
+      direction: r.direction,
+      totalTrades: Number(r.total_trades),
+      winRate: Number(r.win_rate_pct),
+      expectancy: Number(r.expectancy_r),
+      tradesPerYear: Number(r.trades_per_year),
+      annualizedReturn: Number(r.est_annualized_pct),
+      avgBars: Number(r.avg_bars),
+      avgRR: Number(r.avg_rr),
+      edgeAtlasUrl: `/edge-atlas/${encodeURIComponent(r.pattern_id)}`,
+      liveSetupsUrl: `/patterns/live?pattern=${encodeURIComponent(r.pattern_name)}`
+    })),
+    filters_used: args
+  };
+}
+
 async function executeTool(toolName: string, args: any, supabase: any, userId: string | null, messages?: any[]) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
@@ -933,6 +1039,8 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeGetMarketBreadth();
     case 'analyze_chart_context':
       return executeAnalyzeChartContext(args, messages || []);
+    case 'query_edge_atlas':
+      return await executeQueryEdgeAtlas(supabase, args);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
