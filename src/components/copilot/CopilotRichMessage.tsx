@@ -221,10 +221,16 @@ function extractActionButtons(content: string): ActionButton[] {
   const firstTicker = tickerMatch?.[0];
   const firstPattern = patternMatch ? PATTERN_SCREENER_MAP[patternMatch[0].toLowerCase()] : null;
 
+  // Extract grade from response (e.g., "Grade A", "Grade: B", "grade B")
+  const gradeMatch = content.match(/\bgrade[:\s]*([ABCDF])\b/i);
+  const extractedGrade = gradeMatch ? gradeMatch[1].toUpperCase() : null;
+
   // Build query params
   const labParams = new URLSearchParams();
   if (firstTicker) labParams.set('instrument', firstTicker);
   if (firstPattern) labParams.set('pattern', firstPattern);
+  if (extractedGrade) labParams.set('grade', extractedGrade);
+  labParams.set('mode', 'validate');
 
   const screenerParams = new URLSearchParams();
   if (firstPattern) screenerParams.set('pattern', firstPattern);
