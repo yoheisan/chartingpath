@@ -203,7 +203,7 @@ export default function EdgeAtlasPatternPage() {
             <div className="hidden sm:grid grid-cols-[1fr_80px_80px_90px_80px_70px_auto] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Instrument</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Expect.</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">Expect. (R)</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Est. Annual</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg Bars</span>
