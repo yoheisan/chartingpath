@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, ReactNode, useState, useCallback, useRef, useEffect } from 'react';
 import { ChartAnalysisResult } from '@/hooks/useChartAnalysis';
 
 export interface ChartContextData {
@@ -70,6 +70,18 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   const getChartContext = useCallback(() => {
     return contextRef.current;
   }, []);
+
+  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        toggle();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [toggle]);
 
   return (
     <TradingCopilotContext.Provider value={{
