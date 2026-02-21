@@ -42,23 +42,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
     setMode("commands");
   }, []);
 
-  // Global keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        toggle();
-      }
-      // Escape to close
-      if (e.key === "Escape" && isOpen) {
-        close();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggle, close, isOpen]);
+  // Keyboard shortcut moved to TradingCopilotContext
 
   return (
     <CommandPaletteContext.Provider
