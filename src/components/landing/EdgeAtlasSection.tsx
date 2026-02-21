@@ -400,11 +400,13 @@ export function EdgeAtlasSection() {
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
                       Live Setups
-                      {liveCount > 0 && (
-                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-bold">
-                          {liveCount}
-                        </span>
-                      )}
+                      <span className={`ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                        liveCount > 0
+                          ? 'bg-green-500/20 text-green-500'
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {liveCount}
+                      </span>
                     </Button>
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleBacktest(r)}>
                       <FlaskConical className="h-3 w-3" />
