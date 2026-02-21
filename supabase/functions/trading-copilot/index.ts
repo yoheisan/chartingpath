@@ -739,6 +739,100 @@ async function executeGetMarketBreadth() {
 }
 
 // ============================================
+// DYNAMIC PROMPT PATCHING — Self-Improvement Layer
+// Fetches learned rules from copilot_learned_rules table
+// ============================================
+
+async function fetchLearnedRules(supabase: any): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('copilot_learned_rules')
+      .select('rule_type, trigger_pattern, rule_content')
+      .eq('is_active', true)
+      .order('confidence', { ascending: false })
+      .limit(20);
+
+    if (error || !data?.length) return '';
+
+    // Increment usage counts (fire-and-forget)
+    const ids = data.map((r: any) => r.id);
+    supabase.rpc('increment_learned_rule_usage', { rule_ids: ids }).catch(() => {});
+
+    const rulesByType: Record<string, string[]> = {};
+    for (const rule of data) {
+      if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+      rulesByType[rule.rule_type].push(`• [${rule.trigger_pattern}] ${rule.rule_content}`);
+    }
+
+    const sections = Object.entries(rulesByType).map(([type, rules]) => 
+      `### ${type.toUpperCase()} RULES\n${rules.join('\n')}`
+    );
+
+    return `\n\n## LEARNED RULES (Auto-Generated from Feedback Loop)\nThese rules were extracted from past interactions. Follow them precisely.\n\n${sections.join('\n\n')}`;
+  } catch (err) {
+    console.error('[LearnedRules] Failed to fetch:', err);
+    return '';
+  }
+}
+
+// ============================================
+// RLVR TRAINING PAIR LOGGER
+// Logs prompt-response-outcome for future DPO fine-tuning
+// ============================================
+
+async function logTrainingPair(
+  supabase: any,
+  userId: string | null,
+  sessionId: string | null,
+  prompt: string,
+  response: string,
+  toolCalls: any[],
+  toolResults: any[]
+) {
+  try {
+    // Compute basic reward signals
+    const hasResults = toolResults.some((r: any) => {
+      try {
+        const parsed = JSON.parse(r.content || '{}');
+        return (parsed.count > 0 || parsed.results?.length > 0 || parsed.patterns?.length > 0);
+      } catch { return false; }
+    });
+
+    const outcomeSignals = {
+      tool_returned_data: hasResults,
+      tool_call_count: toolCalls.length,
+      response_length: response.length,
+      has_markdown_table: response.includes('|---'),
+      has_links: response.includes('](/'),
+      timestamp: new Date().toISOString(),
+    };
+
+    // Simple reward: +1 if tools returned data and response is substantial
+    const rewardScore = (hasResults ? 0.5 : -0.5) + 
+      (response.length > 200 ? 0.3 : 0) + 
+      (response.includes('](/') ? 0.2 : 0);
+
+    await supabase.from('copilot_training_pairs').insert({
+      user_id: userId,
+      session_id: sessionId,
+      prompt: prompt.substring(0, 5000),
+      response: response.substring(0, 5000),
+      tool_calls: toolCalls.map((tc: any) => ({ name: tc.function?.name, args: tc.function?.arguments })),
+      tool_results: toolResults.map((tr: any) => {
+        try { return { content: JSON.parse(tr.content || '{}') }; } 
+        catch { return { content: tr.content?.substring(0, 500) }; }
+      }),
+      outcome_signals: outcomeSignals,
+      reward_score: rewardScore,
+      dpo_eligible: Math.abs(rewardScore) > 0.5, // Strong signal = eligible for DPO
+    });
+  } catch (err) {
+    // Never block the response for logging
+    console.error('[RLVR] Failed to log training pair:', err);
+  }
+}
+
+// ============================================
 // RAG CONTEXT RETRIEVAL
 // Fetches relevant ChartingPath data based on user query
 // ============================================
@@ -1092,15 +1186,22 @@ serve(async (req) => {
     }
 
     // ============================================
-    // RAG: Fetch relevant ChartingPath context
+    // PHASE 1: Fetch learned rules + RAG context in parallel
     // ============================================
-    console.log('[trading-copilot] Fetching RAG context...');
-    const ragContext = await fetchRAGContext(supabase, messages);
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext);
+    console.log('[trading-copilot] Fetching learned rules + RAG context...');
+    const [learnedRulesPrompt, ragContext] = await Promise.all([
+      fetchLearnedRules(supabase),
+      fetchRAGContext(supabase, messages),
+    ]);
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + learnedRulesPrompt;
     console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
+    console.log(`[trading-copilot] Learned rules injected: ${learnedRulesPrompt.length > 0 ? 'yes' : 'none'}`);
+
+    // Track tool calls/results for RLVR logging
+    const allToolCalls: any[] = [];
+    const allToolResults: any[] = [];
 
     // Tool-call loop (non-stream) to guarantee we return assistant content.
-    // Proxy-streaming can surface tool_calls (with no content) to the client for some providers.
     let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
 
     // Increase to 5 rounds to allow broader searches when initial queries return empty
@@ -1207,11 +1308,20 @@ serve(async (req) => {
           })
         );
 
+        // Track for RLVR logging
+        allToolCalls.push(...assistantMessage.tool_calls);
+        allToolResults.push(...toolResults);
+
         convo = [...convo, assistantMessage, ...toolResults];
         continue;
       }
 
       const content = assistantMessage?.content || "I couldn't process that request.";
+
+      // RLVR: Log training pair (fire-and-forget)
+      const userPrompt = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+      logTrainingPair(supabase, userId, null, userPrompt, content, allToolCalls, allToolResults);
+
       const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
 
       return new Response(sseData, {

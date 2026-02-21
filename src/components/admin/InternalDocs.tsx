@@ -519,6 +519,144 @@ const NotificationTab = () => (
   </div>
 );
 
+// ─── Tab: Copilot AI ───────────────────────────────────────────────────────────
+
+const CopilotAITab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Copilot Self-Improvement Architecture</CardTitle>
+        <CardDescription>Three-phase autonomous learning loop for competitive moat. Last updated: 2026-02-21.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Cpu} title="Phase 1 — Dynamic Prompt Patching (ACTIVE)" />
+        <p className="text-sm text-muted-foreground mb-3">
+          Corrective rules are stored in <code className="text-xs bg-muted px-1 rounded">copilot_learned_rules</code> and injected into the system prompt at runtime.
+          This allows the copilot to autonomously fix known failure patterns without code deploys.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Rule Type", "Purpose", "Example"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["translation", "Convert user language to system units", '"30% return" → 1-3R in Edge Atlas'],
+                ["fallback", "Auto-retry strategy when 0 results", "Remove min_annualized_pct → remove timeframe → show all"],
+                ["correction", "Fix ambiguous intent parsing", '"best pattern" → sort by annualized return'],
+                ["guardrail", "Silently relax unrealistic filters", "min_win_rate > 80% → cap at 65%"],
+                ["few_shot", "Example Q&A pairs for in-context learning", "Full prompt-response exemplars"],
+              ].map(([type, purpose, example]) => (
+                <tr key={type}>
+                  <td className="px-4 py-2 border-b font-mono text-xs text-primary">{type}</td>
+                  <td className="px-4 py-2 border-b text-xs">{purpose}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{example}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Activity} title="Phase 2 — RLVR Reward Pipeline (ACTIVE)" />
+        <p className="text-sm text-muted-foreground mb-3">
+          Every copilot interaction is auto-scored and logged to <code className="text-xs bg-muted px-1 rounded">copilot_training_pairs</code>.
+          Reward signals are computed from objective technical outcomes, not subjective user ratings.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Signal", "Weight", "Condition"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Tool returned data", "+0.5", "Tool result contains count > 0 or non-empty results"],
+                ["No results", "-0.5", "All tool calls returned empty datasets"],
+                ["Substantial response", "+0.3", "Response length > 200 chars"],
+                ["Contains links", "+0.2", "Response includes relative links ([text](/path))"],
+              ].map(([signal, weight, condition]) => (
+                <tr key={signal}>
+                  <td className="px-4 py-2 border-b text-xs font-medium">{signal}</td>
+                  <td className="px-4 py-2 border-b text-xs font-mono text-primary">{weight}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{condition}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={TrendingUp} title="Phase 3 — DPO Fine-Tuning (PLANNED)" />
+        <p className="text-sm text-muted-foreground mb-3">
+          Once ~5,000 preference pairs are collected (dpo_eligible = true), the dataset can be used for Direct Preference Optimization
+          on an open-weight model (Llama 3, Gemma 2). This creates a model uniquely trained on ChartingPath's proprietary data structures.
+        </p>
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p><strong>Pairs collected:</strong> Check <code className="text-xs">SELECT COUNT(*) FROM copilot_training_pairs WHERE dpo_eligible = true</code></p>
+          <p><strong>Target:</strong> 5,000 eligible pairs</p>
+          <p><strong>Model candidates:</strong> Llama 3.3 70B, Gemma 2 27B</p>
+          <p><strong>Training method:</strong> DPO with (prompt, preferred_response, rejected_response) triplets</p>
+        </div>
+
+        <SectionHeader icon={GitBranch} title="Data Flow Architecture" />
+        <CodeBlock>{`User Question
+  │
+  ▼
+[trading-copilot] ──► Fetch copilot_learned_rules (active rules)
+  │                       └──► Inject into system prompt dynamically
+  │
+  ├──► RAG Context (pattern stats, articles, market data)
+  │
+  ▼
+[Gemini 2.0 Flash] ──► Tool Calls ──► Tool Results
+  │
+  ▼
+Response to User
+  │
+  └──► [RLVR Logger] ──► copilot_training_pairs
+                              ├── prompt, response, tool_calls
+                              ├── outcome_signals (auto-computed)
+                              ├── reward_score (-1 to +1)
+                              └── dpo_eligible (|reward| > 0.5)
+
+Periodic Analysis (Future):
+  copilot_training_pairs ──► Lesson Extractor
+       └──► copilot_learned_rules (new correction rules)
+            └──► Auto-injected into next copilot session`}</CodeBlock>
+
+        <SectionHeader icon={Shield} title="Competitive Moat Properties" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              title: "Proprietary Dataset",
+              desc: "Training pairs are generated from ChartingPath's unique pattern database (320k+ trades). Competitors cannot replicate without the same underlying data.",
+            },
+            {
+              title: "Compound Learning",
+              desc: "Each learned rule improves future interactions, which generate better training pairs, which produce better rules. Positive feedback loop.",
+            },
+            {
+              title: "No Model Lock-In",
+              desc: "Prompt patching works with any LLM (Gemini, GPT, Claude). DPO fine-tuning targets open-weight models. No vendor dependency.",
+            },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
@@ -541,16 +679,18 @@ export const InternalDocs = () => {
           <TabsTrigger value="validation">Validation Shards</TabsTrigger>
           <TabsTrigger value="infra">Infrastructure</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
         <TabsContent value="validation" className="mt-4"><ValidationTab /></TabsContent>
         <TabsContent value="infra" className="mt-4"><InfraTab /></TabsContent>
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
+        <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-20 · Version 2.0
+        Last updated: 2026-02-21 · Version 2.1
       </p>
     </div>
   );

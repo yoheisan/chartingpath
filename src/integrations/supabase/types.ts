@@ -1015,6 +1015,90 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_learned_rules: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          rule_content: string
+          rule_type: string
+          source: string | null
+          trigger_pattern: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          rule_content: string
+          rule_type: string
+          source?: string | null
+          trigger_pattern: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          rule_content?: string
+          rule_type?: string
+          source?: string | null
+          trigger_pattern?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      copilot_training_pairs: {
+        Row: {
+          created_at: string
+          dpo_eligible: boolean | null
+          id: string
+          is_preferred: boolean | null
+          outcome_signals: Json | null
+          prompt: string
+          response: string
+          reward_score: number | null
+          session_id: string | null
+          tool_calls: Json | null
+          tool_results: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dpo_eligible?: boolean | null
+          id?: string
+          is_preferred?: boolean | null
+          outcome_signals?: Json | null
+          prompt: string
+          response: string
+          reward_score?: number | null
+          session_id?: string | null
+          tool_calls?: Json | null
+          tool_results?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dpo_eligible?: boolean | null
+          id?: string
+          is_preferred?: boolean | null
+          outcome_signals?: Json | null
+          prompt?: string
+          response?: string
+          reward_score?: number | null
+          session_id?: string | null
+          tool_calls?: Json | null
+          tool_results?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       country_language_mapping: {
         Row: {
           country_code: string
