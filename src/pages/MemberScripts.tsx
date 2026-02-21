@@ -324,7 +324,9 @@ const MemberScripts = () => {
                 )}
                 {labInstruments.length > 0 && (
                   <Badge variant="outline" className="text-xs">
-                    {labInstruments.length} instrument{labInstruments.length > 1 ? 's' : ''}
+                    {labInstruments.length <= 2
+                      ? labInstruments.join(' · ')
+                      : `${labInstruments.slice(0, 2).join(' · ')} +${labInstruments.length - 2} more`}
                   </Badge>
                 )}
                 {repeatableWinners.length > 0 && (
