@@ -23,13 +23,14 @@ interface TradeForExcursion {
 
 interface TradeExcursionChartProps {
   trades: TradeForExcursion[];
+  embedded?: boolean;
 }
 
 /**
  * Trade Excursion chart — shows each trade's R-multiple as a bar,
  * giving an instant visual of win/loss distribution and outliers.
  */
-export const TradeExcursionChart = ({ trades }: TradeExcursionChartProps) => {
+export const TradeExcursionChart = ({ trades, embedded }: TradeExcursionChartProps) => {
   const chartData = useMemo(() => {
     return trades.map((t, i) => ({
       index: i + 1,
@@ -52,20 +53,10 @@ export const TradeExcursionChart = ({ trades }: TradeExcursionChartProps) => {
 
   if (trades.length === 0) return null;
 
-  return (
-    <Card className="border-border/50 bg-card/50">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <ArrowUpDown className="h-5 w-5" />
-          Trade Excursion (R-Multiple Distribution)
-        </CardTitle>
-        <CardDescription>
-          Each bar = one trade's R-multiple outcome. Green = win, Red = loss.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Stats row */}
-        <div className="flex flex-wrap gap-4 mb-4 p-3 rounded-lg bg-muted/30 border border-border/50 text-sm">
+  const content = (
+    <>
+      {/* Stats row */}
+      <div className="flex flex-wrap gap-4 mb-4 p-3 rounded-lg bg-muted/30 border border-border/50 text-sm">
           <div>
             <span className="text-muted-foreground">Avg Win:</span>{' '}
             <span className="font-semibold text-green-500">+{stats.avgWinR.toFixed(2)}R</span>
@@ -133,7 +124,23 @@ export const TradeExcursionChart = ({ trades }: TradeExcursionChartProps) => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <Card className="border-border/50 bg-card/50">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <ArrowUpDown className="h-5 w-5" />
+          Trade Excursion (R-Multiple Distribution)
+        </CardTitle>
+        <CardDescription>
+          Each bar = one trade's R-multiple outcome. Green = win, Red = loss.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{content}</CardContent>
     </Card>
   );
 };
