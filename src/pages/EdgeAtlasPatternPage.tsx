@@ -139,7 +139,7 @@ export default function EdgeAtlasPatternPage() {
 
         {/* Back */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/#edge-atlas')}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
