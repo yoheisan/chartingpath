@@ -1,93 +1,278 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Link } from 'react-router-dom';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink } from 'lucide-react';
 
 interface CopilotRichMessageProps {
   content: string;
 }
 
-// Detect if a value is a positive/negative metric for color coding
+// ─── Platform route mapping for service keywords ───
+const SERVICE_LINKS: { pattern: RegExp; path: string; label: string }[] = [
+  { pattern: /\bPattern\s*Lab\b/gi, path: '/projects/pattern-lab/new', label: 'Pattern Lab' },
+  { pattern: /\bScreener\b/gi, path: '/patterns/live', label: 'Screener' },
+  { pattern: /\bEdge\s*Atlas\b/gi, path: '/patterns/live', label: 'Edge Atlas' },
+  { pattern: /\bScript(?:s|\s+Generator)?\b/gi, path: '/members/scripts', label: 'Scripts' },
+  { pattern: /\bDashboard\b/gi, path: '/members/dashboard', label: 'Dashboard' },
+];
+
+// Known ticker patterns (stocks, crypto, forex, indices)
+const TICKER_REGEX = /\b([A-Z]{1,5}(?:USD[T]?)?)\b/g;
+const KNOWN_PREFIXES = new Set([
+  // Common words to exclude
+  'THE','AND','FOR','NOT','BUT','ALL','ARE','WAS','HAS','HAD','HIS','HER','HIM',
+  'HOW','GET','GOT','LET','MAY','NEW','NOW','OLD','SEE','WAY','WHO','OUR',
+  'OUT','DAY','USE','MAN','SAY','SHE','TWO','ONE','ITS','ANY','FEW','OWN',
+  'SET','RUN','PUT','END','WIN','TOP','LOW','BIG','TRY','ASK','MEN','RAN',
+  'ADD','AGO','YES','YET','ACT','CUT','FAR','FIT','HIT','HOT','LAY','LED',
+  'PAY','RED','RAN','SAT','SIT','TEN','VIA','WILL','WITH','THIS','THAT','FROM',
+  'THEY','BEEN','HAVE','EACH','MAKE','LIKE','JUST','THAN','THEM','SOME','INTO',
+  'OVER','SUCH','TAKE','YEAR','ALSO','BACK','COME','THAN','MOST','ONLY','VERY',
+  'WHEN','WHAT','YOUR','LONG','SHORT','HIGH','BULL','BEAR','SELL','BUY','HOLD',
+  'STOP','LOSS','TAKE','RISK','RATE','OPEN','CLOSE','CALL','DIR','AVG','MAX',
+  'MIN','NET','PNL','VOL','ADX','RSI','MACD','EMA','SMA','ATR','USD','EUR',
+  'GBP','JPY','AUD','CAD','NZD','CHF','VWAP','OHLC',
+]);
+
+function isLikelyTicker(word: string): boolean {
+  if (word.length < 2 || word.length > 6) return false;
+  if (KNOWN_PREFIXES.has(word)) return false;
+  // Must be all uppercase letters (with optional trailing digits for crypto like BTC)
+  if (!/^[A-Z]{1,5}(?:USDT?)?$/.test(word)) return false;
+  return true;
+}
+
+// Map pattern names to screener IDs
+const PATTERN_SCREENER_MAP: Record<string, string> = {
+  'head and shoulders': 'head-and-shoulders',
+  'inverse head and shoulders': 'inverse-head-and-shoulders',
+  'double top': 'double-top',
+  'double bottom': 'double-bottom',
+  'triple top': 'triple-top',
+  'triple bottom': 'triple-bottom',
+  'ascending triangle': 'ascending-triangle',
+  'descending triangle': 'descending-triangle',
+  'symmetrical triangle': 'symmetrical-triangle',
+  'bull flag': 'bull-flag',
+  'bear flag': 'bear-flag',
+  'bull pennant': 'bull-pennant',
+  'bear pennant': 'bear-pennant',
+  'rising wedge': 'rising-wedge',
+  'falling wedge': 'falling-wedge',
+  'cup and handle': 'cup-and-handle',
+  'ascending channel': 'ascending-channel',
+  'descending channel': 'descending-channel',
+};
+
+const PATTERN_REGEX = new RegExp(
+  `\\b(${Object.keys(PATTERN_SCREENER_MAP).join('|')})\\b`,
+  'gi'
+);
+
+// ─── Metric color coding ───
 function getMetricStyle(value: string, header: string): string {
   const lowerHeader = header.toLowerCase();
   const numMatch = value.match(/^-?\d+\.?\d*/);
   if (!numMatch) return '';
-
   const num = parseFloat(numMatch[0]);
 
-  // Win rate coloring
   if (lowerHeader.includes('win') && lowerHeader.includes('rate')) {
     if (num >= 50) return 'text-emerald-500 font-semibold';
     if (num >= 40) return 'text-amber-500 font-semibold';
     return 'text-red-500 font-semibold';
   }
-
-  // Return / PnL / Expectancy coloring
-  if (
-    lowerHeader.includes('return') ||
-    lowerHeader.includes('pnl') ||
-    lowerHeader.includes('exp') ||
-    lowerHeader.includes('profit') ||
-    lowerHeader.includes('expectancy')
-  ) {
+  if (lowerHeader.includes('return') || lowerHeader.includes('pnl') || lowerHeader.includes('exp') || lowerHeader.includes('profit') || lowerHeader.includes('expectancy')) {
     if (num > 0) return 'text-emerald-500 font-semibold';
     if (num < 0) return 'text-red-500 font-semibold';
     return 'text-muted-foreground';
   }
-
-  // R-multiple coloring
   if (value.endsWith('R') || lowerHeader.includes('(r)')) {
     if (num > 0) return 'text-emerald-500 font-semibold';
     if (num < 0) return 'text-red-500 font-semibold';
   }
-
   return '';
 }
 
-// Detect direction badge
 function DirectionBadge({ value }: { value: string }) {
   const lower = value.toLowerCase().trim();
   if (lower === 'long') {
     return (
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-500/15 text-emerald-500">
-        <TrendingUp className="h-3 w-3" />
-        Long
+        <TrendingUp className="h-3 w-3" /> Long
       </span>
     );
   }
   if (lower === 'short') {
     return (
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/15 text-red-500">
-        <TrendingDown className="h-3 w-3" />
-        Short
+        <TrendingDown className="h-3 w-3" /> Short
       </span>
     );
   }
   return <span>{value}</span>;
 }
 
-// Parse a markdown table string into headers + rows
+// ─── Inline hyperlink injection ───
+function enrichTextWithLinks(text: string): React.ReactNode[] {
+  // Build a combined regex for all linkable tokens
+  type Match = { index: number; length: number; node: React.ReactNode };
+  const matches: Match[] = [];
+
+  // 1. Service links
+  for (const svc of SERVICE_LINKS) {
+    let m: RegExpExecArray | null;
+    const re = new RegExp(svc.pattern.source, svc.pattern.flags);
+    while ((m = re.exec(text)) !== null) {
+      matches.push({
+        index: m.index,
+        length: m[0].length,
+        node: (
+          <Link key={`svc-${m.index}`} to={svc.path} className="text-primary underline underline-offset-2 hover:text-primary/80 font-medium">
+            {m[0]}
+          </Link>
+        ),
+      });
+    }
+  }
+
+  // 2. Pattern names
+  {
+    let m: RegExpExecArray | null;
+    const re = new RegExp(PATTERN_REGEX.source, PATTERN_REGEX.flags);
+    while ((m = re.exec(text)) !== null) {
+      // Skip if already captured by a service match
+      if (matches.some(x => m!.index >= x.index && m!.index < x.index + x.length)) continue;
+      const screenerId = PATTERN_SCREENER_MAP[m[0].toLowerCase()];
+      if (screenerId) {
+        matches.push({
+          index: m.index,
+          length: m[0].length,
+          node: (
+            <Link key={`pat-${m.index}`} to={`/patterns/live?pattern=${screenerId}`} className="text-primary underline underline-offset-2 hover:text-primary/80">
+              {m[0]}
+            </Link>
+          ),
+        });
+      }
+    }
+  }
+
+  // 3. Ticker symbols (only in non-table text)
+  {
+    let m: RegExpExecArray | null;
+    const re = new RegExp(TICKER_REGEX.source, TICKER_REGEX.flags);
+    while ((m = re.exec(text)) !== null) {
+      if (matches.some(x => m!.index >= x.index && m!.index < x.index + x.length)) continue;
+      if (!isLikelyTicker(m[1])) continue;
+      matches.push({
+        index: m.index,
+        length: m[0].length,
+        node: (
+          <Link key={`tkr-${m.index}`} to={`/members/dashboard?instrument=${m[1]}`} className="text-primary font-mono font-semibold hover:underline">
+            {m[1]}
+          </Link>
+        ),
+      });
+    }
+  }
+
+  if (matches.length === 0) return [text];
+
+  // Sort by index and build result
+  matches.sort((a, b) => a.index - b.index);
+
+  const result: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const match of matches) {
+    if (match.index > cursor) {
+      result.push(text.slice(cursor, match.index));
+    }
+    if (match.index >= cursor) {
+      result.push(match.node);
+      cursor = match.index + match.length;
+    }
+  }
+  if (cursor < text.length) {
+    result.push(text.slice(cursor));
+  }
+
+  return result;
+}
+
+// ─── Action buttons extracted from message context ───
+interface ActionButton {
+  label: string;
+  icon: React.ReactNode;
+  to: string;
+}
+
+function extractActionButtons(content: string): ActionButton[] {
+  const buttons: ActionButton[] = [];
+  const lc = content.toLowerCase();
+
+  // Extract tickers and patterns for deep-linking
+  const tickerMatch = content.match(/\b([A-Z]{2,5}(?:USDT?)?)\b/g)?.filter(isLikelyTicker);
+  const patternMatch = lc.match(PATTERN_REGEX);
+  const firstTicker = tickerMatch?.[0];
+  const firstPattern = patternMatch ? PATTERN_SCREENER_MAP[patternMatch[0].toLowerCase()] : null;
+
+  // Build query params
+  const labParams = new URLSearchParams();
+  if (firstTicker) labParams.set('instrument', firstTicker);
+  if (firstPattern) labParams.set('pattern', firstPattern);
+
+  const screenerParams = new URLSearchParams();
+  if (firstPattern) screenerParams.set('pattern', firstPattern);
+
+  const scriptParams = new URLSearchParams();
+  if (firstTicker) scriptParams.set('instrument', firstTicker);
+  if (firstPattern) scriptParams.set('pattern', firstPattern);
+
+  // Only add relevant buttons
+  if (firstTicker || firstPattern) {
+    buttons.push({
+      label: 'Validate in Pattern Lab',
+      icon: <FlaskConical className="h-3.5 w-3.5" />,
+      to: `/projects/pattern-lab/new?${labParams.toString()}`,
+    });
+  }
+  if (firstPattern) {
+    buttons.push({
+      label: 'Find Active Signals',
+      icon: <Activity className="h-3.5 w-3.5" />,
+      to: `/patterns/live?${screenerParams.toString()}`,
+    });
+  }
+  if (firstTicker || firstPattern) {
+    buttons.push({
+      label: 'Export Script',
+      icon: <FileCode className="h-3.5 w-3.5" />,
+      to: `/members/scripts?${scriptParams.toString()}`,
+    });
+  }
+
+  return buttons;
+}
+
+// ─── Table parsing ───
 function parseMarkdownTable(tableStr: string): { headers: string[]; rows: string[][] } | null {
   const lines = tableStr.trim().split('\n').filter(l => l.trim());
   if (lines.length < 3) return null;
-
-  // Check for separator line (---|---|---)
   const sepIdx = lines.findIndex(l => /^\|?\s*[-:]+[-|\s:]+\s*\|?$/.test(l));
   if (sepIdx < 1) return null;
-
   const parseLine = (line: string): string[] =>
     line.split('|').map(c => c.trim()).filter((_, i, arr) => i > 0 && i < arr.length);
-
   const headers = parseLine(lines[sepIdx - 1]);
   const rows = lines.slice(sepIdx + 1).map(parseLine).filter(r => r.length === headers.length);
-
   if (headers.length < 2 || rows.length === 0) return null;
   return { headers, rows };
 }
 
-// Extract stat-card worthy metrics from text
+// ─── Stat metrics extraction ───
 interface StatMetric {
   label: string;
   value: string;
@@ -97,60 +282,33 @@ interface StatMetric {
 
 function extractStatMetrics(text: string): StatMetric[] {
   const metrics: StatMetric[] = [];
-
-  // Win Rate pattern
   const winRateMatch = text.match(/win\s*rate[:\s]*(\d+\.?\d*)\s*%/i);
   if (winRateMatch) {
     const val = parseFloat(winRateMatch[1]);
-    metrics.push({
-      label: 'Win Rate',
-      value: `${winRateMatch[1]}%`,
-      icon: <Target className="h-4 w-4" />,
-      color: val >= 50 ? 'text-emerald-500' : val >= 40 ? 'text-amber-500' : 'text-red-500',
-    });
+    metrics.push({ label: 'Win Rate', value: `${winRateMatch[1]}%`, icon: <Target className="h-4 w-4" />, color: val >= 50 ? 'text-emerald-500' : val >= 40 ? 'text-amber-500' : 'text-red-500' });
   }
-
-  // Expectancy pattern
   const expMatch = text.match(/expectancy[:\s]*(-?\d+\.?\d*)\s*R/i);
   if (expMatch) {
     const val = parseFloat(expMatch[1]);
-    metrics.push({
-      label: 'Expectancy',
-      value: `${expMatch[1]}R`,
-      icon: <BarChart3 className="h-4 w-4" />,
-      color: val > 0 ? 'text-emerald-500' : 'text-red-500',
-    });
+    metrics.push({ label: 'Expectancy', value: `${expMatch[1]}R`, icon: <BarChart3 className="h-4 w-4" />, color: val > 0 ? 'text-emerald-500' : 'text-red-500' });
   }
-
-  // Annualized Return
   const annMatch = text.match(/annualized?\s*return[:\s]*(-?\d+\.?\d*)\s*%/i);
   if (annMatch) {
     const val = parseFloat(annMatch[1]);
-    metrics.push({
-      label: 'Ann. Return',
-      value: `${annMatch[1]}%`,
-      icon: <Percent className="h-4 w-4" />,
-      color: val > 0 ? 'text-emerald-500' : 'text-red-500',
-    });
+    metrics.push({ label: 'Ann. Return', value: `${annMatch[1]}%`, icon: <Percent className="h-4 w-4" />, color: val > 0 ? 'text-emerald-500' : 'text-red-500' });
   }
-
-  // Total Trades / Sample Size
   const tradesMatch = text.match(/(?:total\s*)?trades[:\s]*(\d[\d,]*)/i) || text.match(/sample\s*size[:\s]*(\d[\d,]*)/i);
   if (tradesMatch) {
-    metrics.push({
-      label: 'Total Trades',
-      value: tradesMatch[1],
-      icon: <Hash className="h-4 w-4" />,
-      color: 'text-muted-foreground',
-    });
+    metrics.push({ label: 'Total Trades', value: tradesMatch[1], icon: <Hash className="h-4 w-4" />, color: 'text-muted-foreground' });
   }
-
   return metrics;
 }
 
-// Rich table component
+// ─── Table component with linked cells ───
 function RichTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   const dirIdx = headers.findIndex(h => h.toLowerCase() === 'dir' || h.toLowerCase() === 'direction');
+  const tickerIdx = headers.findIndex(h => /symbol|ticker|instrument|stock|pair/i.test(h));
+  const patternIdx = headers.findIndex(h => /pattern/i.test(h));
 
   return (
     <div className="my-3 rounded-lg border bg-card overflow-hidden">
@@ -159,20 +317,41 @@ function RichTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
           <TableHeader>
             <TableRow className="bg-muted/50">
               {headers.map((h, i) => (
-                <TableHead key={i} className="text-xs font-semibold whitespace-nowrap py-2 px-3">
-                  {h}
-                </TableHead>
+                <TableHead key={i} className="text-xs font-semibold whitespace-nowrap py-2 px-3">{h}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row, ri) => (
               <TableRow key={ri} className="hover:bg-muted/30 transition-colors">
-                {row.map((cell, ci) => (
-                  <TableCell key={ci} className={cn("py-2 px-3 text-xs whitespace-nowrap", getMetricStyle(cell, headers[ci]))}>
-                    {ci === dirIdx ? <DirectionBadge value={cell} /> : cell}
-                  </TableCell>
-                ))}
+                {row.map((cell, ci) => {
+                  let cellContent: React.ReactNode = cell;
+
+                  if (ci === dirIdx) {
+                    cellContent = <DirectionBadge value={cell} />;
+                  } else if (ci === tickerIdx && cell.trim()) {
+                    cellContent = (
+                      <Link to={`/members/dashboard?instrument=${cell.trim()}`} className="text-primary font-mono font-semibold hover:underline">
+                        {cell.trim()}
+                      </Link>
+                    );
+                  } else if (ci === patternIdx && cell.trim()) {
+                    const screenerId = PATTERN_SCREENER_MAP[cell.trim().toLowerCase()];
+                    if (screenerId) {
+                      cellContent = (
+                        <Link to={`/patterns/live?pattern=${screenerId}`} className="text-primary hover:underline">
+                          {cell.trim()}
+                        </Link>
+                      );
+                    }
+                  }
+
+                  return (
+                    <TableCell key={ci} className={cn("py-2 px-3 text-xs whitespace-nowrap", getMetricStyle(cell, headers[ci]))}>
+                      {cellContent}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
@@ -182,7 +361,6 @@ function RichTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   );
 }
 
-// Stat cards row
 function StatCards({ metrics }: { metrics: StatMetric[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3">
@@ -199,7 +377,24 @@ function StatCards({ metrics }: { metrics: StatMetric[] }) {
   );
 }
 
-// Split content into segments: text blocks and table blocks
+function ActionButtons({ buttons }: { buttons: ActionButton[] }) {
+  if (buttons.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
+      {buttons.map((btn, i) => (
+        <Link key={i} to={btn.to}>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+            {btn.icon}
+            {btn.label}
+            <ExternalLink className="h-3 w-3 opacity-50" />
+          </Button>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// ─── Content segmentation ───
 interface Segment {
   type: 'text' | 'table';
   content: string;
@@ -219,7 +414,6 @@ function segmentContent(content: string): Segment[] {
       currentText = [];
     }
   };
-
   const flushTable = () => {
     if (tableLines.length > 0) {
       const parsed = parseMarkdownTable(tableLines.join('\n'));
@@ -234,37 +428,68 @@ function segmentContent(content: string): Segment[] {
 
   for (const line of lines) {
     const isTableLine = line.trim().startsWith('|') || /^\s*[-:]+[-|\s:]+\s*$/.test(line.trim());
-
     if (isTableLine) {
-      if (!inTable) {
-        flushText();
-        inTable = true;
-      }
+      if (!inTable) { flushText(); inTable = true; }
       tableLines.push(line);
     } else {
-      if (inTable) {
-        flushTable();
-        inTable = false;
-      }
+      if (inTable) { flushTable(); inTable = false; }
       currentText.push(line);
     }
   }
-
   if (inTable) flushTable();
   flushText();
-
   return segments;
 }
 
+// ─── Custom markdown renderer with inline links ───
+function EnrichedMarkdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => {
+          // Process text children to inject links
+          const enriched = React.Children.map(children, child => {
+            if (typeof child === 'string') {
+              return <>{enrichTextWithLinks(child)}</>;
+            }
+            return child;
+          });
+          return <p>{enriched}</p>;
+        },
+        li: ({ children }) => {
+          const enriched = React.Children.map(children, child => {
+            if (typeof child === 'string') {
+              return <>{enrichTextWithLinks(child)}</>;
+            }
+            return child;
+          });
+          return <li>{enriched}</li>;
+        },
+        strong: ({ children }) => {
+          const enriched = React.Children.map(children, child => {
+            if (typeof child === 'string') {
+              return <strong>{enrichTextWithLinks(child)}</strong>;
+            }
+            return <strong>{child}</strong>;
+          });
+          return <>{enriched}</>;
+        },
+      }}
+    >
+      {content || '...'}
+    </ReactMarkdown>
+  );
+}
+
+// ─── Main component ───
 export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
   const segments = useMemo(() => segmentContent(content), [content]);
-
-  // Extract stat metrics from the full text (only show if no table present — avoids duplication)
   const hasTable = segments.some(s => s.type === 'table');
   const statMetrics = useMemo(() => {
-    if (hasTable) return []; // Tables already show the data
+    if (hasTable) return [];
     return extractStatMetrics(content);
   }, [content, hasTable]);
+  const actionButtons = useMemo(() => extractActionButtons(content), [content]);
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80 prose-headings:text-foreground">
@@ -273,10 +498,9 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
         if (segment.type === 'table' && segment.parsed) {
           return <RichTable key={i} headers={segment.parsed.headers} rows={segment.parsed.rows} />;
         }
-        return (
-          <ReactMarkdown key={i}>{segment.content || '...'}</ReactMarkdown>
-        );
+        return <EnrichedMarkdown key={i} content={segment.content} />;
       })}
+      <ActionButtons buttons={actionButtons} />
     </div>
   );
 }
