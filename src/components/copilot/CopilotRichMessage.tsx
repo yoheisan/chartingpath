@@ -327,8 +327,18 @@ function RichTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
                 {row.map((cell, ci) => {
                   let cellContent: React.ReactNode = cell;
 
+                  // Parse markdown links like [Text](/path) in any cell
+                  const mdLinkMatch = cell.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+
                   if (ci === dirIdx) {
                     cellContent = <DirectionBadge value={cell} />;
+                  } else if (mdLinkMatch) {
+                    // Render markdown link as a router Link
+                    cellContent = (
+                      <Link to={mdLinkMatch[2]} className="text-primary hover:underline">
+                        {mdLinkMatch[1]}
+                      </Link>
+                    );
                   } else if (ci === tickerIdx && cell.trim()) {
                     cellContent = (
                       <Link to={`/members/dashboard?instrument=${cell.trim()}`} className="text-primary font-mono font-semibold hover:underline">
