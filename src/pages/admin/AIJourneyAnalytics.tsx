@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   ArrowLeft, RefreshCw, BarChart3, Zap, AlertTriangle, 
-  TrendingUp, Users, Activity, Brain, Shield
+  TrendingUp, Users, Activity, Brain, Shield, Target, Globe
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,8 +19,17 @@ import { AIInsightsPanel } from '@/components/admin/AIInsightsPanel';
 import { UserSegmentsCard } from '@/components/admin/UserSegmentsCard';
 import { KPIEmailSubscription } from '@/components/admin/KPIEmailSubscription';
 import { LoopCompletionCard } from '@/components/admin/LoopCompletionCard';
+import { UnmetNeedsSpotlight, type UnmetNeed } from '@/components/admin/UnmetNeedsSpotlight';
+import { RegionalAnalysis, type RegionalInsight, type CopilotInsights, type JourneySummary } from '@/components/admin/RegionalAnalysis';
 
 type TimeWindow = '7d' | '30d' | '90d';
+
+interface AIAnalysisResult {
+  unmetNeeds: UnmetNeed[];
+  regionalInsights: RegionalInsight[];
+  journeySummary: JourneySummary;
+  copilotInsights: CopilotInsights;
+}
 
 const AIJourneyAnalytics = () => {
   const [loading, setLoading] = useState(true);
@@ -28,6 +37,8 @@ const AIJourneyAnalytics = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [analytics, setAnalytics] = useState<JourneyAnalytics | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -90,6 +101,26 @@ const AIJourneyAnalytics = () => {
     }
   };
 
+  const runAIAnalysis = async () => {
+    setAiAnalyzing(true);
+    try {
+      const days = timeWindow === '7d' ? 7 : timeWindow === '30d' ? 30 : 90;
+      const { data, error } = await supabase.functions.invoke('analyze-journey-insights', {
+        body: { days, analysisType: 'full' },
+      });
+      if (error) throw error;
+      if (data?.analysis) {
+        setAiAnalysis(data.analysis);
+        toast({ title: 'AI Analysis Complete', description: `Analyzed ${data.metadata?.totalEvents || 0} events across ${data.metadata?.totalSessions || 0} sessions.` });
+      }
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      toast({ title: 'AI Analysis Failed', description: 'Could not complete AI analysis. Check edge function logs.', variant: 'destructive' });
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
   const getHealthScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
     if (score >= 60) return 'text-amber-500';
@@ -148,6 +179,10 @@ const AIJourneyAnalytics = () => {
               <Button onClick={loadAnalytics} variant="outline" size="sm" disabled={refreshing}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
+              </Button>
+              <Button onClick={runAIAnalysis} size="sm" disabled={aiAnalyzing} className="gap-2">
+                <Brain className={`h-4 w-4 ${aiAnalyzing ? 'animate-pulse' : ''}`} />
+                {aiAnalyzing ? 'Analyzing...' : 'Run AI Analysis'}
               </Button>
               {analytics && (
                 <span className="text-sm text-muted-foreground">
@@ -255,8 +290,16 @@ const AIJourneyAnalytics = () => {
             </div>
 
             {/* Main Tabs */}
-<Tabs defaultValue="insights" className="space-y-6">
-              <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+<Tabs defaultValue="unmet-needs" className="space-y-6">
+              <TabsList className="flex flex-wrap h-auto gap-1 w-full max-w-4xl">
+                <TabsTrigger value="unmet-needs" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Unmet Needs
+                </TabsTrigger>
+                <TabsTrigger value="regional" className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  Regional
+                </TabsTrigger>
                 <TabsTrigger value="insights" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
                   AI Insights
@@ -278,6 +321,34 @@ const AIJourneyAnalytics = () => {
                   Email Reports
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="unmet-needs">
+                <UnmetNeedsSpotlight needs={aiAnalysis?.unmetNeeds || []} />
+                {!aiAnalysis && (
+                  <Card className="mt-4">
+                    <CardContent className="p-6 text-center">
+                      <Brain className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Click <strong>"Run AI Analysis"</strong> to identify unmet user needs using Gemini AI.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="regional">
+                <RegionalAnalysis 
+                  regions={aiAnalysis?.regionalInsights || []}
+                  summary={aiAnalysis?.journeySummary || null}
+                  copilotInsights={aiAnalysis?.copilotInsights || null}
+                />
+                {!aiAnalysis && (
+                  <Card className="mt-4">
+                    <CardContent className="p-6 text-center">
+                      <Globe className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Click <strong>"Run AI Analysis"</strong> to see regional engagement breakdown.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
 
               <TabsContent value="insights">
                 <AIInsightsPanel insights={analytics.aiInsights} />
