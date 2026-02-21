@@ -15,7 +15,7 @@ const Terms = () => {
 
         <div className="prose prose-gray dark:prose-invert max-w-none">
           <h1>📑 Terms and Conditions</h1>
-          <p><strong>Last updated:</strong> February 4, 2026</p>
+          <p><strong>Last updated:</strong> February 21, 2026</p>
 
           <p>These Terms and Conditions ("Terms") govern the use of services provided by Market Leap Partners Inc., registered in Tokyo, Japan ("Company", "we", "us", or "our"). By accessing or using our website, services, or purchasing any subscription plan, you agree to be bound by these Terms.</p>
 
@@ -71,13 +71,24 @@ const Terms = () => {
           <h2>9. Termination</h2>
           <p>We reserve the right to suspend or terminate access if a user violates these Terms or engages in abuse.</p>
 
-          <h2>10. Governing Law</h2>
+          <h2>10. Market Data Attribution</h2>
+          <p><strong>10.1</strong> Market data displayed on the Site is sourced from third-party providers including EODHD and Yahoo Finance. All market data is delayed and provided for educational and informational purposes only.</p>
+          <p><strong>10.2</strong> Data for Asia-Pacific markets — including Hong Kong (HKEX), Singapore (SGX), and Thailand (SET) — is delayed and not suitable for real-time trading decisions.</p>
+          <p><strong>10.3</strong> ChartingPath provides derived analytical insights (pattern detections, backtest analytics, alerts) based on market data. We do not redistribute raw market data feeds.</p>
+          <p><strong>10.4</strong> Data accuracy is not guaranteed. Users should verify all information with their broker or an official exchange source before making trading decisions.</p>
+
+          <h2>11. Regional Disclaimers</h2>
+          <p><strong>11.1</strong> For users in China, Singapore, and Thailand: The services provided are for educational purposes only. Trading in financial instruments may be subject to local regulations. You are solely responsible for ensuring compliance with local laws before acting on any information provided on the Site.</p>
+          <p><strong>11.2</strong> ChartingPath does not hold any financial services license in any jurisdiction. Our services do not constitute a regulated financial activity.</p>
+          <p><strong>11.3</strong> Currency and market data for APAC markets is provided by EODHD (primary) and Yahoo Finance (fallback) under their respective licensing terms.</p>
+
+          <h2>12. Governing Law</h2>
           <p>These Terms shall be governed by and construed under the laws of Japan.</p>
 
-          <h2>11. Changes to Terms</h2>
+          <h2>13. Changes to Terms</h2>
           <p>We may update these Terms at any time. Continued use of the Site after changes indicates acceptance of the revised Terms.</p>
 
-          <h2>12. Contact</h2>
+          <h2>14. Contact</h2>
           <p>For questions about these Terms, please contact us:</p>
           <p>📧 contact@chartingpath.com</p>
         </div>
