@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
+import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 
 interface Message {
   id: string;
@@ -32,6 +33,8 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
   const inputRef = useRef<HTMLInputElement>(null);
   const hasInitialized = useRef(false);
   const { trackQuestion } = useCopilotFeedback();
+  const { createConversation, saveMessage, isAuthenticated } = useCopilotConversations();
+  const convoIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -76,6 +79,14 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
     ]);
     setIsLoading(true);
     setInput("");
+
+    // Persist: ensure conversation exists
+    if (!convoIdRef.current && isAuthenticated) {
+      convoIdRef.current = await createConversation(userMessage.slice(0, 60));
+    }
+    if (convoIdRef.current) {
+      saveMessage(convoIdRef.current, "user", userMessage);
+    }
 
     let assistantContent = "";
 
@@ -217,6 +228,10 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
     } finally {
       setIsLoading(false);
       trackQuestion(userMessage, assistantContent);
+      // Persist assistant response
+      if (convoIdRef.current && assistantContent) {
+        saveMessage(convoIdRef.current, "assistant", assistantContent);
+      }
     }
   };
 
