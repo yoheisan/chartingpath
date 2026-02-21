@@ -87,17 +87,33 @@ export const TradeExcursionChart = ({ trades }: TradeExcursionChartProps) => {
         <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} barCategoryGap="10%">
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
               <XAxis
                 dataKey="index"
-                tick={{ fontSize: 11 }}
-                label={{ value: 'Trade #', position: 'insideBottom', offset: -3, fontSize: 12 }}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                label={{ value: 'Trade #', position: 'insideBottom', offset: -3, fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={(v) => `${v}R`}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
+                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                  padding: '8px 12px',
+                  fontSize: '13px',
+                }}
+                labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 2 }}
+                itemStyle={{ color: 'hsl(var(--muted-foreground))' }}
                 formatter={(val: number) => [`${val >= 0 ? '+' : ''}${val.toFixed(2)}R`, 'R-Multiple']}
                 labelFormatter={(label) => {
                   const item = chartData[Number(label) - 1];
