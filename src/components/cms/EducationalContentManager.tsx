@@ -4,8 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, CalendarPlus, RefreshCw, BookOpen, Globe, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, CalendarPlus, RefreshCw, BookOpen, Globe, Trash2, Pencil, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -39,6 +49,10 @@ const MARKET_LABELS: Record<string, string> = {
 
 export function EducationalContentManager() {
   const [articleFilter, setArticleFilter] = useState<string>("all");
+  const [editingPiece, setEditingPiece] = useState<any | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editHashtags, setEditHashtags] = useState("");
+  const [editLinkUrl, setEditLinkUrl] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch educational pieces
@@ -143,6 +157,29 @@ export function EducationalContentManager() {
       toast.success("Piece removed from rotation");
     },
   });
+
+  // Update piece
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, content, hashtags, link_back_url }: { id: string; content: string; hashtags: string[]; link_back_url: string }) => {
+      const { error } = await supabase
+        .from("educational_content_pieces")
+        .update({ content, hashtags, link_back_url })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educational-pieces"] });
+      setEditingPiece(null);
+      toast.success("Piece updated");
+    },
+  });
+
+  const openEdit = (piece: any) => {
+    setEditingPiece(piece);
+    setEditContent(piece.content);
+    setEditHashtags((piece.hashtags || []).join(", "));
+    setEditLinkUrl(piece.link_back_url || "");
+  };
 
   // Unique articles in pieces
   const uniqueArticles = pieces
@@ -270,8 +307,9 @@ export function EducationalContentManager() {
                 <TableHead>Content</TableHead>
                 <TableHead className="w-28">Type</TableHead>
                 <TableHead className="w-36">Article</TableHead>
+                <TableHead className="w-44">Link</TableHead>
                 <TableHead className="w-20">Posts</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -303,18 +341,43 @@ export function EducationalContentManager() {
                       ({piece.sequence_number}/{piece.total_in_series})
                     </span>
                   </TableCell>
+                  <TableCell>
+                    {piece.link_back_url ? (
+                      <a
+                        href={piece.link_back_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline flex items-center gap-1 line-clamp-1"
+                      >
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                        {piece.link_back_url.replace("https://chartingpath.com/learn/", "")}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-center">
                     <span className="text-sm">{piece.posted_count}</span>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => deleteMutation.mutate(piece.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => openEdit(piece)}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => deleteMutation.mutate(piece.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -334,6 +397,60 @@ export function EducationalContentManager() {
           </Button>
         </Card>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingPiece} onOpenChange={(open) => !open && setEditingPiece(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Content Piece</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Content</Label>
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={6}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">{editContent.length} characters</p>
+            </div>
+            <div>
+              <Label>Link URL</Label>
+              <Input
+                value={editLinkUrl}
+                onChange={(e) => setEditLinkUrl(e.target.value)}
+                placeholder="https://chartingpath.com/learn/..."
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Hashtags (comma-separated)</Label>
+              <Input
+                value={editHashtags}
+                onChange={(e) => setEditHashtags(e.target.value)}
+                placeholder="Trading, Finance, Forex"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingPiece(null)}>Cancel</Button>
+            <Button
+              onClick={() => updateMutation.mutate({
+                id: editingPiece.id,
+                content: editContent,
+                hashtags: editHashtags.split(",").map(h => h.trim()).filter(Boolean),
+                link_back_url: editLinkUrl,
+              })}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
