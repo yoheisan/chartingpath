@@ -68,16 +68,42 @@ serve(async (req) => {
     for (const article of batch) {
       console.log(`Generating pieces for: ${article.title}`);
 
+      const linkUrl = `https://chartingpath.com/learn/${article.slug}`;
+      
+      const ctaOptions: Record<string, string[]> = {
+        glossary: [
+          `Master the full concept 👉 ${linkUrl}`,
+          `Deep dive into this topic 👉 ${linkUrl}`,
+          `Full glossary breakdown 👉 ${linkUrl}`,
+        ],
+        key_learning: [
+          `Read the complete guide 👉 ${linkUrl}`,
+          `Get the full strategy 👉 ${linkUrl}`,
+          `Learn the complete framework 👉 ${linkUrl}`,
+        ],
+        technique: [
+          `Step-by-step setup guide 👉 ${linkUrl}`,
+          `Full technique with examples 👉 ${linkUrl}`,
+          `See real chart examples 👉 ${linkUrl}`,
+        ],
+        insight: [
+          `More insights like this 👉 ${linkUrl}`,
+          `Unlock the full analysis 👉 ${linkUrl}`,
+          `Discover more edge 👉 ${linkUrl}`,
+        ],
+      };
+
       const prompt = `You are a financial education content strategist for @chartingpath on Twitter/X.
 
 Break this trading education article into exactly 4 tweet-sized educational posts. Each tweet should be self-contained, valuable, and engaging.
 
-REQUIREMENTS FOR EACH TWEET:
-- Maximum 250 characters (leave room for hashtags)
+CRITICAL REQUIREMENTS FOR EACH TWEET:
+- Maximum 220 characters for the educational content (leave room for CTA + hashtags)
 - Must be educational and actionable
 - Include specific numbers, percentages, or levels when possible
 - Start with an eye-catching emoji
-- End with a call-to-action linking to the full article
+- DO NOT include any links, URLs, or "[link to article]" placeholders — the CTA link will be appended automatically
+- DO NOT end with "Learn more:", "Full guide:", etc. — the system adds the CTA
 - Each tweet should cover a DIFFERENT aspect of the article
 
 TYPES (assign one type per tweet, use all 4 different types):
@@ -93,10 +119,10 @@ ${article.content.substring(0, 4000)}
 
 Respond in this exact JSON format (no markdown, just raw JSON):
 [
-  {"sequence": 1, "type": "glossary", "content": "tweet text here", "hashtags": ["Trading", "Finance"]},
-  {"sequence": 2, "type": "key_learning", "content": "tweet text here", "hashtags": ["Trading", "Finance"]},
-  {"sequence": 3, "type": "technique", "content": "tweet text here", "hashtags": ["Trading", "Finance"]},
-  {"sequence": 4, "type": "insight", "content": "tweet text here", "hashtags": ["Trading", "Finance"]}
+  {"sequence": 1, "type": "glossary", "content": "tweet text WITHOUT any link", "hashtags": ["Trading", "Finance"]},
+  {"sequence": 2, "type": "key_learning", "content": "tweet text WITHOUT any link", "hashtags": ["Trading", "Finance"]},
+  {"sequence": 3, "type": "technique", "content": "tweet text WITHOUT any link", "hashtags": ["Trading", "Finance"]},
+  {"sequence": 4, "type": "insight", "content": "tweet text WITHOUT any link", "hashtags": ["Trading", "Finance"]}
 ]`;
 
       try {
@@ -122,18 +148,33 @@ Respond in this exact JSON format (no markdown, just raw JSON):
         rawText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
         const pieces = JSON.parse(rawText);
-        const linkUrl = `https://chartingpath.com/learn/${article.slug}`;
 
-        const rows = pieces.map((piece: any) => ({
-          article_id: article.id,
-          article_title: article.title,
-          sequence_number: piece.sequence,
-          total_in_series: pieces.length,
-          content: piece.content,
-          piece_type: piece.type,
-          link_back_url: linkUrl,
-          hashtags: piece.hashtags || [],
-        }));
+        const rows = pieces.map((piece: any) => {
+          // Pick a random CTA for this piece type
+          const ctas = ctaOptions[piece.type] || ctaOptions.insight;
+          const cta = ctas[Math.floor(Math.random() * ctas.length)];
+          // Clean any leftover link placeholders from AI output
+          let cleanContent = piece.content
+            .replace(/\[link to article\]/gi, '')
+            .replace(/Learn more:?\s*$/i, '')
+            .replace(/Full guide:?\s*$/i, '')
+            .replace(/Read more:?\s*$/i, '')
+            .replace(/https?:\/\/\S+/g, '')
+            .trim();
+          // Append CTA with link
+          const fullContent = `${cleanContent}\n\n${cta}`;
+          
+          return {
+            article_id: article.id,
+            article_title: article.title,
+            sequence_number: piece.sequence,
+            total_in_series: pieces.length,
+            content: fullContent,
+            piece_type: piece.type,
+            link_back_url: linkUrl,
+            hashtags: piece.hashtags || [],
+          };
+        });
 
         // Insert immediately per article so progress is saved
         const { error: insertError } = await supabase
