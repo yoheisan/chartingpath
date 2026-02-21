@@ -1054,6 +1054,15 @@ function toEODHDSymbol(symbol: string): string {
     const index = symbol.replace('^', '');
     return `${index}.INDX`;
   }
+  // Hong Kong stocks: 0700.HK stays as 0700.HK on EODHD
+  if (symbol.endsWith('.HK')) return symbol;
+  // Singapore stocks: D05.SI → D05.SG on EODHD
+  if (symbol.endsWith('.SI')) return `${symbol.replace('.SI', '')}.SG`;
+  // Thailand stocks: PTT.BK stays as PTT.BK on EODHD
+  if (symbol.endsWith('.BK')) return symbol;
+  // Shanghai/Shenzhen: 000001.SS → 000001.SHG, 399001.SZ → 399001.SHE
+  if (symbol.endsWith('.SS')) return `${symbol.replace('.SS', '')}.SHG`;
+  if (symbol.endsWith('.SZ')) return `${symbol.replace('.SZ', '')}.SHE`;
   return `${symbol}.US`;
 }
 
