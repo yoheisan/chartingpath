@@ -14,10 +14,10 @@ import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
 const ASSET_TABS: { value: TeaserAssetType; label: string; universe: number }[] = [
-  { value: 'stocks', label: 'Stocks', universe: 250 },
-  { value: 'fx', label: 'Forex', universe: 87 },
-  { value: 'crypto', label: 'Crypto', universe: 69 },
-  { value: 'commodities', label: 'Commodities', universe: 28 },
+  { value: 'stocks', label: 'Stocks', universe: 90 },
+  { value: 'fx', label: 'Forex', universe: 57 },
+  { value: 'crypto', label: 'Crypto', universe: 84 },
+  { value: 'commodities', label: 'Commodities', universe: 25 },
 ];
 
 const MAX_TEASER_ITEMS = 10;
@@ -45,7 +45,7 @@ export function PatternScreenerTeaser() {
       try {
         const { data, error: fnError } = await withTimeout(
           supabase.functions.invoke('scan-live-patterns', {
-            body: { assetType, timeframe: '1d', forceRefresh: false },
+            body: { assetType, timeframe: '1h', forceRefresh: false },
           }),
           25000
         );
@@ -142,7 +142,7 @@ export function PatternScreenerTeaser() {
           </div>
           <h2 className="text-2xl font-bold">Top Pattern Signals</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Highest-graded setups across markets
+            Highest-graded setups across markets · 1H timeframe
           </p>
         </div>
 
