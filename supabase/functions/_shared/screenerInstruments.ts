@@ -702,6 +702,62 @@ export const STOCK_INSTRUMENTS: Instrument[] = [
   { symbol: 'BB', yahooSymbol: 'BB', name: 'BlackBerry Limited' },
   { symbol: 'NOK', yahooSymbol: 'NOK', name: 'Nokia Corporation' },
   { symbol: 'XPEV', yahooSymbol: 'XPEV', name: 'XPeng Inc.' },
+  
+  // ===== HONG KONG (HKEX) — Top 15 by Market Cap =====
+  { symbol: '0700.HK', yahooSymbol: '0700.HK', name: 'Tencent Holdings' },
+  { symbol: '9988.HK', yahooSymbol: '9988.HK', name: 'Alibaba Group (HK)' },
+  { symbol: '0005.HK', yahooSymbol: '0005.HK', name: 'HSBC Holdings (HK)' },
+  { symbol: '1299.HK', yahooSymbol: '1299.HK', name: 'AIA Group' },
+  { symbol: '3690.HK', yahooSymbol: '3690.HK', name: 'Meituan' },
+  { symbol: '0941.HK', yahooSymbol: '0941.HK', name: 'China Mobile' },
+  { symbol: '2318.HK', yahooSymbol: '2318.HK', name: 'Ping An Insurance' },
+  { symbol: '1810.HK', yahooSymbol: '1810.HK', name: 'Xiaomi Corporation' },
+  { symbol: '0388.HK', yahooSymbol: '0388.HK', name: 'Hong Kong Exchanges' },
+  { symbol: '0939.HK', yahooSymbol: '0939.HK', name: 'China Construction Bank' },
+  { symbol: '3988.HK', yahooSymbol: '3988.HK', name: 'Bank of China' },
+  { symbol: '1398.HK', yahooSymbol: '1398.HK', name: 'ICBC' },
+  { symbol: '2269.HK', yahooSymbol: '2269.HK', name: 'WuXi Biologics' },
+  { symbol: '9618.HK', yahooSymbol: '9618.HK', name: 'JD.com (HK)' },
+  { symbol: '9999.HK', yahooSymbol: '9999.HK', name: 'NetEase (HK)' },
+  
+  // ===== SINGAPORE (SGX) — Top 15 by Market Cap =====
+  { symbol: 'D05.SI', yahooSymbol: 'D05.SI', name: 'DBS Group Holdings' },
+  { symbol: 'O39.SI', yahooSymbol: 'O39.SI', name: 'OCBC Bank' },
+  { symbol: 'U11.SI', yahooSymbol: 'U11.SI', name: 'United Overseas Bank' },
+  { symbol: 'Z74.SI', yahooSymbol: 'Z74.SI', name: 'Singtel' },
+  { symbol: 'C38U.SI', yahooSymbol: 'C38U.SI', name: 'CapitaLand Integrated' },
+  { symbol: 'D01.SI', yahooSymbol: 'D01.SI', name: 'DFI Retail Group' },
+  { symbol: 'BN4.SI', yahooSymbol: 'BN4.SI', name: 'Keppel Corporation' },
+  { symbol: 'U96.SI', yahooSymbol: 'U96.SI', name: 'Sembcorp Industries' },
+  { symbol: 'C09.SI', yahooSymbol: 'C09.SI', name: 'City Developments' },
+  { symbol: 'G13.SI', yahooSymbol: 'G13.SI', name: 'Genting Singapore' },
+  { symbol: 'S63.SI', yahooSymbol: 'S63.SI', name: 'ST Engineering' },
+  { symbol: 'C07.SI', yahooSymbol: 'C07.SI', name: 'Jardine C&C' },
+  { symbol: 'A17U.SI', yahooSymbol: 'A17U.SI', name: 'CapitaLand Ascendas REIT' },
+  { symbol: 'N2IU.SI', yahooSymbol: 'N2IU.SI', name: 'Mapletree Pan Asia' },
+  { symbol: 'Y92.SI', yahooSymbol: 'Y92.SI', name: 'Thai Beverage' },
+  
+  // ===== THAILAND (SET) — Top 10 by Market Cap =====
+  { symbol: 'PTT.BK', yahooSymbol: 'PTT.BK', name: 'PTT Public Company' },
+  { symbol: 'ADVANC.BK', yahooSymbol: 'ADVANC.BK', name: 'Advanced Info Service' },
+  { symbol: 'CPALL.BK', yahooSymbol: 'CPALL.BK', name: 'CP ALL Public Company' },
+  { symbol: 'SCC.BK', yahooSymbol: 'SCC.BK', name: 'Siam Cement Group' },
+  { symbol: 'GULF.BK', yahooSymbol: 'GULF.BK', name: 'Gulf Energy Development' },
+  { symbol: 'AOT.BK', yahooSymbol: 'AOT.BK', name: 'Airports of Thailand' },
+  { symbol: 'KBANK.BK', yahooSymbol: 'KBANK.BK', name: 'Kasikornbank' },
+  { symbol: 'BBL.BK', yahooSymbol: 'BBL.BK', name: 'Bangkok Bank' },
+  { symbol: 'PTTEP.BK', yahooSymbol: 'PTTEP.BK', name: 'PTT Exploration & Production' },
+  { symbol: 'SCB.BK', yahooSymbol: 'SCB.BK', name: 'SCB X Public Company' },
+  
+  // ===== CHINA ADRs (US-listed, already in US stock format) =====
+  { symbol: 'BABA', yahooSymbol: 'BABA', name: 'Alibaba Group (ADR)' },
+  { symbol: 'JD', yahooSymbol: 'JD', name: 'JD.com (ADR)' },
+  { symbol: 'PDD', yahooSymbol: 'PDD', name: 'PDD Holdings (ADR)' },
+  { symbol: 'BIDU', yahooSymbol: 'BIDU', name: 'Baidu (ADR)' },
+  { symbol: 'LI', yahooSymbol: 'LI', name: 'Li Auto (ADR)' },
+  { symbol: 'NTES', yahooSymbol: 'NTES', name: 'NetEase (ADR)' },
+  { symbol: 'BILI', yahooSymbol: 'BILI', name: 'Bilibili (ADR)' },
+  { symbol: 'ZTO', yahooSymbol: 'ZTO', name: 'ZTO Express (ADR)' },
 ];
 
 // =============================================================================

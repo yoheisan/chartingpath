@@ -133,6 +133,32 @@ function toEODHDSymbol(symbol: string): { eodhSymbol: string; exchange: string }
     return { eodhSymbol: '__UNSUPPORTED__', exchange: 'NYB' };
   }
 
+  // Hong Kong stocks: 0700.HK → 0700.HK (EODHD uses same format)
+  if (symbol.endsWith('.HK')) {
+    return { eodhSymbol: symbol, exchange: 'HK' };
+  }
+
+  // Singapore stocks: D05.SI → D05.SG (EODHD uses .SG for SGX)
+  if (symbol.endsWith('.SI')) {
+    const base = symbol.replace('.SI', '');
+    return { eodhSymbol: `${base}.SG`, exchange: 'SG' };
+  }
+
+  // Thailand stocks: PTT.BK → PTT.BK (EODHD uses same format)
+  if (symbol.endsWith('.BK')) {
+    return { eodhSymbol: symbol, exchange: 'BK' };
+  }
+
+  // Shanghai/Shenzhen indices: 000001.SS → 000001.SHG, 399001.SZ → 399001.SHE
+  if (symbol.endsWith('.SS')) {
+    const base = symbol.replace('.SS', '');
+    return { eodhSymbol: `${base}.SHG`, exchange: 'SHG' };
+  }
+  if (symbol.endsWith('.SZ')) {
+    const base = symbol.replace('.SZ', '');
+    return { eodhSymbol: `${base}.SHE`, exchange: 'SHE' };
+  }
+
   // Default: US stocks
   return { eodhSymbol: `${symbol}.US`, exchange: 'US' };
 }

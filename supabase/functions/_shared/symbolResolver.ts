@@ -118,6 +118,12 @@ export function detectAssetType(symbol: string): 'crypto' | 'forex' | 'commodity
   if (symbol.endsWith('=X')) return 'forex';
   if (symbol.endsWith('=F')) return 'commodity';
   
+  // APAC exchange suffixes → stock
+  if (symbol.endsWith('.HK') || symbol.endsWith('.SI') || symbol.endsWith('.BK')) return 'stock';
+  
+  // Shanghai/Shenzhen indices
+  if (symbol.endsWith('.SS') || symbol.endsWith('.SZ')) return 'index';
+  
   // Check known ETFs
   const etfSymbols = ['SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'VOO', 'VXX', 'GLD', 'SLV', 'TLT', 'XLF', 'XLK'];
   if (etfSymbols.includes(symbol)) return 'etf';

@@ -90,8 +90,8 @@ Gated 05:00–12:00 UTC to avoid conflicts with the validation workers.
 Analytics show 69% China, 10% Singapore, 6% Thailand traffic. Expanding APAC coverage
 to serve the primary audience with local market instruments and content.
 
-### Phase 1: APAC Ticker Universe Expansion (~60 tickers)
-**Status**: 🔲 Planned
+### Phase 1: APAC Ticker Universe Expansion (~58 tickers)
+**Status**: ✅ COMPLETED (2026-02-21)
 **Risk Level**: LOW — uses existing seeding pipeline, no new cron shards needed
 **API Impact**: ~5-8K additional EODHD calls/day (well within 100K quota)
 
