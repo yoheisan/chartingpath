@@ -69,7 +69,7 @@ export function TradingCopilot({
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextProcessedRef = useRef(false);
@@ -310,10 +310,16 @@ export function TradingCopilot({
   }
 
   return (
-    <Card className={cn(
-      "fixed bottom-6 right-6 h-[600px] max-h-[80vh] flex shadow-2xl z-50 border-primary/20 overflow-hidden transition-all",
-      showHistory ? "w-[580px]" : "w-[400px]"
-    )}>
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50" onClick={onToggle} />
+      
+      {/* Full-screen modal (same size as ⌘K) */}
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
+        <Card className={cn(
+          "w-full max-w-3xl h-[75vh] flex shadow-2xl border-primary/20 overflow-hidden transition-all animate-in fade-in-0 zoom-in-95",
+          showHistory && isAuthenticated ? "max-w-4xl" : "max-w-3xl"
+        )}>
       {/* History sidebar */}
       {showHistory && isAuthenticated && (
         <CopilotHistorySidebar
@@ -428,6 +434,8 @@ export function TradingCopilot({
           </p>
         </div>
       </div>
-    </Card>
+        </Card>
+      </div>
+    </>
   );
 }
