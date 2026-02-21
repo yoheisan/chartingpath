@@ -1058,8 +1058,6 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
             />
           )}
 
-          {/* Edge Rankings — cross-pattern annualized return intel */}
-          <EdgeRankingsCard />
 
           {/* Automation CTAs - Journey Stage Handoff */}
           {artifact.patterns.length > 0 && (() => {
