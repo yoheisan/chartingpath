@@ -135,7 +135,7 @@ const tools = [
     type: "function",
     function: {
       name: "query_edge_atlas",
-      description: "Query the Edge Atlas rankings to find the best-performing pattern/timeframe combinations based on historical backtested data (320,000+ trades). Use this when users ask about annualized returns, best patterns, highest win rates, most profitable setups, edge rankings, or performance filtering across asset classes. Supports filtering by asset type, timeframe, min annualized return %, min win rate %, direction, pattern name, and sorting.",
+      description: "Query the Edge Atlas rankings to find the best-performing pattern/timeframe combinations based on historical backtested data (320,000+ trades). Use this when users ask about annualized returns, best patterns, highest win rates, most profitable setups, edge rankings, or performance filtering across asset classes. CRITICAL: Annualized returns are in R-multiples (risk units), NOT percentages. Typical top values range 1R-10R. When users say '30% return', do NOT pass 30 as min_annualized_pct — that would be 30R which is unrealistically high. Instead, omit the filter or use a small value like 1-3. If 0 results return, AUTOMATICALLY retry with relaxed filters before telling the user nothing was found.",
       parameters: {
         type: "object",
         properties: {
@@ -145,7 +145,7 @@ const tools = [
           direction: { type: "string", enum: ["long", "short"], description: "Trade direction filter." },
           min_trades: { type: "number", description: "Minimum sample size. Default 30." },
           min_win_rate: { type: "number", description: "Minimum win rate percentage. E.g. 55 for 55%." },
-          min_annualized_pct: { type: "number", description: "Minimum estimated annualized return in R-multiples. E.g. 30 for 30R annualized." },
+          min_annualized_pct: { type: "number", description: "Minimum estimated annualized return in R-multiples (NOT percentage). Typical range: 0.5-10. Do NOT pass values like 20, 30, 40 — those are unrealistically high." },
           min_expectancy: { type: "number", description: "Minimum expectancy per trade in R. E.g. 0.3." },
           fx_segment: { type: "string", enum: ["majors", "crosses"], description: "For FX only: filter by majors or crosses." },
           sort_by: { type: "string", enum: ["annualized", "win_rate", "expectancy", "trades"], description: "Sort order. Default 'annualized'." },
@@ -235,14 +235,31 @@ When generate_pine_script returns, you MUST:
 📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish
 
 ## Edge Atlas Results Format
+
+**CRITICAL — R-Multiple Units:**
+All annualized returns from query_edge_atlas are in R-multiples (risk units), NOT percentages.
+- 1R annualized = if you risk 1% per trade, you'd make ~1% annually from that pattern
+- 3.7R annualized = risking 1% per trade → ~3.7% annual return; risking 2% → ~7.4%
+- The top FX patterns typically yield 1-5R annualized; stocks may reach 5-15R
+- When users ask for "30% return", explain the R-multiple system and show the best available results
+- NEVER pass values like 20, 30, or 40 as min_annualized_pct — those are unrealistically high in R terms
+
+**Auto-Fallback Strategy for Edge Atlas Queries:**
+1. First query with user's exact intent (but convert % to reasonable R values)
+2. If 0 results: AUTOMATICALLY retry without min_annualized_pct and min_win_rate filters
+3. If still 0: Remove timeframe filter too
+4. ALWAYS show whatever data exists — never tell the user "nothing found" multiple times
+5. Explain what the data means in practical terms (e.g., "At 1% risk per trade, this pattern yields ~3.7% annually")
+
 When query_edge_atlas returns data, present results in a markdown table with actionable links:
 
 | # | Pattern | TF | Dir | Win Rate | Exp (R) | Ann. Return | Trades |
 |---|---------|-----|-----|----------|---------|-------------|--------|
-| 1 | [Bull Flag](/edge-atlas/bull_flag) | 1h | Long | 58.2% | 0.45R | 42.3R | 312 |
+| 1 | [Bull Flag](/edge-atlas/bull_flag) | 1h | Long | 58.2% | 0.45R | 4.2R | 312 |
 
 After the table:
-- Summarize the key insight (e.g. "Bull Flags on 1H charts deliver the highest annualized return in FX Majors")
+- Summarize the key insight (e.g. "Falling Wedge on 8H delivers the highest annualized return in FX at 3.7R")
+- Explain what the R-values mean in practical terms for the user
 - Link to [Edge Atlas](/edge-atlas) for full exploration
 - Link to [Live Setups](/patterns/live) to find currently active instances
 - Mention sample size and statistical confidence
