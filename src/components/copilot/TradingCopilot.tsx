@@ -23,6 +23,13 @@ import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 
 interface Message {
   id: string;
@@ -73,6 +80,7 @@ export function TradingCopilot({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextProcessedRef = useRef(false);
+  const isMobile = useIsMobile();
 
   const {
     conversations,
@@ -302,26 +310,17 @@ export function TradingCopilot({
     return (
       <Button
         onClick={onToggle}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-accent hover:opacity-90 hidden md:flex"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-accent hover:opacity-90"
       >
         <Sparkles className="h-6 w-6" />
       </Button>
     );
   }
 
-  return (
+  const copilotBody = (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50" onClick={onToggle} />
-      
-      {/* Full-screen modal (same size as ⌘K) */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
-        <Card className={cn(
-          "w-full max-w-3xl h-[75vh] flex shadow-2xl border-primary/20 overflow-hidden transition-all animate-in fade-in-0 zoom-in-95",
-          showHistory && isAuthenticated ? "max-w-4xl" : "max-w-3xl"
-        )}>
-      {/* History sidebar */}
-      {showHistory && isAuthenticated && (
+      {/* History sidebar — hidden on mobile */}
+      {!isMobile && showHistory && isAuthenticated && (
         <CopilotHistorySidebar
           conversations={conversations}
           activeId={activeConversationId}
@@ -335,7 +334,7 @@ export function TradingCopilot({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-accent/10">
           <div className="flex items-center gap-2">
-            {isAuthenticated && (
+            {!isMobile && isAuthenticated && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowHistory(v => !v)}>
                 {showHistory ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
               </Button>
@@ -372,7 +371,7 @@ export function TradingCopilot({
               </div>
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground font-medium px-1">Quick actions</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
                   {QUICK_ACTIONS.map((action) => (
                     <Button key={action.label} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
                       <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
@@ -397,7 +396,12 @@ export function TradingCopilot({
                       <ChartAnalysisSummary analysis={message.analysisData} />
                     </Card>
                   )}
-                  <div className={cn("max-w-[85%] rounded-lg px-3 py-2 text-sm", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                  <div className={cn(
+                    "rounded-lg px-3 py-2 text-sm",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground max-w-[85%]"
+                      : "bg-muted w-full"
+                  )}>
                     {message.role === "assistant" ? (
                       <CopilotRichMessage content={message.content || "..."} />
                     ) : message.analysisData ? (
@@ -432,6 +436,34 @@ export function TradingCopilot({
           </p>
         </div>
       </div>
+    </>
+  );
+
+  // Mobile: bottom-sheet Drawer
+  if (isMobile) {
+    return (
+      <Drawer open={isExpanded} onOpenChange={(open) => !open && onToggle?.()}>
+        <DrawerContent className="max-h-[92vh] flex flex-col">
+          <DrawerTitle className="sr-only">Trading Copilot</DrawerTitle>
+          <DrawerDescription className="sr-only">AI-powered trading research assistant</DrawerDescription>
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {copilotBody}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: near-fullscreen centered modal
+  return (
+    <>
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50" onClick={onToggle} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+        <Card className={cn(
+          "w-full h-full max-w-[90vw] max-h-[88vh] flex shadow-2xl border-primary/20 overflow-hidden animate-in fade-in-0 zoom-in-95",
+          showHistory && isAuthenticated ? "max-w-[92vw]" : "max-w-[90vw]"
+        )}>
+          {copilotBody}
         </Card>
       </div>
     </>
