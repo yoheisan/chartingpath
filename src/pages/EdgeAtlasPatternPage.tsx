@@ -121,7 +121,7 @@ export default function EdgeAtlasPatternPage() {
   };
 
   const handleValidate = (symbol: string) => {
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&symbol=${encodeURIComponent(symbol)}`);
+    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&instrument=${encodeURIComponent(symbol)}`);
   };
 
   const SortBtn = ({ col, label }: { col: typeof sortBy; label: string }) => (
