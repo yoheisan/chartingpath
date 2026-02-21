@@ -88,7 +88,28 @@ export function EdgeAtlasSection() {
   const [activeTab, setActiveTab] = useState<AssetTab>('stocks');
   const [fxSubFilter, setFxSubFilter] = useState<FxSubFilter>('majors');
   const [liveCountMap, setLiveCountMap] = useState<Record<string, number>>({});
+  const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+
+  // Fetch total active setup counts per asset class (once on mount)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('live_pattern_detections')
+          .select('asset_type')
+          .eq('status', 'active');
+        if (error) { console.error('Tab count fetch error:', error); return; }
+        const counts: Record<string, number> = {};
+        for (const row of (data || [])) {
+          counts[row.asset_type] = (counts[row.asset_type] || 0) + 1;
+        }
+        setTabCounts(counts);
+      } catch (e) {
+        console.error('Tab count fetch error:', e);
+      }
+    })();
+  }, []);
 
   // Fetch active live setup counts for current rankings
   const fetchLiveCounts = useCallback(async (rows: EdgeRanking[], assetType: AssetTab) => {
@@ -282,19 +303,31 @@ export function EdgeAtlasSection() {
 
         {/* Asset Class Tabs */}
         <div className="flex items-center gap-1 flex-wrap mb-2">
-          {ASSET_TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                activeTab === tab.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {ASSET_TABS.map(tab => {
+            const count = tabCounts[tab.key] || 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  activeTab === tab.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+                {count > 0 && (
+                  <span className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold ${
+                    activeTab === tab.key
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : 'bg-green-500/20 text-green-500'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* FX Sub-filter */}
