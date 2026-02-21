@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Zap, Code2, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
 import RunHistory from '@/components/projects/RunHistory';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
+import { GradeBadge, extractGrade } from '@/components/ui/GradeBadge';
+import { trackEvent } from '@/lib/analytics';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ExecutionMetadata {
   progress?: number;
@@ -84,6 +87,10 @@ const ProjectRun = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const previousMetrics = (location.state as any)?.previousMetrics ?? null;
+  const locationMode = (location.state as any)?.mode as 'validate' | 'automate' | null;
+  const [mode] = useState<'validate' | 'automate' | null>(locationMode);
+  const isValidate = mode === 'validate';
+  const [showFullAnalysis, setShowFullAnalysis] = useState(false);
   
   const [run, setRun] = useState<ProjectRun | null>(null);
   const [project, setProject] = useState<Project | null>(null);
@@ -457,10 +464,112 @@ const ProjectRun = () => {
           </Card>
         )}
         
+        {/* Verdict Card — Validate mode only */}
+        {run?.status === 'succeeded' && artifact && isValidate && (() => {
+          // Compute verdict from first setup's aggregate stats
+          const setups = artifact.setups || [];
+          const firstSetup = setups[0];
+          const grade = firstSetup ? extractGrade(firstSetup.quality) : 'C';
+          // We don't have win rate directly here — it's computed in the viewer
+          // Show a prominent signal context card as verdict
+          return (
+            <Card className="mb-6 border-primary/30 bg-primary/5">
+              <CardContent className="py-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <Zap className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-1">Signal Validated</h3>
+                    <div className="flex items-center gap-3 flex-wrap mb-3">
+                      {firstSetup && (
+                        <>
+                          <span className="font-medium">{firstSetup.instrument?.replace('=X', '').replace('=F', '').replace('-USD', '')}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-sm text-muted-foreground">{firstSetup.patternName}</span>
+                          <GradeBadge grade={grade} size="sm" />
+                        </>
+                      )}
+                    </div>
+                    {firstSetup?.tradePlan && (
+                      <div className="grid grid-cols-3 gap-4 p-3 rounded-lg bg-background/50 border border-border/50 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Entry</p>
+                          <p className="font-mono font-medium">{firstSetup.tradePlan.entry}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Stop Loss</p>
+                          <p className="font-mono font-medium text-destructive">{firstSetup.tradePlan.stopLoss}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Take Profit</p>
+                          <p className="font-mono font-medium text-green-500">{firstSetup.tradePlan.takeProfit}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-3 mt-4 flex-wrap">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          trackEvent('pattern_lab.validate_verdict', { grade, instrument: firstSetup?.instrument });
+                          // Navigate to alerts — user is ready to execute
+                          navigate('/alerts');
+                        }}
+                      >
+                        <Bell className="h-4 w-4 mr-2" />
+                        Set Alert
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          trackEvent('pattern_lab.promote_to_automate', {
+                            instrument: firstSetup?.instrument,
+                            pattern: firstSetup?.patternId,
+                          });
+                          // Navigate back to Pattern Lab with automate mode + all context preserved
+                          const inputs = artifact.inputs;
+                          navigate('/projects/pattern-lab/new?mode=automate', {
+                            state: inputs ? {
+                              instruments: inputs.instruments,
+                              patterns: inputs.patterns,
+                              gradeFilter: inputs.gradeFilter,
+                              timeframe: artifact.timeframe,
+                              lookbackYears: artifact.lookbackYears,
+                              riskPerTrade: inputs.riskPerTrade ?? artifact.riskPerTrade ?? 1,
+                            } : undefined,
+                          });
+                        }}
+                      >
+                        <Code2 className="h-4 w-4 mr-2" />
+                        Promote to Automation
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* Artifact Viewer */}
         {run?.status === 'succeeded' && artifact && (
           <>
-            <PatternLabViewer artifact={artifact as any} runId={runId!} previousMetrics={previousMetrics} />
+            {isValidate ? (
+              <Collapsible open={showFullAnalysis} onOpenChange={setShowFullAnalysis}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="mb-4 w-full justify-between text-muted-foreground">
+                    {showFullAnalysis ? 'Hide' : 'See'} Full Analysis
+                    {showFullAnalysis ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <PatternLabViewer artifact={artifact as any} runId={runId!} previousMetrics={previousMetrics} />
+                </CollapsibleContent>
+              </Collapsible>
+            ) : (
+              <PatternLabViewer artifact={artifact as any} runId={runId!} previousMetrics={previousMetrics} />
+            )}
             <DisclaimerBanner className="mt-8" />
           </>
         )}

@@ -288,8 +288,10 @@ const PatternLabWizard = () => {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<PlanTier>('FREE');
-  const [paramsOpen, setParamsOpen] = useState(false);
-  const [patternsOpen, setPatternsOpen] = useState(false);
+  // In validate mode, collapse by default (user arrives pre-filled); in automate, expand
+  const isValidate = mode === 'validate';
+  const [paramsOpen, setParamsOpen] = useState(!isValidate && !urlInstrument);
+  const [patternsOpen, setPatternsOpen] = useState(!isValidate && !urlPattern);
   
   // Use centralized auth context instead of local state
   const { isAuthenticated, isAuthLoading, session } = useAuth();
@@ -455,7 +457,8 @@ const PatternLabWizard = () => {
       }
       
       toast.success('Pattern Lab backtest started!');
-      navigate(`/projects/runs/${data.runId}`);
+      // Forward mode to results page so it can render mode-aware UI
+      navigate(`/projects/runs/${data.runId}`, { state: { mode } });
     } catch (error) {
       console.error('Run error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start run');
@@ -596,6 +599,34 @@ const PatternLabWizard = () => {
           </div>
         )}
 
+        {/* Signal Context Card — Validate mode only, shows what they're confirming */}
+        {isValidate && selectedInstruments.length > 0 && selectedPatterns.length > 0 && (
+          <Card className="mb-6 border-primary/30 bg-primary/5">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-4">
+                <Zap className="h-8 w-8 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">Validating signal</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-foreground">
+                      {selectedInstruments[0]?.replace('=X', '').replace('=F', '').replace('-USD', '')}
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-sm text-muted-foreground">
+                      {PATTERNS.find(p => p.id === selectedPatterns[0])?.name || selectedPatterns[0]}
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-sm text-muted-foreground">
+                      {TIMEFRAMES.find(t => t.value === timeframe)?.label}
+                    </span>
+                    {urlGrade && <GradeBadge grade={urlGrade} size="sm" />}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Main form — always shown, mode just adds framing context */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Form */}
@@ -604,35 +635,40 @@ const PatternLabWizard = () => {
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Instruments</CardTitle>
-                <CardDescription>Search and add instruments to backtest</CardDescription>
+                <CardDescription>
+                  {isValidate
+                    ? 'Validating this specific instrument'
+                    : 'Search and add instruments to backtest'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Symbol Search Button */}
-                <UniversalSymbolSearch
-                  onSelect={(symbol, name, category) => {
-                    if (!selectedInstruments.includes(symbol)) {
-                      setSelectedInstruments(prev => [...prev, symbol]);
-                      // Update asset class to match selected category
-                      const categoryMap: Record<string, string> = {
-                        'stocks': 'stocks',
-                        'crypto': 'crypto',
-                        'fx': 'fx',
-                        'commodities': 'commodities',
-                        'indices': 'indices',
-                        'etfs': 'etfs',
-                      };
-                      if (categoryMap[category]) {
-                        setAssetClass(categoryMap[category]);
+                {/* Symbol Search — hidden in validate mode when instrument is locked */}
+                {!isValidate && (
+                  <UniversalSymbolSearch
+                    onSelect={(symbol, name, category) => {
+                      if (!selectedInstruments.includes(symbol)) {
+                        setSelectedInstruments(prev => [...prev, symbol]);
+                        const categoryMap: Record<string, string> = {
+                          'stocks': 'stocks',
+                          'crypto': 'crypto',
+                          'fx': 'fx',
+                          'commodities': 'commodities',
+                          'indices': 'indices',
+                          'etfs': 'etfs',
+                        };
+                        if (categoryMap[category]) {
+                          setAssetClass(categoryMap[category]);
+                        }
                       }
+                    }}
+                    trigger={
+                      <Button variant="outline" className="w-full justify-start gap-2 h-11">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Search for instruments...</span>
+                      </Button>
                     }
-                  }}
-                  trigger={
-                    <Button variant="outline" className="w-full justify-start gap-2 h-11">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Search for instruments...</span>
-                    </Button>
-                  }
-                />
+                  />
+                )}
                 
                 {/* Selected Instruments */}
                 {selectedInstruments.length > 0 ? (
@@ -1111,30 +1147,26 @@ const PatternLabWizard = () => {
                   Estimated runtime: 1-3 minutes
                 </p>
                 
-                {/* What you'll get - integrated inline */}
+                {/* What you'll get - mode-aware */}
                 <div className="pt-4 border-t border-border/50">
                   <p className="text-xs font-medium text-muted-foreground mb-3">What You'll Get</p>
                   <div className="grid grid-cols-1 gap-1.5 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
-                      <span>Win rate & expectancy per pattern</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
-                      <span>Regime breakdown (trend + volatility)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
-                      <span>Do-not-trade rules (low-edge regimes)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
-                      <span>Full trade log with R-multiples</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1 w-1 rounded-full bg-green-500 flex-shrink-0" />
-                      <span>Equity curve & drawdown chart</span>
-                    </div>
+                    {(isValidate ? [
+                      'Go / No-Go verdict',
+                      'Win rate on this pair',
+                      'Trade plan with entry / SL / TP',
+                      'Grade confirmation',
+                    ] : [
+                      'Full equity curve & drawdown',
+                      'Setup optimizer with exit models',
+                      'Repeatable winners / losers analysis',
+                      'Export Pine Script v6 / MQL4/5',
+                    ]).map(item => (
+                      <div key={item} className="flex items-center gap-2">
+                        <div className={`h-1 w-1 rounded-full flex-shrink-0 ${isValidate ? 'bg-primary' : 'bg-green-500'}`} />
+                        <span>{item}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>

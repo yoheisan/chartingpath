@@ -45,7 +45,9 @@ export type AnalyticsEvent =
   | 'landing_presets_view_all'
   | 'landing_pricing_view'
   | 'pattern_shared'
-  | 'shared_pattern_viewed';
+  | 'shared_pattern_viewed'
+  | 'pattern_lab.validate_verdict'
+  | 'pattern_lab.promote_to_automate';
 
 // Event properties types
 export interface PresetLoadedProps {
