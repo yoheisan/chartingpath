@@ -13,8 +13,18 @@ serve(async (req) => {
   }
 
   try {
-    const { articleId, articleIds } = await req.json();
-    
+    let articleId: string | undefined;
+    let articleIds: string[] | undefined;
+    let batchSize = 5; // Process max 5 articles per invocation
+    try {
+      const body = await req.json();
+      articleId = body.articleId;
+      articleIds = body.articleIds;
+      if (body.batchSize) batchSize = Math.min(body.batchSize, 10);
+    } catch {
+      // No body — process all unprocessed articles
+    }
+
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY not configured');
 
@@ -23,43 +33,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get articles to process
+    // Get published articles
     const idsToProcess = articleIds || (articleId ? [articleId] : null);
-    
     let query = supabase
       .from('learning_articles')
       .select('id, title, content, slug, category, tags')
       .eq('status', 'published');
-    
     if (idsToProcess) {
       query = query.in('id', idsToProcess);
     }
-    
     const { data: articles, error: articlesError } = await query;
     if (articlesError) throw articlesError;
     if (!articles || articles.length === 0) throw new Error('No articles found');
 
-    // Check which articles already have pieces
+    // Find which articles already have pieces
     const { data: existingPieces } = await supabase
       .from('educational_content_pieces')
       .select('article_id')
       .in('article_id', articles.map(a => a.id));
-    
     const existingArticleIds = new Set((existingPieces || []).map(p => p.article_id));
     const newArticles = articles.filter(a => !existingArticleIds.has(a.id));
-    
+
     if (newArticles.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'All articles already have educational pieces', processed: 0 }),
+        JSON.stringify({ message: 'All articles already have educational pieces', processed: 0, remaining: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const allPieces: any[] = [];
-    
-    for (const article of newArticles) {
+    // Only process a batch
+    const batch = newArticles.slice(0, batchSize);
+    let piecesGenerated = 0;
+
+    for (const article of batch) {
       console.log(`Generating pieces for: ${article.title}`);
-      
+
       const prompt = `You are a financial education content strategist for @chartingpath on Twitter/X.
 
 Break this trading education article into exactly 4 tweet-sized educational posts. Each tweet should be self-contained, valuable, and engaging.
@@ -91,94 +99,89 @@ Respond in this exact JSON format (no markdown, just raw JSON):
   {"sequence": 4, "type": "insight", "content": "tweet text here", "hashtags": ["Trading", "Finance"]}
 ]`;
 
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 1500, temperature: 0.7 },
-          }),
-        }
-      );
-
-      if (!geminiResponse.ok) {
-        console.error(`Gemini error for ${article.title}: ${geminiResponse.status}`);
-        continue;
-      }
-
-      const geminiData = await geminiResponse.json();
-      let rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      // Clean markdown fences
-      rawText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      
       try {
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 1500, temperature: 0.7 },
+            }),
+          }
+        );
+
+        if (!geminiResponse.ok) {
+          console.error(`Gemini error for ${article.title}: ${geminiResponse.status}`);
+          continue;
+        }
+
+        const geminiData = await geminiResponse.json();
+        let rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        rawText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
         const pieces = JSON.parse(rawText);
         const linkUrl = `https://chartingpath.com/learn/${article.slug}`;
-        
-        for (const piece of pieces) {
-          allPieces.push({
-            article_id: article.id,
-            article_title: article.title,
-            sequence_number: piece.sequence,
-            total_in_series: pieces.length,
-            content: piece.content,
-            piece_type: piece.type,
-            link_back_url: linkUrl,
-            hashtags: piece.hashtags || [],
-          });
+
+        const rows = pieces.map((piece: any) => ({
+          article_id: article.id,
+          article_title: article.title,
+          sequence_number: piece.sequence,
+          total_in_series: pieces.length,
+          content: piece.content,
+          piece_type: piece.type,
+          link_back_url: linkUrl,
+          hashtags: piece.hashtags || [],
+        }));
+
+        // Insert immediately per article so progress is saved
+        const { error: insertError } = await supabase
+          .from('educational_content_pieces')
+          .insert(rows);
+
+        if (insertError) {
+          console.error(`Insert error for ${article.title}:`, insertError.message);
+        } else {
+          piecesGenerated += rows.length;
+          console.log(`✅ Inserted ${rows.length} pieces for: ${article.title}`);
         }
       } catch (parseError) {
-        console.error(`Failed to parse pieces for ${article.title}:`, parseError);
+        console.error(`Failed for ${article.title}:`, parseError);
         continue;
       }
 
-      // Rate limit between articles
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Small delay between Gemini calls
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    if (allPieces.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No pieces generated', processed: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Insert all pieces
-    const { error: insertError } = await supabase
+    // Recompute global_order for all pieces
+    const { data: allPieces } = await supabase
       .from('educational_content_pieces')
-      .insert(allPieces);
-    
-    if (insertError) throw insertError;
-
-    // Now assign global_order to ALL active pieces (including newly added ones)
-    // Order by article category then sequence for progressive learning
-    const { data: allActivePieces, error: fetchError } = await supabase
-      .from('educational_content_pieces')
-      .select('id, article_title, sequence_number, piece_type')
+      .select('id')
       .eq('is_active', true)
       .order('article_title', { ascending: true })
       .order('sequence_number', { ascending: true });
-    
-    if (fetchError) throw fetchError;
 
-    // Assign sequential global_order
-    for (let i = 0; i < (allActivePieces || []).length; i++) {
-      await supabase
-        .from('educational_content_pieces')
-        .update({ global_order: i })
-        .eq('id', allActivePieces![i].id);
+    if (allPieces) {
+      for (let i = 0; i < allPieces.length; i++) {
+        await supabase
+          .from('educational_content_pieces')
+          .update({ global_order: i })
+          .eq('id', allPieces[i].id);
+      }
     }
 
-    console.log(`Generated ${allPieces.length} pieces from ${newArticles.length} articles. Total queue: ${allActivePieces?.length}`);
+    const remaining = newArticles.length - batch.length;
+    console.log(`Generated ${piecesGenerated} pieces from ${batch.length} articles. ${remaining} articles remaining.`);
 
     return new Response(
       JSON.stringify({
-        processed: newArticles.length,
-        piecesGenerated: allPieces.length,
-        totalQueue: allActivePieces?.length || 0,
+        processed: batch.length,
+        piecesGenerated,
+        totalQueue: allPieces?.length || 0,
+        remaining,
+        message: remaining > 0 ? `${remaining} articles remaining. Call again to process more.` : 'All articles processed!',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
