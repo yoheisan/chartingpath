@@ -236,6 +236,7 @@ const PatternLabWizard = () => {
   const urlPattern = searchParams.get('pattern');
   // Normalize timeframe to lowercase to match DATA_COVERAGE keys (e.g. '1D' -> '1d', '1W' -> '1wk')
   const rawUrlTimeframe = searchParams.get('timeframe');
+  const urlGrade = searchParams.get('grade')?.toUpperCase() as GradeLetter | null;
   const normalizeTimeframe = (tf: string | null): string | null => {
     if (!tf) return null;
     const map: Record<string, string> = { '1D': '1d', '1W': '1wk', '1H': '1h', '4H': '4h', '8H': '8h', '15M': '15m', '5M': '5m', '1M': '1M' };
@@ -267,11 +268,18 @@ const PatternLabWizard = () => {
     return 'custom';
   };
   
+  // If a specific grade came via URL (from screener/copilot), include it + grades above it
+  const gradeHierarchy: GradeLetter[] = ['A', 'B', 'C', 'D', 'F'];
+  const urlGradeFilter: GradeLetter[] | null = urlGrade 
+    ? gradeHierarchy.slice(0, gradeHierarchy.indexOf(urlGrade as GradeLetter) + 1) as GradeLetter[]
+    : null;
+
   const [gradePreset, setGradePreset] = useState<GradePreset>(
+    urlGradeFilter ? getPresetFromGrades(urlGradeFilter) :
     prefilledState?.gradeFilter ? getPresetFromGrades(prefilledState.gradeFilter) : 'moderate'
   );
   const [selectedGrades, setSelectedGrades] = useState<GradeLetter[]>(
-    (prefilledState?.gradeFilter as GradeLetter[]) ?? ['A', 'B', 'C']
+    urlGradeFilter ?? (prefilledState?.gradeFilter as GradeLetter[]) ?? ['A', 'B', 'C']
   );
   
   // UI state
