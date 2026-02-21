@@ -87,7 +87,36 @@ export function EdgeAtlasSection() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AssetTab>('stocks');
   const [fxSubFilter, setFxSubFilter] = useState<FxSubFilter>('majors');
+  const [liveCountMap, setLiveCountMap] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+
+  // Fetch active live setup counts for current rankings
+  const fetchLiveCounts = useCallback(async (rows: EdgeRanking[], assetType: AssetTab) => {
+    if (rows.length === 0) return;
+    try {
+      const patternIds = [...new Set(rows.map(r => PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id))];
+      const timeframes = [...new Set(rows.map(r => r.timeframe))];
+
+      const { data, error } = await supabase
+        .from('live_pattern_detections')
+        .select('pattern_id, timeframe')
+        .eq('status', 'active')
+        .eq('asset_type', assetType)
+        .in('pattern_id', patternIds)
+        .in('timeframe', timeframes);
+
+      if (error) { console.error('Live count fetch error:', error); return; }
+
+      const counts: Record<string, number> = {};
+      for (const row of (data || [])) {
+        const key = `${row.pattern_id}|${row.timeframe}`;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+      setLiveCountMap(counts);
+    } catch (e) {
+      console.error('Live count fetch error:', e);
+    }
+  }, []);
 
   const fetchRankings = useCallback(async (tab: AssetTab, fxFilter: FxSubFilter) => {
     const cacheKey = tab === 'fx' ? `fx-${fxFilter}` : tab;
@@ -192,10 +221,18 @@ export function EdgeAtlasSection() {
     fetchRankings(activeTab, fxSubFilter);
   }, [activeTab, fxSubFilter, fetchRankings]);
 
+  // Fetch live counts whenever rankings change
+  useEffect(() => {
+    if (rankings.length > 0) {
+      fetchLiveCounts(rankings, activeTab);
+    } else {
+      setLiveCountMap({});
+    }
+  }, [rankings, activeTab, fetchLiveCounts]);
+
   const handleTabChange = (tab: AssetTab) => {
     setActiveTab(tab);
   };
-
 
   const handlePatternClick = (r: EdgeRanking) => {
     navigate(`/edge-atlas/${encodeURIComponent(r.pattern_id)}?timeframe=${r.timeframe}&assetType=${activeTab}&patternName=${encodeURIComponent(r.pattern_name)}`);
@@ -319,6 +356,8 @@ export function EdgeAtlasSection() {
             {rankings.map((r, i) => {
               const isLowSample = r.total_trades < CONFIDENCE_THRESHOLD;
               const isTop3 = i < 3;
+              const screenerId = PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id;
+              const liveCount = liveCountMap[`${screenerId}|${r.timeframe}`] || 0;
               return (
                 <div
                   key={`${r.pattern_id}-${r.timeframe}`}
@@ -361,6 +400,11 @@ export function EdgeAtlasSection() {
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
                       Live Setups
+                      {liveCount > 0 && (
+                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-bold">
+                          {liveCount}
+                        </span>
+                      )}
                     </Button>
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleBacktest(r)}>
                       <FlaskConical className="h-3 w-3" />
