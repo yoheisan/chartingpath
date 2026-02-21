@@ -5,6 +5,7 @@ import Footer from "./Footer";
 import { TradingCopilot, useTradingCopilotContext } from "./copilot";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 interface LayoutProps {
   children: ReactNode;
@@ -23,6 +24,9 @@ const Layout = ({ children }: LayoutProps) => {
   
   // Prefetch member route chunks once authenticated
   usePrefetchRoutes(isAuthenticated);
+  
+  // Track page views & time-on-page
+  usePageTracking();
   
   const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
   const showCopilot = !COPILOT_EXCLUDED_ROUTES.some(route => location.pathname.startsWith(route));

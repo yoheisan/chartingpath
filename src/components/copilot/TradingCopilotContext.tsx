@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useCallback, useRef, useEffect } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { ChartAnalysisResult } from '@/hooks/useChartAnalysis';
 
 export interface ChartContextData {
@@ -34,6 +35,7 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const open = useCallback(() => {
+    trackEvent('copilot.open', { trigger: 'manual' });
     setIsOpen(true);
   }, []);
 
@@ -45,6 +47,11 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
     if (chartData) {
       contextRef.current = chartData;
     }
+    trackEvent('copilot.open', {
+      trigger: 'chart_analysis',
+      symbol: chartData?.symbol || null,
+      timeframe: chartData?.timeframe || null,
+    });
     setPendingContext(context);
     setPendingAnalysis(null);
     setIsOpen(true);
