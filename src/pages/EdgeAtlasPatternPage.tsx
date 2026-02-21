@@ -41,10 +41,12 @@ export default function EdgeAtlasPatternPage() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'est_annualized_pct' | 'win_rate_pct' | 'total_trades' | 'expectancy_r'>('est_annualized_pct');
   const [totalSampleSize, setTotalSampleSize] = useState(0);
+  const [liveCountMap, setLiveCountMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!patternId) return;
     fetchTickers();
+    fetchLiveCounts();
   }, [patternId, timeframe, assetType]);
 
   const fetchTickers = async () => {
@@ -111,6 +113,27 @@ export default function EdgeAtlasPatternPage() {
     }
   };
 
+  const fetchLiveCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('live_pattern_detections')
+        .select('instrument')
+        .eq('pattern_id', patternId!)
+        .eq('timeframe', timeframe)
+        .eq('asset_type', assetType)
+        .eq('status', 'active');
+
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of (data || [])) {
+        counts[row.instrument] = (counts[row.instrument] || 0) + 1;
+      }
+      setLiveCountMap(counts);
+    } catch (e) {
+      console.error('Live count fetch error:', e);
+    }
+  };
+
   const handleSort = (col: typeof sortBy) => {
     setSortBy(col);
     setTickers(prev => [...prev].sort((a, b) => b[col] - a[col]));
@@ -160,6 +183,15 @@ export default function EdgeAtlasPatternPage() {
               {TF_LABEL[timeframe] || timeframe}
             </Badge>
             <Badge variant="secondary" className="text-xs capitalize">{assetType}</Badge>
+            {(() => {
+              const totalLive = Object.values(liveCountMap).reduce((a, b) => a + b, 0);
+              return totalLive > 0 ? (
+                <Badge className="bg-primary/20 text-primary border border-primary/30 gap-1 text-xs">
+                  <Zap className="h-3 w-3" />
+                  {totalLive} live signal{totalLive !== 1 ? 's' : ''}
+                </Badge>
+              ) : null;
+            })()}
           </div>
           <p className="text-muted-foreground mt-2 text-sm">
             {loading ? '...' : `${tickers.length} instruments with positive edge on this pattern/timeframe combination. n=${totalSampleSize}`}
@@ -270,9 +302,25 @@ export default function EdgeAtlasPatternPage() {
 
                   {/* CTAs */}
                   <div className="hidden sm:flex items-center gap-2 justify-end">
-                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleLiveSignals(t.symbol)}>
-                      <Zap className="h-3 w-3" /> Live
-                    </Button>
+                    {(() => {
+                      const liveCount = liveCountMap[t.symbol] || 0;
+                      return (
+                        <Button
+                          size="sm"
+                          variant={liveCount > 0 ? 'default' : 'outline'}
+                          className={`text-xs h-8 gap-1.5 ${liveCount > 0 ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' : ''}`}
+                          onClick={() => handleLiveSignals(t.symbol)}
+                        >
+                          <Zap className={`h-3 w-3 ${liveCount > 0 ? 'text-primary' : ''}`} />
+                          Live
+                          {liveCount > 0 && (
+                            <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px] font-bold bg-primary/20 text-primary">
+                              {liveCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      );
+                    })()}
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleValidate(t.symbol)}>
                       <FlaskConical className="h-3 w-3" /> Validate
                     </Button>
