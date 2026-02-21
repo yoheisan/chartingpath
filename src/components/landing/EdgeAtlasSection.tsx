@@ -61,12 +61,12 @@ const FX_MAJORS_SET = new Set(FX_MAJORS);
 type AssetTab = 'stocks' | 'crypto' | 'fx' | 'indices' | 'commodities';
 type FxSubFilter = 'all' | 'majors' | 'crosses';
 
-const ASSET_TABS: { key: AssetTab; label: string }[] = [
-  { key: 'stocks', label: 'Stocks' },
-  { key: 'crypto', label: 'Crypto' },
-  { key: 'fx', label: 'FX' },
-  { key: 'indices', label: 'Indices' },
-  { key: 'commodities', label: 'Commodities' },
+const ASSET_TABS: { key: AssetTab; label: string; universe: number }[] = [
+  { key: 'stocks', label: 'Stocks', universe: 342 },
+  { key: 'crypto', label: 'Crypto', universe: 98 },
+  { key: 'fx', label: 'FX', universe: 89 },
+  { key: 'indices', label: 'Indices', universe: 32 },
+  { key: 'commodities', label: 'Commodities', universe: 28 },
 ];
 
 const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
@@ -316,15 +316,13 @@ export function EdgeAtlasSection() {
                 }`}
               >
                 {tab.label}
-                {count > 0 && (
-                  <span className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold ${
-                    activeTab === tab.key
-                      ? 'bg-primary-foreground/20 text-primary-foreground'
-                      : 'bg-green-500/20 text-green-500'
-                  }`}>
-                    {count}
-                  </span>
-                )}
+                <span className={`text-[10px] font-mono ${
+                  activeTab === tab.key
+                    ? 'text-primary-foreground/70'
+                    : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'
+                }`}>
+                  {count}/{tab.universe}
+                </span>
               </button>
             );
           })}
