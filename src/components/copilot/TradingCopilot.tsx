@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
+import { CopilotRichMessage } from "./CopilotRichMessage";
 import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
@@ -399,9 +399,7 @@ export function TradingCopilot({
                   )}
                   <div className={cn("max-w-[85%] rounded-lg px-3 py-2 text-sm", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}>
                     {message.role === "assistant" ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80">
-                        <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
-                      </div>
+                      <CopilotRichMessage content={message.content || "..."} />
                     ) : message.analysisData ? (
                       <span className="text-xs opacity-80">Analyze {message.analysisData.symbol} ({message.analysisData.timeframe})</span>
                     ) : (
