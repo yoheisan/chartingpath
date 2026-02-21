@@ -1373,6 +1373,111 @@ export type Database = {
         }
         Relationships: []
       }
+      educational_content_pieces: {
+        Row: {
+          article_id: string | null
+          article_title: string
+          content: string
+          created_at: string
+          global_order: number | null
+          hashtags: string[] | null
+          id: string
+          is_active: boolean
+          last_posted_at: string | null
+          link_back_url: string | null
+          piece_type: string
+          posted_count: number
+          sequence_number: number
+          total_in_series: number
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          article_title: string
+          content: string
+          created_at?: string
+          global_order?: number | null
+          hashtags?: string[] | null
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          link_back_url?: string | null
+          piece_type: string
+          posted_count?: number
+          sequence_number: number
+          total_in_series: number
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          article_title?: string
+          content?: string
+          created_at?: string
+          global_order?: number | null
+          hashtags?: string[] | null
+          id?: string
+          is_active?: boolean
+          last_posted_at?: string | null
+          link_back_url?: string | null
+          piece_type?: string
+          posted_count?: number
+          sequence_number?: number
+          total_in_series?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "educational_content_pieces_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "article_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "educational_content_pieces_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learning_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      educational_schedule_state: {
+        Row: {
+          created_at: string
+          current_position: number
+          id: string
+          is_active: boolean
+          last_scheduled_at: string | null
+          market_region: string
+          optimal_post_time_utc: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_position?: number
+          id?: string
+          is_active?: boolean
+          last_scheduled_at?: string | null
+          market_region: string
+          optimal_post_time_utc: string
+          timezone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_position?: number
+          id?: string
+          is_active?: boolean
+          last_scheduled_at?: string | null
+          market_region?: string
+          optimal_post_time_utc?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       extracted_strings: {
         Row: {
           context_element: string | null

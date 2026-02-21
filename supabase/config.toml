@@ -203,3 +203,9 @@ verify_jwt = false
 
 [functions.service-health-ping]
 verify_jwt = false
+
+[functions.generate-educational-posts]
+verify_jwt = false
+
+[functions.schedule-educational-posts]
+verify_jwt = false

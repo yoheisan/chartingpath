@@ -212,6 +212,28 @@ Stocks A-G / H-O / P-Z seeding windows based on alphabetical sort.
 
 ---
 
+## Educational Content Pipeline ✅ (Implemented 2026-02-21)
+
+### Architecture
+- **Source**: 30+ published learning articles → Gemini breaks each into 4 tweet-sized pieces
+- **Rotation**: 4 markets (US, EU, Tokyo, Shanghai) each get 1 unique post/day
+- **Scheduling**: Round-robin with offset — US=pos 0, EU=pos 1, Tokyo=pos 2, Shanghai=pos 3; advance by 4 each day
+- **Loop**: After ~30 days (120 pieces / 4 markets), content loops back (evergreen)
+
+### Optimal Posting Times
+| Market | UTC | Local | Rationale |
+|--------|-----|-------|-----------|
+| 🇺🇸 US | 14:00 | 9:00 AM EST | Market open |
+| 🇬🇧 EU | 08:30 | 8:30 AM GMT | Morning pre-market |
+| 🇯🇵 Tokyo | 00:00 | 9:00 AM JST | Morning session |
+| 🇨🇳 Shanghai | 01:00 | 9:00 AM HKT | Morning session |
+
+### Cron Job (manual setup needed)
+- **Schedule**: `0 20 * * 0-4` (8 PM UTC, Sun-Thu)
+- **Target**: `schedule-educational-posts`
+
+---
+
 ## Notification System Plan (Next)
 
 ### Phase 1 — VAPID Keys ✅ (secrets already exist)

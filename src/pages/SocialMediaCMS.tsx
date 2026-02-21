@@ -7,7 +7,8 @@ import { ScheduledPostsManager } from "@/components/cms/ScheduledPostsManager";
 import { SocialAccountsManager } from "@/components/cms/SocialAccountsManager";
 import { PostAnalytics } from "@/components/cms/PostAnalytics";
 import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft } from "lucide-react";
+import { EducationalContentManager } from "@/components/cms/EducationalContentManager";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -25,14 +26,18 @@ export default function SocialMediaCMS() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="schedule" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Schedule</span>
           </TabsTrigger>
+          <TabsTrigger value="educational" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            <span className="hidden sm:inline">Educational</span>
+          </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <Library className="h-4 w-4" />
-            <span className="hidden sm:inline">Content Library</span>
+            <span className="hidden sm:inline">Library</span>
           </TabsTrigger>
           <TabsTrigger value="accounts" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -48,6 +53,12 @@ export default function SocialMediaCMS() {
           <MarketReportScheduler />
           <Card className="p-6">
             <ScheduledPostsManager />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="educational" className="space-y-4">
+          <Card className="p-6">
+            <EducationalContentManager />
           </Card>
         </TabsContent>
 
