@@ -450,10 +450,11 @@ export function TradingCopilot({
                 const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
                 if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
               }}
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs shadow-lg backdrop-blur-sm hover:bg-primary transition-all animate-bounce"
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-0.5 p-2 rounded-lg bg-background/80 border border-border/50 text-muted-foreground shadow-lg backdrop-blur-sm hover:text-foreground hover:border-border transition-all cursor-pointer"
+              aria-label="Scroll down for more"
             >
-              <ChevronDown className="h-3.5 w-3.5" />
-              <span>Scroll down</span>
+              <ChevronDown className="h-5 w-5 animate-bounce" />
+              <span className="text-[10px] font-medium">More below</span>
             </button>
           )}
         </div>
