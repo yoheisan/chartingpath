@@ -14,7 +14,8 @@ import {
   BookOpen,
   BarChart3,
   PanelLeftOpen,
-  PanelLeftClose
+  PanelLeftClose,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -78,7 +79,9 @@ export function TradingCopilot({
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollDown, setShowScrollDown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  
   const contextProcessedRef = useRef(false);
   const isMobile = useIsMobile();
 
@@ -98,11 +101,27 @@ export function TradingCopilot({
   // Track which conversation the current in-memory messages belong to
   const activeConvoRef = useRef<string | null>(null);
 
+  // Check scroll position for scroll-down indicator
+  const checkScrollPosition = useCallback(() => {
+    const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    if (!viewport) return;
+    const { scrollTop, scrollHeight, clientHeight } = viewport;
+    setShowScrollDown(scrollHeight - scrollTop - clientHeight > 60);
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+        // Attach scroll listener
+        viewport.addEventListener('scroll', checkScrollPosition);
+        // Initial check
+        setTimeout(checkScrollPosition, 100);
+        return () => viewport.removeEventListener('scroll', checkScrollPosition);
+      }
     }
-  }, [messages]);
+  }, [messages, checkScrollPosition]);
 
   useEffect(() => {
     if (isExpanded && inputRef.current) {
@@ -353,75 +372,91 @@ export function TradingCopilot({
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          {isLoadingHistory ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="space-y-4">
-              <div className="text-center py-6">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <h4 className="font-semibold mb-1">How can I help you trade smarter?</h4>
-                <p className="text-sm text-muted-foreground">
-                  Find patterns, analyze statistics, create alerts, or generate scripts.
-                </p>
+        <div className="flex-1 relative min-h-0">
+          <ScrollArea className="h-full p-4" ref={scrollRef}>
+            {isLoadingHistory ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium px-1">Quick actions</p>
-                <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                  {QUICK_ACTIONS.map((action) => (
-                    <Button key={action.label} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
-                      <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                      <span className="text-xs">{action.label}</span>
-                    </Button>
-                  ))}
+            ) : messages.length === 0 ? (
+              <div className="space-y-4">
+                <div className="text-center py-6">
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
+                    <Sparkles className="h-8 w-8 text-primary" />
+                  </div>
+                  <h4 className="font-semibold mb-1">How can I help you trade smarter?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Find patterns, analyze statistics, create alerts, or generate scripts.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium px-1">Quick actions</p>
+                  <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+                    {QUICK_ACTIONS.map((action) => (
+                      <Button key={action.label} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
+                        <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
+                        <span className="text-xs">{action.label}</span>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className={cn("flex flex-col gap-2", message.role === "user" ? "items-end" : "items-start")}>
-                  {message.role === "user" && message.analysisData && (
-                    <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                      <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="h-3.5 w-3.5" />
-                          <span>Chart Analysis</span>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div key={message.id} className={cn("flex flex-col gap-2", message.role === "user" ? "items-end" : "items-start")}>
+                    {message.role === "user" && message.analysisData && (
+                      <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+                        <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="h-3.5 w-3.5" />
+                            <span>Chart Analysis</span>
+                          </div>
                         </div>
-                      </div>
-                      <ChartAnalysisSummary analysis={message.analysisData} />
-                    </Card>
-                  )}
-                  <div className={cn(
-                    "rounded-lg px-3 py-2 text-sm",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground max-w-[85%]"
-                      : "bg-muted w-full"
-                  )}>
-                    {message.role === "assistant" ? (
-                      <CopilotRichMessage content={message.content || "..."} />
-                    ) : message.analysisData ? (
-                      <span className="text-xs opacity-80">Analyze {message.analysisData.symbol} ({message.analysisData.timeframe})</span>
-                    ) : (
-                      message.content
+                        <ChartAnalysisSummary analysis={message.analysisData} />
+                      </Card>
                     )}
+                    <div className={cn(
+                      "rounded-lg px-3 py-2 text-sm",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground max-w-[85%]"
+                        : "bg-muted w-full"
+                    )}>
+                      {message.role === "assistant" ? (
+                        <CopilotRichMessage content={message.content || "..."} />
+                      ) : message.analysisData ? (
+                        <span className="text-xs opacity-80">Analyze {message.analysisData.symbol} ({message.analysisData.timeframe})</span>
+                      ) : (
+                        message.content
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {isLoading && messages[messages.length - 1]?.role === "user" && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg px-3 py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Scroll down indicator */}
+          {showScrollDown && (
+            <button
+              onClick={() => {
+                const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+                if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+              }}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs shadow-lg backdrop-blur-sm hover:bg-primary transition-all animate-bounce"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+              <span>Scroll down</span>
+            </button>
           )}
-        </ScrollArea>
+        </div>
 
         {/* Input */}
         <div className="p-4 border-t bg-background">
