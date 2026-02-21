@@ -153,7 +153,7 @@ Stocks A-G / H-O / P-Z seeding windows based on alphabetical sort.
 ---
 
 ### Phase 3: zh-CN Localization (Partial)
-**Status**: 🔲 Planned
+**Status**: ✅ COMPLETED (2026-02-21)
 **Risk Level**: VERY LOW — frontend-only changes, no backend impact
 **API Impact**: NONE
 

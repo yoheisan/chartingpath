@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { MarketReportProvider } from "@/contexts/MarketReportContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import HreflangTags from "@/components/HreflangTags";
 import Bootstrap from "./Bootstrap";
 import "./index.css";
 import "./i18n/config";
@@ -70,6 +71,7 @@ createRoot(document.getElementById("root")!).render(
           <AuthProvider>
             <MarketReportProvider>
               <ErrorBoundary>
+                <HreflangTags />
                 <Bootstrap />
               </ErrorBoundary>
             </MarketReportProvider>
