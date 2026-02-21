@@ -209,3 +209,6 @@ verify_jwt = false
 
 [functions.schedule-educational-posts]
 verify_jwt = false
+
+[functions.analyze-conversation-intents]
+verify_jwt = false

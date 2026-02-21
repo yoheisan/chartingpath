@@ -24,6 +24,7 @@ import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
+import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
@@ -97,6 +98,8 @@ export function TradingCopilot({
     startNewChat,
     isAuthenticated,
   } = useCopilotConversations();
+
+  const { trackQuestion } = useCopilotFeedback();
 
   // Track which conversation the current in-memory messages belong to
   const activeConvoRef = useRef<string | null>(null);
@@ -277,9 +280,13 @@ export function TradingCopilot({
         }
       }
 
-      // Persist assistant message
+      // Persist assistant message and track for intent analysis
       if (convoId && assistantContent) {
         saveMessage(convoId, "assistant", assistantContent);
+      }
+      // Fire-and-forget intent classification
+      if (assistantContent) {
+        trackQuestion(userMessage, assistantContent);
       }
 
     } catch (error) {
