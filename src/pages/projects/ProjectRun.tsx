@@ -90,7 +90,7 @@ const ProjectRun = () => {
   const locationMode = (location.state as any)?.mode as 'validate' | 'automate' | null;
   const [mode] = useState<'validate' | 'automate' | null>(locationMode);
   const isValidate = mode === 'validate';
-  const [showFullAnalysis, setShowFullAnalysis] = useState(false);
+  const [showFullAnalysis, setShowFullAnalysis] = useState(true);
   
   const [run, setRun] = useState<ProjectRun | null>(null);
   const [project, setProject] = useState<Project | null>(null);
