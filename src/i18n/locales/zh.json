@@ -1,8 +1,13 @@
 {
   "hero": {
-    "subtitle": "最佳交易需要研究，然后是承诺。",
-    "cta": "免费开始",
-    "free_text": "$0 永久免费，无需信用卡"
+    "headline1": "TradingView展示形态。",
+    "headline2": "ChartingPath展示它们何时成立。",
+    "subtitle": "扫描市场形态信号。获取包含入场、止损、止盈的可重复交易计划。",
+    "subtext": "历史回测 + 警报。专为加密货币波段交易者打造。",
+    "cta": "打开扫描器",
+    "ctaSecondary": "创建免费警报",
+    "free_text": "$0 永久免费，无需信用卡",
+    "disclaimer": "过去的表现不保证未来的结果。仅供教育用途。"
   },
   "features": {
     "no_coding": "无需编程",
@@ -13,16 +18,43 @@
     "home": "首页",
     "pricing": "价格",
     "aiBuilder": "AI策略构建器",
-    "patternGenerator": "模式生成器",
-    "patternLibrary": "模式库",
-    "patternQuiz": "模式测试",
+    "patternGenerator": "形态生成器",
+    "patternLibrary": "形态库",
+    "patternQuiz": "形态测验",
     "tradingStrategies": "交易策略",
     "scriptGenerator": "脚本生成器",
     "pipCalculator": "点数计算器",
     "riskCalculator": "风险计算器",
+    "marketBreadth": "市场广度报告",
     "memberArea": "会员区",
     "login": "登录",
     "logout": "登出"
+  },
+  "footer": {
+    "brand_description": "多资产图表形态检测，覆盖股票、外汇、加密货币和大宗商品。",
+    "research": "研究",
+    "screener": "扫描器",
+    "patternLab": "形态实验室",
+    "scripts": "脚本",
+    "learning": "学习",
+    "learningCenter": "学习中心",
+    "blogArticles": "博客与文章",
+    "patternQuizzes": "形态测验",
+    "tools": "工具",
+    "strategyWorkspace": "策略工作区",
+    "economicCalendar": "经济日历",
+    "markets": "市场",
+    "stockMarket": "股票市场",
+    "forex": "外汇 (FX)",
+    "cryptocurrency": "加密货币",
+    "commodities": "大宗商品",
+    "company": "公司",
+    "about": "关于",
+    "faq": "常见问题",
+    "more": "更多",
+    "terms": "条款",
+    "privacy": "隐私",
+    "allRightsReserved": "版权所有。"
   },
   "pricing": {
     "title": "选择您的计划",
@@ -45,8 +77,8 @@
           "基础点数和风险计算器",
           "月度教程",
           "邮件支持",
-          "基础模式识别指南",
-          "1-2个基础图表模式警报（仅邮件）",
+          "基础形态识别指南",
+          "1-2个基础图表形态警报（仅邮件）",
           "入门Discord访问（只读）"
         ]
       },
@@ -55,7 +87,7 @@
         "description": "包含入门版所有内容，plus：",
         "features": [
           "高级脚本库（50+策略）",
-          "10个多条件图表模式警报（邮件）",
+          "10个多条件图表形态警报（邮件）",
           "视频课程：从零开始的自动化交易到第一个机器人",
           "专业计算器（保存配置文件，CSV导出）",
           "AI生成的月度\"脚本\"",
@@ -69,7 +101,7 @@
         "description": "包含专业版所有内容，plus：",
         "features": [
           "AI策略构建器（简单中文→Pine v5、MQL4、MQL5代码）",
-          "25个AI驱动的模式警报（邮件+电报/Discord）",
+          "25个AI驱动的形态警报（邮件+电报/Discord）",
           "高级回测（权益统计+风险指标+CSV导出）",
           "月度AI策略包",
           "Pro+ Discord角色（专属频道）"
@@ -80,12 +112,48 @@
         "description": "包含Pro+所有内容，plus：",
         "features": [
           "AI脚本生成器（高级）—多平台+内置风险预设",
-          "无限AI驱动的模式警报（邮件+电报/Discord）",
+          "无限AI驱动的形态警报（邮件+电报/Discord）",
           "AI风险教练（组合级洞察）",
           "提前使用AI功能和策略包",
           "高级Discord角色和私人频道",
           "优先功能请求"
         ]
+      }
+    }
+  },
+  "projects": {
+    "pricing": {
+      "headline": "无需提示的交易项目，由图表形态智能驱动",
+      "subheadline": "扫描市场。检测信号。获取包含精确入场、止损、止盈的可重复交易计划。",
+      "creditsExplained": "积分根据 品种数 × 历史 × 形态 × 时间框架 进行缩放",
+      "estimatedBefore": "积分在运行前进行估算。",
+      "examples": {
+        "screener": "扫描器：1,100+品种无限扫描（免费）",
+        "patternLab": "形态实验室（10个品种，1D，5年，4个形态）≈ 12-18积分"
+      },
+      "bestFor": {
+        "free": "探索平台",
+        "plus": "测试交易想法的活跃交易者",
+        "pro": "每日扫描的认真交易者",
+        "team": "团队和投资组合经理"
+      },
+      "features": {
+        "monthlyCredits": "月度积分",
+        "dailyRuns": "每日运行次数",
+        "maxInstruments": "最大品种数",
+        "maxLookback": "最大回溯期",
+        "activeAlerts": "活跃警报"
+      },
+      "cta": {
+        "free": "免费开始",
+        "plus": "获取Plus",
+        "pro": "升级Pro",
+        "team": "联系销售"
+      },
+      "trust": {
+        "execution": "执行假设透明度",
+        "bracket": "确定性括号引擎 (v1.0.0)",
+        "alerts": "警报包含止损/止盈和目标触及"
       }
     }
   },
@@ -134,6 +202,43 @@
     "download": "下载",
     "save": "保存",
     "disclaimer": "仅供教育目的：所有生成的策略仅供教育使用，不构成财务建议。交易涉及重大亏损风险。过去的表现不保证未来的结果。在实盘交易前务必彻底测试策略。"
+  },
+  "screener": {
+    "title": "形态扫描器",
+    "subtitle": "实时扫描1,100+品种的图表形态",
+    "filters": "过滤器",
+    "pattern": "形态",
+    "timeframe": "时间框架",
+    "direction": "方向",
+    "bullish": "看涨",
+    "bearish": "看跌",
+    "quality": "质量",
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "noResults": "未找到匹配的形态",
+    "entry": "入场",
+    "stopLoss": "止损",
+    "takeProfit": "止盈",
+    "riskReward": "风险回报比",
+    "detected": "检测时间",
+    "viewChart": "查看图表",
+    "createAlert": "创建警报"
+  },
+  "learn": {
+    "title": "学习中心",
+    "subtitle": "掌握图表形态和技术分析",
+    "categories": "分类",
+    "allArticles": "所有文章",
+    "chartPatterns": "图表形态",
+    "technicalAnalysis": "技术分析",
+    "tradingStrategies": "交易策略",
+    "riskManagement": "风险管理",
+    "readMore": "阅读更多",
+    "minuteRead": "分钟阅读",
+    "beginner": "初学者",
+    "intermediate": "中级",
+    "advanced": "高级"
   },
   "common": {
     "loading": "加载中...",
