@@ -61,13 +61,30 @@ const FX_MAJORS_SET = new Set(FX_MAJORS);
 type AssetTab = 'stocks' | 'crypto' | 'fx' | 'indices' | 'commodities';
 type FxSubFilter = 'all' | 'majors' | 'crosses';
 
-const ASSET_TABS: { key: AssetTab; label: string; universe: number }[] = [
-  { key: 'stocks', label: 'Stocks', universe: 342 },
-  { key: 'crypto', label: 'Crypto', universe: 98 },
-  { key: 'fx', label: 'FX', universe: 89 },
-  { key: 'indices', label: 'Indices', universe: 32 },
-  { key: 'commodities', label: 'Commodities', universe: 28 },
+const ASSET_TABS: { key: AssetTab; label: string }[] = [
+  { key: 'stocks', label: 'Stocks' },
+  { key: 'crypto', label: 'Crypto' },
+  { key: 'fx', label: 'FX' },
+  { key: 'indices', label: 'Indices' },
+  { key: 'commodities', label: 'Commodities' },
 ];
+
+// Per-timeframe universe sizes (distinct tickers with historical data)
+const UNIVERSE_BY_ASSET_TF: Record<string, Record<string, number>> = {
+  stocks:      { '1h': 48, '4h': 225, '8h': 240, '1d': 250, '1wk': 323 },
+  crypto:      { '4h': 13, '8h': 40, '1d': 69, '1wk': 97 },
+  fx:          { '4h': 54, '8h': 69, '1d': 87, '1wk': 87 },
+  indices:     { '1h': 6, '4h': 19, '8h': 26, '1d': 32, '1wk': 32 },
+  commodities: { '4h': 1, '1d': 28, '1wk': 28 },
+};
+
+const getUniverse = (asset: string, timeframe?: string): number => {
+  const tfMap = UNIVERSE_BY_ASSET_TF[asset];
+  if (!tfMap) return 0;
+  if (timeframe && tfMap[timeframe]) return tfMap[timeframe];
+  // Fallback: max across all timeframes
+  return Math.max(...Object.values(tfMap));
+};
 
 const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
   stocks: 'Aggregated across 300+ equities. Pattern behaviour is consistent within this universe.',
@@ -321,7 +338,7 @@ export function EdgeAtlasSection() {
                     ? 'text-primary-foreground/70'
                     : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'
                 }`}>
-                  {count}/{tab.universe}
+                  {count}/{getUniverse(tab.key)}
                 </span>
               </button>
             );

@@ -13,11 +13,11 @@ import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
 
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
-const ASSET_TABS: { value: TeaserAssetType; label: string }[] = [
-  { value: 'stocks', label: 'Stocks' },
-  { value: 'fx', label: 'Forex' },
-  { value: 'crypto', label: 'Crypto' },
-  { value: 'commodities', label: 'Commodities' },
+const ASSET_TABS: { value: TeaserAssetType; label: string; universe: number }[] = [
+  { value: 'stocks', label: 'Stocks', universe: 250 },
+  { value: 'fx', label: 'Forex', universe: 87 },
+  { value: 'crypto', label: 'Crypto', universe: 69 },
+  { value: 'commodities', label: 'Commodities', universe: 28 },
 ];
 
 const MAX_TEASER_ITEMS = 10;
@@ -149,16 +149,24 @@ export function PatternScreenerTeaser() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TeaserAssetType)} className="mb-6">
           <TabsList className="grid w-full grid-cols-4">
-            {ASSET_TABS.map(tab => (
-              <TabsTrigger key={tab.value} value={tab.value} className="text-sm">
-                {tab.label}
-                {!loading[tab.value] && totalCounts[tab.value] > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
-                    {totalCounts[tab.value]}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            ))}
+            {ASSET_TABS.map(tab => {
+              const count = totalCounts[tab.value];
+              const isActive = activeTab === tab.value;
+              return (
+                <TabsTrigger key={tab.value} value={tab.value} className="text-sm gap-1.5">
+                  {tab.label}
+                  {!loading[tab.value] && (
+                    <span className={`text-[10px] font-mono ${
+                      isActive
+                        ? 'opacity-70'
+                        : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'
+                    }`}>
+                      {count}/{tab.universe}
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           {ASSET_TABS.map(tab => (
