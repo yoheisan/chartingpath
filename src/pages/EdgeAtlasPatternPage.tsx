@@ -200,7 +200,7 @@ export default function EdgeAtlasPatternPage() {
         ) : (
           <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
             {/* Column headers */}
-            <div className="hidden sm:grid grid-cols-[1fr_80px_80px_90px_80px_70px_auto] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
+            <div className="hidden sm:grid grid-cols-[1fr_80px_80px_90px_80px_70px_170px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Instrument</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">Expect. (R)</span>
@@ -215,7 +215,7 @@ export default function EdgeAtlasPatternPage() {
               return (
                 <div
                   key={t.symbol}
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_90px_80px_70px_auto] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_90px_80px_70px_170px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
                 >
                   {/* Symbol */}
                   <div className="flex items-center gap-2">
