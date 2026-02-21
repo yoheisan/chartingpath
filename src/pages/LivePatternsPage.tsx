@@ -221,6 +221,8 @@ export default function LivePatternsPage() {
   const highlightSymbol = searchParams.get('highlight');
   const openPatternId = searchParams.get('openPattern');
   const urlAssetType = searchParams.get('assetType') as AssetType | null;
+  const urlPattern = searchParams.get('pattern');
+  const urlTimeframe = searchParams.get('timeframe') as '1h' | '4h' | '8h' | '1d' | '1wk' | null;
   
   // Detect initial asset type: prefer explicit URL param, then detect from highlight symbol, then default to 'fx'
   const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
@@ -235,9 +237,13 @@ export default function LivePatternsPage() {
   const [totalInUniverse, setTotalInUniverse] = useState(0);
   
   // Filters - use detected type from highlight or default to 'fx'
+  // Initialize pattern filter and timeframe from Edge Atlas URL params when present
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
-  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '8h' | '1d' | '1wk'>('1d');
-  const [filters, setFilters] = useState<ScreenerFiltersState>(DEFAULT_SCREENER_FILTERS);
+  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '8h' | '1d' | '1wk'>(urlTimeframe || '1d');
+  const [filters, setFilters] = useState<ScreenerFiltersState>(() => ({
+    ...DEFAULT_SCREENER_FILTERS,
+    ...(urlPattern ? { pattern: urlPattern } : {}),
+  }));
   const [showInstrumentList, setShowInstrumentList] = useState(false);
   
   
