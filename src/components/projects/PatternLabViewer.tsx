@@ -731,161 +731,181 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
           )}
         </div>
 
-        {/* Equity Curve + Drawdown — combined dual-axis chart */}
+        {/* Charts — Tabbed: Equity, Trade Excursion, Profit Structure */}
         <Card className="border-border/50 bg-card/50">
           <CardContent className="pt-4 pb-2">
-            <div className="flex items-center gap-4 mb-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 bg-primary rounded" />
-                Equity
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 bg-destructive rounded" />
-                Drawdown
-              </span>
-            </div>
-            <div className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                {(() => {
-                  const initialCapital = 10000;
-                  const values = directionFilteredEquity.map(d => d.value as number).filter(v => v != null && !isNaN(v));
-                  const ddValues = directionFilteredEquity.map(d => d.drawdown as number).filter(v => v != null && !isNaN(v));
+            <Tabs defaultValue="equity" className="w-full">
+              <TabsList className="mb-3 h-8">
+                <TabsTrigger value="equity" className="text-xs gap-1.5 h-7 px-3">
+                  <LineChart className="h-3 w-3" />
+                  Equity & Drawdown
+                </TabsTrigger>
+                <TabsTrigger value="excursion" className="text-xs gap-1.5 h-7 px-3">
+                  <BarChart3 className="h-3 w-3" />
+                  Trade Excursion
+                </TabsTrigger>
+                <TabsTrigger value="profit-structure" className="text-xs gap-1.5 h-7 px-3">
+                  <TrendingUp className="h-3 w-3" />
+                  Profit Structure
+                </TabsTrigger>
+              </TabsList>
 
-                  const minVal = values.length ? Math.min(...values) : initialCapital * 0.9;
-                  const maxVal = values.length ? Math.max(...values) : initialCapital * 1.2;
-                  const valuePad = Math.max((maxVal - minVal) * 0.12, initialCapital * 0.02);
-                  const equityDomainMin = Math.max(0, minVal - valuePad);
-                  const equityDomainMax = maxVal + valuePad;
+              <TabsContent value="equity" className="mt-0">
+                <div className="flex items-center gap-4 mb-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-0.5 bg-primary rounded" />
+                    Equity
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-0.5 bg-destructive rounded" />
+                    Drawdown
+                  </span>
+                </div>
+                <div className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {(() => {
+                      const initialCapital = 10000;
+                      const values = directionFilteredEquity.map(d => d.value as number).filter(v => v != null && !isNaN(v));
+                      const ddValues = directionFilteredEquity.map(d => d.drawdown as number).filter(v => v != null && !isNaN(v));
 
-                  // Dynamic drawdown domain: tight to actual max, minimum 5% headroom
-                  const maxDD = ddValues.length ? Math.max(...ddValues) : 0;
-                  const ddDomainMax = Math.max(maxDD * 1.4, 0.05);
+                      const minVal = values.length ? Math.min(...values) : initialCapital * 0.9;
+                      const maxVal = values.length ? Math.max(...values) : initialCapital * 1.2;
+                      const valuePad = Math.max((maxVal - minVal) * 0.12, initialCapital * 0.02);
+                      const equityDomainMin = Math.max(0, minVal - valuePad);
+                      const equityDomainMax = maxVal + valuePad;
 
-                  // Breakeven offset within the equity domain
-                  const totalRange = equityDomainMax - equityDomainMin || 1;
-                  const breakevenOffset = Math.max(0, Math.min(1, (equityDomainMax - initialCapital) / totalRange));
+                      const maxDD = ddValues.length ? Math.max(...ddValues) : 0;
+                      const ddDomainMax = Math.max(maxDD * 1.4, 0.05);
 
-                  // Tick formatter: show decimal when range is small
-                  const kRange = (equityDomainMax - equityDomainMin) / 1000;
-                  const equityTickFmt = (val: number) =>
-                    kRange < 2 ? `$${(val / 1000).toFixed(1)}k` : `$${Math.round(val / 1000)}k`;
+                      const totalRange = equityDomainMax - equityDomainMin || 1;
+                      const breakevenOffset = Math.max(0, Math.min(1, (equityDomainMax - initialCapital) / totalRange));
 
-                  // DD tick: show as % with 1 decimal when range is tiny
-                  const ddTickFmt = (val: number) =>
-                    ddDomainMax < 0.05 ? `-${(val * 100).toFixed(1)}%` : `-${Math.round(val * 100)}%`;
+                      const kRange = (equityDomainMax - equityDomainMin) / 1000;
+                      const equityTickFmt = (val: number) =>
+                        kRange < 2 ? `$${(val / 1000).toFixed(1)}k` : `$${Math.round(val / 1000)}k`;
 
-                  return (
-                    <RechartsComposedChart data={directionFilteredEquity}>
-                      <defs>
-                        <linearGradient id="equityColorGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset={`${breakevenOffset * 100}%`} stopColor="#22c55e" stopOpacity={1} />
-                          <stop offset={`${breakevenOffset * 100}%`} stopColor="#ef4444" stopOpacity={1} />
-                        </linearGradient>
-                        <linearGradient id="equityAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.18} />
-                          <stop offset="100%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(val) => {
-                          const d = new Date(val);
-                          return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-                        }}
-                        minTickGap={60}
-                      />
-                      {/* Left Y-axis: equity — tightly padded around actual range */}
-                      <YAxis
-                        yAxisId="equity"
-                        orientation="left"
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={equityTickFmt}
-                        domain={[equityDomainMin, equityDomainMax]}
-                        width={58}
-                      />
-                      {/* Right Y-axis: drawdown — tightly scaled to actual max DD */}
-                      <YAxis
-                        yAxisId="drawdown"
-                        orientation="right"
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={ddTickFmt}
-                        reversed
-                        domain={[0, ddDomainMax]}
-                        width={52}
-                      />
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (!active || !payload || !payload.length) return null;
-                          const equityEntry = payload.find(p => p.name === 'Equity');
-                          const ddEntry = payload.find(p => p.name === 'Drawdown');
-                          const equityVal = equityEntry?.value as number | undefined;
-                          const ddVal = ddEntry?.value as number | undefined;
-                          const roi = equityVal != null ? ((equityVal - initialCapital) / initialCapital) * 100 : null;
-                          return (
-                            <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[180px]">
-                              <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
-                                {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </p>
-                              {equityVal != null && (
-                                <div className="flex items-center justify-between gap-4 mb-1">
-                                  <span className="text-[11px] text-muted-foreground">Equity</span>
-                                  <div className="text-right">
-                                    <span className="text-[13px] font-semibold text-foreground">${equityVal.toFixed(2)}</span>
-                                    {roi != null && (
-                                      <span className={`ml-1.5 text-[11px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
-                                      </span>
-                                    )}
-                                  </div>
+                      const ddTickFmt = (val: number) =>
+                        ddDomainMax < 0.05 ? `-${(val * 100).toFixed(1)}%` : `-${Math.round(val * 100)}%`;
+
+                      return (
+                        <RechartsComposedChart data={directionFilteredEquity}>
+                          <defs>
+                            <linearGradient id="equityColorGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset={`${breakevenOffset * 100}%`} stopColor="#22c55e" stopOpacity={1} />
+                              <stop offset={`${breakevenOffset * 100}%`} stopColor="#ef4444" stopOpacity={1} />
+                            </linearGradient>
+                            <linearGradient id="equityAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.18} />
+                              <stop offset="100%" stopColor={minVal >= initialCapital ? "#22c55e" : "#ef4444"} stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(val) => {
+                              const d = new Date(val);
+                              return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                            }}
+                            minTickGap={60}
+                          />
+                          <YAxis
+                            yAxisId="equity"
+                            orientation="left"
+                            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={equityTickFmt}
+                            domain={[equityDomainMin, equityDomainMax]}
+                            width={58}
+                          />
+                          <YAxis
+                            yAxisId="drawdown"
+                            orientation="right"
+                            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={ddTickFmt}
+                            reversed
+                            domain={[0, ddDomainMax]}
+                            width={52}
+                          />
+                          <Tooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const equityEntry = payload.find(p => p.name === 'Equity');
+                              const ddEntry = payload.find(p => p.name === 'Drawdown');
+                              const equityVal = equityEntry?.value as number | undefined;
+                              const ddVal = ddEntry?.value as number | undefined;
+                              const roi = equityVal != null ? ((equityVal - initialCapital) / initialCapital) * 100 : null;
+                              return (
+                                <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[180px]">
+                                  <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
+                                    {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  </p>
+                                  {equityVal != null && (
+                                    <div className="flex items-center justify-between gap-4 mb-1">
+                                      <span className="text-[11px] text-muted-foreground">Equity</span>
+                                      <div className="text-right">
+                                        <span className="text-[13px] font-semibold text-foreground">${equityVal.toFixed(2)}</span>
+                                        {roi != null && (
+                                          <span className={`ml-1.5 text-[11px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                            {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {ddVal != null && ddVal > 0 && (
+                                    <div className="flex items-center justify-between gap-4">
+                                      <span className="text-[11px] text-muted-foreground">Drawdown</span>
+                                      <span className="text-[13px] font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              {ddVal != null && ddVal > 0 && (
-                                <div className="flex items-center justify-between gap-4">
-                                  <span className="text-[11px] text-muted-foreground">Drawdown</span>
-                                  <span className="text-[13px] font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        }}
-                      />
-                      <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 3" strokeOpacity={0.5} />
-                      {/* Area fill for equity */}
-                      <Area
-                        yAxisId="equity"
-                        type="monotone"
-                        dataKey="value"
-                        name="Equity"
-                        stroke="url(#equityColorGradient)"
-                        strokeWidth={2.5}
-                        fill="url(#equityAreaGradient)"
-                        dot={false}
-                        activeDot={{ r: 4, strokeWidth: 0 }}
-                      />
-                      <Line
-                        yAxisId="drawdown"
-                        type="monotone"
-                        dataKey="drawdown"
-                        name="Drawdown"
-                        stroke="hsl(var(--destructive))"
-                        strokeWidth={1.5}
-                        dot={false}
-                        strokeDasharray="4 2"
-                        strokeOpacity={0.7}
-                      />
-                    </RechartsComposedChart>
-                  );
-                })()}
-              </ResponsiveContainer>
-            </div>
+                              );
+                            }}
+                          />
+                          <ReferenceLine yAxisId="equity" y={initialCapital} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 3" strokeOpacity={0.5} />
+                          <Area
+                            yAxisId="equity"
+                            type="monotone"
+                            dataKey="value"
+                            name="Equity"
+                            stroke="url(#equityColorGradient)"
+                            strokeWidth={2.5}
+                            fill="url(#equityAreaGradient)"
+                            dot={false}
+                            activeDot={{ r: 4, strokeWidth: 0 }}
+                          />
+                          <Line
+                            yAxisId="drawdown"
+                            type="monotone"
+                            dataKey="drawdown"
+                            name="Drawdown"
+                            stroke="hsl(var(--destructive))"
+                            strokeWidth={1.5}
+                            dot={false}
+                            strokeDasharray="4 2"
+                            strokeOpacity={0.7}
+                          />
+                        </RechartsComposedChart>
+                      );
+                    })()}
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="excursion" className="mt-0">
+                <TradeExcursionChart trades={displayedTrades} embedded />
+              </TabsContent>
+
+              <TabsContent value="profit-structure" className="mt-0">
+                <ProfitStructureWaterfall trades={displayedTrades} embedded />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
@@ -1185,11 +1205,6 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
             </Card>
           )}
 
-          {/* Trade Excursion Chart */}
-          <TradeExcursionChart trades={displayedTrades} />
-
-          {/* Profit Structure Waterfall */}
-          <ProfitStructureWaterfall trades={displayedTrades} />
         </TabsContent>
 
         {/* Patterns Tab */}
