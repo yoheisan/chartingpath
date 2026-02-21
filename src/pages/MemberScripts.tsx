@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { trackEvent } from '@/lib/analytics';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -188,6 +189,13 @@ const MemberScripts = () => {
     const config = buildConfig();
     const code = generateScannerScript(config);
     setGeneratedCode(code);
+    trackEvent('script.generate', {
+      platform,
+      patterns: selectedPatterns.join(','),
+      patterns_count: selectedPatterns.length,
+      instruments: labInstruments.join(','),
+      direction: directionFilter,
+    });
     toast({
       title: 'Scanner Script Generated',
       description: `${selectedPatterns.length} pattern${selectedPatterns.length > 1 ? 's' : ''} • ${PLATFORMS.find(p => p.value === platform)?.label}`,

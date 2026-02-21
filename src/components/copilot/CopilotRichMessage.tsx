@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
@@ -388,11 +389,19 @@ function StatCards({ metrics }: { metrics: StatMetric[] }) {
 }
 
 function ActionButtons({ buttons }: { buttons: ActionButton[] }) {
+  const handleClick = useCallback((btn: ActionButton) => {
+    trackEvent('copilot.action_click', {
+      label: btn.label,
+      destination: btn.to,
+    });
+  }, []);
+
   if (buttons.length === 0) return null;
+
   return (
     <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
       {buttons.map((btn, i) => (
-        <Link key={i} to={btn.to}>
+        <Link key={i} to={btn.to} onClick={() => handleClick(btn)}>
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
             {btn.icon}
             {btn.label}

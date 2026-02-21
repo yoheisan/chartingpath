@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -408,6 +409,13 @@ const PatternLabWizard = () => {
       return;
     }
     
+    trackEvent('pattern_lab.run_backtest', {
+      mode: mode || 'unknown',
+      instruments: selectedInstruments.join(','),
+      patterns: selectedPatterns.join(','),
+      timeframe,
+      instruments_count: selectedInstruments.length,
+    });
     setIsRunning(true);
     try {
       const response = await fetch(
@@ -501,7 +509,7 @@ const PatternLabWizard = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               {/* Validate Signal */}
               <button
-                onClick={() => setMode('validate')}
+                onClick={() => { setMode('validate'); trackEvent('pattern_lab.mode_select', { mode: 'validate' }); }}
                 className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
               >
                 <div className="flex items-start gap-4">
@@ -530,7 +538,7 @@ const PatternLabWizard = () => {
 
               {/* Build Automation */}
               <button
-                onClick={() => setMode('automate')}
+                onClick={() => { setMode('automate'); trackEvent('pattern_lab.mode_select', { mode: 'automate' }); }}
                 className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-violet-500/50 hover:bg-card transition-all"
               >
                 <div className="flex items-start gap-4">
