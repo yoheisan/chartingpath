@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3 } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -775,6 +775,137 @@ toEODHDSymbol(symbol):
   </div>
 );
 
+// ─── Tab: Internal Analytics ───────────────────────────────────────────────────
+
+const AnalyticsTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Internal Analytics Architecture</CardTitle>
+        <CardDescription>
+          AI-driven user journey analytics, intent analysis, and unmet needs detection. Last updated: 2026-02-21.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={BarChart3} title="Analytics Data Pipeline" />
+        <CodeBlock>{`Browser Events (trackEvent)
+  │
+  ├─► analytics_events (batched, 3s flush)
+  │     ├── event_name: page.view | copilot.open | pattern_lab.run_backtest | ...
+  │     ├── properties: { url, referrer, mode, instruments, ... }
+  │     ├── session_id (per-tab, sessionStorage)
+  │     └── user_id (auth, cached)
+  │
+  ├─► copilot_feedback (per-interaction, via analyze-copilot-feedback)
+  │     ├── intent_category: pattern_discovery | signal_validation | ...
+  │     ├── content_gap_identified: bool
+  │     ├── topics: string[]
+  │     └── quality_score: 1-5
+  │
+  └─► copilot_messages → [analyze-conversation-intents] (batch, 24h)
+        ├── engagementLevel: high | medium | low | abandoned
+        ├── dropOffPoint: where user stopped
+        ├── contentGaps: unserved topics
+        └── userSatisfactionSignal: positive | neutral | negative`}</CodeBlock>
+
+        <SectionHeader icon={Cpu} title="AI Analysis Layer" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Edge Function", "Model", "Input", "Output", "Trigger"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["analyze-copilot-feedback", "Gemini 2.0 Flash", "Single Q&A pair", "Intent, topics, gaps, quality", "Real-time (per interaction)"],
+                ["analyze-conversation-intents", "Gemini 2.0 Flash", "Full conversation transcript", "Engagement, drop-offs, satisfaction", "On-demand (batch 50)"],
+                ["analyze-journey-insights", "Gemini 2.0 Flash", "Aggregated events + feedback", "Unmet needs, regional insights, journey summary", "On-demand (admin click)"],
+              ].map(([fn, model, input, output, trigger]) => (
+                <tr key={fn}>
+                  <td className="px-3 py-2 border-b font-mono text-xs text-primary">{fn}</td>
+                  <td className="px-3 py-2 border-b text-xs">{model}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground">{input}</td>
+                  <td className="px-3 py-2 border-b text-xs">{output}</td>
+                  <td className="px-3 py-2 border-b text-xs">{trigger}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Activity} title="Dashboard Views (/admin/journey-analytics)" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { tab: "Unmet Needs Spotlight", desc: "AI-ranked user needs not being served, with severity, evidence, and actions. Powered by analyze-journey-insights." },
+            { tab: "Regional Analysis", desc: "Engagement by Americas/Europe/APAC with region-specific needs and opportunities." },
+            { tab: "AI Insights", desc: "Priority matrix of drop-offs, bottlenecks, and opportunities from journey flow data." },
+            { tab: "User Flow", desc: "Visual journey graph: Discover → Research → Execute → Automate with conversion rates." },
+            { tab: "Broken Paths", desc: "Critical path segments underperforming benchmarks, with estimated revenue loss." },
+            { tab: "Segments", desc: "User cohorts: Full Journey, Executors, Researchers, Discoverers, Bounced." },
+            { tab: "Copilot Intelligence", desc: "Content gaps, unserved intents, and satisfaction trends from copilot conversations." },
+          ].map(({ tab, desc }) => (
+            <div key={tab} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1">{tab}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={TrendingUp} title="Key Metrics Tracked" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { metric: "Loop Completion Rate", desc: "% completing all 4 stages in 7 days" },
+            { metric: "Health Score", desc: "0-100, based on funnel performance" },
+            { metric: "Unmet Needs Count", desc: "AI-identified gaps by severity" },
+            { metric: "Content Gap Index", desc: "Topics users search but we don't serve" },
+            { metric: "Regional Engagement", desc: "High/Medium/Low per continent" },
+            { metric: "Copilot Satisfaction", desc: "Improving/Stable/Declining trend" },
+            { metric: "Drop-off Rate", desc: "Per critical journey transition" },
+            { metric: "Time to Convert", desc: "Hours from first event to paid" },
+          ].map(({ metric, desc }) => (
+            <div key={metric} className="p-2 bg-muted rounded text-center">
+              <p className="text-xs font-semibold">{metric}</p>
+              <p className="text-[10px] text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Shield} title="Data Collection Points" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border">
+            <thead className="bg-muted">
+              <tr>
+                {["Hook / Utility", "Events Tracked", "Location"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["usePageTracking()", "page.view, page.leave (with duration)", "Layout.tsx (global)"],
+                ["trackEvent('copilot.open')", "Copilot opens (manual + chart-analysis)", "TradingCopilotContext"],
+                ["trackEvent('copilot.action_click')", "Action button clicks in copilot", "CopilotRichMessage"],
+                ["trackEvent('pattern_lab.*')", "Mode select, run backtest", "PatternLabWizard"],
+                ["trackEvent('script.generate')", "Script generation with platform metadata", "MemberScripts"],
+                ["useCopilotFeedback()", "Per-interaction intent analysis", "TradingCopilot + CommandPaletteChat"],
+              ].map(([hook, events, location]) => (
+                <tr key={hook}>
+                  <td className="px-3 py-2 border-b font-mono">{hook}</td>
+                  <td className="px-3 py-2 border-b text-muted-foreground">{events}</td>
+                  <td className="px-3 py-2 border-b">{location}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
@@ -799,6 +930,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="apac">APAC Expansion</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
@@ -807,10 +939,11 @@ export const InternalDocs = () => {
         <TabsContent value="apac" className="mt-4"><APACTab /></TabsContent>
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
+        <TabsContent value="analytics" className="mt-4"><AnalyticsTab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-21 · Version 2.2
+        Last updated: 2026-02-21 · Version 2.3
       </p>
     </div>
   );

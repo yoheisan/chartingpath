@@ -212,3 +212,6 @@ verify_jwt = false
 
 [functions.analyze-conversation-intents]
 verify_jwt = false
+
+[functions.analyze-journey-insights]
+verify_jwt = false
