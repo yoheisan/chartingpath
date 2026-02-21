@@ -657,6 +657,124 @@ Periodic Analysis (Future):
   </div>
 );
 
+// ─── Tab: APAC Market Expansion ────────────────────────────────────────────────
+
+const APACTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">APAC Market Expansion</CardTitle>
+        <CardDescription>
+          Ticker universe, seeding coverage, and API usage for Hong Kong, Singapore, and Thailand markets. Completed 2026-02-21.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Activity} title="Expansion Summary" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {[
+            { label: "New tickers added", value: "~58" },
+            { label: "Markets", value: "HKEX · SGX · SET" },
+            { label: "Additional API calls/day", value: "~8,000" },
+            { label: "New cron jobs", value: "0" },
+          ].map(({ label, value }) => (
+            <div key={label} className="text-center p-3 bg-muted rounded-lg">
+              <p className="text-lg font-bold">{value}</p>
+              <p className="text-xs text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Database} title="APAC Ticker Universe" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Market", "Count", "Examples", "Symbol Format", "EODHD Exchange"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Hong Kong (HKEX)", "20", "Tencent, Alibaba HK, HSBC HK, AIA", ".HK", ".HK"],
+                ["Singapore (SGX)", "15", "DBS, OCBC, UOB, SingTel", ".SI (Yahoo) → .SG (EODHD)", ".SG"],
+                ["Thailand (SET)", "10", "PTT, SCB, ADVANC, CPALL", ".BK", ".BK"],
+                ["China ADRs (US)", "10", "BABA, JD, PDD, BIDU, NIO", "Standard US", "US"],
+                ["APAC Indices", "3+", "^HSI, 000001.SS, ^STI", ".SS → .SHG", ".SHG / .SHE"],
+              ].map(([market, count, examples, format, eodhd]) => (
+                <tr key={market}>
+                  <td className="px-3 py-2 border-b font-medium text-xs">{market}</td>
+                  <td className="px-3 py-2 border-b text-xs">{count}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground">{examples}</td>
+                  <td className="px-3 py-2 border-b font-mono text-xs">{format}</td>
+                  <td className="px-3 py-2 border-b font-mono text-xs text-primary">{eodhd}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Server} title="Symbol Resolution Logic" />
+        <CodeBlock>{`// fetch-eodhd & seed-historical-patterns-mtf
+toEODHDSymbol(symbol):
+  .HK  → .HK   (direct passthrough)
+  .SI  → .SG   (Yahoo SGX → EODHD SG exchange)
+  .BK  → .BK   (direct passthrough)
+  .SS  → .SHG  (Shanghai Stock Exchange)
+  .SZ  → .SHE  (Shenzhen Stock Exchange)
+
+// symbolResolver.ts — detectAssetType()
+  .HK, .SI, .BK, .SS, .SZ → 'stock'
+  ^HSI, ^STI, ^N225        → 'index'`}</CodeBlock>
+
+        <SectionHeader icon={TrendingUp} title="API Usage Impact" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Resource", "Before", "After", "Headroom"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["EODHD API calls/day", "~85,000", "~93,000", "7,000 remaining"],
+                ["Universe size", "~1,000", "~1,060", "+60 instruments"],
+                ["Seeding cron jobs", "42", "42 (unchanged)", "N/A"],
+                ["RAM usage (peak)", "3.74 GB / 4 GB", "~3.8 GB / 4 GB", "~200 MB"],
+                ["Market reports/day", "5", "6 (+Shanghai/HK Open)", "—"],
+              ].map(([resource, before, after, headroom]) => (
+                <tr key={resource}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{resource}</td>
+                  <td className="px-4 py-2 border-b text-xs">{before}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{after}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{headroom}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Clock} title="Scheduling Impact" />
+        <p className="text-sm text-muted-foreground">
+          <strong>Zero impact.</strong> New APAC tickers are automatically picked up by existing Stocks A–G / H–O / P–Z seeding windows 
+          based on alphabetical sorting. The Shanghai/HK Open market report runs at 01:30 UTC — well outside the 05:00–12:00 seeding window.
+          SGX tickers that return 404 from EODHD correctly trigger the Yahoo Finance fallback path.
+        </p>
+
+        <SectionHeader icon={Shield} title="Data Attribution & Compliance" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p>• APAC market data sourced from <strong>EODHD</strong> (primary) and <strong>Yahoo Finance</strong> (fallback)</p>
+          <p>• All APAC data is <strong>delayed</strong> (not real-time) — consistent with existing data policy</p>
+          <p>• Terms & Conditions updated with APAC data attribution and regional disclaimers</p>
+          <p>• Platform monetizes derived insights (patterns, analytics) — not raw data redistribution</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
@@ -678,6 +796,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="cron">Cron Schedule</TabsTrigger>
           <TabsTrigger value="validation">Validation Shards</TabsTrigger>
           <TabsTrigger value="infra">Infrastructure</TabsTrigger>
+          <TabsTrigger value="apac">APAC Expansion</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
         </TabsList>
@@ -685,12 +804,13 @@ export const InternalDocs = () => {
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
         <TabsContent value="validation" className="mt-4"><ValidationTab /></TabsContent>
         <TabsContent value="infra" className="mt-4"><InfraTab /></TabsContent>
+        <TabsContent value="apac" className="mt-4"><APACTab /></TabsContent>
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-21 · Version 2.1
+        Last updated: 2026-02-21 · Version 2.2
       </p>
     </div>
   );

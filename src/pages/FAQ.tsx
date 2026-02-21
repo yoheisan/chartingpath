@@ -39,6 +39,80 @@ const FAQ = () => {
       description: "Live pattern detection across markets",
       sections: [
         {
+          category: "Markets & Coverage",
+          questions: [
+            {
+              question: "Which Asian markets does ChartingPath support?",
+              answer: (
+                <div className="space-y-3">
+                  <p>ChartingPath covers major APAC markets including <strong>Hong Kong (HKEX)</strong>, <strong>Singapore (SGX)</strong>, and <strong>Thailand (SET)</strong>, along with US-listed China ADRs and APAC indices.</p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">APAC Stocks (~58 tickers)</h4>
+                      <div className="text-xs space-y-1">
+                        <div>• Hong Kong: Tencent, Alibaba HK, HSBC, AIA, Meituan</div>
+                        <div>• Singapore: DBS, OCBC, UOB, SingTel, CapitaLand</div>
+                        <div>• Thailand: PTT, SCB, ADVANC, CPALL, GULF</div>
+                        <div>• China ADRs: BABA, JD, PDD, BIDU, NIO</div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">Also Covered</h4>
+                      <div className="text-xs space-y-1">
+                        <div>• APAC FX: USD/CNH, USD/SGD, USD/THB, USD/HKD</div>
+                        <div>• Indices: HSI, SSE Composite, Nikkei, KOSPI</div>
+                        <div>• APAC ETFs: FXI, EWJ, EWY, EWT, MCHI</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: "What exchanges does ChartingPath cover?",
+              answer: (
+                <div className="space-y-3">
+                  <p>We cover instruments from major global exchanges across all asset classes:</p>
+                  <div className="border rounded-lg p-4">
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium mb-1">Americas</div>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <div>NYSE, NASDAQ</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium mb-1">Europe</div>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <div>LSE, Euronext, XETRA</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium mb-1">Asia-Pacific</div>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <div>HKEX, SGX, SET, TSE, SSE, SZSE</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Plus forex (major & minor pairs), crypto (BTC, ETH, top altcoins), and commodities (Gold, Oil, etc.).</p>
+                </div>
+              )
+            },
+            {
+              question: "How fresh is APAC market data?",
+              answer: (
+                <div className="space-y-3">
+                  <p>All APAC market data is <strong>delayed</strong> (not real-time), consistent with our global data policy. Patterns are scanned every 15 minutes during market hours.</p>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                    <p>Data is sourced from EODHD (primary) and Yahoo Finance (fallback). ChartingPath provides derived analytical insights — not raw market data feeds.</p>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
           category: "Getting Started",
           questions: [
             {
