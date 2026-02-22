@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide-react";
 import { format, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { formatInTimeZone } from "date-fns-tz";
 
 interface EconomicEvent {
@@ -80,6 +81,7 @@ const INDICATOR_TYPES = [
 ];
 
 const EconomicCalendar = () => {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<EconomicEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -441,7 +443,7 @@ const EconomicCalendar = () => {
             >
               {isLive ? '🟢 LIVE' : '🔴 OFFLINE'}
             </Badge>
-            <h1 className="text-2xl font-bold">Economic Calendar</h1>
+            <h1 className="text-2xl font-bold">{t('economicCalendar.title')}</h1>
             <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
               <SelectTrigger className="w-[200px] h-8 text-xs bg-background border-border">
                 <SelectValue />
@@ -460,8 +462,8 @@ const EconomicCalendar = () => {
             <Button onClick={refreshCalendar} variant="outline" size="sm" disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            <Button onClick={triggerAggressiveScrape} variant="outline" size="sm">
-              Aggressive Scrape
+             <Button onClick={triggerAggressiveScrape} variant="outline" size="sm">
+               {t('economicCalendar.aggressiveScrape')}
             </Button>
           </div>
         </div>
@@ -470,7 +472,7 @@ const EconomicCalendar = () => {
         <div className="flex gap-3 items-center flex-wrap border-b pb-2">
           {/* Importance Filter */}
           <div className="flex items-center gap-2">
-            <Label className="text-xs font-medium whitespace-nowrap">Importance:</Label>
+            <Label className="text-xs font-medium whitespace-nowrap">{t('economicCalendar.importance')}</Label>
             <div className="flex gap-1">
               {[
                 { value: "high", label: "High", variant: "destructive" },
@@ -498,7 +500,7 @@ const EconomicCalendar = () => {
 
           {/* Country Filter - All Countries */}
           <div className="flex items-start gap-2">
-            <Label className="text-xs font-medium whitespace-nowrap pt-1">Countries:</Label>
+            <Label className="text-xs font-medium whitespace-nowrap pt-1">{t('economicCalendar.countries')}</Label>
             <div className="flex gap-1 flex-wrap max-w-4xl">
               {REGIONS.map((region) => (
                 <Button
@@ -537,14 +539,14 @@ const EconomicCalendar = () => {
         </div>
 
           <Tabs defaultValue="calendar" className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-              <TabsTrigger value="calendar">
-                <Calendar className="mr-2 h-4 w-4" />
-                Calendar
-              </TabsTrigger>
-              <TabsTrigger value="settings">
-                <Settings className="mr-2 h-4 w-4" />
-                Alert Settings
+             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+               <TabsTrigger value="calendar">
+                 <Calendar className="mr-2 h-4 w-4" />
+                 {t('economicCalendar.calendar')}
+               </TabsTrigger>
+               <TabsTrigger value="settings">
+                 <Settings className="mr-2 h-4 w-4" />
+                 {t('economicCalendar.alertSettings')}
               </TabsTrigger>
             </TabsList>
 
@@ -552,11 +554,11 @@ const EconomicCalendar = () => {
               {/* Week Navigation Tabs */}
               <Tabs defaultValue="this-week" className="w-full">
                 <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2">
-                  <TabsTrigger value="this-week">
-                    This Week ({thisWeekEvents.length})
+                   <TabsTrigger value="this-week">
+                     {t('economicCalendar.thisWeek')} ({thisWeekEvents.length})
                   </TabsTrigger>
-                  <TabsTrigger value="next-week">
-                    Next Week ({nextWeekEvents.length})
+                   <TabsTrigger value="next-week">
+                     {t('economicCalendar.nextWeek')} ({nextWeekEvents.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -565,11 +567,11 @@ const EconomicCalendar = () => {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <Bell className="h-4 w-4" />
-                        This Week ({thisWeekEvents.length})
+                         <Bell className="h-4 w-4" />
+                         {t('economicCalendar.thisWeek')} ({thisWeekEvents.length})
                         <Badge variant="outline" className="ml-2 gap-1.5 text-xs">
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          Real-time
+                           {t('economicCalendar.realTime')}
                         </Badge>
                       </CardTitle>
                       <CardDescription className="text-xs">
@@ -578,7 +580,7 @@ const EconomicCalendar = () => {
                     </CardHeader>
                     <CardContent>
                       {Object.keys(thisWeekByDay).length === 0 ? (
-                        <p className="text-muted-foreground text-center py-8">No events for this week</p>
+                        <p className="text-muted-foreground text-center py-8">{t('economicCalendar.noEventsThisWeek')}</p>
                       ) : (
                         <div className="space-y-4">
                           {Object.entries(thisWeekByDay).map(([day, dayEvents]) => (
@@ -635,8 +637,8 @@ const EconomicCalendar = () => {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <Calendar className="h-4 w-4" />
-                        Next Week ({nextWeekEvents.length})
+                         <Calendar className="h-4 w-4" />
+                         {t('economicCalendar.nextWeek')} ({nextWeekEvents.length})
                       </CardTitle>
                       <CardDescription className="text-xs">
                         {format(nextWeekStart, 'MMM d')} - {format(nextWeekEnd, 'MMM d, yyyy')}
@@ -644,7 +646,7 @@ const EconomicCalendar = () => {
                     </CardHeader>
                     <CardContent>
                       {Object.keys(nextWeekByDay).length === 0 ? (
-                        <p className="text-muted-foreground text-center py-8">No events for next week</p>
+                        <p className="text-muted-foreground text-center py-8">{t('economicCalendar.noEventsNextWeek')}</p>
                       ) : (
                         <div className="space-y-4">
                           {Object.entries(nextWeekByDay).map(([day, dayEvents]) => (
@@ -703,16 +705,16 @@ const EconomicCalendar = () => {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <Calendar className="h-4 w-4" />
-                        Recent Releases ({releasedEvents.length})
+                         <Calendar className="h-4 w-4" />
+                         {t('economicCalendar.recentReleases')} ({releasedEvents.length})
                       </CardTitle>
-                      <Badge variant="outline" className="gap-1.5 text-xs">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        Past 7 days
+                       <Badge variant="outline" className="gap-1.5 text-xs">
+                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                         {t('economicCalendar.past7days')}
                       </Badge>
                     </div>
-                    <CardDescription className="text-xs">
-                      Economic data released in the past 7 days
+                     <CardDescription className="text-xs">
+                       {t('economicCalendar.releasedDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -774,10 +776,10 @@ const EconomicCalendar = () => {
 
             <TabsContent value="settings" className="space-y-6 mt-6">
               {!user ? (
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">
-                      Please login to configure alert preferences
+                 <Card>
+                   <CardContent className="pt-6">
+                     <p className="text-center text-muted-foreground">
+                       {t('economicCalendar.loginToConfig')}
                     </p>
                   </CardContent>
                 </Card>
@@ -785,17 +787,17 @@ const EconomicCalendar = () => {
                 <>
                   {/* Alert Delivery Methods */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Alert Delivery</CardTitle>
-                      <CardDescription>
-                        Choose how you want to receive economic event alerts
-                      </CardDescription>
+                     <CardHeader>
+                       <CardTitle>{t('economicCalendar.alertDelivery')}</CardTitle>
+                       <CardDescription>
+                         {t('economicCalendar.alertDeliveryDesc')}
+                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Mail className="h-5 w-5 text-muted-foreground" />
-                          <Label htmlFor="email-alerts">Email Alerts</Label>
+                          <Label htmlFor="email-alerts">{t('economicCalendar.emailAlerts')}</Label>
                         </div>
                         <Switch
                           id="email-alerts"
@@ -809,7 +811,7 @@ const EconomicCalendar = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                          <Label htmlFor="telegram-alerts">Telegram Alerts</Label>
+                          <Label htmlFor="telegram-alerts">{t('economicCalendar.telegramAlerts')}</Label>
                         </div>
                         <Switch
                           id="telegram-alerts"
@@ -822,7 +824,7 @@ const EconomicCalendar = () => {
 
                       {preferences.telegram_enabled && (
                         <div className="ml-8 space-y-2">
-                          <Label htmlFor="telegram-chat-id">Telegram Chat ID</Label>
+                          <Label htmlFor="telegram-chat-id">{t('economicCalendar.telegramChatId')}</Label>
                           <Input
                             id="telegram-chat-id"
                             placeholder="Your Telegram Chat ID"
@@ -832,7 +834,7 @@ const EconomicCalendar = () => {
                             }
                           />
                           <p className="text-xs text-muted-foreground">
-                            Get your Chat ID by messaging @userinfobot on Telegram
+                            {t('economicCalendar.telegramHint')}
                           </p>
                         </div>
                       )}
@@ -841,16 +843,16 @@ const EconomicCalendar = () => {
 
                   {/* Filter Preferences */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Alert Filters</CardTitle>
-                      <CardDescription>
-                        Customize which events you want to be notified about
-                      </CardDescription>
+                     <CardHeader>
+                       <CardTitle>{t('economicCalendar.alertFilters')}</CardTitle>
+                       <CardDescription>
+                         {t('economicCalendar.alertFiltersDesc')}
+                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Regions */}
                       <div className="space-y-3">
-                        <Label>Regions</Label>
+                        <Label>{t('economicCalendar.regions')}</Label>
                         <div className="grid grid-cols-2 gap-3">
                           {REGIONS.map((region) => (
                             <div key={region.value} className="flex items-center space-x-2">
@@ -881,7 +883,7 @@ const EconomicCalendar = () => {
 
                       {/* Indicator Types */}
                       <div className="space-y-3">
-                        <Label>Indicator Types</Label>
+                        <Label>{t('economicCalendar.indicatorTypes')}</Label>
                         <div className="grid grid-cols-1 gap-3">
                           {INDICATOR_TYPES.map((type) => (
                             <div key={type.value} className="flex items-center space-x-2">
@@ -912,7 +914,7 @@ const EconomicCalendar = () => {
 
                       {/* Impact Level */}
                       <div className="space-y-3">
-                        <Label>Impact Level</Label>
+                        <Label>{t('economicCalendar.impactLevel')}</Label>
                         <div className="flex gap-3">
                           {["high", "medium", "low"].map((level) => (
                             <div key={level} className="flex items-center space-x-2">
@@ -941,8 +943,8 @@ const EconomicCalendar = () => {
                         </div>
                       </div>
 
-                      <Button onClick={savePreferences} disabled={savingPreferences} className="w-full">
-                        {savingPreferences ? "Saving..." : "Save Preferences"}
+                       <Button onClick={savePreferences} disabled={savingPreferences} className="w-full">
+                         {savingPreferences ? t('economicCalendar.saving') : t('economicCalendar.savePreferences')}
                       </Button>
                     </CardContent>
                   </Card>

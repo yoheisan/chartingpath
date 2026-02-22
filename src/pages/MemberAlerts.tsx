@@ -20,6 +20,7 @@ import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
+import { useTranslation } from "react-i18next";
 
 interface UserProfile {
   id: string;
@@ -37,6 +38,7 @@ interface Alert {
 }
 
 const MemberAlerts = () => {
+  const { t } = useTranslation();
   const { user, isAuthLoading: authLoading } = useAuth();
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("alerts");
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -429,16 +431,16 @@ const MemberAlerts = () => {
               <Bell className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Chart Pattern Alerts
-            </h1>
+             {t('alerts.title')}
+           </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-            Get notified via email and push when chart patterns form on your favorite instruments.
-          </p>
+           {t('alerts.subtitle')}
+         </p>
           <Button asChild size="lg">
             <Link to={`/auth?redirect=${encodeURIComponent('/members/alerts')}`}>
               <Lock className="h-4 w-4 mr-2" />
-              Sign in to manage alerts
+              {t('alerts.signInToManage')}
             </Link>
           </Button>
         </div>
@@ -487,9 +489,9 @@ const MemberAlerts = () => {
       
       {/* Back Navigation */}
       <div className="mb-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
+         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+           <ArrowLeft className="h-4 w-4" />
+           {t('common.backToHome')}
         </Link>
       </div>
 
@@ -503,12 +505,12 @@ const MemberAlerts = () => {
             <Bell className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Chart Pattern Alerts
-          </h1>
+             {t('alerts.title')}
+           </h1>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
-          Get notified via email and push when chart patterns form on your favorite instruments.
-        </p>
+           {t('alerts.subtitle')}
+         </p>
         
         {/* Plan Status */}
         <div className="flex items-center justify-center gap-2">
@@ -528,20 +530,20 @@ const MemberAlerts = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              Create New Alert
-            </CardTitle>
+               {t('alerts.createNew')}
+             </CardTitle>
             <CardDescription>
-              Set up notifications for chart pattern formations
-              {playbookContext && (
+               {t('alerts.createNewDesc')}
+               {playbookContext && (
                 <Badge variant="secondary" className="ml-2">
-                  Prefilled from playbook
+                  {t('alerts.prefilledFromPlaybook')}
                 </Badge>
               )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Symbol</Label>
+              <Label>{t('alerts.symbol')}</Label>
               <UniversalSymbolSearch
                 onSelect={(selectedSymbol) => setSymbol(selectedSymbol)}
                 trigger={
@@ -552,8 +554,8 @@ const MemberAlerts = () => {
                     {symbol ? (
                       <span className="text-foreground font-medium">{symbol}</span>
                     ) : (
-                      <span className="text-muted-foreground">Search for a symbol...</span>
-                    )}
+                     <span className="text-muted-foreground">{t('alerts.searchSymbol')}</span>
+                   )}
                     <Search className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 }
@@ -561,15 +563,15 @@ const MemberAlerts = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="timeframe">
-                Timeframe
+               <Label htmlFor="timeframe">
+                 {t('alerts.timeframe')}
                 {wedgeConfig.wedgeEnabled && (
                   <Badge variant="outline" className="ml-2 text-xs">1H recommended</Badge>
                 )}
               </Label>
               <Select value={timeframe} onValueChange={setTimeframe}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select timeframe" />
+                  <SelectValue placeholder={t('alerts.selectTimeframe')} />
                 </SelectTrigger>
                 <SelectContent>
                   {timeframeOptions.map((option) => (
@@ -583,7 +585,7 @@ const MemberAlerts = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Chart Patterns</Label>
+                <Label>{t('alerts.chartPatterns')}</Label>
                 <div className="flex items-center gap-1">
                   {selectedPatterns.length < patternOptions.length && (
                     <Button 
@@ -591,8 +593,8 @@ const MemberAlerts = () => {
                       size="sm" 
                       className="h-6 px-2 text-xs"
                       onClick={() => setSelectedPatterns(patternOptions.map(p => p.value))}
-                    >
-                      Select All
+                     >
+                       {t('alerts.selectAll')}
                     </Button>
                   )}
                   {selectedPatterns.length > 0 && (
@@ -638,7 +640,7 @@ const MemberAlerts = () => {
 
             {/* Delivery Method */}
             <div className="space-y-2">
-              <Label>Delivery Method</Label>
+              <Label>{t('alerts.deliveryMethod')}</Label>
               <div className="border rounded-lg p-3 space-y-2">
                 <div className="flex items-center space-x-2 py-1">
                   <Checkbox
@@ -654,7 +656,7 @@ const MemberAlerts = () => {
                   />
                   <label htmlFor="delivery-email" className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    Email
+                    {t('alerts.email')}
                   </label>
                 </div>
                 <div className="flex items-center space-x-2 py-1">
@@ -671,13 +673,13 @@ const MemberAlerts = () => {
                   />
                   <label htmlFor="delivery-push" className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2">
                     <Smartphone className="h-4 w-4 text-muted-foreground" />
-                    Push Notification
+                     {t('alerts.pushNotification')}
                   </label>
                 </div>
               </div>
               {deliveryMethods.length === 0 && (
-                <p className="text-xs text-destructive">
-                  Select at least one delivery method
+                 <p className="text-xs text-destructive">
+                   {t('alerts.selectDelivery')}
                 </p>
               )}
             </div>
@@ -686,15 +688,15 @@ const MemberAlerts = () => {
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <Lock className="h-4 w-4" />
-                  <span className="font-medium">Alert limit reached</span>
+                  <span className="font-medium">{t('alerts.alertLimitReached')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
                   You're using {activeAlerts.length}/{planLimits.max} alerts on your {planLimits.name} plan.
                 </p>
                 <Button asChild size="sm">
                   <Link to="/projects/pricing">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Upgrade for More Alerts
+                     <TrendingUp className="h-4 w-4 mr-2" />
+                     {t('alerts.upgradeForMore')}
                   </Link>
                 </Button>
               </div>
@@ -707,8 +709,8 @@ const MemberAlerts = () => {
                 {creating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating Alert...
-                  </>
+                     {t('alerts.creatingAlert')}
+                   </>
                 ) : (
                   <>
                     <Plus className="h-4 w-4 mr-2" />
@@ -725,20 +727,20 @@ const MemberAlerts = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Your Alerts
-            </CardTitle>
+               {t('alerts.yourAlerts')}
+             </CardTitle>
             <CardDescription>
-              Manage your active chart pattern alerts
-            </CardDescription>
+               {t('alerts.manageAlerts')}
+             </CardDescription>
           </CardHeader>
           <CardContent>
             {alerts.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No alerts created yet</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Create your first alert to get started
-                </p>
+                 <p className="text-muted-foreground">{t('alerts.noAlertsYet')}</p>
+                 <p className="text-sm text-muted-foreground mt-2">
+                   {t('alerts.createFirstAlert')}
+                 </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -783,10 +785,10 @@ const MemberAlerts = () => {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Alert</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this alert for {alert.symbol}? This action cannot be undone.
-                            </AlertDialogDescription>
+                             <AlertDialogTitle>{t('alerts.deleteAlert')}</AlertDialogTitle>
+                             <AlertDialogDescription>
+                               {t('alerts.deleteAlertConfirm', { symbol: alert.symbol })}
+                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -813,7 +815,7 @@ const MemberAlerts = () => {
       {/* How It Works */}
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>How It Works</CardTitle>
+          <CardTitle>{t('alerts.howItWorks')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
@@ -821,28 +823,28 @@ const MemberAlerts = () => {
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold text-primary">1</span>
               </div>
-              <h3 className="font-semibold mb-2">Create Alert</h3>
-              <p className="text-sm text-muted-foreground">
-                Set up alerts for your favorite symbols and patterns
-              </p>
+               <h3 className="font-semibold mb-2">{t('alerts.step1Title')}</h3>
+               <p className="text-sm text-muted-foreground">
+                 {t('alerts.step1Desc')}
+               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold text-primary">2</span>
               </div>
-              <h3 className="font-semibold mb-2">Pattern Detection</h3>
-              <p className="text-sm text-muted-foreground">
-                Our system monitors markets and detects patterns on closed {wedgeConfig.wedgeEnabled ? '1H' : ''} candles
-              </p>
+               <h3 className="font-semibold mb-2">{t('alerts.step2Title')}</h3>
+               <p className="text-sm text-muted-foreground">
+                 {t('alerts.step2Desc')}
+               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold text-primary">3</span>
               </div>
-              <h3 className="font-semibold mb-2">Get Notified</h3>
-              <p className="text-sm text-muted-foreground">
-                Receive instant alerts via email and push when patterns are detected
-              </p>
+               <h3 className="font-semibold mb-2">{t('alerts.step3Title')}</h3>
+               <p className="text-sm text-muted-foreground">
+                 {t('alerts.step3Desc')}
+               </p>
             </div>
           </div>
         </CardContent>
@@ -850,8 +852,8 @@ const MemberAlerts = () => {
 
       {/* Disclaimer */}
       <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-        <p className="text-sm text-muted-foreground text-center">
-          <strong>Disclaimer:</strong> Alerts are for educational use only and do not constitute financial advice. Trading involves risk of loss. Past pattern performance does not guarantee future results.
+         <p className="text-sm text-muted-foreground text-center">
+           <strong>{t('common.disclaimer')}</strong> {t('alerts.disclaimer')}
         </p>
       </div>
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="alerts" />

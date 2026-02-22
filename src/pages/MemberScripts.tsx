@@ -17,6 +17,7 @@ import {
   ChevronDown, ChevronUp, ScanSearch, Shield
 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +65,7 @@ const PATTERN_CATEGORIES = [
 ];
 
 const MemberScripts = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -280,9 +282,9 @@ const MemberScripts = () => {
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Back Navigation */}
       <div className="mb-6">
-        <Link to={isFromPatternLab ? "/projects/pattern-lab/new" : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          {isFromPatternLab ? "Back to Pattern Lab" : "Back to Home"}
+         <Link to={isFromPatternLab ? "/projects/pattern-lab/new" : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+           <ArrowLeft className="h-4 w-4" />
+           {isFromPatternLab ? t('scripts.backToPatternLab') : t('common.backToHome')}
         </Link>
       </div>
 
@@ -292,11 +294,11 @@ const MemberScripts = () => {
           <div className="p-3 rounded-xl bg-primary/10">
             <ScanSearch className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold">Pattern Scanner Scripts</h1>
-        </div>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Generate scripts that automatically detect chart patterns and execute trades with your custom SL/TP rules
-        </p>
+           <h1 className="text-3xl font-bold">{t('scripts.title')}</h1>
+         </div>
+         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+           {t('scripts.subtitle')}
+         </p>
       </div>
 
       {/* Pattern Lab Context Banner */}
@@ -309,11 +311,11 @@ const MemberScripts = () => {
                   <FlaskConical className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Imported from Pattern Lab</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your backtest optimizations have been applied to this script
-                  </p>
-                </div>
+                   <h3 className="font-semibold">{t('scripts.importedFromLab')}</h3>
+                   <p className="text-sm text-muted-foreground">
+                     {t('scripts.importedFromLabDesc')}
+                   </p>
+                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="text-xs">
@@ -360,15 +362,15 @@ const MemberScripts = () => {
                   <FlaskConical className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Validate with Pattern Lab</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Backtest pattern performance before deploying scanner scripts
-                  </p>
-                </div>
+                   <h3 className="font-semibold">{t('scripts.validateWithLab')}</h3>
+                   <p className="text-sm text-muted-foreground">
+                     {t('scripts.validateWithLabDesc')}
+                   </p>
+                 </div>
               </div>
-              <Button onClick={() => navigate('/projects/pattern-lab')} className="gap-2">
-                <FlaskConical className="h-4 w-4" />
-                Open Pattern Lab
+               <Button onClick={() => navigate('/projects/pattern-lab')} className="gap-2">
+                 <FlaskConical className="h-4 w-4" />
+                 {t('scripts.openPatternLab')}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -379,13 +381,13 @@ const MemberScripts = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="generate" className="gap-2">
-            <Zap className="h-4 w-4" />
-            Generate Scanner
+           <TabsTrigger value="generate" className="gap-2">
+             <Zap className="h-4 w-4" />
+             {t('scripts.generateScanner')}
           </TabsTrigger>
-          <TabsTrigger value="my-scripts" className="gap-2">
-            <FileCode className="h-4 w-4" />
-            My Scripts
+           <TabsTrigger value="my-scripts" className="gap-2">
+             <FileCode className="h-4 w-4" />
+             {t('scripts.myScripts')}
             {savedScripts.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-xs">{savedScripts.length}</Badge>
             )}
@@ -404,9 +406,9 @@ const MemberScripts = () => {
                     <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors pb-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <ScanSearch className="h-4 w-4" />
-                            Pattern Selection
+                           <CardTitle className="text-base flex items-center gap-2">
+                             <ScanSearch className="h-4 w-4" />
+                             {t('scripts.patternSelection')}
                           </CardTitle>
                           <CardDescription className="text-xs mt-1">
                             {selectedPatterns.length} of {SCANNER_PATTERNS.length} patterns selected
@@ -909,12 +911,11 @@ const MemberScripts = () => {
       </div>
 
       {/* Disclaimer */}
-      <div className="mt-8 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-        <p className="text-sm text-muted-foreground text-center">
-          <strong>Disclaimer:</strong> Scripts are for educational purposes only and do not constitute financial advice. 
-          Trading involves risk. Always test thoroughly in demo accounts before live trading.
-        </p>
-      </div>
+       <div className="mt-8 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+         <p className="text-sm text-muted-foreground text-center">
+           <strong>{t('common.disclaimer')}</strong> {t('scripts.disclaimer')}
+         </p>
+       </div>
     </div>
   );
 };
