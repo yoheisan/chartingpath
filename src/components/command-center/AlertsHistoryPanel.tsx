@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface AlertsHistoryPanelProps {
   userId?: string;
@@ -41,6 +42,7 @@ interface ConfiguredAlert {
 }
 
 export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPanelProps) {
+  const { t } = useTranslation();
   const [alertLogs, setAlertLogs] = useState<AlertLog[]>([]);
   const [configuredAlerts, setConfiguredAlerts] = useState<ConfiguredAlert[]>([]);
   const [loading, setLoading] = useState(false);
@@ -113,11 +115,11 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
         <h3 className="font-semibold text-sm flex items-center gap-1.5">
           <Bell className="h-4 w-4" />
-          Alerts History
+          {t('commandCenter.alertsHistory')}
         </h3>
         <Button variant="ghost" size="sm" className="h-6 text-xs" asChild>
           <Link to="/members/alerts">
-            View All
+            {t('commandCenter.viewAll')}
             <ExternalLink className="h-3 w-3 ml-1" />
           </Link>
         </Button>
@@ -129,16 +131,16 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
           {!userId ? (
             <div className="text-center py-6 text-xs text-muted-foreground">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Sign in to view your alerts</p>
+              <p>{t('commandCenter.signInToView')}</p>
             </div>
           ) : loading ? (
             <div className="text-center py-6 text-xs text-muted-foreground">
-              Loading alerts...
+              {t('commandCenter.loadingAlerts')}
             </div>
           ) : alertLogs.length === 0 ? (
             <div className="text-center py-4 text-xs text-muted-foreground">
               <Bell className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
-              <p>No triggered alerts yet</p>
+              <p>{t('commandCenter.noTriggeredAlerts')}</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -177,7 +179,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                         </span>
                       ) : (
                         <Badge variant="secondary" className="text-[9px]">
-                          Pending
+                          {t('commandCenter.pending')}
                         </Badge>
                       )}
                       <div className="text-[9px] text-muted-foreground">
@@ -197,7 +199,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
             <>
               <div className="flex items-center gap-2 mt-3 mb-1.5 px-1">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Active Monitors ({configuredAlerts.length})
+                  {t('commandCenter.activeMonitors', { count: configuredAlerts.length })}
                 </span>
                 <div className="flex-1 h-px bg-border" />
               </div>
@@ -221,7 +223,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                       </div>
                     </div>
                     <Badge variant="secondary" className="text-[9px] bg-primary/10 text-primary border-0">
-                      Watching
+                      {t('commandCenter.watching')}
                     </Badge>
                   </button>
                 ))}

@@ -18,6 +18,7 @@ import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
 import { useMarketDataCache } from '@/hooks/useMarketDataCache';
+import { useTranslation } from 'react-i18next';
 
 interface BreadthData {
   advances: number;
@@ -226,6 +227,7 @@ async function fetchMarketDataFn(): Promise<MarketDataResponse> {
 }
 
 export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', onTabChange }: MarketOverviewPanelProps) {
+  const { t } = useTranslation();
   // Use caching for market data - shows cached immediately, refreshes in background if stale
   const { 
     data: marketData, 
@@ -269,7 +271,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <h3 className="font-semibold text-sm flex items-center gap-1.5">
           <Globe className="h-4 w-4" />
-          Market Overview
+          {t('commandCenter.marketOverview')}
         </h3>
         <Button
           variant="ghost"
@@ -287,19 +289,19 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
           <TabsTrigger value="indices" className="text-xs h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
-            Indices
+            {t('commandCenter.indices')}
           </TabsTrigger>
           <TabsTrigger value="breadth" className="text-xs h-6 px-2">
             <BarChart3 className="h-3 w-3 mr-1" />
-            Breadth
+            {t('commandCenter.breadth')}
           </TabsTrigger>
           <TabsTrigger value="movers" className="text-xs h-6 px-2">
             <TrendingUp className="h-3 w-3 mr-1" />
-            Movers
+            {t('commandCenter.movers')}
           </TabsTrigger>
           <TabsTrigger value="calendar" className="text-xs h-6 px-2">
             <Calendar className="h-3 w-3 mr-1" />
-            Calendar
+            {t('commandCenter.calendar')}
           </TabsTrigger>
         </TabsList>
 
@@ -358,7 +360,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                 <>
                   {/* Sentiment Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">NYSE Market Breadth</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
                     <Badge 
                       className={cn(
                         'text-[10px] border-0',
@@ -378,7 +380,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* A/D Ratio Display */}
                   <div className="rounded-lg border border-border p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Advance/Decline Ratio</span>
+                      <span className="text-xs font-medium">{t('commandCenter.advanceDeclineRatio')}</span>
                       <span className={cn(
                         'text-lg font-bold',
                         breadthData.advanceDeclineRatio >= 1 ? 'text-bullish' : 'text-bearish'
@@ -413,7 +415,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground mb-1">A/D Line</div>
+                      <div className="text-[10px] text-muted-foreground mb-1">{t('commandCenter.adLine')}</div>
                       <div className={cn(
                         'text-sm font-semibold',
                         breadthData.advanceDeclineLine >= 0 ? 'text-bullish' : 'text-bearish'
@@ -423,7 +425,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       </div>
                     </div>
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground mb-1">Unchanged</div>
+                      <div className="text-[10px] text-muted-foreground mb-1">{t('commandCenter.unchanged')}</div>
                       <div className="text-sm font-semibold text-muted-foreground">
                         {breadthData.unchanged.toLocaleString()}
                       </div>
@@ -457,21 +459,21 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       disabled={breadthLoading}
                     >
                       <RefreshCw className={cn('h-3 w-3 mr-1', breadthLoading && 'animate-spin')} />
-                      Refresh
+                       {t('commandCenter.refresh')}
                     </Button>
                   </div>
                 </>
               ) : (
                 <div className="text-center py-8">
                   <BarChart3 className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-xs text-muted-foreground">Breadth data unavailable</p>
+                  <p className="text-xs text-muted-foreground">{t('commandCenter.breadthUnavailable')}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     className="mt-2 h-7 text-xs"
                     onClick={refreshBreadth}
                   >
-                    Retry
+                    {t('commandCenter.retry')}
                   </Button>
                 </div>
               )}
@@ -487,10 +489,10 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
               <div className="mb-4">
                 <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-bullish" />
-                  Top Gainers
+                  {t('commandCenter.topGainers')}
                 </h4>
                 {topGainers.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground px-2">No data available</p>
+                  <p className="text-[10px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topGainers.map((mover) => (
@@ -514,10 +516,10 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
               <div>
                 <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                   <TrendingDown className="h-3 w-3 text-bearish" />
-                  Top Losers
+                  {t('commandCenter.topLosers')}
                 </h4>
                 {topLosers.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground px-2">No data available</p>
+                  <p className="text-[10px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topLosers.map((mover) => (

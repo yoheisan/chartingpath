@@ -20,6 +20,7 @@ import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface WatchlistPanelProps {
   userId?: string;
@@ -64,6 +65,7 @@ export function WatchlistPanel({
   defaultTab = 'watchlist',
   onTabChange,
 }: WatchlistPanelProps) {
+  const { t } = useTranslation();
   const { profile } = useUserProfile();
   
   const [userWatchlist, setUserWatchlist] = useState<WatchlistItem[]>([]);
@@ -134,7 +136,7 @@ export function WatchlistPanel({
   // Add symbol to watchlist
   const addToWatchlist = async (symbol: string) => {
     if (!userId || !isPaidUser) {
-      toast.error('Upgrade to add custom symbols to your watchlist');
+      toast.error(t('commandCenter.upgradeToAddCustom'));
       return;
     }
 
@@ -149,17 +151,17 @@ export function WatchlistPanel({
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('Symbol already in watchlist');
+          toast.error(t('commandCenter.symbolAlreadyInWatchlist'));
         } else {
           throw error;
         }
       } else {
-        toast.success(`${symbol} added to watchlist`);
+        toast.success(t('commandCenter.addedToWatchlist', { symbol }));
         fetchUserWatchlist();
       }
     } catch (err) {
       console.error('[WatchlistPanel] add error:', err);
-      toast.error('Failed to add symbol');
+      toast.error(t('commandCenter.failedToAdd'));
     } finally {
       setAddingSymbol(false);
     }
@@ -177,11 +179,11 @@ export function WatchlistPanel({
         .eq('symbol', symbol);
 
       if (error) throw error;
-      toast.success(`${symbol} removed from watchlist`);
+      toast.success(t('commandCenter.removedFromWatchlist', { symbol }));
       fetchUserWatchlist();
     } catch (err) {
       console.error('[WatchlistPanel] remove error:', err);
-      toast.error('Failed to remove symbol');
+      toast.error(t('commandCenter.failedToRemove'));
     }
   };
 
@@ -202,11 +204,11 @@ export function WatchlistPanel({
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm flex items-center gap-1.5">
             <Eye className="h-4 w-4" />
-            Watchlist
+            {t('commandCenter.watchlist')}
             {isPaidUser && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
                 <Crown className="h-2.5 w-2.5 mr-0.5" />
-                Custom
+                {t('commandCenter.custom')}
               </Badge>
             )}
           </h3>
@@ -222,14 +224,14 @@ export function WatchlistPanel({
                 disabled={addingSymbol}
               >
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Add symbol...
+                {t('commandCenter.addSymbol')}
               </Button>
             }
           />
         ) : (
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
             <Lock className="h-3 w-3" />
-            <span>Upgrade to add custom symbols</span>
+            <span>{t('commandCenter.upgradeToAdd')}</span>
           </div>
         )}
       </div>
@@ -239,11 +241,11 @@ export function WatchlistPanel({
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
           <TabsTrigger value="watchlist" className="text-xs h-6 px-2">
             <Star className="h-3 w-3 mr-1" />
-            {isPaidUser ? 'My List' : 'Universe'}
+            {isPaidUser ? t('commandCenter.myList') : t('commandCenter.universe')}
           </TabsTrigger>
           <TabsTrigger value="patterns" className="text-xs h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
-            Active
+            {t('commandCenter.active')}
             {activePatterns.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[9px] px-1 py-0">
                 {activePatterns.length}
@@ -260,7 +262,7 @@ export function WatchlistPanel({
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <Lock className="h-3 w-3" />
-                    <span>Upgrade to monitor your own symbols</span>
+                    <span>{t('commandCenter.upgradeToMonitor')}</span>
                   </div>
                 </div>
               )}
@@ -299,8 +301,8 @@ export function WatchlistPanel({
               {displayList.length === 0 && (
                 <div className="text-center py-4 text-xs text-muted-foreground">
                   {isPaidUser 
-                    ? 'No symbols yet. Add one above!' 
-                    : 'No instruments available'}
+                    ? t('commandCenter.noSymbolsYet')
+                    : t('commandCenter.noInstruments')}
                 </div>
               )}
             </div>
@@ -315,19 +317,19 @@ export function WatchlistPanel({
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <Activity className="h-3 w-3" />
-                    <span>Showing patterns from default universe</span>
+                    <span>{t('commandCenter.showingDefault')}</span>
                   </div>
                 </div>
               )}
               {loading ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
-                  Loading patterns...
+                  {t('commandCenter.loadingPatterns')}
                 </div>
               ) : activePatterns.length === 0 ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
                   {isPaidUser && userWatchlist.length === 0
-                    ? 'Add symbols to your watchlist first'
-                    : 'No active patterns detected'}
+                    ? t('commandCenter.addToWatchlistFirst')
+                    : t('commandCenter.noActivePatterns')}
                 </div>
               ) : (
                 activePatterns.map((pattern) => (
