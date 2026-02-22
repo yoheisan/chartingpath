@@ -5,27 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  Crown, 
-  Zap, 
-  Users, 
-  Layers,
-  ArrowRight,
-  CheckCircle,
-  Infinity,
-  BarChart3,
-  Code,
-  BookOpen,
-  Bell,
-  Download,
-  Activity,
-  Settings
+  Crown, Zap, Users, Layers, ArrowRight, CheckCircle, Infinity,
+  BarChart3, Code, BookOpen, Bell, Download, Activity, Settings
 } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useBacktesterV2Usage } from "@/hooks/useBacktesterV2Usage";
+import { useTranslation } from "react-i18next";
 
 const EliteDashboard = () => {
   const { profile, getTierDisplayName } = useUserProfile();
   const { currentUsage, hasUnlimited } = useBacktesterV2Usage();
+  const { t } = useTranslation();
 
   const eliteFeatures = [
     {
@@ -135,7 +125,6 @@ const EliteDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Elite Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 shadow-2xl">
@@ -143,21 +132,19 @@ const EliteDashboard = () => {
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Elite Dashboard
+                {t('eliteDashboard.title')}
               </h1>
               <p className="text-muted-foreground">
-                Welcome back, {profile?.email} • {getTierDisplayName} Member
+                {t('eliteDashboard.welcomeBack')} {profile?.email} • {getTierDisplayName} Member
               </p>
             </div>
           </div>
-          
           <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 text-lg">
             <Crown className="h-4 w-4 mr-2" />
-            ELITE ACCESS - ALL FEATURES UNLOCKED
+            {t('eliteDashboard.eliteAccess')}
           </Badge>
         </div>
 
-        {/* Usage Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {usageStats.map((stat, index) => (
             <Card key={index} className="relative overflow-hidden">
@@ -171,7 +158,7 @@ const EliteDashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span>Limit</span>
+                    <span>{t('eliteDashboard.limit')}</span>
                     <span>{stat.max}</span>
                   </div>
                   <Progress value={stat.percentage} className="h-2" />
@@ -182,16 +169,13 @@ const EliteDashboard = () => {
           ))}
         </div>
 
-        {/* Quick Actions */}
         <Card className="mb-12">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5" />
-              Quick Actions
+              {t('eliteDashboard.quickActions')}
             </CardTitle>
-            <CardDescription>
-              Jump straight into your elite features
-            </CardDescription>
+            <CardDescription>{t('eliteDashboard.quickActionsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -212,7 +196,6 @@ const EliteDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Elite Features Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {eliteFeatures.map((feature, index) => (
             <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20">
@@ -245,67 +228,37 @@ const EliteDashboard = () => {
           ))}
         </div>
 
-        {/* Elite Benefits */}
         <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-700">
               <Crown className="h-6 w-6" />
-              Your Elite Benefits
+              {t('eliteDashboard.yourEliteBenefits')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-3">
-                <h4 className="font-semibold text-purple-700">Advanced Analytics</h4>
+                <h4 className="font-semibold text-purple-700">{t('eliteDashboard.advancedAnalytics')}</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Tick-level backtesting precision
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Advanced risk metrics
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Portfolio optimization tools
-                  </li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Tick-level backtesting precision</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Advanced risk metrics</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Portfolio optimization tools</li>
                 </ul>
               </div>
-              
               <div className="space-y-3">
-                <h4 className="font-semibold text-purple-700">Unlimited Access</h4>
+                <h4 className="font-semibold text-purple-700">{t('eliteDashboard.unlimitedAccess')}</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <Infinity className="h-4 w-4 text-purple-500" />
-                    Unlimited V2 backtests
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Infinity className="h-4 w-4 text-purple-500" />
-                    Unlimited script downloads
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Infinity className="h-4 w-4 text-purple-500" />
-                    Unlimited pattern alerts
-                  </li>
+                  <li className="flex items-center gap-2"><Infinity className="h-4 w-4 text-purple-500" />Unlimited V2 backtests</li>
+                  <li className="flex items-center gap-2"><Infinity className="h-4 w-4 text-purple-500" />Unlimited script downloads</li>
+                  <li className="flex items-center gap-2"><Infinity className="h-4 w-4 text-purple-500" />Unlimited pattern alerts</li>
                 </ul>
               </div>
-              
               <div className="space-y-3">
-                <h4 className="font-semibold text-purple-700">Premium Support</h4>
+                <h4 className="font-semibold text-purple-700">{t('eliteDashboard.premiumSupport')}</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Priority customer support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Exclusive trading insights
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Beta feature access
-                  </li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Priority customer support</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Exclusive trading insights</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500" />Beta feature access</li>
                 </ul>
               </div>
             </div>

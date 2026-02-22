@@ -4,8 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Package, ArrowLeft, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import MemberNavigation from "@/components/MemberNavigation";
+import { useTranslation } from "react-i18next";
 
 const MemberDownloads = () => {
+  const { t } = useTranslation();
+
   const downloads = [
     {
       id: 1,
@@ -71,7 +74,6 @@ const MemberDownloads = () => {
   ];
 
   const handleDownload = (downloadId: number, downloadName: string) => {
-    // Analytics event
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'asset_downloaded', {
         event_category: 'Members',
@@ -79,7 +81,6 @@ const MemberDownloads = () => {
         value: downloadId
       });
     }
-    // Simulate download
     console.log(`Downloading: ${downloadName}`);
   };
 
@@ -87,58 +88,48 @@ const MemberDownloads = () => {
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       <MemberNavigation />
         
-        {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('common.backToHome')}
           </Link>
         </div>
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
               <Package className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Downloads & Assets
+              {t('memberDownloads.title')}
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Access your exclusive collection of trading assets, starter packs, and educational resources.
+            {t('memberDownloads.subtitle')}
           </p>
         </div>
 
-        {/* Stats */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {downloads.length}
-                </div>
-                <div className="text-sm text-muted-foreground">Available Packs</div>
+                <div className="text-2xl font-bold text-primary">{downloads.length}</div>
+                <div className="text-sm text-muted-foreground">{t('memberDownloads.availablePacks')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-accent">
-                  {downloads.reduce((sum, d) => sum + d.downloads, 0)}
-                </div>
-                <div className="text-sm text-muted-foreground">Total Downloads</div>
+                <div className="text-2xl font-bold text-accent">{downloads.reduce((sum, d) => sum + d.downloads, 0)}</div>
+                <div className="text-sm text-muted-foreground">{t('memberDownloads.totalDownloads')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">
-                  {(downloads.reduce((sum, d) => sum + parseFloat(d.size), 0)).toFixed(1)} MB
-                </div>
-                <div className="text-sm text-muted-foreground">Total Size</div>
+                <div className="text-2xl font-bold text-foreground">{(downloads.reduce((sum, d) => sum + parseFloat(d.size), 0)).toFixed(1)} MB</div>
+                <div className="text-sm text-muted-foreground">{t('memberDownloads.totalSize')}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Featured Downloads */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Featured Downloads</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">{t('memberDownloads.featuredDownloads')}</h2>
           <div className="grid gap-6 md:grid-cols-2">
             {downloads.filter(d => d.featured).map((download) => (
               <Card key={download.id} className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
@@ -149,7 +140,7 @@ const MemberDownloads = () => {
                         <CardTitle className="text-xl">{download.name}</CardTitle>
                         <Badge className="bg-gradient-to-r from-primary to-accent text-white">
                           <Star className="h-3 w-3 mr-1" />
-                          Featured
+                          {t('memberDownloads.featured')}
                         </Badge>
                       </div>
                       <Badge variant="outline">{download.type}</Badge>
@@ -157,10 +148,9 @@ const MemberDownloads = () => {
                   </div>
                   <CardDescription className="text-base">{download.description}</CardDescription>
                 </CardHeader>
-                
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Includes:</h4>
+                    <h4 className="font-semibold text-sm">{t('memberDownloads.includes')}</h4>
                     <ul className="space-y-1">
                       {download.files.map((file, index) => (
                         <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -170,18 +160,13 @@ const MemberDownloads = () => {
                       ))}
                     </ul>
                   </div>
-
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{download.downloads} downloads</span>
+                    <span>{download.downloads} {t('memberDownloads.downloads')}</span>
                     <span>{download.size}</span>
                   </div>
-
-                  <Button 
-                    className="w-full"
-                    onClick={() => handleDownload(download.id, download.name)}
-                  >
+                  <Button className="w-full" onClick={() => handleDownload(download.id, download.name)}>
                     <Download className="h-4 w-4 mr-2" />
-                    Download Pack
+                    {t('memberDownloads.downloadPack')}
                   </Button>
                 </CardContent>
               </Card>
@@ -189,9 +174,8 @@ const MemberDownloads = () => {
           </div>
         </div>
 
-        {/* All Downloads */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-foreground">All Downloads</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('memberDownloads.allDownloads')}</h2>
           <div className="grid gap-4">
             {downloads.map((download) => (
               <Card key={download.id} className="hover:shadow-md transition-shadow">
@@ -204,13 +188,13 @@ const MemberDownloads = () => {
                         {download.featured && (
                           <Badge className="bg-gradient-to-r from-primary to-accent text-white">
                             <Star className="h-3 w-3 mr-1" />
-                            Featured
+                            {t('memberDownloads.featured')}
                           </Badge>
                         )}
                       </div>
                       <p className="text-muted-foreground">{download.description}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{download.downloads} downloads</span>
+                        <span>{download.downloads} {t('memberDownloads.downloads')}</span>
                         <span>•</span>
                         <span>{download.size}</span>
                         <span>•</span>
@@ -218,12 +202,9 @@ const MemberDownloads = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <Button 
-                        variant="outline"
-                        onClick={() => handleDownload(download.id, download.name)}
-                      >
+                      <Button variant="outline" onClick={() => handleDownload(download.id, download.name)}>
                         <Download className="h-4 w-4 mr-2" />
-                        Download
+                        {t('memberDownloads.download')}
                       </Button>
                     </div>
                   </div>
@@ -233,20 +214,18 @@ const MemberDownloads = () => {
           </div>
         </div>
 
-        {/* Access Notice */}
         <Card className="mt-8 bg-secondary/50">
           <CardContent className="p-6 text-center">
-            <h3 className="font-semibold text-foreground mb-2">Premium Member Benefits</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t('memberDownloads.premiumBenefits')}</h3>
             <p className="text-muted-foreground mb-4">
-              As a premium member, you have unlimited access to all downloads, starter packs, and exclusive resources. 
-              New assets are added monthly based on member requests and market trends.
+              {t('memberDownloads.premiumBenefitsDesc')}
             </p>
             <div className="flex gap-2 justify-center">
               <Button variant="outline" size="sm" asChild>
-                <Link to="/pricing">View All Plans</Link>
+                <Link to="/pricing">{t('memberDownloads.viewAllPlans')}</Link>
               </Button>
               <Button variant="ghost" size="sm">
-                Request New Asset
+                {t('memberDownloads.requestNewAsset')}
               </Button>
             </div>
           </CardContent>
