@@ -324,12 +324,21 @@ Return ONLY the JSON object, no markdown, no explanation.`
               continue
             }
 
-            // Sanitize control characters that Gemini sometimes includes in JSON strings
-            const sanitized = jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, (ch) => {
-              if (ch === '\n' || ch === '\r' || ch === '\t') return ch // keep valid whitespace
-              return '' // strip other control chars
-            })
-            const translations = JSON.parse(sanitized)
+            // Sanitize control characters inside JSON string values that Gemini sometimes includes
+            // We need to strip ALL control chars (0x00-0x1F, 0x7F) except structural JSON whitespace
+            // between tokens. The safest approach: strip them all, then the JSON structure (braces,
+            // brackets, colons, commas) plus spaces/newlines between tokens remain valid.
+            const sanitized = jsonMatch[0]
+              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // strip non-standard control chars
+              .replace(/\t/g, ' ') // replace tabs with spaces
+            let translations: Record<string, string>
+            try {
+              translations = JSON.parse(sanitized)
+            } catch {
+              // Last resort: strip ALL control chars including newlines inside strings
+              const aggressive = jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, ' ')
+              translations = JSON.parse(aggressive)
+            }
 
             // Insert/upsert translations
             for (const item of batch) {
