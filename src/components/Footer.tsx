@@ -33,16 +33,16 @@ const Footer = () => {
 
             {/* Research */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Research</h3>
+              <h3 className="font-semibold mb-4 text-foreground">{t('footer.research', 'Research')}</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/patterns/live" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Screener
+                  {t('navigation.screener', 'Screener')}
                 </Link>
                 <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pattern Lab
+                  {t('navigation.patternLab', 'Pattern Lab')}
                 </Link>
                 <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Scripts
+                  {t('navigation.scripts', 'Scripts')}
                 </Link>
                 <Link to="/projects/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pricing', 'Pricing')}
@@ -52,7 +52,7 @@ const Footer = () => {
 
             {/* Learning */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">Learning</h3>
+              <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pattern Library
@@ -68,7 +68,7 @@ const Footer = () => {
 
             {/* Tools & Company - matches header More dropdown */}
             <div>
-              <h3 className="font-semibold mb-4 text-foreground">More</h3>
+              <h3 className="font-semibold mb-4 text-foreground">{t('navigation.more', 'More')}</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pip Calculator
