@@ -23,7 +23,8 @@ import {
   Activity,
   FileCode,
   Bell,
-  Star
+  Star,
+  Bot
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
@@ -262,6 +263,18 @@ const Navigation = () => {
                   
                   <DropdownMenuSeparator />
                   
+                  {/* AI Copilot Feature */}
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Features</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/features/trading-copilot" className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-primary" />
+                        AI Copilot
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  
+
                   {/* Company Section */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Company</DropdownMenuLabel>
                   <DropdownMenuGroup>
