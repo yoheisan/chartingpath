@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Calculator, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const PipCalculator = () => {
+  const { t } = useTranslation();
   const [currencyPair, setCurrencyPair] = useState("");
   const [lotSize, setLotSize] = useState("");
   const [accountCurrency, setAccountCurrency] = useState("");
@@ -57,7 +59,7 @@ const PipCalculator = () => {
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('common.backToHome')}
           </Link>
         </div>
 
@@ -68,11 +70,11 @@ const PipCalculator = () => {
               <Calculator className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Pip Calculator
+              {t('pipCalculator.title')}
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Calculate the monetary value of each pip movement for your trades. Essential for proper risk management and position sizing.
+            {t('pipCalculator.subtitle')}
           </p>
         </div>
 
@@ -80,17 +82,17 @@ const PipCalculator = () => {
           {/* Calculator Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Calculate Pip Value</CardTitle>
+              <CardTitle>{t('pipCalculator.calculatePipValue')}</CardTitle>
               <CardDescription>
-                Enter your trading parameters to calculate pip value
+                {t('pipCalculator.enterParams')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currency-pair">Currency Pair</Label>
+                <Label htmlFor="currency-pair">{t('pipCalculator.currencyPair')}</Label>
                 <Select value={currencyPair} onValueChange={setCurrencyPair}>
                   <SelectTrigger id="currency-pair">
-                    <SelectValue placeholder="Select currency pair" />
+                    <SelectValue placeholder={t('pipCalculator.selectCurrencyPair')} />
                   </SelectTrigger>
                   <SelectContent>
                     {currencyPairs.map((pair) => (
@@ -103,7 +105,7 @@ const PipCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lot-size">Lot Size</Label>
+                <Label htmlFor="lot-size">{t('pipCalculator.lotSize')}</Label>
                 <Input
                   id="lot-size"
                   type="number"
@@ -115,10 +117,10 @@ const PipCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="account-currency">Account Currency</Label>
+                <Label htmlFor="account-currency">{t('pipCalculator.accountCurrency')}</Label>
                 <Select value={accountCurrency} onValueChange={setAccountCurrency}>
                   <SelectTrigger id="account-currency">
-                    <SelectValue placeholder="Select account currency" />
+                    <SelectValue placeholder={t('pipCalculator.selectAccountCurrency')} />
                   </SelectTrigger>
                   <SelectContent>
                     {currencies.map((currency) => (
@@ -131,10 +133,10 @@ const PipCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="leverage">Leverage (Optional)</Label>
+                <Label htmlFor="leverage">{t('pipCalculator.leverage')}</Label>
                 <Select value={leverage} onValueChange={setLeverage}>
                   <SelectTrigger id="leverage">
-                    <SelectValue placeholder="Select leverage" />
+                    <SelectValue placeholder={t('pipCalculator.selectLeverage')} />
                   </SelectTrigger>
                   <SelectContent>
                     {leverageOptions.map((lev) => (
@@ -151,7 +153,7 @@ const PipCalculator = () => {
                 className="w-full"
                 disabled={!currencyPair || !lotSize || !accountCurrency}
               >
-                Calculate Pip Value
+                {t('pipCalculator.calculate')}
               </Button>
             </CardContent>
           </Card>
@@ -159,18 +161,18 @@ const PipCalculator = () => {
           {/* Results */}
           <Card>
             <CardHeader>
-              <CardTitle>Calculation Results</CardTitle>
+              <CardTitle>{t('pipCalculator.results')}</CardTitle>
               <CardDescription>
-                Your pip value calculation
+                {t('pipCalculator.yourPipValue')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {pipValue !== null ? (
                 <div className="space-y-6">
                   <div className="text-center p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border">
-                    <div className="text-sm text-muted-foreground mb-2">Your pip value is:</div>
+                    <div className="text-sm text-muted-foreground mb-2">{t('pipCalculator.pipValueIs')}</div>
                     <div className="text-3xl font-bold text-primary">
-                      ${pipValue.toFixed(2)} per pip
+                      ${pipValue.toFixed(2)} {t('pipCalculator.perPip')}
                     </div>
                   </div>
 
@@ -193,7 +195,7 @@ const PipCalculator = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Enter your trading parameters to see the pip value calculation</p>
+                  <p>{t('pipCalculator.enterToSee')}</p>
                 </div>
               )}
             </CardContent>
@@ -203,8 +205,7 @@ const PipCalculator = () => {
         {/* Disclaimer */}
         <div className="mt-8 p-4 bg-muted/50 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
-            <strong>Disclaimer:</strong> Educational purposes only. Not financial advice. Past performance does not guarantee future results. 
-            Pip values are estimates based on current market conditions and may vary.
+            <strong>{t('common.disclaimer')}</strong> {t('pipCalculator.disclaimer')}
           </p>
         </div>
       </div>

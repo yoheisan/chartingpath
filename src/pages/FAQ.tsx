@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import {
 import { Link } from "react-router-dom";
 
 const FAQ = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("screener");
 
@@ -859,14 +861,14 @@ const FAQ = () => {
           <div className="flex items-center gap-4 mb-6">
             <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
-              Back to Home
+              {t('common.backToHome')}
             </Link>
           </div>
           
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
+            <h1 className="text-4xl font-bold mb-4">{t('faq.title')}</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Find answers about ChartingPath's pattern detection tools, research features, and trading automation.
+              {t('faq.subtitle')}
             </p>
           </div>
 
@@ -874,7 +876,7 @@ const FAQ = () => {
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search FAQ..."
+              placeholder={t('faq.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -947,8 +949,8 @@ const FAQ = () => {
               {filteredSections(data.sections).length === 0 && (
                 <div className="text-center py-12">
                   <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No results found</h3>
-                  <p className="text-muted-foreground">Try adjusting your search terms or browse other categories.</p>
+                  <h3 className="text-lg font-semibold mb-2">{t('faq.noResults')}</h3>
+                  <p className="text-muted-foreground">{t('faq.noResultsHint')}</p>
                 </div>
               )}
             </TabsContent>
@@ -959,15 +961,15 @@ const FAQ = () => {
         <div className="mt-16 pt-8 border-t">
           <Card className="bg-gradient-to-r from-primary/10 to-accent/10">
             <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">Still need help?</h3>
+              <h3 className="text-2xl font-bold mb-4">{t('faq.stillNeedHelp')}</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Can't find the answer you're looking for? Check our pricing page for support options.
+                {t('faq.stillNeedHelpDesc')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button variant="outline" asChild>
                   <Link to="/projects/pricing">
                     <Crown className="h-4 w-4 mr-2" />
-                    View Plans & Support
+                    {t('faq.viewPlansSupport')}
                   </Link>
                 </Button>
               </div>
