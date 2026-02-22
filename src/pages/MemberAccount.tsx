@@ -9,6 +9,7 @@ import MemberNavigation from "@/components/MemberNavigation";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ interface UserProfile {
 type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
 
 const MemberAccount = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(null);
@@ -165,29 +167,29 @@ const MemberAccount = () => {
           <Alert className="mb-6 border-green-500/50 bg-green-500/10">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-700 dark:text-green-400">
-              🎉 Payment successful! Your subscription is being activated. It may take a moment to reflect below.
-            </AlertDescription>
+             {t('memberAccount.paymentSuccess')}
+             </AlertDescription>
           </Alert>
         )}
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Account Settings</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
+         <div className="text-center mb-8">
+           <h1 className="text-3xl font-bold mb-2">{t('memberAccount.title')}</h1>
+           <p className="text-muted-foreground">{t('memberAccount.subtitle')}</p>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          </TabsList>
+           <TabsList className="grid w-full grid-cols-3">
+             <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
+             <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
+             <TabsTrigger value="preferences">{t('memberAccount.preferences')}</TabsTrigger>
+           </TabsList>
 
           <TabsContent value="profile">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Information
+                   <User className="h-5 w-5" />
+                   {t('memberAccount.profileInfo')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -231,22 +233,22 @@ const MemberAccount = () => {
                   </div>
                   
                   <p className="text-sm text-muted-foreground mt-2">
-                    Member since {profile && new Date(profile.created_at).toLocaleDateString()}
+                    {t('memberAccount.memberSince')} {profile && new Date(profile.created_at).toLocaleDateString()}
                   </p>
                   
                   {/* Admin Access Links */}
                   {(userRole === 'super_admin' || userRole === 'admin') && (
                     <div className="mt-4 pt-4 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">Admin Access</p>
+                      <p className="text-xs text-muted-foreground mb-2">{t('memberAccount.adminAccess')}</p>
                       <div className="flex flex-wrap justify-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to="/admin/kpi">KPI Dashboard</Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to="/admin/credits">Credits Tool</Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to="/admin">Admin Panel</Link>
+                         <Button variant="outline" size="sm" asChild>
+                           <Link to="/admin/kpi">{t('memberAccount.kpiDashboard')}</Link>
+                         </Button>
+                         <Button variant="outline" size="sm" asChild>
+                           <Link to="/admin/credits">{t('memberAccount.creditsTool')}</Link>
+                         </Button>
+                         <Button variant="outline" size="sm" asChild>
+                           <Link to="/admin">{t('memberAccount.adminPanel')}</Link>
                         </Button>
                       </div>
                     </div>
@@ -258,18 +260,18 @@ const MemberAccount = () => {
                 {/* Password Reset Section */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium flex items-center gap-2">
-                    <KeyRound className="h-4 w-4" />
-                    Password & Security
+                     <KeyRound className="h-4 w-4" />
+                     {t('memberAccount.passwordSecurity')}
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Click the button below to receive a password reset link via email.
+                    {t('memberAccount.passwordResetDesc')}
                   </p>
                   <Button 
                     variant="outline" 
                     onClick={handlePasswordReset}
                     disabled={sendingReset}
                   >
-                    {sendingReset ? "Sending..." : "Send Password Reset Email"}
+                    {sendingReset ? t('memberAccount.sendingReset') : t('memberAccount.sendPasswordReset')}
                   </Button>
                 </div>
               </CardContent>

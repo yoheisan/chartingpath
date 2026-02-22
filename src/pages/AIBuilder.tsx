@@ -37,12 +37,14 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useUserProfile } from "@/hooks/useUserProfile";
   import { PairTradingBuilder, PairTradingConfig } from "@/components/PairTradingBuilder";
   import { GuidedStrategyBuilder } from "@/components/GuidedStrategyBuilder";
   import { GuidedStrategyManager } from "@/components/GuidedStrategyManager";
 
 const AIBuilder = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedInstrument, setSelectedInstrument] = useState("");
   const [instrumentCategory, setInstrumentCategory] = useState("");
@@ -527,9 +529,9 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
-            <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
+             <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+               <ArrowLeft className="h-4 w-4" />
+               {t('common.backToHome')}
             </Link>
             
             <Badge variant="outline" className="flex items-center gap-2">
@@ -539,13 +541,13 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
-              AI Strategy Builder
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Transform your trading ideas into professional-grade code. Select your financial instrument and describe your strategy in plain English 
-              to get Pine Script, MQL4, and MQL5 implementations instantly.
-            </p>
+             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+               {t('aiBuilder.title')}
+             </h1>
+             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+               {t('aiBuilder.subtitle')}
+             </p>
+           </div>
           </div>
 
           {/* Main Content - Single Column Centered Layout */}
@@ -556,8 +558,8 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Strategy Configuration
+                     <Settings className="h-5 w-5" />
+                     {t('aiBuilder.strategyConfiguration')}
                     <Tooltip>
                       <TooltipTrigger>
                         <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
