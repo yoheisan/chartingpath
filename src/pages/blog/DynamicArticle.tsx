@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
 import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
@@ -955,6 +956,7 @@ function TableOfContents({ sections }: { sections: ParsedSection[] }) {
 const DynamicArticle = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -966,9 +968,8 @@ const DynamicArticle = () => {
     }
   }, [slug, navigate]);
 
-  // Fetch article data
+  // Fetch article data (with translation overlay)
   useEffect(() => {
-    // Reset state when slug changes to ensure fresh loading state
     setLoading(true);
     setError(null);
     setArticle(null);
@@ -980,13 +981,9 @@ const DynamicArticle = () => {
         return;
       }
 
-      // Skip fetch if redirecting to static page
-      if (STATIC_ARTICLE_REDIRECTS[slug]) {
-        return;
-      }
+      if (STATIC_ARTICLE_REDIRECTS[slug]) return;
 
       try {
-        // Fetch article using RPC function with timeout
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Request timed out')), 15000)
         );
@@ -1005,9 +1002,37 @@ const DynamicArticle = () => {
           return;
         }
 
-        setArticle(data as Article);
+        let articleData = data as Article;
 
-        // Track view (insert into article_views) - fire and forget
+        // If user language != English, try to load translation
+        const currentLang = i18n.language?.split('-')[0];
+        if (currentLang && currentLang !== 'en') {
+          try {
+            const { data: translation } = await supabase
+              .from('learning_article_translations')
+              .select('title, excerpt, content, seo_title, seo_description')
+              .eq('article_id', data.id)
+              .eq('language_code', currentLang)
+              .single();
+
+            if (translation) {
+              articleData = {
+                ...articleData,
+                title: translation.title || articleData.title,
+                excerpt: translation.excerpt || articleData.excerpt,
+                content: translation.content || articleData.content,
+                seo_title: translation.seo_title || articleData.seo_title,
+                seo_description: translation.seo_description || articleData.seo_description,
+              };
+            }
+          } catch {
+            // No translation available, use English
+          }
+        }
+
+        setArticle(articleData);
+
+        // Track view
         supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
             supabase.from('article_views').insert({
@@ -1026,7 +1051,7 @@ const DynamicArticle = () => {
     };
 
     fetchArticle();
-  }, [slug]);
+  }, [slug, i18n.language]);
 
   // Update page metadata
   useEffect(() => {

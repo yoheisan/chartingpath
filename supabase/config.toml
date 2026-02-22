@@ -218,3 +218,6 @@ verify_jwt = false
 
 [functions.sync-translations]
 verify_jwt = false
+
+[functions.translate-articles]
+verify_jwt = false
