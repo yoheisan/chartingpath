@@ -1,69 +1,79 @@
 
 
-## Differentiate Validate vs. Automate Modes in Pattern Lab
+# Automated Translation Pipeline Implementation
 
-### Problem
-Today, both modes share identical UI: same form fields, same sidebar guidance, same results page. The mode picker creates an expectation of a tailored experience but doesn't deliver one. Users arriving from the Screener with a live signal (Validate) see the same complexity as someone building a full trading system (Automate).
+## Overview
 
-### Design Principles
+Build a `sync-translations` edge function that detects missing/stale translations across all 14 non-English locales and uses Gemini to auto-translate them. Enhance the existing Translation Management admin page with coverage stats and a "Sync Now" trigger.
 
-**Validate a Signal** = "Should I take this trade?"
-- User has a LIVE setup right now. Speed and clarity are paramount.
-- They need: go/no-go verdict, win rate, grade context, a quick trade plan.
-- They do NOT need: equity curves, exit model optimization, script export options cluttering their view.
+## What This Solves
 
-**Build Automation** = "Can I systematize this edge?"
-- User is in research mode, no urgency.
-- They need: full statistical depth, multi-instrument support, optimization controls, script export.
-- They benefit from maximum configuration flexibility.
+- Spanish (and other locales) are missing keys like `hero.headline1`, `hero.headline2`, `projects.*`
+- No automated way to detect or fill gaps when new English content is added
+- Manual translation is not scalable across 14 languages
 
-### Changes
+## Implementation Steps
 
-#### 1. Wizard Form (PatternLabWizard.tsx)
+### Step 1: Database Schema Update
 
-**Validate mode simplifications:**
-- Lock instrument count to 1 (the one from the screener/copilot) -- hide "add more" affordances
-- Auto-collapse the Pattern and Backtest Parameters sections (they arrive pre-filled)
-- Show a "Signal Context" card at the top displaying the grade badge, pattern name, and instrument prominently -- reinforcing what they're validating
-- Sidebar "What You'll Get" list changes to: Go/No-Go verdict, Win rate on this pair, Trade plan with entry/SL/TP levels, Grade confirmation
-- CTA button stays "Validate Signal"
+Add columns to the `translations` table to support stale detection:
+- `source_hash` (text) -- MD5 hash of the English source value, used to detect when source text changes
+- Allow `auto_translated` as a valid status alongside `pending` and `approved`
 
-**Automate mode enhancements:**
-- Keep multi-instrument selection open by default
-- Keep all parameter sections expanded
-- Sidebar "What You'll Get" list changes to: Full equity curve and drawdown, Setup optimizer with exit models, Repeatable winners/losers analysis, Export Pine Script v6 / MQL4/5
-- CTA button stays "Run and Build Script"
+### Step 2: Create `sync-translations` Edge Function
 
-#### 2. Results Page (ProjectRun.tsx)
+Core logic:
+1. Accept `en.json` content (flattened key-value pairs) and a list of target language codes
+2. For each target language, query the `translations` table to find:
+   - Missing keys (no translation exists)
+   - Stale keys (source_hash differs from current English value hash)
+3. Skip keys where `is_manual_override = true` (never overwrite human edits)
+4. Batch missing keys (20-30 per call) and send to Gemini 2.0 Flash with context-aware prompts
+5. Insert results into `translations` table with status `auto_translated`
+6. Return a summary: per-language counts of translated, skipped, stale keys
 
-**Validate mode -- streamlined results:**
-- Show a prominent verdict card at the top: large go/no-go badge (green checkmark for positive expectancy, red X for negative) with the win rate and expectancy front and center
-- Show a simplified Trade Plan section: suggested entry, stop loss, take profit based on backtest stats
-- Collapse the equity curve and optimizer tabs behind "See Full Analysis" toggle
-- Primary CTA: "Set Alert" (push to execution stage of the journey)
-- Secondary CTA: "Promote to Automation" -- switches to automate mode with all context preserved, letting users who confirm a good edge seamlessly transition to building a script
+Gemini prompt strategy:
+- Include key path for context (e.g., `pricing.plans.pro.description`)
+- Include 2-3 existing approved translations in the target language for tone consistency
+- Instruct to preserve technical terms (Pine Script, MQL4, ATR, EMA, etc.)
+- Target language name and code
 
-**Automate mode -- full results (current behavior):**
-- All tabs visible by default (Equity, Trade Excursion, Profit Structure)
-- Setup Optimizer section prominent
-- Primary CTA: "Export Script" / "Script This Strategy"
-- No verdict card needed -- the user wants depth, not a quick answer
+### Step 3: Add `export_locale_json` Action to `manage-translations`
 
-#### 3. Analytics Tracking
+New action in the existing edge function that:
+- Fetches all approved translations for a given language
+- Structures them as nested JSON matching `en.json` format (e.g., `hero.headline1` becomes `{ hero: { headline1: "..." } }`)
+- Returns downloadable JSON content
 
-- Track `pattern_lab.mode_select` with the mode (already done)
-- Add `pattern_lab.validate_verdict` event: logs the go/no-go result, win rate, grade
-- Add `pattern_lab.promote_to_automate` event: tracks when validate users convert to automation
-- Feed these into the AI journey analytics to measure mode conversion rates
+### Step 4: Enhance Translation Management Admin UI
 
-### Technical Details
+Add to the existing `TranslationManagement.tsx` page:
+- **Coverage Dashboard** section showing per-language completion percentage (e.g., "Spanish: 142/170 -- 83%")
+- **"Sync Now" button** that triggers the sync-translations function with current en.json keys
+- **Progress indicator** during sync (shows which language is being processed)
+- **"Export JSON" button** per language to download the generated locale file
+- **Stale indicator** badge on translations where the English source changed since last translation
 
-**Files to modify:**
-- `src/pages/projects/PatternLabWizard.tsx` -- mode-aware form layout, sidebar content, signal context card
-- `src/pages/projects/ProjectRun.tsx` -- mode-aware results: verdict card, simplified vs. full view, promote-to-automate CTA
-- `src/services/analytics.ts` -- add new event types
+### Step 5: Integration with Admin Content Management
 
-**Mode persistence:** The `mode` parameter is already passed via URL (`?mode=validate`). It needs to be forwarded to the results page (currently not done) either via URL param on navigation or via location state.
+Add a "Translations" tab to `AdminContentManagement.tsx` that links to the Translation Management page or embeds a summary widget showing coverage stats.
 
-**Promote to Automate flow:** When clicked, navigate back to `/projects/pattern-lab/new` with all current params plus `mode=automate`, preserving instrument, pattern, timeframe, and grade so the user doesn't re-enter anything.
+## Files to Create/Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `supabase/migrations/...` | Create | Add `source_hash` column, update status enum |
+| `supabase/functions/sync-translations/index.ts` | Create | Core auto-translation pipeline |
+| `supabase/functions/manage-translations/index.ts` | Modify | Add `export_locale_json` action |
+| `src/pages/TranslationManagement.tsx` | Modify | Add coverage dashboard, sync button, export |
+| `src/pages/AdminContentManagement.tsx` | Modify | Add Translations tab |
+| `supabase/config.toml` | Modify | Register sync-translations function |
+
+## Safeguards
+
+- Manual overrides (`is_manual_override = true`) are never overwritten
+- Source hash tracking detects when English text changes, flagging translations as stale
+- Gemini calls are batched (20-30 keys per request) to stay within rate limits
+- Error handling per language -- if one language fails, others continue
+- Existing GEMINI_API_KEY secret is already configured and will be used
 
