@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
 import ActionCard from '@/components/landing/ActionCard';
@@ -20,6 +21,7 @@ import { CopilotShowcase } from '@/components/landing/CopilotShowcase';
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
 
   // Prime articles cache on homepage load for instant /learn navigation
@@ -56,58 +58,58 @@ const Index = () => {
     }
   };
 
-  // Activity cards configuration
+  // Activity cards configuration - now with i18n
   const activityCards = [
     {
-      title: "Scan the Market",
-      description: "Discover active pattern setups across 1,100+ instruments in real-time.",
-      bullets: ["Live pattern detection", "Quality scores & metrics", "Filter by asset class"],
-      ctaText: "Open Screener",
+      title: t('landing.scanMarket', 'Scan the Market'),
+      description: t('landing.scanMarketDesc', 'Discover active pattern setups across 1,100+ instruments in real-time.'),
+      bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBullet3', 'Filter by asset class')],
+      ctaText: t('landing.openScreener', 'Open Screener'),
       ctaLink: "/patterns/live",
       icon: Activity,
-      bestFor: "Signal discovery",
+      bestFor: t('landing.bestForDiscovery', 'Signal discovery'),
       slug: "screener",
     },
     {
-      title: "Research & Backtest",
-      description: "Validate any pattern on any ticker with historical performance data.",
-      bullets: ["Win rates & expectancy", "Visual Proof charts", "Custom timeframes"],
-      ctaText: "Open Pattern Lab",
+      title: t('landing.researchBacktest', 'Research & Backtest'),
+      description: t('landing.researchDesc', 'Validate any pattern on any ticker with historical performance data.'),
+      bullets: [t('landing.researchBullet1', 'Win rates & expectancy'), t('landing.researchBullet2', 'Visual Proof charts'), t('landing.researchBullet3', 'Custom timeframes')],
+      ctaText: t('landing.openPatternLab', 'Open Pattern Lab'),
       ctaLink: "/pattern-lab",
       icon: Search,
-      bestFor: "Research & validation",
+      bestFor: t('landing.bestForResearch', 'Research & validation'),
       slug: "pattern_lab",
     },
     {
-      title: "Create Alerts",
-      description: "Get notified when pattern setups appear on your watchlist.",
-      bullets: ["Multi-pattern support", "Email notifications", "Manage active alerts"],
-      ctaText: "Create Alert",
+      title: t('landing.createAlerts', 'Create Alerts'),
+      description: t('landing.createAlertsDesc', 'Get notified when pattern setups appear on your watchlist.'),
+      bullets: [t('landing.alertsBullet1', 'Multi-pattern support'), t('landing.alertsBullet2', 'Email notifications'), t('landing.alertsBullet3', 'Manage active alerts')],
+      ctaText: t('landing.createAlert', 'Create Alert'),
       ctaLink: "/members/alerts",
       icon: Bell,
-      bestFor: "Stay informed",
+      bestFor: t('landing.bestForAlerts', 'Stay informed'),
       slug: "alerts",
       requiresAuth: true,
     },
     {
-      title: "Export Scripts",
-      description: "Download ready-to-use Pine Script and MQL code for your strategies.",
-      bullets: ["Pine Script & MQL", "Customizable templates", "Subscriber access"],
-      ctaText: "Browse Scripts",
+      title: t('landing.exportScripts', 'Export Scripts'),
+      description: t('landing.exportScriptsDesc', 'Download ready-to-use Pine Script and MQL code for your strategies.'),
+      bullets: [t('landing.scriptsBullet1', 'Pine Script & MQL'), t('landing.scriptsBullet2', 'Customizable templates'), t('landing.scriptsBullet3', 'Subscriber access')],
+      ctaText: t('landing.browseScripts', 'Browse Scripts'),
       ctaLink: "/members/scripts",
       icon: Code,
-      bestFor: "Automate trading",
+      bestFor: t('landing.bestForScripts', 'Automate trading'),
       slug: "scripts",
       requiresAuth: true,
     },
     {
-      title: "Learn Patterns",
-      description: "Master chart patterns with interactive examples and quizzes.",
-      bullets: ["Pattern library", "Interactive quizzes", "Trading rules"],
-      ctaText: "Explore Learn",
+      title: t('landing.learnPatterns', 'Learn Patterns'),
+      description: t('landing.learnPatternsDesc', 'Master chart patterns with interactive examples and quizzes.'),
+      bullets: [t('landing.learnBullet1', 'Pattern library'), t('landing.learnBullet2', 'Interactive quizzes'), t('landing.learnBullet3', 'Trading rules')],
+      ctaText: t('landing.exploreLearn', 'Explore Learn'),
       ctaLink: "/chart-patterns/library",
       icon: BookOpen,
-      bestFor: "Education",
+      bestFor: t('landing.bestForLearn', 'Education'),
       slug: "learn",
     },
   ];
@@ -126,7 +128,7 @@ const Index = () => {
           />
         </div>
         
-        {/* Grid Pattern */}
+        {/* Grid overlay */}
         <div className="absolute inset-0 opacity-5"
           style={{
             backgroundImage: 'linear-gradient(hsl(var(--primary) / 0.2) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.2) 1px, transparent 1px)',
@@ -138,16 +140,16 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-4xl text-center px-6">
           {/* H1 - Primary headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
-            <span className="text-foreground">Discover signals.</span>
+            <span className="text-foreground">{t('hero.headline1', 'Discover signals.')}</span>
             <br />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Research. Execute. Automate.
+              {t('hero.headline2', 'Research. Execute. Automate.')}
             </span>
           </h1>
           
           {/* Subheadline */}
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            Find pattern-based setups, validate with historical data, and export trading scripts—all in one platform.
+            {t('hero.subtitle', 'Find pattern-based setups, validate with historical data, and export trading scripts—all in one platform.')}
           </p>
           
           {/* CTAs */}
@@ -158,7 +160,7 @@ const Index = () => {
               className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
             >
               <Activity className="h-5 w-5 mr-2" />
-              Open Screener
+              {t('hero.cta', 'Open Screener')}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             
@@ -169,7 +171,7 @@ const Index = () => {
               className="px-8 py-6 text-lg"
             >
               <Bell className="h-5 w-5 mr-2" />
-              Create your first alert
+              {t('hero.ctaSecondary', 'Create your first alert')}
             </Button>
           </div>
           
@@ -177,15 +179,15 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Signals on closed candles</span>
+              <span>{t('hero.trustSignals', 'Signals on closed candles')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Assumptions documented</span>
+              <span>{t('hero.trustAssumptions', 'Assumptions documented')}</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Built for repeatability</span>
+              <span>{t('hero.trustRepeatability', 'Built for repeatability')}</span>
             </div>
           </div>
         </div>
@@ -201,8 +203,8 @@ const Index = () => {
       <section className="py-16 px-6 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">Choose Your Next Action</h2>
-            <p className="text-muted-foreground">Pick an activity based on your current goal</p>
+            <h2 className="text-3xl font-bold mb-3">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
+            <p className="text-muted-foreground">{t('landing.chooseActionSubtitle', 'Pick an activity based on your current goal')}</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -232,9 +234,7 @@ const Index = () => {
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <p>
-              <strong>Disclaimer:</strong> ChartingPath provides educational tools and backtesting software. 
-              Past performance does not guarantee future results. Trading involves substantial risk of loss. 
-              Alerts and signals are for informational purposes only and do not constitute financial advice.
+              <strong>{t('common.warning', 'Disclaimer')}:</strong> {t('landing.disclaimer', 'ChartingPath provides educational tools and backtesting software. Past performance does not guarantee future results. Trading involves substantial risk of loss. Alerts and signals are for informational purposes only and do not constitute financial advice.')}
             </p>
           </div>
         </div>

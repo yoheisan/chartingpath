@@ -84,13 +84,13 @@ const Navigation = () => {
       {/* 1. Screener - Discover signals */}
       <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
         <Activity className="h-5 w-5 text-amber-500" />
-        Screener
+        {t('navigation.screener', 'Screener')}
       </Link>
       
       {/* 2. Pattern Lab */}
       <Link to="/projects/pattern-lab/new" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <FlaskConical className="h-5 w-5 text-violet-500" />
-        Pattern Lab
+        {t('navigation.patternLab', 'Pattern Lab')}
       </Link>
       
       {/* 3. Alerts - Execute */}
@@ -167,13 +167,13 @@ const Navigation = () => {
             {/* 1. Screener - Discover signals */}
             <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
               <Activity className="h-4 w-4 text-amber-500" />
-              Screener
+              {t('navigation.screener', 'Screener')}
             </Link>
             
             {/* 2. Pattern Lab - Backtest historically */}
             <Link to="/projects/pattern-lab/new" className={navLinkClass('/projects/pattern-lab')}>
               <FlaskConical className="h-4 w-4 text-violet-500" />
-              Pattern Lab
+              {t('navigation.patternLab', 'Pattern Lab')}
             </Link>
             
             {/* 3. Alerts - Get notified */}
@@ -181,13 +181,13 @@ const Navigation = () => {
               <WithNotificationBadge count={alertCount} size="sm">
                 <Bell className="h-4 w-4 text-emerald-500" />
               </WithNotificationBadge>
-              Alerts
+              {t('navigation.alerts', 'Alerts')}
             </Link>
             
             {/* 4. Scripts - Automate trading */}
             <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
               <FileCode className="h-4 w-4 text-cyan-500" />
-              Scripts
+              {t('navigation.scripts', 'Scripts')}
             </Link>
             
             {/* 5. Learning - Pattern Library, Blog & Articles */}
@@ -199,27 +199,27 @@ const Navigation = () => {
                 <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
                   <GraduationCap className="h-3.5 w-3.5 text-white" />
                 </div>
-                Learning
+                {t('navigation.learning', 'Learning')}
                 <ChevronDown className="h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-popover z-50">
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/library" className="flex items-center gap-2">
                     <Database className="h-4 w-4 text-blue-500" />
-                    Pattern Library
+                    {t('navigation.patternLibrary', 'Pattern Library')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/learn" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-green-500" />
-                    Blog & Articles
+                    {t('navigation.blogArticles', 'Blog & Articles')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-purple-500" />
-                    Pattern Quizzes
+                    {t('navigation.patternQuiz', 'Pattern Quizzes')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -235,28 +235,28 @@ const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
-                  More
+                  {t('navigation.more', 'More')}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 bg-popover z-50">
                   {/* Tools Section */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Tools</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.tools', 'Tools')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
                       <Link to="/tools/pip-calculator" className="flex items-center gap-2">
                         <Calculator className="h-4 w-4" />
-                        Pip Calculator
+                        {t('navigation.pipCalculator', 'Pip Calculator')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/tools/risk-calculator" className="flex items-center gap-2">
                         <Calculator className="h-4 w-4" />
-                        Risk Calculator
+                        {t('navigation.riskCalculator', 'Risk Calculator')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/tools/economic-calendar" className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Economic Calendar
+                        {t('navigation.economicCalendar', 'Economic Calendar')}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
@@ -264,30 +264,30 @@ const Navigation = () => {
                   <DropdownMenuSeparator />
                   
                   {/* AI Copilot Feature */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Features</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.features', 'Features')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
                       <Link to="/features/trading-copilot" className="flex items-center gap-2">
                         <Bot className="h-4 w-4 text-primary" />
-                        AI Copilot
+                        {t('navigation.aiCopilot', 'AI Copilot')}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   
 
                   {/* Company Section */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Company</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.company', 'Company')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
                       <Link to="/faq" className="flex items-center gap-2">
                         <HelpCircle className="h-4 w-4" />
-                        FAQ
+                        {t('navigation.faq', 'FAQ')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/about" className="flex items-center gap-2">
                         <Info className="h-4 w-4" />
-                        About
+                        {t('navigation.about', 'About')}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
