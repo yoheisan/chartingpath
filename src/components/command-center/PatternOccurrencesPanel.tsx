@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,6 +40,7 @@ interface PatternOccurrencesPanelProps {
 
 /** Compact performance metrics bar */
 function PerformanceMetricsBar({ patterns }: { patterns: PatternOccurrence[] }) {
+  const { t } = useTranslation();
   const stats = useMemo(() => {
     const resolved = patterns.filter(p => !p.isActive && p.outcome && p.outcome !== 'pending');
     const wins = resolved.filter(p => p.outcome === 'hit_tp' || p.outcome === 'win');
@@ -69,12 +71,12 @@ function PerformanceMetricsBar({ patterns }: { patterns: PatternOccurrence[] }) 
     <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-gradient-to-r from-primary/5 to-transparent text-xs flex-wrap">
       <div className="flex items-center gap-1.5">
         <BarChart3 className="h-3.5 w-3.5 text-primary" />
-        <span className="font-medium text-foreground">Performance</span>
+        <span className="font-medium text-foreground">{t('commandCenter.performance')}</span>
       </div>
       {stats.sampleSize > 0 ? (
         <>
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Win Rate</span>
+            <span className="text-muted-foreground">{t('screener.winRate')}</span>
             <span className={cn(
               "font-semibold",
               stats.winRate >= 50 ? "text-emerald-500" : "text-red-500"
@@ -84,7 +86,7 @@ function PerformanceMetricsBar({ patterns }: { patterns: PatternOccurrence[] }) 
           </div>
           <span className="text-border">|</span>
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">PF</span>
+            <span className="text-muted-foreground">{t('commandCenter.pf')}</span>
             <span className={cn(
               "font-semibold",
               stats.profitFactor >= 1 ? "text-emerald-500" : "text-red-500"
@@ -94,7 +96,7 @@ function PerformanceMetricsBar({ patterns }: { patterns: PatternOccurrence[] }) 
           </div>
           <span className="text-border">|</span>
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Exp</span>
+            <span className="text-muted-foreground">{t('commandCenter.exp')}</span>
             <span className={cn(
               "font-semibold",
               stats.expectancy >= 0 ? "text-emerald-500" : "text-red-500"
@@ -106,7 +108,7 @@ function PerformanceMetricsBar({ patterns }: { patterns: PatternOccurrence[] }) 
           <span className="text-muted-foreground">n={stats.sampleSize}</span>
         </>
       ) : (
-        <span className="text-muted-foreground">No resolved trades yet</span>
+        <span className="text-muted-foreground">{t('commandCenter.noResolvedTrades')}</span>
       )}
     </div>
   );
@@ -122,6 +124,7 @@ function ActivePatternsSection({
   onPatternSelect?: (p: PatternOccurrence) => void;
   selectedPatternId?: string | null;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
   
   if (patterns.length === 0) return null;
@@ -131,7 +134,7 @@ function ActivePatternsSection({
       <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 border-b border-border hover:bg-muted/30 transition-colors">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-semibold">Active Patterns ({patterns.length})</span>
+          <span className="text-xs font-semibold">{t('commandCenter.activePatterns', { count: patterns.length })}</span>
         </div>
         <ChevronDown className={cn(
           "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
@@ -164,6 +167,7 @@ function PatternRow({
   isSelected: boolean;
   onSelect?: (p: PatternOccurrence) => void;
 }) {
+  const { t } = useTranslation();
   const isClickable = Boolean(onSelect);
 
   return (
@@ -239,7 +243,7 @@ function PatternRow({
               )}
             </TooltipTrigger>
             <TooltipContent side="left">
-              <p>{p.isActive ? 'View pattern on chart' : 'Replay trade'}</p>
+              <p>{p.isActive ? t('commandCenter.viewPatternOnChart') : t('commandCenter.replayTrade')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -254,6 +258,7 @@ export function PatternOccurrencesPanel({
   onPatternSelect,
   selectedPatternId,
 }: PatternOccurrencesPanelProps) {
+  const { t } = useTranslation();
   const [patterns, setPatterns] = useState<PatternOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -355,7 +360,7 @@ export function PatternOccurrencesPanel({
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-sm">
         <Target className="h-8 w-8 mb-2 opacity-50" />
-        <p>No patterns found for {symbol} ({timeframe})</p>
+        <p>{t('commandCenter.noPatternsFound', { symbol, timeframe })}</p>
       </div>
     );
   }
@@ -380,7 +385,7 @@ export function PatternOccurrencesPanel({
             {activePatterns.length > 0 && (
               <div className="px-1 py-1">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                  Historical ({historicalPatterns.length})
+                  {t('commandCenter.historical', { count: historicalPatterns.length })}
                 </span>
               </div>
             )}

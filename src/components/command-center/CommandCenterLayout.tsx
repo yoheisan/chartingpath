@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -83,6 +84,7 @@ interface PatternDetailsResponse {
 }
 
 export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSymbol }: CommandCenterLayoutProps) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
 
   // Persisted dashboard settings
@@ -160,8 +162,8 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       
       
       
-      toast.success(`Trade Playback: ${initialPlaybackPattern.symbol} - ${initialPlaybackPattern.patternName}`, {
-        description: 'Use playback controls to replay this trade bar-by-bar',
+      toast.success(t('commandCenter.tradePlayback', { symbol: initialPlaybackPattern.symbol, patternName: initialPlaybackPattern.patternName }), {
+        description: t('commandCenter.usePlaybackControls'),
         duration: 4000,
       });
     }
@@ -347,7 +349,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       throw lastErr;
     } catch (err: any) {
       console.error('[CommandCenter] Failed to load chart details:', err?.message || err);
-      toast.error('Failed to load pattern chart details');
+      toast.error(t('commandCenter.failedToLoadChartDetails'));
     } finally {
       if (chartDetailsRequestIdRef.current === requestId) {
         setLoadingChartDetails(false);
@@ -410,7 +412,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       setOccurrenceSetup(toSetupWithVisuals(res.data.pattern));
     } catch (err: any) {
       console.error('[CommandCenter] Failed to load occurrence details:', err?.message || err);
-      toast.error('Failed to load pattern details');
+      toast.error(t('commandCenter.failedToLoadPatternDetails'));
       // Clear selection on error
       setSelectedOccurrence(null);
     } finally {
@@ -441,20 +443,20 @@ Stop Loss: ${tradePlan.stopLoss.toFixed(2)}
 Take Profit: ${tradePlan.takeProfit.toFixed(2)}
 R:R = 1:${tradePlan.rr.toFixed(1)}`;
     navigator.clipboard.writeText(plan);
-    toast.success('Trade plan copied to clipboard');
+    toast.success(t('commandCenter.tradePlanCopied'));
   }, [selectedSetup]);
 
   const handleCreateAlert = useCallback(async () => {
     if (!selectedSetup || !userId) {
-      toast.error('Please sign in to create alerts');
+      toast.error(t('commandCenter.signInToCreateAlerts'));
       return;
     }
     setIsCreatingAlert(true);
     try {
       // Simplified alert creation - just notify for now
-      toast.success(`Alert created for ${selectedSetup.instrument}`);
+      toast.success(t('commandCenter.alertCreated', { instrument: selectedSetup.instrument }));
     } catch (err) {
-      toast.error('Failed to create alert');
+      toast.error(t('commandCenter.failedToLoadPatternDetails'));
     } finally {
       setIsCreatingAlert(false);
     }
@@ -559,12 +561,12 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               {studyPanelCollapsed ? (
                 <>
                   <ChevronUp className="h-3.5 w-3.5" />
-                  <span>Show Patterns & Metrics</span>
+                  <span>{t('commandCenter.showPatternsMetrics')}</span>
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-3.5 w-3.5" />
-                  <span>Hide Patterns & Metrics</span>
+                  <span>{t('commandCenter.hidePatternsMetrics')}</span>
                 </>
               )}
             </button>
@@ -594,7 +596,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 size="icon"
                 className="h-8 w-8 mb-2"
                 onClick={() => toggleSidebar(false)}
-                title="Expand sidebar"
+                title={t('commandCenter.expandSidebar')}
               >
                 <PanelRightOpen className="h-4 w-4" />
               </Button>
@@ -603,7 +605,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => { setRightPanelTab('watchlist'); toggleSidebar(false); }}
-                title="Watchlist"
+                title={t('commandCenter.watchlist')}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -612,7 +614,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => { setRightPanelTab('alerts'); toggleSidebar(false); }}
-                title="Alerts"
+                title={t('commandCenter.alerts')}
               >
                 <Bell className="h-4 w-4" />
               </Button>
@@ -622,7 +624,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => { toggleSidebar(false); }}
-                title="Market Overview"
+                title={t('commandCenter.marketOverview')}
               >
                 <Globe className="h-4 w-4" />
               </Button>
@@ -636,7 +638,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => toggleSidebar(true)}
-                  title="Collapse sidebar"
+                  title={t('commandCenter.collapseSidebar')}
                 >
                   <PanelRightClose className="h-4 w-4" />
                 </Button>
@@ -650,10 +652,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   }} className="h-full flex flex-col">
                     <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2">
                       <TabsTrigger value="watchlist" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                        Watchlist
+                        {t('commandCenter.watchlist')}
                       </TabsTrigger>
                       <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                        Alerts
+                        {t('commandCenter.alerts')}
                       </TabsTrigger>
                     </TabsList>
                     <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
