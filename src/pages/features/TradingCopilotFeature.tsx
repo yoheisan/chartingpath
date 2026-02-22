@@ -7,111 +7,113 @@ import {
   Search, Bell, FileCode, FlaskConical, CheckCircle, X
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-
-// Moat features — expanded for the feature page
-const moatFeatures = [
-  {
-    icon: Activity,
-    title: "Live Pattern Database",
-    description: "The Copilot calls search_patterns to scan 8,500+ instruments across stocks, forex, crypto, and commodities for active pattern setups — in real-time, on closed candles.",
-    whyCant: "ChatGPT has no live market data access. It cannot scan instruments or detect patterns.",
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-  },
-  {
-    icon: Database,
-    title: "320K+ Backtested Edge Atlas",
-    description: "Ask \"what actually works?\" and get real statistics from our proprietary dataset of 320,000+ historically validated pattern trades with win rates, expectancy, and R-multiples.",
-    whyCant: "No public AI has access to this proprietary dataset. Generic AI can only cite textbook estimates.",
-    color: "text-violet-500",
-    bgColor: "bg-violet-500/10",
-  },
-  {
-    icon: Eye,
-    title: "Chart Context Analysis",
-    description: "Send your actual chart directly from the platform — indicators, support/resistance levels, RSI, MACD, ATR are all read with full precision. No screenshots needed.",
-    whyCant: "ChatGPT can only OCR uploaded screenshots, losing indicator precision and context.",
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-  },
-  {
-    icon: Code2,
-    title: "One-Click Pine Script & MQL",
-    description: "The Copilot generates ready-to-use trading scripts with the exact pattern, symbol, timeframe, and entry/exit levels pre-filled from your current analysis context.",
-    whyCant: "ChatGPT generates generic templates without your specific market context or parameters.",
-    color: "text-cyan-500",
-    bgColor: "bg-cyan-500/10",
-  },
-  {
-    icon: Brain,
-    title: "Self-Improving Rules",
-    description: "copilot_learned_rules auto-patches known errors at runtime — correcting unit conversions, improving pattern recommendations, and adapting to market regime changes without code deploys.",
-    whyCant: "ChatGPT is a static model. It cannot learn from market outcomes or correct domain-specific errors.",
-    color: "text-pink-500",
-    bgColor: "bg-pink-500/10",
-  },
-  {
-    icon: Link2,
-    title: "Action Bridging",
-    description: "Every response includes deep links to Pattern Lab validation, Edge Atlas stats, alert creation, and script export — turning insights into executable actions in one click.",
-    whyCant: "No external AI can link into ChartingPath's integrated tool ecosystem.",
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-  },
-];
-
-// Side-by-side comparison challenges
-const challenges = [
-  {
-    prompt: "Show me bull flags on crypto right now",
-    copilot: {
-      type: "table",
-      summary: "Found 3 bull flag setups on crypto (4H, closed candles):",
-      rows: [
-        { symbol: "BTC/USD", grade: "A", rr: "2.3" },
-        { symbol: "ETH/USD", grade: "B+", rr: "2.0" },
-        { symbol: "SOL/USD", grade: "A-", rr: "2.1" },
-      ],
-      hasActions: true,
-    },
-    generic: "I don't have access to real-time market data. I can explain what bull flags look like...",
-  },
-  {
-    prompt: "What's the win rate of ascending triangles on stocks?",
-    copilot: {
-      type: "stats",
-      summary: "Based on 12,847 validated ascending triangle trades on stocks:",
-      stats: [
-        { label: "Win Rate (2:1 R:R)", value: "62.4%" },
-        { label: "Avg Expectancy", value: "0.38R" },
-        { label: "Best Timeframe", value: "4H" },
-      ],
-      hasActions: true,
-    },
-    generic: "Ascending triangles generally have a success rate of 60-70% according to Thomas Bulkowski's research...",
-  },
-  {
-    prompt: "Generate a Pine Script for this AAPL head & shoulders setup",
-    copilot: {
-      type: "code",
-      summary: "Here's a Pine Script for AAPL Head & Shoulders (4H, entry: $185.40, SL: $188.20, TP: $179.80):",
-      code: '//@version=5\nstrategy("AAPL H&S", overlay=true)\n// Entry: 185.40 | SL: 188.20 | TP: 179.80\n// ... 47 more lines with position sizing',
-      hasActions: true,
-    },
-    generic: "Here's a basic head and shoulders Pine Script template:\n//@version=5\n// Generic template without specific levels...",
-  },
-];
-
-// Workflow loop steps
-const workflowSteps = [
-  { icon: Search, label: "Discover", description: "Find live pattern setups", color: "text-amber-500" },
-  { icon: FlaskConical, label: "Research", description: "Validate with backtested data", color: "text-violet-500" },
-  { icon: Bell, label: "Execute", description: "Set alerts & act on signals", color: "text-emerald-500" },
-  { icon: FileCode, label: "Automate", description: "Export scripts for your platform", color: "text-cyan-500" },
-];
+import { useTranslation } from "react-i18next";
 
 const TradingCopilotFeature = () => {
+  const { t } = useTranslation();
+
+  // Moat features — expanded for the feature page
+  const moatFeatures = [
+    {
+      icon: Activity,
+      title: t('tradingCopilot.moat.livePatternDb'),
+      description: t('tradingCopilot.moat.livePatternDbDesc'),
+      whyCant: t('tradingCopilot.moat.livePatternDbCant'),
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+    },
+    {
+      icon: Database,
+      title: t('tradingCopilot.moat.backtestAtlas'),
+      description: t('tradingCopilot.moat.backtestAtlasDesc'),
+      whyCant: t('tradingCopilot.moat.backtestAtlasCant'),
+      color: "text-violet-500",
+      bgColor: "bg-violet-500/10",
+    },
+    {
+      icon: Eye,
+      title: t('tradingCopilot.moat.chartContext'),
+      description: t('tradingCopilot.moat.chartContextDesc'),
+      whyCant: t('tradingCopilot.moat.chartContextCant'),
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+    },
+    {
+      icon: Code2,
+      title: t('tradingCopilot.moat.pineScript'),
+      description: t('tradingCopilot.moat.pineScriptDesc'),
+      whyCant: t('tradingCopilot.moat.pineScriptCant'),
+      color: "text-cyan-500",
+      bgColor: "bg-cyan-500/10",
+    },
+    {
+      icon: Brain,
+      title: t('tradingCopilot.moat.selfImproving'),
+      description: t('tradingCopilot.moat.selfImprovingDesc'),
+      whyCant: t('tradingCopilot.moat.selfImprovingCant'),
+      color: "text-pink-500",
+      bgColor: "bg-pink-500/10",
+    },
+    {
+      icon: Link2,
+      title: t('tradingCopilot.moat.actionBridging'),
+      description: t('tradingCopilot.moat.actionBridgingDesc'),
+      whyCant: t('tradingCopilot.moat.actionBridgingCant'),
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+    },
+  ];
+
+  // Side-by-side comparison challenges
+  const challenges = [
+    {
+      prompt: t('tradingCopilot.challenges.prompt1'),
+      copilot: {
+        type: "table" as const,
+        summary: t('tradingCopilot.challenges.summary1'),
+        rows: [
+          { symbol: "BTC/USD", grade: "A", rr: "2.3" },
+          { symbol: "ETH/USD", grade: "B+", rr: "2.0" },
+          { symbol: "SOL/USD", grade: "A-", rr: "2.1" },
+        ],
+        hasActions: true,
+      },
+      generic: t('tradingCopilot.challenges.generic1'),
+    },
+    {
+      prompt: t('tradingCopilot.challenges.prompt2'),
+      copilot: {
+        type: "stats" as const,
+        summary: t('tradingCopilot.challenges.summary2'),
+        stats: [
+          { label: t('tradingCopilot.challenges.statWinRate'), value: "62.4%" },
+          { label: t('tradingCopilot.challenges.statExpectancy'), value: "0.38R" },
+          { label: t('tradingCopilot.challenges.statBestTf'), value: "4H" },
+        ],
+        hasActions: true,
+      },
+      generic: t('tradingCopilot.challenges.generic2'),
+    },
+    {
+      prompt: t('tradingCopilot.challenges.prompt3'),
+      copilot: {
+        type: "code" as const,
+        summary: t('tradingCopilot.challenges.summary3'),
+        code: '//@version=5\nstrategy("AAPL H&S", overlay=true)\n// Entry: 185.40 | SL: 188.20 | TP: 179.80\n// ... 47 more lines with position sizing',
+        hasActions: true,
+      },
+      generic: t('tradingCopilot.challenges.generic3'),
+    },
+  ];
+
+  // Workflow loop steps
+  const workflowSteps = [
+    { icon: Search, label: t('tradingCopilot.workflow.discover'), description: t('tradingCopilot.workflow.discoverDesc'), color: "text-amber-500" },
+    { icon: FlaskConical, label: t('tradingCopilot.workflow.research'), description: t('tradingCopilot.workflow.researchDesc'), color: "text-violet-500" },
+    { icon: Bell, label: t('tradingCopilot.workflow.execute'), description: t('tradingCopilot.workflow.executeDesc'), color: "text-emerald-500" },
+    { icon: FileCode, label: t('tradingCopilot.workflow.automate'), description: t('tradingCopilot.workflow.automateDesc'), color: "text-cyan-500" },
+  ];
+
     return (
       <div className="min-h-screen bg-background">
         {/* Hero */}
@@ -124,27 +126,27 @@ const TradingCopilotFeature = () => {
           <div className="relative container mx-auto max-w-4xl text-center">
             <Badge variant="secondary" className="mb-6 gap-1.5 text-sm">
               <Bot className="h-4 w-4" />
-              AI Trading Copilot
+              {t('tradingCopilot.badge')}
             </Badge>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              The Only AI That Can Actually{" "}
+              {t('tradingCopilot.headline')}{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Trade-Research
+                {t('tradingCopilot.headlineHighlight')}
               </span>{" "}
-              For You
+              {t('tradingCopilot.headlineEnd')}
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Not a generic chatbot. A purpose-built AI with live market access, proprietary data, and direct integration with your trading tools.
+              {t('tradingCopilot.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg">
                 <Bot className="h-5 w-5" />
-                Try the Copilot
+                {t('tradingCopilot.tryCopilot')}
                 <ArrowRight className="h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" className="px-8 py-6 text-lg" asChild>
                 <a href="#challenge">
-                  See the Comparison
+                  {t('tradingCopilot.seeComparison')}
                 </a>
               </Button>
             </div>
@@ -156,10 +158,10 @@ const TradingCopilotFeature = () => {
           <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Try This With ChatGPT
+                {t('tradingCopilot.challengeTitle')}
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Same prompt. Very different results. Here's what happens when you ask a real trading question.
+                {t('tradingCopilot.challengeSubtitle')}
               </p>
             </div>
 
@@ -168,7 +170,7 @@ const TradingCopilotFeature = () => {
                 <Card key={i} className="overflow-hidden">
                   <div className="px-5 py-3 bg-muted/50 border-b">
                     <p className="text-sm font-medium">
-                      <span className="text-muted-foreground">Prompt:</span>{" "}
+                      <span className="text-muted-foreground">{t('tradingCopilot.prompt')}</span>{" "}
                       "{challenge.prompt}"
                     </p>
                   </div>
@@ -177,7 +179,7 @@ const TradingCopilotFeature = () => {
                     <div className="p-5 space-y-3">
                       <div className="flex items-center gap-2 mb-3">
                         <Bot className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-semibold text-primary">ChartingPath Copilot</span>
+                        <span className="text-sm font-semibold text-primary">{t('tradingCopilot.copilotLabel')}</span>
                         <CheckCircle className="h-3.5 w-3.5 text-emerald-500 ml-auto" />
                       </div>
                       <p className="text-sm text-muted-foreground">{challenge.copilot.summary}</p>
@@ -222,8 +224,8 @@ const TradingCopilotFeature = () => {
 
                       {challenge.copilot.hasActions && (
                         <div className="flex gap-2 pt-1">
-                          <Badge variant="secondary" className="text-[10px]">↗ Open in Pattern Lab</Badge>
-                          <Badge variant="secondary" className="text-[10px]">↗ Create Alert</Badge>
+                          <Badge variant="secondary" className="text-[10px]">{t('tradingCopilot.openInPatternLab')}</Badge>
+                          <Badge variant="secondary" className="text-[10px]">{t('tradingCopilot.createAlert')}</Badge>
                         </div>
                       )}
                     </div>
@@ -232,7 +234,7 @@ const TradingCopilotFeature = () => {
                     <div className="p-5 space-y-3 bg-muted/10">
                       <div className="flex items-center gap-2 mb-3">
                         <Bot className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-semibold text-muted-foreground">Generic AI Chat</span>
+                        <span className="text-sm font-semibold text-muted-foreground">{t('tradingCopilot.genericLabel')}</span>
                         <X className="h-3.5 w-3.5 text-destructive ml-auto" />
                       </div>
                       <p className="text-sm text-muted-foreground italic">
@@ -251,10 +253,10 @@ const TradingCopilotFeature = () => {
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                The Irreplaceable Moat
+                {t('tradingCopilot.moatTitle')}
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Six capabilities that are impossible to replicate by pasting a chart into ChatGPT, Gemini, or any generic AI.
+                {t('tradingCopilot.moatSubtitle')}
               </p>
             </div>
 
@@ -284,10 +286,10 @@ const TradingCopilotFeature = () => {
         <section className="py-20 px-6 bg-muted/30">
           <div className="container mx-auto max-w-4xl text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Built Into Your Workflow
+              {t('tradingCopilot.workflowTitle')}
             </h2>
             <p className="text-muted-foreground text-lg mb-12 max-w-2xl mx-auto">
-              The Copilot sits at the center of the Discover → Research → Execute → Automate loop, bridging every step with AI-powered analysis.
+              {t('tradingCopilot.workflowSubtitle')}
             </p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
@@ -310,7 +312,7 @@ const TradingCopilotFeature = () => {
             {/* Central copilot badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-card">
               <Bot className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">AI Copilot connects every step</span>
+              <span className="text-sm font-medium">{t('tradingCopilot.copilotConnects')}</span>
             </div>
           </div>
         </section>
@@ -318,14 +320,14 @@ const TradingCopilotFeature = () => {
         {/* Final CTA */}
         <section className="py-20 px-6">
           <div className="container mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to try it?</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('tradingCopilot.readyToTry')}</h2>
             <p className="text-muted-foreground mb-8">
-              Press <kbd className="px-1.5 py-0.5 rounded border bg-muted text-sm font-mono">⌘K</kbd> anywhere in the platform to open the Copilot.
+              {t('tradingCopilot.pressCmd')} <kbd className="px-1.5 py-0.5 rounded border bg-muted text-sm font-mono">{t('tradingCopilot.cmdKey')}</kbd> {t('tradingCopilot.anywhereInPlatform')}
             </p>
             <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" asChild>
               <Link to="/">
                 <Bot className="h-5 w-5" />
-                Go to Dashboard
+                {t('tradingCopilot.goToDashboard')}
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
