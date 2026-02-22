@@ -7,6 +7,7 @@ import { useState, lazy, Suspense, memo } from "react";
 import { Link } from "react-router-dom";
 import { PatternDetailModal } from "@/components/PatternDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 // Lazy load the chart component for performance
 const DynamicPatternChart = lazy(() => 
@@ -254,6 +255,7 @@ const PATTERN_LIBRARY: Pattern[] = [
 ];
 
 export const PatternLibrary = () => {
+  const { t } = useTranslation();
   const [selectedPatternForDetails, setSelectedPatternForDetails] = useState<string | null>(null);
 
   const getPatternIcon = (type: string) => {
@@ -299,7 +301,7 @@ export const PatternLibrary = () => {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4"
           >
             <Info className="h-4 w-4" />
-            Questions about pattern success rates? See our FAQ
+            {t('patternLibrary.faqLink')}
           </Link>
         </div>
 
@@ -308,10 +310,10 @@ export const PatternLibrary = () => {
           <div className="flex items-center gap-3">
             {getPatternIcon(type)}
             <h3 className="text-2xl font-semibold capitalize text-foreground">
-              {type === "candlestick" ? "Candlestick" : type} Patterns
+              {type === "reversal" ? t('patternLibrary.reversalPatterns') : type === "continuation" ? t('patternLibrary.continuationPatterns') : t('patternLibrary.candlestickPatterns')}
             </h3>
             <Badge variant="outline" className="text-sm">
-              {patterns.length} patterns  
+              {t('patternLibrary.patternsCount', { count: patterns.length })}
             </Badge>
           </div>
           
@@ -370,7 +372,7 @@ export const PatternLibrary = () => {
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p className="text-xs">
-                              Success rate based on Thomas Bulkowski's Encyclopedia of Chart Patterns.
+                              {t('patternLibrary.successRateTooltip')}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -382,7 +384,7 @@ export const PatternLibrary = () => {
                       size="sm" 
                       className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      Learn More
+                      {t('patternLibrary.learnMore')}
                     </Button>
                   </div>
                 </div>
