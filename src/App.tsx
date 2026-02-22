@@ -289,6 +289,7 @@ const App = () => (
           <Route path="/admin/content" element={withSuspense(<AdminContentManagement />)} />
           <Route path="/admin/kpi" element={withSuspense(<AdminKPIDashboard />)} />
           <Route path="/admin/translation-management" element={withSuspense(<TranslationManagement />)} />
+          <Route path="/admin/translations" element={withSuspense(<TranslationManagement />)} />
           <Route path="/admin/journey-analytics" element={withSuspense(<AIJourneyAnalytics />)} />
           <Route path="/admin/outcome-analytics" element={withSuspense(<OutcomeAnalytics />)} />
           <Route path="/admin/pattern-health" element={withSuspense(<PatternHealthMonitor />)} />
