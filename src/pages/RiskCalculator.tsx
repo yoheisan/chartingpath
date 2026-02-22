@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Shield, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const RiskCalculator = () => {
+  const { t } = useTranslation();
   const [accountBalance, setAccountBalance] = useState("");
   const [riskPercentage, setRiskPercentage] = useState("");
   const [stopLossPips, setStopLossPips] = useState("");
@@ -64,7 +66,7 @@ const RiskCalculator = () => {
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('common.backToHome')}
           </Link>
         </div>
 
@@ -75,11 +77,11 @@ const RiskCalculator = () => {
               <Shield className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Risk Management Calculator
+              {t('riskCalculator.title')}
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Calculate your optimal position size based on your risk tolerance and stop loss. Never risk more than you can afford to lose.
+            {t('riskCalculator.subtitle')}
           </p>
         </div>
 
@@ -87,14 +89,14 @@ const RiskCalculator = () => {
           {/* Calculator Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Risk Parameters</CardTitle>
+              <CardTitle>{t('riskCalculator.riskParameters')}</CardTitle>
               <CardDescription>
-                Enter your trading parameters to calculate optimal position size
+                {t('riskCalculator.enterParams')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="account-balance">Account Balance</Label>
+                <Label htmlFor="account-balance">{t('riskCalculator.accountBalance')}</Label>
                 <Input
                   id="account-balance"
                   type="number"
@@ -106,7 +108,7 @@ const RiskCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="risk-percentage">Risk % per Trade</Label>
+                <Label htmlFor="risk-percentage">{t('riskCalculator.riskPerTrade')}</Label>
                 <Input
                   id="risk-percentage"
                   type="number"
@@ -116,11 +118,11 @@ const RiskCalculator = () => {
                   value={riskPercentage}
                   onChange={(e) => setRiskPercentage(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Recommended: 1-3% per trade</p>
+                <p className="text-xs text-muted-foreground">{t('riskCalculator.riskRecommended')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="stop-loss">Stop Loss (pips)</Label>
+                <Label htmlFor="stop-loss">{t('riskCalculator.stopLossPips')}</Label>
                 <Input
                   id="stop-loss"
                   type="number"
@@ -168,7 +170,7 @@ const RiskCalculator = () => {
                 className="w-full"
                 disabled={!accountBalance || !riskPercentage || !stopLossPips || !currencyPair || !accountCurrency}
               >
-                Calculate Risk
+                {t('riskCalculator.calculateRisk')}
               </Button>
             </CardContent>
           </Card>
@@ -176,9 +178,9 @@ const RiskCalculator = () => {
           {/* Results */}
           <Card>
             <CardHeader>
-              <CardTitle>Risk Analysis</CardTitle>
+              <CardTitle>{t('riskCalculator.riskAnalysis')}</CardTitle>
               <CardDescription>
-                Your calculated position size and risk exposure
+                {t('riskCalculator.riskAnalysisDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -186,14 +188,14 @@ const RiskCalculator = () => {
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border">
-                      <div className="text-sm text-muted-foreground mb-1">Recommended Position Size:</div>
+                      <div className="text-sm text-muted-foreground mb-1">{t('riskCalculator.positionSize')}</div>
                       <div className="text-2xl font-bold text-primary">
-                        {results.positionSize} lots
+                        {results.positionSize} {t('riskCalculator.lots')}
                       </div>
                     </div>
 
                     <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-                      <div className="text-sm text-muted-foreground mb-1">Estimated Risk:</div>
+                      <div className="text-sm text-muted-foreground mb-1">{t('riskCalculator.estimatedRisk')}</div>
                       <div className="text-2xl font-bold text-destructive">
                         ${results.riskAmount.toLocaleString()}
                       </div>
@@ -223,8 +225,8 @@ const RiskCalculator = () => {
                     <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                       <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
                       <div className="text-sm">
-                        <div className="font-semibold text-destructive">High Risk Warning</div>
-                        <div className="text-muted-foreground">Risking more than 5% per trade is not recommended for long-term success.</div>
+                       <div className="font-semibold text-destructive">{t('riskCalculator.highRiskWarning')}</div>
+                        <div className="text-muted-foreground">{t('riskCalculator.highRiskDesc')}</div>
                       </div>
                     </div>
                   )}
@@ -233,7 +235,7 @@ const RiskCalculator = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Enter your risk parameters to see the position size calculation</p>
+                  <p>{t('riskCalculator.enterRiskParams')}</p>
                 </div>
               )}
             </CardContent>
@@ -243,37 +245,36 @@ const RiskCalculator = () => {
         {/* Educational Content */}
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Risk Management Best Practices</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-foreground">1-3% Rule</h4>
-                <p className="text-sm text-muted-foreground">
-                  Never risk more than 1-3% of your account on a single trade. This ensures long-term survival.
-                </p>
+              <CardTitle>{t('riskCalculator.bestPractices')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground">{t('riskCalculator.rule13')}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t('riskCalculator.rule13Desc')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground">{t('riskCalculator.positionSizing')}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t('riskCalculator.positionSizingDesc')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground">{t('riskCalculator.consistency')}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t('riskCalculator.consistencyDesc')}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-foreground">Position Sizing</h4>
-                <p className="text-sm text-muted-foreground">
-                  Calculate your position size based on your stop loss distance, not your desired profit.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-foreground">Consistency</h4>
-                <p className="text-sm text-muted-foreground">
-                  Use the same risk percentage for every trade to maintain consistent risk exposure.
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
         {/* Disclaimer */}
         <div className="mt-8 p-4 bg-muted/50 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
-            <strong>Disclaimer:</strong> All results are estimates. Educational use only. Not financial advice. Past performance does not guarantee future results. 
-            Always conduct your own research and consider your risk tolerance before trading.
+            <strong>{t('common.disclaimer')}</strong> {t('riskCalculator.disclaimer')}
           </p>
         </div>
       </div>
