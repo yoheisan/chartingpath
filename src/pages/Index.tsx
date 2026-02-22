@@ -15,6 +15,7 @@ import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
+import { CopilotShowcase } from '@/components/landing/CopilotShowcase';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -215,6 +216,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* AI Copilot Moat Showcase */}
+      <CopilotShowcase />
 
       {/* How It Works */}
       <HowItWorks />
