@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ interface BacktestRun {
 }
 
 const BacktestWorkspace = () => {
+  const { t } = useTranslation();
   const { user, profile, hasFeatureAccess } = useUserProfile();
   const { incrementUsage } = useBacktesterV2Usage();
   const location = useLocation();
@@ -526,10 +528,10 @@ const BacktestWorkspace = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Backtesting Workspace
+              {t('backtestWorkspace.title')}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Test your trading strategies against historical data
+              {t('backtestWorkspace.subtitle')}
             </p>
           </div>
           
@@ -539,7 +541,7 @@ const BacktestWorkspace = () => {
             </Badge>
             {!canRunBacktest && (
               <Button variant="outline" size="sm">
-                Upgrade to Pro
+                {t('backtestWorkspace.upgradeToPro')}
               </Button>
             )}
           </div>
@@ -547,8 +549,8 @@ const BacktestWorkspace = () => {
 
         <Tabs defaultValue="v1" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="v1">V1 Engine (Classic)</TabsTrigger>
-            <TabsTrigger value="v2">V2 Engine (Advanced)</TabsTrigger>
+            <TabsTrigger value="v1">{t('backtestWorkspace.v1Engine')}</TabsTrigger>
+            <TabsTrigger value="v2">{t('backtestWorkspace.v2Engine')}</TabsTrigger>
           </TabsList>
 
           {/* V1 Engine */}
@@ -599,18 +601,18 @@ const BacktestWorkspace = () => {
             <Card>
               <CardContent className="p-12 text-center">
                 <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Ready to Backtest</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('backtestWorkspace.readyToBacktest')}</h3>
                 <p className="text-muted-foreground mb-6">
-                  Configure your strategy parameters and click "Run Backtest" to begin
+                  {t('backtestWorkspace.readyDesc')}
                 </p>
                 
                 {!canRunBacktest && (
                   <div className="bg-muted p-6 rounded-lg max-w-md mx-auto">
-                    <h4 className="font-medium mb-2">Demo Mode</h4>
+                    <h4 className="font-medium mb-2">{t('backtestWorkspace.demoMode')}</h4>
                     <p className="text-sm text-muted-foreground mb-4">
-                      You can view sample backtest results in demo mode. Upgrade to Pro to run unlimited custom backtests.
+                      {t('backtestWorkspace.demoModeDesc')}
                     </p>
-                    <Button size="sm">View Demo Results</Button>
+                    <Button size="sm">{t('backtestWorkspace.viewDemoResults')}</Button>
                   </div>
                 )}
               </CardContent>
