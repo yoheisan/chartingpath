@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,6 +67,7 @@ const IMPACT_LEVELS = [
 ];
 
 export function EconomicCalendarWidget() {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useDashboardSettings();
   
   const [events, setEvents] = useState<EconomicEvent[]>([]);
@@ -270,7 +272,7 @@ export function EconomicCalendarWidget() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuLabel className="text-xs">Impact Level</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">{t('commandCenter.impactLevel')}</DropdownMenuLabel>
             {IMPACT_LEVELS.map(impact => (
               <DropdownMenuCheckboxItem
                 key={impact.value}
@@ -282,7 +284,7 @@ export function EconomicCalendarWidget() {
               </DropdownMenuCheckboxItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs">Regions</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">{t('commandCenter.regions')}</DropdownMenuLabel>
             {REGIONS.map(region => (
               <DropdownMenuCheckboxItem
                 key={region.value}
@@ -316,7 +318,7 @@ export function EconomicCalendarWidget() {
       ) : events.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
           <AlertCircle className="h-5 w-5 mb-2" />
-          <p className="text-xs text-center">No events match your filters</p>
+          <p className="text-xs text-center">{t('commandCenter.noEventsMatchFilters')}</p>
         </div>
       ) : (
         <ScrollArea className="flex-1">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ interface Alert {
 }
 
 const EnhancedAlertsLibrary = () => {
+  const { t } = useTranslation();
   const [alertLogs, setAlertLogs] = useState<AlertLog[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [outcomes, setOutcomes] = useState<AlertOutcome[]>([]);
@@ -104,8 +106,8 @@ const EnhancedAlertsLibrary = () => {
     } catch (error) {
       console.error('Error fetching alerts data:', error);
       toast({
-        title: "Error",
-        description: "Failed to load alerts data",
+        title: t('alertsLibrary.error'),
+        description: t('alertsLibrary.errorLoadingAlerts'),
         variant: "destructive"
       });
     } finally {
@@ -136,8 +138,8 @@ const EnhancedAlertsLibrary = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Alert outcome recorded successfully!"
+        title: t('alertsLibrary.success'),
+        description: t('alertsLibrary.outcomeRecorded')
       });
 
       setShowOutcomeDialog(false);
@@ -154,8 +156,8 @@ const EnhancedAlertsLibrary = () => {
     } catch (error) {
       console.error('Error adding outcome:', error);
       toast({
-        title: "Error",
-        description: "Failed to record outcome",
+        title: t('alertsLibrary.error'),
+        description: t('alertsLibrary.failedToRecord'),
         variant: "destructive"
       });
     }
@@ -193,7 +195,7 @@ const EnhancedAlertsLibrary = () => {
      outcomes.filter(o => o.pnl_percentage !== null).length).toFixed(2) : '0';
 
   if (loading) {
-    return <div className="flex items-center justify-center p-8">Loading alerts library...</div>;
+    return <div className="flex items-center justify-center p-8">{t('alertsLibrary.loadingAlertsLibrary')}</div>;
   }
 
   return (
@@ -206,7 +208,7 @@ const EnhancedAlertsLibrary = () => {
               <AlertTriangle className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{totalAlerts}</p>
-                <p className="text-sm text-muted-foreground">Total Alerts</p>
+                <p className="text-sm text-muted-foreground">{t('alertsLibrary.totalAlerts')}</p>
               </div>
             </div>
           </CardContent>
@@ -218,7 +220,7 @@ const EnhancedAlertsLibrary = () => {
               <Target className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{hitRate}%</p>
-                <p className="text-sm text-muted-foreground">Hit Rate</p>
+                <p className="text-sm text-muted-foreground">{t('alertsLibrary.hitRate')}</p>
               </div>
             </div>
           </CardContent>
@@ -230,7 +232,7 @@ const EnhancedAlertsLibrary = () => {
               <DollarSign className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{avgPnL}%</p>
-                <p className="text-sm text-muted-foreground">Avg P&L</p>
+                <p className="text-sm text-muted-foreground">{t('alertsLibrary.avgPnl')}</p>
               </div>
             </div>
           </CardContent>
@@ -242,7 +244,7 @@ const EnhancedAlertsLibrary = () => {
               <Clock className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">{alertsWithOutcomes}</p>
-                <p className="text-sm text-muted-foreground">Tracked</p>
+                <p className="text-sm text-muted-foreground">{t('alertsLibrary.tracked')}</p>
               </div>
             </div>
           </CardContent>
@@ -251,8 +253,8 @@ const EnhancedAlertsLibrary = () => {
 
       <Tabs defaultValue="recent" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="recent">Recent Alerts</TabsTrigger>
-          <TabsTrigger value="outcomes">Alert Outcomes</TabsTrigger>
+          <TabsTrigger value="recent">{t('alertsLibrary.recentAlerts')}</TabsTrigger>
+          <TabsTrigger value="outcomes">{t('alertsLibrary.alertOutcomes')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="recent" className="space-y-4">
@@ -298,7 +300,7 @@ const EnhancedAlertsLibrary = () => {
                             setShowOutcomeDialog(true);
                           }}
                         >
-                          Record Outcome
+                          {t('alertsLibrary.recordOutcome')}
                         </Button>
                       )}
                     </div>
@@ -372,15 +374,15 @@ const EnhancedAlertsLibrary = () => {
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Record Alert Outcome</DialogTitle>
+            <DialogTitle>{t('alertsLibrary.recordAlertOutcome')}</DialogTitle>
             <DialogDescription>
-              Track the result of this alert for performance analysis
+              {t('alertsLibrary.trackResultDescription')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Outcome Type</label>
+              <label className="text-sm font-medium">{t('alertsLibrary.outcomeType')}</label>
               <select 
                 className="w-full mt-1 px-3 py-2 border rounded-md"
                 value={outcomeForm.outcome_type}
@@ -389,16 +391,16 @@ const EnhancedAlertsLibrary = () => {
                   outcome_type: e.target.value as AlertOutcome['outcome_type']
                 }))}
               >
-                <option value="hit">Hit - Alert was correct</option>
-                <option value="missed">Missed - Pattern didn't play out</option>
-                <option value="false_positive">False Positive - Wrong signal</option>
-                <option value="manual_close">Manual Close - Closed manually</option>
+                <option value="hit">{t('alertsLibrary.hitCorrect')}</option>
+                <option value="missed">{t('alertsLibrary.missedNoPlay')}</option>
+                <option value="false_positive">{t('alertsLibrary.falsePositive')}</option>
+                <option value="manual_close">{t('alertsLibrary.manualClose')}</option>
               </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Entry Price</label>
+                <label className="text-sm font-medium">{t('alertsLibrary.entryPrice')}</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -408,7 +410,7 @@ const EnhancedAlertsLibrary = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Exit Price</label>
+                <label className="text-sm font-medium">{t('alertsLibrary.exitPrice')}</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -421,7 +423,7 @@ const EnhancedAlertsLibrary = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">P&L %</label>
+                <label className="text-sm font-medium">{t('alertsLibrary.pnlPercent')}</label>
                 <Input
                   type="number"
                   step="0.1"
@@ -431,7 +433,7 @@ const EnhancedAlertsLibrary = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Duration (hours)</label>
+                <label className="text-sm font-medium">{t('alertsLibrary.durationHours')}</label>
                 <Input
                   type="number"
                   placeholder="24"
@@ -442,9 +444,9 @@ const EnhancedAlertsLibrary = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Notes</label>
+              <label className="text-sm font-medium">{t('alertsLibrary.notes')}</label>
               <Textarea
-                placeholder="Additional notes about this outcome..."
+                placeholder={t('alertsLibrary.additionalNotes')}
                 value={outcomeForm.notes}
                 onChange={(e) => setOutcomeForm(prev => ({ ...prev, notes: e.target.value }))}
                 rows={3}
@@ -453,13 +455,13 @@ const EnhancedAlertsLibrary = () => {
 
             <div className="flex gap-2 pt-4">
               <Button onClick={handleAddOutcome} className="flex-1">
-                Record Outcome
+                {t('alertsLibrary.recordOutcome')}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setShowOutcomeDialog(false)}
               >
-                Cancel
+                {t('alertsLibrary.cancel')}
               </Button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +88,7 @@ export function DashboardPatternStudy({
   onPatternSelect,
   selectedPatternId,
 }: DashboardPatternStudyProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
@@ -299,7 +301,7 @@ export function DashboardPatternStudy({
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                     <CardTitle className="text-lg">
-                      Active Patterns ({activePatterns.length})
+                      {t('commandCenter.activePatterns', { count: activePatterns.length })}
                     </CardTitle>
                     <Badge variant="secondary" className="text-xs">
                       {timeframeLabel}
@@ -343,17 +345,17 @@ export function DashboardPatternStudy({
                             height={96}
                           />
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-3 gap-2 text-xs">
                           <div>
-                            <p className="text-muted-foreground">Entry</p>
+                            <p className="text-muted-foreground">{t('commandCenter.entry')}</p>
                             <p className="font-medium">${pattern.entry_price.toFixed(2)}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Target</p>
+                            <p className="text-muted-foreground">{t('commandCenter.target')}</p>
                             <p className="font-medium text-emerald-500">${pattern.take_profit_price.toFixed(2)}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Stop</p>
+                            <p className="text-muted-foreground">{t('commandCenter.stop')}</p>
                             <p className="font-medium text-destructive">${pattern.stop_loss_price.toFixed(2)}</p>
                           </div>
                         </div>
@@ -373,11 +375,11 @@ export function DashboardPatternStudy({
           <div className="flex items-center gap-3">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-primary" />
-              Performance Metrics
+              {t('commandCenter.performanceMetrics')}
             </CardTitle>
             {stats.sampleSize > 0 && (
               <p className="text-xs text-muted-foreground">
-                Based on {stats.sampleSize} resolved trades
+                {t('commandCenter.basedOnTrades', { count: stats.sampleSize })}
               </p>
             )}
           </div>
@@ -386,43 +388,43 @@ export function DashboardPatternStudy({
           <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold">{stats.totalPatterns}</p>
-              <p className="text-[10px] text-muted-foreground">Patterns</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.patterns')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-primary">{stats.activePatterns}</p>
-              <p className="text-[10px] text-muted-foreground">Active Now</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.activeNow')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.winRate >= 50 ? 'text-emerald-500' : 'text-amber-500')}>
                 {stats.winRate.toFixed(1)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">Win Rate</p>
+              <p className="text-[10px] text-muted-foreground">{t('screener.winRate')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.avgPnl >= 0 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.avgPnl >= 0 ? '+' : ''}{stats.avgPnl.toFixed(2)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">Avg P&L</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.avgPnl')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.totalPnl >= 0 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(1)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">Total P&L</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.totalPnl')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.profitFactor >= 1 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.profitFactor.toFixed(2)}
               </p>
-              <p className="text-[10px] text-muted-foreground">Profit Factor</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.profitFactor')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-emerald-500">{stats.wins}</p>
-              <p className="text-[10px] text-muted-foreground">Wins</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.wins')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-destructive">{stats.losses}</p>
-              <p className="text-[10px] text-muted-foreground">Losses</p>
+              <p className="text-[10px] text-muted-foreground">{t('commandCenter.losses')}</p>
             </div>
           </div>
         </CardContent>
@@ -434,13 +436,13 @@ export function DashboardPatternStudy({
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="text-base flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
-              Historical Pattern Occurrences
+              {t('commandCenter.historicalPatternOccurrences')}
               <Badge variant="secondary" className="text-xs">
                 {timeframeLabel}
               </Badge>
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {historicalPatterns.length} patterns found
+              {t('commandCenter.patternsFound', { count: historicalPatterns.length })}
             </p>
           </div>
         </CardHeader>
@@ -449,16 +451,16 @@ export function DashboardPatternStudy({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Pattern</TableHead>
-                  <TableHead className="w-[80px]">View</TableHead>
-                  <TableHead className="w-[80px]">Replay</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Entry</TableHead>
-                  <TableHead className="text-right">Target</TableHead>
-                  <TableHead className="text-right">Stop</TableHead>
-                  <TableHead className="text-center">R:R</TableHead>
-                  <TableHead className="text-center">Outcome</TableHead>
-                  <TableHead className="text-right">P&L</TableHead>
+                  <TableHead>{t('screener.pattern')}</TableHead>
+                  <TableHead className="w-[80px]">{t('commandCenter.view')}</TableHead>
+                  <TableHead className="w-[80px]">{t('commandCenter.replay')}</TableHead>
+                  <TableHead>{t('commandCenter.date')}</TableHead>
+                  <TableHead className="text-right">{t('commandCenter.entry')}</TableHead>
+                  <TableHead className="text-right">{t('commandCenter.target')}</TableHead>
+                  <TableHead className="text-right">{t('commandCenter.stop')}</TableHead>
+                  <TableHead className="text-center">{t('commandCenter.rr')}</TableHead>
+                  <TableHead className="text-center">{t('commandCenter.outcome')}</TableHead>
+                  <TableHead className="text-right">{t('commandCenter.pnl')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -495,7 +497,7 @@ export function DashboardPatternStudy({
                         }}
                       >
                         <Eye className="h-3.5 w-3.5 mr-1" />
-                        View
+                        {t('commandCenter.view')}
                       </Button>
                     </TableCell>
                     <TableCell className="py-2">
@@ -509,7 +511,7 @@ export function DashboardPatternStudy({
                         }}
                       >
                         <Play className="h-3.5 w-3.5 mr-1 fill-current" />
-                        Replay
+                        {t('commandCenter.replay')}
                       </Button>
                     </TableCell>
                     <TableCell>
@@ -556,8 +558,8 @@ export function DashboardPatternStudy({
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <BarChart3 className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="font-medium">No Historical Patterns Found</p>
-              <p className="text-xs mt-1">Pattern history will populate as patterns are detected and resolved</p>
+              <p className="font-medium">{t('commandCenter.noHistoricalPatternsFound')}</p>
+              <p className="text-xs mt-1">{t('commandCenter.patternHistoryWillPopulate')}</p>
             </div>
           )}
         </CardContent>
