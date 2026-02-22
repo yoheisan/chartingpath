@@ -387,18 +387,16 @@ Deno.serve(async (req) => {
       }
 
       case 'get_coverage_stats': {
-        // Get total English keys count
-        const { data: enKeys, error: enError } = await supabase
-          .from('translations')
-          .select('key', { count: 'exact' })
-          .eq('language_code', 'en')
+        // Get total keys count from translation_keys table (not translations table)
+        const { data: allKeys, error: keysError } = await supabase
+          .from('translation_keys')
+          .select('key')
+
+        const totalEnKeys = allKeys?.length || 0
 
         // For each language, count how many keys have translations
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr']
         const coverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {}
-
-        // Get all translation keys from en.json (passed as reference)
-        const totalEnKeys = enKeys?.length || 0
 
         for (const lang of targetLanguages) {
           const { data: langData, error: langError } = await supabase
