@@ -8,26 +8,23 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { withTimeout } from '@/utils/withTimeout';
 import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
+import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
 
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
-const ASSET_TABS: { value: TeaserAssetType; label: string; universe: number }[] = [
-  { value: 'stocks', label: 'Stocks', universe: 90 },
-  { value: 'fx', label: 'Forex', universe: 57 },
-  { value: 'crypto', label: 'Crypto', universe: 84 },
-  { value: 'commodities', label: 'Commodities', universe: 25 },
+const ASSET_TAB_KEYS: { value: TeaserAssetType; i18nKey: string; universe: number }[] = [
+  { value: 'stocks', i18nKey: 'patternScreenerTeaser.stocks', universe: 90 },
+  { value: 'fx', i18nKey: 'patternScreenerTeaser.forex', universe: 57 },
+  { value: 'crypto', i18nKey: 'patternScreenerTeaser.crypto', universe: 84 },
+  { value: 'commodities', i18nKey: 'patternScreenerTeaser.commodities', universe: 25 },
 ];
 
 const MAX_TEASER_ITEMS = 10;
 
-/**
- * Homepage teaser version of the screener.
- * Shows top 10 signals per asset class sorted by grade + win rate.
- * No filters, minimal UI, strong CTA to full screener.
- */
 export function PatternScreenerTeaser() {
+  const { t } = useTranslation();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<TeaserAssetType, LiveSetup[]>>({
     stocks: [], fx: [], crypto: [], commodities: [],
   });
@@ -55,7 +52,6 @@ export function PatternScreenerTeaser() {
 
         const allPatterns = data.patterns || [];
 
-        // Deduplicate: keep highest-graded entry per base symbol + pattern
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');
           return `${baseSymbol}|${p.patternName}`;
@@ -101,7 +97,7 @@ export function PatternScreenerTeaser() {
 
     const fetchWithStagger = async () => {
       await fetchPatternsForAsset('stocks');
-      const remainingTabs = ASSET_TABS.filter(t => t.value !== 'stocks');
+      const remainingTabs = ASSET_TAB_KEYS.filter(t => t.value !== 'stocks');
       for (let i = 0; i < remainingTabs.length; i++) {
         await new Promise(r => setTimeout(r, 200));
         fetchPatternsForAsset(remainingTabs[i].value);
@@ -112,6 +108,7 @@ export function PatternScreenerTeaser() {
   }, []);
 
   const currentTotal = totalCounts[activeTab];
+  const activeTabConfig = ASSET_TAB_KEYS.find(t => t.value === activeTab);
 
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -134,27 +131,27 @@ export function PatternScreenerTeaser() {
           <div className="flex items-center justify-center gap-2 mb-3">
             <Badge variant="outline" className="text-primary border-primary/50">
               <Zap className="h-3 w-3 mr-1" />
-              Live
+              {t('patternScreenerTeaser.live')}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              {lastScanned ? `Updated ${new Date(lastScanned).toLocaleTimeString()}` : 'Just now'}
+              {lastScanned ? `${t('patternScreenerTeaser.updated')} ${new Date(lastScanned).toLocaleTimeString()}` : t('patternScreenerTeaser.justNow')}
             </span>
           </div>
-          <h2 className="text-2xl font-bold">Top Pattern Signals</h2>
+          <h2 className="text-2xl font-bold">{t('patternScreenerTeaser.title')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Highest-graded setups across markets · 1H timeframe
+            {t('patternScreenerTeaser.subtitle')}
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TeaserAssetType)} className="mb-6">
           <TabsList className="grid w-full grid-cols-4">
-            {ASSET_TABS.map(tab => {
+            {ASSET_TAB_KEYS.map(tab => {
               const count = totalCounts[tab.value];
               const isActive = activeTab === tab.value;
               return (
                 <TabsTrigger key={tab.value} value={tab.value} className="text-sm gap-1.5">
-                  {tab.label}
+                  {t(tab.i18nKey)}
                   {!loading[tab.value] && (
                     <span className={`text-[10px] font-mono ${
                       isActive
@@ -169,7 +166,7 @@ export function PatternScreenerTeaser() {
             })}
           </TabsList>
 
-          {ASSET_TABS.map(tab => (
+          {ASSET_TAB_KEYS.map(tab => (
             <TabsContent key={tab.value} value={tab.value} className="mt-4">
               {loading[tab.value] ? (
                 <LoadingSkeleton />
@@ -179,7 +176,7 @@ export function PatternScreenerTeaser() {
                 </div>
               ) : (
                 <div className="rounded-lg border bg-card p-8 text-center">
-                  <p className="text-muted-foreground">No active patterns in {tab.label} right now.</p>
+                  <p className="text-muted-foreground">{t('patternScreenerTeaser.noActivePatterns', { label: t(tab.i18nKey) })}</p>
                 </div>
               )}
             </TabsContent>
@@ -191,14 +188,14 @@ export function PatternScreenerTeaser() {
           <Link to="/patterns/live">
             <Button size="lg" className="px-8">
               {currentTotal > MAX_TEASER_ITEMS
-                ? `View All ${currentTotal} ${ASSET_TABS.find(t => t.value === activeTab)?.label} Signals`
-                : 'Open Full Screener'
+                ? t('patternScreenerTeaser.viewAllSignals', { count: currentTotal, label: activeTabConfig ? t(activeTabConfig.i18nKey) : '' })
+                : t('patternScreenerTeaser.openFullScreener')
               }
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </Link>
           <p className="text-xs text-muted-foreground mt-3">
-            Filter by asset class, timeframe, grade, and more
+            {t('patternScreenerTeaser.filterHint')}
           </p>
         </div>
       </div>

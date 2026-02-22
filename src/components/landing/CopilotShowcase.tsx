@@ -6,62 +6,7 @@ import {
   ArrowRight, Bot, User, TrendingUp, ExternalLink
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const moatFeatures = [
-  {
-    icon: Activity,
-    title: "Live Market Access",
-    description: "Scans 8,500+ instruments for active pattern setups in real-time.",
-    cantDo: "ChatGPT would say: \"I don't have access to real-time market data.\"",
-    color: "text-amber-500",
-  },
-  {
-    icon: Database,
-    title: "320K+ Backtested Trades",
-    description: "Answers \"what actually works?\" with real win rates from our Edge Atlas.",
-    cantDo: "ChatGPT guesses: \"Generally 60-70% according to textbooks.\"",
-    color: "text-violet-500",
-  },
-  {
-    icon: Eye,
-    title: "Chart Context Analysis",
-    description: "Reads your chart indicators, S/R levels, RSI, MACD directly — no screenshots.",
-    cantDo: "ChatGPT can only OCR blurry screenshots, losing precision.",
-    color: "text-emerald-500",
-  },
-  {
-    icon: Code2,
-    title: "One-Click Pine Script",
-    description: "Generates symbol-specific, context-aware Pine Script and MQL code.",
-    cantDo: "ChatGPT produces generic templates without market context.",
-    color: "text-cyan-500",
-  },
-  {
-    icon: Brain,
-    title: "Self-Improving AI",
-    description: "Learns from real trading outcomes to auto-correct its analysis rules.",
-    cantDo: "ChatGPT is a static model — it can't learn from your market.",
-    color: "text-pink-500",
-  },
-  {
-    icon: Link2,
-    title: "Action Bridging",
-    description: "Every response links to Pattern Lab, Edge Atlas, Alerts, and Scripts.",
-    cantDo: "No external AI can link into ChartingPath's tools.",
-    color: "text-blue-500",
-  },
-];
-
-const demoMessages = [
-  {
-    role: "user" as const,
-    content: "What bull flag setups are active on crypto right now?",
-  },
-  {
-    role: "assistant" as const,
-    content: null, // We render a custom table
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const demoResults = [
   { symbol: "BTC/USD", quality: "A", direction: "Bullish", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
@@ -70,6 +15,53 @@ const demoResults = [
 ];
 
 export const CopilotShowcase = () => {
+  const { t } = useTranslation();
+
+  const moatFeatures = [
+    {
+      icon: Activity,
+      title: t('copilotShowcase.liveMarketAccess'),
+      description: t('copilotShowcase.liveMarketAccessDesc'),
+      cantDo: t('copilotShowcase.liveMarketAccessCant'),
+      color: "text-amber-500",
+    },
+    {
+      icon: Database,
+      title: t('copilotShowcase.backtested'),
+      description: t('copilotShowcase.backtestedDesc'),
+      cantDo: t('copilotShowcase.backtestedCant'),
+      color: "text-violet-500",
+    },
+    {
+      icon: Eye,
+      title: t('copilotShowcase.chartContext'),
+      description: t('copilotShowcase.chartContextDesc'),
+      cantDo: t('copilotShowcase.chartContextCant'),
+      color: "text-emerald-500",
+    },
+    {
+      icon: Code2,
+      title: t('copilotShowcase.pineScript'),
+      description: t('copilotShowcase.pineScriptDesc'),
+      cantDo: t('copilotShowcase.pineScriptCant'),
+      color: "text-cyan-500",
+    },
+    {
+      icon: Brain,
+      title: t('copilotShowcase.selfImproving'),
+      description: t('copilotShowcase.selfImprovingDesc'),
+      cantDo: t('copilotShowcase.selfImprovingCant'),
+      color: "text-pink-500",
+    },
+    {
+      icon: Link2,
+      title: t('copilotShowcase.actionBridging'),
+      description: t('copilotShowcase.actionBridgingDesc'),
+      cantDo: t('copilotShowcase.actionBridgingCant'),
+      color: "text-blue-500",
+    },
+  ];
+
   return (
     <section className="py-20 px-6">
       <div className="container mx-auto max-w-6xl">
@@ -77,14 +69,12 @@ export const CopilotShowcase = () => {
         <div className="text-center mb-14">
           <Badge variant="secondary" className="mb-4 gap-1.5">
             <Bot className="h-3.5 w-3.5" />
-            AI Copilot
+            {t('copilotShowcase.badge')}
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Why Use Our Copilot Instead of ChatGPT?
+            {t('copilotShowcase.title')}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Six capabilities that are <strong className="text-foreground">impossible to replicate</strong> by pasting a chart into ChatGPT or Gemini.
-          </p>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.subtitle') }} />
         </div>
 
         {/* 6-Card Moat Grid */}
@@ -109,13 +99,13 @@ export const CopilotShowcase = () => {
 
         {/* Demo Conversation */}
         <div className="max-w-3xl mx-auto">
-          <h3 className="text-lg font-semibold mb-4 text-center">See it in action</h3>
+          <h3 className="text-lg font-semibold mb-4 text-center">{t('copilotShowcase.seeItInAction')}</h3>
           <div className="rounded-xl border bg-card overflow-hidden">
             {/* Chat header */}
             <div className="px-4 py-3 border-b bg-muted/30 flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Trading Copilot</span>
-              <Badge variant="outline" className="text-xs ml-auto">Demo</Badge>
+              <span className="text-sm font-medium">{t('copilotShowcase.tradingCopilot')}</span>
+              <Badge variant="outline" className="text-xs ml-auto">{t('copilotShowcase.demo')}</Badge>
             </div>
 
             {/* User message */}
@@ -125,7 +115,7 @@ export const CopilotShowcase = () => {
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <div className="bg-muted rounded-lg px-4 py-2.5 text-sm max-w-[85%]">
-                  {demoMessages[0].content}
+                  {t('copilotShowcase.demoQuestion')}
                 </div>
               </div>
 
@@ -135,20 +125,18 @@ export const CopilotShowcase = () => {
                   <Bot className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div className="flex-1 space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Found <strong className="text-foreground">3 bull flag setups</strong> on crypto (4H timeframe):
-                  </p>
+                  <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.demoResponse') }} />
                   {/* Results table */}
                   <div className="overflow-x-auto rounded-lg border">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b bg-muted/50">
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Symbol</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Grade</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Entry</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">SL</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">TP</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">R:R</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.symbol')}</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.grade')}</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.entry')}</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.sl')}</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.tp')}</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.rr')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -170,10 +158,10 @@ export const CopilotShowcase = () => {
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
-                      <TrendingUp className="h-3 w-3" /> Validate in Pattern Lab
+                      <TrendingUp className="h-3 w-3" /> {t('copilotShowcase.validateInPatternLab')}
                     </Button>
                     <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
-                      <Code2 className="h-3 w-3" /> Export Pine Script
+                      <Code2 className="h-3 w-3" /> {t('copilotShowcase.exportPineScript')}
                     </Button>
                   </div>
                 </div>
@@ -183,7 +171,7 @@ export const CopilotShowcase = () => {
             {/* Footnote */}
             <div className="px-4 py-3 border-t bg-muted/20">
               <p className="text-xs text-muted-foreground text-center italic">
-                💬 ChatGPT would say: "I don't have access to real-time market data."
+                {t('copilotShowcase.chatgptFootnote')}
               </p>
             </div>
           </div>
@@ -192,13 +180,11 @@ export const CopilotShowcase = () => {
           <div className="text-center mt-8 space-y-3">
             <Button asChild size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
               <Link to="/features/trading-copilot">
-                Learn More About the Copilot
+                {t('copilotShowcase.learnMore')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Or press <kbd className="px-1.5 py-0.5 rounded border bg-muted text-xs font-mono">⌘K</kbd> to try it now
-            </p>
+            <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.pressToTry') }} />
           </div>
         </div>
       </div>

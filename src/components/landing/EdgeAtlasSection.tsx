@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, FlaskConical, Info, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Tooltip,
   TooltipContent,
@@ -54,22 +55,13 @@ const TF_LABEL: Record<string, string> = {
   '1h': '1H',
 };
 
-// FX Major pairs (G7 + NZD vs USD)
 const FX_MAJORS = ['EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X', 'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X'];
-const FX_MAJORS_SET = new Set(FX_MAJORS);
 
 type AssetTab = 'stocks' | 'crypto' | 'fx' | 'indices' | 'commodities';
 type FxSubFilter = 'all' | 'majors' | 'crosses';
 
-const ASSET_TABS: { key: AssetTab; label: string }[] = [
-  { key: 'stocks', label: 'Stocks' },
-  { key: 'crypto', label: 'Crypto' },
-  { key: 'fx', label: 'FX' },
-  { key: 'indices', label: 'Indices' },
-  { key: 'commodities', label: 'Commodities' },
-];
+const ASSET_TAB_KEYS: AssetTab[] = ['stocks', 'crypto', 'fx', 'indices', 'commodities'];
 
-// Per-timeframe universe sizes (distinct tickers with historical data)
 const UNIVERSE_BY_ASSET_TF: Record<string, Record<string, number>> = {
   stocks:      { '1h': 48, '4h': 225, '8h': 240, '1d': 250, '1wk': 323 },
   crypto:      { '4h': 13, '8h': 40, '1d': 69, '1wk': 97 },
@@ -82,24 +74,23 @@ const getUniverse = (asset: string, timeframe?: string): number => {
   const tfMap = UNIVERSE_BY_ASSET_TF[asset];
   if (!tfMap) return 0;
   if (timeframe && tfMap[timeframe]) return tfMap[timeframe];
-  // Fallback: max across all timeframes
   return Math.max(...Object.values(tfMap));
 };
 
-const TAB_DESCRIPTIONS: Record<AssetTab, string> = {
-  stocks: 'Aggregated across 300+ equities. Pattern behaviour is consistent within this universe.',
-  crypto: 'Aggregated across top-cap coins. High BTC-beta correlation makes cross-coin analysis defensible.',
-  fx: 'Segmented by pair type. Major pairs share liquidity structure; crosses behave differently.',
-  indices: 'Broad market indices share similar mechanics — suitable for cross-index aggregation.',
-  commodities: 'Aggregated across energy, metals and softs. Use as directional signal only.',
+const TAB_DESC_KEYS: Record<AssetTab, string> = {
+  stocks: 'edgeAtlas.stocksDesc',
+  crypto: 'edgeAtlas.cryptoDesc',
+  fx: 'edgeAtlas.fxDesc',
+  indices: 'edgeAtlas.indicesDesc',
+  commodities: 'edgeAtlas.commoditiesDesc',
 };
 
 const RANK_ICONS = ['🥇', '🥈', '🥉'];
 
-// Cache results per cache-key to avoid redundant RPC calls
 const rankingsCache: Record<string, EdgeRanking[]> = {};
 
 export function EdgeAtlasSection() {
+  const { t } = useTranslation();
   const [rankings, setRankings] = useState<EdgeRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AssetTab>('stocks');
@@ -172,22 +163,16 @@ export function EdgeAtlasSection() {
         let symbols: string[] | null = null;
         if (fxFilter === 'majors') symbols = FX_MAJORS;
         else if (fxFilter === 'crosses') {
-          // We'll fetch all FX and filter crosses server-side via exclusion — 
-          // instead pass null and filter client-side since we can't do NOT IN easily
-          // Use the general RPC but pass null to get all FX, then filter
-          symbols = null; // handled below
+          symbols = null;
         }
 
         if (fxFilter === 'crosses') {
-          // Fetch all FX rankings then filter out majors
           const { data: allFx, error } = await supabase.rpc('get_edge_atlas_rankings_fx', {
             p_symbols: null,
             p_min_trades: 50,
             p_limit: 50,
           });
           if (!error && allFx) {
-            // We can't easily filter by symbol at ranking level since rankings are aggregated
-            // So for crosses we just return all non-major aggregated — use the all FX result
             data = (allFx as any[]).map(r => ({
               pattern_id: r.pattern_id,
               pattern_name: r.pattern_name,
@@ -259,7 +244,6 @@ export function EdgeAtlasSection() {
     fetchRankings(activeTab, fxSubFilter);
   }, [activeTab, fxSubFilter, fetchRankings]);
 
-  // Fetch live counts whenever rankings change
   useEffect(() => {
     if (rankings.length > 0) {
       fetchLiveCounts(rankings, activeTab);
@@ -285,6 +269,14 @@ export function EdgeAtlasSection() {
     navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
   };
 
+  const assetTabLabels: Record<AssetTab, string> = {
+    stocks: t('edgeAtlas.stocks'),
+    crypto: t('edgeAtlas.crypto'),
+    fx: t('edgeAtlas.fx'),
+    indices: t('edgeAtlas.indices'),
+    commodities: t('edgeAtlas.commodities'),
+  };
+
   return (
     <section className="py-14 px-6 bg-background border-t border-border/40">
       <div className="container mx-auto max-w-5xl">
@@ -296,11 +288,11 @@ export function EdgeAtlasSection() {
               <div className="p-1.5 rounded-lg bg-amber-500/10">
                 <Trophy className="h-5 w-5 text-amber-400" />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">Edge Atlas</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">{t('edgeAtlas.badge')}</span>
             </div>
-            <h2 className="text-2xl font-bold">Patterns with Proven Edge</h2>
+            <h2 className="text-2xl font-bold">{t('edgeAtlas.title')}</h2>
             <p className="text-muted-foreground text-sm mt-1">
-              Ranked by estimated annualized return. Filter by asset class for meaningful comparisons.
+              {t('edgeAtlas.subtitle')}
             </p>
           </div>
           <TooltipProvider>
@@ -308,11 +300,11 @@ export function EdgeAtlasSection() {
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-help">
                   <Info className="h-3.5 w-3.5" />
-                  How is this calculated?
+                  {t('edgeAtlas.howCalculated')}
                 </div>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p className="text-xs">Est. Annual % = trades/year × expectancy R × 1% risk per trade. Based on all resolved historical detections. ⚠️ = fewer than {CONFIDENCE_THRESHOLD} samples.</p>
+                <p className="text-xs">{t('edgeAtlas.howCalculatedTooltip', { threshold: CONFIDENCE_THRESHOLD })}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -320,25 +312,25 @@ export function EdgeAtlasSection() {
 
         {/* Asset Class Tabs */}
         <div className="flex items-center gap-1 flex-wrap mb-2">
-          {ASSET_TABS.map(tab => {
-            const count = tabCounts[tab.key] || 0;
+          {ASSET_TAB_KEYS.map(tabKey => {
+            const count = tabCounts[tabKey] || 0;
             return (
               <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
+                key={tabKey}
+                onClick={() => handleTabChange(tabKey)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                  activeTab === tab.key
+                  activeTab === tabKey
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
-                {tab.label}
+                {assetTabLabels[tabKey]}
                 <span className={`text-[10px] font-mono ${
-                  activeTab === tab.key
+                  activeTab === tabKey
                     ? 'text-primary-foreground/70'
                     : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'
                 }`}>
-                  {count}/{getUniverse(tab.key)}
+                  {count}/{getUniverse(tabKey)}
                 </span>
               </button>
             );
@@ -348,7 +340,7 @@ export function EdgeAtlasSection() {
         {/* FX Sub-filter */}
         {activeTab === 'fx' && (
           <div className="flex items-center gap-2 mb-3 pl-1">
-            <span className="text-xs text-muted-foreground">Pair type:</span>
+            <span className="text-xs text-muted-foreground">{t('edgeAtlas.pairType')}</span>
             {(['all', 'majors', 'crosses'] as FxSubFilter[]).map(f => (
               <button
                 key={f}
@@ -359,7 +351,7 @@ export function EdgeAtlasSection() {
                     : 'border-border/40 text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {f === 'all' ? 'All FX' : f === 'majors' ? 'Majors (G7+NZD)' : 'Crosses'}
+                {f === 'all' ? t('edgeAtlas.allFx') : f === 'majors' ? t('edgeAtlas.majors') : t('edgeAtlas.crosses')}
               </button>
             ))}
             <TooltipProvider>
@@ -368,7 +360,7 @@ export function EdgeAtlasSection() {
                   <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p className="text-xs"><strong>Majors:</strong> EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD — all vs USD, tightest spreads.<br /><strong>Crosses:</strong> Everything else (EUR/GBP, GBP/JPY, AUD/JPY, etc.).</p>
+                  <p className="text-xs"><strong>{t('edgeAtlas.majors')}:</strong> {t('edgeAtlas.majorsTooltip')}<br /><strong>{t('edgeAtlas.crosses')}:</strong> {t('edgeAtlas.crossesTooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -377,7 +369,7 @@ export function EdgeAtlasSection() {
 
         {/* Context note */}
         <p className="text-xs text-muted-foreground/70 mb-4 pl-1 italic">
-          {TAB_DESCRIPTIONS[activeTab]}
+          {t(TAB_DESC_KEYS[activeTab])}
         </p>
 
         {/* Table */}
@@ -397,7 +389,7 @@ export function EdgeAtlasSection() {
           </div>
         ) : rankings.length === 0 ? (
           <div className="rounded-xl border border-border/40 bg-card/40 p-10 text-center text-muted-foreground">
-            Not enough historical data for this filter combination.
+            {t('edgeAtlas.noData')}
           </div>
         ) : (
           <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
@@ -423,13 +415,13 @@ export function EdgeAtlasSection() {
                           {TF_LABEL[r.timeframe] || r.timeframe}
                         </Badge>
                         {isLowSample && (
-                          <span className="text-[10px] text-yellow-500">⚠️ low sample</span>
+                          <span className="text-[10px] text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-                        <span>Win: <span className={`font-medium ${r.win_rate_pct >= 55 ? 'text-green-500' : r.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>{r.win_rate_pct}%</span></span>
-                        <span>Expect: <span className="font-mono text-green-500">{r.expectancy_r.toFixed(3)}R</span></span>
-                        <span className="hidden sm:inline">{r.trades_per_year.toFixed(0)} trades/yr</span>
+                        <span>{t('edgeAtlas.win')} <span className={`font-medium ${r.win_rate_pct >= 55 ? 'text-green-500' : r.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>{r.win_rate_pct}%</span></span>
+                        <span>{t('edgeAtlas.expect')} <span className="font-mono text-green-500">{r.expectancy_r.toFixed(3)}R</span></span>
+                        <span className="hidden sm:inline">{r.trades_per_year.toFixed(0)} {t('edgeAtlas.tradesPerYear')}</span>
                         <span className="text-muted-foreground/60">n={r.total_trades.toLocaleString()}</span>
                       </div>
                     </div>
@@ -440,14 +432,14 @@ export function EdgeAtlasSection() {
                     <div className={`text-lg font-bold ${r.est_annualized_pct >= 20 ? 'text-green-400' : r.est_annualized_pct >= 8 ? 'text-green-500' : 'text-green-600'}`}>
                       +{r.est_annualized_pct.toFixed(1)}%
                     </div>
-                    <div className="text-[10px] text-muted-foreground">est. annual</div>
+                    <div className="text-[10px] text-muted-foreground">{t('edgeAtlas.estAnnual')}</div>
                   </div>
 
                   {/* CTAs */}
                   <div className="flex items-center gap-2 shrink-0">
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
-                      Live Setups
+                      {t('edgeAtlas.liveSetups')}
                       <span className={`ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
                         liveCount > 0
                           ? 'bg-green-500/20 text-green-500'
@@ -458,7 +450,7 @@ export function EdgeAtlasSection() {
                     </Button>
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleBacktest(r)}>
                       <FlaskConical className="h-3 w-3" />
-                      Validate
+                      {t('edgeAtlas.validate')}
                     </Button>
                   </div>
                 </div>
@@ -469,9 +461,7 @@ export function EdgeAtlasSection() {
 
         {/* Footer */}
         {!loading && rankings.length > 0 && (
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Use <strong>Live Setups</strong> to see current formations of this pattern · Use <strong>Validate</strong> to backtest on a specific instrument
-          </p>
+          <p className="text-center text-xs text-muted-foreground mt-6" dangerouslySetInnerHTML={{ __html: t('edgeAtlas.footerNote') }} />
         )}
       </div>
     </section>
