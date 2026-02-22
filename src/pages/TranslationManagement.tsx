@@ -6,13 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan } from 'lucide-react';
+import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3 } from 'lucide-react';
 import { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { SiteStringScanner } from '@/components/SiteStringScanner';
+import enTranslations from '@/i18n/locales/en.json';
 
 interface PendingTranslation {
   id: string;
@@ -69,7 +71,10 @@ export const TranslationManagement = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pending' | 'search' | 'submit' | 'scanner'>('search');
+  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner'>('coverage');
+  const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
+  const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
+  const [syncProgress, setSyncProgress] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -116,11 +121,79 @@ export const TranslationManagement = () => {
 
       setIsAdmin(true);
       await loadPendingTranslations();
+      await loadCoverageStats();
     } catch (error) {
       console.error('Auth error:', error);
       navigate('/auth');
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const loadCoverageStats = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-translations', {
+        body: { action: 'get_coverage_stats' }
+      });
+      if (error) throw error;
+      setCoverageData(data.coverage || {});
+    } catch (error) {
+      console.error('Error loading coverage stats:', error);
+    }
+  };
+
+  const handleSyncTranslations = async (targetLanguages?: string[]) => {
+    setSyncingLanguages('all');
+    setSyncProgress('Starting translation sync...');
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-translations', {
+        body: {
+          en_content: enTranslations,
+          target_languages: targetLanguages
+        }
+      });
+
+      if (error) throw error;
+
+      const totalTranslated = Object.values(data.summary as Record<string, { translated: number }>).reduce((sum, lang) => sum + lang.translated, 0);
+      toast({
+        title: 'Sync Complete',
+        description: `Translated ${totalTranslated} keys across ${Object.keys(data.summary).length} languages`
+      });
+
+      await loadCoverageStats();
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Sync Failed',
+        description: error instanceof Error ? error.message : 'Failed to sync translations',
+        variant: 'destructive'
+      });
+    } finally {
+      setSyncingLanguages(null);
+      setSyncProgress('');
+    }
+  };
+
+  const handleExportJson = async (langCode: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-translations', {
+        body: { action: 'export_locale_json', language: langCode }
+      });
+      if (error) throw error;
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${langCode}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: 'Exported', description: `${langCode}.json downloaded` });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({ title: 'Export Failed', variant: 'destructive' });
     }
   };
 
@@ -359,14 +432,22 @@ export const TranslationManagement = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <Button
+            variant={activeTab === 'coverage' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('coverage')}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Coverage & Sync
+          </Button>
           <Button
             variant={activeTab === 'search' ? 'default' : 'outline'}
             onClick={() => setActiveTab('search')}
             className="flex items-center gap-2"
           >
             <Search className="h-4 w-4" />
-            Search & Edit Translations
+            Search & Edit
           </Button>
           <Button
             variant={activeTab === 'scanner' ? 'default' : 'outline'}
@@ -382,7 +463,7 @@ export const TranslationManagement = () => {
             className="flex items-center gap-2"
           >
             <Upload className="h-4 w-4" />
-            Submit New Translation
+            Submit New
           </Button>
           <Button
             variant={activeTab === 'pending' ? 'default' : 'outline'}
@@ -390,9 +471,110 @@ export const TranslationManagement = () => {
             className="flex items-center gap-2"
           >
             <Clock className="h-4 w-4" />
-            Pending Approvals ({pendingTranslations.length})
+            Pending ({pendingTranslations.length})
           </Button>
         </div>
+
+        {/* Coverage & Sync Tab */}
+        {activeTab === 'coverage' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Translation Coverage
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => loadCoverageStats()}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Refresh
+                    </Button>
+                    <Button
+                      onClick={() => handleSyncTranslations()}
+                      disabled={!!syncingLanguages}
+                      size="sm"
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      {syncingLanguages ? 'Syncing...' : 'Sync All Languages'}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {syncProgress && (
+                  <div className="mb-4 p-3 bg-muted rounded-lg text-sm">
+                    {syncProgress}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(coverageData).map(([langCode, stats]) => {
+                    const lang = languages.find(l => l.code === langCode);
+                    const pct = stats.total > 0 ? Math.round((stats.translated / stats.total) * 100) : 0;
+                    return (
+                      <Card key={langCode} className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">
+                            {lang?.flag} {lang?.name || langCode}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {stats.translated}/{stats.total}
+                          </span>
+                        </div>
+                        <Progress value={pct} className="h-2 mb-2" />
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{pct}% complete</span>
+                          <div className="flex gap-1">
+                            {stats.approved > 0 && (
+                              <Badge variant="default" className="text-xs px-1 py-0">
+                                {stats.approved} approved
+                              </Badge>
+                            )}
+                            {stats.auto_translated > 0 && (
+                              <Badge variant="secondary" className="text-xs px-1 py-0">
+                                {stats.auto_translated} auto
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1 mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-xs"
+                            onClick={() => handleSyncTranslations([langCode])}
+                            disabled={!!syncingLanguages}
+                          >
+                            <Zap className="h-3 w-3 mr-1" />
+                            Sync
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-xs"
+                            onClick={() => handleExportJson(langCode)}
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Export
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+                {Object.keys(coverageData).length === 0 && (
+                  <p className="text-muted-foreground text-center py-8">
+                    No coverage data available. Click "Sync All Languages" to start translating.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Search & Edit Tab */}
         {activeTab === 'search' && (

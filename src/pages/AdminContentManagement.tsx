@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Globe } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ArticleManager } from "@/components/admin/ArticleManager";
 import { QuizManager } from "@/components/admin/QuizManager";
 import { PatternImageManager } from "@/components/admin/PatternImageManager";
@@ -30,7 +31,7 @@ const AdminContentManagement = () => {
 
         <Card className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6 mb-6">
+            <TabsList className="grid w-full grid-cols-7 mb-6">
               <TabsTrigger value="migrate">
                 Migrate Content
               </TabsTrigger>
@@ -48,6 +49,10 @@ const AdminContentManagement = () => {
               </TabsTrigger>
               <TabsTrigger value="images">
                 Pattern Images
+              </TabsTrigger>
+              <TabsTrigger value="translations">
+                <Globe className="h-4 w-4 mr-1" />
+                Translations
               </TabsTrigger>
             </TabsList>
 
@@ -73,6 +78,21 @@ const AdminContentManagement = () => {
 
             <TabsContent value="images">
               <PatternImageManager />
+            </TabsContent>
+
+            <TabsContent value="translations">
+              <div className="text-center py-12 space-y-4">
+                <Globe className="h-12 w-12 mx-auto text-muted-foreground" />
+                <h3 className="text-xl font-semibold">Translation Management</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Manage automated translations, view coverage stats, and sync translations across all 14 supported languages.
+                </p>
+                <Link to="/admin/translations">
+                  <Button size="lg">
+                    Open Translation Dashboard
+                  </Button>
+                </Link>
+              </div>
             </TabsContent>
           </Tabs>
         </Card>
