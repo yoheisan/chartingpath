@@ -215,3 +215,6 @@ verify_jwt = false
 
 [functions.analyze-journey-insights]
 verify_jwt = false
+
+[functions.sync-translations]
+verify_jwt = false

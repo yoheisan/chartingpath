@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 interface TranslationRequest {
-  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details'
+  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details' | 'export_locale_json' | 'get_coverage_stats'
   language?: string
   namespace?: string
   keys?: Array<{ key: string; description?: string; category?: string; page_context?: string; element_context?: string }>
@@ -350,6 +350,80 @@ Deno.serve(async (req) => {
           translations: translationsByLanguage,
           metadata: metadataByLanguage,
           message: 'Use these translations to update your locale files'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'export_locale_json': {
+        if (!language) {
+          throw new Error('Language code is required for export')
+        }
+
+        // Get all approved + auto_translated translations for this language
+        const { data: exportData, error: exportError } = await supabase
+          .from('translations')
+          .select('key, value')
+          .eq('language_code', language)
+          .in('status', ['approved', 'auto_translated'])
+
+        if (exportError) throw exportError
+
+        // Build nested JSON from flat keys
+        const nested: Record<string, any> = {}
+        exportData?.forEach((item: { key: string; value: string }) => {
+          const parts = item.key.split('.')
+          let current = nested
+          for (let i = 0; i < parts.length - 1; i++) {
+            if (!current[parts[i]]) current[parts[i]] = {}
+            current = current[parts[i]]
+          }
+          current[parts[parts.length - 1]] = item.value
+        })
+
+        return new Response(JSON.stringify(nested, null, 2), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'get_coverage_stats': {
+        // Get total English keys count
+        const { data: enKeys, error: enError } = await supabase
+          .from('translations')
+          .select('key', { count: 'exact' })
+          .eq('language_code', 'en')
+
+        // For each language, count how many keys have translations
+        const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr']
+        const coverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {}
+
+        // Get all translation keys from en.json (passed as reference)
+        const totalEnKeys = enKeys?.length || 0
+
+        for (const lang of targetLanguages) {
+          const { data: langData, error: langError } = await supabase
+            .from('translations')
+            .select('status, source_hash')
+            .eq('language_code', lang)
+
+          if (langError) {
+            console.error(`Error fetching ${lang} stats:`, langError)
+            continue
+          }
+
+          const translations = langData || []
+          coverage[lang] = {
+            total: totalEnKeys,
+            translated: translations.length,
+            approved: translations.filter(t => t.status === 'approved').length,
+            auto_translated: translations.filter(t => t.status === 'auto_translated').length,
+            stale: translations.filter(t => !t.source_hash).length
+          }
+        }
+
+        return new Response(JSON.stringify({ 
+          total_keys: totalEnKeys,
+          coverage 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })

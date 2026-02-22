@@ -3935,6 +3935,7 @@ export type Database = {
           original_automated_value: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          source_hash: string | null
           status: string
           updated_at: string
           value: string
@@ -3953,6 +3954,7 @@ export type Database = {
           original_automated_value?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source_hash?: string | null
           status?: string
           updated_at?: string
           value: string
@@ -3971,6 +3973,7 @@ export type Database = {
           original_automated_value?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source_hash?: string | null
           status?: string
           updated_at?: string
           value?: string
