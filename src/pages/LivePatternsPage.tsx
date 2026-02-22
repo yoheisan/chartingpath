@@ -171,6 +171,7 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
   ],
 };
 
+import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
 
@@ -217,6 +218,7 @@ function detectAssetTypeFromSymbol(symbol: string): AssetType | null {
 }
 
 export default function LivePatternsPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const highlightSymbol = searchParams.get('highlight');
   const openPatternId = searchParams.get('openPattern');
@@ -918,13 +920,13 @@ export default function LivePatternsPage() {
         </div>
         <div className="flex items-center gap-3 mb-2">
           <Activity className="h-8 w-8 text-amber-500" />
-          <h1 className="text-3xl font-bold">Active Pattern Screener</h1>
+          <h1 className="text-3xl font-bold">{t('livePatterns.title')}</h1>
           <UniversalSymbolSearch 
             onSelect={(symbol) => navigate('/members/dashboard', { state: { initialSymbol: symbol.toUpperCase() } })}
             trigger={
               <Button variant="outline" size="sm" className="gap-2">
-                <Search className="h-4 w-4" />
-                Study Ticker
+               <Search className="h-4 w-4" />
+                {t('livePatterns.studyTicker')}
               </Button>
             }
           />
@@ -936,7 +938,7 @@ export default function LivePatternsPage() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-sm p-3">
-                <p className="font-medium mb-2">How This Works</p>
+                <p className="font-medium mb-2">{t('livePatterns.howThisWorks')}</p>
                 <p className="text-sm mb-2">
                   We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
                   for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '8h' ? '8-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
@@ -966,7 +968,7 @@ export default function LivePatternsPage() {
           <div className="flex items-center gap-2 text-sm">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{patterns.length}</span>
-            <span className="text-muted-foreground">patterns found</span>
+            <span className="text-muted-foreground">{t('livePatterns.patternsFound')}</span>
           </div>
         </div>
         
@@ -1044,7 +1046,7 @@ export default function LivePatternsPage() {
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('livePatterns.refresh')}
           </Button>
         </div>
       </div>
@@ -1103,13 +1105,13 @@ export default function LivePatternsPage() {
       <Card className="mb-6 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Patterns We Detect</span>
+            <span className="text-sm font-medium">{t('livePatterns.patternsWeDetect')}</span>
             <Badge variant="secondary" className="text-[10px]">
               {ALL_PATTERN_IDS.length} types
             </Badge>
           </div>
           <span className="text-xs text-muted-foreground">
-            Click to filter
+            {t('livePatterns.clickToFilter')}
           </span>
         </div>
         <SupportedPatternsList
@@ -1142,7 +1144,7 @@ export default function LivePatternsPage() {
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
+            {t('livePatterns.tryAgain')}
           </Button>
         </Card>
       )}
@@ -1167,7 +1169,7 @@ export default function LivePatternsPage() {
       {!error && !showSkeletonCards && sortedPatterns.length === 0 && (
         <Card className="p-12 text-center">
           <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Patterns Found</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('livePatterns.noPatternsFound')}</h3>
           <p className="text-muted-foreground mb-4">
             {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0
               ? 'Trend alignment data is being calculated. Click "Refresh" to analyze patterns with trend indicators.'
@@ -1178,7 +1180,7 @@ export default function LivePatternsPage() {
           {patterns.length > 0 && (
             <div className="flex items-center justify-center gap-3">
               <Button variant="outline" onClick={() => setFilters(DEFAULT_SCREENER_FILTERS)}>
-                Clear Filters
+                {t('livePatterns.clearFilters')}
               </Button>
               {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0 && (
                 <Button variant="default" onClick={() => fetchLivePatterns(true)} disabled={refreshing}>
@@ -1427,15 +1429,15 @@ export default function LivePatternsPage() {
       <Card className="mt-12 p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h3 className="text-xl font-bold mb-2">Want Deeper Analysis?</h3>
+            <h3 className="text-xl font-bold mb-2">{t('livePatterns.wantDeeperAnalysis')}</h3>
             <p className="text-muted-foreground">
-              Run Pattern Lab to backtest historical performance, optimize R:R targets, and compare equity curves.
+              {t('livePatterns.deeperAnalysisDesc')}
             </p>
           </div>
           <Link to="/projects/pattern-lab/new">
             <Button size="lg" className="bg-gradient-to-r from-primary to-accent">
               <FlaskConical className="h-5 w-5 mr-2" />
-              Open Pattern Lab
+              {t('livePatterns.openPatternLab')}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
