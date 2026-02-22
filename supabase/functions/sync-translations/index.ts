@@ -324,7 +324,12 @@ Return ONLY the JSON object, no markdown, no explanation.`
               continue
             }
 
-            const translations = JSON.parse(jsonMatch[0])
+            // Sanitize control characters that Gemini sometimes includes in JSON strings
+            const sanitized = jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, (ch) => {
+              if (ch === '\n' || ch === '\r' || ch === '\t') return ch // keep valid whitespace
+              return '' // strip other control chars
+            })
+            const translations = JSON.parse(sanitized)
 
             // Insert/upsert translations
             for (const item of batch) {
