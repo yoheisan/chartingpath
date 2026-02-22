@@ -75,6 +75,38 @@ Deno.serve(async (req) => {
     const totalKeys = Object.keys(flatEnglish).length
     console.log(`Processing ${totalKeys} English keys`)
 
+    // Ensure all keys exist in translation_keys table (FK requirement)
+    const allKeys = Object.keys(flatEnglish)
+    const { data: existingKeys } = await supabase
+      .from('translation_keys')
+      .select('key')
+    
+    const existingKeySet = new Set((existingKeys || []).map((k: any) => k.key))
+    const missingKeys = allKeys.filter(k => !existingKeySet.has(k))
+    
+    if (missingKeys.length > 0) {
+      console.log(`Creating ${missingKeys.length} missing translation_keys`)
+      const BATCH_SIZE_KEYS = 100
+      for (let i = 0; i < missingKeys.length; i += BATCH_SIZE_KEYS) {
+        const batch = missingKeys.slice(i, i + BATCH_SIZE_KEYS).map(key => {
+          const parts = key.split('.')
+          return {
+            key,
+            description: flatEnglish[key],
+            category: parts[0] || 'general',
+            page_context: null,
+            element_context: null
+          }
+        })
+        const { error: insertKeysError } = await supabase
+          .from('translation_keys')
+          .insert(batch)
+        if (insertKeysError) {
+          console.error(`Error inserting translation_keys batch:`, insertKeysError)
+        }
+      }
+    }
+
     const languages = target_languages || Object.keys(LANGUAGE_NAMES)
     const summary: Record<string, { translated: number; skipped: number; stale: number; errors: number }> = {}
 
