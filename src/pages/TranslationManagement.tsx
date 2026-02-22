@@ -144,35 +144,65 @@ export const TranslationManagement = () => {
 
   const handleSyncTranslations = async (targetLanguages?: string[]) => {
     setSyncingLanguages('all');
-    setSyncProgress('Starting translation sync...');
+    const langs = targetLanguages || languages.filter(l => l.code !== 'en').map(l => l.code);
+    let totalTranslated = 0;
+    let totalErrors = 0;
+
+    // First pass: ensure translation_keys exist (fast, one call)
+    setSyncProgress('Preparing translation keys...');
     try {
-      const { data, error } = await supabase.functions.invoke('sync-translations', {
+      const { error: prepError } = await supabase.functions.invoke('sync-translations', {
         body: {
           en_content: enTranslations,
-          target_languages: targetLanguages
+          target_languages: [], // empty = just create keys, no translations
+          prepare_keys_only: true
         }
       });
-
-      if (error) throw error;
-
-      const totalTranslated = Object.values(data.summary as Record<string, { translated: number }>).reduce((sum, lang) => sum + lang.translated, 0);
-      toast({
-        title: 'Sync Complete',
-        description: `Translated ${totalTranslated} keys across ${Object.keys(data.summary).length} languages`
-      });
-
-      await loadCoverageStats();
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({
-        title: 'Sync Failed',
-        description: error instanceof Error ? error.message : 'Failed to sync translations',
-        variant: 'destructive'
-      });
-    } finally {
-      setSyncingLanguages(null);
-      setSyncProgress('');
+      if (prepError) console.error('Key prep error:', prepError);
+    } catch (e) {
+      console.error('Key prep error:', e);
     }
+
+    // Second pass: translate one language at a time
+    for (let i = 0; i < langs.length; i++) {
+      const langCode = langs[i];
+      const langName = languages.find(l => l.code === langCode)?.name || langCode;
+      setSyncProgress(`Translating ${langName} (${i + 1}/${langs.length})...`);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('sync-translations', {
+          body: {
+            en_content: enTranslations,
+            target_languages: [langCode],
+            skip_key_creation: true
+          }
+        });
+
+        if (error) {
+          console.error(`Sync error for ${langCode}:`, error);
+          totalErrors++;
+          continue;
+        }
+
+        const langStats = data?.summary?.[langCode];
+        if (langStats) {
+          totalTranslated += langStats.translated || 0;
+          totalErrors += langStats.errors || 0;
+        }
+      } catch (error) {
+        console.error(`Sync error for ${langCode}:`, error);
+        totalErrors++;
+      }
+    }
+
+    toast({
+      title: 'Sync Complete',
+      description: `Translated ${totalTranslated} keys across ${langs.length} languages${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
+    });
+
+    await loadCoverageStats();
+    setSyncingLanguages(null);
+    setSyncProgress('');
   };
 
   const handleExportJson = async (langCode: string) => {

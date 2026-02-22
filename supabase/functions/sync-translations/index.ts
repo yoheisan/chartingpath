@@ -46,6 +46,8 @@ interface SyncRequest {
   en_content: Record<string, any>
   target_languages?: string[]
   dry_run?: boolean
+  prepare_keys_only?: boolean
+  skip_key_creation?: boolean
 }
 
 Deno.serve(async (req) => {
@@ -64,7 +66,7 @@ Deno.serve(async (req) => {
       throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const { en_content, target_languages, dry_run = false }: SyncRequest = await req.json()
+    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false }: SyncRequest = await req.json()
 
     if (!en_content || typeof en_content !== 'object') {
       throw new Error('en_content (English JSON content) is required')
@@ -76,35 +78,48 @@ Deno.serve(async (req) => {
     console.log(`Processing ${totalKeys} English keys`)
 
     // Ensure all keys exist in translation_keys table (FK requirement)
-    const allKeys = Object.keys(flatEnglish)
-    const { data: existingKeys } = await supabase
-      .from('translation_keys')
-      .select('key')
-    
-    const existingKeySet = new Set((existingKeys || []).map((k: any) => k.key))
-    const missingKeys = allKeys.filter(k => !existingKeySet.has(k))
-    
-    if (missingKeys.length > 0) {
-      console.log(`Creating ${missingKeys.length} missing translation_keys`)
-      const BATCH_SIZE_KEYS = 100
-      for (let i = 0; i < missingKeys.length; i += BATCH_SIZE_KEYS) {
-        const batch = missingKeys.slice(i, i + BATCH_SIZE_KEYS).map(key => {
-          const parts = key.split('.')
-          return {
-            key,
-            description: flatEnglish[key],
-            category: parts[0] || 'general',
-            page_context: null,
-            element_context: null
+    if (!skip_key_creation) {
+      const allKeys = Object.keys(flatEnglish)
+      const { data: existingKeys } = await supabase
+        .from('translation_keys')
+        .select('key')
+      
+      const existingKeySet = new Set((existingKeys || []).map((k: any) => k.key))
+      const missingKeys = allKeys.filter(k => !existingKeySet.has(k))
+      
+      if (missingKeys.length > 0) {
+        console.log(`Creating ${missingKeys.length} missing translation_keys`)
+        const BATCH_SIZE_KEYS = 100
+        for (let i = 0; i < missingKeys.length; i += BATCH_SIZE_KEYS) {
+          const batch = missingKeys.slice(i, i + BATCH_SIZE_KEYS).map(key => {
+            const parts = key.split('.')
+            return {
+              key,
+              description: flatEnglish[key],
+              category: parts[0] || 'general',
+              page_context: null,
+              element_context: null
+            }
+          })
+          const { error: insertKeysError } = await supabase
+            .from('translation_keys')
+            .insert(batch)
+          if (insertKeysError) {
+            console.error(`Error inserting translation_keys batch:`, insertKeysError)
           }
-        })
-        const { error: insertKeysError } = await supabase
-          .from('translation_keys')
-          .insert(batch)
-        if (insertKeysError) {
-          console.error(`Error inserting translation_keys batch:`, insertKeysError)
         }
       }
+    }
+
+    // If only preparing keys, return early
+    if (prepare_keys_only) {
+      return new Response(JSON.stringify({
+        success: true,
+        total_english_keys: totalKeys,
+        keys_prepared: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
     const languages = target_languages || Object.keys(LANGUAGE_NAMES)
