@@ -1557,7 +1557,7 @@ serve(async (req) => {
                 .insert({
                   user_id: user.id,
                   plan_tier: 'free',
-                  credits_balance: 25, // FREE tier monthly credits
+                  credits_balance: 50, // FREE tier monthly credits (matches PLANS_CONFIG)
                 })
                 .select()
                 .single();
@@ -1723,7 +1723,7 @@ serve(async (req) => {
             .insert({
               user_id: user.id,
               plan_tier: 'free',
-              credits_balance: 25,
+              credits_balance: 50, // FREE tier monthly credits (matches PLANS_CONFIG)
             })
             .select()
             .single();
