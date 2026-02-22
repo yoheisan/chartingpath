@@ -55,18 +55,92 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Handle GET requests for locale export (allows lov-download-to-repo)
+  if (req.method === 'GET') {
+    const url = new URL(req.url)
+    const langCode = url.searchParams.get('lang')
+    if (langCode) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+        const { data: translations, error } = await supabase
+          .from('translations')
+          .select('key, value')
+          .eq('language_code', langCode)
+          .order('key')
+        if (error) throw error
+        const nested: Record<string, any> = {}
+        for (const { key, value } of translations || []) {
+          const parts = key.split('.')
+          let current = nested
+          for (let i = 0; i < parts.length - 1; i++) {
+            if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+              current[parts[i]] = {}
+            }
+            current = current[parts[i]]
+          }
+          current[parts[parts.length - 1]] = value
+        }
+        return new Response(JSON.stringify(nested, null, 2), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+    }
+    return new Response(JSON.stringify({ error: 'lang parameter required' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const body = await req.json()
+
+    // Handle export_locale_json action
+    if (body.action === 'export_locale_json' && body.language_code) {
+      const langCode = body.language_code
+      const { data: translations, error } = await supabase
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', langCode)
+        .order('key')
+
+      if (error) throw error
+
+      // Build nested JSON from flat keys
+      const nested: Record<string, any> = {}
+      for (const { key, value } of translations || []) {
+        const parts = key.split('.')
+        let current = nested
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+            current[parts[i]] = {}
+          }
+          current = current[parts[i]]
+        }
+        current[parts[parts.length - 1]] = value
+      }
+
+      return new Response(JSON.stringify(nested, null, 2), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false }: SyncRequest = await req.json()
+    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false }: SyncRequest = body
 
     if (!en_content || typeof en_content !== 'object') {
       throw new Error('en_content (English JSON content) is required')
