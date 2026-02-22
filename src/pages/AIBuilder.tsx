@@ -548,7 +548,6 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
                {t('aiBuilder.subtitle')}
              </p>
            </div>
-          </div>
 
           {/* Main Content - Single Column Centered Layout */}
           <div className="max-w-4xl mx-auto space-y-8">
