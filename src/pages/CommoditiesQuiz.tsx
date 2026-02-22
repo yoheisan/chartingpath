@@ -1,16 +1,17 @@
 import { DatabaseQuiz } from "@/components/DatabaseQuiz";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Boxes } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const CommoditiesQuiz = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/chart-patterns/quiz" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Quiz Hub
+            {t('quizHub.backToQuizHub')}
           </Link>
         </div>
 
@@ -18,14 +19,14 @@ const CommoditiesQuiz = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <Boxes className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Commodities Trading Quiz</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('quizHub.commoditiesQuiz')}</h1>
           <p className="text-xl text-muted-foreground">
-            Learn about commodity markets including gold, oil, futures, contango, and safe-haven assets
+            {t('quizHub.commoditiesDesc')}
           </p>
         </div>
         
         <DatabaseQuiz 
-          title="Commodities Trading Quiz"
+          title={t('quizHub.commoditiesQuiz')}
           category="commodities"
           limit={10}
         />
