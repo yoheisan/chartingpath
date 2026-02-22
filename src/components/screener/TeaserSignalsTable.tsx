@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
@@ -25,18 +26,19 @@ interface TeaserSignalsTableProps {
 }
 
 export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="whitespace-nowrap">Symbol</TableHead>
-          <TableHead className="whitespace-nowrap">Pattern</TableHead>
-          <TableHead className="text-center whitespace-nowrap">Grade</TableHead>
-          <TableHead className="whitespace-nowrap">Signal</TableHead>
-          <TableHead className="text-right whitespace-nowrap">Win Rate</TableHead>
-          <TableHead className="text-right whitespace-nowrap">Age</TableHead>
+          <TableHead className="whitespace-nowrap">{t('teaserSignals.symbol')}</TableHead>
+          <TableHead className="whitespace-nowrap">{t('teaserSignals.pattern')}</TableHead>
+          <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.grade')}</TableHead>
+          <TableHead className="whitespace-nowrap">{t('teaserSignals.signal')}</TableHead>
+          <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate')}</TableHead>
+          <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.age')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -71,9 +73,9 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
                   )}
                 >
                   {isLong ? (
-                    <><TrendingUp className="h-3 w-3 mr-1" /> Long</>
+                    <><TrendingUp className="h-3 w-3 mr-1" /> {t('teaserSignals.long')}</>
                   ) : (
-                    <><TrendingDown className="h-3 w-3 mr-1" /> Short</>
+                    <><TrendingDown className="h-3 w-3 mr-1" /> {t('teaserSignals.short')}</>
                   )}
                 </Badge>
               </TableCell>

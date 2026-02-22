@@ -3,30 +3,45 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { track } from "@/services/analytics";
-
-const plans = [
-  {
-    name: "Free",
-    tagline: "Explore",
-    features: ["50 credits/month", "3 active alerts", "Basic patterns"],
-  },
-  {
-    name: "Lite",
-    tagline: "Getting Started",
-    features: ["100 credits/month", "5 active alerts", "4H timeframe"],
-    highlighted: false,
-    price: "$12/mo",
-  },
-  {
-    name: "Pro",
-    tagline: "Serious Trading",
-    features: ["900 credits/month", "100 active alerts", "All timeframes"],
-    highlighted: true,
-    price: "$79/mo",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export const PricingTeaser = () => {
+  const { t } = useTranslation();
+
+  const plans = [
+    {
+      name: t('pricingTeaser.free'),
+      tagline: t('pricingTeaser.freeTagline'),
+      features: [
+        t('pricingTeaser.creditsPerMonth', { count: 50 }),
+        t('pricingTeaser.activeAlerts', { count: 3 }),
+        t('pricingTeaser.basicPatterns'),
+      ],
+    },
+    {
+      name: t('pricingTeaser.lite'),
+      tagline: t('pricingTeaser.liteTagline'),
+      features: [
+        t('pricingTeaser.creditsPerMonth', { count: 100 }),
+        t('pricingTeaser.activeAlerts', { count: 5 }),
+        t('pricingTeaser.timeframe4h'),
+      ],
+      highlighted: false,
+      price: "$12/mo",
+    },
+    {
+      name: t('pricingTeaser.pro'),
+      tagline: t('pricingTeaser.proTagline'),
+      features: [
+        t('pricingTeaser.creditsPerMonth', { count: 900 }),
+        t('pricingTeaser.activeAlerts', { count: 100 }),
+        t('pricingTeaser.allTimeframes'),
+      ],
+      highlighted: true,
+      price: "$79/mo",
+    },
+  ];
+
   const handlePricingClick = () => {
     track('pricing_viewed', { source: 'landing_pricing_teaser' });
   };
@@ -35,9 +50,9 @@ export const PricingTeaser = () => {
     <section className="py-16 px-6">
       <div className="container mx-auto max-w-4xl">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">Simple, Credit-Based Pricing</h2>
+          <h2 className="text-3xl font-bold mb-3">{t('pricingTeaser.title')}</h2>
           <p className="text-muted-foreground">
-            Credits are used for scans and backtests. Start free, upgrade as you grow.
+            {t('pricingTeaser.subtitle')}
           </p>
         </div>
 
@@ -66,7 +81,7 @@ export const PricingTeaser = () => {
         <div className="text-center">
           <Button asChild size="lg" variant="outline" onClick={handlePricingClick}>
             <Link to="/pricing">
-              See Full Pricing
+              {t('pricingTeaser.seeFullPricing')}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>

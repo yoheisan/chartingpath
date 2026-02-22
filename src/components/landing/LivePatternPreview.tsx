@@ -6,12 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import { CompressedBar, VisualSpec, PatternQuality } from '@/types/VisualSpec';
 
 import type { LiveSetup, ScanResult } from '@/types/screener';
 
 export default function LivePatternPreview() {
+  const { t } = useTranslation();
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,6 @@ export default function LivePatternPreview() {
     setError(null);
     
     try {
-      // Use fx as default for homepage preview - fast DB-first path returns in <1s
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
         body: { assetType: 'fx', limit: 4 },
       });
@@ -30,12 +31,12 @@ export default function LivePatternPreview() {
       if (fnError) throw fnError;
       
       if (data?.patterns) {
-        setPatterns(data.patterns.slice(0, 4)); // Show max 4
+        setPatterns(data.patterns.slice(0, 4));
         setLastScanned(data.scannedAt);
       }
     } catch (err: any) {
       console.error('[LivePatternPreview] Error:', err);
-      setError('Failed to load live patterns');
+      setError(t('livePatternPreview.noPatterns'));
     } finally {
       setLoading(false);
     }
@@ -54,10 +55,10 @@ export default function LivePatternPreview() {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-primary border-primary/50">
                   <Zap className="h-3 w-3 mr-1" />
-                  Live
+                  {t('patternScreenerTeaser.live')}
                 </Badge>
               </div>
-              <h2 className="text-2xl font-bold">Active Patterns Right Now</h2>
+              <h2 className="text-2xl font-bold">{t('livePatternPreview.title')}</h2>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -85,19 +86,19 @@ export default function LivePatternPreview() {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-primary border-primary/50">
                   <Zap className="h-3 w-3 mr-1" />
-                  Live
+                  {t('patternScreenerTeaser.live')}
                 </Badge>
               </div>
-              <h2 className="text-2xl font-bold">Active Patterns Right Now</h2>
+              <h2 className="text-2xl font-bold">{t('livePatternPreview.title')}</h2>
             </div>
           </div>
           <Card className="p-8 text-center">
             <p className="text-muted-foreground mb-4">
-              {error || 'No active patterns detected at the moment. Check back soon!'}
+              {error || t('livePatternPreview.noPatterns')}
             </p>
             <Button variant="outline" onClick={fetchLivePatterns}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              {t('livePatternPreview.refresh')}
             </Button>
           </Card>
         </div>
@@ -113,20 +114,20 @@ export default function LivePatternPreview() {
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-primary border-primary/50 animate-pulse">
                 <Zap className="h-3 w-3 mr-1" />
-                Live
+                {t('patternScreenerTeaser.live')}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Scanned {lastScanned ? new Date(lastScanned).toLocaleTimeString() : 'just now'}
+                {t('livePatternPreview.scanned')} {lastScanned ? new Date(lastScanned).toLocaleTimeString() : t('patternScreenerTeaser.justNow')}
               </span>
             </div>
-            <h2 className="text-2xl font-bold">Active Patterns Right Now</h2>
+            <h2 className="text-2xl font-bold">{t('livePatternPreview.title')}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Patterns detected across crypto & forex markets
+              {t('livePatternPreview.patternsDetected')}
             </p>
           </div>
           <Link to="/patterns/live">
             <Button variant="ghost" size="sm">
-              See all
+              {t('livePatternPreview.seeAll')}
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </Link>
@@ -185,14 +186,14 @@ export default function LivePatternPreview() {
           <Link to="/patterns/live">
             <Button variant="outline">
               <Zap className="h-4 w-4 mr-2" />
-              Explore All Live Patterns
+              {t('livePatternPreview.exploreAll')}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </Link>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          For educational purposes only. Past patterns don't guarantee future results.
+          {t('livePatternPreview.disclaimer')}
         </p>
       </div>
     </section>
