@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3 } from 'lucide-react';
+import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen } from 'lucide-react';
 import { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
@@ -75,6 +75,8 @@ export const TranslationManagement = () => {
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
   const [syncProgress, setSyncProgress] = useState<string>('');
+  const [articleSyncing, setArticleSyncing] = useState(false);
+  const [articleSyncProgress, setArticleSyncProgress] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -203,6 +205,48 @@ export const TranslationManagement = () => {
     await loadCoverageStats();
     setSyncingLanguages(null);
     setSyncProgress('');
+  };
+
+  const handleSyncArticleTranslations = async () => {
+    setArticleSyncing(true);
+    const langs = languages.filter(l => l.code !== 'en').map(l => l.code);
+    let totalTranslated = 0;
+    let totalErrors = 0;
+
+    for (let i = 0; i < langs.length; i++) {
+      const langCode = langs[i];
+      const langName = languages.find(l => l.code === langCode)?.name || langCode;
+      setArticleSyncProgress(`Translating articles to ${langName} (${i + 1}/${langs.length})...`);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('translate-articles', {
+          body: {
+            action: 'translate_all',
+            target_languages: [langCode]
+          }
+        });
+
+        if (error) {
+          console.error(`Article sync error for ${langCode}:`, error);
+          totalErrors++;
+          continue;
+        }
+
+        totalTranslated += data?.translated || 0;
+        totalErrors += data?.errors || 0;
+      } catch (error) {
+        console.error(`Article sync error for ${langCode}:`, error);
+        totalErrors++;
+      }
+    }
+
+    toast({
+      title: 'Article Translation Complete',
+      description: `Translated ${totalTranslated} articles across ${langs.length} languages${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
+    });
+
+    setArticleSyncing(false);
+    setArticleSyncProgress('');
   };
 
   const handleExportJson = async (langCode: string) => {
@@ -601,6 +645,37 @@ export const TranslationManagement = () => {
                     No coverage data available. Click "Sync All Languages" to start translating.
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Article Translations */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Blog Article Translations
+                  </CardTitle>
+                  <Button
+                    onClick={handleSyncArticleTranslations}
+                    disabled={articleSyncing}
+                    size="sm"
+                  >
+                    <Zap className="h-4 w-4 mr-1" />
+                    {articleSyncing ? 'Translating...' : 'Translate All Articles'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {articleSyncProgress && (
+                  <div className="mb-4 p-3 bg-muted rounded-lg text-sm">
+                    {articleSyncProgress}
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Auto-translate all published blog articles to all supported languages using Gemini. 
+                  Each language is processed separately to avoid timeouts. Articles with existing translations are skipped unless the English content has changed.
+                </p>
               </CardContent>
             </Card>
           </div>

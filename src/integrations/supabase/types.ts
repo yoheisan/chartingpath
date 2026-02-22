@@ -1828,6 +1828,69 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_article_translations: {
+        Row: {
+          article_id: string
+          content: string
+          excerpt: string | null
+          id: string
+          is_manual_override: boolean
+          language_code: string
+          seo_description: string | null
+          seo_title: string | null
+          source_hash: string | null
+          status: string
+          title: string
+          translated_at: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          content: string
+          excerpt?: string | null
+          id?: string
+          is_manual_override?: boolean
+          language_code: string
+          seo_description?: string | null
+          seo_title?: string | null
+          source_hash?: string | null
+          status?: string
+          title: string
+          translated_at?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          content?: string
+          excerpt?: string | null
+          id?: string
+          is_manual_override?: boolean
+          language_code?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          source_hash?: string | null
+          status?: string
+          title?: string
+          translated_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_article_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "article_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_article_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learning_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_articles: {
         Row: {
           author_id: string | null
