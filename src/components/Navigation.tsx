@@ -69,7 +69,7 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
   const navLinkClass = (path: string) => 
-    `flex items-center gap-1.5 transition-colors ${
+    `flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
       isActive(path) 
         ? 'text-foreground font-medium' 
         : 'text-muted-foreground hover:text-foreground'
@@ -163,7 +163,7 @@ const Navigation = () => {
               </Link>
             </div>
             
-            <nav className="hidden md:flex items-center gap-6 ml-8">
+            <nav className="hidden md:flex items-center gap-4 ml-8">
             {/* 1. Screener - Discover signals */}
             <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
               <Activity className="h-4 w-4 text-amber-500" />
@@ -193,7 +193,7 @@ const Navigation = () => {
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1.5 ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                className={`flex items-center gap-1 text-[13px] whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                 onMouseEnter={prefetchArticles}
               >
                 <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
@@ -233,7 +233,7 @@ const Navigation = () => {
               
               {/* 6. More - Tools & Company */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-1 text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                   {t('navigation.more', 'More')}
                 </DropdownMenuTrigger>
