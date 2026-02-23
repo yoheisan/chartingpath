@@ -39,11 +39,43 @@ const resources = {
   tr: { translation: trTranslations },
 };
 
+const SUPPORTED_LANGS = Object.keys(resources);
+const LANG_STORAGE_KEY = 'cp_language';
+
+/**
+ * Resolve initial language:
+ * 1. localStorage (user previously chose a language)
+ * 2. Browser locale (navigator.language) mapped to supported codes
+ * 3. Fallback to 'en'
+ */
+function detectInitialLanguage(): string {
+  // 1. Check localStorage for a previously saved choice
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY);
+    if (saved && SUPPORTED_LANGS.includes(saved)) {
+      return saved;
+    }
+  } catch {
+    // localStorage unavailable (SSR / privacy mode)
+  }
+
+  // 2. Browser locale detection (geo-based)
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    const browserLang = navigator.language.split('-')[0].toLowerCase();
+    if (SUPPORTED_LANGS.includes(browserLang)) {
+      return browserLang;
+    }
+  }
+
+  // 3. Fallback
+  return 'en';
+}
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // default language
+    lng: detectInitialLanguage(),
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // React already does escaping

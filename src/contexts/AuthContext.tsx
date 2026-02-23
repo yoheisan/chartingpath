@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import i18n from '@/i18n/config';
 
 interface AuthContextType {
   user: User | null;
@@ -44,6 +45,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } catch {
               if (mounted) setIsAdmin(false);
             }
+            // Load user's saved language preference from DB
+            try {
+              const { data: lang } = await supabase.rpc('get_user_language', { p_user_id: session.user.id });
+              if (mounted && lang && lang !== i18n.language) {
+                await i18n.changeLanguage(lang);
+                try { localStorage.setItem('cp_language', lang); } catch {}
+              }
+            } catch {}
           }, 0);
         } else {
           setIsAdmin(false);
@@ -75,6 +84,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } catch {
               if (mounted) setIsAdmin(false);
             }
+            // Load user's saved language preference from DB
+            try {
+              const { data: lang } = await supabase.rpc('get_user_language', { p_user_id: session.user.id });
+              if (mounted && lang && lang !== i18n.language) {
+                await i18n.changeLanguage(lang);
+                try { localStorage.setItem('cp_language', lang); } catch {}
+              }
+            } catch {}
           }, 0);
         }
       }
