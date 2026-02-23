@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
+import { useTranslation } from "react-i18next";
 import {
   SkillLevelSection,
   TradingRule,
@@ -16,14 +17,18 @@ import {
 } from "@/components/blog/ArticleSection";
 
 const BreakoutStrategy = () => {
+  const { t } = useTranslation();
+  const s = (key: string) => t(`strategies.breakout.${key}`);
+  const sc = (key: string) => t(`strategies.common.${key}`);
+
   const tocSections = [
-    { id: 'introduction', title: 'What is Breakout Trading?' },
-    { id: 'types', title: 'Types of Breakouts', level: 'novice' as const },
-    { id: 'identification', title: 'Identifying Breakout Setups', level: 'novice' as const },
-    { id: 'entry-rules', title: 'Entry Rules', level: 'intermediate' as const },
-    { id: 'false-breakouts', title: 'Handling False Breakouts', level: 'intermediate' as const },
-    { id: 'risk-management', title: 'Risk Management', level: 'advanced' as const },
-    { id: 'pro-techniques', title: 'Professional Techniques', level: 'professional' as const },
+    { id: 'introduction', title: s('tocIntroduction') },
+    { id: 'types', title: s('tocTypes'), level: 'novice' as const },
+    { id: 'identification', title: s('tocIdentification'), level: 'novice' as const },
+    { id: 'entry-rules', title: s('tocEntryRules'), level: 'intermediate' as const },
+    { id: 'false-breakouts', title: s('tocFalseBreakouts'), level: 'intermediate' as const },
+    { id: 'risk-management', title: s('tocRiskManagement'), level: 'advanced' as const },
+    { id: 'pro-techniques', title: s('tocProTechniques'), level: 'professional' as const },
   ];
 
   return (
@@ -31,188 +36,131 @@ const BreakoutStrategy = () => {
       <div className="container mx-auto px-6 py-12 max-w-4xl">
         <Link to="/learn/trading-strategies-guide" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to Strategy Guide
+          {sc('backToStrategyGuide')}
         </Link>
 
         <article className="prose prose-lg dark:prose-invert max-w-none">
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400">Price Action</Badge>
-            <Badge variant="outline">Technical Strategy</Badge>
-            <Badge variant="secondary">14 min read</Badge>
+            <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400">{s('badge1')}</Badge>
+            <Badge variant="outline">{s('badge2')}</Badge>
+            <Badge variant="secondary">{t('strategies.common.minRead', { count: 14 })}</Badge>
           </div>
 
-          <h1 className="text-4xl font-bold mb-4">Breakout Trading: Capturing Explosive Moves</h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            Learn to identify and trade price breakouts from consolidation patterns, support/resistance levels, 
-            and chart formations — the moments when markets decide their next direction.
-          </p>
+          <h1 className="text-4xl font-bold mb-4">{s('title')}</h1>
+          <p className="text-xl text-muted-foreground mb-8">{s('subtitle')}</p>
 
           <TableOfContents sections={tocSections} />
 
           <StatisticsBox 
             stats={[
-              { label: 'Win Rate', value: '40-55%', description: 'Varies by filter' },
-              { label: 'Risk-Reward', value: '2:1 to 4:1+', description: 'Target trend continuation' },
-              { label: 'Best Timeframes', value: 'Daily/4H', description: 'Higher = more reliable' },
-              { label: 'False Breakouts', value: '~50%', description: 'Hence need for filters' },
+              { label: s('statsWinRate'), value: s('statsWinRateVal'), description: s('statsWinRateDesc') },
+              { label: s('statsRR'), value: s('statsRRVal'), description: s('statsRRDesc') },
+              { label: s('statsBestTf'), value: s('statsBestTfVal'), description: s('statsBestTfDesc') },
+              { label: s('statsFalse'), value: s('statsFalseVal'), description: s('statsFalseDesc') },
             ]}
-            title="Breakout Trading Statistics"
+            title={s('statsTitle')}
           />
 
           {/* Introduction */}
           <section id="introduction">
             <Alert className="mb-8 border-primary/50 bg-primary/5">
               <Zap className="h-5 w-5 text-primary" />
-              <AlertDescription className="text-base">
-                A breakout occurs when price moves decisively beyond a defined level of support, resistance, 
-                or pattern boundary with increased momentum, signaling the start of a new trend or trend continuation.
-              </AlertDescription>
+              <AlertDescription className="text-base">{s('introAlert')}</AlertDescription>
             </Alert>
 
-            <p className="text-muted-foreground leading-relaxed mb-6">
-              Breakout trading capitalizes on the moment markets transition from consolidation to trending behavior. 
-              These explosive moves occur when accumulated buying or selling pressure finally overcomes a key level. 
-              The strategy is favored by momentum traders because breakouts often lead to sustained directional moves 
-              with favorable risk-reward ratios.
-            </p>
+            <p className="text-muted-foreground leading-relaxed mb-6">{s('introP1')}</p>
 
             <div className="my-8 rounded-lg overflow-hidden border border-border bg-card">
               <DynamicPatternChart patternType="ascending-triangle" height={400} showTitle={false} />
               <div className="p-4 bg-muted/30 text-sm text-muted-foreground">
-                <strong>Chart:</strong> An ascending triangle breakout — price breaks above horizontal resistance after multiple tests, 
-                confirming bullish momentum.
+                <strong>Chart:</strong> {s('chartCaption')}
               </div>
             </div>
           </section>
 
           {/* Types of Breakouts */}
           <section id="types">
-            <SkillLevelSection level="novice" title="Types of Breakouts">
+            <SkillLevelSection level="novice" title={s('typesTitle')}>
               <div className="grid gap-4 mb-6">
                 <Card className="bg-background/50 border-l-4 border-green-500">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold text-green-600 dark:text-green-400 mb-2">
-                      1. Horizontal Level Breakouts
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Price breaks above resistance or below support that has been tested multiple times. 
-                      The more tests, the more significant the breakout when it occurs.
-                    </p>
+                    <h4 className="font-semibold text-green-600 dark:text-green-400 mb-2">{s('horizontalTitle')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('horizontalDesc')}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-background/50 border-l-4 border-blue-500">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                      2. Chart Pattern Breakouts
-                    </h4>
+                    <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">{s('chartPatternTitle')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Breakouts from <Link to="/learn/triangle-patterns" className="text-primary hover:underline">triangles</Link>, 
-                      <Link to="/learn/flag-pennant-patterns" className="text-primary hover:underline"> flags</Link>, 
-                      <Link to="/learn/wedge-patterns" className="text-primary hover:underline"> wedges</Link>, and other formations. 
-                      These often have measured move targets based on pattern height.
+                      {s('chartPatternDesc')}
                     </p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-background/50 border-l-4 border-purple-500">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold text-purple-600 dark:text-purple-400 mb-2">
-                      3. Range Breakouts
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Price breaks out of a defined trading range after consolidation. 
-                      The longer the range, the more powerful the breakout tends to be.
-                    </p>
+                    <h4 className="font-semibold text-purple-600 dark:text-purple-400 mb-2">{s('rangeTitle')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('rangeDesc')}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-background/50 border-l-4 border-amber-500">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold text-amber-600 dark:text-amber-400 mb-2">
-                      4. Volatility Breakouts
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Price moves beyond a volatility envelope (Bollinger Bands, ATR bands, Keltner Channels). 
-                      These signal abnormal momentum regardless of specific price levels.
-                    </p>
+                    <h4 className="font-semibold text-amber-600 dark:text-amber-400 mb-2">{s('volatilityTitle')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('volatilityDesc')}</p>
                   </CardContent>
                 </Card>
               </div>
 
-              <ProTip>
-                Not all breakouts are equal. Breakouts from longer consolidation periods with multiple tests 
-                tend to be more reliable than breakouts from short, untested ranges.
-              </ProTip>
+              <ProTip>{s('proTipTypes')}</ProTip>
             </SkillLevelSection>
           </section>
 
           {/* Identification */}
           <section id="identification">
-            <SkillLevelSection level="novice" title="Identifying High-Probability Breakout Setups">
+            <SkillLevelSection level="novice" title={s('identTitle')}>
               <PatternChecklist 
-                title="Breakout Validation Checklist"
+                title={s('identChecklistTitle')}
                 items={[
-                  { text: 'Level has been tested 2-4+ times (more tests = more significant)', critical: true },
-                  { text: 'Price is consolidating in a tightening range before breakout', critical: true },
-                  { text: 'Volume is declining during consolidation (coiling)', critical: false },
-                  { text: 'The breakout candle has above-average volume', critical: true },
-                  { text: 'Breakout occurs in direction of higher timeframe trend', critical: false },
-                  { text: 'Price closes beyond the level (not just wicks)', critical: true },
-                  { text: 'No major resistance immediately above breakout level', critical: false },
+                  { text: s('identItem1'), critical: true },
+                  { text: s('identItem2'), critical: true },
+                  { text: s('identItem3'), critical: false },
+                  { text: s('identItem4'), critical: true },
+                  { text: s('identItem5'), critical: false },
+                  { text: s('identItem6'), critical: true },
+                  { text: s('identItem7'), critical: false },
                 ]}
               />
 
               <div className="bg-primary/5 border border-primary/20 p-6 rounded-lg mt-6">
-                <h4 className="font-semibold mb-3">The Squeeze Setup</h4>
-                <p className="text-sm text-muted-foreground">
-                  The highest-probability breakouts occur after volatility contraction — when Bollinger Bands 
-                  narrow inside Keltner Channels (the "TTM Squeeze"). This compression precedes explosive moves 
-                  as pent-up energy is released.
-                </p>
+                <h4 className="font-semibold mb-3">{s('squeezeSetup')}</h4>
+                <p className="text-sm text-muted-foreground">{s('squeezeSetupP')}</p>
               </div>
             </SkillLevelSection>
           </section>
 
           {/* Entry Rules */}
           <section id="entry-rules">
-            <SkillLevelSection level="intermediate" title="Breakout Entry Rules">
-              <h4 className="text-lg font-semibold mb-4">1. Aggressive Entry (Breakout)</h4>
+            <SkillLevelSection level="intermediate" title={s('entryRulesTitle')}>
+              <h4 className="text-lg font-semibold mb-4">{s('aggressiveEntry')}</h4>
               <div className="space-y-3 mb-6">
-                <TradingRule type="entry" title="Entry Signal">
-                  Enter immediately when price breaks above resistance (long) or below support (short) 
-                  with a strong candle and increased volume. Use a buy-stop order at the breakout level.
-                </TradingRule>
-                <TradingRule type="stop" title="Stop Loss">
-                  Place stop just below the breakout level (for longs) or just above (for shorts). 
-                  If price falls back into the range, the breakout has failed.
-                </TradingRule>
-                <TradingRule type="target" title="Profit Target">
-                  Target 1.5-2x the height of the consolidation range, or the next significant 
-                  resistance/support level.
-                </TradingRule>
+                <TradingRule type="entry" title={s('aggressiveEntrySignal')}>{s('aggressiveEntrySignalDesc')}</TradingRule>
+                <TradingRule type="stop" title={s('aggressiveStopLoss')}>{s('aggressiveStopLossDesc')}</TradingRule>
+                <TradingRule type="target" title={s('aggressiveTarget')}>{s('aggressiveTargetDesc')}</TradingRule>
               </div>
 
-              <h4 className="text-lg font-semibold mb-4">2. Conservative Entry (Retest)</h4>
+              <h4 className="text-lg font-semibold mb-4">{s('conservativeEntry')}</h4>
               <div className="space-y-3 mb-6">
-                <TradingRule type="entry" title="Entry Signal">
-                  Wait for the breakout to occur, then wait for price to pull back and retest 
-                  the breakout level as new support/resistance. Enter on the bounce.
-                </TradingRule>
-                <TradingRule type="stop" title="Stop Loss">
-                  Place stop below the retest low (for longs) — typically 0.5-1x ATR below 
-                  the breakout level.
-                </TradingRule>
-                <TradingRule type="target" title="Profit Target">
-                  Same targets as aggressive entry, but with better risk-reward due to tighter stop.
-                </TradingRule>
+                <TradingRule type="entry" title={s('conservativeEntrySignal')}>{s('conservativeEntrySignalDesc')}</TradingRule>
+                <TradingRule type="stop" title={s('conservativeStopLoss')}>{s('conservativeStopLossDesc')}</TradingRule>
+                <TradingRule type="target" title={s('conservativeTarget')}>{s('conservativeTargetDesc')}</TradingRule>
               </div>
 
               <Alert className="mt-6">
                 <AlertTriangle className="h-5 w-5" />
                 <AlertDescription>
-                  <strong>Trade-Off:</strong> Aggressive entries catch more of the move but have lower win rates. 
-                  Conservative retest entries have higher win rates but sometimes miss the move if no retest occurs.
+                  <strong>Trade-Off:</strong> {s('tradeOffAlert')}
                 </AlertDescription>
               </Alert>
             </SkillLevelSection>
@@ -220,71 +168,59 @@ const BreakoutStrategy = () => {
 
           {/* False Breakouts */}
           <section id="false-breakouts">
-            <SkillLevelSection level="intermediate" title="Handling False Breakouts">
-              <p className="text-muted-foreground mb-6">
-                Up to 50% of breakouts fail. False breakouts (also called "fakeouts" or "traps") occur when 
-                price breaks a level only to quickly reverse back into the range. Here's how to handle them:
-              </p>
+            <SkillLevelSection level="intermediate" title={s('falseBreakoutsTitle')}>
+              <p className="text-muted-foreground mb-6">{s('falseBreakoutsP')}</p>
 
-              <h4 className="text-lg font-semibold mb-4">Recognizing False Breakouts</h4>
+              <h4 className="text-lg font-semibold mb-4">{s('recognizing')}</h4>
               <div className="grid gap-4 mb-6">
                 <Card className="bg-red-500/10 border-red-500/30">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-red-600 dark:text-red-400">Low Volume Breakout:</strong> 
-                    {" "}Breakout occurs on below-average volume — lack of conviction, likely to fail.
+                    <strong className="text-red-600 dark:text-red-400">{s('lowVolBreakout')}</strong>
+                    {" "}{s('lowVolBreakoutDesc')}
                   </CardContent>
                 </Card>
                 <Card className="bg-red-500/10 border-red-500/30">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-red-600 dark:text-red-400">Wick-Only Close:</strong> 
-                    {" "}Price breaks level intraday but closes back inside — rejection signal.
+                    <strong className="text-red-600 dark:text-red-400">{s('wickOnly')}</strong>
+                    {" "}{s('wickOnlyDesc')}
                   </CardContent>
                 </Card>
                 <Card className="bg-red-500/10 border-red-500/30">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-red-600 dark:text-red-400">Immediate Reversal:</strong> 
-                    {" "}Price reverses within 1-3 candles of breakout — trapped traders.
+                    <strong className="text-red-600 dark:text-red-400">{s('immediateReversal')}</strong>
+                    {" "}{s('immediateReversalDesc')}
                   </CardContent>
                 </Card>
               </div>
 
-              <h4 className="text-lg font-semibold mb-4">Trading the Failed Breakout</h4>
+              <h4 className="text-lg font-semibold mb-4">{s('tradingFailed')}</h4>
               <div className="bg-accent/50 p-6 rounded-lg mb-6">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Failed breakouts can be excellent counter-trend opportunities:
-                </p>
+                <p className="text-sm text-muted-foreground mb-4">{s('tradingFailedP')}</p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• If a bullish breakout fails and reverses, go short with stop above the false high</li>
-                  <li>• Target the opposite end of the range (old support)</li>
-                  <li>• These trades trap breakout traders, causing forced liquidation</li>
+                  <li>• {s('tradingFailedItem1')}</li>
+                  <li>• {s('tradingFailedItem2')}</li>
+                  <li>• {s('tradingFailedItem3')}</li>
                 </ul>
               </div>
 
               <CommonMistakes 
-                mistakes={[
-                  'Entering breakouts without volume confirmation',
-                  'Using stops too tight (normal volatility triggers them)',
-                  'Chasing breakouts after they\'ve already extended significantly',
-                  'Trading every breakout instead of waiting for A+ setups',
-                  'Not waiting for the candle close (entering on wicks)',
-                  'Ignoring the higher timeframe trend direction',
-                ]}
+                mistakes={[s('commonMistake1'), s('commonMistake2'), s('commonMistake3'), s('commonMistake4'), s('commonMistake5'), s('commonMistake6')]}
               />
             </SkillLevelSection>
           </section>
 
           {/* Risk Management */}
           <section id="risk-management">
-            <SkillLevelSection level="advanced" title="Risk Management for Breakout Trading">
+            <SkillLevelSection level="advanced" title={s('riskTitle')}>
               <RiskManagementBox 
-                positionSize="1-2% of account per trade"
-                stopLoss="Below breakout level + buffer"
-                riskReward="1.5:1 or better"
-                maxRisk="Max 3 similar breakouts open"
+                positionSize={s('riskPositionSize')}
+                stopLoss={s('riskStopLoss')}
+                riskReward={s('riskReward')}
+                maxRisk={s('riskMax')}
               />
 
               <div className="bg-primary/5 border border-primary/20 p-6 rounded-lg mt-6">
-                <h4 className="font-semibold mb-3">Position Sizing for Breakouts</h4>
+                <h4 className="font-semibold mb-3">{s('positionSizingTitle')}</h4>
                 <div className="font-mono text-sm bg-background/50 p-4 rounded">
                   <p>Account Size: $50,000</p>
                   <p>Risk Per Trade: 1% = $500</p>
@@ -298,45 +234,40 @@ const BreakoutStrategy = () => {
 
           {/* Professional Techniques */}
           <section id="pro-techniques">
-            <SkillLevelSection level="professional" title="Professional Breakout Techniques">
-              <h4 className="text-lg font-semibold mb-4">Multi-Timeframe Breakout Confirmation</h4>
-              <p className="text-muted-foreground mb-4">
-                The most reliable breakouts occur when multiple timeframes align. A daily breakout 
-                is more significant if the weekly chart also shows a breakout from a larger pattern.
-              </p>
+            <SkillLevelSection level="professional" title={s('proTitle')}>
+              <h4 className="text-lg font-semibold mb-4">{s('multiTfTitle')}</h4>
+              <p className="text-muted-foreground mb-4">{s('multiTfP')}</p>
 
-              <h4 className="text-lg font-semibold mb-4">Order Flow Confirmation</h4>
+              <h4 className="text-lg font-semibold mb-4">{s('orderFlowTitle')}</h4>
               <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg mb-6">
-                <p className="text-sm text-muted-foreground">
-                  Professional traders use order flow data to validate breakouts:
-                </p>
+                <p className="text-sm text-muted-foreground">{s('orderFlowP')}</p>
                 <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-                  <li>• <strong>Delta:</strong> Positive delta on bullish breakouts (more buying at ask)</li>
-                  <li>• <strong>Large Prints:</strong> Institutional orders appearing at breakout level</li>
-                  <li>• <strong>Absorption:</strong> Selling absorbed without price falling back</li>
+                  <li>• <strong>Delta:</strong> {s('deltaItem')}</li>
+                  <li>• <strong>Large Prints:</strong> {s('largePrintsItem')}</li>
+                  <li>• <strong>Absorption:</strong> {s('absorptionItem')}</li>
                 </ul>
               </div>
 
-              <h4 className="text-lg font-semibold mb-4">Measured Move Targets</h4>
+              <h4 className="text-lg font-semibold mb-4">{s('measuredMoveTitle')}</h4>
               <div className="space-y-3">
                 <Card className="bg-background/50">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-foreground">Rectangles:</strong> Height of rectangle added to breakout point
+                    <strong className="text-foreground">Rectangles:</strong> {s('rectanglesTarget')}
                   </CardContent>
                 </Card>
                 <Card className="bg-background/50">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-foreground">Triangles:</strong> Base width added to breakout point
+                    <strong className="text-foreground">Triangles:</strong> {s('trianglesTarget')}
                   </CardContent>
                 </Card>
                 <Card className="bg-background/50">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-foreground">Flags:</strong> Length of flagpole added to breakout point
+                    <strong className="text-foreground">Flags:</strong> {s('flagsTarget')}
                   </CardContent>
                 </Card>
                 <Card className="bg-background/50">
                   <CardContent className="pt-4 text-sm text-muted-foreground">
-                    <strong className="text-foreground">Head & Shoulders:</strong> Head-to-neckline distance from neckline break
+                    <strong className="text-foreground">Head & Shoulders:</strong> {s('hsTarget')}
                   </CardContent>
                 </Card>
               </div>
@@ -347,26 +278,26 @@ const BreakoutStrategy = () => {
           <section className="mt-12">
             <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30">
               <CardHeader>
-                <CardTitle>Breakout Strategy Summary</CardTitle>
+                <CardTitle>{s('summaryTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="text-muted-foreground">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2">Best For:</h4>
+                    <h4 className="font-semibold text-foreground mb-2">{s('bestFor')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Momentum-oriented traders</li>
-                      <li>• Those comfortable with moderate win rates</li>
-                      <li>• Patient traders who wait for setups</li>
-                      <li>• Pattern recognition skills</li>
+                      <li>• {s('bestForItem1')}</li>
+                      <li>• {s('bestForItem2')}</li>
+                      <li>• {s('bestForItem3')}</li>
+                      <li>• {s('bestForItem4')}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2">Not Ideal For:</h4>
+                    <h4 className="font-semibold text-foreground mb-2">{s('notIdealFor')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Those who can't handle false breakouts</li>
-                      <li>• Traders needing constant action</li>
-                      <li>• Range-trading personality types</li>
-                      <li>• Those without patience for consolidation</li>
+                      <li>• {s('notIdealItem1')}</li>
+                      <li>• {s('notIdealItem2')}</li>
+                      <li>• {s('notIdealItem3')}</li>
+                      <li>• {s('notIdealItem4')}</li>
                     </ul>
                   </div>
                 </div>
@@ -376,29 +307,29 @@ const BreakoutStrategy = () => {
 
           {/* Related Strategies */}
           <section className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">Related Strategies</h2>
+            <h2 className="text-2xl font-bold mb-4">{sc('relatedStrategies')}</h2>
             <div className="grid md:grid-cols-3 gap-4">
               <Link to="/learn/strategies/trend-following" className="block">
                 <Card className="hover:border-primary/50 transition-colors h-full">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold mb-2">Trend Following</h4>
-                    <p className="text-sm text-muted-foreground">Riding extended breakout moves</p>
+                    <h4 className="font-semibold mb-2">{s('relatedTrendFollowing')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('relatedTrendFollowingDesc')}</p>
                   </CardContent>
                 </Card>
               </Link>
               <Link to="/learn/strategies/momentum-trading" className="block">
                 <Card className="hover:border-primary/50 transition-colors h-full">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold mb-2">Momentum Trading</h4>
-                    <p className="text-sm text-muted-foreground">Capturing strong directional moves</p>
+                    <h4 className="font-semibold mb-2">{s('relatedMomentum')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('relatedMomentumDesc')}</p>
                   </CardContent>
                 </Card>
               </Link>
               <Link to="/learn/support-resistance" className="block">
                 <Card className="hover:border-primary/50 transition-colors h-full">
                   <CardContent className="pt-6">
-                    <h4 className="font-semibold mb-2">Support & Resistance</h4>
-                    <p className="text-sm text-muted-foreground">Understanding key levels</p>
+                    <h4 className="font-semibold mb-2">{s('relatedSR')}</h4>
+                    <p className="text-sm text-muted-foreground">{s('relatedSRDesc')}</p>
                   </CardContent>
                 </Card>
               </Link>
