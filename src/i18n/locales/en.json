@@ -1019,22 +1019,27 @@
   },
   "projects": {
     "pricing": {
+      "betaPricing": "Beta Pricing",
       "bestFor": {
-        "free": "Exploring the platform",
+        "free": "Explore the platform",
+        "lite": "Hobbyist traders starting out",
         "plus": "Active traders testing ideas",
         "pro": "Serious traders scanning daily",
-        "team": "Teams and portfolio managers"
+        "team": "Trading teams & portfolio managers"
       },
-      "creditsExplained": "Credits vary by Symbols × History × Patterns × Timeframe",
+      "creditsExplained": "Credits scale with symbols × history × patterns × timeframe",
       "cta": {
         "free": "Start Free",
+        "lite": "Get Lite",
         "plus": "Get Plus",
         "pro": "Upgrade to Pro",
-        "team": "Contact Us"
+        "team": "Get Team"
       },
-      "estimatedBefore": "Credits are estimated before running.",
+      "estimatedBefore": "Credits are estimated before you run.",
       "examples": {
         "patternLab": "Pattern Lab (10 symbols, 1D, 5y, 4 patterns) ≈ 12–18 credits",
+        "patternLabSmall": "Pattern Lab (10 symbols, 1D, 3y, 4 patterns) ≈ 12 credits",
+        "patternLabLarge": "Pattern Lab (50 symbols, 4H, 2y, 6 patterns) ≈ 25 credits",
         "screener": "Screener: Unlimited scanning of 1,100+ symbols (Free)"
       },
       "features": {
@@ -1046,11 +1051,83 @@
       },
       "headline": "Prompt-free trading projects powered by chart pattern intelligence",
       "subheadline": "Scan the market. Detect setups. Get a reproducible trade plan with precise entries, stop-loss, and take-profit.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "savePercent": "Save ~10%",
+      "mostPopular": "Most Popular",
+      "free": "Free",
+      "perMonth": "/mo",
+      "perYear": "/year",
+      "loading": "Loading...",
+      "labels": {
+        "credits": "Credits",
+        "alerts": "Alerts",
+        "instruments": "Instruments",
+        "lookback": "Lookback",
+        "studyTFs": "Study TFs",
+        "watchlistSlots": "Watchlist Slots",
+        "unlimited": "Unlimited"
+      },
+      "featureNames": {
+        "patternScreener": "Pattern Screener",
+        "patternLab": "Pattern Lab",
+        "portfolioTools": "Portfolio Tools"
+      },
+      "freeScreener": {
+        "badge": "FREE",
+        "title": "Default Screener",
+        "desc": "Monitor <strong>1,100+ instruments</strong> scanned every 4 hours",
+        "sp500": "S&P 500 stocks",
+        "crypto": "100+ Cryptocurrencies",
+        "forex": "50+ Forex pairs",
+        "commodities": "30+ Commodities"
+      },
+      "paidScreener": {
+        "badge": "PAID",
+        "title": "Custom Watchlist Monitoring",
+        "desc": "Add <strong>ANY US stock</strong> from 8,000+ to your personal screener",
+        "smallCaps": "Small-caps, mid-caps, OTC stocks",
+        "cadence": "Scanned at the same 4-hour cadence",
+        "alerts": "Pattern alerts on YOUR watchlist",
+        "slots": "Up to 300 custom slots (Pro)"
+      },
+      "badges": {
+        "screenerFree": "Pattern Screener: Free for all",
+        "chartPatterns": "20+ Chart Patterns",
+        "research": "Research: 8,000+ US Stocks"
+      },
+      "howCreditsWork": "How Credits Work",
+      "dataRefreshRates": "Data Refresh Rates",
+      "dataRefreshDesc": "Pattern detection freshness by timeframe and instrument tier",
+      "core": "CORE",
+      "fullUniverse": "FULL UNIVERSE",
+      "coreCharts": "1-Hour Charts",
+      "coreInstruments": "1,100+ core instruments",
+      "coreRefresh": "Refreshed every hour",
+      "fullCharts": "4H / Daily / Weekly",
+      "fullInstruments": "8,500+ instruments",
+      "fullRefresh": "Refreshed every 4 hours",
+      "faqTitle": "Frequently Asked Questions",
+      "faq": {
+        "timeframesQ": "What timeframes are supported?",
+        "timeframesA": "Pattern Lab and the screener support 1H, 4H, 8H, Daily, and Weekly timeframes for pattern detection and backtesting. The 15m timeframe is available for chart viewing (Study pages) on Lite+ plans, but not for automated scanning.",
+        "freshnessQ": "How fresh is the pattern data?",
+        "freshnessA1": "Core 1,100: 1H patterns refresh hourly; 4H/8H/Daily every 4 hours.",
+        "freshnessA2": "Full 8,500+: 4H, 8H, Daily, and Weekly patterns refresh every 4 hours.",
+        "whatIsLabQ": "What is Pattern Lab?",
+        "whatIsLabA": "Pattern Lab is our research engine for backtesting chart patterns across historical data. Select instruments, patterns, and timeframes to see Win Rate, Expectancy, and trade-by-trade results with visual proof charts. Use it to validate strategies before setting alerts.",
+        "detectionQ": "What happens when a pattern is detected?",
+        "detectionA": "Detected patterns appear in the screener with Entry, Stop Loss, and Take Profit levels calculated using our deterministic bracket engine (v1.0.0). If you have an active alert, you'll receive an email notification with the trade plan details."
+      },
       "trust": {
         "alerts": "Alerts include SL/TP and target hit",
+        "alertsDesc": "Get notified when price hits your targets",
         "bracket": "Deterministic bracket engine (v1.0.0)",
-        "execution": "Transparency on execution assumptions"
-      }
+        "bracketDesc": "Consistent SL/TP calculation across all features",
+        "execution": "Execution Assumptions Transparency",
+        "executionDesc": "Every backtest includes documented assumptions"
+      },
+      "educationalDisclaimer": "Educational Use Only: All trade plans and signals are for educational purposes only and do not constitute financial advice. Trading involves substantial risk of loss. Past performance does not guarantee future results."
     }
   },
   "quizHub": {
