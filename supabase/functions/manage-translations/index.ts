@@ -36,6 +36,40 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Support GET for direct locale JSON download: ?action=export_locale_json&language=ja
+    const url = new URL(req.url)
+    if (req.method === 'GET' && url.searchParams.get('action') === 'export_locale_json') {
+      const lang = url.searchParams.get('language')
+      if (!lang) {
+        return new Response(JSON.stringify({ error: 'language param required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      )
+      const { data: exportData, error: exportError } = await supabase
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', lang)
+        .in('status', ['approved', 'auto_translated'])
+      if (exportError) throw exportError
+      const nested: Record<string, any> = {}
+      exportData?.forEach((item: { key: string; value: string }) => {
+        const parts = item.key.split('.')
+        let current = nested
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (!current[parts[i]]) current[parts[i]] = {}
+          current = current[parts[i]]
+        }
+        current[parts[parts.length - 1]] = item.value
+      })
+      return new Response(JSON.stringify(nested, null, 2), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
