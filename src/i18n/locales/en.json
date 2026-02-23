@@ -1803,7 +1803,21 @@
     "Donchian Breakout Short": "Donchian Breakout (Short)",
     "Channel Up": "Channel Up",
     "Channel Down": "Channel Down",
-    "Pennant": "Pennant"
+    "Pennant": "Pennant",
+    "Bump-and-Run Reversal": "Bump-and-Run Reversal",
+    "Island Reversal": "Island Reversal",
+    "Cup with Handle": "Cup with Handle",
+    "Rectangle": "Rectangle",
+    "Hammer": "Hammer",
+    "Hanging Man": "Hanging Man",
+    "Shooting Star": "Shooting Star",
+    "Doji": "Doji",
+    "Bullish Harami": "Bullish Harami",
+    "Bearish Harami": "Bearish Harami",
+    "Bullish Engulfing": "Bullish Engulfing",
+    "Bearish Engulfing": "Bearish Engulfing",
+    "Spinning Top": "Spinning Top",
+    "Inverted Head and Shoulders": "Inverted Head and Shoulders"
   },
   "timeframes": {
     "1H": "1H",
