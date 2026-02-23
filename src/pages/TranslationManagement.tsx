@@ -79,6 +79,8 @@ export const TranslationManagement = () => {
   const [coverageLoading, setCoverageLoading] = useState(false);
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
   const [syncProgress, setSyncProgress] = useState<string>('');
+  const [syncPercent, setSyncPercent] = useState<number>(0);
+  const [syncLangResults, setSyncLangResults] = useState<Record<string, { translated: number; errors: number; status: 'pending' | 'syncing' | 'done' | 'error' }>>({}); 
   const [articleSyncing, setArticleSyncing] = useState(false);
   const [articleSyncProgress, setArticleSyncProgress] = useState<string>('');
   const { toast } = useToast();
@@ -162,8 +164,17 @@ export const TranslationManagement = () => {
     const langs = targetLanguages || languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
+    const totalSteps = langs.length + 2; // keys prep + langs + export
+    let currentStep = 0;
+
+    // Initialize per-language tracking
+    const initialResults: Record<string, { translated: number; errors: number; status: 'pending' | 'syncing' | 'done' | 'error' }> = {};
+    langs.forEach(code => { initialResults[code] = { translated: 0, errors: 0, status: 'pending' }; });
+    setSyncLangResults(initialResults);
 
     // First pass: ensure translation_keys exist (fast, one call)
+    currentStep++;
+    setSyncPercent(Math.round((currentStep / totalSteps) * 100));
     setSyncProgress('Preparing translation keys...');
     try {
       const { error: prepError } = await supabase.functions.invoke('sync-translations', {
@@ -182,7 +193,10 @@ export const TranslationManagement = () => {
     for (let i = 0; i < langs.length; i++) {
       const langCode = langs[i];
       const langName = languages.find(l => l.code === langCode)?.name || langCode;
+      currentStep++;
+      setSyncPercent(Math.round((currentStep / totalSteps) * 100));
       setSyncProgress(`Translating ${langName} (${i + 1}/${langs.length})...`);
+      setSyncLangResults(prev => ({ ...prev, [langCode]: { ...prev[langCode], status: 'syncing' } }));
 
       try {
         const { data, error } = await supabase.functions.invoke('sync-translations', {
@@ -196,6 +210,7 @@ export const TranslationManagement = () => {
         if (error) {
           console.error(`Sync error for ${langCode}:`, error);
           totalErrors++;
+          setSyncLangResults(prev => ({ ...prev, [langCode]: { translated: 0, errors: 1, status: 'error' } }));
           continue;
         }
 
@@ -203,14 +218,26 @@ export const TranslationManagement = () => {
         if (langStats) {
           totalTranslated += langStats.translated || 0;
           totalErrors += langStats.errors || 0;
+          setSyncLangResults(prev => ({
+            ...prev,
+            [langCode]: { translated: langStats.translated || 0, errors: langStats.errors || 0, status: 'done' }
+          }));
+        } else {
+          setSyncLangResults(prev => ({ ...prev, [langCode]: { translated: 0, errors: 0, status: 'done' } }));
         }
+
+        // Refresh coverage after each language so user sees live progress
+        await loadCoverageStats();
       } catch (error) {
         console.error(`Sync error for ${langCode}:`, error);
         totalErrors++;
+        setSyncLangResults(prev => ({ ...prev, [langCode]: { translated: 0, errors: 1, status: 'error' } }));
       }
     }
 
     // Auto re-export: reload locale bundles from DB into i18n runtime
+    currentStep++;
+    setSyncPercent(100);
     setSyncProgress('Re-exporting locale files from DB...');
     let exportErrors = 0;
     for (const langCode of langs) {
@@ -241,6 +268,8 @@ export const TranslationManagement = () => {
     await loadCoverageStats();
     setSyncingLanguages(null);
     setSyncProgress('');
+    setSyncPercent(0);
+    setSyncLangResults({});
   };
 
   const handleSyncArticleTranslations = async () => {
@@ -671,8 +700,31 @@ export const TranslationManagement = () => {
               </CardHeader>
               <CardContent>
                 {syncProgress && (
-                  <div className="mb-4 p-3 bg-muted rounded-lg text-sm">
-                    {syncProgress}
+                  <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span>{syncProgress}</span>
+                      <span className="text-primary">{syncPercent}%</span>
+                    </div>
+                    <Progress value={syncPercent} className="h-3" />
+                    {Object.keys(syncLangResults).length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {Object.entries(syncLangResults).map(([code, result]) => {
+                          const lang = languages.find(l => l.code === code);
+                          return (
+                            <Badge
+                              key={code}
+                              variant={result.status === 'done' ? 'default' : result.status === 'error' ? 'destructive' : result.status === 'syncing' ? 'secondary' : 'outline'}
+                              className={`text-xs ${result.status === 'syncing' ? 'animate-pulse' : ''} ${result.status === 'done' ? 'bg-green-600' : ''}`}
+                            >
+                              {lang?.flag} {code.toUpperCase()}
+                              {result.status === 'done' && ` ✓${result.translated > 0 ? ` +${result.translated}` : ''}`}
+                              {result.status === 'error' && ' ✗'}
+                              {result.status === 'syncing' && ' ⟳'}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
                 {/* Summary row */}
