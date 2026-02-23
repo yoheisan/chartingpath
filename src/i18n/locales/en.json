@@ -700,7 +700,46 @@
     "candlestickPatterns": "Candlestick Patterns",
     "patternsCount": "{{count}} patterns",
     "learnMore": "Learn More",
-    "successRateTooltip": "Success rate based on Thomas Bulkowski's Encyclopedia of Chart Patterns."
+    "successRateTooltip": "Success rate based on Thomas Bulkowski's Encyclopedia of Chart Patterns.",
+    "types": {
+      "reversal": "reversal",
+      "continuation": "continuation",
+      "candlestick": "candlestick"
+    },
+    "difficulty": {
+      "Beginner": "Beginner",
+      "Intermediate": "Intermediate",
+      "Advanced": "Advanced"
+    },
+    "descriptions": {
+      "Head and Shoulders": "Most reliable bearish reversal pattern with three peaks",
+      "Inverted Head and Shoulders": "Bullish reversal pattern with three troughs - mirror of Head and Shoulders",
+      "Double Top": "Bearish reversal with two peaks at same level",
+      "Double Bottom": "Bullish reversal with two troughs at same level",
+      "Triple Top": "Strong bearish reversal with three equal peaks",
+      "Triple Bottom": "Strong bullish reversal with three equal troughs",
+      "Bump-and-Run Reversal": "Three-phase reversal pattern with trend acceleration",
+      "Island Reversal": "Gap-based reversal pattern isolated from main trend",
+      "Ascending Triangle": "Bullish continuation with horizontal resistance",
+      "Descending Triangle": "Bearish continuation with horizontal support",
+      "Symmetrical Triangle": "Neutral triangle with converging trend lines",
+      "Bull Flag": "Brief consolidation in strong uptrend",
+      "Bear Flag": "Brief consolidation in strong downtrend",
+      "Pennant": "Small symmetrical triangle after strong move",
+      "Cup with Handle": "Bullish continuation resembling a cup",
+      "Rectangle": "Consolidation between horizontal support and resistance",
+      "Rising Wedge": "Bearish reversal with converging upward sloping trendlines",
+      "Falling Wedge": "Bullish reversal with converging downward sloping trendlines",
+      "Hammer": "Bullish reversal with long lower shadow",
+      "Hanging Man": "Bearish reversal with long lower shadow",
+      "Shooting Star": "Bearish reversal with long upper shadow",
+      "Doji": "Indecision candle with equal open/close",
+      "Bullish Harami": "Small candle inside previous large bearish candle",
+      "Bearish Harami": "Small candle inside previous large bullish candle",
+      "Bullish Engulfing": "Large bullish candle engulfing previous bearish candle",
+      "Bearish Engulfing": "Large bearish candle engulfing previous bullish candle",
+      "Spinning Top": "Small body with long shadows indicating indecision"
+    }
   },
   "commandCenter": {
     "watchlist": "Watchlist",
