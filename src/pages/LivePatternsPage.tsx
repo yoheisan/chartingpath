@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
@@ -1204,10 +1205,9 @@ export default function LivePatternsPage() {
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <Info className="h-4 w-4 mt-0.5 shrink-0" />
               <div>
-                <span className="font-medium text-foreground">Data Coverage:</span>{' '}
-                Historical Win% is available for ~5,000 core instruments (S&P 500, Russell 2000, NASDAQ, major FX/Crypto). 
-                Extended pairs showing "—" can be analyzed on-demand via{' '}
-                <Link to="/projects/pattern-lab/new" className="text-primary hover:underline">Pattern Lab</Link>.
+                <span className="font-medium text-foreground">{t('screener.dataCoverage')}:</span>{' '}
+                {t('screener.dataCoverageDesc')}{' '}
+                <Link to="/projects/pattern-lab/new" className="text-primary hover:underline">{t('screener.patternLab')}</Link>.
               </div>
             </div>
           </div>
@@ -1303,7 +1303,7 @@ export default function LivePatternsPage() {
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
                       <TableCell colSpan={7} className="py-2">
-                        <span className="font-semibold text-sm">{patternName}</span>
+                        <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
                         </Badge>
@@ -1337,7 +1337,7 @@ export default function LivePatternsPage() {
                             <InstrumentLogo instrument={setup.instrument} />
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {setup.patternName}
+                            {translatePatternName(setup.patternName)}
                           </TableCell>
                           <TableCell className="text-center">
                             <GradeBadge quality={setup.quality} />
