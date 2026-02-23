@@ -145,7 +145,15 @@ export const TranslationManagement = () => {
         body: { action: 'get_coverage_stats' }
       });
       if (error) throw error;
-      setCoverageData(data.coverage || {});
+      const dbCoverage = data.coverage || {};
+      const dbCoverageValues = Object.values(dbCoverage) as Array<{ total: number; translated: number; approved: number; auto_translated: number; stale: number }>;
+      const totalKeys = data.total_keys || dbCoverageValues[0]?.total || 0;
+      const fullCoverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {};
+      for (const lang of languages) {
+        if (lang.code === 'en') continue;
+        fullCoverage[lang.code] = dbCoverage[lang.code] || { total: totalKeys, translated: 0, approved: 0, auto_translated: 0, stale: 0 };
+      }
+      setCoverageData(fullCoverage);
       if (showToast) {
         toast({ title: 'Coverage stats refreshed', description: `${data.total_keys || 0} total keys loaded` });
       }
