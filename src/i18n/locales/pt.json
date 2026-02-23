@@ -1122,5 +1122,39 @@
     "seeAll": "Ver todos",
     "exploreAll": "Explorar Todos os Padrões Ativos",
     "disclaimer": "Apenas para fins educacionais. Padrões passados não garantem resultados futuros."
+  },
+  "patternNames": {
+    "Bull Flag": "Bandeira de Alta",
+    "Bear Flag": "Bandeira de Baixa",
+    "Falling Wedge": "Cunha Descendente",
+    "Rising Wedge": "Cunha Ascendente",
+    "Triple Bottom": "Triplo Fundo",
+    "Triple Top": "Triplo Topo",
+    "Double Bottom": "Fundo Duplo",
+    "Double Top": "Topo Duplo",
+    "Cup & Handle": "Xícara com Alça",
+    "Inverse Cup & Handle": "Xícara com Alça Invertida",
+    "Symmetrical Triangle": "Triângulo Simétrico",
+    "Ascending Triangle": "Triângulo Ascendente",
+    "Descending Triangle": "Triângulo Descendente",
+    "Head and Shoulders": "Ombro-Cabeça-Ombro",
+    "Inverse Head and Shoulders": "Ombro-Cabeça-Ombro Invertido",
+    "Donchian Breakout (Long)": "Rompimento Donchian (Compra)",
+    "Donchian Breakout (Short)": "Rompimento Donchian (Venda)",
+    "Channel Up": "Canal Ascendente",
+    "Channel Down": "Canal Descendente",
+    "Pennant": "Flâmula"
+  },
+  "timeframes": {
+    "1H": "1H",
+    "4H": "4H",
+    "8H": "8H",
+    "1D": "1D",
+    "1W": "1S"
+  },
+  "footer": {
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Todos os direitos reservados."
   }
 }

@@ -1122,5 +1122,39 @@
     "long": "Largo",
     "age": "Antigüedad",
     "short": "Corto"
+  },
+  "patternNames": {
+    "Bull Flag": "Bandera Alcista",
+    "Bear Flag": "Bandera Bajista",
+    "Falling Wedge": "Cuña Descendente",
+    "Rising Wedge": "Cuña Ascendente",
+    "Triple Bottom": "Triple Suelo",
+    "Triple Top": "Triple Techo",
+    "Double Bottom": "Doble Suelo",
+    "Double Top": "Doble Techo",
+    "Cup & Handle": "Taza con Asa",
+    "Inverse Cup & Handle": "Taza con Asa Invertida",
+    "Symmetrical Triangle": "Triángulo Simétrico",
+    "Ascending Triangle": "Triángulo Ascendente",
+    "Descending Triangle": "Triángulo Descendente",
+    "Head and Shoulders": "Hombro-Cabeza-Hombro",
+    "Inverse Head and Shoulders": "Hombro-Cabeza-Hombro Invertido",
+    "Donchian Breakout (Long)": "Ruptura Donchian (Largo)",
+    "Donchian Breakout (Short)": "Ruptura Donchian (Corto)",
+    "Channel Up": "Canal Ascendente",
+    "Channel Down": "Canal Descendente",
+    "Pennant": "Banderín"
+  },
+  "timeframes": {
+    "1H": "1H",
+    "4H": "4H",
+    "8H": "8H",
+    "1D": "1D",
+    "1W": "1S"
+  },
+  "footer": {
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Todos los derechos reservados."
   }
 }

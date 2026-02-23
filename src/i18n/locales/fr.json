@@ -1120,5 +1120,39 @@
     "long": "Long",
     "age": "Ancienneté",
     "short": "Short"
+  },
+  "patternNames": {
+    "Bull Flag": "Drapeau Haussier",
+    "Bear Flag": "Drapeau Baissier",
+    "Falling Wedge": "Biseau Descendant",
+    "Rising Wedge": "Biseau Ascendant",
+    "Triple Bottom": "Triple Creux",
+    "Triple Top": "Triple Sommet",
+    "Double Bottom": "Double Creux",
+    "Double Top": "Double Sommet",
+    "Cup & Handle": "Tasse avec Anse",
+    "Inverse Cup & Handle": "Tasse avec Anse Inversée",
+    "Symmetrical Triangle": "Triangle Symétrique",
+    "Ascending Triangle": "Triangle Ascendant",
+    "Descending Triangle": "Triangle Descendant",
+    "Head and Shoulders": "Tête et Épaules",
+    "Inverse Head and Shoulders": "Tête et Épaules Inversées",
+    "Donchian Breakout (Long)": "Cassure Donchian (Long)",
+    "Donchian Breakout (Short)": "Cassure Donchian (Short)",
+    "Channel Up": "Canal Haussier",
+    "Channel Down": "Canal Baissier",
+    "Pennant": "Fanion"
+  },
+  "timeframes": {
+    "1H": "1H",
+    "4H": "4H",
+    "8H": "8H",
+    "1D": "1J",
+    "1W": "1S"
+  },
+  "footer": {
+    "terms": "Conditions",
+    "privacy": "Confidentialité",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Tous droits réservés."
   }
 }

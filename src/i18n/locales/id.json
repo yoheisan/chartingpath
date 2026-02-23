@@ -1120,5 +1120,39 @@
     "watching": "Mengawasi",
     "activeNow": "Aktif Sekarang",
     "losses": "Kalah"
+  },
+  "patternNames": {
+    "Bull Flag": "Bull Flag",
+    "Bear Flag": "Bear Flag",
+    "Falling Wedge": "Falling Wedge",
+    "Rising Wedge": "Rising Wedge",
+    "Triple Bottom": "Triple Bottom",
+    "Triple Top": "Triple Top",
+    "Double Bottom": "Double Bottom",
+    "Double Top": "Double Top",
+    "Cup & Handle": "Cup & Handle",
+    "Inverse Cup & Handle": "Inverse Cup & Handle",
+    "Symmetrical Triangle": "Segitiga Simetris",
+    "Ascending Triangle": "Segitiga Naik",
+    "Descending Triangle": "Segitiga Turun",
+    "Head and Shoulders": "Head and Shoulders",
+    "Inverse Head and Shoulders": "Inverse Head and Shoulders",
+    "Donchian Breakout (Long)": "Breakout Donchian (Long)",
+    "Donchian Breakout (Short)": "Breakout Donchian (Short)",
+    "Channel Up": "Channel Naik",
+    "Channel Down": "Channel Turun",
+    "Pennant": "Pennant"
+  },
+  "timeframes": {
+    "1H": "1J",
+    "4H": "4J",
+    "8H": "8J",
+    "1D": "1H",
+    "1W": "1M"
+  },
+  "footer": {
+    "terms": "Ketentuan",
+    "privacy": "Privasi",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Hak cipta dilindungi."
   }
 }

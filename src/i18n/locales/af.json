@@ -1122,5 +1122,39 @@
     "age": "Ouderdom",
     "long": "Lang",
     "short": "Kort"
+  },
+  "patternNames": {
+    "Bull Flag": "Bulvlag",
+    "Bear Flag": "Beervlag",
+    "Falling Wedge": "Dalende Wig",
+    "Rising Wedge": "Stygende Wig",
+    "Triple Bottom": "Driedubbele Bodem",
+    "Triple Top": "Driedubbele Top",
+    "Double Bottom": "Dubbele Bodem",
+    "Double Top": "Dubbele Top",
+    "Cup & Handle": "Koppie en Handvatsel",
+    "Inverse Cup & Handle": "Omgekeerde Koppie en Handvatsel",
+    "Symmetrical Triangle": "Simmetriese Driehoek",
+    "Ascending Triangle": "Stygende Driehoek",
+    "Descending Triangle": "Dalende Driehoek",
+    "Head and Shoulders": "Kop en Skouers",
+    "Inverse Head and Shoulders": "Omgekeerde Kop en Skouers",
+    "Donchian Breakout (Long)": "Donchian Uitbraak (Lang)",
+    "Donchian Breakout (Short)": "Donchian Uitbraak (Kort)",
+    "Channel Up": "Stygende Kanaal",
+    "Channel Down": "Dalende Kanaal",
+    "Pennant": "Wimpel"
+  },
+  "timeframes": {
+    "1H": "1U",
+    "4H": "4U",
+    "8H": "8U",
+    "1D": "1D",
+    "1W": "1W"
+  },
+  "footer": {
+    "terms": "Voorwaardes",
+    "privacy": "Privaatheid",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Alle regte voorbehou."
   }
 }

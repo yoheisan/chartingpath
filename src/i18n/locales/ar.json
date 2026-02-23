@@ -1122,5 +1122,39 @@
     "refresh": "تحديث",
     "patternsDetected": "تم الكشف عن أنماط عبر أسواق العملات المشفرة والفوركس",
     "disclaimer": "للأغراض التعليمية فقط. الأنماط السابقة لا تضمن نتائج مستقبلية."
+  },
+  "patternNames": {
+    "Bull Flag": "علم صاعد",
+    "Bear Flag": "علم هابط",
+    "Falling Wedge": "وتد هابط",
+    "Rising Wedge": "وتد صاعد",
+    "Triple Bottom": "قاع ثلاثي",
+    "Triple Top": "قمة ثلاثية",
+    "Double Bottom": "قاع مزدوج",
+    "Double Top": "قمة مزدوجة",
+    "Cup & Handle": "كوب ومقبض",
+    "Inverse Cup & Handle": "كوب ومقبض معكوس",
+    "Symmetrical Triangle": "مثلث متماثل",
+    "Ascending Triangle": "مثلث صاعد",
+    "Descending Triangle": "مثلث هابط",
+    "Head and Shoulders": "رأس وكتفين",
+    "Inverse Head and Shoulders": "رأس وكتفين معكوس",
+    "Donchian Breakout (Long)": "اختراق دونشيان (شراء)",
+    "Donchian Breakout (Short)": "اختراق دونشيان (بيع)",
+    "Channel Up": "قناة صاعدة",
+    "Channel Down": "قناة هابطة",
+    "Pennant": "راية"
+  },
+  "timeframes": {
+    "1H": "1س",
+    "4H": "4س",
+    "8H": "8س",
+    "1D": "1ي",
+    "1W": "1أ"
+  },
+  "footer": {
+    "terms": "الشروط",
+    "privacy": "الخصوصية",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. جميع الحقوق محفوظة."
   }
 }

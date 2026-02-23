@@ -1122,5 +1122,39 @@
     "automate": "स्वचालित करें",
     "automateDesc": "स्वचालित निष्पादन के लिए Pine Script या ट्रेडिंग बॉट कोड जेनरेट करें।",
     "footerNote": "प्रत्येक चरण पिछले चरण पर बनता है—अपनी वर्तमान आवश्यकताओं के आधार पर कहीं से भी शुरू करें।"
+  },
+  "patternNames": {
+    "Bull Flag": "बुल फ्लैग",
+    "Bear Flag": "बेयर फ्लैग",
+    "Falling Wedge": "गिरता हुआ वेज",
+    "Rising Wedge": "बढ़ता हुआ वेज",
+    "Triple Bottom": "ट्रिपल बॉटम",
+    "Triple Top": "ट्रिपल टॉप",
+    "Double Bottom": "डबल बॉटम",
+    "Double Top": "डबल टॉप",
+    "Cup & Handle": "कप एंड हैंडल",
+    "Inverse Cup & Handle": "इनवर्स कप एंड हैंडल",
+    "Symmetrical Triangle": "सिमेट्रिकल ट्रायंगल",
+    "Ascending Triangle": "असेंडिंग ट्रायंगल",
+    "Descending Triangle": "डिसेंडिंग ट्रायंगल",
+    "Head and Shoulders": "हेड एंड शोल्डर्स",
+    "Inverse Head and Shoulders": "इनवर्स हेड एंड शोल्डर्स",
+    "Donchian Breakout (Long)": "डोंचियन ब्रेकआउट (लॉन्ग)",
+    "Donchian Breakout (Short)": "डोंचियन ब्रेकआउट (शॉर्ट)",
+    "Channel Up": "अपवर्ड चैनल",
+    "Channel Down": "डाउनवर्ड चैनल",
+    "Pennant": "पेनेंट"
+  },
+  "timeframes": {
+    "1H": "1 घंटा",
+    "4H": "4 घंटे",
+    "8H": "8 घंटे",
+    "1D": "दैनिक",
+    "1W": "साप्ताहिक"
+  },
+  "footer": {
+    "terms": "शर्तें",
+    "privacy": "गोपनीयता",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. सर्वाधिकार सुरक्षित।"
   }
 }

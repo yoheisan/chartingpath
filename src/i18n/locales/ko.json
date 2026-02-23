@@ -1122,5 +1122,39 @@
     "age": "경과 시간",
     "long": "매수",
     "short": "매도"
+  },
+  "patternNames": {
+    "Bull Flag": "상승 깃발",
+    "Bear Flag": "하락 깃발",
+    "Falling Wedge": "하락 쐐기",
+    "Rising Wedge": "상승 쐐기",
+    "Triple Bottom": "삼중 바닥",
+    "Triple Top": "삼중 천장",
+    "Double Bottom": "이중 바닥",
+    "Double Top": "이중 천장",
+    "Cup & Handle": "컵 앤 핸들",
+    "Inverse Cup & Handle": "역 컵 앤 핸들",
+    "Symmetrical Triangle": "대칭 삼각형",
+    "Ascending Triangle": "상승 삼각형",
+    "Descending Triangle": "하락 삼각형",
+    "Head and Shoulders": "머리어깨형",
+    "Inverse Head and Shoulders": "역 머리어깨형",
+    "Donchian Breakout (Long)": "돈치안 돌파 (매수)",
+    "Donchian Breakout (Short)": "돈치안 돌파 (매도)",
+    "Channel Up": "상승 채널",
+    "Channel Down": "하락 채널",
+    "Pennant": "페넌트"
+  },
+  "timeframes": {
+    "1H": "1시간",
+    "4H": "4시간",
+    "8H": "8시간",
+    "1D": "일봉",
+    "1W": "주봉"
+  },
+  "footer": {
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved."
   }
 }

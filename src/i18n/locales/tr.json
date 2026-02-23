@@ -1122,5 +1122,39 @@
     "age": "Yaş",
     "long": "Uzun",
     "short": "Kısa"
+  },
+  "patternNames": {
+    "Bull Flag": "Boğa Bayrağı",
+    "Bear Flag": "Ayı Bayrağı",
+    "Falling Wedge": "Düşen Kama",
+    "Rising Wedge": "Yükselen Kama",
+    "Triple Bottom": "Üçlü Dip",
+    "Triple Top": "Üçlü Tepe",
+    "Double Bottom": "İkili Dip",
+    "Double Top": "İkili Tepe",
+    "Cup & Handle": "Fincan ve Kulp",
+    "Inverse Cup & Handle": "Ters Fincan ve Kulp",
+    "Symmetrical Triangle": "Simetrik Üçgen",
+    "Ascending Triangle": "Yükselen Üçgen",
+    "Descending Triangle": "Düşen Üçgen",
+    "Head and Shoulders": "Omuz Baş Omuz",
+    "Inverse Head and Shoulders": "Ters Omuz Baş Omuz",
+    "Donchian Breakout (Long)": "Donchian Kırılımı (Uzun)",
+    "Donchian Breakout (Short)": "Donchian Kırılımı (Kısa)",
+    "Channel Up": "Yükselen Kanal",
+    "Channel Down": "Düşen Kanal",
+    "Pennant": "Flama"
+  },
+  "timeframes": {
+    "1H": "1S",
+    "4H": "4S",
+    "8H": "8S",
+    "1D": "1G",
+    "1W": "1H"
+  },
+  "footer": {
+    "terms": "Şartlar",
+    "privacy": "Gizlilik",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Tüm hakları saklıdır."
   }
 }

@@ -1122,5 +1122,39 @@
     "pnl": "G&V",
     "losses": "Verluste",
     "targetHit": "Ziel erreicht"
+  },
+  "patternNames": {
+    "Bull Flag": "Bullenflagge",
+    "Bear Flag": "Bärenflagge",
+    "Falling Wedge": "Fallender Keil",
+    "Rising Wedge": "Steigender Keil",
+    "Triple Bottom": "Dreifachboden",
+    "Triple Top": "Dreifachhoch",
+    "Double Bottom": "Doppelboden",
+    "Double Top": "Doppelhoch",
+    "Cup & Handle": "Tasse mit Henkel",
+    "Inverse Cup & Handle": "Umgekehrte Tasse mit Henkel",
+    "Symmetrical Triangle": "Symmetrisches Dreieck",
+    "Ascending Triangle": "Aufsteigendes Dreieck",
+    "Descending Triangle": "Absteigendes Dreieck",
+    "Head and Shoulders": "Kopf-Schulter-Formation",
+    "Inverse Head and Shoulders": "Umgekehrte Kopf-Schulter-Formation",
+    "Donchian Breakout (Long)": "Donchian-Ausbruch (Long)",
+    "Donchian Breakout (Short)": "Donchian-Ausbruch (Short)",
+    "Channel Up": "Aufwärtskanal",
+    "Channel Down": "Abwärtskanal",
+    "Pennant": "Wimpel"
+  },
+  "timeframes": {
+    "1H": "1Std",
+    "4H": "4Std",
+    "8H": "8Std",
+    "1D": "1T",
+    "1W": "1W"
+  },
+  "footer": {
+    "terms": "AGB",
+    "privacy": "Datenschutz",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Alle Rechte vorbehalten."
   }
 }
