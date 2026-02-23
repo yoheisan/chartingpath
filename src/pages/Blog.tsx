@@ -208,8 +208,127 @@ const blogPosts = [
     icon: BookOpen,
     readTime: "8 min read"
   },
-  // Trading Strategies migrated to /blog/:slug as "Indicator Guides > Pattern Confirmation"
-  // New slugs: using-macd-to-confirm-patterns, bollinger-bands-pattern-confirmation, etc.
+  // Indicator Confirmation Guides (dynamic /blog/:slug articles)
+  {
+    id: "blog/using-macd-to-confirm-patterns",
+    title: "Using MACD to Confirm Chart Pattern Breakouts",
+    description: "Learn how MACD histogram expansion and signal line crossovers validate pattern breakouts and filter false signals.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "12 min read"
+  },
+  {
+    id: "blog/bollinger-bands-pattern-confirmation",
+    title: "Bollinger Bands as Pattern Confirmation Tool",
+    description: "Use Bollinger Band squeezes and band walks to confirm chart pattern breakout energy and volatility expansion.",
+    category: "Indicator Guides",
+    icon: TrendingUp,
+    readTime: "11 min read"
+  },
+  {
+    id: "blog/rsi-divergence-pattern-signals",
+    title: "RSI Divergence for Pattern Signal Confirmation",
+    description: "Spot RSI divergence at key pattern levels to confirm reversal and continuation signals with higher accuracy.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "11 min read"
+  },
+  {
+    id: "blog/vwap-pattern-confirmation",
+    title: "VWAP as Institutional Pattern Confirmation",
+    description: "Use VWAP as an institutional fair-value anchor to confirm intraday pattern breakouts and reversals.",
+    category: "Indicator Guides",
+    icon: Target,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/stochastic-pattern-confirmation",
+    title: "Stochastic Oscillator for Pattern Timing",
+    description: "Refine pattern entry timing with stochastic crossovers in overbought/oversold zones.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/moving-average-pattern-confirmation",
+    title: "Moving Average Alignment for Pattern Confirmation",
+    description: "Use 20/50/200 EMA stack alignment to confirm trend direction before trading chart patterns.",
+    category: "Indicator Guides",
+    icon: TrendingUp,
+    readTime: "11 min read"
+  },
+  {
+    id: "blog/momentum-pattern-confirmation",
+    title: "Momentum Indicators for Breakout Confirmation",
+    description: "Combine MACD and RSI momentum readings to confirm breakout strength and avoid fakeouts.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "12 min read"
+  },
+  {
+    id: "blog/atr-pattern-confirmation",
+    title: "ATR for Pattern Stop-Loss and Target Setting",
+    description: "Use Average True Range to set volatility-adjusted stops and targets for chart pattern trades.",
+    category: "Indicator Guides",
+    icon: Target,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/ichimoku-pattern-confirmation",
+    title: "Ichimoku Cloud as Pattern Trend Filter",
+    description: "Use Ichimoku Cloud components to filter patterns by trend strength and identify key support/resistance.",
+    category: "Indicator Guides",
+    icon: TrendingUp,
+    readTime: "13 min read"
+  },
+  {
+    id: "blog/adx-pattern-confirmation",
+    title: "ADX for Pattern Trend Strength Validation",
+    description: "Validate pattern signals by measuring trend strength with the Average Directional Index.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/obv-pattern-confirmation",
+    title: "On-Balance Volume for Pattern Volume Confirmation",
+    description: "Use OBV trends to confirm accumulation or distribution behind chart pattern formations.",
+    category: "Indicator Guides",
+    icon: Target,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/cci-pattern-confirmation",
+    title: "CCI for Pattern Cycle Timing",
+    description: "Use the Commodity Channel Index to time entries at cyclical extremes within chart patterns.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/williams-r-pattern-confirmation",
+    title: "Williams %R for Pattern Reversal Confirmation",
+    description: "Apply Williams %R readings to confirm reversal patterns at overbought and oversold extremes.",
+    category: "Indicator Guides",
+    icon: TrendingUp,
+    readTime: "9 min read"
+  },
+  {
+    id: "blog/parabolic-sar-pattern-confirmation",
+    title: "Parabolic SAR for Pattern Trailing Stops",
+    description: "Use Parabolic SAR dots to trail stops and manage exits on confirmed chart pattern trades.",
+    category: "Indicator Guides",
+    icon: Target,
+    readTime: "10 min read"
+  },
+  {
+    id: "blog/multi-indicator-pattern-confirmation",
+    title: "Multi-Indicator Confluence for Pattern Trading",
+    description: "Build a systematic confirmation framework combining multiple indicators to validate chart patterns.",
+    category: "Indicator Guides",
+    icon: BarChart3,
+    readTime: "14 min read"
+  },
 ];
 
 const categories = ["All", "Chart Patterns", "Technical Analysis", "Price Action", "Risk Management", "Psychology", "Indicator Guides"];
@@ -258,7 +377,7 @@ const Blog = () => {
             const Icon = post.icon;
             const hasSkillLevels = 'skillLevels' in post && Array.isArray((post as any).skillLevels);
             return (
-              <Link key={post.id} to={`/learn/${post.id}`}>
+              <Link key={post.id} to={post.id.startsWith('blog/') ? `/${post.id}` : `/learn/${post.id}`}>
                 <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-3">
