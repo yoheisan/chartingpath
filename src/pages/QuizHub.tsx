@@ -27,24 +27,24 @@ const QuizHub = () => {
   const knowledgeAreas = scores ? [
     {
       id: 'visual',
-      name: 'Pattern Visual Recognition',
+      name: t('knowledgeAssessment.patternVisualRecognition'),
       score: scores.patternVisual.score,
       total: scores.patternVisual.total,
-      category: 'Pattern Analysis'
+      category: t('knowledgeAssessment.patternAnalysis')
     },
     {
       id: 'characteristics',
-      name: 'Pattern Characteristics',
+      name: t('knowledgeAssessment.patternCharacteristics'),
       score: scores.patternCharacteristics.score,
       total: scores.patternCharacteristics.total,
-      category: 'Technical Knowledge'
+      category: t('knowledgeAssessment.technicalKnowledge')
     },
     {
       id: 'risk',
-      name: 'Risk Management',
+      name: t('knowledgeAssessment.riskManagement'),
       score: scores.riskManagement.score,
       total: scores.riskManagement.total,
-      category: 'Trading Discipline'
+      category: t('knowledgeAssessment.tradingDiscipline')
     }
   ] : [];
 

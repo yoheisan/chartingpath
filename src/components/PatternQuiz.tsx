@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { getTopicLink } from "@/utils/quizTopicLinks";
+import { useTranslation } from "react-i18next";
 
 interface QuizQuestion {
   id: string;
@@ -741,6 +742,7 @@ const generateAllQuestions = (): QuizQuestion[] => {
 };
 
 export const PatternQuiz = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [savedProgress, setSavedProgress] = useState<any>(null);
@@ -1040,8 +1042,8 @@ export const PatternQuiz = () => {
     };
     localStorage.setItem('tradingQuizProgress', JSON.stringify(progress));
     toast({
-      title: "Progress Saved",
-      description: "You can continue this quiz later from where you left off."
+      title: t('patternQuiz.progressSaved'),
+      description: t('patternQuiz.progressSavedDesc')
     });
   };
 
@@ -1053,8 +1055,8 @@ export const PatternQuiz = () => {
       setUserAnswers(savedProgress.userAnswers);
       setShowResumeDialog(false);
       toast({
-        title: "Quiz Resumed",
-        description: `Continuing from question ${savedProgress.currentQuestion + 1}`
+        title: t('patternQuiz.quizResumed'),
+        description: t('patternQuiz.quizResumedDesc', { question: savedProgress.currentQuestion + 1 })
       });
     }
   };
@@ -1063,8 +1065,8 @@ export const PatternQuiz = () => {
     localStorage.removeItem('tradingQuizProgress');
     setShowResumeDialog(false);
     toast({
-      title: "New Quiz Started",
-      description: "Previous progress has been cleared."
+      title: t('patternQuiz.newQuizStarted'),
+      description: t('patternQuiz.newQuizStartedDesc')
     });
   };
 
@@ -1076,34 +1078,34 @@ export const PatternQuiz = () => {
           <div className="flex justify-center mb-4">
             <Trophy className="h-16 w-16 text-yellow-500" />
           </div>
-          <CardTitle className="text-3xl">Quiz Complete!</CardTitle>
+          <CardTitle className="text-3xl">{t('patternQuiz.quizComplete')}</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-6">
           <div className="space-y-4">
             <div className="text-6xl font-bold text-primary">{percentage}%</div>
             <div className="text-xl text-muted-foreground">
-              You scored {score} out of {questions.length} questions correctly
+              {t('patternQuiz.scoreResult', { score, total: questions.length })}
             </div>
           </div>
           
           <div className="space-y-2">
             <div className="text-lg font-semibold">
-              {percentage >= 90 ? "Excellent! Pattern Master 🏆" :
-               percentage >= 80 ? "Great Job! Advanced Trader 📈" :
-               percentage >= 70 ? "Good Work! Developing Skills 📊" :
-               percentage >= 60 ? "Keep Learning! 📚" :
-               "More Practice Needed 💪"}
+              {percentage >= 90 ? t('patternQuiz.excellentResult') :
+               percentage >= 80 ? t('patternQuiz.greatResult') :
+               percentage >= 70 ? t('patternQuiz.goodResult') :
+               percentage >= 60 ? t('patternQuiz.keepLearning') :
+               t('patternQuiz.morePractice')}
             </div>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               {percentage >= 80 
-                ? "You have strong pattern recognition skills! Continue practicing to maintain your edge."
-                : "Keep studying patterns and practicing. Each quiz helps improve your trading skills."}
+                ? t('patternQuiz.strongSkills')
+                : t('patternQuiz.keepStudying')}
             </p>
           </div>
           
           <Button onClick={handleRestart} size="lg" className="px-8">
             <RotateCcw className="mr-2 h-4 w-4" />
-            Take New Quiz
+            {t('patternQuiz.takeNewQuiz')}
           </Button>
         </CardContent>
       </Card>
@@ -1116,20 +1118,18 @@ export const PatternQuiz = () => {
       <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Resume Quiz?</AlertDialogTitle>
+            <AlertDialogTitle>{t('patternQuiz.resumeTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              You have a saved quiz in progress from{' '}
-              {savedProgress && new Date(savedProgress.timestamp).toLocaleDateString()}. 
-              Would you like to continue where you left off or start a new quiz?
+              {t('patternQuiz.resumeDesc', { date: savedProgress ? new Date(savedProgress.timestamp).toLocaleDateString() : '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleStartFresh}>
-              Start Fresh
+              {t('patternQuiz.startFresh')}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleResume}>
               <Play className="mr-2 h-4 w-4" />
-              Continue Quiz
+              {t('patternQuiz.continueQuiz')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1140,16 +1140,16 @@ export const PatternQuiz = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Question {currentQuestion + 1} of {questions.length}</span>
+              <span className="text-sm font-medium">{t('patternQuiz.questionOf', { current: currentQuestion + 1, total: questions.length })}</span>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">{score} correct</span>
+                <span className="text-sm text-muted-foreground">{t('patternQuiz.correct', { score })}</span>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={handleSaveAndExit}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  Save & Exit
+                  {t('patternQuiz.saveAndExit')}
                 </Button>
               </div>
             </div>
@@ -1165,8 +1165,8 @@ export const PatternQuiz = () => {
               currentQ.type === "visual" ? "default" : 
               currentQ.type === "characteristics" ? "secondary" : "destructive"
             }>
-              {currentQ.type === "visual" ? "Visual Recognition" :
-               currentQ.type === "characteristics" ? "Pattern Analysis" : "Risk Management"}
+              {currentQ.type === "visual" ? t('patternQuiz.visualRecognition') :
+               currentQ.type === "characteristics" ? t('patternQuiz.patternAnalysis') : t('patternQuiz.riskManagement')}
             </Badge>
           </div>
           
@@ -1230,7 +1230,7 @@ export const PatternQuiz = () => {
                     <XCircle className="h-5 w-5 text-red-600" />
                   )}
                   <span className="font-semibold">
-                    {selectedAnswer === currentQ.correctAnswer ? "Correct!" : "Incorrect"}
+                    {selectedAnswer === currentQ.correctAnswer ? t('patternQuiz.correctLabel') : t('patternQuiz.incorrectLabel')}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">{currentQ.explanation}</p>
@@ -1243,14 +1243,14 @@ export const PatternQuiz = () => {
                   <Link to={topicLink.url}>
                     <Button variant="outline" className="w-full" size="lg">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Learn More: {topicLink.title}
+                      {t('patternQuiz.learnMore', { title: topicLink.title })}
                     </Button>
                   </Link>
                 );
               })()}
               
               <Button onClick={handleNext} className="w-full" size="lg">
-                {currentQuestion < questions.length - 1 ? "Next Question" : "View Results"}
+                {currentQuestion < questions.length - 1 ? t('patternQuiz.nextQuestion') : t('patternQuiz.viewResults')}
               </Button>
             </div>
           )}
