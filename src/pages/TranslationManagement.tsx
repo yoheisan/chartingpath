@@ -9,13 +9,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen, FileSearch } from 'lucide-react';
+import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen, FileSearch, Bug } from 'lucide-react';
 import i18n, { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { SiteStringScanner } from '@/components/SiteStringScanner';
 import enTranslations from '@/i18n/locales/en.json';
 import { TranslationGapAnalysis } from '@/components/TranslationGapAnalysis';
+import { TranslationDebugPanel } from '@/components/TranslationDebugPanel';
 
 interface PendingTranslation {
   id: string;
@@ -72,7 +73,7 @@ export const TranslationManagement = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps'>('coverage');
+  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps' | 'debug'>('coverage');
   const [gapSyncing, setGapSyncing] = useState(false);
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [coverageLoading, setCoverageLoading] = useState(false);
@@ -644,6 +645,14 @@ export const TranslationManagement = () => {
             <Clock className="h-4 w-4" />
             Pending ({pendingTranslations.length})
           </Button>
+          <Button
+            variant={activeTab === 'debug' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('debug')}
+            className="flex items-center gap-2"
+          >
+            <Bug className="h-4 w-4" />
+            Debug Tools
+          </Button>
         </div>
 
         {/* Coverage & Sync Tab */}
@@ -967,6 +976,11 @@ export const TranslationManagement = () => {
         {/* Site Scanner Tab */}
         {activeTab === 'scanner' && (
           <SiteStringScanner />
+        )}
+
+        {/* Debug Tools Tab */}
+        {activeTab === 'debug' && (
+          <TranslationDebugPanel />
         )}
 
         {/* Submit New Translation Tab */}
