@@ -1495,6 +1495,7 @@ export type Database = {
           scan_session_id: string
           string_hash: string
           string_key: string
+          updated_at: string | null
         }
         Insert: {
           context_element?: string | null
@@ -1512,6 +1513,7 @@ export type Database = {
           scan_session_id: string
           string_hash: string
           string_key: string
+          updated_at?: string | null
         }
         Update: {
           context_element?: string | null
@@ -1529,6 +1531,7 @@ export type Database = {
           scan_session_id?: string
           string_hash?: string
           string_key?: string
+          updated_at?: string | null
         }
         Relationships: [
           {

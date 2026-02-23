@@ -1,0 +1,1 @@
+ALTER TABLE public.extracted_strings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now();
