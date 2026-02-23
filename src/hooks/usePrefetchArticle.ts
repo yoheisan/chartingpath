@@ -35,22 +35,7 @@ const STATIC_ARTICLE_SLUGS = new Set([
   'platform-glossary',
   'command-center-guide',
   'platform-faq',
-  // Strategy articles
-  'strategies/scalping',
-  'strategies/day-trading',
-  'strategies/trend-following',
-  'strategies/breakout',
-  'strategies/mean-reversion',
-  'strategies/momentum',
-  'strategies/swing-trading',
-  'strategies/position-trading',
-  'strategies/macd-strategy',
-  'strategies/bollinger-bands',
-  'strategies/rsi-divergence',
-  'strategies/vwap',
-  'strategies/fibonacci',
-  'strategies/support-resistance',
-  'strategies/gap-trading',
+  // Strategy articles migrated to /blog/:slug dynamic articles
 ]);
 
 /**
@@ -99,22 +84,7 @@ export function usePrefetchArticle() {
         'platform-glossary': () => import('@/pages/blog/PlatformGlossary'),
         'command-center-guide': () => import('@/pages/blog/CommandCenterGuide'),
         'platform-faq': () => import('@/pages/blog/PlatformFAQ'),
-        // Strategy articles
-        'strategies/scalping': () => import('@/pages/strategies/ScalpingStrategy'),
-        'strategies/day-trading': () => import('@/pages/strategies/DayTradingStrategy'),
-        'strategies/trend-following': () => import('@/pages/strategies/TrendFollowingStrategy'),
-        'strategies/breakout': () => import('@/pages/strategies/BreakoutStrategy'),
-        'strategies/mean-reversion': () => import('@/pages/strategies/MeanReversionStrategy'),
-        'strategies/momentum': () => import('@/pages/strategies/MomentumStrategy'),
-        'strategies/swing-trading': () => import('@/pages/strategies/SwingTradingStrategy'),
-        'strategies/position-trading': () => import('@/pages/strategies/PositionTradingStrategy'),
-        'strategies/macd-strategy': () => import('@/pages/strategies/MACDStrategy'),
-        'strategies/bollinger-bands': () => import('@/pages/strategies/BollingerBandsStrategy'),
-        'strategies/rsi-divergence': () => import('@/pages/strategies/RSIDivergenceStrategy'),
-        'strategies/vwap': () => import('@/pages/strategies/VWAPStrategy'),
-        'strategies/fibonacci': () => import('@/pages/strategies/FibonacciStrategy'),
-        'strategies/support-resistance': () => import('@/pages/strategies/SupportResistanceStrategy'),
-        'strategies/gap-trading': () => import('@/pages/strategies/GapTradingStrategy'),
+        // Strategy articles migrated to /blog/:slug dynamic articles (no prefetch needed)
       };
       
       const prefetchFn = prefetchMap[slug];
