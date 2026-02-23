@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 import { PATTERN_DETAILS } from "@/utils/PatternDetails";
+import { useTranslation } from "react-i18next";
 
 interface QuizQuestion {
   id: string;
@@ -15,7 +16,7 @@ interface QuizQuestion {
   category: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | 'stock_market' | 'forex' | 'cryptocurrency' | 'commodities';
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   question_text: string;
-  options: any; // Json type from Supabase
+  options: any;
   correct_answer: number;
   explanation: string;
   pattern_name: string | null;
@@ -41,6 +42,7 @@ export const DatabaseQuiz = ({
   limit = 10,
   title = "Pattern Recognition Quiz"
 }: DatabaseQuizProps) => {
+  const { t } = useTranslation();
   const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -65,11 +67,10 @@ export const DatabaseQuiz = ({
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        toast.error("No questions found for this category");
+        toast.error(t('databaseQuiz.noQuestions'));
         return;
       }
 
-      // Process questions to convert options from Json to string[]
       const processedQuestions: ProcessedQuestion[] = data.map((q: QuizQuestion) => ({
         ...q,
         options: Array.isArray(q.options) ? q.options : []
@@ -78,7 +79,7 @@ export const DatabaseQuiz = ({
       setQuestions(processedQuestions);
     } catch (error: any) {
       console.error('Error loading questions:', error);
-      toast.error("Failed to load quiz questions");
+      toast.error(t('databaseQuiz.noQuestions'));
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export const DatabaseQuiz = ({
   const saveQuizAttempt = async (questionId: string, isCorrect: boolean) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return; // Don't save if not authenticated
+      if (!user) return;
 
       const { error } = await supabase
         .from('quiz_attempts')
@@ -118,7 +119,6 @@ export const DatabaseQuiz = ({
       setScore(score + 1);
     }
 
-    // Save the attempt
     saveQuizAttempt(currentQuestion.id, isCorrect);
   };
 
@@ -145,7 +145,7 @@ export const DatabaseQuiz = ({
     return (
       <Card className="max-w-4xl mx-auto">
         <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">Loading quiz questions...</p>
+          <p className="text-muted-foreground">{t('databaseQuiz.loading')}</p>
         </CardContent>
       </Card>
     );
@@ -155,9 +155,9 @@ export const DatabaseQuiz = ({
     return (
       <Card className="max-w-4xl mx-auto">
         <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">No questions available</p>
+          <p className="text-muted-foreground">{t('databaseQuiz.noQuestions')}</p>
           <Button onClick={loadQuestions} className="mt-4">
-            Try Again
+            {t('databaseQuiz.tryAgain')}
           </Button>
         </CardContent>
       </Card>
@@ -171,18 +171,18 @@ export const DatabaseQuiz = ({
       <Card className="max-w-2xl mx-auto">
         <CardContent className="p-8 text-center">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-primary" />
-          <h2 className="text-3xl font-bold mb-4">Quiz Complete!</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('databaseQuiz.quizComplete')}</h2>
           <p className="text-5xl font-bold mb-4 text-primary">
             {score} / {questions.length}
           </p>
           <p className="text-xl mb-6 text-muted-foreground">
-            {percentage >= 80 ? "Excellent! You're a pattern recognition expert!" :
-             percentage >= 60 ? "Good job! Keep practicing to improve." :
-             "Keep learning! Practice makes perfect."}
+            {percentage >= 80 ? t('databaseQuiz.excellentResult') :
+             percentage >= 60 ? t('databaseQuiz.goodResult') :
+             t('databaseQuiz.keepLearning')}
           </p>
           <Button onClick={handleRestart} size="lg" className="gap-2">
             <RotateCcw className="w-4 h-4" />
-            Try Again
+            {t('databaseQuiz.tryAgain')}
           </Button>
         </CardContent>
       </Card>
@@ -196,10 +196,10 @@ export const DatabaseQuiz = ({
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">
-              Question {currentQuestionIndex + 1} of {questions.length}
+              {t('databaseQuiz.questionOf', { current: currentQuestionIndex + 1, total: questions.length })}
             </span>
             <span className="text-sm font-medium">
-              Score: {score} / {currentQuestionIndex + (showExplanation ? 1 : 0)}
+              {t('databaseQuiz.score', { score, total: currentQuestionIndex + (showExplanation ? 1 : 0) })}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -219,7 +219,7 @@ export const DatabaseQuiz = ({
 
           <p className="text-lg mb-6">{currentQuestion.question_text}</p>
 
-          {/* Image Display - For questions with image_url */}
+          {/* Image Display */}
           {currentQuestion.image_url && !currentQuestion.pattern_key && !currentQuestion.pattern_name && (
             <div className="mb-6 rounded-lg overflow-hidden border">
               <img 
@@ -230,7 +230,7 @@ export const DatabaseQuiz = ({
             </div>
           )}
 
-          {/* Pattern Chart Display - For pattern-specific questions */}
+          {/* Pattern Chart Display */}
           {(currentQuestion.pattern_key || currentQuestion.pattern_name) && (
             <div className="mb-6 rounded-lg overflow-hidden">
               <DynamicPatternChart 
@@ -287,12 +287,12 @@ export const DatabaseQuiz = ({
                   : 'bg-red-500/10 border border-red-500'
               }`}>
                 <p className="font-semibold mb-2">
-                  {selectedAnswer === currentQuestion.correct_answer ? '✓ Correct!' : '✗ Incorrect'}
+                  {selectedAnswer === currentQuestion.correct_answer ? t('databaseQuiz.correct') : t('databaseQuiz.incorrect')}
                 </p>
                 <p className="text-sm">{currentQuestion.explanation}</p>
               </div>
 
-              {/* Pattern Details - Formation and Identification */}
+              {/* Pattern Details */}
               {(currentQuestion.pattern_key || currentQuestion.pattern_name) && (() => {
                 const patternKey = currentQuestion.pattern_key || currentQuestion.pattern_name?.toLowerCase().replace(/\s+/g, '-');
                 const patternDetails = patternKey ? PATTERN_DETAILS[patternKey] : null;
@@ -301,14 +301,14 @@ export const DatabaseQuiz = ({
                   <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
                     <div>
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                        <span className="text-primary">📋</span> How This Pattern Forms
+                        <span className="text-primary">📋</span> {t('databaseQuiz.howItForms')}
                       </h4>
                       <p className="text-sm text-muted-foreground">{patternDetails.formation}</p>
                     </div>
                     
                     <div>
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                        <span className="text-primary">🔍</span> How to Identify It
+                        <span className="text-primary">🔍</span> {t('databaseQuiz.howToIdentify')}
                       </h4>
                       <ul className="space-y-1">
                         {patternDetails.characteristics.map((char, idx) => (
@@ -323,7 +323,7 @@ export const DatabaseQuiz = ({
                     {patternDetails.confirmation && (
                       <div>
                         <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                          <span className="text-primary">✓</span> Confirmation
+                          <span className="text-primary">✓</span> {t('databaseQuiz.confirmation')}
                         </h4>
                         <p className="text-sm text-muted-foreground">{patternDetails.confirmation}</p>
                       </div>
@@ -332,15 +332,15 @@ export const DatabaseQuiz = ({
                 );
               })()}
 
-              {/* Professional Standards & Sources - show when mentioned in explanation or by category */}
+              {/* Professional Standards Sources */}
               {(currentQuestion.explanation.toLowerCase().includes('professional standard') || 
                 currentQuestion.category === 'professional_practices') && (
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                    <span className="text-primary">📚</span> Professional Standards Sources
+                    <span className="text-primary">📚</span> {t('databaseQuiz.professionalSources')}
                   </h4>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>Information based on industry standards from:</p>
+                    <p>{t('databaseQuiz.professionalSourcesInfo')}</p>
                     <ul className="ml-4 space-y-1">
                       <li>• CFA Institute - Standards of Practice Handbook</li>
                       <li>• SEC (Securities and Exchange Commission) - Trading Regulations</li>
@@ -355,10 +355,10 @@ export const DatabaseQuiz = ({
               {currentQuestion.category === 'risk_management' && (
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                    <span className="text-primary">📚</span> Risk Management Standards
+                    <span className="text-primary">📚</span> {t('databaseQuiz.riskManagementSources')}
                   </h4>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>Based on frameworks from:</p>
+                    <p>{t('databaseQuiz.riskManagementSourcesInfo')}</p>
                     <ul className="ml-4 space-y-1">
                       <li>• CFA Institute - Risk Management & Performance Standards</li>
                       <li>• GARP (Global Association of Risk Professionals) - FRM Standards</li>
@@ -372,10 +372,10 @@ export const DatabaseQuiz = ({
               {currentQuestion.category === 'statistics' && (
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                    <span className="text-primary">📚</span> Statistical Standards
+                    <span className="text-primary">📚</span> {t('databaseQuiz.statisticalSources')}
                   </h4>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>Methodologies recognized by:</p>
+                    <p>{t('databaseQuiz.statisticalSourcesInfo')}</p>
                     <ul className="ml-4 space-y-1">
                       <li>• CFA Institute - Quantitative Methods Standards</li>
                       <li>• Academic research from Journal of Technical Analysis</li>
@@ -390,7 +390,7 @@ export const DatabaseQuiz = ({
           {/* Next Button */}
           {showExplanation && (
             <Button onClick={handleNext} className="w-full mt-4" size="lg">
-              {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+              {currentQuestionIndex < questions.length - 1 ? t('databaseQuiz.nextQuestion') : t('databaseQuiz.finishQuiz')}
             </Button>
           )}
         </CardContent>
