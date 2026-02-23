@@ -312,8 +312,12 @@ export const TranslationManagement = () => {
       if (error) throw error;
 
       const langStats = data?.summary?.[langCode];
+      const translated = langStats?.translated || 0;
+      const errors = langStats?.errors || 0;
+      const skipped = langStats?.skipped || 0;
 
-      // Re-export locale bundle
+      // Re-export locale bundle from DB (always, even if 0 new translations —
+      // the DB may already have keys the static JSON file is missing)
       const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'export_locale_json', language: langCode }
       });
@@ -321,9 +325,13 @@ export const TranslationManagement = () => {
         i18n.addResourceBundle(langCode, 'translation', localeData, true, true);
       }
 
+      // If nothing was translated but nothing errored, the DB already had them
+      const alreadyInDb = translated === 0 && errors === 0 && skipped > 0;
       toast({
         title: `Gap Sync Complete: ${langName}`,
-        description: `Translated ${langStats?.translated || 0} of ${missingKeys.length} missing keys${langStats?.errors ? ` (${langStats.errors} errors)` : ''}`
+        description: alreadyInDb
+          ? `All ${missingKeys.length} keys already exist in the database. Runtime bundle refreshed. To update static files, use "Export JSON".`
+          : `Translated ${translated} of ${missingKeys.length} missing keys${errors ? ` (${errors} errors)` : ''}`
       });
 
       await loadCoverageStats();
