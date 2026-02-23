@@ -488,6 +488,50 @@ export const STRATEGY_INDICATOR_MAPPING: Record<string, StrategyIndicatorConfig[
   'arbitrage-trading': [
     { indicator: 'bollinger', title: 'Spread Analysis', symbol: 'SPY' }
   ],
+
+  // ===== PATTERN CONFIRMATION GUIDES =====
+  'using-macd-to-confirm-patterns': [
+    { indicator: 'macd', title: 'MACD Pattern Confirmation', description: 'MACD histogram and signal line crossovers for validating pattern breakouts', symbol: 'SPY' }
+  ],
+  'bollinger-bands-pattern-confirmation': [
+    { indicator: 'bollinger', title: 'Bollinger Band Squeeze & Walk', description: 'Volatility bands confirming pattern breakout energy', symbol: 'AAPL' }
+  ],
+  'rsi-divergence-pattern-validation': [
+    { indicator: 'rsi', title: 'RSI Divergence at Pattern Levels', description: 'RSI divergence confirming reversal pattern signals', symbol: 'MSFT' }
+  ],
+  'vwap-pattern-confirmation': [
+    { indicator: 'ema-crossover', title: 'VWAP & Moving Average Context', description: 'Institutional fair value confirmation for intraday patterns', symbol: 'SPY' }
+  ],
+  'fibonacci-pattern-confluence': [
+    { indicator: 'ema-crossover', title: 'Fibonacci & Moving Average Confluence', description: 'Fibonacci retracement zones aligning with pattern boundaries', symbol: 'AAPL' }
+  ],
+  'trend-following-pattern-alignment': [
+    { indicator: 'adx', title: 'ADX Trend Strength', description: 'Measuring trend strength for pattern direction alignment', symbol: 'SPY' },
+    { indicator: 'ema-crossover', title: 'Moving Average Stack', description: '20/50/200 EMA alignment confirming trend direction', symbol: 'SPY' }
+  ],
+  'momentum-pattern-confirmation': [
+    { indicator: 'macd', title: 'MACD Momentum Gauge', description: 'Histogram expansion confirming breakout strength', symbol: 'AAPL' },
+    { indicator: 'rsi', title: 'RSI Momentum Thrust', description: 'RSI position confirming breakout momentum', symbol: 'AAPL' }
+  ],
+  'mean-reversion-pattern-context': [
+    { indicator: 'bollinger', title: 'Bollinger Band Extremes', description: 'Mean reversion signals at pattern support/resistance', symbol: 'SPY' },
+    { indicator: 'rsi', title: 'RSI Extremes at Patterns', description: 'Oversold/overbought confirmation at pattern levels', symbol: 'SPY' }
+  ],
+  'swing-trading-pattern-strategies': [
+    { indicator: 'ema-crossover', title: 'Swing Trade EMA Confirmation', description: '20/50 EMA bounce entries within pattern structure', symbol: 'AAPL' }
+  ],
+  'day-trading-pattern-strategies': [
+    { indicator: 'ema-crossover', title: 'Intraday EMA Context', description: '9/20 EMA alignment for intraday pattern confirmation', symbol: 'SPY' }
+  ],
+  'breakout-pattern-execution': [
+    { indicator: 'adx', title: 'ADX Breakout Strength', description: 'Trend strength confirming pattern breakout validity', symbol: 'SPY' }
+  ],
+  'position-trading-pattern-strategies': [
+    { indicator: 'sma-crossover', title: 'Weekly Moving Average Cross', description: '50/200 SMA for position trade trend confirmation', symbol: 'SPY' }
+  ],
+  'gap-trading-pattern-context': [
+    { indicator: 'ema-crossover', title: 'Gap Context EMAs', description: 'Moving average position relative to price gaps', symbol: 'AAPL' }
+  ],
 };
 
 /**
