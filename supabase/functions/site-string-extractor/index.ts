@@ -514,6 +514,8 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
     .select('*')
     .in('id', stringIds);
 
+  const newKeys: Array<{ key: string; value: string }> = [];
+
   for (const string of strings || []) {
     // Create translation key if it doesn't exist
     const { error: keyError } = await supabase
@@ -543,5 +545,90 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
         context_page: string.context_path,
         context_element: string.context_element
       });
+
+    newKeys.push({ key: string.string_key, value: string.original_text });
   }
+
+  // Auto-translate the newly approved strings into all target languages
+  if (newKeys.length > 0) {
+    await autoTranslateStrings(supabase, newKeys);
+  }
+}
+
+const TARGET_LANGUAGES: Record<string, string> = {
+  es: 'Spanish', pt: 'Portuguese', fr: 'French', zh: 'Chinese (Simplified)',
+  de: 'German', hi: 'Hindi', id: 'Indonesian', it: 'Italian',
+  ja: 'Japanese', ru: 'Russian', ar: 'Arabic', af: 'Afrikaans',
+  ko: 'Korean', tr: 'Turkish'
+};
+
+async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; value: string }>) {
+  const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!geminiApiKey) {
+    console.error('GEMINI_API_KEY not set, skipping auto-translation');
+    return;
+  }
+
+  console.log(`Auto-translating ${keys.length} strings into ${Object.keys(TARGET_LANGUAGES).length} languages`);
+
+  // Build a simple key→value map for the prompt
+  const sourceMap: Record<string, string> = {};
+  for (const k of keys) {
+    sourceMap[k.key] = k.value;
+  }
+
+  for (const [langCode, langName] of Object.entries(TARGET_LANGUAGES)) {
+    try {
+      const prompt = `Translate the following JSON values from English to ${langName}. Keep JSON keys unchanged. Return ONLY valid JSON, no markdown fences.\n\n${JSON.stringify(sourceMap, null, 2)}`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        console.error(`Gemini API error for ${langCode}: ${response.status}`);
+        continue;
+      }
+
+      const result = await response.json();
+      let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      // Strip markdown fences
+      rawText = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      // Strip control characters
+      rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\t' ? ch : '');
+
+      const translated: Record<string, string> = JSON.parse(rawText);
+
+      // Upsert translations
+      for (const [key, value] of Object.entries(translated)) {
+        if (typeof value !== 'string' || !value.trim()) continue;
+
+        await supabase
+          .from('translations')
+          .upsert({
+            key,
+            language_code: langCode,
+            value: value.trim(),
+            status: 'auto_translated',
+            automation_source: 'site_scanner_auto',
+            context_page: keys.find(k => k.key === key) ? 'auto_extracted' : null
+          }, { onConflict: 'key,language_code' });
+      }
+
+      console.log(`✓ Translated ${Object.keys(translated).length} strings to ${langName}`);
+    } catch (error) {
+      console.error(`Error translating to ${langName}:`, error);
+    }
+  }
+
+  console.log('Auto-translation complete');
 }
