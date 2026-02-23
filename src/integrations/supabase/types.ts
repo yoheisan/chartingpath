@@ -1836,6 +1836,8 @@ export type Database = {
           id: string
           is_manual_override: boolean
           language_code: string
+          og_description: string | null
+          og_title: string | null
           seo_description: string | null
           seo_title: string | null
           source_hash: string | null
@@ -1851,6 +1853,8 @@ export type Database = {
           id?: string
           is_manual_override?: boolean
           language_code: string
+          og_description?: string | null
+          og_title?: string | null
           seo_description?: string | null
           seo_title?: string | null
           source_hash?: string | null
@@ -1866,6 +1870,8 @@ export type Database = {
           id?: string
           is_manual_override?: boolean
           language_code?: string
+          og_description?: string | null
+          og_title?: string | null
           seo_description?: string | null
           seo_title?: string | null
           source_hash?: string | null
