@@ -519,6 +519,19 @@ export const SiteStringScanner = () => {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Extracted Strings</CardTitle>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedStrings.size === extractedStrings.length) {
+                      setSelectedStrings(new Set());
+                    } else {
+                      setSelectedStrings(new Set(extractedStrings.map(s => s.id)));
+                    }
+                  }}
+                >
+                  {selectedStrings.size === extractedStrings.length ? 'Deselect All' : 'Select All'}
+                </Button>
                 {selectedStrings.size > 0 && (
                   <Button
                     onClick={approveSelectedStrings}
