@@ -83,7 +83,7 @@ const QuizHub = () => {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Eye className="h-8 w-8 text-primary" />
-                <Badge variant="outline">Visual Recognition</Badge>
+                <Badge variant="outline">{t('quizHub.visualRecognition')}</Badge>
               </div>
               <CardTitle className="text-2xl">{t('quizHub.patternQuizTitle')}</CardTitle>
               <CardDescription>{t('quizHub.patternQuizDesc')}</CardDescription>
@@ -92,15 +92,15 @@ const QuizHub = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                  <span className="font-medium">15 patterns</span>
+                  <span className="font-medium">{t('quizHub.patternsCount')}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t('quizHub.focus')}</span>
-                  <span className="font-medium">Visual pattern recognition</span>
+                  <span className="font-medium">{t('quizHub.visualPatternRecognition')}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                  <Badge variant="secondary">Intermediate</Badge>
+                  <Badge variant="secondary">{t('quizHub.intermediate')}</Badge>
                 </div>
                 <Link to="/quiz/pattern-identification" className="block">
                   <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
@@ -115,7 +115,7 @@ const QuizHub = () => {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <BookOpen className="h-8 w-8 text-primary" />
-                <Badge variant="outline">Comprehensive</Badge>
+                <Badge variant="outline">{t('quizHub.comprehensive')}</Badge>
               </div>
               <CardTitle className="text-2xl">{t('quizHub.tradingKnowledgeTitle')}</CardTitle>
               <CardDescription>{t('quizHub.tradingKnowledgeDesc')}</CardDescription>
@@ -124,15 +124,15 @@ const QuizHub = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                  <span className="font-medium">25+ questions</span>
+                  <span className="font-medium">{t('quizHub.questionsCount25')}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Categories:</span>
-                  <span className="font-medium">All categories</span>
+                  <span className="text-muted-foreground">{t('quizHub.categories')}</span>
+                  <span className="font-medium">{t('quizHub.allCategories')}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                  <Badge variant="secondary">All Levels</Badge>
+                  <Badge variant="secondary">{t('quizHub.allLevels')}</Badge>
                 </div>
                 <Link to="/quiz/trading-knowledge" className="block">
                   <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
@@ -154,7 +154,7 @@ const QuizHub = () => {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <TrendingUp className="h-8 w-8 text-primary" />
-                  <Badge variant="outline">Stock Market</Badge>
+                  <Badge variant="outline">{t('quizHub.stockMarket')}</Badge>
                 </div>
                 <CardTitle className="text-2xl">{t('quizHub.stockMarketQuiz')}</CardTitle>
                 <CardDescription>{t('quizHub.stockMarketDesc')}</CardDescription>
@@ -163,19 +163,19 @@ const QuizHub = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                    <span className="font-medium">15 questions</span>
+                    <span className="font-medium">{t('quizHub.questionsCount15')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.focus')}</span>
-                    <span className="font-medium">P/E ratios, market hours, indices</span>
+                    <span className="font-medium">{t('quizHub.stockFocus')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                    <Badge variant="secondary">Beginner to Advanced</Badge>
+                    <Badge variant="secondary">{t('quizHub.beginnerToAdvanced')}</Badge>
                   </div>
                   <Link to="/quiz/stock-market" className="block">
                     <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
-                      Start Stock Market Quiz
+                      {t('quizHub.startStockQuiz')}
                     </Button>
                   </Link>
                 </div>
@@ -186,7 +186,7 @@ const QuizHub = () => {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="h-8 w-8 text-primary" />
-                  <Badge variant="outline">Forex</Badge>
+                  <Badge variant="outline">{t('quizHub.forex')}</Badge>
                 </div>
                 <CardTitle className="text-2xl">{t('quizHub.forexQuiz')}</CardTitle>
                 <CardDescription>{t('quizHub.forexDesc')}</CardDescription>
@@ -195,19 +195,19 @@ const QuizHub = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                    <span className="font-medium">15 questions</span>
+                    <span className="font-medium">{t('quizHub.questionsCount15')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.focus')}</span>
-                    <span className="font-medium">Currency pairs, NFP, carry trades</span>
+                    <span className="font-medium">{t('quizHub.forexFocus')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                    <Badge variant="secondary">Beginner to Advanced</Badge>
+                    <Badge variant="secondary">{t('quizHub.beginnerToAdvanced')}</Badge>
                   </div>
                   <Link to="/quiz/forex" className="block">
                     <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
-                      Start Forex Quiz
+                      {t('quizHub.startForexQuiz')}
                     </Button>
                   </Link>
                 </div>
@@ -218,7 +218,7 @@ const QuizHub = () => {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <Bitcoin className="h-8 w-8 text-primary" />
-                  <Badge variant="outline">Cryptocurrency</Badge>
+                  <Badge variant="outline">{t('quizHub.cryptocurrency')}</Badge>
                 </div>
                 <CardTitle className="text-2xl">{t('quizHub.cryptoQuiz')}</CardTitle>
                 <CardDescription>{t('quizHub.cryptoDesc')}</CardDescription>
@@ -227,19 +227,19 @@ const QuizHub = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                    <span className="font-medium">15 questions</span>
+                    <span className="font-medium">{t('quizHub.questionsCount15')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.focus')}</span>
-                    <span className="font-medium">Bitcoin, DeFi, blockchain, wallets</span>
+                    <span className="font-medium">{t('quizHub.cryptoFocus')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                    <Badge variant="secondary">Beginner to Advanced</Badge>
+                    <Badge variant="secondary">{t('quizHub.beginnerToAdvanced')}</Badge>
                   </div>
                   <Link to="/quiz/crypto" className="block">
                     <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
-                      Start Crypto Quiz
+                      {t('quizHub.startCryptoQuiz')}
                     </Button>
                   </Link>
                 </div>
@@ -250,7 +250,7 @@ const QuizHub = () => {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <Boxes className="h-8 w-8 text-primary" />
-                  <Badge variant="outline">Commodities</Badge>
+                  <Badge variant="outline">{t('quizHub.commodities')}</Badge>
                 </div>
                 <CardTitle className="text-2xl">{t('quizHub.commoditiesQuiz')}</CardTitle>
                 <CardDescription>{t('quizHub.commoditiesDesc')}</CardDescription>
@@ -259,19 +259,19 @@ const QuizHub = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.questions')}</span>
-                    <span className="font-medium">15 questions</span>
+                    <span className="font-medium">{t('quizHub.questionsCount15')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.focus')}</span>
-                    <span className="font-medium">Gold, oil, futures, COT reports</span>
+                    <span className="font-medium">{t('quizHub.commoditiesFocus')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{t('quizHub.difficulty')}</span>
-                    <Badge variant="secondary">Beginner to Advanced</Badge>
+                    <Badge variant="secondary">{t('quizHub.beginnerToAdvanced')}</Badge>
                   </div>
                   <Link to="/quiz/commodities" className="block">
                     <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
-                      Start Commodities Quiz
+                      {t('quizHub.startCommoditiesQuiz')}
                     </Button>
                   </Link>
                 </div>
