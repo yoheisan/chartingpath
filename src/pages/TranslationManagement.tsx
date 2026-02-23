@@ -73,6 +73,7 @@ export const TranslationManagement = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner'>('coverage');
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
+  const [coverageLoading, setCoverageLoading] = useState(false);
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
   const [syncProgress, setSyncProgress] = useState<string>('');
   const [articleSyncing, setArticleSyncing] = useState(false);
@@ -132,15 +133,24 @@ export const TranslationManagement = () => {
     }
   };
 
-  const loadCoverageStats = async () => {
+  const loadCoverageStats = async (showToast = false) => {
+    setCoverageLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'get_coverage_stats' }
       });
       if (error) throw error;
       setCoverageData(data.coverage || {});
+      if (showToast) {
+        toast({ title: 'Coverage stats refreshed', description: `${data.total_keys || 0} total keys loaded` });
+      }
     } catch (error) {
       console.error('Error loading coverage stats:', error);
+      if (showToast) {
+        toast({ title: 'Error', description: 'Failed to refresh coverage stats', variant: 'destructive' });
+      }
+    } finally {
+      setCoverageLoading(false);
     }
   };
 
@@ -584,12 +594,13 @@ export const TranslationManagement = () => {
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => loadCoverageStats()}
+                      onClick={() => loadCoverageStats(true)}
                       variant="outline"
                       size="sm"
+                      disabled={coverageLoading}
                     >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Refresh
+                      <RefreshCw className={`h-4 w-4 mr-1 ${coverageLoading ? 'animate-spin' : ''}`} />
+                      {coverageLoading ? 'Refreshing...' : 'Refresh'}
                     </Button>
                     <Button
                       onClick={() => handleSyncTranslations()}
