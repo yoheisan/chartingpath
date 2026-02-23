@@ -170,7 +170,7 @@ export default function LivePatternPreview() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {setup.patternName}
+                    {t(`patternNames.${setup.patternName}`, setup.patternName)}
                   </p>
                   <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
                     <span>R:R {setup.tradePlan.rr.toFixed(1)}</span>

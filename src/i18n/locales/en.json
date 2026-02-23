@@ -1157,5 +1157,34 @@
     "loadingAlertsLibrary": "Loading alerts library...",
     "error": "Error",
     "success": "Success"
+  },
+  "patternNames": {
+    "Bull Flag": "Bull Flag",
+    "Bear Flag": "Bear Flag",
+    "Falling Wedge": "Falling Wedge",
+    "Rising Wedge": "Rising Wedge",
+    "Triple Bottom": "Triple Bottom",
+    "Triple Top": "Triple Top",
+    "Double Bottom": "Double Bottom",
+    "Double Top": "Double Top",
+    "Cup & Handle": "Cup & Handle",
+    "Inverse Cup & Handle": "Inverse Cup & Handle",
+    "Symmetrical Triangle": "Symmetrical Triangle",
+    "Ascending Triangle": "Ascending Triangle",
+    "Descending Triangle": "Descending Triangle",
+    "Head and Shoulders": "Head and Shoulders",
+    "Inverse Head and Shoulders": "Inverse Head and Shoulders",
+    "Donchian Breakout (Long)": "Donchian Breakout (Long)",
+    "Donchian Breakout (Short)": "Donchian Breakout (Short)",
+    "Channel Up": "Channel Up",
+    "Channel Down": "Channel Down",
+    "Pennant": "Pennant"
+  },
+  "timeframes": {
+    "1H": "1H",
+    "4H": "4H",
+    "8H": "8H",
+    "1D": "1D",
+    "1W": "1W"
   }
 }

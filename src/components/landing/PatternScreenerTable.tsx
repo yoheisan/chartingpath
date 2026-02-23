@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -479,6 +480,7 @@ function getCryptoLogoName(ticker: string): string {
 // InstrumentLogo is now imported from @/components/charts/InstrumentLogo
 
 export default function PatternScreenerTable() {
+  const { t } = useTranslation();
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1097,7 +1099,7 @@ export default function PatternScreenerTable() {
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
                         <TableCell colSpan={8} className="py-2">
-                          <span className="font-semibold text-sm">{patternName}</span>
+                          <span className="font-semibold text-sm">{t(`patternNames.${patternName}`, patternName)}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
                           </Badge>
@@ -1127,7 +1129,7 @@ export default function PatternScreenerTable() {
                               <InstrumentLogo instrument={setup.instrument} />
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
-                              {setup.patternName}
+                              {t(`patternNames.${setup.patternName}`, setup.patternName)}
                             </TableCell>
                             <TableCell className="text-center">
                               <GradeBadge quality={setup.quality} />

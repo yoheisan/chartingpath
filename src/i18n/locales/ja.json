@@ -1052,7 +1052,12 @@
     "selfImprovingDesc": "実際の取引結果から学習し、分析ルールを自動修正します。",
     "selfImprovingCant": "ChatGPTは静的なモデルです - あなたの市場から学習することはできません。",
     "actionBridging": "アクションブリッジング",
-    "actionBridgingDesc": "すべての応答は、Pattern Lab、Edge Atlas、アラート、およびスクリプトにリンクされています。"
+    "actionBridgingDesc": "すべての応答は、Pattern Lab、Edge Atlas、アラート、およびスクリプトにリンクされています。",
+    "actionBridgingCant": "外部AIはChartingPathのツールにリンクできません。",
+    "backtested": "320K以上のバックテスト済みトレード",
+    "backtestedDesc": "Edge Atlasの実際の勝率で「実際に何が有効か？」に回答します。",
+    "backtestedCant": "ChatGPTの推測: 「教科書によると一般的に60-70%です。」",
+    "chartContext": "チャートコンテキスト分析"
   },
   "teaserSignals": {
     "grade": "グレード",
@@ -1097,6 +1102,10 @@
     "filterHint": "アセットクラス、時間足、グレードなどで絞り込む",
     "updated": "更新",
     "title": "トップパターンシグナル",
+    "subtitle": "市場全体で最高グレードのセットアップ · 1H時間足",
+    "stocks": "株式",
+    "forex": "外国為替",
+    "crypto": "暗号資産",
     "commodities": "商品",
     "noActivePatterns": "{{label}}には現在アクティブなパターンはありません。",
     "viewAllSignals": "{{count}}件の{{label}}シグナルをすべて表示"
@@ -1111,6 +1120,10 @@
     "lite": "Lite",
     "pro": "Pro",
     "seeFullPricing": "詳細な料金を見る",
+    "creditsPerMonth": "{{count}}クレジット/月",
+    "activeAlerts": "{{count}}件のアクティブアラート",
+    "basicPatterns": "基本パターン",
+    "timeframe4h": "4H時間足",
     "allTimeframes": "すべての時間足"
   },
   "livePatternPreview": {
@@ -1122,5 +1135,39 @@
     "seeAll": "すべて見る",
     "exploreAll": "すべてのライブパターンを見る",
     "disclaimer": "教育目的のみ。過去のパターンは将来の結果を保証するものではありません。"
+  },
+  "patternNames": {
+    "Bull Flag": "ブルフラッグ",
+    "Bear Flag": "ベアフラッグ",
+    "Falling Wedge": "下降ウェッジ",
+    "Rising Wedge": "上昇ウェッジ",
+    "Triple Bottom": "トリプルボトム",
+    "Triple Top": "トリプルトップ",
+    "Double Bottom": "ダブルボトム",
+    "Double Top": "ダブルトップ",
+    "Cup & Handle": "カップアンドハンドル",
+    "Inverse Cup & Handle": "逆カップアンドハンドル",
+    "Symmetrical Triangle": "シンメトリカルトライアングル",
+    "Ascending Triangle": "上昇トライアングル",
+    "Descending Triangle": "下降トライアングル",
+    "Head and Shoulders": "ヘッドアンドショルダー",
+    "Inverse Head and Shoulders": "逆ヘッドアンドショルダー",
+    "Donchian Breakout (Long)": "ドンチャンブレイクアウト（ロング）",
+    "Donchian Breakout (Short)": "ドンチャンブレイクアウト（ショート）",
+    "Channel Up": "上昇チャネル",
+    "Channel Down": "下降チャネル",
+    "Pennant": "ペナント"
+  },
+  "timeframes": {
+    "1H": "1時間",
+    "4H": "4時間",
+    "8H": "8時間",
+    "1D": "日足",
+    "1W": "週足"
+  },
+  "footer": {
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved."
   }
 }
