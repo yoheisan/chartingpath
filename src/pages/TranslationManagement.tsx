@@ -585,6 +585,33 @@ export const TranslationManagement = () => {
                     {syncProgress}
                   </div>
                 )}
+                {/* Summary row */}
+                {Object.keys(coverageData).length > 0 && (() => {
+                  const allStats = Object.values(coverageData);
+                  const totalKeys = allStats[0]?.total || 0;
+                  const allMatch = allStats.every(s => s.translated === totalKeys);
+                  const missingLangs = Object.entries(coverageData)
+                    .filter(([, s]) => s.translated < totalKeys)
+                    .map(([code, s]) => `${code} (${s.translated})`);
+                  return (
+                    <div className={`mb-4 p-4 rounded-lg border ${allMatch ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">
+                          Source keys: <span className="font-bold text-lg">{totalKeys}</span>
+                          <span className="mx-2">•</span>
+                          Languages: <span className="font-bold">{allStats.length}</span>
+                        </div>
+                        {allMatch ? (
+                          <Badge variant="default" className="bg-green-600">✓ All languages at 100%</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-yellow-600 text-white">
+                            ⚠ Missing: {missingLangs.join(', ')}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.entries(coverageData).map(([langCode, stats]) => {
                     const lang = languages.find(l => l.code === langCode);
