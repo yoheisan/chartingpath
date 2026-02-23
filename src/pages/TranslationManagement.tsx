@@ -542,33 +542,8 @@ export const TranslationManagement = () => {
     }
   };
 
-  const handleSyncToProduction = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'sync_to_production' }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'Translations synced. Update your locale files with the returned data.',
-        duration: 10000
-      });
-
-      console.log('Production sync data:', data);
-    } catch (error) {
-      console.error('Error syncing to production:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to sync translations',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Production Sync removed — DB-first architecture means translations
+  // are served directly from the database at runtime. No manual publish needed.
 
   if (authLoading) {
     return (
@@ -1121,37 +1096,18 @@ export const TranslationManagement = () => {
           </Card>
         )}
 
-        {/* Production Sync Card - Always Visible */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Production Sync
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Export approved translations for production deployment. Manual overrides will be preserved.
-            </p>
-            <Button 
-              onClick={handleSyncToProduction}
-              disabled={loading}
-              variant="outline"
-              className="w-full"
-            >
-              Export for Production
-            </Button>
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Enhanced Workflow:</h4>
-              <ol className="text-sm space-y-1 list-decimal list-inside">
-                <li>Search existing translations</li>
-                <li>Edit specific words/sentences manually</li>
-                <li>Submit new translations if needed</li>
-                <li>Approve pending translations</li>
-                <li>Export all approved translations</li>
-                <li>Update locale JSON files</li>
-                <li>Deploy to production</li>
-              </ol>
+        {/* DB-First Architecture Info */}
+        <Card className="mt-6 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <RefreshCw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-medium mb-1">Automated DB-First Architecture</h4>
+                <p className="text-sm text-muted-foreground">
+                  Translations are served directly from the database at runtime. No manual publishing is required — 
+                  once translations are synced or approved, users see them automatically on next page load.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
