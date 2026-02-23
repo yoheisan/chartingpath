@@ -270,7 +270,39 @@
     "panning": "パン中...",
     "previousSessionClose": "前セッション終値。日足データのみ。",
     "changeVsPrior": "前セッション終値との変化。日中の動きは表示されません。",
-    "bollingerBands": "ボリンジャーバンド"
+    "bollingerBands": "ボリンジャーバンド",
+    "doNotTrade": {
+      "majorEconomicNews": "今後4時間以内に重要な経済指標発表",
+      "weekendGapRisk": "週末ギャップリスク（金曜クローズ）",
+      "lowLiquiditySession": "低流動性セッション（祝日）",
+      "strongBullishMomentum": "ダイバージェンスのない強い上昇モメンタム",
+      "priceAbove20EMA": "出来高増加を伴う20EMA上方の価格",
+      "strongBearishMomentum": "ダイバージェンスのない強い下降モメンタム",
+      "priceBelow20EMA": "出来高増加を伴う20EMA下方の価格",
+      "resistanceBroken": "レジスタンスが既にブレイク・リテスト済み",
+      "volumeDecliningBreakout": "ブレイクアウト時の出来高減少",
+      "supportBroken": "サポートが既にブレイク・リテスト済み",
+      "bullishDivergence": "モメンタム指標の強気ダイバージェンス",
+      "rightShoulderHigher": "右肩が左肩より高い",
+      "volumeNotConfirming": "出来高パターンがブレイクダウンを確認していない",
+      "secondTopLower": "2番目の高値が1番目より大幅に低い",
+      "strongSupportHolding": "2度目のテスト後もサポートが維持",
+      "secondBottomHigher": "2番目の安値が1番目より大幅に高い",
+      "strongResistanceHolding": "2度目のテスト後もレジスタンスが維持",
+      "strongBearishHigherTF": "上位時間足で強い下降トレンド",
+      "strongBullishHigherTF": "上位時間足で強い上昇トレンド"
+    },
+    "qualityReasons": {
+      "Short signal in downtrend": "下降トレンドでのショートシグナル",
+      "Long signal in uptrend": "上昇トレンドでのロングシグナル",
+      "Stop at 2.0 ATR (optimal); Excellent R:R": "2.0 ATRでストップ（最適）; 優秀なR:R",
+      "Normal volatility regime; Optimal for trend patterns": "通常のボラティリティ環境; トレンドパターンに最適",
+      "High volatility regime; Wide stops recommended": "高ボラティリティ環境; ワイドストップ推奨",
+      "Low volatility regime; Tight stops possible": "低ボラティリティ環境; タイトストップ可能",
+      "Breakout confirmed with volume": "出来高でブレイクアウト確認",
+      "Pattern near key support level": "主要サポートレベル付近のパターン",
+      "Pattern near key resistance level": "主要レジスタンスレベル付近のパターン"
+    }
   },
   "footer": {
     "about": "概要",

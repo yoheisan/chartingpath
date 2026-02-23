@@ -640,7 +640,39 @@
     "panning": "Panning...",
     "previousSessionClose": "Previous session close. Daily data only.",
     "changeVsPrior": "Change vs. prior session close. Intraday moves not shown.",
-    "bollingerBands": "Bollinger Bands"
+    "bollingerBands": "Bollinger Bands",
+    "doNotTrade": {
+      "majorEconomicNews": "Major economic news within next 4 hours",
+      "weekendGapRisk": "Weekend gap risk (Friday close)",
+      "lowLiquiditySession": "Low liquidity session (holidays)",
+      "strongBullishMomentum": "Strong bullish momentum with no divergence",
+      "priceAbove20EMA": "Price above 20 EMA with increasing volume",
+      "strongBearishMomentum": "Strong bearish momentum with no divergence",
+      "priceBelow20EMA": "Price below 20 EMA with increasing volume",
+      "resistanceBroken": "Resistance level already broken and retested",
+      "volumeDecliningBreakout": "Volume declining on breakout attempt",
+      "supportBroken": "Support level already broken and retested",
+      "bullishDivergence": "Bullish divergence on momentum indicators",
+      "rightShoulderHigher": "Right shoulder higher than left",
+      "volumeNotConfirming": "Volume pattern not confirming breakdown",
+      "secondTopLower": "Second top significantly lower than first",
+      "strongSupportHolding": "Strong support holding after second test",
+      "secondBottomHigher": "Second bottom significantly higher than first",
+      "strongResistanceHolding": "Strong resistance holding after second test",
+      "strongBearishHigherTF": "Strong bearish trend on higher timeframe",
+      "strongBullishHigherTF": "Strong bullish trend on higher timeframe"
+    },
+    "qualityReasons": {
+      "Short signal in downtrend": "Short signal in downtrend",
+      "Long signal in uptrend": "Long signal in uptrend",
+      "Stop at 2.0 ATR (optimal); Excellent R:R": "Stop at 2.0 ATR (optimal); Excellent R:R",
+      "Normal volatility regime; Optimal for trend patterns": "Normal volatility regime; Optimal for trend patterns",
+      "High volatility regime; Wide stops recommended": "High volatility regime; Wide stops recommended",
+      "Low volatility regime; Tight stops possible": "Low volatility regime; Tight stops possible",
+      "Breakout confirmed with volume": "Breakout confirmed with volume",
+      "Pattern near key support level": "Pattern near key support level",
+      "Pattern near key resistance level": "Pattern near key resistance level"
+    }
   },
   "footer": {
     "about": "About",

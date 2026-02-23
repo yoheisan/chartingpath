@@ -61,6 +61,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { SetupWithVisuals } from '@/types/VisualSpec';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl } from '@/utils/tradingViewLinks';
 import { useAuthGate } from '@/hooks/useAuthGate';
@@ -141,53 +142,33 @@ interface FullChartViewerProps {
   selectedRR?: number; // User-selected R:R for trade planning
 }
 
-// Do Not Trade conditions based on pattern and market structure
-const getDoNotTradeConditions = (patternId: string, direction: 'long' | 'short'): string[] => {
-  const commonConditions = [
-    'Major economic news within next 4 hours',
-    'Weekend gap risk (Friday close)',
-    'Low liquidity session (holidays)',
-  ];
-  
-  const patternConditions: Record<string, string[]> = {
-    rising_wedge: [
-      'Strong bullish momentum with no divergence',
-      'Price above 20 EMA with increasing volume',
-    ],
-    falling_wedge: [
-      'Strong bearish momentum with no divergence',
-      'Price below 20 EMA with increasing volume',
-    ],
-    ascending_triangle: [
-      'Resistance level already broken and retested',
-      'Volume declining on breakout attempt',
-    ],
-    descending_triangle: [
-      'Support level already broken and retested',
-      'Bullish divergence on momentum indicators',
-    ],
-    head_shoulders: [
-      'Right shoulder higher than left',
-      'Volume pattern not confirming breakdown',
-    ],
-    double_top: [
-      'Second top significantly lower than first',
-      'Strong support holding after second test',
-    ],
-    double_bottom: [
-      'Second bottom significantly higher than first',
-      'Strong resistance holding after second test',
-    ],
-  };
-  
-  const directionConditions = direction === 'long'
-    ? ['Strong bearish trend on higher timeframe']
-    : ['Strong bullish trend on higher timeframe'];
-  
+// Do Not Trade conditions — keyed for i18n
+const DO_NOT_TRADE_KEYS = {
+  common: [
+    'majorEconomicNews',
+    'weekendGapRisk',
+    'lowLiquiditySession',
+  ],
+  patterns: {
+    rising_wedge: ['strongBullishMomentum', 'priceAbove20EMA'],
+    falling_wedge: ['strongBearishMomentum', 'priceBelow20EMA'],
+    ascending_triangle: ['resistanceBroken', 'volumeDecliningBreakout'],
+    descending_triangle: ['supportBroken', 'bullishDivergence'],
+    head_shoulders: ['rightShoulderHigher', 'volumeNotConfirming'],
+    double_top: ['secondTopLower', 'strongSupportHolding'],
+    double_bottom: ['secondBottomHigher', 'strongResistanceHolding'],
+  } as Record<string, string[]>,
+  direction: {
+    long: ['strongBearishHigherTF'],
+    short: ['strongBullishHigherTF'],
+  },
+};
+
+const getDoNotTradeKeys = (patternId: string, direction: 'long' | 'short'): string[] => {
   return [
-    ...commonConditions,
-    ...(patternConditions[patternId] || []),
-    ...directionConditions,
+    ...DO_NOT_TRADE_KEYS.common,
+    ...(DO_NOT_TRADE_KEYS.patterns[patternId] || []),
+    ...DO_NOT_TRADE_KEYS.direction[direction],
   ];
 };
 
@@ -717,10 +698,11 @@ export default function FullChartViewer({
   const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
 
   const { tradePlan, direction, patternName, instrument, visualSpec, quality, currentPrice, changePercent } = setup as SetupWithVisuals & { currentPrice?: number; changePercent?: number | null };
+  const translatedPatternName = translatePatternName(patternName);
   const isLong = direction === 'long';
   const decimals = tradePlan.priceRounding?.priceDecimals || 2;
   const formatPrice = (price: number) => price.toFixed(Math.min(decimals, 6));
-  const doNotTradeConditions = getDoNotTradeConditions(setup.patternId, direction);
+  const doNotTradeConditionKeys = getDoNotTradeKeys(setup.patternId, direction);
 
   // Defensive: older artifacts may not include the full PatternQuality shape
   const qualityReasons: string[] = Array.isArray((quality as any)?.reasons) ? (quality as any).reasons : [];
@@ -812,7 +794,7 @@ export default function FullChartViewer({
                   </Link>
                 </DialogTitle>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm text-muted-foreground">{patternName} • {(visualSpec?.timeframe || '').toUpperCase()}</p>
+                  <p className="text-sm text-muted-foreground">{translatedPatternName} • {(visualSpec?.timeframe || '').toUpperCase()}</p>
                   {currentPrice != null && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1303,7 +1285,7 @@ export default function FullChartViewer({
                     qualityReasons.map((reason, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-green-500 mt-0.5">✓</span>
-                        <span className="text-muted-foreground">{reason}</span>
+                        <span className="text-muted-foreground">{fc(`qualityReasons.${reason}`, { defaultValue: reason })}</span>
                       </li>
                     ))
                   ) : (
@@ -1323,10 +1305,10 @@ export default function FullChartViewer({
               </CardHeader>
               <CardContent>
                 <ul className="text-xs space-y-1.5">
-                  {doNotTradeConditions.slice(0, 5).map((condition, i) => (
+                  {doNotTradeConditionKeys.slice(0, 5).map((key, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-destructive mt-0.5">✕</span>
-                      <span className="text-muted-foreground">{condition}</span>
+                      <span className="text-muted-foreground">{fc(`doNotTrade.${key}`)}</span>
                     </li>
                   ))}
                 </ul>
@@ -1353,7 +1335,7 @@ export default function FullChartViewer({
                     </div>
                     <div className="flex-1 min-w-0">
                        <p className="text-xs font-medium">{fc('researchHistory')}</p>
-                       <p className="text-[10px] text-muted-foreground truncate">{fc('backtestFor', { pattern: patternName })}</p>
+                       <p className="text-[10px] text-muted-foreground truncate">{fc('backtestFor', { pattern: translatedPatternName })}</p>
                     </div>
                   </div>
                 </a>
