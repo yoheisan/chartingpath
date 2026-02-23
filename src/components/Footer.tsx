@@ -91,10 +91,10 @@ const Footer = () => {
 
           {/* Copyright and Legal */}
           <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} ChartingPath. Market Leap Partners Inc. All rights reserved.</p>
+            <p>{t('footer.copyright', '© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved.', { year: new Date().getFullYear() })}</p>
             <div className="flex items-center gap-4">
-              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms', 'Terms')}</Link>
+              <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy', 'Privacy')}</Link>
             </div>
           </div>
         </div>
@@ -202,10 +202,10 @@ const Footer = () => {
 
         {/* Copyright and Legal */}
         <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} ChartingPath. Market Leap Partners Inc. All rights reserved.</p>
+          <p>{t('footer.copyright', '© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved.', { year: new Date().getFullYear() })}</p>
           <div className="flex items-center gap-4">
-            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms', 'Terms')}</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy', 'Privacy')}</Link>
           </div>
         </div>
       </div>

@@ -57,7 +57,7 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
                 <InstrumentLogo instrument={setup.instrument} />
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
-                {setup.patternName}
+                {t(`patternNames.${setup.patternName}`, setup.patternName)}
               </TableCell>
               <TableCell className="text-center">
                 <GradeBadge quality={setup.quality} />

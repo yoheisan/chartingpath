@@ -410,7 +410,7 @@ export function EdgeAtlasSection() {
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => handlePatternClick(r)} className="font-semibold text-sm truncate hover:text-primary hover:underline underline-offset-2 transition-colors text-left">{r.pattern_name}</button>
+                        <button onClick={() => handlePatternClick(r)} className="font-semibold text-sm truncate hover:text-primary hover:underline underline-offset-2 transition-colors text-left">{t(`patternNames.${r.pattern_name}`, r.pattern_name)}</button>
                         <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 shrink-0">
                           {TF_LABEL[r.timeframe] || r.timeframe}
                         </Badge>
