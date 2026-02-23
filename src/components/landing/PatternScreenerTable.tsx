@@ -821,7 +821,7 @@ export default function PatternScreenerTable() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
+              <h2 className="text-2xl font-bold">{t('screener.activePatternScreener')}</h2>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -830,23 +830,22 @@ export default function PatternScreenerTable() {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-sm p-3">
-                    <p className="font-medium mb-2">Universe Coverage</p>
+                    <p className="font-medium mb-2">{t('screener.universeCoverage')}</p>
                     <p className="text-sm mb-2">{UNIVERSE_INFO[assetType].description}</p>
                     <p className="text-xs text-muted-foreground mb-2">
-                      <span className="font-medium">Includes:</span> {UNIVERSE_INFO[assetType].examples}
+                      <span className="font-medium">{t('screener.includes')}:</span> {UNIVERSE_INFO[assetType].examples}
                     </p>
                     <p className="text-xs text-muted-foreground border-t pt-2 mt-2">
-                      Only instruments with detected patterns are displayed below. 
-                      No pattern shown means no active setup was found.
+                      {t('screener.onlyActiveInstruments')}
                     </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Scanning {UNIVERSE_INFO[assetType].count} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments • 
-              Showing {patterns.length > 0 ? `${patterns.length} with active patterns` : 'no active patterns'} 
-              {!marketOpen && assetType !== 'crypto' && ' (last session)'}
+              {t('screener.scanning', { count: UNIVERSE_INFO[assetType].count, assetType: ASSET_TYPE_LABELS[assetType].toLowerCase() })} • 
+              {patterns.length > 0 ? t('screener.showingActive', { count: patterns.length }) : t('screener.noActiveShort')} 
+              {!marketOpen && assetType !== 'crypto' && ` ${t('screener.lastSession')}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -872,7 +871,7 @@ export default function PatternScreenerTable() {
             </Button>
             <Link to="/patterns/live">
               <Button variant="outline" size="sm">
-                Full Screener
+                {t('screener.fullScreener')}
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
@@ -899,7 +898,7 @@ export default function PatternScreenerTable() {
               className="mb-4 text-muted-foreground hover:text-foreground"
             >
               <List className="h-4 w-4 mr-2" />
-              View all {UNIVERSE_INFO[assetType].count} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments
+              {t('screener.viewAllInstruments', { count: UNIVERSE_INFO[assetType].count, assetType: ASSET_TYPE_LABELS[assetType].toLowerCase() })}
               {showInstrumentList ? (
                 <ChevronUp className="h-4 w-4 ml-2" />
               ) : (
@@ -910,8 +909,7 @@ export default function PatternScreenerTable() {
           <CollapsibleContent>
             <div className="mb-6 p-4 rounded-lg border bg-muted/30">
               <p className="text-sm text-muted-foreground mb-3">
-                The following {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments are scanned for chart patterns. 
-                Only those with active pattern setups appear in the table below.
+                {t('screener.instrumentsDesc', { assetType: ASSET_TYPE_LABELS[assetType].toLowerCase() })}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                 {AVAILABLE_INSTRUMENTS[assetType].map(({ symbol, name }) => (
@@ -932,13 +930,13 @@ export default function PatternScreenerTable() {
         <div className="mb-6 p-4 rounded-lg border bg-card">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Patterns We Detect</span>
+              <span className="text-sm font-medium">{t('screener.patternsWeDetect')}</span>
               <Badge variant="secondary" className="text-[10px]">
-                {ALL_PATTERN_IDS.length} types
+                {ALL_PATTERN_IDS.length} {t('screener.types')}
               </Badge>
             </div>
             <span className="text-xs text-muted-foreground">
-              Click to filter • Locked patterns require upgrade
+              {t('screener.clickToFilter')} • {t('screener.lockedPatternsRequireUpgrade')}
             </span>
           </div>
           <SupportedPatternsList
@@ -970,7 +968,7 @@ export default function PatternScreenerTable() {
             <p className="text-muted-foreground mb-4">{error}</p>
             <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
+              {t('screener.retry')}
             </Button>
           </div>
         )}
@@ -979,19 +977,19 @@ export default function PatternScreenerTable() {
           <div className="rounded-lg border bg-card p-8 text-center">
             <p className="text-muted-foreground mb-4">
               {filters.pattern !== 'all' 
-                ? `No active ${PATTERN_DISPLAY_NAMES[filters.pattern] || filters.pattern} signals for ${ASSET_TYPE_LABELS[assetType]} at this time.`
-                : `No patterns detected for ${ASSET_TYPE_LABELS[assetType]} at this time.`}
-              {!marketOpen && assetType !== 'crypto' && ' (Market currently closed)'}
+                ? t('screener.noActiveSignalsFor', { pattern: PATTERN_DISPLAY_NAMES[filters.pattern] || filters.pattern, assetType: ASSET_TYPE_LABELS[assetType] })
+                : t('screener.noPatternsFor', { assetType: ASSET_TYPE_LABELS[assetType] })}
+              {!marketOpen && assetType !== 'crypto' && ` ${t('screener.marketClosed')}`}
             </p>
             <div className="flex items-center justify-center gap-3">
               {filters.pattern !== 'all' && (
                 <Button variant="outline" onClick={() => setFilters(prev => ({ ...prev, pattern: 'all' }))}>
-                  Clear Filter
+                  {t('screener.clearFilter')}
                 </Button>
               )}
               <Button variant="outline" onClick={() => fetchLivePatterns(true)}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                {t('screener.refresh')}
               </Button>
             </div>
           </div>
@@ -1008,22 +1006,22 @@ export default function PatternScreenerTable() {
                       onClick={() => handleSort('instrument')}
                     >
                       <div className="flex items-center">
-                        Symbol
+                        {t('screener.symbol')}
                         <SortIcon columnKey="instrument" />
                       </div>
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Pattern</TableHead>
+                    <TableHead className="whitespace-nowrap">{t('screener.pattern')}</TableHead>
                     <TableHead className="text-center whitespace-nowrap">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="flex items-center justify-center gap-1 cursor-help">
-                              Grade
+                              {t('screener.grade')}
                               <Info className="h-3 w-3 opacity-50" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Pattern quality grade (A-F) based on trend alignment, R:R structure, volume, and more.</p>
+                            <p className="text-xs">{t('screener.gradeTooltip')}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1033,7 +1031,7 @@ export default function PatternScreenerTable() {
                       onClick={() => handleSort('direction')}
                     >
                       <div className="flex items-center">
-                        Signal
+                        {t('screener.signal')}
                         <SortIcon columnKey="direction" />
                       </div>
                     </TableHead>
@@ -1042,12 +1040,12 @@ export default function PatternScreenerTable() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="flex items-center justify-end gap-1 cursor-help">
-                              Price
+                              {t('screener.price')}
                               <Info className="h-3 w-3 opacity-50" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Previous session close price. Daily data only—intraday movements are not reflected.</p>
+                            <p className="text-xs">{t('screener.priceTooltip')}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1057,12 +1055,12 @@ export default function PatternScreenerTable() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="flex items-center justify-end gap-1 cursor-help">
-                              Chg %
+                              {t('screener.chgPercent')}
                               <Info className="h-3 w-3 opacity-50" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Change from the prior session's close. Does not include today's price action.</p>
+                            <p className="text-xs">{t('screener.chgPercentTooltip')}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1072,12 +1070,12 @@ export default function PatternScreenerTable() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="flex items-center justify-end gap-1 cursor-help">
-                              Win Rate
+                              {t('screener.winPercent')}
                               <Crown className="h-3 w-3 text-amber-500 opacity-70" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Historical win rate from backtested data. Upgrade to see full edge metrics.</p>
+                            <p className="text-xs">{t('screener.winRateColumnTooltip')}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1087,7 +1085,7 @@ export default function PatternScreenerTable() {
                       onClick={() => handleSort('signal')}
                     >
                       <div className="flex items-center justify-end">
-                        Age
+                        {t('screener.age')}
                         <SortIcon columnKey="signal" />
                       </div>
                     </TableHead>
@@ -1148,7 +1146,7 @@ export default function PatternScreenerTable() {
                                 ) : (
                                   <TrendingDown className="h-3 w-3 mr-1" />
                                 )}
-                                {isLong ? 'Long' : 'Short'}
+                                {isLong ? t('screener.long') : t('screener.short')}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -1204,11 +1202,11 @@ export default function PatternScreenerTable() {
         {/* Footer */}
         <div className="flex items-center justify-between mt-4">
           <p className="text-xs text-muted-foreground">
-            For educational purposes only. Past patterns don't guarantee future results.
+            {t('screener.educationalDisclaimer')}
           </p>
           <Link to="/patterns/live">
             <Button variant="link" size="sm" className="text-primary">
-              View full screener
+              {t('screener.viewFullScreener')}
               <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </Link>
