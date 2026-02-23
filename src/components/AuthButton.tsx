@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
@@ -16,6 +17,7 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
 
 const AuthButton = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole>(null);
@@ -85,7 +87,7 @@ const AuthButton = () => {
       <Button asChild variant="outline">
         <Link to="/auth">
           <LogIn className="h-4 w-4 mr-2" />
-          Login
+          {t('accountMenu.login')}
         </Link>
       </Button>
     );
@@ -98,7 +100,7 @@ const AuthButton = () => {
           <div className="w-6 h-6 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">
             {user.email?.charAt(0).toUpperCase()}
           </div>
-          <span className="hidden sm:inline">Account</span>
+          <span className="hidden sm:inline">{t('accountMenu.account')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -113,10 +115,10 @@ const AuthButton = () => {
             {(userRole === 'super_admin' || userRole === 'admin') ? (
               <span className="text-xs text-amber-500 font-semibold flex items-center gap-1">
                 <Crown className="h-3 w-3" />
-                {userRole === 'super_admin' ? 'Super Admin' : 'Admin'}
+                {userRole === 'super_admin' ? t('accountMenu.superAdmin') : t('accountMenu.admin')}
               </span>
             ) : (
-              <span className="text-xs text-muted-foreground">Member</span>
+              <span className="text-xs text-muted-foreground">{t('accountMenu.member')}</span>
             )}
           </div>
         </div>
@@ -124,25 +126,25 @@ const AuthButton = () => {
         <DropdownMenuItem asChild>
           <Link to="/members/account" className="flex items-center">
             <Settings className="h-4 w-4 mr-2" />
-            Account Settings
+            {t('accountMenu.accountSettings')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/members/dashboard" className="flex items-center">
             <User className="h-4 w-4 mr-2" />
-            Member Dashboard
+            {t('accountMenu.memberDashboard')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <div className="px-2 py-1">
           <div className="flex items-center gap-2 mb-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Language:</span>
+            <span className="text-sm text-muted-foreground">{t('accountMenu.language')}</span>
             <LanguageSwitcher />
           </div>
           <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Theme:</span>
+            <span className="text-sm text-muted-foreground">{t('accountMenu.theme')}</span>
             <ThemeSwitcher />
           </div>
         </div>
@@ -153,7 +155,7 @@ const AuthButton = () => {
           className="text-red-600 cursor-pointer"
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
+          {t('accountMenu.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
