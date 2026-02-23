@@ -1966,6 +1966,7 @@
     "selected": "Selected",
     "noInstruments": "No instruments selected. Use the search above to add instruments.",
     "backtestParameters": "Backtest Parameters",
+    "paramSummary": "{{lookback}}Y lookback • {{risk}}% risk",
     "timeframe": "Timeframe",
     "lookbackPeriod": "Lookback Period",
     "riskPerTrade": "Risk Per Trade",
