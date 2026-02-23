@@ -178,15 +178,15 @@ const PipCalculator = () => {
 
                   <div className="space-y-3 text-sm text-muted-foreground">
                     <div className="flex justify-between">
-                      <span>Currency Pair:</span>
+                      <span>{t('pipCalculatorExtra.currencyPairLabel')}</span>
                       <span className="text-foreground">{currencyPair}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Lot Size:</span>
+                      <span>{t('pipCalculatorExtra.lotSizeLabel')}</span>
                       <span className="text-foreground">{lotSize}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Account Currency:</span>
+                      <span>{t('pipCalculatorExtra.accountCurrencyLabel')}</span>
                       <span className="text-foreground">{accountCurrency}</span>
                     </div>
                   </div>

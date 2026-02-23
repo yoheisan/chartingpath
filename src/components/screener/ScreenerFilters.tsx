@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -114,6 +115,7 @@ export function ScreenerFilters({
   onChange,
   onClear,
 }: ScreenerFiltersProps) {
+  const { t } = useTranslation();
   const hasActiveFilters = useMemo(() => {
     return filters.direction !== 'all' ||
            filters.pattern !== 'all' ||
@@ -135,7 +137,7 @@ export function ScreenerFilters({
             className="h-8 px-3 text-xs font-medium"
             onClick={() => onChange({ direction: 'all' })}
           >
-            All
+            {t('screener.all')}
             <Badge variant="outline" className="ml-1.5 h-4 text-[10px] px-1.5 bg-background">
               {stats.total}
             </Badge>
@@ -150,7 +152,7 @@ export function ScreenerFilters({
             onClick={() => onChange({ direction: 'long' })}
           >
             <TrendingUp className="h-3.5 w-3.5" />
-            Long
+            {t('screener.long')}
             {stats.longCount > 0 && (
               <Badge variant="outline" className={cn(
                 "ml-0.5 h-4 text-[10px] px-1.5",
@@ -170,7 +172,7 @@ export function ScreenerFilters({
             onClick={() => onChange({ direction: 'short' })}
           >
             <TrendingDown className="h-3.5 w-3.5" />
-            Short
+            {t('screener.short')}
             {stats.shortCount > 0 && (
               <Badge variant="outline" className={cn(
                 "ml-0.5 h-4 text-[10px] px-1.5",
@@ -186,10 +188,10 @@ export function ScreenerFilters({
         <Select value={filters.pattern} onValueChange={(v) => onChange({ pattern: v })}>
           <SelectTrigger className="h-9 w-44 text-xs">
             <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-            <SelectValue placeholder="All Patterns" />
+            <SelectValue placeholder={t('screener.allPatterns')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Patterns</SelectItem>
+            <SelectItem value="all">{t('screener.allPatterns')}</SelectItem>
             {patterns.map(p => (
               <SelectItem key={p.id} value={p.id}>
                 <span className="flex items-center justify-between w-full">
@@ -217,11 +219,11 @@ export function ScreenerFilters({
                   className="border border-border/60 rounded-lg p-1 bg-background"
                 >
                   <ToggleGroupItem value="all" className="text-xs px-2.5 h-7">
-                    All
+                    {t('screener.all')}
                   </ToggleGroupItem>
                   <ToggleGroupItem value="with_trend" className="text-xs px-2.5 h-7 gap-1">
                     <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                    Trend
+                    {t('screener.trend')}
                     {stats.withTrend > 0 && (
                       <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
                         {stats.withTrend}
@@ -230,7 +232,7 @@ export function ScreenerFilters({
                   </ToggleGroupItem>
                   <ToggleGroupItem value="counter_trend" className="text-xs px-2.5 h-7 gap-1">
                     <ArrowDownRight className="h-3 w-3 text-amber-500" />
-                    Counter
+                    {t('screener.counter')}
                     {stats.counterTrend > 0 && (
                       <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
                         {stats.counterTrend}
@@ -241,16 +243,16 @@ export function ScreenerFilters({
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-sm p-4">
-              <p className="font-semibold mb-2">Trend Alignment</p>
-              <div className="text-xs space-y-2 text-muted-foreground">
-                <div className="flex gap-2">
-                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500 mt-0.5" />
-                  <span><strong className="text-emerald-600">With Trend</strong> — Pattern aligns with market direction. Higher probability.</span>
-                </div>
-                <div className="flex gap-2">
-                  <ArrowDownRight className="h-3.5 w-3.5 text-amber-500 mt-0.5" />
-                  <span><strong className="text-amber-600">Counter Trend</strong> — Reversal setup. Higher risk, larger reward potential.</span>
-                </div>
+               <p className="font-semibold mb-2">{t('screener.trendAlignment')}</p>
+               <div className="text-xs space-y-2 text-muted-foreground">
+                 <div className="flex gap-2">
+                   <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500 mt-0.5" />
+                   <span><strong className="text-emerald-600">{t('screener.trend')}</strong> — {t('screener.withTrendDesc')}</span>
+                 </div>
+                 <div className="flex gap-2">
+                   <ArrowDownRight className="h-3.5 w-3.5 text-amber-500 mt-0.5" />
+                   <span><strong className="text-amber-600">{t('screener.counter')}</strong> — {t('screener.counterTrendDesc')}</span>
+                 </div>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -259,42 +261,42 @@ export function ScreenerFilters({
         {/* Grade Filter */}
         <Select value={filters.grade} onValueChange={(v) => onChange({ grade: v as GradeFilter })}>
           <SelectTrigger className="h-9 w-32 text-xs">
-            <SelectValue placeholder="All Grades" />
+            <SelectValue placeholder={t('screener.allGrades')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
+            <SelectItem value="all">{t('screener.allGrades')}</SelectItem>
             <SelectItem value="A">
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-grade-a/15 text-grade-a border border-grade-a/30 flex items-center justify-center text-[10px] font-bold">A</span>
-                <span>Grade A</span>
+                <span>{t('screener.gradeA')}</span>
                 {stats.gradeA > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeA}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="B">
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-grade-b/15 text-grade-b border border-grade-b/30 flex items-center justify-center text-[10px] font-bold">B</span>
-                <span>Grade B</span>
+                <span>{t('screener.gradeB')}</span>
                 {stats.gradeB > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeB}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="C">
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-grade-c/15 text-grade-c border border-grade-c/30 flex items-center justify-center text-[10px] font-bold">C</span>
-                <span>Grade C</span>
+                <span>{t('screener.gradeC')}</span>
                 {stats.gradeC > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeC}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="D">
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-grade-d/15 text-grade-d border border-grade-d/30 flex items-center justify-center text-[10px] font-bold">D</span>
-                <span>Grade D</span>
+                <span>{t('screener.gradeD')}</span>
                 {stats.gradeD > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeD}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="F">
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-grade-f/15 text-grade-f border border-grade-f/30 flex items-center justify-center text-[10px] font-bold">F</span>
-                <span>Grade F</span>
+                <span>{t('screener.gradeF')}</span>
                 {stats.gradeF > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeF}</Badge>}
               </span>
             </SelectItem>
@@ -310,7 +312,7 @@ export function ScreenerFilters({
             onClick={onClear}
           >
             <X className="h-3 w-3" />
-            Clear
+             {t('screener.clear')}
           </Button>
         )}
 
@@ -318,8 +320,8 @@ export function ScreenerFilters({
         <div className="ml-auto">
           <Badge variant="outline" className="text-xs font-medium">
             {stats.filtered === stats.total 
-              ? `${stats.total} setups`
-              : `${stats.filtered} of ${stats.total}`
+              ? `${stats.total} ${t('screener.setups')}`
+              : `${stats.filtered} ${t('screener.of')} ${stats.total}`
             }
           </Badge>
         </div>
@@ -339,7 +341,7 @@ export function ScreenerFilters({
                     className="h-7 px-2.5 text-xs"
                     onClick={() => onChange({ fxCategory: 'all' })}
                   >
-                    All Pairs
+                    {t('screener.allPairs')}
                   </Button>
                   <Button
                     variant={filters.fxCategory === 'major' ? 'default' : 'ghost'}
@@ -350,7 +352,7 @@ export function ScreenerFilters({
                     )}
                     onClick={() => onChange({ fxCategory: 'major' })}
                   >
-                    Major
+                    {t('screener.major')}
                     {(stats.fxMajor ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
                         "h-4 text-[10px] px-1",
@@ -369,7 +371,7 @@ export function ScreenerFilters({
                     )}
                     onClick={() => onChange({ fxCategory: 'minor' })}
                   >
-                    Minor
+                    {t('screener.minor')}
                     {(stats.fxMinor ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
                         "h-4 text-[10px] px-1",
@@ -388,7 +390,7 @@ export function ScreenerFilters({
                     )}
                     onClick={() => onChange({ fxCategory: 'exotic' })}
                   >
-                    Exotic
+                    {t('screener.exotic')}
                     {(stats.fxExotic ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
                         "h-4 text-[10px] px-1",
@@ -401,12 +403,12 @@ export function ScreenerFilters({
                 </div>
               </TooltipTrigger>
               <TooltipContent className="max-w-sm p-4">
-                <p className="font-semibold mb-2">FX Pair Categories</p>
-                <div className="text-xs space-y-2 text-muted-foreground">
-                  <div><strong className="text-blue-500">Major:</strong> USD paired with EUR, GBP, JPY, CHF, CAD, AUD, NZD. Most liquid, tightest spreads.</div>
-                  <div><strong className="text-purple-500">Minor:</strong> Major currencies without USD (crosses). Good liquidity, slightly wider spreads.</div>
-                  <div><strong className="text-amber-500">Exotic:</strong> Major currency + emerging market. Higher volatility, wider spreads, less historical data.</div>
-                </div>
+                <p className="font-semibold mb-2">{t('screener.fxPairCategories')}</p>
+                 <div className="text-xs space-y-2 text-muted-foreground">
+                   <div><strong className="text-blue-500">{t('screener.major')}:</strong> {t('screener.majorDesc')}</div>
+                   <div><strong className="text-purple-500">{t('screener.minor')}:</strong> {t('screener.minorDesc')}</div>
+                   <div><strong className="text-amber-500">{t('screener.exotic')}:</strong> {t('screener.exoticDesc')}</div>
+                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -424,7 +426,7 @@ export function ScreenerFilters({
                   className="h-7 px-2.5 text-xs"
                   onClick={() => onChange({ age: 'all' })}
                 >
-                  Any Age
+                  {t('screener.anyAge')}
                 </Button>
                 <Button
                   variant={filters.age === 'fresh' ? 'default' : 'ghost'}
@@ -435,7 +437,7 @@ export function ScreenerFilters({
                   )}
                   onClick={() => onChange({ age: 'fresh' })}
                 >
-                  Fresh
+                   {t('screener.fresh')}
                   {stats.freshCount > 0 && (
                     <Badge variant="outline" className={cn(
                       "h-4 text-[10px] px-1",
@@ -454,7 +456,7 @@ export function ScreenerFilters({
                   )}
                   onClick={() => onChange({ age: 'recent' })}
                 >
-                  Recent
+                   {t('screener.recent')}
                   {stats.recentCount > 0 && (
                     <Badge variant="outline" className={cn(
                       "h-4 text-[10px] px-1",
@@ -467,11 +469,11 @@ export function ScreenerFilters({
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              <p className="font-medium mb-2">Signal Age</p>
-              <div className="text-xs space-y-1 text-muted-foreground">
-                <div><strong>Fresh:</strong> &lt;24h old — Newest setups</div>
-                <div><strong>Recent:</strong> &lt;3 days — Still actionable</div>
-              </div>
+               <p className="font-medium mb-2">{t('screener.signalAge')}</p>
+               <div className="text-xs space-y-1 text-muted-foreground">
+                 <div><strong>{t('screener.fresh')}:</strong> {t('screener.freshDesc')}</div>
+                 <div><strong>{t('screener.recent')}:</strong> {t('screener.recentDesc')}</div>
+               </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

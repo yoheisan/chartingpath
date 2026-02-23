@@ -134,10 +134,10 @@ const RiskCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="currency-pair">Currency Pair</Label>
+                <Label htmlFor="currency-pair">{t('riskCalculatorExtra.currencyPair')}</Label>
                 <Select value={currencyPair} onValueChange={setCurrencyPair}>
                   <SelectTrigger id="currency-pair">
-                    <SelectValue placeholder="Select currency pair" />
+                    <SelectValue placeholder={t('riskCalculatorExtra.selectCurrencyPair')} />
                   </SelectTrigger>
                   <SelectContent>
                     {currencyPairs.map((pair) => (
@@ -150,10 +150,10 @@ const RiskCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="account-currency">Account Currency</Label>
+                <Label htmlFor="account-currency">{t('riskCalculatorExtra.accountCurrency')}</Label>
                 <Select value={accountCurrency} onValueChange={setAccountCurrency}>
                   <SelectTrigger id="account-currency">
-                    <SelectValue placeholder="Select account currency" />
+                    <SelectValue placeholder={t('riskCalculatorExtra.selectAccountCurrency')} />
                   </SelectTrigger>
                   <SelectContent>
                     {currencies.map((currency) => (
@@ -204,19 +204,19 @@ const RiskCalculator = () => {
 
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Account Balance:</span>
+                      <span className="text-muted-foreground">{t('riskCalculatorExtra.accountBalance')}:</span>
                       <span className="text-foreground">${parseFloat(accountBalance).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Risk Percentage:</span>
+                      <span className="text-muted-foreground">{t('riskCalculator.riskPerTrade')}:</span>
                       <span className="text-foreground">{riskPercentage}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Stop Loss:</span>
-                      <span className="text-foreground">{stopLossPips} pips</span>
+                      <span className="text-muted-foreground">{t('riskCalculator.stopLossPips')}:</span>
+                      <span className="text-foreground">{stopLossPips} {t('riskCalculatorExtra.pips')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Currency Pair:</span>
+                      <span className="text-muted-foreground">{t('riskCalculatorExtra.currencyPair')}:</span>
                       <span className="text-foreground">{currencyPair}</span>
                     </div>
                   </div>
