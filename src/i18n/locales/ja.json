@@ -637,6 +637,7 @@
     "tfWeeklyDesc": "長期投資（5年以上の履歴）",
     "daily": "日足",
     "weekly": "週足",
+    "updatedAt": "最終更新 {{time}}",
     "viewAllInstruments": "分析対象の{{count}}件の{{assetType}}銘柄をすべて表示",
     "instrumentsDesc": "以下の{{assetType}}銘柄のチャートパターンをスキャンしています。アクティブなパターンセットアップがある銘柄のみ下に表示されます。",
     "howThisWorksDesc": "{{count}}件の{{assetType}}銘柄を{{timeframe}}の時間足でチャートパターン分析しています。",

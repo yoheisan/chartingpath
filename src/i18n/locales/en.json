@@ -688,6 +688,7 @@
     "patternsFound": "patterns found",
     "patternsWeDetect": "Patterns We Detect",
     "refresh": "Refresh",
+    "updatedAt": "Updated {{time}}",
     "studyTicker": "Study Ticker",
     "timeframe": "Timeframe",
     "title": "Active Pattern Screener",
