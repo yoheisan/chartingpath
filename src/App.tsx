@@ -95,9 +95,7 @@ const DynamicArticle = lazy(() => import("./pages/blog/DynamicArticle"));
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
 
-const IndustrialMetals = lazy(() => import("./pages/markets/commodities/IndustrialMetals"));
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
-const CommodityMarket = lazy(() => import("./pages/markets/CommodityMarket"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
 
@@ -105,21 +103,6 @@ const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 const OutcomeAnalytics = lazy(() => import("./pages/admin/OutcomeAnalytics"));
 const PatternHealthMonitor = lazy(() => import("./pages/admin/PatternHealthMonitor"));
-
-// Markets
-const StockMarket = lazy(() => import("./pages/markets/StockMarket"));
-const ForexMarket = lazy(() => import("./pages/markets/ForexMarket"));
-const CryptoMarket = lazy(() => import("./pages/markets/CryptoMarket"));
-const EnergyCommodities = lazy(() => import("./pages/markets/commodities/EnergyCommodities"));
-const PreciousMetals = lazy(() => import("./pages/markets/commodities/PreciousMetals"));
-const AgriculturalCommodities = lazy(() => import("./pages/markets/commodities/AgriculturalCommodities"));
-const MajorCurrencyPairs = lazy(() => import("./pages/markets/forex/MajorCurrencyPairs"));
-const CrossCurrencyPairs = lazy(() => import("./pages/markets/forex/CrossCurrencyPairs"));
-const MajorIndices = lazy(() => import("./pages/markets/stocks/MajorIndices"));
-const StockSectors = lazy(() => import("./pages/markets/stocks/StockSectors"));
-const Bitcoin = lazy(() => import("./pages/markets/crypto/Bitcoin"));
-const Ethereum = lazy(() => import("./pages/markets/crypto/Ethereum"));
-const Altcoins = lazy(() => import("./pages/markets/crypto/Altcoins"));
 
 const App = () => (
   <TooltipProvider>
@@ -181,21 +164,6 @@ const App = () => (
           <Route path="/learn/fear-and-greed" element={<Navigate to="/blog/fear-and-greed" replace />} />
           <Route path="/learn/trading-journal" element={<Navigate to="/blog/trading-journal" replace />} />
           <Route path="/learn/trading-strategies-guide" element={<Navigate to="/blog/trading-strategies-guide" replace />} />
-          <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
-          <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
-          <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
-          <Route path="/markets/forex" element={withSuspense(<ForexMarket />)} />
-          <Route path="/markets/forex/major-pairs" element={withSuspense(<MajorCurrencyPairs />)} />
-          <Route path="/markets/forex/cross-pairs" element={withSuspense(<CrossCurrencyPairs />)} />
-          <Route path="/markets/crypto" element={withSuspense(<CryptoMarket />)} />
-          <Route path="/markets/crypto/bitcoin" element={withSuspense(<Bitcoin />)} />
-          <Route path="/markets/crypto/ethereum" element={withSuspense(<Ethereum />)} />
-          <Route path="/markets/crypto/altcoins" element={withSuspense(<Altcoins />)} />
-          <Route path="/markets/commodities" element={withSuspense(<CommodityMarket />)} />
-          <Route path="/markets/commodities/energy" element={withSuspense(<EnergyCommodities />)} />
-          <Route path="/markets/commodities/precious-metals" element={withSuspense(<PreciousMetals />)} />
-          <Route path="/markets/commodities/agricultural" element={withSuspense(<AgriculturalCommodities />)} />
-          <Route path="/markets/commodities/industrial-metals" element={withSuspense(<IndustrialMetals />)} />
           <Route path="/strategy-workspace" element={withSuspense(<StrategyWorkspace />)} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />

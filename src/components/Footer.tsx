@@ -164,24 +164,6 @@ const Footer = () => {
             </nav>
           </div>
 
-          {/* Markets Column */}
-          <div>
-            <h3 className="font-semibold mb-4 text-foreground">{t('footer.markets', 'Markets')}</h3>
-            <nav className="flex flex-col gap-2">
-              <Link to="/markets/stocks" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.stockMarket', 'Stock Market')}
-              </Link>
-              <Link to="/markets/forex" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.forex', 'Forex (FX)')}
-              </Link>
-              <Link to="/markets/crypto" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.cryptocurrency', 'Cryptocurrency')}
-              </Link>
-              <Link to="/markets/commodities" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.commodities', 'Commodities')}
-              </Link>
-            </nav>
-          </div>
 
           {/* Company Column */}
           <div>
