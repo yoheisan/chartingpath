@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ interface SharedBacktestData {
 
 const SharedBacktest = () => {
   const { token } = useParams<{ token: string }>();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [backtest, setBacktest] = useState<SharedBacktestData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -160,7 +162,7 @@ const SharedBacktest = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading backtest results...</p>
+          <p className="text-muted-foreground">{t('sharedBacktest.loading')}</p>
         </div>
       </div>
     );
@@ -173,13 +175,13 @@ const SharedBacktest = () => {
           <Card className="border-destructive/50">
             <CardContent className="p-8 text-center">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h1 className="text-2xl font-bold mb-2">Backtest Not Found</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('sharedBacktest.notFound')}</h1>
               <p className="text-muted-foreground mb-6">
-                {error || "This share link is invalid or has been revoked."}
+                {error || t('sharedBacktest.invalidLink')}
               </p>
               <Button asChild>
                 <Link to="/strategy-workspace">
-                  Create Your Own Backtest
+                  {t('sharedBacktest.createOwn')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -197,7 +199,7 @@ const SharedBacktest = () => {
         <div className="text-center mb-8">
           <Badge variant="secondary" className="mb-4">
             <Share2 className="h-3 w-3 mr-1" />
-            Shared Backtest Results
+            {t('sharedBacktest.sharedResults')}
           </Badge>
           <h1 className="text-3xl font-bold mb-2">{backtest.strategy_name}</h1>
           <p className="text-muted-foreground">
@@ -210,7 +212,7 @@ const SharedBacktest = () => {
           <Card>
             <CardContent className="p-4 text-center">
               <Percent className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Win Rate</p>
+              <p className="text-sm text-muted-foreground">{t('sharedBacktest.winRate')}</p>
               <p className="text-2xl font-bold">
                 {backtest.win_rate ? formatPercentage(backtest.win_rate) : 'N/A'}
               </p>
@@ -224,7 +226,7 @@ const SharedBacktest = () => {
               ) : (
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-red-500" />
               )}
-              <p className="text-sm text-muted-foreground">Net P&L</p>
+              <p className="text-sm text-muted-foreground">{t('sharedBacktest.netPnl')}</p>
               <p className={`text-2xl font-bold ${(backtest.net_pnl || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {backtest.net_pnl ? formatCurrency(backtest.net_pnl) : 'N/A'}
               </p>
@@ -234,7 +236,7 @@ const SharedBacktest = () => {
           <Card>
             <CardContent className="p-4 text-center">
               <TrendingDown className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Max Drawdown</p>
+              <p className="text-sm text-muted-foreground">{t('sharedBacktest.maxDrawdown')}</p>
               <p className="text-2xl font-bold text-red-500">
                 {backtest.max_drawdown ? formatPercentage(backtest.max_drawdown) : 'N/A'}
               </p>
@@ -244,7 +246,7 @@ const SharedBacktest = () => {
           <Card>
             <CardContent className="p-4 text-center">
               <Target className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Total Trades</p>
+              <p className="text-sm text-muted-foreground">{t('sharedBacktest.totalTrades')}</p>
               <p className="text-2xl font-bold">
                 {backtest.total_trades || 0}
               </p>
@@ -256,7 +258,7 @@ const SharedBacktest = () => {
         <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-center">
-              Want to trade this strategy?
+              {t('sharedBacktest.tradeStrategy')}
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -265,11 +267,11 @@ const SharedBacktest = () => {
                 className="gap-2 flex-1 max-w-xs"
               >
                 <Bell className="h-4 w-4" />
-                Create Alert
+                {t('sharedBacktest.createAlert')}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center mt-4">
-              Most traders validate performance before creating alerts.
+              {t('sharedBacktest.validateFirst')}
             </p>
           </CardContent>
         </Card>
@@ -279,31 +281,31 @@ const SharedBacktest = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Performance Metrics
+              {t('sharedBacktest.performanceMetrics')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
-                <p className="text-sm text-muted-foreground">Sharpe Ratio</p>
+                <p className="text-sm text-muted-foreground">{t('sharedBacktest.sharpeRatio')}</p>
                 <p className="text-xl font-semibold">
                   {backtest.sharpe_ratio?.toFixed(2) || 'N/A'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Profit Factor</p>
+                <p className="text-sm text-muted-foreground">{t('sharedBacktest.profitFactor')}</p>
                 <p className="text-xl font-semibold">
                   {backtest.profit_factor?.toFixed(2) || 'N/A'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg Win</p>
+                <p className="text-sm text-muted-foreground">{t('sharedBacktest.avgWin')}</p>
                 <p className="text-xl font-semibold text-green-500">
                   {backtest.avg_win ? formatCurrency(backtest.avg_win) : 'N/A'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg Loss</p>
+                <p className="text-sm text-muted-foreground">{t('sharedBacktest.avgLoss')}</p>
                 <p className="text-xl font-semibold text-red-500">
                   {backtest.avg_loss ? formatCurrency(backtest.avg_loss) : 'N/A'}
                 </p>
@@ -333,8 +335,7 @@ const SharedBacktest = () => {
         {/* Footer Disclaimer */}
         <div className="mt-12 p-4 bg-muted/50 rounded-lg text-center">
           <p className="text-xs text-muted-foreground">
-            <strong>Disclaimer:</strong> Past performance does not guarantee future results. 
-            This is for educational purposes only and does not constitute financial advice.
+            <strong>{t('about.disclaimerTitle')}</strong> {t('sharedBacktest.disclaimer')}
           </p>
         </div>
       </div>

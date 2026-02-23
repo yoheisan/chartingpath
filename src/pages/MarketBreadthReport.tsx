@@ -11,8 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { getPrefetchedReport, clearPrefetchedReport } from "@/utils/marketReportPrefetch";
+import { useTranslation } from "react-i18next";
 
 const MarketBreadthReport = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
@@ -368,10 +370,10 @@ const MarketBreadthReport = () => {
         {/* Hero Section */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Market Breadth Report
+            {t('marketReport.title')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Catch up on what happened in the market daily before trading hours
+            {t('marketReport.subtitle')}
           </p>
         </div>
 
@@ -384,9 +386,9 @@ const MarketBreadthReport = () => {
                   <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Daily Market Intelligence</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t('marketReport.dailyIntelligence')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Get comprehensive AI-powered market analysis delivered to your inbox. Stay informed about what happened across all markets—all in one report.
+                    {t('marketReport.dailyIntelligenceDesc')}
                   </p>
                 </div>
               </div>
@@ -400,9 +402,9 @@ const MarketBreadthReport = () => {
                   <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Multi-Market Coverage</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t('marketReport.multiMarketCoverage')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Track movements across stocks, forex, crypto, and commodities. Get cross-market insights and correlations that matter for your trading decisions.
+                    {t('marketReport.multiMarketCoverageDesc')}
                   </p>
                 </div>
               </div>
@@ -418,11 +420,11 @@ const MarketBreadthReport = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Today's Market Analysis
+                    {t('marketReport.todaysAnalysis')}
                     {reportMetadata.cached && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
                         <Zap className="h-3 w-3" />
-                        {reportMetadata.cache_age_minutes !== undefined && reportMetadata.cache_age_minutes < 5 ? 'Fresh' : 'Cached'}
+                        {reportMetadata.cache_age_minutes !== undefined && reportMetadata.cache_age_minutes < 5 ? t('marketReport.fresh') : t('marketReport.cached')}
                       </span>
                     )}
                   </CardTitle>
@@ -436,7 +438,7 @@ const MarketBreadthReport = () => {
                         <> • Auto-refresh enabled</>
                       </>
                     ) : (
-                      <>Comprehensive market breadth report for all markets based on your selected timezone</>
+                      <>{t('marketReport.defaultDesc')}</>
                     )}
                   </CardDescription>
                 </div>
@@ -448,16 +450,16 @@ const MarketBreadthReport = () => {
                   className="gap-2"
                 >
                   <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                  Generate Fresh Report
+                  {t('marketReport.generateFresh')}
                 </Button>
               </div>
               
               {/* Timezone Selector for Report */}
               <div className="pt-4">
                 <div className="flex-1">
-                  <Label htmlFor="report-timezone" className="text-sm">
-                    Report Timezone
-                  </Label>
+                   <Label htmlFor="report-timezone" className="text-sm">
+                    {t('marketReport.reportTimezone')}
+                   </Label>
                   <Select
                     value={reportTimezone}
                     onValueChange={(value) => setReportTimezone(value)}
@@ -495,7 +497,7 @@ const MarketBreadthReport = () => {
               {isGenerating ? (
                 <div className="text-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                  <p className="text-muted-foreground">Generating your market analysis...</p>
+                  <p className="text-muted-foreground">{t('marketReport.generatingAnalysis')}</p>
                 </div>
               ) : report ? (
                 <div className="ft-article max-w-none">
@@ -517,7 +519,7 @@ const MarketBreadthReport = () => {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Loading market analysis...</p>
+                  <p>{t('marketReport.loadingAnalysis')}</p>
                 </div>
               )}
             </CardContent>
@@ -528,17 +530,17 @@ const MarketBreadthReport = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Email Subscription
+                {t('marketReport.emailSubscription')}
               </CardTitle>
               <CardDescription>
-                Receive automated market reports delivered to your inbox
+                {t('marketReport.emailSubscriptionDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {isLoadingSubscription ? (
                 <div className="py-12 text-center">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                  <p className="text-muted-foreground">Loading subscription settings...</p>
+                  <p className="text-muted-foreground">{t('marketReport.loadingSubscription')}</p>
                 </div>
               ) : (
                 <div className="grid lg:grid-cols-2 gap-6">
@@ -546,8 +548,8 @@ const MarketBreadthReport = () => {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label>Enable Email Reports</Label>
-                        <p className="text-sm text-muted-foreground">Receive automated reports</p>
+                        <Label>{t('marketReport.enableEmailReports')}</Label>
+                        <p className="text-sm text-muted-foreground">{t('marketReport.receiveAutomatedReports')}</p>
                       </div>
                       <Switch
                         checked={subscription.is_active}
@@ -558,7 +560,7 @@ const MarketBreadthReport = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="sub-email">Email Address</Label>
+                      <Label htmlFor="sub-email">{t('marketReport.emailAddress')}</Label>
                       <Input
                         id="sub-email"
                         type="email"
@@ -571,7 +573,7 @@ const MarketBreadthReport = () => {
                     </div>
 
                     <div>
-                      <Label className="mb-3 block">Markets to Include</Label>
+                      <Label className="mb-3 block">{t('marketReport.marketsToInclude')}</Label>
                       <div className="space-y-3">
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -580,7 +582,7 @@ const MarketBreadthReport = () => {
                             onCheckedChange={() => toggleMarket("stocks")}
                           />
                           <label htmlFor="sub-stocks" className="text-sm cursor-pointer">
-                            Stock Market
+                            {t('marketReport.stockMarket')}
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -590,7 +592,7 @@ const MarketBreadthReport = () => {
                             onCheckedChange={() => toggleMarket("forex")}
                           />
                           <label htmlFor="sub-forex" className="text-sm cursor-pointer">
-                            Forex Market
+                            {t('marketReport.forexMarket')}
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -600,7 +602,7 @@ const MarketBreadthReport = () => {
                             onCheckedChange={() => toggleMarket("crypto")}
                           />
                           <label htmlFor="sub-crypto" className="text-sm cursor-pointer">
-                            Cryptocurrency
+                            {t('marketReport.cryptocurrency')}
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -610,14 +612,14 @@ const MarketBreadthReport = () => {
                             onCheckedChange={() => toggleMarket("commodities")}
                           />
                           <label htmlFor="sub-commodities" className="text-sm cursor-pointer">
-                            Commodities
+                            {t('marketReport.commodities')}
                           </label>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="sub-timezone">Timezone</Label>
+                      <Label htmlFor="sub-timezone">{t('marketReport.timezone')}</Label>
                       <Select
                         value={subscription.timezone}
                         onValueChange={(value) =>
@@ -643,7 +645,7 @@ const MarketBreadthReport = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="sub-frequency">Frequency</Label>
+                      <Label htmlFor="sub-frequency">{t('marketReport.frequency')}</Label>
                       <Select
                         value={subscription.frequency}
                         onValueChange={(value) =>
@@ -654,14 +656,14 @@ const MarketBreadthReport = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly (Monday)</SelectItem>
+                          <SelectItem value="daily">{t('marketReport.daily')}</SelectItem>
+                          <SelectItem value="weekly">{t('marketReport.weeklyMonday')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div>
-                      <Label htmlFor="sub-time">Send Time</Label>
+                      <Label htmlFor="sub-time">{t('marketReport.sendTime')}</Label>
                       <Input
                         id="sub-time"
                         type="time"
@@ -671,12 +673,12 @@ const MarketBreadthReport = () => {
                         }
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Reports will be sent at this time in your selected timezone
+                        {t('marketReport.sendTimeHint')}
                       </p>
                     </div>
 
                     <div>
-                      <Label htmlFor="sub-timespan">Time Span</Label>
+                      <Label htmlFor="sub-timespan">{t('marketReport.timeSpan')}</Label>
                       <Select
                         value={subscription.time_span}
                         onValueChange={(value) =>
@@ -687,8 +689,8 @@ const MarketBreadthReport = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="previous_day">Previous Day</SelectItem>
-                          <SelectItem value="past_5_sessions">Past 5 Sessions</SelectItem>
+                          <SelectItem value="previous_day">{t('marketReport.previousDay')}</SelectItem>
+                          <SelectItem value="past_5_sessions">{t('marketReport.past5Sessions')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -703,12 +705,12 @@ const MarketBreadthReport = () => {
                         {isSaving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
+                            {t('marketReport.saving')}
                           </>
                         ) : (
                           <>
                             <Mail className="mr-2 h-4 w-4" />
-                            Save Subscription
+                            {t('marketReport.saveSubscription')}
                           </>
                         )}
                       </Button>
@@ -723,12 +725,12 @@ const MarketBreadthReport = () => {
                         {isSendingTest ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
+                            {t('marketReport.sending')}
                           </>
                         ) : (
                           <>
                             <Mail className="mr-2 h-4 w-4" />
-                            Send Test Email
+                            {t('marketReport.sendTestEmail')}
                           </>
                         )}
                       </Button>
@@ -738,9 +740,9 @@ const MarketBreadthReport = () => {
                   {/* Subscription Preview */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-medium mb-2">Subscription Preview</h3>
+                      <h3 className="text-lg font-medium mb-2">{t('marketReport.subscriptionPreview')}</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Review your email report settings
+                        {t('marketReport.reviewSettings')}
                       </p>
                     </div>
 
@@ -748,9 +750,9 @@ const MarketBreadthReport = () => {
                       <div className="flex items-start gap-2">
                         <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-medium">Email Address</p>
+                          <p className="text-sm font-medium">{t('marketReport.emailAddress')}</p>
                           <p className="text-sm text-muted-foreground">
-                            {subscription.email || "Not set"}
+                            {subscription.email || t('marketReport.notSet')}
                           </p>
                         </div>
                       </div>
@@ -758,7 +760,7 @@ const MarketBreadthReport = () => {
                       <div className="flex items-start gap-2">
                         <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-medium">Frequency</p>
+                          <p className="text-sm font-medium">{t('marketReport.frequency')}</p>
                           <p className="text-sm text-muted-foreground">
                             {subscription.frequency === "daily" ? "Daily" : "Weekly (Monday)"}
                           </p>
@@ -768,7 +770,7 @@ const MarketBreadthReport = () => {
                       <div className="flex items-start gap-2">
                         <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-medium">Send Time</p>
+                          <p className="text-sm font-medium">{t('marketReport.sendTime')}</p>
                           <p className="text-sm text-muted-foreground">
                             {subscription.send_time} ({subscription.timezone})
                           </p>
@@ -778,13 +780,13 @@ const MarketBreadthReport = () => {
                       <div className="flex items-start gap-2">
                         <TrendingUp className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-medium">Markets</p>
+                          <p className="text-sm font-medium">{t('marketReport.marketsToInclude')}</p>
                           <p className="text-sm text-muted-foreground">
                             {subscription.markets.length > 0
                               ? subscription.markets
                                   .map(m => m.charAt(0).toUpperCase() + m.slice(1))
                                   .join(", ")
-                              : "None selected"}
+                              : t('marketReport.noneSelected')}
                           </p>
                         </div>
                       </div>
@@ -792,7 +794,7 @@ const MarketBreadthReport = () => {
                       <div className="flex items-start gap-2">
                         <div className="h-4 w-4" />
                         <div>
-                          <p className="text-sm font-medium">Settings</p>
+                          <p className="text-sm font-medium">{t('marketReport.settings')}</p>
                           <p className="text-sm text-muted-foreground">
                             {subscription.tone.charAt(0).toUpperCase() + subscription.tone.slice(1)} tone,{" "}
                             {subscription.time_span === "previous_day" ? "Previous Day" : "Past 5 Sessions"}
@@ -802,9 +804,9 @@ const MarketBreadthReport = () => {
 
                       <div className="pt-3 border-t">
                         <p className="text-sm font-medium">
-                          Status:{" "}
+                          {t('marketReport.status')}{" "}
                           <span className={subscription.is_active ? "text-green-600" : "text-muted-foreground"}>
-                            {subscription.is_active ? "Active" : "Inactive"}
+                            {subscription.is_active ? t('marketReport.active') : t('marketReport.inactive')}
                           </span>
                         </p>
                       </div>
