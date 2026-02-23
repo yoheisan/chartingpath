@@ -1141,6 +1141,8 @@
     "Inverse Head and Shoulders": "头肩底",
     "Donchian Breakout (Long)": "唐奇安突破（做多）",
     "Donchian Breakout (Short)": "唐奇安突破（做空）",
+    "Donchian Breakout Long": "唐奇安突破（做多）",
+    "Donchian Breakout Short": "唐奇安突破（做空）",
     "Channel Up": "上升通道",
     "Channel Down": "下降通道",
     "Pennant": "三角旗"
