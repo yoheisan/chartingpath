@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ const EXPORT_PLATFORMS = {
     supportsIndicator: true,
     supportsStrategy: true,
     folderStructure: {
-      indicator: "", // No folder needed for Pine scripts
+      indicator: "",
       strategy: ""
     }
   },
@@ -92,6 +93,7 @@ const COMING_SOON_PLATFORMS = [
 export const StrategyDetail = () => {
   const { strategyId } = useParams();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [confirmTimeframe, setConfirmTimeframe] = useState("4h");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("TradingView - Pine Script v6");
@@ -108,11 +110,11 @@ export const StrategyDetail = () => {
         <div className="max-w-4xl mx-auto">
           <Link to="/trading-strategies" className="inline-flex items-center gap-2 text-primary hover:underline mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Trading Strategies
+            {t('strategyDetail.backToStrategies')}
           </Link>
           <Card className="text-center p-8">
-            <CardTitle>Strategy Not Found</CardTitle>
-            <CardDescription className="mt-2">The requested strategy could not be found.</CardDescription>
+            <CardTitle>{t('strategyDetail.strategyNotFound')}</CardTitle>
+            <CardDescription className="mt-2">{t('strategyDetail.strategyNotFoundDesc')}</CardDescription>
           </Card>
         </div>
       </div>
@@ -269,7 +271,6 @@ Type: ${variant || "strategy"}
       return true;
     } catch (e) {
       console.error('downloadFile error:', e);
-      // Fallback: open in a new window so user can save manually
       try {
         const nw = window.open('', '_blank');
         if (nw) {
@@ -284,7 +285,6 @@ Type: ${variant || "strategy"}
     }
   };
 
-  // Enhanced download with Supabase Storage option for production
   const downloadViaSupabase = async (zipBlob: Blob, filename: string) => {
     try {
       const { data, error } = await supabase.storage
@@ -296,14 +296,12 @@ Type: ${variant || "strategy"}
 
       if (error) throw error;
 
-      // Try public URL first (bucket is public)
       const { data: publicUrlData } = supabase.storage
         .from('strategy-downloads')
         .getPublicUrl(`temp/${filename}`);
 
       let finalUrl = publicUrlData?.publicUrl || '';
 
-      // If no public URL (or bucket privacy changes), use signed URL
       if (!finalUrl) {
         const { data: signedUrlData } = await supabase.storage
           .from('strategy-downloads')
@@ -317,10 +315,8 @@ Type: ${variant || "strategy"}
       }
 
       if (finalUrl) {
-        // Try window.open first (works better in iframes)
         window.open(finalUrl, '_blank');
         
-        // Also try traditional download as backup
         const a = document.createElement('a');
         a.href = finalUrl;
         a.download = filename;
@@ -330,7 +326,6 @@ Type: ${variant || "strategy"}
         a.click();
         if (document.body.contains(a)) document.body.removeChild(a);
         
-        // Show success message with direct link
         toast({
           title: "Download started!",
           description: (
@@ -372,7 +367,6 @@ Type: ${variant || "strategy"}
       const platform = EXPORT_PLATFORMS[selectedPlatform as keyof typeof EXPORT_PLATFORMS];
       const cleanName = strategy.name.replace(/[^a-zA-Z0-9]/g, '_');
 
-      // Generate content
       const code = template.generateCode(strategy, selectedTimeframe);
       if (!code) {
         toast({
@@ -385,29 +379,22 @@ Type: ${variant || "strategy"}
       const readme = template.generateReadme(strategy);
       const disclaimer = DISCLAIMER_TEXT;
 
-      // Build ZIP bundle with proper platform folder structure
       const zip = new JSZip();
       const folder = platform.folderStructure?.strategy || "";
       
-      // Add main code file in correct folder
       zip.file(`${folder}${cleanName}.${platform.extension}`, code);
-      
-      // Add documentation files at root level
       zip.file(`${cleanName}_README.txt`, readme);
       zip.file(`${cleanName}_DISCLAIMER.txt`, disclaimer);
       
-      // Add installation instructions specific to platform
       const installInstructions = generateInstallationInstructions(selectedPlatform, cleanName, platform.extension);
       zip.file(`${cleanName}_INSTALLATION_GUIDE.txt`, installInstructions);
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const zipName = `${cleanName}_${selectedPlatform.replace(/[^a-zA-Z0-9]/g, '_')}_bundle.zip`;
       
-      // Try Supabase Storage first for most reliable downloads
       const supabaseSuccess = await downloadViaSupabase(zipBlob, zipName);
       
       if (!supabaseSuccess) {
-        // Fallback to client-side download
         const anyWin = window as any;
         let saved = false;
         if (typeof anyWin.showSaveFilePicker === 'function') {
@@ -465,7 +452,6 @@ Type: ${variant || "strategy"}
         return;
       }
 
-      // Generate code with timeout protection
       const code = template.generateCode(strategy, selectedTimeframe);
       
       if (!code || code.trim() === '') {
@@ -542,14 +528,12 @@ Type: ${variant || "strategy"}
       let disclaimer: string;
       
       if (platform === "TradingView - Pine Script v6") {
-        // Use existing Pine Script engine
         code = variant === "indicator" 
           ? PineScriptEngine.generateIndicatorVersion(strategy)
           : PineScriptEngine.generateStrategyVersion(strategy);
         readme = PineScriptEngine.generateReadme(strategy, variant);
         disclaimer = PineScriptEngine.generateDisclaimer();
       } else {
-        // Use export templates for other platforms
         const template = EXPORT_TEMPLATES[platform as keyof typeof EXPORT_TEMPLATES];
         if (!template) {
           toast({
@@ -564,9 +548,7 @@ Type: ${variant || "strategy"}
         readme = template.generateReadme(strategy);
         disclaimer = DISCLAIMER_TEXT;
         
-        // Modify code generation for indicator vs strategy variants
         if (variant === "indicator") {
-          // Customize for indicator-only functionality
           code = code.replace(/strategy\(/g, 'indicator(').replace(/strategy\./g, '');
         }
       }
@@ -581,18 +563,15 @@ Type: ${variant || "strategy"}
         return;
       }
       
-      // Force download with user interaction
       const timestamp = new Date().toISOString().slice(0, 10);
       const variantName = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
       const prefix = `${cleanName}_${variantName.replace(/\s+/g, '_')}_${timestamp}`;
       
       console.log('Attempting to download files...');
       
-      // Enhanced download with integrity checks
       const downloadWithFallback = (content: string, filename: string) => {
         console.log(`Downloading ${filename}, content length: ${content.length}`);
         
-        // Validate content integrity
         if (!content || content.trim().length === 0) {
           console.error(`Cannot download ${filename}: Empty content`);
           toast({
@@ -604,11 +583,9 @@ Type: ${variant || "strategy"}
         }
         
         try {
-          // Use proper MIME type for different file extensions
           const mimeType = filename.endsWith('.txt') ? 'text/plain' : 'application/octet-stream';
           const blob = new Blob([content], { type: mimeType });
           
-          // Verify blob was created successfully
           if (blob.size === 0) {
             throw new Error('Blob creation failed - zero size');
           }
@@ -620,14 +597,10 @@ Type: ${variant || "strategy"}
           link.download = filename;
           link.style.display = 'none';
           
-          // Add to DOM, trigger download, then cleanup
           document.body.appendChild(link);
-          
-          // Trigger download immediately within user gesture
           link.click();
           console.log(`Successfully triggered download for ${filename}`);
           
-          // Cleanup after download
           setTimeout(() => {
             if (document.body.contains(link)) {
               document.body.removeChild(link);
@@ -639,7 +612,6 @@ Type: ${variant || "strategy"}
         } catch (downloadError) {
           console.error(`Failed to download ${filename}:`, downloadError);
           
-          // Enhanced fallback - show content in new window with better formatting
           try {
             const newWindow = window.open('', '_blank');
             if (newWindow) {
@@ -675,18 +647,13 @@ Type: ${variant || "strategy"}
         }
       };
       
-      // Package files into a single ZIP with proper folder structure
       const zip = new JSZip();
       const folder = platformInfo.folderStructure?.[variant] || "";
       
-      // Add main code file in correct platform folder
       zip.file(`${folder}${prefix}.${platformInfo.extension}`, code);
-      
-      // Add documentation at root level  
       zip.file(`${prefix}_README.txt`, readme);
       zip.file(`${prefix}_DISCLAIMER.txt`, disclaimer);
       
-      // Add platform-specific installation guide
       const installGuide = generateInstallationInstructions(platform, prefix, platformInfo.extension, variant);
       zip.file(`${prefix}_INSTALLATION_GUIDE.txt`, installGuide);
 
@@ -694,11 +661,9 @@ Type: ${variant || "strategy"}
         const zipName = `${prefix}.zip`;
         const variantDescription = variant === "indicator" ? platformInfo.indicatorName : platformInfo.strategyName;
         
-        // Try Supabase Storage first for reliable downloads
         const supabaseSuccess = await downloadViaSupabase(zipBlob, zipName);
         
         if (!supabaseSuccess) {
-          // Fallback to client-side methods
           const anyWin = window as any;
           if (typeof anyWin.showSaveFilePicker === 'function') {
             try {
@@ -761,7 +726,6 @@ Type: ${variant || "strategy"}
           description: "Failed to create ZIP file for download",
           variant: "destructive",
         });
-        // Fallback to single primary file download to salvage action
         downloadWithFallback(code, `${prefix}.${platformInfo.extension}`);
       });
       
@@ -781,7 +745,7 @@ Type: ${variant || "strategy"}
         <div className="max-w-4xl mx-auto space-y-6">
           <Link to="/trading-strategies" className="inline-flex items-center gap-2 text-primary hover:underline">
             <ArrowLeft className="h-4 w-4" />
-            Back to Trading Strategies
+            {t('strategyDetail.backToStrategies')}
           </Link>
 
           {/* Strategy Header */}
@@ -807,7 +771,7 @@ Type: ${variant || "strategy"}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="font-medium text-foreground mb-2">Indicators</h4>
+                <h4 className="font-medium text-foreground mb-2">{t('strategyDetail.indicators')}</h4>
                 <div className="flex flex-wrap gap-1">
                   {strategy.indicators.map((indicator, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
@@ -818,7 +782,7 @@ Type: ${variant || "strategy"}
               </div>
               
               <div>
-                <h4 className="font-medium text-foreground mb-2">Timeframes</h4>
+                <h4 className="font-medium text-foreground mb-2">{t('strategyDetail.timeframes')}</h4>
                 <div className="flex flex-wrap gap-1">
                   {strategy.timeframes.map((tf, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
@@ -834,7 +798,7 @@ Type: ${variant || "strategy"}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-6">
               <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg text-bullish">Entry Rules</CardTitle>
+                <CardTitle className="text-lg text-bullish">{t('strategyDetail.entryRules')}</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <p className="text-muted-foreground">{strategy.entry}</p>
@@ -843,7 +807,7 @@ Type: ${variant || "strategy"}
 
             <Card className="p-6">
               <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg text-bearish">Exit Rules</CardTitle>
+                <CardTitle className="text-lg text-bearish">{t('strategyDetail.exitRules')}</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <p className="text-muted-foreground">{strategy.exit}</p>
@@ -856,17 +820,17 @@ Type: ${variant || "strategy"}
             <CardHeader className="p-0 mb-6">
               <div className="flex items-center gap-3 mb-3">
                 <Code className="h-6 w-6 text-primary" />
-                <CardTitle className="text-2xl">Code Preview & Generation</CardTitle>
+                <CardTitle className="text-2xl">{t('strategyDetail.codePreview')}</CardTitle>
               </div>
               <CardDescription className="text-lg">
-                Generate and preview trading code for your preferred platform
+                {t('strategyDetail.codePreviewDesc')}
               </CardDescription>
             </CardHeader>
             
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Platform:</label>
+                  <label className="text-sm font-medium">{t('strategyDetail.platform')}</label>
                   <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                     <SelectTrigger>
                       <SelectValue />
@@ -882,7 +846,7 @@ Type: ${variant || "strategy"}
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Timeframe:</label>
+                  <label className="text-sm font-medium">{t('strategyDetail.timeframe')}</label>
                   <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
                     <SelectTrigger>
                       <SelectValue />
@@ -898,17 +862,17 @@ Type: ${variant || "strategy"}
 
               <Button onClick={handleGenerateCode} className="w-full md:w-auto">
                 <Code className="h-4 w-4 mr-2" />
-                Generate Code Preview
+                {t('strategyDetail.generateCodePreview')}
               </Button>
 
               {generatedCode && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Generated Code:</h4>
+                    <h4 className="font-medium">{t('strategyDetail.generatedCode')}</h4>
                     <div className="flex gap-2">
                        <Button onClick={handleCopyCode} variant="outline" size="sm">
                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                         {copied ? "Copied!" : "Copy"}
+                         {copied ? t('strategyDetail.copied') : t('strategyDetail.copy')}
                        </Button>
                         {currentPlatform?.supportsExport && (
                           <Tooltip>
@@ -916,11 +880,11 @@ Type: ${variant || "strategy"}
                               <Button onClick={handleExportCodeFile} variant="outline" size="sm" className="relative">
                                 <Download className="h-4 w-4 mr-2" />
                                 <Info className="h-3 w-3 absolute -top-1 -right-1 text-muted-foreground" />
-                                Export File
+                                {t('strategyDetail.exportFile')}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">Downloads the generated code as a file for {selectedPlatform}. Perfect for importing directly into your trading platform.</p>
+                              <p className="max-w-xs">{t('strategyDetail.exportFileTooltip', { platform: selectedPlatform })}</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -934,7 +898,7 @@ Type: ${variant || "strategy"}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">Downloads {selectedPlatform} {currentPlatform.indicatorName.toLowerCase()} version with visual buy/sell signals, alerts, and chart overlays. No automatic trading - perfect for manual analysis.</p>
+                              <p className="max-w-xs">{t('strategyDetail.indicatorTooltip', { platform: selectedPlatform, type: currentPlatform.indicatorName.toLowerCase() })}</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -948,7 +912,7 @@ Type: ${variant || "strategy"}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="max-w-xs">Downloads complete {selectedPlatform} {currentPlatform.strategyName.toLowerCase()} with backtesting framework, automatic position management, and performance analytics.</p>
+                              <p className="max-w-xs">{t('strategyDetail.strategyTooltip', { platform: selectedPlatform, type: currentPlatform.strategyName.toLowerCase() })}</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -958,7 +922,7 @@ Type: ${variant || "strategy"}
                     value={generatedCode}
                     readOnly
                     className="min-h-[400px] font-mono text-sm"
-                    placeholder="Generated code will appear here..."
+                    placeholder={t('strategyDetail.generatedCodePlaceholder')}
                   />
                 </div>
               )}
@@ -970,10 +934,9 @@ Type: ${variant || "strategy"}
             <div className="flex items-start gap-3">
               <AlertCircle className="h-6 w-6 text-warning mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-warning mb-2">Important Disclaimer</h3>
+                <h3 className="font-semibold text-warning mb-2">{t('strategyDetail.importantDisclaimer')}</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  All scripts are provided for educational purposes only and follow uniform Pine Script v6 standards. 
-                  Each download includes detailed documentation and disclaimers.
+                  {t('strategyDetail.disclaimerText')}
                 </p>
                 <div className="bg-warning/5 border border-warning/20 rounded-md p-3 mb-3">
                   <p className="text-sm text-warning-foreground font-medium">
@@ -981,11 +944,11 @@ Type: ${variant || "strategy"}
                   </p>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• Educational use only - not financial advice</li>
-                  <li>• Always test strategies thoroughly before live trading</li>
-                  <li>• Past performance does not guarantee future results</li>
-                  <li>• Use proper risk management and position sizing</li>
-                  <li>• Comply with all applicable laws and regulations</li>
+                  <li>• {t('strategyDetail.educationalOnly')}</li>
+                  <li>• {t('strategyDetail.testStrategies')}</li>
+                  <li>• {t('strategyDetail.pastPerformance')}</li>
+                  <li>• {t('strategyDetail.riskManagement')}</li>
+                  <li>• {t('strategyDetail.complyLaws')}</li>
                 </ul>
               </div>
             </div>
