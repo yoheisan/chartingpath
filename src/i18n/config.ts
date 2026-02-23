@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { missingKeyCollector } from './missingKeyCollector';
 
 // Translation files
 import enTranslations from './locales/en.json';
@@ -45,6 +46,8 @@ i18n
     interpolation: {
       escapeValue: false, // React already does escaping
     },
+    saveMissing: true,
+    missingKeyHandler: missingKeyCollector.handler,
   });
 
 export default i18n;
