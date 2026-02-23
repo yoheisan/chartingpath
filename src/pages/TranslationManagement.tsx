@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen } from 'lucide-react';
-import { languages } from '@/i18n/config';
+import i18n, { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { SiteStringScanner } from '@/components/SiteStringScanner';
@@ -197,9 +197,32 @@ export const TranslationManagement = () => {
       }
     }
 
+    // Auto re-export: reload locale bundles from DB into i18n runtime
+    setSyncProgress('Re-exporting locale files from DB...');
+    let exportErrors = 0;
+    for (const langCode of langs) {
+      try {
+        const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
+          body: { action: 'export_locale_json', language: langCode }
+        });
+        if (exportError) {
+          console.error(`Export error for ${langCode}:`, exportError);
+          exportErrors++;
+          continue;
+        }
+        if (localeData) {
+          i18n.addResourceBundle(langCode, 'translation', localeData, true, true);
+          console.log(`Re-exported ${langCode} locale (${Object.keys(localeData).length} top-level keys)`);
+        }
+      } catch (e) {
+        console.error(`Export error for ${langCode}:`, e);
+        exportErrors++;
+      }
+    }
+
     toast({
-      title: 'Sync Complete',
-      description: `Translated ${totalTranslated} keys across ${langs.length} languages${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
+      title: 'Sync & Export Complete',
+      description: `Translated ${totalTranslated} keys across ${langs.length} languages${totalErrors > 0 ? ` (${totalErrors} sync errors)` : ''}${exportErrors > 0 ? ` (${exportErrors} export errors)` : '. Locale bundles reloaded.'}`
     });
 
     await loadCoverageStats();
