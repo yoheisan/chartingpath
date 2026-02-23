@@ -306,10 +306,10 @@
         "screener": "スクリーナー：1,100以上のシンボルを無制限にスキャン（無料）"
       },
       "features": {
-        "activeAlerts": "アクティブアラート",
-        "dailyRuns": "毎日の実行",
-        "maxInstruments": "最大インストゥルメント数",
-        "maxLookback": "最大ルックバック",
+        "activeAlerts": "有効アラート数",
+        "dailyRuns": "1日の実行回数",
+        "maxInstruments": "最大銘柄数",
+        "maxLookback": "最大遡及期間",
         "monthlyCredits": "月間クレジット"
       },
       "headline": "チャートパターンインテリジェンスを活用した、プロンプト不要のトレーディングプロジェクト",
@@ -325,10 +325,10 @@
       "labels": {
         "credits": "クレジット",
         "alerts": "アラート",
-        "instruments": "インストゥルメント",
-        "lookback": "ルックバック",
-        "studyTFs": "分析時間足",
-        "watchlistSlots": "ウォッチリスト枠",
+        "instruments": "銘柄数/回",
+        "lookback": "遡及期間",
+        "studyTFs": "対応時間足",
+        "watchlistSlots": "ウォッチリスト登録数",
         "unlimited": "無制限"
       },
       "featureNames": {
@@ -361,7 +361,7 @@
       },
       "howCreditsWork": "クレジットの仕組み",
       "dataRefreshRates": "データ更新レート",
-      "dataRefreshDesc": "時間枠とインストゥルメントティアによるパターン検出の鮮度",
+      "dataRefreshDesc": "時間足と銘柄カバレッジによるパターン検出の更新頻度",
       "core": "コア",
       "fullUniverse": "フルユニバース",
       "coreCharts": "1時間足チャート",
