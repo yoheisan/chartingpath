@@ -897,12 +897,13 @@ function OptionsPayoffVisualization({ slug }: { slug: string }) {
 
 // Generate table of contents from sections
 function TableOfContents({ sections }: { sections: ParsedSection[] }) {
+  const { t } = useTranslation();
   if (sections.length < 3) return null;
   
   return (
     <Card className="mb-8 bg-muted/30">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">In This Article</CardTitle>
+        <CardTitle className="text-lg">{t('learn.inThisArticle')}</CardTitle>
       </CardHeader>
       <CardContent>
         <nav>
@@ -1090,7 +1091,7 @@ const DynamicArticle = () => {
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground mb-8">
             <span className="flex items-center gap-1">
               <Tag className="h-4 w-4" />
-              {article.category}
+              {t(`learn.categories.${article.category}`, article.category)}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
@@ -1099,7 +1100,7 @@ const DynamicArticle = () => {
             </span>
             <span>•</span>
             <Badge variant="secondary" className="capitalize">
-              {article.difficulty_level}
+              {t(`learn.difficulties.${article.difficulty_level}`, article.difficulty_level)}
             </Badge>
           </div>
 
@@ -1417,7 +1418,7 @@ const DynamicArticle = () => {
               <div className="flex flex-wrap gap-2">
                 {article.tags.map((tag) => (
                   <Badge key={tag} variant="outline">
-                    {tag}
+                    {t(`learn.tagLabels.${tag}`, tag)}
                   </Badge>
                 ))}
               </div>
