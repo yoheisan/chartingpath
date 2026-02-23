@@ -531,7 +531,7 @@ const EconomicCalendar = () => {
                   className="h-7 px-2 text-xs"
                   onClick={() => setSelectedCountries([])}
                 >
-                  Clear
+                  {t('common.clear')}
                 </Button>
               )}
             </div>
@@ -604,19 +604,19 @@ const EconomicCalendar = () => {
                                     <div className="flex gap-4 text-xs mt-2 ml-7">
                                       {event.actual_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Actual: </span>
+                                           <span className="text-muted-foreground">{t('economicCalendar.actual')}: </span>
                                           <span className="font-semibold">{event.actual_value}</span>
                                         </div>
                                       )}
                                       {event.forecast_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Forecast: </span>
+                                           <span className="text-muted-foreground">{t('economicCalendar.forecast')}: </span>
                                           <span>{event.forecast_value}</span>
                                         </div>
                                       )}
                                       {event.previous_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Previous: </span>
+                                           <span className="text-muted-foreground">{t('economicCalendar.previous')}: </span>
                                           <span>{event.previous_value}</span>
                                         </div>
                                       )}
