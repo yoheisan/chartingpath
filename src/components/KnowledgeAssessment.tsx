@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Target, BookOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface KnowledgeArea {
   id: string;
@@ -16,15 +17,17 @@ interface KnowledgeAssessmentProps {
 }
 
 export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
+  const { t } = useTranslation();
+
   const getScorePercentage = (area: KnowledgeArea) => {
     return area.total > 0 ? Math.round((area.score / area.total) * 100) : 0;
   };
 
   const getScoreLevel = (percentage: number) => {
-    if (percentage >= 80) return { label: "Expert", color: "bg-green-500", icon: TrendingUp };
-    if (percentage >= 60) return { label: "Proficient", color: "bg-blue-500", icon: Target };
-    if (percentage >= 40) return { label: "Developing", color: "bg-yellow-500", icon: BookOpen };
-    return { label: "Needs Focus", color: "bg-red-500", icon: TrendingDown };
+    if (percentage >= 80) return { label: t('knowledgeAssessment.expert'), color: "bg-green-500", icon: TrendingUp };
+    if (percentage >= 60) return { label: t('knowledgeAssessment.proficient'), color: "bg-blue-500", icon: Target };
+    if (percentage >= 40) return { label: t('knowledgeAssessment.developing'), color: "bg-yellow-500", icon: BookOpen };
+    return { label: t('knowledgeAssessment.needsFocus'), color: "bg-red-500", icon: TrendingDown };
   };
 
   const sortedAreas = [...areas].sort((a, b) => getScorePercentage(a) - getScorePercentage(b));
@@ -41,7 +44,7 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
       <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Your Trading Knowledge</span>
+            <span>{t('knowledgeAssessment.yourKnowledge')}</span>
             <Badge variant="outline" className="text-lg">
               {overallPercentage}%
             </Badge>
@@ -50,18 +53,18 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
         <CardContent>
           <Progress value={overallPercentage} className="h-3" />
           <p className="text-sm text-muted-foreground mt-2">
-            Overall: {overallScore} / {overallTotal} questions answered correctly
+            {t('knowledgeAssessment.overall', { score: overallScore, total: overallTotal })}
           </p>
         </CardContent>
       </Card>
 
-      {/* Weak Areas - Focus Here */}
+      {/* Weak Areas */}
       {weakestAreas.length > 0 && (
         <Card className="border-red-500/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-500" />
-              Focus Areas - Needs Improvement
+              {t('knowledgeAssessment.focusAreas')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -83,17 +86,17 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
                   </div>
                   <Progress value={percentage} className="h-2" />
                   <p className="text-xs text-muted-foreground">
-                    {area.score} / {area.total} correct - {level.label}
+                    {t('knowledgeAssessment.correctWithLevel', { score: area.score, total: area.total, level: level.label })}
                   </p>
                 </div>
               );
             })}
             <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm font-medium mb-2">Recommendations:</p>
+              <p className="text-sm font-medium mb-2">{t('knowledgeAssessment.recommendations')}</p>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Review pattern characteristics and trading rules</li>
-                <li>• Practice with more visual recognition exercises</li>
-                <li>• Study risk management principles</li>
+                <li>• {t('knowledgeAssessment.rec1')}</li>
+                <li>• {t('knowledgeAssessment.rec2')}</li>
+                <li>• {t('knowledgeAssessment.rec3')}</li>
               </ul>
             </div>
           </CardContent>
@@ -106,7 +109,7 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-500" />
-              Strong Areas - Well Done!
+              {t('knowledgeAssessment.strongAreas')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -128,7 +131,7 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
                   </div>
                   <Progress value={percentage} className="h-2" />
                   <p className="text-xs text-muted-foreground">
-                    {area.score} / {area.total} correct - {level.label}
+                    {t('knowledgeAssessment.correctWithLevel', { score: area.score, total: area.total, level: level.label })}
                   </p>
                 </div>
               );
@@ -140,7 +143,7 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
       {/* All Knowledge Areas */}
       <Card>
         <CardHeader>
-          <CardTitle>Detailed Knowledge Breakdown</CardTitle>
+          <CardTitle>{t('knowledgeAssessment.detailedBreakdown')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {areas.map((area) => {
@@ -164,7 +167,7 @@ export const KnowledgeAssessment = ({ areas }: KnowledgeAssessmentProps) => {
                 </div>
                 <Progress value={percentage} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  {area.score} / {area.total} correct
+                  {t('knowledgeAssessment.correct', { score: area.score, total: area.total })}
                 </p>
               </div>
             );

@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle, XCircle, Trophy, RotateCcw } from "lucide-react";
 import { PatternCalculator } from "@/utils/PatternCalculator";
 import { chartPatternTemplates } from "@/utils/ChartPatternTemplates";
+import { useTranslation } from "react-i18next";
+import { translatePatternName } from "@/utils/translatePatternName";
 
 interface QuizQuestion {
   patternId: string;
@@ -17,7 +19,6 @@ interface QuizQuestion {
 }
 
 const generateQuizQuestions = (): QuizQuestion[] => {
-  // Select diverse patterns from the templates
   const selectedPatterns = chartPatternTemplates.filter(p => 
     ['head-shoulders', 'double-top', 'double-bottom', 'ascending-triangle', 
      'bull-flag', 'bear-flag', 'cup-handle', 'symmetrical-triangle',
@@ -26,13 +27,11 @@ const generateQuizQuestions = (): QuizQuestion[] => {
   );
 
   return selectedPatterns.map(pattern => {
-    // Get similar patterns for wrong options
     const similarPatterns = chartPatternTemplates
       .filter(p => p.category === pattern.category && p.id !== pattern.id)
       .slice(0, 2)
       .map(p => p.name);
     
-    // If not enough similar patterns, add from other categories
     while (similarPatterns.length < 2) {
       const randomPattern = chartPatternTemplates[Math.floor(Math.random() * chartPatternTemplates.length)];
       if (!similarPatterns.includes(randomPattern.name) && randomPattern.id !== pattern.id) {
@@ -55,6 +54,7 @@ const generateQuizQuestions = (): QuizQuestion[] => {
 };
 
 export const PatternIdentificationQuiz = () => {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [questions] = useState<QuizQuestion[]>(generateQuizQuestions());
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -76,22 +76,18 @@ export const PatternIdentificationQuiz = () => {
     const patternData = PatternCalculator.getPatternData(patternId);
     const { candles, annotations } = patternData;
 
-    // Set canvas size
     canvas.width = 800;
     canvas.height = 500;
 
-    // Clear canvas with dark background
     ctx.fillStyle = "hsl(223, 39%, 4%)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Chart dimensions
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2 - 80;
     const chartLeft = padding;
     const chartTop = padding;
 
-    // Draw grid
     ctx.strokeStyle = "hsl(215, 15%, 20%)";
     ctx.lineWidth = 0.5;
     
@@ -111,7 +107,6 @@ export const PatternIdentificationQuiz = () => {
       ctx.stroke();
     }
 
-    // Calculate price range
     const prices = candles.flatMap(d => [d.high, d.low]);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
@@ -129,7 +124,6 @@ export const PatternIdentificationQuiz = () => {
       return chartLeft + (index + 0.5) * (chartWidth / candles.length);
     };
 
-    // Draw candlesticks
     const candleWidth = Math.max(8, chartWidth / (candles.length * 1.5));
     candles.forEach((candle, index) => {
       const x = indexToX(index);
@@ -141,7 +135,6 @@ export const PatternIdentificationQuiz = () => {
 
       const isBullish = candle.close > candle.open;
       
-      // Draw wick - Unified chart colors: #22c55e (green) and #ef4444 (red)
       ctx.strokeStyle = isBullish ? "#22c55e" : "#ef4444";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -149,7 +142,6 @@ export const PatternIdentificationQuiz = () => {
       ctx.lineTo(x, yLow);
       ctx.stroke();
 
-      // Draw body
       ctx.fillStyle = isBullish ? "#22c55e" : "#ef4444";
       const bodyTop = Math.min(yOpen, yClose);
       const bodyHeight = Math.abs(yClose - yOpen);
@@ -166,7 +158,6 @@ export const PatternIdentificationQuiz = () => {
       }
     });
 
-    // Draw annotations
     annotations.forEach(annotation => {
       ctx.strokeStyle = annotation.color;
       ctx.fillStyle = annotation.color;
@@ -196,7 +187,6 @@ export const PatternIdentificationQuiz = () => {
       ctx.setLineDash([]);
     });
 
-    // Draw volume
     const volumeTop = chartTop + chartHeight + 20;
     const volumeHeight = 60;
     const maxVolume = Math.max(...candles.map(c => c.volume));
@@ -206,13 +196,11 @@ export const PatternIdentificationQuiz = () => {
       const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
       const isBullish = candle.close > candle.open;
       
-      // Unified volume colors: rgba(34, 197, 94, 0.6) and rgba(239, 68, 68, 0.6)
       ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.6)" : "rgba(239, 68, 68, 0.6)";
       ctx.fillRect(x - candleWidth/2 * 0.6, volumeTop + volumeHeight - volumeBarHeight, 
                    candleWidth * 0.6, volumeBarHeight);
     });
 
-    // Question mark watermark (since we're hiding the pattern name)
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
     ctx.font = "bold 80px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "center";
@@ -243,7 +231,6 @@ export const PatternIdentificationQuiz = () => {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      // Save scores to localStorage
       const savedScores = JSON.parse(localStorage.getItem('quizScores') || '{"patternVisual":{"score":0,"total":0},"patternCharacteristics":{"score":0,"total":0},"riskManagement":{"score":0,"total":0}}');
       savedScores.patternVisual = {
         score: savedScores.patternVisual.score + score,
@@ -269,18 +256,18 @@ export const PatternIdentificationQuiz = () => {
       <Card className="max-w-2xl mx-auto">
         <CardContent className="p-8 text-center">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-primary" />
-          <h2 className="text-3xl font-bold mb-4">Quiz Complete!</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('patternIdQuiz.quizComplete')}</h2>
           <p className="text-5xl font-bold mb-4 text-primary">
             {score} / {questions.length}
           </p>
           <p className="text-xl mb-6 text-muted-foreground">
-            {percentage >= 80 ? "Excellent! You're a pattern recognition expert!" :
-             percentage >= 60 ? "Good job! Keep practicing to improve." :
-             "Keep learning! Practice makes perfect."}
+            {percentage >= 80 ? t('patternIdQuiz.excellentResult') :
+             percentage >= 60 ? t('patternIdQuiz.goodResult') :
+             t('patternIdQuiz.keepLearning')}
           </p>
           <Button onClick={handleRestart} size="lg" className="gap-2">
             <RotateCcw className="w-4 h-4" />
-            Try Again
+            {t('patternIdQuiz.tryAgain')}
           </Button>
         </CardContent>
       </Card>
@@ -289,26 +276,24 @@ export const PatternIdentificationQuiz = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Progress Bar */}
       <Card>
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">
-              Question {currentQuestionIndex + 1} of {questions.length}
+              {t('patternIdQuiz.questionOf', { current: currentQuestionIndex + 1, total: questions.length })}
             </span>
             <span className="text-sm font-medium">
-              Score: {score} / {currentQuestionIndex + (showExplanation ? 1 : 0)}
+              {t('patternIdQuiz.score', { score, total: currentQuestionIndex + (showExplanation ? 1 : 0) })}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
         </CardContent>
       </Card>
 
-      {/* Pattern Display */}
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold">Identify This Chart Pattern</h3>
+            <h3 className="text-xl font-semibold">{t('patternIdQuiz.identifyPattern')}</h3>
             <Badge variant="outline" className="text-sm">
               {currentQuestion.category}
             </Badge>
@@ -319,10 +304,9 @@ export const PatternIdentificationQuiz = () => {
         </CardContent>
       </Card>
 
-      {/* Answer Options */}
       <Card>
         <CardContent className="p-6">
-          <h4 className="font-semibold mb-4">Select the correct pattern:</h4>
+          <h4 className="font-semibold mb-4">{t('patternIdQuiz.selectCorrect')}</h4>
           <div className="grid grid-cols-1 gap-3">
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === index;
@@ -345,7 +329,7 @@ export const PatternIdentificationQuiz = () => {
                   `}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{option}</span>
+                    <span className="font-medium">{translatePatternName(option)}</span>
                     {showResult && isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     )}
@@ -358,7 +342,6 @@ export const PatternIdentificationQuiz = () => {
             })}
           </div>
 
-          {/* Explanation */}
           {showExplanation && (
             <div className={`mt-6 p-4 rounded-lg ${
               selectedAnswer === currentQuestion.correctAnswer 
@@ -366,16 +349,15 @@ export const PatternIdentificationQuiz = () => {
                 : 'bg-red-500/10 border border-red-500'
             }`}>
               <p className="font-semibold mb-2">
-                {selectedAnswer === currentQuestion.correctAnswer ? '✓ Correct!' : '✗ Incorrect'}
+                {selectedAnswer === currentQuestion.correctAnswer ? t('patternIdQuiz.correct') : t('patternIdQuiz.incorrect')}
               </p>
               <p className="text-sm">{currentQuestion.explanation}</p>
             </div>
           )}
 
-          {/* Next Button */}
           {showExplanation && (
             <Button onClick={handleNext} className="w-full mt-4" size="lg">
-              {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+              {currentQuestionIndex < questions.length - 1 ? t('patternIdQuiz.nextQuestion') : t('patternIdQuiz.finishQuiz')}
             </Button>
           )}
         </CardContent>
