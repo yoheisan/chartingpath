@@ -153,7 +153,7 @@ interface ParsedSection {
 }
 
 // Parse markdown content into structured sections
-function parseContentSections(content: string): ParsedSection[] {
+function parseContentSections(content: string, introLabel: string = 'Introduction'): ParsedSection[] {
   const sections: ParsedSection[] = [];
   const h2Regex = /^## (.+)$/gm;
   
@@ -177,7 +177,7 @@ function parseContentSections(content: string): ParsedSection[] {
   if (firstH2Match && firstH2Match.index && firstH2Match.index > 0) {
     const introContent = content.substring(0, firstH2Match.index).trim();
     if (introContent) {
-      sections.push({ title: 'Introduction', content: introContent, type: 'overview' });
+      sections.push({ title: introLabel, content: introContent, type: 'overview' });
     }
   }
   
@@ -1070,7 +1070,7 @@ const DynamicArticle = () => {
   }
 
   // Parse content into structured sections
-  const sections = parseContentSections(article.content);
+  const sections = parseContentSections(article.content, t('learn.introduction'));
 
   return (
     <div className="min-h-screen bg-background">
