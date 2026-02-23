@@ -242,9 +242,13 @@ export const SiteStringScanner = () => {
       });
     } catch (error) {
       console.error('Error comparing versions:', error);
+      const errorMsg = error instanceof Error ? error.message : 
+        (typeof error === 'object' && error !== null && 'message' in error) ? String((error as any).message) : 'Failed to compare versions';
       toast({
         title: 'Error',
-        description: 'Failed to compare versions',
+        description: errorMsg.includes('Version(s) not found') 
+          ? 'You need at least 2 completed scans before you can compare versions. Run another scan first.'
+          : 'Failed to compare versions',
         variant: 'destructive'
       });
     } finally {

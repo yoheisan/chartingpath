@@ -147,7 +147,18 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (!oldSession || !newSession) {
-          throw new Error('One or both versions not found');
+          // Provide helpful info about which versions exist
+          const { data: availableVersions } = await supabase
+            .from('site_scan_sessions')
+            .select('version_number, scan_status, created_at')
+            .order('version_number', { ascending: false })
+            .limit(10);
+
+          throw new Error(
+            `Version(s) not found. Requested: v${old_version} and v${new_version}. ` +
+            `Available versions: ${availableVersions?.map((v: any) => `v${v.version_number} (${v.scan_status})`).join(', ') || 'none'}. ` +
+            `You need at least 2 completed scans to compare.`
+          );
         }
 
         // Perform comparison and create change log
