@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,12 @@ import {
   BarChart3,
   PanelLeftOpen,
   PanelLeftClose,
-  ChevronDown
+  ChevronDown,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquarePlus
 } from "lucide-react";
+import { ContactSupportDialog } from "@/components/support/ContactSupportDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CopilotRichMessage } from "./CopilotRichMessage";
@@ -102,6 +107,21 @@ export function TradingCopilot({
   } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
+
+  const logFeedback = useCallback(async (responseContent: string, helpful: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('copilot_feedback').insert({
+        question: messages.find(m => m.role === 'user')?.content || '',
+        response: responseContent.slice(0, 1000),
+        response_helpful: helpful,
+        session_id: null,
+        user_id: user?.id || null,
+      });
+    } catch (err) {
+      console.error('[CopilotFeedback] logFeedback error:', err);
+    }
+  }, [messages]);
 
   // Track which conversation the current in-memory messages belong to
   const activeConvoRef = useRef<string | null>(null);
@@ -439,6 +459,41 @@ export function TradingCopilot({
                         message.content
                       )}
                     </div>
+                    {message.role === "assistant" && message.content && message.content !== "..." && (
+                      <div className="flex items-center gap-1 mt-1 ml-1">
+                        <button
+                          onClick={() => {
+                            logFeedback(message.content || '', true);
+                            toast.success(t('copilot.feedbackThanks', 'Thanks for your feedback!'));
+                          }}
+                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-green-500 transition-colors"
+                          aria-label="Helpful"
+                        >
+                          <ThumbsUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            logFeedback(message.content || '', false);
+                            toast.info(t('copilot.feedbackNoted', 'Feedback noted. We\'ll improve!'));
+                          }}
+                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
+                          aria-label="Not helpful"
+                        >
+                          <ThumbsDown className="h-3 w-3" />
+                        </button>
+                        <ContactSupportDialog
+                          trigger={
+                            <button className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Report issue">
+                              <MessageSquarePlus className="h-3 w-3" />
+                            </button>
+                          }
+                          defaultCategory="bug"
+                          defaultSubject="Copilot Response Issue"
+                          defaultDescription={`Issue with copilot response:\n\n"${(message.content || '').slice(0, 200)}..."\n\nPlease describe the problem:\n`}
+                          source="copilot_feedback"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (

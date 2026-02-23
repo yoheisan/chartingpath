@@ -94,6 +94,7 @@ const DynamicArticle = lazy(() => import("./pages/blog/DynamicArticle"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
 
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -204,6 +205,7 @@ const App = () => (
           <Route path="/terms" element={withSuspense(<Terms />)} />
           <Route path="/privacy" element={withSuspense(<Privacy />)} />
           <Route path="/faq" element={withSuspense(<FAQ />)} />
+          <Route path="/support" element={withSuspense(<SupportPage />)} />
           <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -85,6 +85,9 @@ const Footer = () => {
                 <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.about', 'About')}
                 </Link>
+                <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {t('navigation.contactSupport', 'Contact Support')}
+                </Link>
               </nav>
             </div>
           </div>
@@ -177,6 +180,9 @@ const Footer = () => {
               </Link>
               <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pricing', 'Pricing')}
+              </Link>
+              <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {t('navigation.contactSupport', 'Contact Support')}
               </Link>
             </nav>
           </div>
