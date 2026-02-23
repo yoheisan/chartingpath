@@ -848,7 +848,24 @@
     "riskManagementSources": "リスク管理基準",
     "riskManagementSourcesInfo": "以下のフレームワークに基づく:",
     "statisticalSources": "統計基準",
-    "statisticalSourcesInfo": "以下で認められた手法:"
+    "statisticalSourcesInfo": "以下で認められた手法:",
+    "categories": {
+      "visual_recognition": "ビジュアル認識",
+      "characteristics": "特性",
+      "statistics": "統計",
+      "risk_management": "リスク管理",
+      "professional_practices": "プロの実践",
+      "stock_market": "株式市場",
+      "forex": "外国為替",
+      "cryptocurrency": "暗号通貨",
+      "commodities": "商品"
+    },
+    "difficulties": {
+      "beginner": "初級",
+      "intermediate": "中級",
+      "advanced": "上級",
+      "expert": "エキスパート"
+    }
   },
   "tradingKnowledgeQuiz": {
     "title": "トレーディング知識クイズ",
@@ -1623,7 +1640,10 @@
     "Inverted Head and Shoulders": "逆ヘッドアンドショルダー",
     "Ascending Triangle": "アセンディング・トライアングル",
     "Descending Triangle": "ディセンディング・トライアングル",
-    "Symmetrical Triangle": "シンメトリカル・トライアングル"
+    "Symmetrical Triangle": "シンメトリカル・トライアングル",
+    "Wedge": "ウェッジ",
+    "Triangle": "トライアングル",
+    "Flag": "フラッグ"
   },
   "timeframes": {
     "1H": "1時間",
