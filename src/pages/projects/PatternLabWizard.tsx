@@ -144,7 +144,8 @@ const INSTRUMENTS: Record<string, { symbol: string; yahooSymbol: string; name: s
 };
 
 // Asset class display names
-const ASSET_CLASS_LABELS: Record<string, string> = {
+// Asset class labels will be translated via t()
+const ASSET_CLASS_KEYS: Record<string, string> = {
   fx: 'Forex',
   crypto: 'Cryptocurrency',
   stocks: 'Stocks',
@@ -168,29 +169,30 @@ const TIMEFRAMES = [
 // Grade filter presets for risk appetite
 type GradePreset = 'conservative' | 'moderate' | 'aggressive' | 'custom';
 
-const GRADE_PRESETS: Record<GradePreset, { grades: GradeLetter[]; label: string; description: string; icon: React.ElementType }> = {
+// Grade presets - labels/descriptions resolved via t() at render time
+const GRADE_PRESET_CONFIG: Record<GradePreset, { grades: GradeLetter[]; labelKey: string; descKey: string; icon: React.ElementType }> = {
   conservative: {
     grades: ['A', 'B'],
-    label: 'Conservative',
-    description: 'Only high-quality setups (A-B grades)',
+    labelKey: 'patternLabWizard.conservativePreset',
+    descKey: 'patternLabWizard.conservativeDesc',
     icon: Shield,
   },
   moderate: {
     grades: ['A', 'B', 'C'],
-    label: 'Moderate',
-    description: 'Good and fair setups (A-C grades)',
+    labelKey: 'patternLabWizard.moderatePreset',
+    descKey: 'patternLabWizard.moderateDesc',
     icon: Target,
   },
   aggressive: {
     grades: ['A', 'B', 'C', 'D', 'F'],
-    label: 'Aggressive',
-    description: 'All setups including weak ones',
+    labelKey: 'patternLabWizard.aggressivePreset',
+    descKey: 'patternLabWizard.aggressiveDesc',
     icon: Flame,
   },
   custom: {
     grades: [],
-    label: 'Custom',
-    description: 'Select specific grades',
+    labelKey: 'patternLabWizard.qualityFilter',
+    descKey: '',
     icon: Target,
   },
 };
@@ -476,7 +478,7 @@ const PatternLabWizard = () => {
             <Link to="/projects/pattern-lab/audit">
               <Button variant="outline" size="sm">
                 <Eye className="h-4 w-4 mr-2" />
-                Visual Audit
+                {t('patternLabWizard.visualAudit')}
               </Button>
             </Link>
           </div>
@@ -486,15 +488,15 @@ const PatternLabWizard = () => {
               <FlaskConical className="h-6 w-6 text-violet-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Pattern Lab</h1>
+              <h1 className="text-2xl font-bold text-foreground">{t('patternLabWizard.title')}</h1>
               <p className="text-muted-foreground">
-                Deep backtest patterns with regime analysis
+                {t('patternLabWizard.subtitle')}
               </p>
             </div>
             {!isEnabled && (
               <Badge variant="secondary" className="ml-auto">
                 <Lock className="h-3 w-3 mr-1" />
-                Plus+ Required
+                {t('patternLabWizard.plusRequired')}
               </Badge>
             )}
           </div>
@@ -505,9 +507,9 @@ const PatternLabWizard = () => {
           <Alert className="mb-6 border-violet-500/30 bg-violet-500/5">
             <Lock className="h-4 w-4 text-violet-500" />
             <AlertDescription>
-              Pattern Lab is available on Plus, Pro, and Team plans.{' '}
+              {t('patternLabWizard.tierGateMessage')}{' '}
               <Button variant="link" className="p-0 h-auto text-violet-500" onClick={() => navigate('/pricing')}>
-                Upgrade to unlock
+                {t('patternLabWizard.upgradeToUnlock')}
               </Button>
             </AlertDescription>
           </Alert>
@@ -516,7 +518,7 @@ const PatternLabWizard = () => {
         {/* Mode Picker — shown when no mode selected yet */}
         {!mode && (
           <div className="mb-8">
-            <p className="text-sm text-muted-foreground mb-4 text-center">What's your goal for this session?</p>
+            <p className="text-sm text-muted-foreground mb-4 text-center">{t('patternLabWizard.modePrompt')}</p>
             <div className="grid sm:grid-cols-2 gap-4">
               {/* Validate Signal */}
               <button
@@ -528,12 +530,12 @@ const PatternLabWizard = () => {
                     <Zap className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Validate a Signal</h3>
+                    <h3 className="font-semibold mb-1">{t('patternLabWizard.validateSignal')}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      You found an active setup in the screener. Confirm its historical edge on this specific instrument before trading.
+                      {t('patternLabWizard.validateDesc')}
                     </p>
                     <div className="mt-3 space-y-1">
-                      {['Win rate + expectancy on this pair', 'Visual proof chart', 'Conviction to act now'].map(b => (
+                      {[t('patternLabWizard.validateBullet1'), t('patternLabWizard.validateBullet2'), t('patternLabWizard.validateBullet3')].map(b => (
                         <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
                           {b}
@@ -541,7 +543,7 @@ const PatternLabWizard = () => {
                       ))}
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
-                      Start validating <ArrowRight className="h-3 w-3" />
+                      {t('patternLabWizard.startValidating')} <ArrowRight className="h-3 w-3" />
                     </div>
                   </div>
                 </div>
@@ -557,12 +559,12 @@ const PatternLabWizard = () => {
                     <Code2 className="h-5 w-5 text-violet-500" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Build Automation</h3>
+                    <h3 className="font-semibold mb-1">{t('patternLabWizard.buildAutomation')}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Run a full historical backtest, optimize parameters, then export a production-ready Pine Script or MQL strategy.
+                      {t('patternLabWizard.automateDesc')}
                     </p>
                     <div className="mt-3 space-y-1">
-                      {['Full equity curve & drawdown', 'Setup optimizer', 'Export Pine Script / MQL'].map(b => (
+                      {[t('patternLabWizard.automateBullet1'), t('patternLabWizard.automateBullet2'), t('patternLabWizard.automateBullet3')].map(b => (
                         <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <CheckCircle2 className="h-3 w-3 text-violet-500 shrink-0" />
                           {b}
@@ -570,7 +572,7 @@ const PatternLabWizard = () => {
                       ))}
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-medium text-violet-500">
-                      Start building <ArrowRight className="h-3 w-3" />
+                      {t('patternLabWizard.startBuilding')} <ArrowRight className="h-3 w-3" />
                     </div>
                   </div>
                 </div>
@@ -588,13 +590,13 @@ const PatternLabWizard = () => {
                 : 'bg-violet-500/10 text-violet-500 border-violet-500/20'
             }`}>
               {mode === 'validate' ? <Zap className="h-3 w-3" /> : <Code2 className="h-3 w-3" />}
-              {mode === 'validate' ? 'Validate Signal' : 'Build Automation'}
+              {mode === 'validate' ? t('patternLabWizard.validateSignal') : t('patternLabWizard.buildAutomation')}
             </div>
             <button
               onClick={() => setMode(null)}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
             >
-              Change goal
+              {t('patternLabWizard.changeGoal')}
             </button>
           </div>
         )}
@@ -606,7 +608,7 @@ const PatternLabWizard = () => {
               <div className="flex items-center gap-4">
                 <Zap className="h-8 w-8 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-1">Validating signal</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('patternLabWizard.validatingSignal')}</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-foreground">
                       {selectedInstruments[0]?.replace('=X', '').replace('=F', '').replace('-USD', '')}
@@ -634,11 +636,11 @@ const PatternLabWizard = () => {
             {/* Instruments */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Instruments</CardTitle>
+                <CardTitle className="text-lg">{t('patternLabWizard.instruments')}</CardTitle>
                 <CardDescription>
                   {isValidate
-                    ? 'Validating this specific instrument'
-                    : 'Search and add instruments to backtest'}
+                    ? t('patternLabWizard.instrumentsDescValidate')
+                    : t('patternLabWizard.instrumentsDescAutomate')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -664,7 +666,7 @@ const PatternLabWizard = () => {
                     trigger={
                       <Button variant="outline" className="w-full justify-start gap-2 h-11">
                         <Search className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">Search for instruments...</span>
+                        <span className="text-muted-foreground">{t('patternLabWizard.searchInstruments')}</span>
                       </Button>
                     }
                   />
@@ -674,7 +676,7 @@ const PatternLabWizard = () => {
                 {selectedInstruments.length > 0 ? (
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
-                      Selected ({selectedInstruments.length})
+                      {t('patternLabWizard.selected')} ({selectedInstruments.length})
                     </Label>
                     <div className="flex flex-wrap gap-2">
                       {selectedInstruments.map(symbol => (
@@ -701,7 +703,7 @@ const PatternLabWizard = () => {
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border/50 rounded-lg">
-                    No instruments selected. Use the search above to add instruments.
+                    {t('patternLabWizard.noInstruments')}
                   </div>
                 )}
               </CardContent>
@@ -713,7 +715,7 @@ const PatternLabWizard = () => {
                 <CardHeader className="pb-4">
                   <CollapsibleTrigger className="flex items-center justify-between w-full group">
                     <div className="text-left">
-                      <CardTitle className="text-lg">Backtest Parameters</CardTitle>
+                      <CardTitle className="text-lg">{t('patternLabWizard.backtestParameters')}</CardTitle>
                       <CardDescription>
                         {TIMEFRAMES.find(t => t.value === timeframe)?.label} • {lookbackYears}Y lookback • {riskPerTrade}% risk
                       </CardDescription>
@@ -725,7 +727,7 @@ const PatternLabWizard = () => {
                   <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div className="space-y-2">
-                        <Label>Timeframe</Label>
+                        <Label>{t('patternLabWizard.timeframe')}</Label>
                         <Select value={timeframe} onValueChange={setTimeframe}>
                           <SelectTrigger>
                             <SelectValue />
@@ -744,7 +746,7 @@ const PatternLabWizard = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label>Lookback Period</Label>
+                        <Label>{t('patternLabWizard.lookbackPeriod')}</Label>
                         <Select 
                           value={String(lookbackYears)} 
                           onValueChange={(v) => setLookbackYears(Number(v))}
@@ -776,22 +778,17 @@ const PatternLabWizard = () => {
                       {/* Risk Per Trade - Professional Tiers */}
                       <div className="space-y-2">
                         <div className="flex items-center gap-1.5">
-                          <Label>Risk Per Trade</Label>
+                          <Label>{t('patternLabWizard.riskPerTrade')}</Label>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-xs">
-                                <p className="text-sm font-semibold mb-1">Position Sizing</p>
+                                <p className="text-sm font-semibold mb-1">{t('patternLabWizard.riskPerTrade')}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Percentage of capital risked per trade. Affects equity curve simulation and max drawdown calculations.
+                                  {t('patternLabWizard.riskTooltip')}
                                 </p>
-                                <div className="text-xs mt-2 space-y-1">
-                                  <p><span className="font-mono">0.5%</span> — Conservative (prop firms)</p>
-                                  <p><span className="font-mono">1.0%</span> — Standard (institutional)</p>
-                                  <p><span className="font-mono">2.0%</span> — Aggressive (retail)</p>
-                                </div>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -804,9 +801,9 @@ const PatternLabWizard = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0.5">0.5% (Conservative)</SelectItem>
-                            <SelectItem value="1">1.0% (Standard)</SelectItem>
-                            <SelectItem value="2">2.0% (Aggressive)</SelectItem>
+                            <SelectItem value="0.5">0.5% ({t('patternLabWizard.conservative')})</SelectItem>
+                            <SelectItem value="1">1.0% ({t('patternLabWizard.standard')})</SelectItem>
+                            <SelectItem value="2">2.0% ({t('patternLabWizard.aggressive')})</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -832,9 +829,9 @@ const PatternLabWizard = () => {
                 <CardHeader className="pb-4">
                   <CollapsibleTrigger className="flex items-center justify-between w-full group">
                     <div className="text-left">
-                      <CardTitle className="text-lg">Pattern Selection</CardTitle>
+                      <CardTitle className="text-lg">{t('patternLabWizard.patternSelection')}</CardTitle>
                       <CardDescription>
-                        {selectedPatterns.length} pattern{selectedPatterns.length !== 1 ? 's' : ''} selected
+                        {t('patternLabWizard.patternsSelected', { count: selectedPatterns.length })}
                       </CardDescription>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -850,7 +847,7 @@ const PatternLabWizard = () => {
                           className="h-7 text-xs"
                           onClick={() => setSelectedPatterns(PATTERNS.map(p => p.id))}
                         >
-                          Select All
+                          {t('patternLabWizard.selectAll')}
                         </Button>
                       )}
                       {selectedPatterns.length > 0 && (
@@ -860,7 +857,7 @@ const PatternLabWizard = () => {
                           className="h-7 text-xs"
                           onClick={() => setSelectedPatterns([])}
                         >
-                          Clear All ({selectedPatterns.length})
+                          {t('patternLabWizard.clearAll', { count: selectedPatterns.length })}
                           <X className="h-3 w-3 ml-1" />
                         </Button>
                       )}
@@ -881,7 +878,7 @@ const PatternLabWizard = () => {
                             onCheckedChange={() => handlePatternToggle(pattern.id)}
                           />
                           <div className="flex-1">
-                            <div className="font-medium text-sm">{pattern.name}</div>
+                            <div className="font-medium text-sm">{t(`patternNames.${pattern.name}`, pattern.name)}</div>
                           </div>
                           {pattern.direction === 'bullish' ? (
                             <TrendingUp className="h-4 w-4 text-green-500" />
@@ -900,7 +897,7 @@ const PatternLabWizard = () => {
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  Quality Filter
+                  {t('patternLabWizard.qualityFilter')}
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -908,20 +905,19 @@ const PatternLabWizard = () => {
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-sm">
-                          Filter setups by quality grade. Conservative traders may want only A-B setups, 
-                          while aggressive traders can include all grades to maximize sample size.
+                          {t('patternLabWizard.qualityTooltip')}
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </CardTitle>
-                <CardDescription>Set your risk appetite for pattern quality</CardDescription>
+                <CardDescription>{t('patternLabWizard.riskAppetite')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Preset Buttons */}
                 <div className="grid gap-3 sm:grid-cols-3">
                   {(['conservative', 'moderate', 'aggressive'] as const).map(preset => {
-                    const config = GRADE_PRESETS[preset];
+                    const config = GRADE_PRESET_CONFIG[preset];
                     const Icon = config.icon;
                     const isSelected = gradePreset === preset;
                     return (
@@ -939,7 +935,7 @@ const PatternLabWizard = () => {
                       >
                         <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                         <span className={`font-medium text-sm ${isSelected ? 'text-primary' : ''}`}>
-                          {config.label}
+                          {t(config.labelKey)}
                         </span>
                         <div className="flex gap-1">
                           {config.grades.map(grade => (
@@ -954,7 +950,7 @@ const PatternLabWizard = () => {
                 {/* Custom Grade Selection */}
                 <div className="pt-2 border-t border-border/50">
                   <Label className="text-xs text-muted-foreground mb-2 block">
-                    Or customize grade selection:
+                    {t('patternLabWizard.customizeGrades')}
                   </Label>
                   <div className="flex gap-2 flex-wrap">
                     {(['A', 'B', 'C', 'D', 'F'] as GradeLetter[]).map(grade => {
@@ -978,23 +974,23 @@ const PatternLabWizard = () => {
                               : 'border-border/50 text-muted-foreground hover:border-border'
                           }`}
                         >
-                          Grade {grade}
+                          {t('patternLabWizard.grade', { grade })}
                         </button>
                       );
                     })}
                   </div>
                   {selectedGrades.length === 0 && (
                     <p className="text-xs text-destructive mt-2">
-                      Select at least one grade
+                      {t('patternLabWizard.selectAtLeastOneGrade')}
                     </p>
                   )}
                 </div>
 
                 {/* Selected Summary */}
                 <div className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{selectedGrades.length}</span> grade{selectedGrades.length !== 1 ? 's' : ''} selected
+                  <span className="font-medium text-foreground">{selectedGrades.length}</span> {t('patternLabWizard.gradesSelected', { count: selectedGrades.length })}
                   {gradePreset !== 'custom' && (
-                    <span className="ml-2">• {GRADE_PRESETS[gradePreset].description}</span>
+                    <span className="ml-2">• {t(GRADE_PRESET_CONFIG[gradePreset].descKey)}</span>
                   )}
                 </div>
               </CardContent>
@@ -1007,7 +1003,7 @@ const PatternLabWizard = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="h-5 w-5 text-primary" />
-                  Run Estimate
+                  {t('patternLabWizard.runEstimate')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1035,7 +1031,7 @@ const PatternLabWizard = () => {
                         }, 50);
                       }}
                     >
-                      Retry
+                      {t('patternLabWizard.retry')}
                     </Button>
                   </div>
                 ) : estimate ? (
@@ -1044,24 +1040,24 @@ const PatternLabWizard = () => {
                       <span className="text-3xl font-bold text-primary">
                         {estimate.creditsEstimated}
                       </span>
-                      <span className="text-muted-foreground">credits</span>
+                      <span className="text-muted-foreground">{t('patternLabWizard.credits')}</span>
                     </div>
                     
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <div className="flex justify-between">
-                        <span>Instruments</span>
+                        <span>{t('patternLabWizard.instruments')}</span>
                         <span className="font-medium text-foreground">{selectedInstruments.length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Patterns</span>
+                        <span>{t('patternLabWizard.patterns')}</span>
                         <span className="font-medium text-foreground">{selectedPatterns.length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Lookback</span>
-                        <span className="font-medium text-foreground">{lookbackYears} year{lookbackYears > 1 ? 's' : ''}</span>
+                        <span>{t('patternLabWizard.lookback')}</span>
+                        <span className="font-medium text-foreground">{t('patternLabWizard.years', { count: lookbackYears })}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Quality Filter</span>
+                        <span>{t('patternLabWizard.qualityFilter')}</span>
                         <div className="flex gap-1">
                           {selectedGrades.map(g => (
                             <span key={g} className={`text-xs font-medium ${GRADE_CONFIG[g].text}`}>{g}</span>
@@ -1069,7 +1065,7 @@ const PatternLabWizard = () => {
                         </div>
                       </div>
                       <div className="flex justify-between border-t border-border/50 pt-2 mt-2">
-                        <span>Your Balance</span>
+                        <span>{t('patternLabWizard.yourBalance')}</span>
                         <span className="font-medium text-foreground">{estimate.creditsBalance}</span>
                       </div>
                     </div>
@@ -1078,7 +1074,7 @@ const PatternLabWizard = () => {
                     {estimate.cacheHitRatio > 0 && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                         <Database className="h-3 w-3" />
-                        <span>{Math.round(estimate.cacheHitRatio * 100)}% data cached</span>
+                        <span>{t('patternLabWizard.dataCached', { percent: Math.round(estimate.cacheHitRatio * 100) })}</span>
                       </div>
                     )}
                     
@@ -1093,7 +1089,7 @@ const PatternLabWizard = () => {
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Select instruments and patterns to see estimate
+                    {t('patternLabWizard.selectToSeeEstimate')}
                   </p>
                 )}
                 
@@ -1113,54 +1109,54 @@ const PatternLabWizard = () => {
                   {isRunning ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Starting...
+                      {t('patternLabWizard.starting')}
                     </>
                   ) : isAuthLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Checking...
+                      {t('patternLabWizard.checking')}
                     </>
                   ) : !isAuthenticated ? (
                     <>
                       <FlaskConical className="h-4 w-4 mr-2" />
-                      Sign in to Run
+                      {t('patternLabWizard.signInToRun')}
                     </>
                   ) : !isEnabled ? (
                     <>
                       <Lock className="h-4 w-4 mr-2" />
-                      Upgrade to Run
+                      {t('patternLabWizard.upgradeToRun')}
                     </>
                   ) : mode === 'automate' ? (
                     <>
                       <Code2 className="h-4 w-4 mr-2" />
-                      Run & Build Script
+                      {t('patternLabWizard.runAndBuildScript')}
                     </>
                   ) : (
                     <>
                       <FlaskConical className="h-4 w-4 mr-2" />
-                      {mode === 'validate' ? 'Validate Signal' : 'Run Backtest'}
+                      {mode === 'validate' ? t('patternLabWizard.validateSignal') : t('patternLabWizard.runBacktest')}
                     </>
                   )}
                 </Button>
                 
                 <p className="text-xs text-muted-foreground text-center">
-                  Estimated runtime: 1-3 minutes
+                  {t('patternLabWizard.estimatedRuntime')}
                 </p>
                 
                 {/* What you'll get - mode-aware */}
                 <div className="pt-4 border-t border-border/50">
-                  <p className="text-xs font-medium text-muted-foreground mb-3">What You'll Get</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-3">{t('patternLabWizard.whatYoullGet')}</p>
                   <div className="grid grid-cols-1 gap-1.5 text-xs text-muted-foreground">
                     {(isValidate ? [
-                      'Go / No-Go verdict',
-                      'Win rate on this pair',
-                      'Trade plan with entry / SL / TP',
-                      'Grade confirmation',
+                      t('patternLabWizard.validateGet1'),
+                      t('patternLabWizard.validateGet2'),
+                      t('patternLabWizard.validateGet3'),
+                      t('patternLabWizard.validateGet4'),
                     ] : [
-                      'Full equity curve & drawdown',
-                      'Setup optimizer with exit models',
-                      'Repeatable winners / losers analysis',
-                      'Export Pine Script v6 / MQL4/5',
+                      t('patternLabWizard.automateGet1'),
+                      t('patternLabWizard.automateGet2'),
+                      t('patternLabWizard.automateGet3'),
+                      t('patternLabWizard.automateGet4'),
                     ]).map(item => (
                       <div key={item} className="flex items-center gap-2">
                         <div className={`h-1 w-1 rounded-full flex-shrink-0 ${isValidate ? 'bg-primary' : 'bg-green-500'}`} />
