@@ -125,6 +125,32 @@ const HFTVisualizer = lazy(() => import('@/components/blog/algo-trading-visualiz
 const MarketMakingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MarketMakingVisualizer'));
 const AIOptimizationVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/AIOptimizationVisualizer'));
 
+// Service names that appear in article content and need localization
+// Maps English service name → i18n key under "serviceNames" namespace
+const SERVICE_NAMES = [
+  'Pattern Lab',
+  'Command Center', 
+  'Pattern Library',
+  'Pattern Screener',
+  'Pattern Quiz',
+  'Script Generator',
+  'Trading Education Center',
+  'Market Breadth',
+];
+
+/** Replace English service names in article content with localized equivalents */
+function localizeServiceNames(content: string, t: any, lang: string): string {
+  if (lang === 'en') return content;
+  let result = content;
+  for (const name of SERVICE_NAMES) {
+    const localized = t(`serviceNames.${name}`, { defaultValue: name });
+    if (localized && localized !== name) {
+      result = result.split(name).join(localized);
+    }
+  }
+  return result;
+}
+
 // All articles are now served dynamically from the database
 
 interface Article {
@@ -1069,8 +1095,9 @@ const DynamicArticle = () => {
     );
   }
 
-  // Parse content into structured sections
-  const sections = parseContentSections(article.content, t('learn.introduction'));
+  // Localize service names in article content, then parse into structured sections
+  const localizedContent = localizeServiceNames(article.content, t, i18n.language);
+  const sections = parseContentSections(localizedContent, t('learn.introduction'));
 
   return (
     <div className="min-h-screen bg-background">

@@ -1206,5 +1206,15 @@
       "all_levels": "Tous niveaux"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "Laboratoire de Patterns",
+    "Command Center": "Centre de Commande",
+    "Pattern Library": "Bibliothèque de Patterns",
+    "Pattern Screener": "Scanner de Patterns",
+    "Pattern Quiz": "Quiz de Patterns",
+    "Script Generator": "Générateur de Scripts",
+    "Trading Education Center": "Centre d'éducation au trading",
+    "Market Breadth": "Ampleur du marché"
   }
 }

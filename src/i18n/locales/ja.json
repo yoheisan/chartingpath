@@ -3909,5 +3909,15 @@
       "altTargets_4": "テクニカルレベル：主要レジスタンスゾーンとラウンドナンバー",
       "additionalNotes": "88%の精度を持つ非常に信頼性の高い強気反転。大幅な上昇につながることが多い。失敗率はわずか10〜12%。"
     }
+  },
+  "serviceNames": {
+    "Pattern Lab": "パターンラボ",
+    "Command Center": "コマンドセンター",
+    "Pattern Library": "パターンライブラリ",
+    "Pattern Screener": "パターンスクリーナー",
+    "Pattern Quiz": "パターンクイズ",
+    "Script Generator": "スクリプトジェネレーター",
+    "Trading Education Center": "トレーディング教育センター",
+    "Market Breadth": "マーケットブレス"
   }
 }

@@ -1208,5 +1208,15 @@
       "all_levels": "جميع المستويات"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "مختبر الأنماط",
+    "Command Center": "مركز القيادة",
+    "Pattern Library": "مكتبة الأنماط",
+    "Pattern Screener": "ماسح الأنماط",
+    "Pattern Quiz": "اختبار الأنماط",
+    "Script Generator": "مولد النصوص البرمجية",
+    "Trading Education Center": "مركز تعليم التداول",
+    "Market Breadth": "اتساع السوق"
   }
 }

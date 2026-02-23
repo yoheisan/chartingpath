@@ -1208,5 +1208,15 @@
       "all_levels": "सभी स्तर"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "पैटर्न लैब",
+    "Command Center": "कमांड सेंटर",
+    "Pattern Library": "पैटर्न लाइब्रेरी",
+    "Pattern Screener": "पैटर्न स्क्रीनर",
+    "Pattern Quiz": "पैटर्न क्विज़",
+    "Script Generator": "स्क्रिप्ट जनरेटर",
+    "Trading Education Center": "ट्रेडिंग शिक्षा केंद्र",
+    "Market Breadth": "मार्केट ब्रेड्थ"
   }
 }

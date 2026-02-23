@@ -1208,5 +1208,15 @@
       "all_levels": "Все уровни"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "Лаборатория паттернов",
+    "Command Center": "Командный центр",
+    "Pattern Library": "Библиотека паттернов",
+    "Pattern Screener": "Сканер паттернов",
+    "Pattern Quiz": "Тест по паттернам",
+    "Script Generator": "Генератор скриптов",
+    "Trading Education Center": "Центр обучения трейдингу",
+    "Market Breadth": "Ширина рынка"
   }
 }

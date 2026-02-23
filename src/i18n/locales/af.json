@@ -1208,5 +1208,15 @@
       "all_levels": "Alle vlakke"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "Patroonlaboratorium",
+    "Command Center": "Bevelsentrum",
+    "Pattern Library": "Patroonbiblioteek",
+    "Pattern Screener": "Patroonskandeerder",
+    "Pattern Quiz": "Patroonvasvra",
+    "Script Generator": "Skripgenerator",
+    "Trading Education Center": "Handelsopleidingsentrum",
+    "Market Breadth": "Markbreedte"
   }
 }

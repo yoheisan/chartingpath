@@ -4458,5 +4458,15 @@
     "errorResponse": "Failed to get response. Please try again.",
     "rateLimitedMsg": "⚠️ Rate limited — please wait a few seconds and try again.",
     "errorMsg": "⚠️ Something went wrong. Please try again."
+  },
+  "serviceNames": {
+    "Pattern Lab": "Pattern Lab",
+    "Command Center": "Command Center",
+    "Pattern Library": "Pattern Library",
+    "Pattern Screener": "Pattern Screener",
+    "Pattern Quiz": "Pattern Quiz",
+    "Script Generator": "Script Generator",
+    "Trading Education Center": "Trading Education Center",
+    "Market Breadth": "Market Breadth"
   }
 }

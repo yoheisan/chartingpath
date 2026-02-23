@@ -1208,5 +1208,15 @@
       "all_levels": "Tüm seviyeler"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "Formasyon Laboratuvarı",
+    "Command Center": "Komuta Merkezi",
+    "Pattern Library": "Formasyon Kütüphanesi",
+    "Pattern Screener": "Formasyon Tarayıcı",
+    "Pattern Quiz": "Formasyon Testi",
+    "Script Generator": "Betik Oluşturucu",
+    "Trading Education Center": "İşlem Eğitim Merkezi",
+    "Market Breadth": "Piyasa Genişliği"
   }
 }
