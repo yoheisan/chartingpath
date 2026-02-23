@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen } from 'lucide-react';
+import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen, FileSearch } from 'lucide-react';
 import i18n, { languages } from '@/i18n/config';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { SiteStringScanner } from '@/components/SiteStringScanner';
 import enTranslations from '@/i18n/locales/en.json';
+import { TranslationGapAnalysis } from '@/components/TranslationGapAnalysis';
 
 interface PendingTranslation {
   id: string;
@@ -71,7 +72,8 @@ export const TranslationManagement = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner'>('coverage');
+  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps'>('coverage');
+  const [gapSyncing, setGapSyncing] = useState(false);
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [coverageLoading, setCoverageLoading] = useState(false);
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
@@ -280,6 +282,60 @@ export const TranslationManagement = () => {
 
     setArticleSyncing(false);
     setArticleSyncProgress('');
+  };
+
+  const handleSyncGaps = async (langCode: string, partialEnContent: Record<string, any>, missingKeys: string[]) => {
+    setGapSyncing(true);
+    const langName = languages.find(l => l.code === langCode)?.name || langCode;
+    
+    try {
+      // First ensure keys exist
+      const { error: prepError } = await supabase.functions.invoke('sync-translations', {
+        body: {
+          en_content: partialEnContent,
+          target_languages: [],
+          prepare_keys_only: true
+        }
+      });
+      if (prepError) console.error('Key prep error:', prepError);
+
+      // Translate the gaps
+      const { data, error } = await supabase.functions.invoke('sync-translations', {
+        body: {
+          en_content: partialEnContent,
+          target_languages: [langCode],
+          skip_key_creation: true
+        }
+      });
+
+      if (error) throw error;
+
+      const langStats = data?.summary?.[langCode];
+
+      // Re-export locale bundle
+      const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
+        body: { action: 'export_locale_json', language: langCode }
+      });
+      if (!exportError && localeData) {
+        i18n.addResourceBundle(langCode, 'translation', localeData, true, true);
+      }
+
+      toast({
+        title: `Gap Sync Complete: ${langName}`,
+        description: `Translated ${langStats?.translated || 0} of ${missingKeys.length} missing keys${langStats?.errors ? ` (${langStats.errors} errors)` : ''}`
+      });
+
+      await loadCoverageStats();
+    } catch (error) {
+      console.error(`Gap sync error for ${langCode}:`, error);
+      toast({
+        title: 'Gap Sync Failed',
+        description: `Failed to sync ${langName} gaps`,
+        variant: 'destructive'
+      });
+    } finally {
+      setGapSyncing(false);
+    }
   };
 
   const handleExportJson = async (langCode: string) => {
@@ -540,6 +596,14 @@ export const TranslationManagement = () => {
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 flex-wrap">
+          <Button
+            variant={activeTab === 'gaps' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('gaps')}
+            className="flex items-center gap-2"
+          >
+            <FileSearch className="h-4 w-4" />
+            Gap Analysis
+          </Button>
           <Button
             variant={activeTab === 'coverage' ? 'default' : 'outline'}
             onClick={() => setActiveTab('coverage')}
@@ -893,6 +957,11 @@ export const TranslationManagement = () => {
               </Card>
             )}
           </div>
+        )}
+
+        {/* Gap Analysis Tab */}
+        {activeTab === 'gaps' && (
+          <TranslationGapAnalysis onSyncGaps={handleSyncGaps} syncing={gapSyncing} />
         )}
 
         {/* Site Scanner Tab */}
