@@ -1069,7 +1069,32 @@
     "readyToApply": "この戦略を実践する準備はできましたか？",
     "readyToApplyDesc": "パターンスキャナーと戦略ツールを使って、知識を実践に活かしましょう。",
     "findSetups": "トレードセットアップを探す",
-    "exploreMore": "他の戦略を探す"
+    "exploreMore": "他の戦略を探す",
+    "allCategories": "すべて",
+    "categories": {
+      "Algorithmic Trading": "アルゴリズム取引",
+      "Candlestick Patterns": "ローソク足パターン",
+      "Chart Patterns": "チャートパターン",
+      "Indicator Guides": "インジケーターガイド",
+      "Market Analysis": "市場分析",
+      "Options Strategies": "オプション戦略",
+      "Platform Guide": "プラットフォームガイド",
+      "Price Action": "プライスアクション",
+      "Psychology": "心理学",
+      "Risk Management": "リスク管理",
+      "Technical Analysis": "テクニカル分析",
+      "Technical Indicators": "テクニカルインジケーター",
+      "Trading Fundamentals": "トレーディングの基礎",
+      "Trading Psychology": "トレーディング心理学",
+      "Trading Strategies": "トレーディング戦略",
+      "Trading Tools": "トレーディングツール"
+    },
+    "difficulties": {
+      "beginner": "初級",
+      "intermediate": "中級",
+      "advanced": "上級",
+      "all_levels": "全レベル"
+    }
   },
   "patternLibrary": {
     "title": "パターンライブラリ",

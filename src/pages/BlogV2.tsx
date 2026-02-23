@@ -225,7 +225,7 @@ const BlogV2 = () => {
                 className="cursor-pointer capitalize"
                 onClick={() => setSelectedCategory(category)}
               >
-                {category}
+                {category === "all" ? l('allCategories') : t(`learn.categories.${category}`, category)}
               </Badge>
             ))}
           </div>
@@ -258,9 +258,9 @@ const BlogV2 = () => {
                 <Card className="h-full hover:shadow-lg transition-shadow border-2 hover:border-primary/50 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary">{article.category}</Badge>
+                      <Badge variant="secondary">{t(`learn.categories.${article.category}`, article.category)}</Badge>
                       <Badge variant="outline" className="capitalize">
-                        {article.difficulty_level}
+                        {t(`learn.difficulties.${article.difficulty_level}`, article.difficulty_level)}
                       </Badge>
                     </div>
                     <CardTitle className="text-xl line-clamp-2">{article.title}</CardTitle>

@@ -707,7 +707,32 @@
     "readyToApply": "Ready to Apply This Strategy?",
     "readyToApplyDesc": "Put your knowledge into practice with our pattern scanner and strategy tools.",
     "findSetups": "Find Trading Setups",
-    "exploreMore": "Explore More Strategies"
+    "exploreMore": "Explore More Strategies",
+    "allCategories": "all",
+    "categories": {
+      "Algorithmic Trading": "Algorithmic Trading",
+      "Candlestick Patterns": "Candlestick Patterns",
+      "Chart Patterns": "Chart Patterns",
+      "Indicator Guides": "Indicator Guides",
+      "Market Analysis": "Market Analysis",
+      "Options Strategies": "Options Strategies",
+      "Platform Guide": "Platform Guide",
+      "Price Action": "Price Action",
+      "Psychology": "Psychology",
+      "Risk Management": "Risk Management",
+      "Technical Analysis": "Technical Analysis",
+      "Technical Indicators": "Technical Indicators",
+      "Trading Fundamentals": "Trading Fundamentals",
+      "Trading Psychology": "Trading Psychology",
+      "Trading Strategies": "Trading Strategies",
+      "Trading Tools": "Trading Tools"
+    },
+    "difficulties": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "all_levels": "All Levels"
+    }
   },
   "patternGenerator": {
     "subtitle": "Generate and visualize various financial chart patterns with our interactive tool",
