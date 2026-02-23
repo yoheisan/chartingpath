@@ -5,12 +5,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, AlertTriangle, Lightbulb, Info, XCircle } from "lucide-react";
 import { getPatternDetails } from "@/utils/PatternDetails";
+import { useTranslation } from "react-i18next";
+import { translatePatternName } from "@/utils/translatePatternName";
 
 interface PatternDetailsSectionProps {
   patternKey: string;
 }
 
 export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps) => {
+  const { t } = useTranslation();
+  const s = (key: string) => t(`patternDetailModal.${key}`);
   const patternDetail = getPatternDetails(patternKey);
 
   if (!patternDetail) {
@@ -63,12 +67,8 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div className="space-y-1">
-            <p className="text-sm font-medium">Educational Research Data</p>
-            <p className="text-xs text-muted-foreground">
-              Pattern statistics based on Thomas N. Bulkowski's research from "Encyclopedia of Chart Patterns" (2nd Edition). 
-              Historical accuracy rates are for educational purposes only. Past performance does not guarantee future results. 
-              Always conduct your own analysis and risk no more than 1-2% of trading capital per trade.
-            </p>
+            <p className="text-sm font-medium">{s('educationalDisclaimer')}</p>
+            <p className="text-xs text-muted-foreground">{s('disclaimerText')}</p>
           </div>
         </div>
       </Card>
@@ -78,9 +78,9 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             {getTypeIcon(patternDetail.type)}
-            <h3 className="text-xl font-semibold">{patternDetail.name}</h3>
+            <h3 className="text-xl font-semibold">{translatePatternName(patternDetail.name)}</h3>
             <Badge variant={getTypeColor(patternDetail.type) as any} className="capitalize">
-              {patternDetail.type}
+              {t(`patternLibrary.types.${patternDetail.type}`, patternDetail.type)}
             </Badge>
           </div>
         </div>
@@ -89,37 +89,34 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              <span className="hidden sm:inline">Trade Setup</span>
-              <span className="sm:hidden">Setup</span>
+              <span className="hidden sm:inline">{s('tradeSetup')}</span>
+              <span className="sm:hidden">{s('tradeSetup')}</span>
             </TabsTrigger>
             <TabsTrigger value="risk" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Risk Factors</span>
-              <span className="sm:hidden">Risk</span>
+              <span className="hidden sm:inline">{s('riskFactors')}</span>
+              <span className="sm:hidden">{s('riskFactors')}</span>
             </TabsTrigger>
             <TabsTrigger value="analysis" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
-              <span className="hidden sm:inline">Pattern Analysis</span>
-              <span className="sm:hidden">Analysis</span>
+              <span className="hidden sm:inline">{s('patternAnalysis')}</span>
+              <span className="sm:hidden">{s('patternAnalysis')}</span>
             </TabsTrigger>
           </TabsList>
 
           {/* TRADE SETUP TAB */}
           <TabsContent value="setup" className="space-y-6 mt-0">
-            {/* Quick Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Success Rate</span>
+                  <span className="text-sm font-medium">{s('successRate')}</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p className="text-sm">
-                        Success rate represents the historical percentage of times this pattern correctly predicted price movement based on Thomas Bulkowski's extensive market research.
-                      </p>
+                      <p className="text-sm">{s('successRateTooltip')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -129,10 +126,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Difficulty</span>
+                  <span className="text-sm font-medium">{s('difficulty')}</span>
                 </div>
                 <Badge className={`${getDifficultyColor(patternDetail.difficulty)} w-fit`}>
-                  {patternDetail.difficulty}
+                  {t(`patternLibrary.difficulty.${patternDetail.difficulty}`, patternDetail.difficulty)}
                 </Badge>
               </div>
 
@@ -147,20 +144,19 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Entry & Risk Management */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
                   <Target className="h-4 w-4 text-bullish" />
-                  Entry & Confirmation
+                  {s('entryAndConfirmation')}
                 </h4>
                 <div className="bg-bullish/5 p-4 rounded-lg border border-bullish/20 space-y-2">
                   <div className="text-sm">
-                    <span className="font-medium">Entry Point: </span>
+                    <span className="font-medium">{s('entryPoint')}: </span>
                     <span className="text-muted-foreground">{patternDetail.entry}</span>
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Confirmation: </span>
+                    <span className="font-medium">{s('confirmation')}: </span>
                     <span className="text-muted-foreground">{patternDetail.confirmation}</span>
                   </div>
                 </div>
@@ -169,15 +165,15 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
                   <Shield className="h-4 w-4 text-bearish" />
-                  Risk Management
+                  {s('riskManagement')}
                 </h4>
                 <div className="bg-bearish/5 p-4 rounded-lg border border-bearish/20 space-y-2">
                   <div className="text-sm">
-                    <span className="font-medium">Stop Loss: </span>
+                    <span className="font-medium">{s('stopLoss')}: </span>
                     <span className="text-muted-foreground">{patternDetail.stopLoss}</span>
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Risk/Reward: </span>
+                    <span className="font-medium">{s('riskRewardRatio')}: </span>
                     <span className="text-muted-foreground">{patternDetail.targetPriceMethodologies.riskReward}</span>
                   </div>
                 </div>
@@ -186,21 +182,20 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Target Price Methodologies */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Target className="h-4 w-4 text-primary" />
-                Target Price Methodologies
+                {s('targetPriceMethodologies')}
               </h4>
               <div className="bg-gradient-to-r from-primary/5 to-bullish/5 p-4 rounded-lg border border-primary/20">
                 <div className="space-y-3">
                   <div>
-                    <h5 className="font-medium text-sm text-primary mb-1">Primary Target Method</h5>
+                    <h5 className="font-medium text-sm text-primary mb-1">{s('primaryTargetMethod')}</h5>
                     <p className="text-sm text-muted-foreground">{patternDetail.targetPriceMethodologies.primary}</p>
                   </div>
                   
                   <div>
-                    <h5 className="font-medium text-sm text-bullish mb-2">Alternative Target Calculations</h5>
+                    <h5 className="font-medium text-sm text-bullish mb-2">{s('alternativeTargetCalc')}</h5>
                     <div className="grid gap-1">
                       {patternDetail.targetPriceMethodologies.alternative.slice(0, 3).map((target, index) => (
                         <div key={index} className="text-xs text-muted-foreground flex items-start gap-1">
@@ -217,11 +212,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
           {/* RISK FACTORS TAB */}
           <TabsContent value="risk" className="space-y-6 mt-0">
-            {/* Common Mistakes - CRITICAL */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2 text-bearish">
                 <XCircle className="h-4 w-4" />
-                Common Mistakes to Avoid
+                {s('commonMistakes')}
               </h4>
               <div className="bg-bearish/5 p-4 rounded-lg border border-bearish/20">
                 <div className="space-y-2">
@@ -237,11 +231,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Critical Success Factors */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
-                Critical Success Factors
+                {s('criticalSuccessFactors')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {patternDetail.keyFactors.map((factor, index) => (
@@ -255,11 +248,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Volume Profile */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Volume2 className="h-4 w-4" />
-                Volume Profile & Confirmation
+                {s('volumeConfirmation')}
               </h4>
               <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 rounded-lg border border-primary/10">
                 <p className="text-sm text-muted-foreground">{patternDetail.volumeProfile}</p>
@@ -269,11 +261,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
           {/* PATTERN ANALYSIS TAB */}
           <TabsContent value="analysis" className="space-y-6 mt-0">
-            {/* Key Characteristics */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
-                Key Characteristics
+                {s('keyCharacteristics')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {patternDetail.characteristics.map((char, index) => (
@@ -287,11 +278,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Pattern Formation */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Brain className="h-4 w-4" />
-                How This Pattern Forms
+                {s('howThisPatternForms')}
               </h4>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">{patternDetail.formation}</p>
@@ -300,11 +290,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
 
             <Separator />
 
-            {/* Market Psychology */}
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Brain className="h-4 w-4" />
-                Market Psychology
+                {s('marketPsychology')}
               </h4>
               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-primary">
                 <p className="text-sm text-muted-foreground italic">
