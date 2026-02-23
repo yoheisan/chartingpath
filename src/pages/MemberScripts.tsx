@@ -318,11 +318,11 @@ const MemberScripts = () => {
                  </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="text-xs">
-                  Platform: {platform === 'pine' ? 'TradingView' : platform === 'mql4' ? 'MT4' : 'MT5'}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  Direction: {directionFilter === 'all' ? 'Both' : directionFilter === 'long' ? 'Long Only' : 'Short Only'}
+                 <Badge variant="outline" className="text-xs">
+                   {t('scripts.platform')}: {platform === 'pine' ? 'TradingView' : platform === 'mql4' ? 'MT4' : 'MT5'}
+                 </Badge>
+                 <Badge variant="outline" className="text-xs">
+                   {t('scripts.direction')}: {directionFilter === 'all' ? t('scripts.both') : directionFilter === 'long' ? t('scripts.long') : t('scripts.short')}
                 </Badge>
                 <Badge variant="outline" className="text-xs font-mono">
                   R:R 1:{rrRatio}
@@ -341,12 +341,12 @@ const MemberScripts = () => {
                 )}
                 {repeatableWinners.length > 0 && (
                   <Badge variant="secondary" className="text-xs text-emerald-500 border-emerald-500/30">
-                    {repeatableWinners.length} repeatable winner{repeatableWinners.length > 1 ? 's' : ''}
+                    {t('scripts.repeatableWinners', { count: repeatableWinners.length })}
                   </Badge>
                 )}
                 {repeatableLosers.length > 0 && (
                   <Badge variant="secondary" className="text-xs text-destructive border-destructive/30">
-                    {repeatableLosers.length} excluded loser{repeatableLosers.length > 1 ? 's' : ''}
+                    {t('scripts.excludedLosers', { count: repeatableLosers.length })}
                   </Badge>
                 )}
               </div>
@@ -411,7 +411,7 @@ const MemberScripts = () => {
                              {t('scripts.patternSelection')}
                           </CardTitle>
                           <CardDescription className="text-xs mt-1">
-                            {selectedPatterns.length} of {SCANNER_PATTERNS.length} patterns selected
+                            {t('scripts.patternsSelected', { count: selectedPatterns.length, total: SCANNER_PATTERNS.length })}
                           </CardDescription>
                         </div>
                         {patternsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -422,11 +422,11 @@ const MemberScripts = () => {
                     <CardContent className="pt-0 space-y-4">
                       {/* Quick actions */}
                       <div className="flex gap-2 text-xs">
-                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={selectAll}>
-                          Select All
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={selectNone}>
-                          Clear
+                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={selectAll}>
+                           {t('scripts.selectAll')}
+                         </Button>
+                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={selectNone}>
+                           {t('scripts.clear')}
                         </Button>
                       </div>
                       
@@ -476,7 +476,7 @@ const MemberScripts = () => {
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
                             <Code className="h-4 w-4" />
-                            Risk & Exit Rules
+                            {t('scripts.riskExitRules')}
                           </CardTitle>
                           <CardDescription className="text-xs mt-1">
                             SL: {slMethod === 'atr' ? `ATR ×${atrMultiplier}` : slMethod === 'fixed_pips' ? `${fixedSlPips} pips` : 'Pattern'} • 
@@ -492,19 +492,19 @@ const MemberScripts = () => {
                     <CardContent className="pt-0 space-y-5">
                       {/* Stop Loss Method */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Stop Loss Method</Label>
+                        <Label className="text-sm font-medium">{t('scripts.stopLossMethod')}</Label>
                         <Select value={slMethod} onValueChange={(v) => setSLMethod(v as ScannerConfig['stopLossMethod'])}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="atr">ATR-Based</SelectItem>
-                            <SelectItem value="pattern">Pattern Structure</SelectItem>
-                            <SelectItem value="fixed_pips">Fixed Pips</SelectItem>
+                             <SelectItem value="atr">{t('scripts.atrBased')}</SelectItem>
+                             <SelectItem value="pattern">{t('scripts.patternStructure')}</SelectItem>
+                             <SelectItem value="fixed_pips">{t('scripts.fixedPips')}</SelectItem>
                           </SelectContent>
                         </Select>
                         {slMethod === 'atr' && (
                           <div className="space-y-1">
                             <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>ATR Multiplier</span>
+                              <span>{t('scripts.atrMultiplier')}</span>
                               <span>{atrMultiplier}×</span>
                             </div>
                             <Slider
@@ -526,19 +526,19 @@ const MemberScripts = () => {
 
                       {/* Take Profit Method */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Take Profit Method</Label>
+                        <Label className="text-sm font-medium">{t('scripts.takeProfitMethod')}</Label>
                         <Select value={tpMethod} onValueChange={(v) => setTPMethod(v as ScannerConfig['takeProfitMethod'])}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="rr_ratio">R:R Ratio</SelectItem>
-                            <SelectItem value="pattern">Pattern Measured Move</SelectItem>
-                            <SelectItem value="fixed_pips">Fixed Pips</SelectItem>
+                             <SelectItem value="rr_ratio">{t('scripts.rrRatio')}</SelectItem>
+                             <SelectItem value="pattern">{t('scripts.patternMeasuredMove')}</SelectItem>
+                             <SelectItem value="fixed_pips">{t('scripts.fixedPips')}</SelectItem>
                           </SelectContent>
                         </Select>
                         {tpMethod === 'rr_ratio' && (
                           <div className="space-y-1">
                             <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>R:R Ratio</span>
+                              <span>{t('scripts.rrRatio')}</span>
                               <span>1:{rrRatio}</span>
                             </div>
                             <Slider
@@ -561,7 +561,7 @@ const MemberScripts = () => {
                       {/* Risk % */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <Label className="text-sm font-medium">Risk Per Trade</Label>
+                          <Label className="text-sm font-medium">{t('scripts.riskPerTrade')}</Label>
                           <span className="text-muted-foreground">{riskPercent}%</span>
                         </div>
                         <Slider
@@ -573,7 +573,7 @@ const MemberScripts = () => {
 
                       {/* Max bars */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Time Stop (bars)</Label>
+                        <Label className="text-sm font-medium">{t('scripts.timeStopBars')}</Label>
                         <Input
                           type="number"
                           value={maxBarsInTrade}
@@ -593,7 +593,7 @@ const MemberScripts = () => {
                       <div>
                         <CardTitle className="text-sm flex items-center gap-2">
                           <Shield className="h-4 w-4 text-primary" />
-                          Signal Quality Filters
+                          {t('scripts.signalQualityFilters')}
                         </CardTitle>
                         <CardDescription className="text-xs mt-1">
                           {[qualityFilterADX && `ADX>${adxThreshold}`, qualityFilterVolume && 'Volume', qualityFilterTrend && '200 EMA'].filter(Boolean).join(' · ') || 'None active'}
@@ -604,8 +604,8 @@ const MemberScripts = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="space-y-4 pt-0">
-                      <p className="text-xs text-muted-foreground">
-                        Approximate Grade B+ minimum — only fire signals that pass these quality checks.
+                       <p className="text-xs text-muted-foreground">
+                         {t('scripts.qualityGradeNote')}
                       </p>
 
                       {/* ADX Filter */}
@@ -617,14 +617,14 @@ const MemberScripts = () => {
                         />
                         <div className="space-y-1 flex-1">
                           <Label htmlFor="filter-adx" className="text-sm font-medium cursor-pointer">
-                            ADX Trend Strength
+                            {t('scripts.adxTrendStrength')}
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            Require ADX above threshold to confirm trending conditions
+                            {t('scripts.adxTrendDesc')}
                           </p>
                           {qualityFilterADX && (
                             <div className="flex items-center gap-2 pt-1">
-                              <span className="text-xs text-muted-foreground">Min ADX:</span>
+                              <span className="text-xs text-muted-foreground">{t('scripts.minAdx')}:</span>
                               <Slider
                                 value={[adxThreshold]}
                                 onValueChange={([v]) => setAdxThreshold(v)}
@@ -646,10 +646,10 @@ const MemberScripts = () => {
                         />
                         <div className="space-y-1">
                           <Label htmlFor="filter-volume" className="text-sm font-medium cursor-pointer">
-                            Volume Confirmation
+                            {t('scripts.volumeConfirmation')}
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            Signal bar volume must exceed 20-bar average
+                            {t('scripts.volumeConfirmDesc')}
                           </p>
                         </div>
                       </div>
@@ -663,10 +663,10 @@ const MemberScripts = () => {
                         />
                         <div className="space-y-1">
                           <Label htmlFor="filter-trend" className="text-sm font-medium cursor-pointer">
-                            200 EMA Trend Alignment
+                            {t('scripts.emaAlignment')}
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            Longs only above 200 EMA, shorts only below — enforces with-trend entries
+                            {t('scripts.emaAlignDesc')}
                           </p>
                         </div>
                       </div>
@@ -679,7 +679,7 @@ const MemberScripts = () => {
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Platform</Label>
+                    <Label className="text-sm font-medium">{t('scripts.platform')}</Label>
                     <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -692,12 +692,12 @@ const MemberScripts = () => {
 
                   {platform === 'pine' && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Script Type</Label>
+                      <Label className="text-sm font-medium">{t('scripts.scriptType')}</Label>
                       <Select value={scriptType} onValueChange={(v) => setScriptType(v as ScriptType)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="strategy">Strategy (backtestable)</SelectItem>
-                          <SelectItem value="indicator">Indicator (alerts only)</SelectItem>
+                           <SelectItem value="strategy">{t('scripts.strategyBacktestable')}</SelectItem>
+                           <SelectItem value="indicator">{t('scripts.indicatorAlertsOnly')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -705,7 +705,7 @@ const MemberScripts = () => {
 
                   {/* Direction Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Direction</Label>
+                    <Label className="text-sm font-medium">{t('scripts.direction')}</Label>
                     <div className="flex rounded-lg border border-border/50 overflow-hidden">
                       {(['all', 'long', 'short'] as const).map(dir => (
                         <Button
@@ -715,26 +715,26 @@ const MemberScripts = () => {
                           className="rounded-none h-8 px-3 flex-1"
                           onClick={() => setDirectionFilter(dir)}
                         >
-                          {dir === 'all' ? 'Both' : dir === 'long' ? '↑ Long' : '↓ Short'}
+                          {dir === 'all' ? t('scripts.both') : dir === 'long' ? `↑ ${t('scripts.long')}` : `↓ ${t('scripts.short')}`}
                         </Button>
                       ))}
                     </div>
                   </div>
 
                   <div className="p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
-                    <p className="font-medium text-foreground">Scanner Contract:</p>
-                    <p>• Monitors chart for pattern formations</p>
-                    <p>• Entry on confirmed pattern breakout</p>
-                    <p>• SL/TP per your configured rules</p>
-                    <p>• {maxBarsInTrade}-bar time stop included</p>
+                     <p className="font-medium text-foreground">{t('scripts.scannerContract')}</p>
+                     <p>• {t('scripts.scannerContractP1')}</p>
+                     <p>• {t('scripts.scannerContractP2')}</p>
+                     <p>• {t('scripts.scannerContractP3')}</p>
+                     <p>• {t('scripts.scannerContractP4', { bars: maxBarsInTrade })}</p>
                   </div>
 
                   <Button onClick={() => requireAuth(handleGenerate)} className="w-full gap-2" size="lg">
                     <ScanSearch className="h-4 w-4" />
-                    Generate Scanner Script
+                    {t('scripts.generateScannerScript')}
                   </Button>
                    <Button onClick={handleGenerateDiagnostic} variant="outline" className="w-full gap-2" size="sm">
-                     🔧 Generate Diagnostic Script (SMA Cross — tests TV)
+                     {t('scripts.generateDiagnostic')}
                    </Button>
                    <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script generation" />
                  </CardContent>
@@ -748,26 +748,26 @@ const MemberScripts = () => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Code className="h-5 w-5" />
-                      Generated Scanner
+                      {t('scripts.generatedScanner')}
                     </CardTitle>
                     <CardDescription>
                       {generatedCode 
                         ? `${selectedPatterns.length} pattern${selectedPatterns.length > 1 ? 's' : ''} • ${PLATFORMS.find(p => p.value === platform)?.label}`
-                        : "Select patterns and configure rules to generate"
+                        : t('scripts.selectAndConfigure')
                       }
                     </CardDescription>
                   </div>
                   {generatedCode && (
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={handleSaveScript}>
-                        <Save className="h-4 w-4 mr-1" /> Save
+                        <Save className="h-4 w-4 mr-1" /> {t('scripts.save')}
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleCopy}>
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        {copied ? 'Copied' : 'Copy'}
+                        {copied ? t('scripts.copied') : t('scripts.copy')}
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleDownload} disabled={!canDownload()}>
-                        <Download className="h-4 w-4 mr-1" /> Download
+                        <Download className="h-4 w-4 mr-1" /> {t('scripts.download')}
                         {!canDownload() && <Lock className="h-3 w-3 ml-1" />}
                       </Button>
                     </div>
@@ -786,10 +786,9 @@ const MemberScripts = () => {
                     <div className="text-center space-y-3">
                       <ScanSearch className="h-12 w-12 text-muted-foreground mx-auto" />
                       <div>
-                        <p className="text-muted-foreground font-medium">Pattern Scanner Generator</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Select patterns, configure SL/TP rules, and generate a script<br/>
-                          that auto-detects and trades chart patterns on your chart
+                         <p className="text-muted-foreground font-medium">{t('scripts.patternScannerGenerator')}</p>
+                         <p className="text-sm text-muted-foreground mt-1">
+                           {t('scripts.patternScannerGeneratorDesc')}
                         </p>
                       </div>
                     </div>
@@ -808,13 +807,13 @@ const MemberScripts = () => {
                 <div className="text-center space-y-4">
                   <FileCode className="h-12 w-12 text-muted-foreground mx-auto" />
                   <div>
-                    <h3 className="text-lg font-semibold">No Saved Scripts</h3>
-                    <p className="text-muted-foreground">
-                      Generate a scanner script and click "Save" to add it here
+                     <h3 className="text-lg font-semibold">{t('scripts.noSavedScripts')}</h3>
+                     <p className="text-muted-foreground">
+                       {t('scripts.noSavedScriptsDesc')}
                     </p>
                   </div>
                   <Button onClick={() => setActiveTab("generate")} variant="outline">
-                    Generate Your First Scanner
+                    {t('scripts.generateFirstScanner')}
                   </Button>
                 </div>
               </CardContent>
@@ -852,7 +851,7 @@ const MemberScripts = () => {
                         </div>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" className="flex-1" onClick={() => handleLoadScript(script)}>
-                            Load
+                             {t('scripts.load')}
                           </Button>
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDeleteScript(script.id)}>
                             <Trash2 className="h-4 w-4" />
@@ -888,7 +887,7 @@ const MemberScripts = () => {
                               {new Date(script.createdAt).toLocaleDateString()}
                             </div>
                             <div className="flex gap-1">
-                              <Button size="sm" variant="outline" onClick={() => handleLoadScript(script)}>Load</Button>
+                              <Button size="sm" variant="outline" onClick={() => handleLoadScript(script)}>{t('scripts.load')}</Button>
                               <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDeleteScript(script.id)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -69,17 +70,22 @@ function Step({ number, title, description, image, imageAlt, warning, tip }: Ste
 }
 
 export function PlatformImportGuide() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("tradingview");
+  const g = (key: string) => t(`scripts.importGuide.${key}`);
+  const tv = (key: string) => t(`scripts.importGuide.tv.${key}`);
+  const mt4 = (key: string) => t(`scripts.importGuide.mt4.${key}`);
+  const mt5 = (key: string) => t(`scripts.importGuide.mt5.${key}`);
 
   return (
     <Card className="border-border/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileCode className="w-5 h-5 text-primary" />
-          Platform Import Guides
+          {g('title')}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Step-by-step instructions for importing your exported scripts
+          {g('subtitle')}
         </p>
       </CardHeader>
       <CardContent>
@@ -102,159 +108,65 @@ export function PlatformImportGuide() {
           <TabsContent value="tradingview" className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="outline">Pine Script v5</Badge>
-              <Badge variant="secondary">Tested ✓</Badge>
+              <Badge variant="secondary">{g('tested')}</Badge>
             </div>
             
             <div className="space-y-4">
-              <Step
-                number={1}
-                title="Open Pine Editor"
-                description="In TradingView, click the 'Pine Editor' tab at the bottom of the chart. This opens the script editor where you can paste your code."
-                image={tradingviewPineEditor}
-                imageAlt="TradingView interface with Pine Editor tab highlighted"
-              />
-              
-              <Step
-                number={2}
-                title="Create New Script"
-                description="Click 'Open' → 'New blank indicator' or 'New blank strategy' depending on your export type. Clear any default code."
-              />
-              
-              <Step
-                number={3}
-                title="Paste Your Script"
-                description="Copy the entire exported script and paste it into the editor. Make sure to replace all default content."
-                image={tradingviewAddToChart}
-                imageAlt="Pine Script code in editor with Add to Chart button"
-                tip="Use Ctrl+A to select all existing code before pasting to ensure clean replacement."
-              />
-              
-              <Step
-                number={4}
-                title="Add to Chart"
-                description="Click the green 'Add to Chart' button. For strategies, this will also add it to the Strategy Tester."
-                warning="Check the chart timeframe matches your pattern's timeframe before adding."
-              />
-              
-              <Step
-                number={5}
-                title="Verify Entry Levels"
-                description="Confirm the dynamic SL/TP lines appear on the chart. Check if the SL breach warning is displayed (orange background)."
-                image={chartSlTpLevels}
-                imageAlt="Chart showing Stop Loss and Take Profit levels"
-                tip="The script enters at current market price and recalculates levels to maintain your R:R ratio."
-              />
+              <Step number={1} title={tv('step1Title')} description={tv('step1Desc')}
+                image={tradingviewPineEditor} imageAlt="TradingView interface with Pine Editor tab highlighted" />
+              <Step number={2} title={tv('step2Title')} description={tv('step2Desc')} />
+              <Step number={3} title={tv('step3Title')} description={tv('step3Desc')}
+                image={tradingviewAddToChart} imageAlt="Pine Script code in editor with Add to Chart button"
+                tip={tv('step3Tip')} />
+              <Step number={4} title={tv('step4Title')} description={tv('step4Desc')}
+                warning={tv('step4Warning')} />
+              <Step number={5} title={tv('step5Title')} description={tv('step5Desc')}
+                image={chartSlTpLevels} imageAlt="Chart showing Stop Loss and Take Profit levels"
+                tip={tv('step5Tip')} />
             </div>
           </TabsContent>
 
           <TabsContent value="mt4" className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="outline">MQL4</Badge>
-              <Badge variant="secondary">Tested ✓</Badge>
+              <Badge variant="secondary">{g('tested')}</Badge>
             </div>
             
             <div className="space-y-4">
-              <Step
-                number={1}
-                title="Open MetaEditor"
-                description="In MT4, press F4 or go to Tools → MetaQuotes Language Editor. This opens the IDE for editing EA files."
-                image={mt4Metaeditor}
-                imageAlt="MetaTrader 4 MetaEditor IDE interface"
-              />
-              
-              <Step
-                number={2}
-                title="Create New Expert Advisor"
-                description="Click File → New → Expert Advisor (template). Name it to match your pattern. Click Next through the wizard."
-              />
-              
-              <Step
-                number={3}
-                title="Replace with Exported Code"
-                description="Select all default code (Ctrl+A) and paste your exported MQL4 script. Save the file (Ctrl+S)."
-                warning="Ensure the file is saved in the 'MQL4/Experts' folder."
-              />
-              
-              <Step
-                number={4}
-                title="Compile the EA"
-                description="Press F7 to compile. Check the 'Errors' tab at the bottom - it should show '0 errors'. Warnings are usually okay."
-              />
-              
-              <Step
-                number={5}
-                title="Attach to Chart"
-                description="In MT4, refresh the Navigator (Ctrl+N), find your EA under 'Expert Advisors', and drag it onto the correct chart."
-                tip="Enable 'Allow live trading' in the EA settings dialog and ensure AutoTrading is on (button in toolbar)."
-              />
-              
-              <Step
-                number={6}
-                title="Verify Execution"
-                description="Check the 'Experts' tab for entry confirmation logs. The EA will show SL breach warnings if applicable."
-                image={chartSlTpLevels}
-                imageAlt="Chart with SL/TP levels visible"
-                warning="Test on a demo account first. Verify the instrument and timeframe match your pattern."
-              />
+              <Step number={1} title={mt4('step1Title')} description={mt4('step1Desc')}
+                image={mt4Metaeditor} imageAlt="MetaTrader 4 MetaEditor IDE interface" />
+              <Step number={2} title={mt4('step2Title')} description={mt4('step2Desc')} />
+              <Step number={3} title={mt4('step3Title')} description={mt4('step3Desc')}
+                warning={mt4('step3Warning')} />
+              <Step number={4} title={mt4('step4Title')} description={mt4('step4Desc')} />
+              <Step number={5} title={mt4('step5Title')} description={mt4('step5Desc')}
+                tip={mt4('step5Tip')} />
+              <Step number={6} title={mt4('step6Title')} description={mt4('step6Desc')}
+                image={chartSlTpLevels} imageAlt="Chart with SL/TP levels visible"
+                warning={mt4('step6Warning')} />
             </div>
           </TabsContent>
 
           <TabsContent value="mt5" className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="outline">MQL5</Badge>
-              <Badge variant="secondary">Tested ✓</Badge>
+              <Badge variant="secondary">{g('tested')}</Badge>
             </div>
             
             <div className="space-y-4">
-              <Step
-                number={1}
-                title="Open MetaEditor"
-                description="In MT5, press F4 or go to Tools → MetaQuotes Language Editor. MT5's editor has enhanced debugging features."
-              />
-              
-              <Step
-                number={2}
-                title="Create New Expert Advisor"
-                description="Click File → New → Expert Advisor (template). The MQL5 wizard offers more options - defaults are fine for our scripts."
-              />
-              
-              <Step
-                number={3}
-                title="Replace with Exported Code"
-                description="Select all and paste your exported MQL5 script. The CTrade include is handled automatically."
-                tip="MQL5 scripts use the CTrade class for cleaner order handling."
-              />
-              
-              <Step
-                number={4}
-                title="Compile the EA"
-                description="Press F7 to compile. MQL5 has stricter type checking - ensure 0 errors before proceeding."
-                warning="If you see 'Trade.mqh not found', ensure your MT5 installation has the standard library."
-              />
-              
-              <Step
-                number={5}
-                title="Attach to Chart"
-                description="In MT5 Navigator, find your EA and drag to chart. MT5 supports both netting and hedging modes - the script handles both."
-                image={mt5Navigator}
-                imageAlt="MetaTrader 5 Navigator with EA and Algo Trading button"
-              />
-              
-              <Step
-                number={6}
-                title="Enable Algo Trading"
-                description="Click the 'Algo Trading' button in the toolbar (must be green). Also enable in EA settings: 'Allow Algo Trading'."
-                tip="MT5 requires explicit algo trading permission at both platform and EA level."
-              />
-              
-              <Step
-                number={7}
-                title="Monitor Execution"
-                description="Check the 'Experts' and 'Journal' tabs for execution logs. Positions will appear in the 'Trade' tab."
-                image={chartSlTpLevels}
-                imageAlt="Chart showing trade execution levels"
-                warning="Always verify on demo first. Symbol naming may differ between brokers (e.g., EURUSD vs EURUSD.pro)."
-              />
+              <Step number={1} title={mt5('step1Title')} description={mt5('step1Desc')} />
+              <Step number={2} title={mt5('step2Title')} description={mt5('step2Desc')} />
+              <Step number={3} title={mt5('step3Title')} description={mt5('step3Desc')}
+                tip={mt5('step3Tip')} />
+              <Step number={4} title={mt5('step4Title')} description={mt5('step4Desc')}
+                warning={mt5('step4Warning')} />
+              <Step number={5} title={mt5('step5Title')} description={mt5('step5Desc')}
+                image={mt5Navigator} imageAlt="MetaTrader 5 Navigator with EA and Algo Trading button" />
+              <Step number={6} title={mt5('step6Title')} description={mt5('step6Desc')}
+                tip={mt5('step6Tip')} />
+              <Step number={7} title={mt5('step7Title')} description={mt5('step7Desc')}
+                image={chartSlTpLevels} imageAlt="Chart showing trade execution levels"
+                warning={mt5('step7Warning')} />
             </div>
           </TabsContent>
         </Tabs>
