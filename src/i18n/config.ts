@@ -2,7 +2,9 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { missingKeyCollector } from './missingKeyCollector';
 
-// Translation files
+// Static JSON files serve as BUILD-TIME fallback.
+// At runtime, the DB loader (dbTranslationLoader.ts) overlays
+// the canonical translations from Supabase on top of these.
 import enTranslations from './locales/en.json';
 import esTranslations from './locales/es.json';
 import ptTranslations from './locales/pt.json';
@@ -49,6 +51,14 @@ i18n
     saveMissing: true,
     missingKeyHandler: missingKeyCollector.handler,
   });
+
+// Trigger async DB overlay after init (non-blocking).
+// This loads canonical translations from Supabase on top of static fallbacks.
+import('./dbTranslationLoader').then(({ loadAllTranslationsFromDB }) => {
+  loadAllTranslationsFromDB().catch(err => {
+    console.warn('[i18n] DB translation overlay failed, using static fallback:', err);
+  });
+});
 
 export default i18n;
 
