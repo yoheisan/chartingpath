@@ -21,6 +21,7 @@ import afTranslations from './locales/af.json';
 import koTranslations from './locales/ko.json';
 import trTranslations from './locales/tr.json';
 import nlTranslations from './locales/nl.json';
+import plTranslations from './locales/pl.json';
 
 const resources = {
   en: { translation: enTranslations },
@@ -39,6 +40,7 @@ const resources = {
   ko: { translation: koTranslations },
   tr: { translation: trTranslations },
   nl: { translation: nlTranslations },
+  pl: { translation: plTranslations },
 };
 
 const SUPPORTED_LANGS = Object.keys(resources);
@@ -114,4 +116,5 @@ export const languages = [
   { code: 'ko', name: '한국어', flag: '🇰🇷' },
   { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
   { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
 ];
