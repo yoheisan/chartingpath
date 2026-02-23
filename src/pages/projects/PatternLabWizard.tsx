@@ -717,7 +717,7 @@ const PatternLabWizard = () => {
                     <div className="text-left">
                       <CardTitle className="text-lg">{t('patternLabWizard.backtestParameters')}</CardTitle>
                       <CardDescription>
-                        {t(TIMEFRAMES.find(tf => tf.value === timeframe)?.labelKey || '')} • {lookbackYears}Y lookback • {riskPerTrade}% risk
+                        {t(TIMEFRAMES.find(tf => tf.value === timeframe)?.labelKey || '')} • {t('patternLabWizard.paramSummary', { lookback: lookbackYears, risk: riskPerTrade })}
                       </CardDescription>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />

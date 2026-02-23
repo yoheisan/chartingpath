@@ -1859,6 +1859,7 @@
     "selected": "選択済み",
     "noInstruments": "銘柄が選択されていません。上の検索から銘柄を追加してください。",
     "backtestParameters": "バックテストパラメータ",
+    "paramSummary": "{{lookback}}年遡及 • {{risk}}%リスク",
     "timeframe": "時間足",
     "lookbackPeriod": "振り返り期間",
     "riskPerTrade": "トレードあたりのリスク",
