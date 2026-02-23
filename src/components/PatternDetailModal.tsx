@@ -7,6 +7,8 @@ import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Clock, Volume2, Br
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
+import { translatePatternName } from "@/utils/translatePatternName";
 
 interface PatternDetailModalProps {
   isOpen: boolean;
@@ -15,6 +17,8 @@ interface PatternDetailModalProps {
 }
 
 export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetailModalProps) => {
+  const { t } = useTranslation();
+  const s = (key: string) => t(`patternDetailModal.${key}`);
   const patternDetail = getPatternDetails(patternKey);
 
   if (!patternDetail) {
@@ -66,13 +70,13 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
         <DialogHeader>
           <div className="flex items-center gap-3">
             {getTypeIcon(patternDetail.type)}
-            <DialogTitle className="text-2xl">{patternDetail.name}</DialogTitle>
+            <DialogTitle className="text-2xl">{translatePatternName(patternDetail.name)}</DialogTitle>
             <Badge variant={getTypeColor(patternDetail.type) as any} className="capitalize">
-              {patternDetail.type}
+              {t(`patternLibrary.types.${patternDetail.type}`, patternDetail.type)}
             </Badge>
           </div>
           <DialogDescription className="text-base">
-            {patternDetail.description}
+            {t(`patternLibrary.descriptions.${patternDetail.name}`, patternDetail.description)}
           </DialogDescription>
         </DialogHeader>
 
@@ -88,17 +92,17 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                       <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p className="text-sm">Based on historical analysis. Not a guarantee of future results. Always do your own research.</p>
+                      <p className="text-sm">{s('successRateTooltip')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="text-sm text-muted-foreground">Success Rate</div>
+                <div className="text-sm text-muted-foreground">{s('successRate')}</div>
               </div>
               <div className="text-center p-3 border rounded-lg">
                 <Badge className={`${getDifficultyColor(patternDetail.difficulty)} text-sm`}>
-                  {patternDetail.difficulty}
+                  {t(`patternLibrary.difficulty.${patternDetail.difficulty}`, patternDetail.difficulty)}
                 </Badge>
-                <div className="text-sm text-muted-foreground mt-1">Difficulty</div>
+                <div className="text-sm text-muted-foreground mt-1">{s('difficulty')}</div>
               </div>
               <div className="text-center p-3 border rounded-lg">
                 <Clock className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
@@ -112,7 +116,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Pattern Visualization
+                {s('patternVisualization')}
               </h3>
               <div className="rounded-xl overflow-hidden border border-border bg-card">
                 <DynamicPatternChart 
@@ -124,14 +128,14 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </div>
             </div>
 
-            {/* NEW: What Is It? - Deep Explanation */}
+            {/* What Is It? */}
             {patternDetail.whatIsIt && (
               <>
                 <Separator />
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    What Is This Pattern?
+                    {s('whatIsThisPattern')}
                   </h3>
                   <Card className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
                     <p className="text-sm leading-relaxed text-foreground">{patternDetail.whatIsIt}</p>
@@ -140,14 +144,14 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </>
             )}
 
-            {/* NEW: Why It Happens - Market Psychology */}
+            {/* Why It Happens */}
             {patternDetail.whyItHappens && (
               <>
                 <Separator />
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Brain className="h-5 w-5 text-purple-500" />
-                    Why Does This Pattern Form?
+                    {s('whyDoesItForm')}
                   </h3>
                   <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-transparent border-purple-500/20">
                     <p className="text-sm leading-relaxed text-foreground">{patternDetail.whyItHappens}</p>
@@ -156,14 +160,14 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </>
             )}
 
-            {/* NEW: How to Identify - Step-by-Step Guide */}
+            {/* How to Identify */}
             {patternDetail.howToIdentify && patternDetail.howToIdentify.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Eye className="h-5 w-5 text-blue-500" />
-                    How to Identify This Pattern
+                    {s('howToIdentify')}
                   </h3>
                   <Card className="p-4 bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
                     <ol className="space-y-3">
@@ -181,48 +185,44 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </>
             )}
 
-            {/* NEW: How to Trade - Complete Execution Guide */}
+            {/* How to Trade */}
             {patternDetail.howToTrade && (
               <>
                 <Separator />
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Crosshair className="h-5 w-5 text-bullish" />
-                    How to Trade This Pattern
+                    {s('howToTrade')}
                   </h3>
                   <div className="grid gap-4">
-                    {/* Setup */}
                     <Card className="p-4 bg-gradient-to-br from-muted/50 to-transparent">
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                         <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                        Trade Setup
+                        {s('tradeSetup')}
                       </h4>
                       <p className="text-sm text-muted-foreground">{patternDetail.howToTrade.setup}</p>
                     </Card>
                     
-                    {/* Entry */}
                     <Card className="p-4 bg-gradient-to-br from-bullish/10 to-transparent border-bullish/30">
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-bullish">
                         <TrendingUp className="h-4 w-4" />
-                        Entry Strategy
+                        {s('entryStrategy')}
                       </h4>
                       <p className="text-sm text-foreground">{patternDetail.howToTrade.entry}</p>
                     </Card>
                     
-                    {/* Stop Loss */}
                     <Card className="p-4 bg-gradient-to-br from-bearish/10 to-transparent border-bearish/30">
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-bearish">
                         <Shield className="h-4 w-4" />
-                        Stop Loss Placement
+                        {s('stopLossPlacement')}
                       </h4>
                       <p className="text-sm text-foreground">{patternDetail.howToTrade.stopLoss}</p>
                     </Card>
                     
-                    {/* Targets */}
                     <Card className="p-4 bg-gradient-to-br from-primary/10 to-transparent border-primary/30">
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-primary">
                         <Target className="h-4 w-4" />
-                        Profit Targets
+                        {s('profitTargets')}
                       </h4>
                       <ul className="space-y-2">
                         {patternDetail.howToTrade.targets.map((target, index) => (
@@ -234,11 +234,10 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                       </ul>
                     </Card>
                     
-                    {/* Position Sizing */}
                     <Card className="p-4 bg-gradient-to-br from-yellow-500/10 to-transparent border-yellow-500/30">
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
                         <BarChart3 className="h-4 w-4" />
-                        Position Sizing
+                        {s('positionSizing')}
                       </h4>
                       <p className="text-sm text-foreground">{patternDetail.howToTrade.positionSizing}</p>
                     </Card>
@@ -254,7 +253,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Globe className="h-5 w-5 text-cyan-500" />
-                    Real-World Examples
+                    {s('realWorldExamples')}
                   </h3>
                   <Card className="p-4 bg-gradient-to-br from-cyan-500/5 to-transparent border-cyan-500/20">
                     <ul className="space-y-2">
@@ -277,7 +276,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Lightbulb className="h-5 w-5 text-amber-500" />
-                    Best Market Conditions
+                    {s('bestMarketConditions')}
                   </h3>
                   <Card className="p-4 bg-gradient-to-br from-amber-500/5 to-transparent border-amber-500/20">
                     <ul className="space-y-2">
@@ -299,7 +298,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Brain className="h-5 w-5" />
-                Pattern Formation & Psychology
+                {s('patternFormation')}
               </h3>
               <p className="text-sm leading-relaxed">{patternDetail.formation}</p>
               <div className="bg-muted/50 p-3 rounded-lg">
@@ -311,7 +310,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
 
             {/* Key Characteristics */}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Key Characteristics</h3>
+              <h3 className="text-lg font-semibold">{s('keyCharacteristics')}</h3>
               <ul className="space-y-2">
                 {patternDetail.characteristics.map((char, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm">
@@ -328,17 +327,17 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Target Price Methodologies
+                {s('targetPriceMethodologies')}
               </h3>
               <div className="bg-gradient-to-r from-primary/5 to-bullish/5 p-4 rounded-lg border-l-4 border-primary">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-primary mb-2">Primary Target Method</h4>
+                    <h4 className="font-medium text-primary mb-2">{s('primaryTargetMethod')}</h4>
                     <p className="text-sm font-medium">{patternDetail.targetPriceMethodologies.primary}</p>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-bullish mb-2">Alternative Target Calculations</h4>
+                    <h4 className="font-medium text-bullish mb-2">{s('alternativeTargetCalc')}</h4>
                     <ul className="space-y-2">
                       {patternDetail.targetPriceMethodologies.alternative.map((target, index) => (
                         <li key={index} className="flex items-start gap-2 text-sm">
@@ -351,17 +350,17 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
                     <div>
-                      <h5 className="text-sm font-medium text-muted-foreground">Risk/Reward Ratio</h5>
+                      <h5 className="text-sm font-medium text-muted-foreground">{s('riskRewardRatio')}</h5>
                       <p className="text-sm font-medium text-primary">{patternDetail.targetPriceMethodologies.riskReward}</p>
                     </div>
                     <div>
-                      <h5 className="text-sm font-medium text-muted-foreground">Pattern Success Rate</h5>
+                      <h5 className="text-sm font-medium text-muted-foreground">{s('patternSuccessRate')}</h5>
                       <p className="text-sm font-medium text-bullish">{patternDetail.accuracy}</p>
                     </div>
                   </div>
 
                   <div className="bg-muted/30 p-3 rounded-lg">
-                    <h5 className="text-sm font-medium mb-1">Calculation Method</h5>
+                    <h5 className="text-sm font-medium mb-1">{s('calculationMethod')}</h5>
                     <p className="text-sm text-muted-foreground italic">{patternDetail.targetPriceMethodologies.calculation}</p>
                   </div>
                 </div>
@@ -375,15 +374,15 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Target className="h-5 w-5" />
-                  Entry & Targets
+                  {s('entryAndTargets')}
                 </h3>
                 <div className="space-y-3">
                   <div className="border-l-4 border-bullish pl-3">
-                    <h4 className="font-medium text-sm text-bullish">Entry Signal</h4>
+                    <h4 className="font-medium text-sm text-bullish">{s('entrySignal')}</h4>
                     <p className="text-sm text-muted-foreground">{patternDetail.entry}</p>
                   </div>
                   <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm">Target Methodology</h4>
+                    <h4 className="font-medium text-sm">{s('targetMethodology')}</h4>
                     <p className="text-sm text-muted-foreground">{patternDetail.targetMethodology}</p>
                   </div>
                 </div>
@@ -392,15 +391,15 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Risk Management
+                  {s('riskManagement')}
                 </h3>
                 <div className="space-y-3">
                   <div className="border-l-4 border-bearish pl-3">
-                    <h4 className="font-medium text-sm text-bearish">Stop Loss</h4>
+                    <h4 className="font-medium text-sm text-bearish">{s('stopLoss')}</h4>
                     <p className="text-sm text-muted-foreground">{patternDetail.stopLoss}</p>
                   </div>
                   <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm">Confirmation</h4>
+                    <h4 className="font-medium text-sm">{s('confirmation')}</h4>
                     <p className="text-sm text-muted-foreground">{patternDetail.confirmation}</p>
                   </div>
                 </div>
@@ -413,7 +412,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Volume2 className="h-5 w-5" />
-                Volume Profile
+                {s('volumeProfile')}
               </h3>
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm">{patternDetail.volumeProfile}</p>
@@ -426,7 +425,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Lightbulb className="h-5 w-5" />
-                Key Success Factors
+                {s('keySuccessFactors')}
               </h3>
               <ul className="space-y-2">
                 {patternDetail.keyFactors.map((factor, index) => (
@@ -444,7 +443,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Common Mistakes to Avoid
+                {s('commonMistakes')}
               </h3>
               <ul className="space-y-2">
                 {patternDetail.commonMistakes.map((mistake, index) => (
@@ -460,7 +459,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Additional Notes</h3>
+                  <h3 className="text-lg font-semibold">{s('additionalNotes')}</h3>
                   <div className="bg-primary/10 p-3 rounded-lg border-l-4 border-primary">
                     <p className="text-sm">{patternDetail.additionalNotes}</p>
                   </div>
