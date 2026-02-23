@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Trophy, Zap, FlaskConical, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { translatePatternName } from '@/utils/translatePatternName';
 interface TickerStat {
   symbol: string;
   total_trades: number;
@@ -179,17 +180,17 @@ export default function EdgeAtlasPatternPage() {
             <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">{t('edgeAtlas.provenTickers')}</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold">{patternName}</h1>
+            <h1 className="text-3xl font-bold">{translatePatternName(patternName)}</h1>
             <Badge variant="outline" className="font-mono text-sm">
               {TF_LABEL[timeframe] || timeframe}
             </Badge>
-            <Badge variant="secondary" className="text-xs capitalize">{assetType}</Badge>
+            <Badge variant="secondary" className="text-xs capitalize">{t(`edgeAtlas.${assetType}`, assetType)}</Badge>
             {(() => {
               const totalLive = Object.values(liveCountMap).reduce((a, b) => a + b, 0);
               return totalLive > 0 ? (
                 <Badge className="bg-primary/20 text-primary border border-primary/30 gap-1 text-xs">
                   <Zap className="h-3 w-3" />
-                  {totalLive} live signal{totalLive !== 1 ? 's' : ''}
+                  {t('edgeAtlas.liveSignals', { count: totalLive })}
                 </Badge>
               ) : null;
             })()}
@@ -259,8 +260,8 @@ export default function EdgeAtlasPatternPage() {
                         {isLowSample && <span className="text-[10px] text-yellow-500">⚠️</span>}
                       </div>
                       <div className="flex items-center gap-2 sm:hidden text-xs text-muted-foreground mt-0.5">
-                        <span>Win: <span className={tk.win_rate_pct >= 55 ? 'text-green-500' : 'text-foreground'}>{tk.win_rate_pct}%</span></span>
-                        <span>Expect: <span className="text-green-500 font-mono">{tk.expectancy_r.toFixed(3)}R</span></span>
+                        <span>{t('edgeAtlas.win')} <span className={tk.win_rate_pct >= 55 ? 'text-green-500' : 'text-foreground'}>{tk.win_rate_pct}%</span></span>
+                        <span>{t('edgeAtlas.expect')} <span className="text-green-500 font-mono">{tk.expectancy_r.toFixed(3)}R</span></span>
                         <span className="font-bold text-green-400">+{tk.est_annualized_pct.toFixed(1)}%</span>
                       </div>
                     </div>
