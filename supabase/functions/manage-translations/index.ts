@@ -421,12 +421,12 @@ Deno.serve(async (req) => {
       }
 
       case 'get_coverage_stats': {
-        // Get total keys count from translation_keys table (not translations table)
-        const { data: allKeys, error: keysError } = await supabase
+        // Get total keys count using exact count (avoids 1000-row default limit)
+        const { count: totalEnKeys, error: keysError } = await supabase
           .from('translation_keys')
-          .select('key')
+          .select('*', { count: 'exact', head: true })
 
-        const totalEnKeys = allKeys?.length || 0
+        const totalKeys = totalEnKeys || 0
 
         // For each language, count how many keys have translations
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr']
@@ -437,6 +437,7 @@ Deno.serve(async (req) => {
             .from('translations')
             .select('status, source_hash')
             .eq('language_code', lang)
+            .limit(5000)
 
           if (langError) {
             console.error(`Error fetching ${lang} stats:`, langError)
@@ -445,7 +446,7 @@ Deno.serve(async (req) => {
 
           const translations = langData || []
           coverage[lang] = {
-            total: totalEnKeys,
+            total: totalKeys,
             translated: translations.length,
             approved: translations.filter(t => t.status === 'approved').length,
             auto_translated: translations.filter(t => t.status === 'auto_translated').length,
@@ -454,7 +455,7 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ 
-          total_keys: totalEnKeys,
+          total_keys: totalKeys,
           coverage 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
