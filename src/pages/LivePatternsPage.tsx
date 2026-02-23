@@ -957,8 +957,12 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          Analyzing {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments on {timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? 'Weekly' : 'Daily'} • 
-          Showing {patterns.length} with active patterns
+          {t('screener.analyzing', { 
+            count: totalInUniverse || instrumentsScanned, 
+            assetType: ASSET_TYPE_LABELS[assetType].toLowerCase(),
+            timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
+            active: patterns.length
+          })}
         </p>
       </div>
 
@@ -1008,16 +1012,16 @@ export default function LivePatternsPage() {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs p-3">
-                <p className="font-medium mb-1">Chart Timeframe</p>
+                <p className="font-medium mb-1">{t('screener.chartTimeframeDesc').split('.')[0]}</p>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Pattern detection uses the selected timeframe. Historical performance stats correspond to the same timeframe.
+                  {t('screener.chartTimeframeDesc')}
                 </p>
                 <div className="text-xs space-y-1 text-muted-foreground">
-                  <div><span className="font-medium">1H:</span> Intraday signals (last 30 days history)</div>
-                  <div><span className="font-medium">4H:</span> Swing trading (last 30 days history)</div>
-                  <div><span className="font-medium">8H:</span> Swing trading (last 30 days history)</div>
-                  <div><span className="font-medium">Daily:</span> Position trading (5+ years history)</div>
-                  <div><span className="font-medium">Weekly:</span> Long-term investing (5+ years history)</div>
+                  <div><span className="font-medium">1H:</span> {t('screener.tf1hDesc')}</div>
+                  <div><span className="font-medium">4H:</span> {t('screener.tf4hDesc')}</div>
+                  <div><span className="font-medium">8H:</span> {t('screener.tf8hDesc')}</div>
+                  <div><span className="font-medium">{t('screener.daily')}:</span> {t('screener.tfDailyDesc')}</div>
+                  <div><span className="font-medium">{t('screener.weekly')}:</span> {t('screener.tfWeeklyDesc')}</div>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -1072,7 +1076,7 @@ export default function LivePatternsPage() {
             className="mb-4 text-muted-foreground hover:text-foreground"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
-            View all {totalInUniverse || instrumentsScanned || AVAILABLE_INSTRUMENTS[assetType]?.length || 25} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments we analyze
+            {t('screener.viewAllInstruments', { count: totalInUniverse || instrumentsScanned || AVAILABLE_INSTRUMENTS[assetType]?.length || 25, assetType: ASSET_TYPE_LABELS[assetType].toLowerCase() })}
             {showInstrumentList ? (
               <ChevronUp className="h-4 w-4 ml-2" />
             ) : (
@@ -1082,10 +1086,9 @@ export default function LivePatternsPage() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Card className="mb-6 p-4 bg-muted/30">
-            <p className="text-sm text-muted-foreground mb-3">
-              The following {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments are scanned for chart patterns. 
-              Only those with active pattern setups appear below.
-            </p>
+             <p className="text-sm text-muted-foreground mb-3">
+               {t('screener.instrumentsDesc', { assetType: ASSET_TYPE_LABELS[assetType].toLowerCase() })}
+             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {AVAILABLE_INSTRUMENTS[assetType]?.map(({ symbol, name }) => (
                 <div 
@@ -1106,8 +1109,8 @@ export default function LivePatternsPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{t('livePatterns.patternsWeDetect')}</span>
-            <Badge variant="secondary" className="text-[10px]">
-              {ALL_PATTERN_IDS.length} types
+             <Badge variant="secondary" className="text-[10px]">
+               {ALL_PATTERN_IDS.length} {t('screener.types')}
             </Badge>
           </div>
           <span className="text-xs text-muted-foreground">
@@ -1172,10 +1175,10 @@ export default function LivePatternsPage() {
           <h3 className="text-lg font-semibold mb-2">{t('livePatterns.noPatternsFound')}</h3>
           <p className="text-muted-foreground mb-4">
             {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0
-              ? 'Trend alignment data is being calculated. Click "Refresh" to analyze patterns with trend indicators.'
+              ? t('screener.noTrendData')
               : patterns.length > 0 
-                ? 'Try adjusting your filters to see more results.'
-                : 'No active patterns detected at the moment. Check back soon!'}
+                ? t('screener.adjustFilters')
+                : t('screener.noActivePatterns')}
           </p>
           {patterns.length > 0 && (
             <div className="flex items-center justify-center gap-3">
@@ -1185,7 +1188,7 @@ export default function LivePatternsPage() {
               {filters.trend !== 'all' && fullFilterStats.withTrend === 0 && fullFilterStats.counterTrend === 0 && (
                 <Button variant="default" onClick={() => fetchLivePatterns(true)} disabled={refreshing}>
                   <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                  Calculate Trend Data
+                  {t('screener.calculateTrendData')}
                 </Button>
               )}
             </div>
@@ -1218,11 +1221,11 @@ export default function LivePatternsPage() {
                     onClick={() => handleSort('instrument')}
                   >
                     <div className="flex items-center">
-                      Symbol
+                     {t('screener.symbol')}
                       <SortIcon columnKey="instrument" />
                     </div>
                   </TableHead>
-                  <TableHead className="whitespace-nowrap">Pattern</TableHead>
+                  <TableHead className="whitespace-nowrap">{t('screener.pattern')}</TableHead>
                   <TableHead 
                     className="cursor-pointer select-none text-center whitespace-nowrap"
                     onClick={() => handleSort('grade')}
@@ -1231,12 +1234,12 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-center gap-1">
-                            Grade
+                           {t('screener.grade')}
                             <SortIcon columnKey="grade" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-sm">
-                          <p className="text-xs">Pattern quality grade (A-F) based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.</p>
+                          <p className="text-xs">{t('screener.gradeTooltip')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1246,7 +1249,7 @@ export default function LivePatternsPage() {
                     onClick={() => handleSort('direction')}
                   >
                     <div className="flex items-center">
-                      Signal
+                     {t('screener.signal')}
                       <SortIcon columnKey="direction" />
                     </div>
                   </TableHead>
@@ -1258,12 +1261,12 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1">
-                            Win %
+                            {t('screener.winPercent')}
                             <SortIcon columnKey="winRate" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Historical win rate for this pattern based on 5 years of backtested data. Click to sort.</p>
+                          <p className="text-xs">{t('screener.winRateTooltip')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1273,12 +1276,12 @@ export default function LivePatternsPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help text-xs">
-                            Exp.
+                            {t('screener.expectancy')}
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Projected expectancy (R-multiple) per trade based on historical win rate and your selected R:R ratio. Positive values indicate an edge.</p>
+                          <p className="text-xs">{t('screener.expectancyTooltip')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1288,7 +1291,7 @@ export default function LivePatternsPage() {
                     onClick={() => handleSort('signal')}
                   >
                     <div className="flex items-center justify-end">
-                      Age
+                     {t('screener.age')}
                       <SortIcon columnKey="signal" />
                     </div>
                   </TableHead>
@@ -1353,7 +1356,7 @@ export default function LivePatternsPage() {
                               ) : (
                                 <TrendingDown className="h-3 w-3 mr-1" />
                               )}
-                              {isLong ? 'Long' : 'Short'}
+                              {isLong ? t('screener.long') : t('screener.short')}
                             </Badge>
                             {/* Trend Alignment Badge */}
                             {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
@@ -1364,9 +1367,9 @@ export default function LivePatternsPage() {
                                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
                                     : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
                                 }`}
-                                title={setup.trendAlignment === 'with_trend' 
-                                  ? 'Pattern aligns with larger market trend' 
-                                  : 'Pattern is against the larger trend'}
+                               title={setup.trendAlignment === 'with_trend' 
+                                  ? t('screener.trendAlignsWith')
+                                  : t('screener.trendAgainst')}
                               >
                                 {setup.trendAlignment === 'with_trend' ? (
                                   <ArrowUpRight className="h-2.5 w-2.5" />
@@ -1448,8 +1451,7 @@ export default function LivePatternsPage() {
       <div className="mt-8 flex items-start gap-3 text-sm text-muted-foreground">
         <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
         <p>
-          <strong>Disclaimer:</strong> Patterns shown are for educational purposes only. 
-          Past pattern performance does not guarantee future results. Always conduct your own research.
+          <strong>{t('common.disclaimer')}:</strong> {t('screener.disclaimer')}
         </p>
       </div>
 

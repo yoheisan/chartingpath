@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Lock, TrendingUp, TrendingDown, Minus, Crown, Target } from 'lucide-react';
 import {
@@ -55,6 +56,7 @@ export function SupportedPatternsList({
   edgeMetrics = [],
   blurEdgeMetrics = false,
 }: SupportedPatternsListProps) {
+  const { t } = useTranslation();
   // Create maps for quick lookup
   const countMap = new Map(patternCounts.map(p => [p.patternId, p]));
   const edgeMap = new Map(edgeMetrics.map(e => [e.patternId, e]));
@@ -107,7 +109,7 @@ export function SupportedPatternsList({
                   {isLocked ? (
                     <div className="text-muted-foreground flex items-center gap-1 mt-1">
                       <Crown className="h-3 w-3 text-amber-500" />
-                      Upgrade to unlock
+                      {t('screener.upgradeToUnlock')}
                     </div>
                   ) : isActive ? (
                     <div className="space-y-1 mt-1">
@@ -135,12 +137,12 @@ export function SupportedPatternsList({
                           )}>
                             {edge.winRate.toFixed(0)}%
                           </span>
-                          <span className="text-muted-foreground">win</span>
+                          <span className="text-muted-foreground">{t('screener.win')}</span>
                         </div>
                       ) : null}
                     </div>
                   ) : (
-                    <div className="text-muted-foreground">No active signals</div>
+                    <div className="text-muted-foreground">{t('screener.noActiveSignals')}</div>
                   )}
                 </TooltipContent>
               </Tooltip>
@@ -213,7 +215,7 @@ export function SupportedPatternsList({
                             )}>
                               {edge.winRate.toFixed(0)}%
                             </span>
-                            <span className="text-muted-foreground">win</span>
+                            <span className="text-muted-foreground">{t('screener.win')}</span>
                           </>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -223,7 +225,7 @@ export function SupportedPatternsList({
                   ) : (
                     <div className="flex items-center justify-center text-[10px] text-muted-foreground">
                       <Minus className="h-3 w-3 mr-1" />
-                      No signals
+                      {t('screener.noSignals')}
                     </div>
                   )}
                 </div>
@@ -232,20 +234,20 @@ export function SupportedPatternsList({
                 {isLocked ? (
                   <div className="flex items-center gap-1">
                     <Crown className="h-3 w-3 text-amber-500" />
-                    <span>Upgrade to unlock this pattern</span>
+                    <span>{t('screener.upgradeToUnlockPattern')}</span>
                   </div>
                 ) : isActive ? (
                   <div className="space-y-1">
-                    <span>{count} active signal{count !== 1 ? 's' : ''} detected</span>
+                    <span>{t('screener.activeSignalDetected', { count })}</span>
                     {blurEdgeMetrics && (
                       <div className="flex items-center gap-1 text-muted-foreground pt-1 border-t border-border/50">
                         <Crown className="h-3 w-3 text-amber-500" />
-                        <span className="text-xs">Upgrade to see edge metrics</span>
+                        <span className="text-xs">{t('screener.upgradeToSeeEdge')}</span>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <span>Scanning for this pattern - no signals yet</span>
+                  <span>{t('screener.scanningNoSignals')}</span>
                 )}
               </TooltipContent>
             </Tooltip>
