@@ -8,9 +8,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useTradingCopilotContext } from "@/components/copilot";
 
 const TradingCopilotFeature = () => {
   const { t } = useTranslation();
+  const copilot = useTradingCopilotContext();
 
   // Moat features — expanded for the feature page
   const moatFeatures = [
@@ -139,7 +141,7 @@ const TradingCopilotFeature = () => {
               {t('tradingCopilot.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg">
+              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" onClick={() => copilot.open()}>
                 <Bot className="h-5 w-5" />
                 {t('tradingCopilot.tryCopilot')}
                 <ArrowRight className="h-5 w-5" />
