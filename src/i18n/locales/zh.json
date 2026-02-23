@@ -1122,5 +1122,39 @@
     "scanned": "已扫描",
     "seeAll": "查看全部",
     "disclaimer": "仅供教育目的。过去的形态不保证未来的结果。"
+  },
+  "patternNames": {
+    "Bull Flag": "看涨旗形",
+    "Bear Flag": "看跌旗形",
+    "Falling Wedge": "下降楔形",
+    "Rising Wedge": "上升楔形",
+    "Triple Bottom": "三重底",
+    "Triple Top": "三重顶",
+    "Double Bottom": "双底",
+    "Double Top": "双顶",
+    "Cup & Handle": "杯柄形态",
+    "Inverse Cup & Handle": "倒杯柄形态",
+    "Symmetrical Triangle": "对称三角形",
+    "Ascending Triangle": "上升三角形",
+    "Descending Triangle": "下降三角形",
+    "Head and Shoulders": "头肩顶",
+    "Inverse Head and Shoulders": "头肩底",
+    "Donchian Breakout (Long)": "唐奇安突破（做多）",
+    "Donchian Breakout (Short)": "唐奇安突破（做空）",
+    "Channel Up": "上升通道",
+    "Channel Down": "下降通道",
+    "Pennant": "三角旗"
+  },
+  "timeframes": {
+    "1H": "1小时",
+    "4H": "4小时",
+    "8H": "8小时",
+    "1D": "日线",
+    "1W": "周线"
+  },
+  "footer": {
+    "terms": "条款",
+    "privacy": "隐私",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. 保留所有权利。"
   }
 }

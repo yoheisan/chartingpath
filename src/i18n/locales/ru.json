@@ -1122,5 +1122,39 @@
     "long": "Long",
     "short": "Short",
     "winRate": "Процент выигрышей"
+  },
+  "patternNames": {
+    "Bull Flag": "Бычий флаг",
+    "Bear Flag": "Медвежий флаг",
+    "Falling Wedge": "Падающий клин",
+    "Rising Wedge": "Восходящий клин",
+    "Triple Bottom": "Тройное дно",
+    "Triple Top": "Тройная вершина",
+    "Double Bottom": "Двойное дно",
+    "Double Top": "Двойная вершина",
+    "Cup & Handle": "Чашка с ручкой",
+    "Inverse Cup & Handle": "Перевёрнутая чашка с ручкой",
+    "Symmetrical Triangle": "Симметричный треугольник",
+    "Ascending Triangle": "Восходящий треугольник",
+    "Descending Triangle": "Нисходящий треугольник",
+    "Head and Shoulders": "Голова и плечи",
+    "Inverse Head and Shoulders": "Перевёрнутые голова и плечи",
+    "Donchian Breakout (Long)": "Прорыв Дончиана (лонг)",
+    "Donchian Breakout (Short)": "Прорыв Дончиана (шорт)",
+    "Channel Up": "Восходящий канал",
+    "Channel Down": "Нисходящий канал",
+    "Pennant": "Вымпел"
+  },
+  "timeframes": {
+    "1H": "1Ч",
+    "4H": "4Ч",
+    "8H": "8Ч",
+    "1D": "1Д",
+    "1W": "1Н"
+  },
+  "footer": {
+    "terms": "Условия",
+    "privacy": "Конфиденциальность",
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. Все права защищены."
   }
 }
