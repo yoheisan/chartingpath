@@ -47,7 +47,10 @@ export type AnalyticsEvent =
   | 'pattern_shared'
   | 'shared_pattern_viewed'
   | 'pattern_lab.validate_verdict'
-  | 'pattern_lab.promote_to_automate';
+  | 'pattern_lab.promote_to_automate'
+  | 'upgrade_banner_shown'
+  | 'upgrade_banner_clicked'
+  | 'upgrade_banner_dismissed';
 
 // Event properties types
 export interface PresetLoadedProps {
