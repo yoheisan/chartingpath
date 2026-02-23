@@ -213,8 +213,8 @@ export const DatabaseQuiz = ({
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-xl font-semibold">{title}</h3>
             <div className="flex gap-2">
-              <Badge variant="outline">{currentQuestion.category}</Badge>
-              <Badge variant="secondary">{currentQuestion.difficulty}</Badge>
+              <Badge variant="outline">{t(`databaseQuiz.categories.${currentQuestion.category}`, currentQuestion.category)}</Badge>
+              <Badge variant="secondary">{t(`databaseQuiz.difficulties.${currentQuestion.difficulty}`, currentQuestion.difficulty)}</Badge>
             </div>
           </div>
 

@@ -1312,7 +1312,24 @@
     "riskManagementSources": "Risk Management Standards",
     "riskManagementSourcesInfo": "Based on frameworks from:",
     "statisticalSources": "Statistical Standards",
-    "statisticalSourcesInfo": "Methodologies recognized by:"
+    "statisticalSourcesInfo": "Methodologies recognized by:",
+    "categories": {
+      "visual_recognition": "Visual Recognition",
+      "characteristics": "Characteristics",
+      "statistics": "Statistics",
+      "risk_management": "Risk Management",
+      "professional_practices": "Professional Practices",
+      "stock_market": "Stock Market",
+      "forex": "Forex",
+      "cryptocurrency": "Cryptocurrency",
+      "commodities": "Commodities"
+    },
+    "difficulties": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    }
   },
   "tradingKnowledgeQuiz": {
     "title": "Trading Knowledge Quiz",
@@ -1862,7 +1879,10 @@
     "Bullish Engulfing": "Bullish Engulfing",
     "Bearish Engulfing": "Bearish Engulfing",
     "Spinning Top": "Spinning Top",
-    "Inverted Head and Shoulders": "Inverted Head and Shoulders"
+    "Inverted Head and Shoulders": "Inverted Head and Shoulders",
+    "Wedge": "Wedge",
+    "Triangle": "Triangle",
+    "Flag": "Flag"
   },
   "timeframes": {
     "1H": "1H",
