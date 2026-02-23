@@ -60,40 +60,40 @@ const MemberAlerts = () => {
   const [deliveryMethods, setDeliveryMethods] = useState<string[]>(['email', 'push']);
 
   const patternOptions = [
-    { value: 'donchian-breakout-long', label: 'Donchian Breakout (Long)' },
-    { value: 'donchian-breakout-short', label: 'Donchian Breakout (Short)' },
-    { value: 'double-top', label: 'Double Top (Short)' },
-    { value: 'double-bottom', label: 'Double Bottom (Long)' },
-    { value: 'ascending-triangle', label: 'Ascending Triangle (Long)' },
-    { value: 'descending-triangle', label: 'Descending Triangle (Short)' },
-    { value: 'head-and-shoulders', label: 'Head & Shoulders (Short)' },
-    { value: 'inverse-head-and-shoulders', label: 'Inverse H&S (Long)' },
-    { value: 'rising-wedge', label: 'Rising Wedge (Short)' },
-    { value: 'falling-wedge', label: 'Falling Wedge (Long)' },
-    { value: 'bull-flag', label: 'Bull Flag (Long)' },
-    { value: 'bear-flag', label: 'Bear Flag (Short)' },
-    { value: 'cup-and-handle', label: 'Cup & Handle (Long)' },
-    { value: 'hammer', label: 'Hammer' },
-    { value: 'inverted_hammer', label: 'Inverted Hammer' },
-    { value: 'bullish_engulfing', label: 'Bullish Engulfing' },
-    { value: 'bearish_engulfing', label: 'Bearish Engulfing' },
-    { value: 'doji', label: 'Doji' },
-    { value: 'morning_star', label: 'Morning Star' },
-    { value: 'evening_star', label: 'Evening Star' },
+    { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
+    { value: 'donchian-breakout-short', label: t('patternNames.Donchian Breakout (Short)', 'Donchian Breakout (Short)') },
+    { value: 'double-top', label: t('patternNames.Double Top', 'Double Top (Short)') },
+    { value: 'double-bottom', label: t('patternNames.Double Bottom', 'Double Bottom (Long)') },
+    { value: 'ascending-triangle', label: t('patternNames.Ascending Triangle', 'Ascending Triangle (Long)') },
+    { value: 'descending-triangle', label: t('patternNames.Descending Triangle', 'Descending Triangle (Short)') },
+    { value: 'head-and-shoulders', label: t('patternNames.Head & Shoulders', 'Head & Shoulders (Short)') },
+    { value: 'inverse-head-and-shoulders', label: t('patternNames.Inverse Head & Shoulders', 'Inverse H&S (Long)') },
+    { value: 'rising-wedge', label: t('patternNames.Rising Wedge', 'Rising Wedge (Short)') },
+    { value: 'falling-wedge', label: t('patternNames.Falling Wedge', 'Falling Wedge (Long)') },
+    { value: 'bull-flag', label: t('patternNames.Bull Flag', 'Bull Flag (Long)') },
+    { value: 'bear-flag', label: t('patternNames.Bear Flag', 'Bear Flag (Short)') },
+    { value: 'cup-and-handle', label: t('patternNames.Cup & Handle', 'Cup & Handle (Long)') },
+    { value: 'hammer', label: t('patternNames.Hammer', 'Hammer') },
+    { value: 'inverted_hammer', label: t('patternNames.Inverted Hammer', 'Inverted Hammer') },
+    { value: 'bullish_engulfing', label: t('patternNames.Bullish Engulfing', 'Bullish Engulfing') },
+    { value: 'bearish_engulfing', label: t('patternNames.Bearish Engulfing', 'Bearish Engulfing') },
+    { value: 'doji', label: t('patternNames.Doji', 'Doji') },
+    { value: 'morning_star', label: t('patternNames.Morning Star', 'Morning Star') },
+    { value: 'evening_star', label: t('patternNames.Evening Star', 'Evening Star') },
   ];
 
   const timeframeOptions = wedgeConfig.wedgeEnabled ? [
-    { value: '1h', label: '1 Hour (Recommended)' },
-    { value: '15m', label: '15 Minutes' },
-    { value: '4h', label: '4 Hours' },
-    { value: '8h', label: '8 Hours' },
-    { value: '1d', label: '1 Day' },
+    { value: '1h', label: t('alerts.tf1hRec') },
+    { value: '15m', label: t('alerts.tf15m') },
+    { value: '4h', label: t('alerts.tf4h') },
+    { value: '8h', label: t('alerts.tf8h') },
+    { value: '1d', label: t('alerts.tf1d') },
   ] : [
-    { value: '15m', label: '15 Minutes' },
-    { value: '1h', label: '1 Hour' },
-    { value: '4h', label: '4 Hours' },
-    { value: '8h', label: '8 Hours' },
-    { value: '1d', label: '1 Day' },
+    { value: '15m', label: t('alerts.tf15m') },
+    { value: '1h', label: t('alerts.tf1h') },
+    { value: '4h', label: t('alerts.tf4h') },
+    { value: '8h', label: t('alerts.tf8h') },
+    { value: '1d', label: t('alerts.tf1d') },
   ];
 
   const getAlertLimits = (plan: string) => {
@@ -220,8 +220,8 @@ const MemberAlerts = () => {
   const createAlert = async () => {
     if (!user || !symbol || !timeframe || selectedPatterns.length === 0) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields and select at least one pattern",
+        title: t('alerts.missingInfo'),
+        description: t('alerts.missingInfoDesc'),
         variant: "destructive",
       });
       return;
@@ -250,8 +250,8 @@ const MemberAlerts = () => {
         });
         
         toast({
-          title: "Alert Limit Reached",
-          description: `You've reached your ${result.max} alert limit. Upgrade to create more alerts.`,
+          title: t('alerts.alertLimitReached'),
+          description: t('alerts.alertLimitReachedDesc', { max: result.max }),
           variant: "destructive",
         });
         return;
@@ -271,8 +271,8 @@ const MemberAlerts = () => {
 
       const alertCount = result.alerts?.length || selectedPatterns.length;
       toast({
-        title: alertCount > 1 ? "Alerts Created" : "Alert Created",
-        description: `${alertCount} alert${alertCount > 1 ? 's' : ''} for ${symbol.toUpperCase()} created successfully`,
+        title: alertCount > 1 ? t('alerts.alertsCreated') : t('alerts.alertCreated'),
+        description: t('alerts.alertCreatedDesc', { count: alertCount, symbol: symbol.toUpperCase() }),
       });
 
       clearPlaybookContext();
@@ -313,8 +313,8 @@ const MemberAlerts = () => {
           });
           
           toast({
-            title: "Alert Limit Reached",
-            description: `You've reached your ${result.max} alert limit. Upgrade or pause another alert first.`,
+            title: t('alerts.alertLimitReached'),
+            description: t('alerts.alertLimitReachedEnable', { max: result.max }),
             variant: "destructive",
           });
           return;
@@ -331,8 +331,8 @@ const MemberAlerts = () => {
       }
 
       toast({
-        title: "Alert Updated",
-        description: `Alert ${newStatus === 'active' ? 'activated' : 'paused'}`,
+        title: t('alerts.alertUpdated'),
+        description: newStatus === 'active' ? t('alerts.alertActivated') : t('alerts.alertPaused'),
       });
 
       if (user) await fetchAlerts(user.id);
@@ -363,8 +363,8 @@ const MemberAlerts = () => {
       }
 
       toast({
-        title: "Alert Deleted",
-        description: "Alert deleted successfully",
+        title: t('alerts.alertDeleted'),
+        description: t('alerts.alertDeletedDesc'),
       });
 
       if (user) await fetchAlerts(user.id);
@@ -519,7 +519,7 @@ const MemberAlerts = () => {
             {planLimits.name} {t('alerts.plan')}
           </Badge>
           <span className="text-sm text-muted-foreground">
-            ({activeAlerts.length}/{planLimits.max === 999999 ? '∞' : planLimits.max} active alerts)
+            ({activeAlerts.length}/{planLimits.max === 999999 ? '∞' : planLimits.max} {t('alerts.statusActive').toLowerCase()})
           </span>
         </div>
       </div>
@@ -565,9 +565,9 @@ const MemberAlerts = () => {
             <div className="space-y-2">
                <Label htmlFor="timeframe">
                  {t('alerts.timeframe')}
-                {wedgeConfig.wedgeEnabled && (
-                  <Badge variant="outline" className="ml-2 text-xs">1H recommended</Badge>
-                )}
+               {wedgeConfig.wedgeEnabled && (
+                   <Badge variant="outline" className="ml-2 text-xs">{t('alerts.oneHourRecommended')}</Badge>
+                 )}
               </Label>
               <Select value={timeframe} onValueChange={setTimeframe}>
                 <SelectTrigger>
@@ -632,8 +632,8 @@ const MemberAlerts = () => {
               </div>
               {selectedPatterns.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedPatterns.length} pattern{selectedPatterns.length > 1 ? 's' : ''} selected
-                  {planLimits.max !== 999999 && ` (${Math.max(0, planLimits.max - activeAlerts.length)} slots remaining)`}
+                  {t('alerts.patternsSelected', { count: selectedPatterns.length })}
+                  {planLimits.max !== 999999 && ` ${t('alerts.slotsRemaining', { count: Math.max(0, planLimits.max - activeAlerts.length) })}`}
                 </p>
               )}
             </div>
@@ -757,7 +757,7 @@ const MemberAlerts = () => {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{alert.symbol}</span>
                           <Badge variant={alert.status === 'active' ? 'default' : 'secondary'}>
-                            {alert.status}
+                            {alert.status === 'active' ? t('alerts.statusActive') : t('alerts.statusPaused')}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">

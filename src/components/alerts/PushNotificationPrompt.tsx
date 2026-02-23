@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { Bell, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface PushNotificationPromptProps {
   userId?: string;
 }
 
-/**
- * A dismissible banner prompting users to enable push notifications.
- * Always shows unless dismissed or user has already set up notifications.
- */
 export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) {
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) {
@@ -43,9 +41,9 @@ export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) 
           <Bell className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 space-y-2">
-          <h4 className="font-medium text-sm">Never miss a pattern signal</h4>
+          <h4 className="font-medium text-sm">{t('alerts.notif.neverMiss')}</h4>
           <p className="text-sm text-muted-foreground">
-            Enable push notifications to get instant browser alerts when your patterns trigger. Configure your preferences below.
+            {t('alerts.notif.neverMissDesc')}
           </p>
           <Button
             size="sm"
@@ -54,7 +52,7 @@ export function PushNotificationPrompt({ userId }: PushNotificationPromptProps) 
             className="mt-1"
           >
             <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
-            Go to Notification Settings
+            {t('alerts.notif.goToSettings')}
           </Button>
         </div>
       </div>
