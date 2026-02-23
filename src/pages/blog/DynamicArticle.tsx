@@ -125,35 +125,7 @@ const HFTVisualizer = lazy(() => import('@/components/blog/algo-trading-visualiz
 const MarketMakingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MarketMakingVisualizer'));
 const AIOptimizationVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/AIOptimizationVisualizer'));
 
-// Slugs that have comprehensive static pages - redirect to them
-const STATIC_ARTICLE_REDIRECTS: Record<string, string> = {
-  'head-and-shoulders': '/learn/head-and-shoulders',
-  'double-top-bottom': '/learn/double-top-bottom',
-  'triangle-patterns': '/learn/triangle-patterns',
-  'wedge-patterns': '/learn/wedge-patterns',
-  'flag-pennant': '/learn/flag-pennant',
-  'flag-pennant-patterns': '/learn/flag-pennant',
-  'cup-and-handle': '/learn/cup-and-handle',
-  'rectangle-pattern': '/learn/rectangle-pattern',
-  'support-resistance': '/learn/support-resistance',
-  'trend-analysis': '/learn/trend-analysis',
-  'volume-analysis': '/learn/volume-analysis',
-  'moving-averages': '/learn/moving-averages',
-  'rsi-indicator': '/learn/rsi-indicator',
-  'macd-indicator': '/learn/macd-indicator',
-  'fibonacci-retracements': '/learn/fibonacci-retracements',
-  'candlestick-patterns': '/learn/candlestick-patterns',
-  'price-action-basics': '/learn/price-action-basics',
-  'breakout-trading': '/learn/breakout-trading',
-  'pin-bar-strategy': '/learn/pin-bar-strategy',
-  'risk-management': '/learn/risk-management',
-  'position-sizing': '/learn/position-sizing',
-  'money-management': '/learn/money-management',
-  'trading-psychology': '/learn/trading-psychology',
-  'trading-discipline': '/learn/trading-discipline',
-  'fear-and-greed': '/learn/fear-and-greed',
-  'trading-journal': '/learn/trading-journal',
-};
+// All articles are now served dynamically from the database
 
 interface Article {
   id: string;
@@ -961,12 +933,6 @@ const DynamicArticle = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to static page if it exists
-  useEffect(() => {
-    if (slug && STATIC_ARTICLE_REDIRECTS[slug]) {
-      navigate(STATIC_ARTICLE_REDIRECTS[slug], { replace: true });
-    }
-  }, [slug, navigate]);
 
   // Fetch article data (with translation overlay)
   useEffect(() => {
@@ -981,7 +947,7 @@ const DynamicArticle = () => {
         return;
       }
 
-      if (STATIC_ARTICLE_REDIRECTS[slug]) return;
+      
 
       try {
         const timeoutPromise = new Promise((_, reject) => 

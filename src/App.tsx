@@ -88,39 +88,9 @@ const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
-// Lazy-load blog pages - reduces initial bundle by ~60-80%
+// Lazy-load blog pages
 const BlogV2 = lazy(() => import("./pages/BlogV2"));
 const DynamicArticle = lazy(() => import("./pages/blog/DynamicArticle"));
-const HeadAndShoulders = lazy(() => import("./pages/blog/HeadAndShoulders"));
-const DoubleTopBottom = lazy(() => import("./pages/blog/DoubleTopBottom"));
-const TrianglePatterns = lazy(() => import("./pages/blog/TrianglePatterns"));
-const WedgePatterns = lazy(() => import("./pages/blog/WedgePatterns"));
-const FlagPennant = lazy(() => import("./pages/blog/FlagPennant"));
-const CupAndHandle = lazy(() => import("./pages/blog/CupAndHandle"));
-const SupportResistance = lazy(() => import("./pages/blog/SupportResistance"));
-const TrendAnalysis = lazy(() => import("./pages/blog/TrendAnalysis"));
-const VolumeAnalysis = lazy(() => import("./pages/blog/VolumeAnalysis"));
-const CandlestickPatterns = lazy(() => import("./pages/blog/CandlestickPatterns"));
-const TradingDiscipline = lazy(() => import("./pages/blog/TradingDiscipline"));
-const FearAndGreed = lazy(() => import("./pages/blog/FearAndGreed"));
-const MovingAverages = lazy(() => import("./pages/blog/MovingAverages"));
-const RSIIndicator = lazy(() => import("./pages/blog/RSIIndicator"));
-const MACDIndicator = lazy(() => import("./pages/blog/MACDIndicator"));
-const FibonacciRetracements = lazy(() => import("./pages/blog/FibonacciRetracements"));
-const PriceActionBasics = lazy(() => import("./pages/blog/PriceActionBasics"));
-const BreakoutTrading = lazy(() => import("./pages/blog/BreakoutTrading"));
-const PinBarStrategy = lazy(() => import("./pages/blog/PinBarStrategy"));
-const PositionSizing = lazy(() => import("./pages/blog/PositionSizing"));
-const MoneyManagement = lazy(() => import("./pages/blog/MoneyManagement"));
-const TradingJournal = lazy(() => import("./pages/blog/TradingJournal"));
-const RectanglePattern = lazy(() => import("./pages/blog/RectanglePattern"));
-const TradingPsychology = lazy(() => import("./pages/blog/TradingPsychology"));
-const RiskManagement = lazy(() => import("./pages/blog/RiskManagement"));
-const TradingStrategiesGuide = lazy(() => import("./pages/blog/TradingStrategiesGuide"));
-const ChartTypesExplained = lazy(() => import("./pages/blog/ChartTypesExplained"));
-const PlatformGlossary = lazy(() => import("./pages/blog/PlatformGlossary"));
-const CommandCenterGuide = lazy(() => import("./pages/blog/CommandCenterGuide"));
-const PlatformFAQ = lazy(() => import("./pages/blog/PlatformFAQ"));
 
 // Lazy-load other heavy pages
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -183,38 +153,34 @@ const App = () => (
           <Route path="/quiz/crypto" element={withSuspense(<CryptoQuiz />)} />
           <Route path="/quiz/commodities" element={withSuspense(<CommoditiesQuiz />)} />
           <Route path="/learn" element={withSuspense(<BlogV2 />)} />
-          <Route path="/blog/chart-types-explained" element={withSuspense(<ChartTypesExplained />)} />
-          <Route path="/blog/platform-glossary" element={withSuspense(<PlatformGlossary />)} />
-          <Route path="/blog/command-center-guide" element={withSuspense(<CommandCenterGuide />)} />
-          <Route path="/blog/platform-faq" element={withSuspense(<PlatformFAQ />)} />
+          {/* All /learn/* articles migrated to /blog/:slug dynamic system */}
           <Route path="/blog/:slug" element={withSuspense(<DynamicArticle />)} />
-          <Route path="/learn/head-and-shoulders" element={withSuspense(<HeadAndShoulders />)} />
-          <Route path="/learn/double-top-bottom" element={withSuspense(<DoubleTopBottom />)} />
-          <Route path="/learn/triangle-patterns" element={withSuspense(<TrianglePatterns />)} />
-          <Route path="/learn/wedge-patterns" element={withSuspense(<WedgePatterns />)} />
-          <Route path="/learn/flag-pennant" element={withSuspense(<FlagPennant />)} />
-          <Route path="/learn/cup-and-handle" element={withSuspense(<CupAndHandle />)} />
-          <Route path="/learn/rectangle-pattern" element={withSuspense(<RectanglePattern />)} />
-          <Route path="/learn/support-resistance" element={withSuspense(<SupportResistance />)} />
-          <Route path="/learn/trend-analysis" element={withSuspense(<TrendAnalysis />)} />
-          <Route path="/learn/volume-analysis" element={withSuspense(<VolumeAnalysis />)} />
-          <Route path="/learn/moving-averages" element={withSuspense(<MovingAverages />)} />
-          <Route path="/learn/rsi-indicator" element={withSuspense(<RSIIndicator />)} />
-          <Route path="/learn/macd-indicator" element={withSuspense(<MACDIndicator />)} />
-          <Route path="/learn/fibonacci-retracements" element={withSuspense(<FibonacciRetracements />)} />
-          <Route path="/learn/candlestick-patterns" element={withSuspense(<CandlestickPatterns />)} />
-          <Route path="/learn/price-action-basics" element={withSuspense(<PriceActionBasics />)} />
-          <Route path="/learn/breakout-trading" element={withSuspense(<BreakoutTrading />)} />
-          <Route path="/learn/pin-bar-strategy" element={withSuspense(<PinBarStrategy />)} />
-          <Route path="/learn/risk-management" element={withSuspense(<RiskManagement />)} />
-          <Route path="/learn/position-sizing" element={withSuspense(<PositionSizing />)} />
-          <Route path="/learn/money-management" element={withSuspense(<MoneyManagement />)} />
-          <Route path="/learn/trading-psychology" element={withSuspense(<TradingPsychology />)} />
-          <Route path="/learn/trading-discipline" element={withSuspense(<TradingDiscipline />)} />
-          <Route path="/learn/fear-and-greed" element={withSuspense(<FearAndGreed />)} />
-          <Route path="/learn/trading-journal" element={withSuspense(<TradingJournal />)} />
-          <Route path="/learn/trading-strategies-guide" element={withSuspense(<TradingStrategiesGuide />)} />
-          {/* Strategy articles migrated to /blog/:slug dynamic articles */}
+          <Route path="/learn/head-and-shoulders" element={<Navigate to="/blog/head-and-shoulders" replace />} />
+          <Route path="/learn/double-top-bottom" element={<Navigate to="/blog/double-top-bottom" replace />} />
+          <Route path="/learn/triangle-patterns" element={<Navigate to="/blog/triangle-patterns" replace />} />
+          <Route path="/learn/wedge-patterns" element={<Navigate to="/blog/wedge-patterns" replace />} />
+          <Route path="/learn/flag-pennant" element={<Navigate to="/blog/flag-pennant-patterns" replace />} />
+          <Route path="/learn/cup-and-handle" element={<Navigate to="/blog/cup-and-handle" replace />} />
+          <Route path="/learn/rectangle-pattern" element={<Navigate to="/blog/rectangle-pattern" replace />} />
+          <Route path="/learn/support-resistance" element={<Navigate to="/blog/support-resistance" replace />} />
+          <Route path="/learn/trend-analysis" element={<Navigate to="/blog/trend-analysis" replace />} />
+          <Route path="/learn/volume-analysis" element={<Navigate to="/blog/volume-analysis" replace />} />
+          <Route path="/learn/moving-averages" element={<Navigate to="/blog/moving-averages" replace />} />
+          <Route path="/learn/rsi-indicator" element={<Navigate to="/blog/rsi-indicator" replace />} />
+          <Route path="/learn/macd-indicator" element={<Navigate to="/blog/macd-indicator" replace />} />
+          <Route path="/learn/fibonacci-retracements" element={<Navigate to="/blog/fibonacci-retracements" replace />} />
+          <Route path="/learn/candlestick-patterns" element={<Navigate to="/blog/candlestick-patterns" replace />} />
+          <Route path="/learn/price-action-basics" element={<Navigate to="/blog/price-action-basics" replace />} />
+          <Route path="/learn/breakout-trading" element={<Navigate to="/blog/breakout-trading" replace />} />
+          <Route path="/learn/pin-bar-strategy" element={<Navigate to="/blog/pin-bar-strategy" replace />} />
+          <Route path="/learn/risk-management" element={<Navigate to="/blog/risk-management" replace />} />
+          <Route path="/learn/position-sizing" element={<Navigate to="/blog/position-sizing" replace />} />
+          <Route path="/learn/money-management" element={<Navigate to="/blog/money-management" replace />} />
+          <Route path="/learn/trading-psychology" element={<Navigate to="/blog/trading-psychology" replace />} />
+          <Route path="/learn/trading-discipline" element={<Navigate to="/blog/trading-discipline" replace />} />
+          <Route path="/learn/fear-and-greed" element={<Navigate to="/blog/fear-and-greed" replace />} />
+          <Route path="/learn/trading-journal" element={<Navigate to="/blog/trading-journal" replace />} />
+          <Route path="/learn/trading-strategies-guide" element={<Navigate to="/blog/trading-strategies-guide" replace />} />
           <Route path="/markets/stocks" element={withSuspense(<StockMarket />)} />
           <Route path="/markets/stocks/indices" element={withSuspense(<MajorIndices />)} />
           <Route path="/markets/stocks/sectors" element={withSuspense(<StockSectors />)} />
