@@ -928,7 +928,7 @@ function TableOfContents({ sections }: { sections: ParsedSection[] }) {
 const DynamicArticle = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1054,14 +1054,14 @@ const DynamicArticle = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-12 max-w-4xl text-center">
-          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
-          <p className="text-muted-foreground mb-8">{error || "The article you're looking for doesn't exist."}</p>
+          <h1 className="text-4xl font-bold mb-4">{t('learn.articleNotFound')}</h1>
+          <p className="text-muted-foreground mb-8">{error || t('learn.articleNotFoundDesc')}</p>
           <Link 
             to="/learn" 
             className="inline-flex items-center gap-2 text-primary hover:underline"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Learning Center
+            {t('learn.backToLearning')}
           </Link>
         </div>
       </div>
@@ -1080,7 +1080,7 @@ const DynamicArticle = () => {
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Learning Center
+          {t('learn.backToLearning')}
         </Link>
 
         {/* Article Header */}
@@ -1095,7 +1095,7 @@ const DynamicArticle = () => {
             <span>•</span>
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              {article.reading_time_minutes} min read
+              {article.reading_time_minutes} {t('learn.minRead')}
             </span>
             <span>•</span>
             <Badge variant="secondary" className="capitalize">
@@ -1413,7 +1413,7 @@ const DynamicArticle = () => {
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
             <div className="mt-12 pt-8 border-t">
-              <h3 className="text-lg font-semibold mb-4">Tags</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('learn.tags')}</h3>
               <div className="flex flex-wrap gap-2">
                 {article.tags.map((tag) => (
                   <Badge key={tag} variant="outline">
@@ -1426,16 +1426,16 @@ const DynamicArticle = () => {
 
           {/* CTA */}
           <div className="mt-12 p-6 bg-muted/30 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">Ready to Apply This Strategy?</h3>
+            <h3 className="text-xl font-bold mb-4">{t('learn.readyToApply')}</h3>
             <p className="text-muted-foreground mb-4">
-              Put your knowledge into practice with our pattern scanner and strategy tools.
+              {t('learn.readyToApplyDesc')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/screener" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                Find Trading Setups
+                {t('learn.findSetups')}
               </Link>
               <Link to="/learn" className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors">
-                Explore More Strategies
+                {t('learn.exploreMore')}
               </Link>
             </div>
           </div>

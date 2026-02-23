@@ -687,6 +687,28 @@
     "returnHome": "Back to Home",
     "title": "404"
   },
+  "learn": {
+    "title": "Trading Education Center",
+    "subtitle": "Comprehensive guides and tutorials to master technical analysis, chart patterns, and trading strategies",
+    "searchPlaceholder": "Search articles by title, content, or tags...",
+    "article": "article",
+    "articles": "articles",
+    "found": "found",
+    "noArticlesFound": "No Articles Found",
+    "tryAdjusting": "Try adjusting your search or filters",
+    "noArticlesYet": "No articles have been published yet",
+    "min": "min",
+    "views": "views",
+    "articleNotFound": "Article Not Found",
+    "articleNotFoundDesc": "The article you're looking for doesn't exist.",
+    "backToLearning": "Back to Learning Center",
+    "minRead": "min read",
+    "tags": "Tags",
+    "readyToApply": "Ready to Apply This Strategy?",
+    "readyToApplyDesc": "Put your knowledge into practice with our pattern scanner and strategy tools.",
+    "findSetups": "Find Trading Setups",
+    "exploreMore": "Explore More Strategies"
+  },
   "patternGenerator": {
     "subtitle": "Generate and visualize various financial chart patterns with our interactive tool",
     "title": "Chart Pattern Generator"
