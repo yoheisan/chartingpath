@@ -207,9 +207,9 @@ export function EconomicCalendarWidget() {
       const time = formatInTimeZone(date, timezone, 'HH:mm');
       
       if (isToday(date)) {
-        return { date: 'Today', time };
+        return { date: t('commandCenter.today', 'Today'), time };
       } else if (isTomorrow(date)) {
-        return { date: 'Tomorrow', time };
+        return { date: t('commandCenter.tomorrow', 'Tomorrow'), time };
       } else {
         return { date: format(date, 'EEE, MMM d'), time };
       }
@@ -263,7 +263,7 @@ export function EconomicCalendarWidget() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
               <Filter className="h-3 w-3" />
-              Filters
+              {t('commandCenter.filters', 'Filters')}
               {activeFilterCount > 0 && (
                 <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-1">
                   {activeFilterCount}
@@ -358,18 +358,18 @@ export function EconomicCalendarWidget() {
                           {event.released && event.actual_value && (
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-muted-foreground">
-                                Actual: <span className="font-medium text-foreground">{event.actual_value}</span>
+                                {t('economicCalendar.actual')} <span className="font-medium text-foreground">{event.actual_value}</span>
                               </span>
                               {event.forecast_value && (
                                 <span className="text-[10px] text-muted-foreground">
-                                  Forecast: {event.forecast_value}
+                                  {t('economicCalendar.forecast')} {event.forecast_value}
                                 </span>
                               )}
                             </div>
                           )}
                           {!event.released && event.forecast_value && (
                             <span className="text-[10px] text-muted-foreground">
-                              Forecast: {event.forecast_value}
+                              {t('economicCalendar.forecast')} {event.forecast_value}
                             </span>
                           )}
                         </div>
