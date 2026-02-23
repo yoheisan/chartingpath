@@ -342,25 +342,25 @@ export const PatternLibrary = () => {
                     variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
                     className="absolute top-2 right-2 text-xs z-10"
                   >
-                    {pattern.type}
+                    {t(`patternLibrary.types.${pattern.type}`)}
                   </Badge>
                 </div>
 
                 <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <h4 className="font-semibold text-foreground text-lg group-hover:text-primary transition-colors">
-                      {pattern.name}
+                      {t(`patternNames.${pattern.name}`, pattern.name)}
                     </h4>
                   </div>
                   
                   <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
-                    {pattern.description}
+                    {t(`patternLibrary.descriptions.${pattern.name}`, pattern.description)}
                   </p>
                   
                   <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-2">
                       <Badge className={`text-xs ${getDifficultyColor(pattern.difficulty)}`}>
-                        {pattern.difficulty}
+                        {t(`patternLibrary.difficulty.${pattern.difficulty}`)}
                       </Badge>
                       <div className="flex items-center gap-1 bg-success/10 px-2 py-0.5 rounded-md">
                         <span className="text-xs font-semibold text-success">

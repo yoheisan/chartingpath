@@ -928,7 +928,46 @@
     "patternsCount": "{{count}} パターン",
     "learnMore": "詳細はこちら",
     "successRateTooltip": "トーマス・ブルコウスキーのチャートパターン百科事典に基づく成功率。",
-    "reversalPatterns": "反転パターン"
+    "reversalPatterns": "反転パターン",
+    "types": {
+      "reversal": "反転",
+      "continuation": "継続",
+      "candlestick": "ローソク足"
+    },
+    "difficulty": {
+      "Beginner": "初級",
+      "Intermediate": "中級",
+      "Advanced": "上級"
+    },
+    "descriptions": {
+      "Head and Shoulders": "3つのピークを持つ最も信頼性の高い弱気反転パターン",
+      "Inverted Head and Shoulders": "3つのトラフを持つ強気反転パターン - ヘッドアンドショルダーの逆",
+      "Double Top": "同じレベルに2つのピークを持つ弱気反転",
+      "Double Bottom": "同じレベルに2つのトラフを持つ強気反転",
+      "Triple Top": "3つの等しいピークを持つ強い弱気反転",
+      "Triple Bottom": "3つの等しいトラフを持つ強い強気反転",
+      "Bump-and-Run Reversal": "トレンド加速を伴う3段階反転パターン",
+      "Island Reversal": "メイントレンドから隔離されたギャップベースの反転パターン",
+      "Ascending Triangle": "水平レジスタンスを持つ強気継続",
+      "Descending Triangle": "水平サポートを持つ弱気継続",
+      "Symmetrical Triangle": "収束するトレンドラインを持つ中立トライアングル",
+      "Bull Flag": "強い上昇トレンドにおける短い調整",
+      "Bear Flag": "強い下降トレンドにおける短い調整",
+      "Pennant": "強い動きの後の小さな対称トライアングル",
+      "Cup with Handle": "カップに似た強気継続パターン",
+      "Rectangle": "水平サポートとレジスタンスの間の調整",
+      "Rising Wedge": "上向きに傾斜する収束トレンドラインを持つ弱気反転",
+      "Falling Wedge": "下向きに傾斜する収束トレンドラインを持つ強気反転",
+      "Hammer": "長い下ヒゲを持つ強気反転",
+      "Hanging Man": "長い下ヒゲを持つ弱気反転",
+      "Shooting Star": "長い上ヒゲを持つ弱気反転",
+      "Doji": "始値と終値が等しい迷いのローソク足",
+      "Bullish Harami": "前の大きな弱気ローソク足の中にある小さなローソク足",
+      "Bearish Harami": "前の大きな強気ローソク足の中にある小さなローソク足",
+      "Bullish Engulfing": "前の弱気ローソク足を包み込む大きな強気ローソク足",
+      "Bearish Engulfing": "前の強気ローソク足を包み込む大きな弱気ローソク足",
+      "Spinning Top": "長いヒゲと小さな実体で迷いを示す"
+    }
   },
   "blog": {
     "title": "ChartingPathラーニングセンター",
