@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { cn } from '@/lib/utils';
 
 interface PatternCount {
@@ -97,7 +98,7 @@ export function SupportedPatternsList({
                   >
                     {isLocked && <Lock className="h-2.5 w-2.5 mr-1" />}
                     <span className="truncate max-w-[100px]">
-                      {PATTERN_DISPLAY_NAMES[patternId] || patternId}
+                      {translatePatternName(PATTERN_DISPLAY_NAMES[patternId] || patternId)}
                     </span>
                     {isActive && (
                       <span className="ml-1 font-bold">{count}</span>
@@ -105,7 +106,7 @@ export function SupportedPatternsList({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs max-w-[200px]">
-                  <div className="font-medium">{PATTERN_DISPLAY_NAMES[patternId] || patternId}</div>
+                  <div className="font-medium">{translatePatternName(PATTERN_DISPLAY_NAMES[patternId] || patternId)}</div>
                   {isLocked ? (
                     <div className="text-muted-foreground flex items-center gap-1 mt-1">
                       <Crown className="h-3 w-3 text-amber-500" />
@@ -184,7 +185,7 @@ export function SupportedPatternsList({
                       'text-xs font-medium',
                       isActive ? 'text-primary' : 'text-foreground'
                     )}>
-                      {PATTERN_DISPLAY_NAMES[patternId] || patternId}
+                      {translatePatternName(PATTERN_DISPLAY_NAMES[patternId] || patternId)}
                     </span>
                   </div>
                   

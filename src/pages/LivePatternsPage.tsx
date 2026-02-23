@@ -911,10 +911,10 @@ export default function LivePatternsPage() {
             <Zap className="h-3 w-3 mr-1" />
             Live
           </Badge>
-          {lastScanned && (
+           {lastScanned && (
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              Updated {new Date(lastScanned).toLocaleTimeString()}
+              {t('screener.updatedAt', { time: new Date(lastScanned).toLocaleTimeString() })}
             </span>
           )}
         </div>
@@ -1005,8 +1005,8 @@ export default function LivePatternsPage() {
                       <SelectItem value="1h">1H</SelectItem>
                       <SelectItem value="4h">4H</SelectItem>
                       <SelectItem value="8h">8H</SelectItem>
-                      <SelectItem value="1d">Daily</SelectItem>
-                      <SelectItem value="1wk">Weekly</SelectItem>
+                      <SelectItem value="1d">{t('screener.daily')}</SelectItem>
+                      <SelectItem value="1wk">{t('screener.weekly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
