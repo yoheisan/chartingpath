@@ -40,16 +40,10 @@ const Pricing = () => {
       return;
     }
 
-    trackPricingClicked({ source: 'plan_select', current_plan: planName.toLowerCase() });
-    
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'plan_checkout_opened', {
-        event_category: 'Pricing',
-        event_label: planName
-      });
-    }
-    
-    createSubscription(dbPlan, planName);
+    // Paid plans are coming soon - show toast instead of Stripe checkout
+    toast('🚀 Stay tight, this plan is coming soon!', {
+      description: 'We\'re working hard to bring you this plan. Check back shortly!',
+    });
   };
 
   const createSubscription = async (dbPlan: string, displayName: string) => {

@@ -118,29 +118,10 @@ export const SubscriptionManager = () => {
   };
 
   const handlePlanChange = async (newPlan: string) => {
-    if (!subscription) return;
-    
-    try {
-      setChangingPlan(true);
-      
-      const { data, error } = await supabase.functions.invoke('change-subscription', {
-        body: {
-          new_plan: newPlan,
-          billing_cycle: billingCycle
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success(data.message || 'Plan changed successfully');
-      await loadSubscriptionData();
-
-    } catch (error) {
-      console.error('Error changing plan:', error);
-      toast.error('Failed to change plan');
-    } finally {
-      setChangingPlan(false);
-    }
+    // Plan changes are coming soon - show toast instead of Stripe checkout
+    toast('🚀 Stay tight, this plan is coming soon!', {
+      description: 'We\'re working hard to bring you this plan. Check back shortly!',
+    });
   };
 
   const handleRefundRequest = async () => {
@@ -176,29 +157,10 @@ export const SubscriptionManager = () => {
   };
 
   const handleCreateSubscription = async (plan: string) => {
-    try {
-      setChangingPlan(true);
-
-      const { data, error } = await supabase.functions.invoke('create-subscription', {
-        body: {
-          plan: plan,
-          billing_cycle: billingCycle
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.url) {
-        window.open(data.url, '_blank');
-        toast.success('Redirecting to checkout...');
-      }
-
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast.error('Failed to create subscription');
-    } finally {
-      setChangingPlan(false);
-    }
+    // Paid plans are coming soon - show toast instead of Stripe checkout
+    toast('🚀 Stay tight, this plan is coming soon!', {
+      description: 'We\'re working hard to bring you this plan. Check back shortly!',
+    });
   };
 
   const formatPrice = (cents: number) => {

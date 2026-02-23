@@ -31,32 +31,10 @@ const ProjectsPricing = () => {
       return;
     }
 
-    setLoading(tierKey);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/auth';
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('create-subscription', {
-        body: { plan: dbPlan, billing_cycle: billingCycle }
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast.error('Failed to start checkout. Please try again.');
-    } finally {
-      setLoading(null);
-    }
+    // Paid plans are coming soon - show toast instead of Stripe checkout
+    toast('🚀 Stay tight, this plan is coming soon!', {
+      description: 'We\'re working hard to bring you this plan. Check back shortly!',
+    });
   };
 
   // Annual prices (yearly / 12, rounded)
