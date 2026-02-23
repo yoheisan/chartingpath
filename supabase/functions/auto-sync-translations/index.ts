@@ -242,9 +242,9 @@ Return ONLY the JSON object, no markdown, no explanation.`
               }
             }
 
-            // Rate limit pause between batches
+            // Rate limit pause between batches (2s to avoid Gemini 429s)
             if (i + BATCH_SIZE < keysToTranslate.length) {
-              await new Promise(r => setTimeout(r, 1000))
+              await new Promise(r => setTimeout(r, 2000))
             }
 
           } catch (batchError) {
