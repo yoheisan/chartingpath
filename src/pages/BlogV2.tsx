@@ -8,6 +8,7 @@ import { BookOpen, Clock, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { usePrefetchArticle } from "@/hooks/usePrefetchArticle";
+import { useTranslation } from "react-i18next";
 
 // Slugs that have comprehensive static pages at /learn/
 const STATIC_ARTICLE_SLUGS = new Set([
@@ -73,6 +74,8 @@ const fetchArticles = async (): Promise<Article[]> => {
 };
 
 const BlogV2 = () => {
+  const { t } = useTranslation();
+  const l = (key: string) => t(`learn.${key}`);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const prefetchArticle = usePrefetchArticle();
@@ -141,10 +144,10 @@ const BlogV2 = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight pb-1">
-            Trading Education Center
+            {l('title')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive guides and tutorials to master technical analysis, chart patterns, and trading strategies
+            {l('subtitle')}
           </p>
         </div>
 
@@ -153,7 +156,7 @@ const BlogV2 = () => {
           <div className="relative max-w-xl mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search articles by title, content, or tags..."
+              placeholder={l('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -176,18 +179,18 @@ const BlogV2 = () => {
 
         {/* Results Count */}
         <div className="text-center mb-6 text-muted-foreground">
-          {filteredArticles.length} {filteredArticles.length === 1 ? 'article' : 'articles'} found
+          {filteredArticles.length} {filteredArticles.length === 1 ? l('article') : l('articles')} {l('found')}
         </div>
 
         {/* Articles Grid */}
         {filteredArticles.length === 0 ? (
           <div className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">No Articles Found</h3>
+            <h3 className="text-xl font-semibold mb-2">{l('noArticlesFound')}</h3>
             <p className="text-muted-foreground">
               {searchQuery || selectedCategory !== "all" 
-                ? "Try adjusting your search or filters" 
-                : "No articles have been published yet"}
+                ? l('tryAdjusting') 
+                : l('noArticlesYet')}
             </p>
           </div>
         ) : (
@@ -215,9 +218,9 @@ const BlogV2 = () => {
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {article.reading_time_minutes} min
+                        {article.reading_time_minutes} {l('min')}
                       </span>
-                      <span>{article.view_count} views</span>
+                      <span>{article.view_count} {l('views')}</span>
                     </div>
                     {article.tags && article.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">

@@ -919,6 +919,28 @@
     "title": "トレーディング戦略",
     "subtitle": "詳細な実装ガイドとダウンロード可能なスクリプトを使用して、実績のあるトレーディング戦略を見つけてください"
   },
+  "learn": {
+    "title": "トレーディング教育センター",
+    "subtitle": "テクニカル分析、チャートパターン、トレーディング戦略を習得するための総合ガイドとチュートリアル",
+    "searchPlaceholder": "タイトル、内容、タグで記事を検索...",
+    "article": "件の記事",
+    "articles": "件の記事",
+    "found": "が見つかりました",
+    "noArticlesFound": "記事が見つかりません",
+    "tryAdjusting": "検索条件やフィルターを調整してみてください",
+    "noArticlesYet": "まだ記事が公開されていません",
+    "min": "分",
+    "views": "閲覧",
+    "articleNotFound": "記事が見つかりません",
+    "articleNotFoundDesc": "お探しの記事は存在しません。",
+    "backToLearning": "教育センターに戻る",
+    "minRead": "分で読めます",
+    "tags": "タグ",
+    "readyToApply": "この戦略を実践する準備はできましたか？",
+    "readyToApplyDesc": "パターンスキャナーと戦略ツールを使って、知識を実践に活かしましょう。",
+    "findSetups": "トレードセットアップを探す",
+    "exploreMore": "他の戦略を探す"
+  },
   "patternLibrary": {
     "title": "パターンライブラリ",
     "subtitle": "詳細な説明と分析を含む、チャートパターンの包括的なコレクションをご覧ください",
