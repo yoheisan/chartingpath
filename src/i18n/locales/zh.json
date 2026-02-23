@@ -1208,5 +1208,15 @@
       "all_levels": "所有级别"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "形态实验室",
+    "Command Center": "指挥中心",
+    "Pattern Library": "形态库",
+    "Pattern Screener": "形态扫描器",
+    "Pattern Quiz": "形态测验",
+    "Script Generator": "脚本生成器",
+    "Trading Education Center": "交易教育中心",
+    "Market Breadth": "市场广度"
   }
 }

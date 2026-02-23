@@ -1206,5 +1206,15 @@
       "all_levels": "Semua level"
     },
     "tagLabels": {}
+  },
+  "serviceNames": {
+    "Pattern Lab": "Lab Pola",
+    "Command Center": "Pusat Komando",
+    "Pattern Library": "Perpustakaan Pola",
+    "Pattern Screener": "Pemindai Pola",
+    "Pattern Quiz": "Kuis Pola",
+    "Script Generator": "Generator Skrip",
+    "Trading Education Center": "Pusat Edukasi Trading",
+    "Market Breadth": "Keluasan Pasar"
   }
 }
