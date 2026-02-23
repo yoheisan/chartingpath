@@ -2016,6 +2016,26 @@
     "stopLoss": "Stop Loss",
     "pips": "pips"
   },
+  "pipCalculator": {
+    "title": "Pip Calculator",
+    "subtitle": "Calculate pip values for different currency pairs and lot sizes",
+    "calculatePipValue": "Calculate Pip Value",
+    "enterParams": "Enter your trade parameters to calculate the pip value",
+    "currencyPair": "Currency Pair",
+    "selectCurrencyPair": "Select Currency Pair",
+    "lotSize": "Lot Size",
+    "accountCurrency": "Account Currency",
+    "selectAccountCurrency": "Select Account Currency",
+    "leverage": "Leverage",
+    "selectLeverage": "Select Leverage",
+    "calculate": "Calculate Pip Value",
+    "results": "Results",
+    "yourPipValue": "Your pip value calculation",
+    "pipValueIs": "Your Pip Value Is",
+    "perPip": "per pip",
+    "enterToSee": "Enter your trade parameters to see the pip value calculation",
+    "disclaimer": "Pip values are approximate and based on simplified exchange rate calculations. For actual trading, always verify pip values with your broker."
+  },
   "pipCalculatorExtra": {
     "currencyPairLabel": "Currency Pair:",
     "lotSizeLabel": "Lot Size:",
