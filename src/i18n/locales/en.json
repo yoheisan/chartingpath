@@ -3655,5 +3655,17 @@
     "s15Title": "15. Contact",
     "s15p1": "For privacy concerns, data requests, or questions about this policy, please contact us:",
     "s15p2": "📧 contact@chartingpath.com"
+  },
+  "accountMenu": {
+    "account": "Account",
+    "superAdmin": "Super Admin",
+    "admin": "Admin",
+    "member": "Member",
+    "accountSettings": "Account Settings",
+    "memberDashboard": "Member Dashboard",
+    "language": "Language:",
+    "theme": "Theme:",
+    "signOut": "Sign Out",
+    "login": "Login"
   }
 }

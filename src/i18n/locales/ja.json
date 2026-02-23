@@ -1651,5 +1651,17 @@
     "8H": "8時間",
     "1D": "日足",
     "1W": "週足"
+  },
+  "accountMenu": {
+    "account": "アカウント",
+    "superAdmin": "スーパー管理者",
+    "admin": "管理者",
+    "member": "メンバー",
+    "accountSettings": "アカウント設定",
+    "memberDashboard": "メンバーダッシュボード",
+    "language": "言語：",
+    "theme": "テーマ：",
+    "signOut": "ログアウト",
+    "login": "ログイン"
   }
 }
