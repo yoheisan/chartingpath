@@ -27,7 +27,7 @@ const Footer = () => {
                 </Link>
               </div>
               <p className="text-sm text-muted-foreground">
-                Multi-asset chart pattern detection for stocks, forex, crypto, and commodities.
+                {t('footer.description', 'Multi-asset chart pattern detection for stocks, forex, crypto, and commodities.')}
               </p>
             </div>
 
@@ -55,13 +55,13 @@ const Footer = () => {
               <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pattern Library
+                  {t('navigation.patternLibrary', 'Pattern Library')}
                 </Link>
                 <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog & Articles
+                  {t('navigation.blogArticles', 'Blog & Articles')}
                 </Link>
                 <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pattern Quizzes
+                  {t('footer.patternQuizzes', 'Pattern Quizzes')}
                 </Link>
               </nav>
             </div>
@@ -71,19 +71,19 @@ const Footer = () => {
               <h3 className="font-semibold mb-4 text-foreground">{t('navigation.more', 'More')}</h3>
               <nav className="flex flex-col gap-2">
                 <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pip Calculator
+                  {t('navigation.pipCalculator', 'Pip Calculator')}
                 </Link>
                 <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Risk Calculator
+                  {t('navigation.riskCalculator', 'Risk Calculator')}
                 </Link>
                 <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Economic Calendar
+                  {t('navigation.economicCalendar', 'Economic Calendar')}
                 </Link>
                 <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  FAQ
+                  {t('navigation.faq', 'FAQ')}
                 </Link>
                 <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
+                  {t('navigation.about', 'About')}
                 </Link>
               </nav>
             </div>
@@ -125,10 +125,10 @@ const Footer = () => {
 
           {/* Tools Column */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Tools</h3>
+            <h3 className="font-semibold mb-4 text-foreground">{t('footer.tools', 'Tools')}</h3>
             <nav className="flex flex-col gap-2">
               <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Strategy Workspace
+                {t('footer.strategyWorkspace', 'Strategy Workspace')}
               </Link>
               <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pipCalculator', 'Pip Calculator')}
@@ -144,10 +144,10 @@ const Footer = () => {
 
           {/* Learning Column */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Learning</h3>
+            <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
             <nav className="flex flex-col gap-2">
               <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Learning Center
+                {t('footer.learningCenter', 'Learning Center')}
               </Link>
               <Link to="/chart-patterns/generator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.patternGenerator', 'Pattern Generator')}
@@ -166,32 +166,32 @@ const Footer = () => {
 
           {/* Markets Column */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Markets</h3>
+            <h3 className="font-semibold mb-4 text-foreground">{t('footer.markets', 'Markets')}</h3>
             <nav className="flex flex-col gap-2">
               <Link to="/markets/stocks" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Stock Market
+                {t('footer.stockMarket', 'Stock Market')}
               </Link>
               <Link to="/markets/forex" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Forex (FX)
+                {t('footer.forex', 'Forex (FX)')}
               </Link>
               <Link to="/markets/crypto" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Cryptocurrency
+                {t('footer.cryptocurrency', 'Cryptocurrency')}
               </Link>
               <Link to="/markets/commodities" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Commodities
+                {t('footer.commodities', 'Commodities')}
               </Link>
             </nav>
           </div>
 
           {/* Company Column */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Company</h3>
+            <h3 className="font-semibold mb-4 text-foreground">{t('footer.company', 'Company')}</h3>
             <nav className="flex flex-col gap-2">
               <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                About
+                {t('footer.about', 'About')}
               </Link>
               <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                FAQ
+                {t('footer.faq', 'FAQ')}
               </Link>
               <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pricing', 'Pricing')}
