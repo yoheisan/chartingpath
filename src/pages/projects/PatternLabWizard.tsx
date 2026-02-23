@@ -157,11 +157,11 @@ const ASSET_CLASS_KEYS: Record<string, string> = {
 // Timeframes - synced with screener (1h, 4h, 8h, 1d, 1wk)
 // Lookback limits based on Data Coverage Contract (Yahoo Finance provider)
 const TIMEFRAMES = [
-  { value: '1h', label: '1 Hour', maxYears: 2, hint: '2 years max' },
-  { value: '4h', label: '4 Hour', maxYears: 2, hint: '2 years max' },
-  { value: '8h', label: '8 Hour', maxYears: 2, hint: '2 years max' },
-  { value: '1d', label: 'Daily', maxYears: 5, hint: '5 years max' },
-  { value: '1wk', label: 'Weekly', maxYears: 7, hint: '7 years max' },
+  { value: '1h', labelKey: 'patternLabWizard.tf1h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
+  { value: '4h', labelKey: 'patternLabWizard.tf4h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
+  { value: '8h', labelKey: 'patternLabWizard.tf8h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
+  { value: '1d', labelKey: 'patternLabWizard.tf1d', maxYears: 5, hintKey: 'patternLabWizard.yearsMax' },
+  { value: '1wk', labelKey: 'patternLabWizard.tf1wk', maxYears: 7, hintKey: 'patternLabWizard.yearsMax' },
 ];
 
 // LOOKBACK_OPTIONS now derived from dataCoverageContract - removed static array
@@ -619,7 +619,7 @@ const PatternLabWizard = () => {
                     </span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-sm text-muted-foreground">
-                      {TIMEFRAMES.find(t => t.value === timeframe)?.label}
+                      {t(TIMEFRAMES.find(tf => tf.value === timeframe)?.labelKey || '')}
                     </span>
                     {urlGrade && <GradeBadge grade={urlGrade} size="sm" />}
                   </div>
@@ -717,7 +717,7 @@ const PatternLabWizard = () => {
                     <div className="text-left">
                       <CardTitle className="text-lg">{t('patternLabWizard.backtestParameters')}</CardTitle>
                       <CardDescription>
-                        {TIMEFRAMES.find(t => t.value === timeframe)?.label} • {lookbackYears}Y lookback • {riskPerTrade}% risk
+                        {t(TIMEFRAMES.find(tf => tf.value === timeframe)?.labelKey || '')} • {lookbackYears}Y lookback • {riskPerTrade}% risk
                       </CardDescription>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -735,9 +735,9 @@ const PatternLabWizard = () => {
                           <SelectContent>
                             {TIMEFRAMES.map(tf => (
                               <SelectItem key={tf.value} value={tf.value}>
-                                {tf.label}
-                                {tf.hint && (
-                                  <span className="text-muted-foreground ml-2">({tf.hint})</span>
+                                {t(tf.labelKey)}
+                                {tf.hintKey && (
+                                  <span className="text-muted-foreground ml-2">({t(tf.hintKey, { count: tf.maxYears })})</span>
                                 )}
                               </SelectItem>
                             ))}
@@ -757,13 +757,16 @@ const PatternLabWizard = () => {
                           <SelectContent>
                             {getValidLookbackOptions(timeframe as Timeframe).map(lb => {
                               const tierCapped = patternLabCaps.maxLookbackYears !== undefined && lb.value > patternLabCaps.maxLookbackYears;
+                              const translatedLabel = lb.value < 1
+                                ? t('patternLabWizard.nDays', { count: Math.round(lb.value * 365) })
+                                : t('patternLabWizard.nYears', { count: lb.value });
                               return (
                                 <SelectItem 
                                   key={lb.value} 
                                   value={String(lb.value)}
                                   disabled={tierCapped}
                                 >
-                                  {lb.label}
+                                  {translatedLabel}
                                   {tierCapped && <span className="text-muted-foreground ml-1">(upgrade)</span>}
                                 </SelectItem>
                               );
@@ -771,7 +774,7 @@ const PatternLabWizard = () => {
                           </SelectContent>
                         </Select>
                         <p className="text-xs text-muted-foreground">
-                          Data coverage: {getCoverageInfo(timeframe as Timeframe)}
+                          {t('patternLabWizard.dataCoverage', { info: getCoverageInfo(timeframe as Timeframe) })}
                         </p>
                       </div>
                       
@@ -814,7 +817,7 @@ const PatternLabWizard = () => {
                       <Alert className="border-amber-500/30 bg-amber-500/5 mt-4">
                         <AlertCircle className="h-4 w-4 text-amber-500" />
                         <AlertDescription className="text-sm">
-                          {timeframe} data is limited to {getCoverageInfo(timeframe as Timeframe)} due to data provider constraints.
+                          {t('patternLabWizard.intradayDataWarning', { timeframe, info: getCoverageInfo(timeframe as Timeframe) })}
                         </AlertDescription>
                       </Alert>
                     )}
