@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Trophy, Zap, FlaskConical, TrendingUp, TrendingDown } from 'lucide-react';
-
+import { useTranslation } from 'react-i18next';
 interface TickerStat {
   symbol: string;
   total_trades: number;
@@ -32,6 +32,7 @@ export default function EdgeAtlasPatternPage() {
   const { patternId } = useParams<{ patternId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const timeframe = searchParams.get('timeframe') || '1d';
   const assetType = searchParams.get('assetType') || 'stocks';
@@ -166,7 +167,7 @@ export default function EdgeAtlasPatternPage() {
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Edge Atlas
+          {t('edgeAtlas.backToEdgeAtlas')}
         </button>
 
         {/* Header */}
@@ -175,7 +176,7 @@ export default function EdgeAtlasPatternPage() {
             <div className="p-1.5 rounded-lg bg-amber-500/10">
               <Trophy className="h-4 w-4 text-amber-400" />
             </div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">Edge Atlas · Proven Tickers</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">{t('edgeAtlas.provenTickers')}</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold">{patternName}</h1>
@@ -193,20 +194,20 @@ export default function EdgeAtlasPatternPage() {
               ) : null;
             })()}
           </div>
-          <p className="text-muted-foreground mt-2 text-sm">
-            {loading ? '...' : `${tickers.length} instruments with positive edge on this pattern/timeframe combination. n=${totalSampleSize}`}
-            {' '}· Sorted by estimated annualised return. Min 5 resolved trades per ticker.
+           <p className="text-muted-foreground mt-2 text-sm">
+            {loading ? '...' : t('edgeAtlas.instrumentsFound', { count: tickers.length, total: totalSampleSize })}
+            {' '}· {t('edgeAtlas.sortedBy')}
           </p>
         </div>
 
         {/* Sort controls */}
         {!loading && tickers.length > 0 && (
           <div className="flex items-center gap-1 mb-4 flex-wrap">
-            <span className="text-xs text-muted-foreground mr-1">Sort by:</span>
-            <SortBtn col="est_annualized_pct" label="Est. Annual %" />
-            <SortBtn col="win_rate_pct" label="Win Rate" />
-            <SortBtn col="expectancy_r" label="Expectancy" />
-            <SortBtn col="total_trades" label="Sample Size" />
+            <span className="text-xs text-muted-foreground mr-1">{t('edgeAtlas.sortBy')}</span>
+            <SortBtn col="est_annualized_pct" label={t('edgeAtlas.estAnnual')} />
+            <SortBtn col="win_rate_pct" label={t('edgeAtlas.winRate')} />
+            <SortBtn col="expectancy_r" label={t('edgeAtlas.expectancy')} />
+            <SortBtn col="total_trades" label={t('edgeAtlas.sampleSize')} />
           </div>
         )}
 
@@ -227,26 +228,26 @@ export default function EdgeAtlasPatternPage() {
           </div>
         ) : tickers.length === 0 ? (
           <div className="rounded-xl border border-border/40 bg-card/40 p-12 text-center text-muted-foreground">
-            No tickers found with positive edge for this combination.
+            {t('edgeAtlas.noTickers')}
           </div>
         ) : (
           <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
             {/* Column headers */}
             <div className="hidden sm:grid grid-cols-[1fr_80px_80px_90px_80px_70px_170px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Instrument</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">Expect. (R)</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Est. Annual</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg Bars</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('edgeAtlas.instrument')}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.winRate')}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">{t('edgeAtlas.expectancyR')}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.estAnnualCol')}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.trades')}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.avgBars')}</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"></span>
             </div>
 
-            {tickers.map((t, i) => {
-              const isLowSample = t.total_trades < CONFIDENCE_THRESHOLD;
+            {tickers.map((tk, i) => {
+              const isLowSample = tk.total_trades < CONFIDENCE_THRESHOLD;
               return (
                 <div
-                  key={t.symbol}
+                  key={tk.symbol}
                   className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_90px_80px_70px_170px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
                 >
                   {/* Symbol */}
@@ -254,65 +255,65 @@ export default function EdgeAtlasPatternPage() {
                     <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}</span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm font-mono">{t.symbol.replace('=X', '').replace('^', '')}</span>
+                        <span className="font-semibold text-sm font-mono">{tk.symbol.replace('=X', '').replace('^', '')}</span>
                         {isLowSample && <span className="text-[10px] text-yellow-500">⚠️</span>}
                       </div>
                       <div className="flex items-center gap-2 sm:hidden text-xs text-muted-foreground mt-0.5">
-                        <span>Win: <span className={t.win_rate_pct >= 55 ? 'text-green-500' : 'text-foreground'}>{t.win_rate_pct}%</span></span>
-                        <span>Expect: <span className="text-green-500 font-mono">{t.expectancy_r.toFixed(3)}R</span></span>
-                        <span className="font-bold text-green-400">+{t.est_annualized_pct.toFixed(1)}%</span>
+                        <span>Win: <span className={tk.win_rate_pct >= 55 ? 'text-green-500' : 'text-foreground'}>{tk.win_rate_pct}%</span></span>
+                        <span>Expect: <span className="text-green-500 font-mono">{tk.expectancy_r.toFixed(3)}R</span></span>
+                        <span className="font-bold text-green-400">+{tk.est_annualized_pct.toFixed(1)}%</span>
                       </div>
                     </div>
                     <div className="ml-auto flex gap-2 sm:hidden">
-                      <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => handleValidate(t.symbol)}>
-                        <FlaskConical className="h-3 w-3" /> Validate
+                      <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => handleValidate(tk.symbol)}>
+                         <FlaskConical className="h-3 w-3" /> {t('edgeAtlas.validate')}
                       </Button>
                     </div>
                   </div>
 
                   {/* Win Rate */}
                   <div className="hidden sm:block text-right">
-                    <span className={`text-sm font-medium ${t.win_rate_pct >= 55 ? 'text-green-500' : t.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {t.win_rate_pct}%
+                    <span className={`text-sm font-medium ${tk.win_rate_pct >= 55 ? 'text-green-500' : tk.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {tk.win_rate_pct}%
                     </span>
-                    <div className="text-[10px] text-muted-foreground">{t.wins}W / {t.losses}L</div>
+                    <div className="text-[10px] text-muted-foreground">{tk.wins}W / {tk.losses}L</div>
                   </div>
 
                   {/* Expectancy */}
                   <div className="hidden sm:block text-right">
-                    <span className="font-mono text-sm text-green-500">{t.expectancy_r.toFixed(3)}R</span>
+                    <span className="font-mono text-sm text-green-500">{tk.expectancy_r.toFixed(3)}R</span>
                   </div>
 
                   {/* Est Annual */}
                   <div className="hidden sm:block text-right">
-                    <span className={`text-base font-bold ${t.est_annualized_pct >= 20 ? 'text-green-400' : t.est_annualized_pct >= 8 ? 'text-green-500' : 'text-green-600'}`}>
-                      +{t.est_annualized_pct.toFixed(1)}%
+                    <span className={`text-base font-bold ${tk.est_annualized_pct >= 20 ? 'text-green-400' : tk.est_annualized_pct >= 8 ? 'text-green-500' : 'text-green-600'}`}>
+                      +{tk.est_annualized_pct.toFixed(1)}%
                     </span>
                   </div>
 
                   {/* Trades */}
                   <div className="hidden sm:block text-right">
-                    <span className="text-sm text-muted-foreground">{t.total_trades}</span>
+                    <span className="text-sm text-muted-foreground">{tk.total_trades}</span>
                   </div>
 
                   {/* Avg Bars */}
                   <div className="hidden sm:block text-right">
-                    <span className="text-sm text-muted-foreground">{t.avg_bars}</span>
+                    <span className="text-sm text-muted-foreground">{tk.avg_bars}</span>
                   </div>
 
                   {/* CTAs */}
                   <div className="hidden sm:flex items-center gap-2 justify-end">
                     {(() => {
-                      const liveCount = liveCountMap[t.symbol] || 0;
+                      const liveCount = liveCountMap[tk.symbol] || 0;
                       return (
                         <Button
                           size="sm"
                           variant={liveCount > 0 ? 'default' : 'outline'}
                           className={`text-xs h-8 gap-1.5 ${liveCount > 0 ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' : ''}`}
-                          onClick={() => handleLiveSignals(t.symbol)}
+                          onClick={() => handleLiveSignals(tk.symbol)}
                         >
                           <Zap className={`h-3 w-3 ${liveCount > 0 ? 'text-primary' : ''}`} />
-                          Live
+                           {t('edgeAtlas.live')}
                           {liveCount > 0 && (
                             <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px] font-bold bg-primary/20 text-primary">
                               {liveCount}
@@ -321,8 +322,8 @@ export default function EdgeAtlasPatternPage() {
                         </Button>
                       );
                     })()}
-                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleValidate(t.symbol)}>
-                      <FlaskConical className="h-3 w-3" /> Validate
+                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleValidate(tk.symbol)}>
+                      <FlaskConical className="h-3 w-3" /> {t('edgeAtlas.validate')}
                     </Button>
                   </div>
                 </div>
@@ -333,7 +334,7 @@ export default function EdgeAtlasPatternPage() {
 
         {!loading && tickers.length > 0 && (
           <p className="text-center text-xs text-muted-foreground mt-6">
-            ⚠️ = fewer than {CONFIDENCE_THRESHOLD} samples · Est. Annual % = trades/yr × expectancy × 1% risk/trade
+            {t('edgeAtlas.lowSampleNote', { threshold: CONFIDENCE_THRESHOLD })}
           </p>
         )}
       </div>

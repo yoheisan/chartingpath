@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface SharedPatternData {
 }
 
 export default function SharedPattern() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [pattern, setPattern] = useState<SharedPatternData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,7 +112,7 @@ export default function SharedPattern() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading pattern...</p>
+          <p className="text-muted-foreground">{t('sharedPattern.loading')}</p>
         </div>
       </div>
     );
@@ -123,14 +125,14 @@ export default function SharedPattern() {
           <Card className="border-destructive/50">
             <CardContent className="p-8 text-center">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h1 className="text-2xl font-bold mb-2">Pattern Not Found</h1>
+               <h1 className="text-2xl font-bold mb-2">{t('sharedPattern.notFound')}</h1>
               <p className="text-muted-foreground mb-6">
-                {error || 'This share link is invalid.'}
+                {error || t('sharedPattern.invalidLink')}
               </p>
               <Button asChild>
                 <Link to="/patterns/live">
                   <Zap className="h-4 w-4 mr-2" />
-                  View Live Patterns
+                  {t('sharedPattern.viewLivePatterns')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -199,14 +201,14 @@ export default function SharedPattern() {
           <Card>
             <CardContent className="p-4 text-center">
               <TrendingDown className="h-6 w-6 mx-auto mb-2 text-destructive" />
-              <p className="text-sm text-muted-foreground">Stop Loss</p>
+              <p className="text-sm text-muted-foreground">{t('sharedPattern.stopLoss')}</p>
               <p className="text-xl font-bold font-mono text-destructive">{pattern.stop_loss_price}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <TrendingUp className="h-6 w-6 mx-auto mb-2 text-green-500" />
-              <p className="text-sm text-muted-foreground">Take Profit</p>
+              <p className="text-sm text-muted-foreground">{t('sharedPattern.takeProfit')}</p>
               <p className="text-xl font-bold font-mono text-green-500">{pattern.take_profit_price}</p>
             </CardContent>
           </Card>
@@ -225,7 +227,7 @@ export default function SharedPattern() {
             <CardContent className="p-4 flex flex-wrap items-center gap-4">
               {grade && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Quality:</span>
+                  <span className="text-sm text-muted-foreground">{t('sharedPattern.quality')}</span>
                   <GradeBadge quality={{ score: grade, grade: grade }} />
                 </div>
               )}
@@ -238,7 +240,7 @@ export default function SharedPattern() {
                       : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
                   }`}
                 >
-                  {pattern.trend_alignment === 'with_trend' ? 'With Trend ↑' : 'Counter Trend ↓'}
+                  {pattern.trend_alignment === 'with_trend' ? t('sharedPattern.withTrend') : t('sharedPattern.counterTrend')}
                 </Badge>
               )}
               {pattern.quality_reasons && pattern.quality_reasons.length > 0 && (
@@ -260,23 +262,23 @@ export default function SharedPattern() {
         {/* CTAs */}
         <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-2 text-center">
-              Want to track this setup?
+             <h2 className="text-xl font-semibold mb-2 text-center">
+              {t('sharedPattern.trackSetup')}
             </h2>
             <p className="text-sm text-muted-foreground text-center mb-4">
-              Create a free account to set alerts, backtest patterns, and discover more setups.
+              {t('sharedPattern.trackSetupDesc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild size="lg">
                 <Link to="/auth?redirect=/patterns/live">
                   <Zap className="h-4 w-4 mr-2" />
-                  View Live Screener
+                  {t('sharedPattern.viewScreener')}
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to={`/projects/pattern-lab/new?instrument=${pattern.instrument}&pattern=${pattern.pattern_id}&timeframe=${pattern.timeframe}`}>
                   <FlaskConical className="h-4 w-4 mr-2" />
-                  Run Backtest
+                  {t('sharedPattern.runBacktest')}
                 </Link>
               </Button>
             </div>
@@ -288,9 +290,8 @@ export default function SharedPattern() {
         {/* Disclaimer */}
         <div className="flex items-start gap-3 text-sm text-muted-foreground">
           <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
-          <p>
-            <strong>Disclaimer:</strong> This pattern is shared for educational purposes only.
-            Past pattern performance does not guarantee future results. Always conduct your own research.
+           <p>
+            <strong>{t('about.disclaimerTitle')}</strong> {t('sharedPattern.disclaimer')}
           </p>
         </div>
       </div>
