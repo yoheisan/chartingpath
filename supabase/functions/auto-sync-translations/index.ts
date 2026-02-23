@@ -9,7 +9,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   es: 'Spanish', pt: 'Portuguese', fr: 'French', zh: 'Chinese (Simplified)',
   de: 'German', hi: 'Hindi', id: 'Indonesian', it: 'Italian',
   ja: 'Japanese', ru: 'Russian', ar: 'Arabic', af: 'Afrikaans',
-  ko: 'Korean', tr: 'Turkish'
+  ko: 'Korean', tr: 'Turkish', nl: 'Dutch'
 }
 
 const TECHNICAL_TERMS = [
