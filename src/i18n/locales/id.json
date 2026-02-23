@@ -1139,6 +1139,8 @@
     "Inverse Head and Shoulders": "Inverse Head and Shoulders",
     "Donchian Breakout (Long)": "Breakout Donchian (Long)",
     "Donchian Breakout (Short)": "Breakout Donchian (Short)",
+    "Donchian Breakout Long": "Breakout Donchian (Long)",
+    "Donchian Breakout Short": "Breakout Donchian (Short)",
     "Channel Up": "Channel Naik",
     "Channel Down": "Channel Turun",
     "Pennant": "Pennant"

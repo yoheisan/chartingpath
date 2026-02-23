@@ -1141,6 +1141,8 @@
     "Inverse Head and Shoulders": "역 머리어깨형",
     "Donchian Breakout (Long)": "돈치안 돌파 (매수)",
     "Donchian Breakout (Short)": "돈치안 돌파 (매도)",
+    "Donchian Breakout Long": "돈치안 돌파 (매수)",
+    "Donchian Breakout Short": "돈치안 돌파 (매도)",
     "Channel Up": "상승 채널",
     "Channel Down": "하락 채널",
     "Pennant": "페넌트"
