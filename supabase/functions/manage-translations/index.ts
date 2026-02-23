@@ -433,24 +433,36 @@ Deno.serve(async (req) => {
         const coverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {}
 
         for (const lang of targetLanguages) {
-          const { data: langData, error: langError } = await supabase
+          // Use exact counts to avoid the 1000-row default limit
+          const { count: translatedCount } = await supabase
             .from('translations')
-            .select('status, source_hash')
+            .select('*', { count: 'exact', head: true })
             .eq('language_code', lang)
-            .limit(5000)
 
-          if (langError) {
-            console.error(`Error fetching ${lang} stats:`, langError)
-            continue
-          }
+          const { count: approvedCount } = await supabase
+            .from('translations')
+            .select('*', { count: 'exact', head: true })
+            .eq('language_code', lang)
+            .eq('status', 'approved')
 
-          const translations = langData || []
+          const { count: autoTranslatedCount } = await supabase
+            .from('translations')
+            .select('*', { count: 'exact', head: true })
+            .eq('language_code', lang)
+            .eq('status', 'auto_translated')
+
+          const { count: staleCount } = await supabase
+            .from('translations')
+            .select('*', { count: 'exact', head: true })
+            .eq('language_code', lang)
+            .is('source_hash', null)
+
           coverage[lang] = {
             total: totalKeys,
-            translated: translations.length,
-            approved: translations.filter(t => t.status === 'approved').length,
-            auto_translated: translations.filter(t => t.status === 'auto_translated').length,
-            stale: translations.filter(t => !t.source_hash).length
+            translated: translatedCount || 0,
+            approved: approvedCount || 0,
+            auto_translated: autoTranslatedCount || 0,
+            stale: staleCount || 0
           }
         }
 
