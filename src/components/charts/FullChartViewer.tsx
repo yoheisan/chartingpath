@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   createChart,
@@ -202,7 +203,9 @@ export default function FullChartViewer({
   isSavingToVault = false,
   selectedRR = 2,
 }: FullChartViewerProps) {
-  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("this feature");
+  const { t } = useTranslation();
+  const fc = (key: string, opts?: Record<string, any>): string => t(`fullChart.${key}`, opts) as string;
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate(t('common.thisFeature', 'this feature'));
   const { sharePattern, sharing } = useSharePattern();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -821,7 +824,7 @@ export default function FullChartViewer({
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p className="text-xs">Previous session close. Daily data only.</p>
+                        <p className="text-xs">{fc('previousSessionClose')}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -835,7 +838,7 @@ export default function FullChartViewer({
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p className="text-xs">Change vs. prior session close. Intraday moves not shown.</p>
+                        <p className="text-xs">{fc('changeVsPrior')}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -872,11 +875,11 @@ export default function FullChartViewer({
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Play className="h-3.5 w-3.5" />
-                    <span>Trade Playback</span>
+                    <span>{fc('tradePlayback')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">
-                      {playbackEnabled ? 'Interactive replay' : 'Static view'}
+                      {playbackEnabled ? fc('interactiveReplay') : fc('staticView')}
                     </span>
                     <Switch
                       id="playback-toggle"
@@ -981,7 +984,7 @@ export default function FullChartViewer({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p className="text-xs">Reset view &amp; re-enable auto-scale</p>
+                        <p className="text-xs">{fc('resetView')}</p>
                       </TooltipContent>
                     </Tooltip>
                     <Popover>
@@ -992,7 +995,7 @@ export default function FullChartViewer({
                           className="h-7 px-2 bg-background/90 border-border/50 hover:bg-background"
                         >
                           <Settings2 className="h-3.5 w-3.5 mr-1" />
-                          <span className="text-xs">Indicators</span>
+                          <span className="text-xs">{fc('indicators')}</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent 
@@ -1045,7 +1048,7 @@ export default function FullChartViewer({
                             <div className="flex items-center justify-between">
                               <Label htmlFor="fc-bb" className="text-sm flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-gray-400" />
-                                Bollinger Bands
+                                {fc('bollingerBands')}
                               </Label>
                               <Switch
                                 id="fc-bb"
@@ -1069,7 +1072,7 @@ export default function FullChartViewer({
 
                           <div className="pt-2 border-t border-border/50">
                             <p className="text-[10px] text-muted-foreground">
-                              {Object.values(indicators).filter(Boolean).length} of 5 indicators active
+                              {fc('indicatorsActive', { count: Object.values(indicators).filter(Boolean).length })}
                             </p>
                           </div>
                         </div>
@@ -1086,7 +1089,7 @@ export default function FullChartViewer({
                   {!chartError && (loading || !hasBars) && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30">
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>{loading ? 'Loading detailed chart…' : 'No chart data available for this setup.'}</span>
+                      <span>{loading ? fc('loadingChart') : fc('noChartData')}</span>
                     </div>
                   )}
                 </div>
@@ -1097,26 +1100,26 @@ export default function FullChartViewer({
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
                   <Target className="h-3 w-3" />
-                  Entry
+                  {fc('entry')}
                 </div>
                 <p className="font-mono font-bold text-primary">{formatPrice(tradePlan.entry)}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
                   <ShieldAlert className="h-3 w-3" />
-                  Stop Loss
+                  {fc('stopLoss')}
                 </div>
                 <p className="font-mono font-bold text-destructive">{formatPrice(tradePlan.stopLoss)}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  Take Profit
+                  {fc('takeProfit')}
                 </div>
                 <p className="font-mono font-bold text-green-500">{formatPrice(tradePlan.takeProfit)}</p>
               </div>
               <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Risk:Reward</div>
+                <div className="text-xs text-muted-foreground mb-1">{fc('riskReward')}</div>
                 <p className="font-mono font-bold">1:{tradePlan.rr.toFixed(2)}</p>
               </div>
             </div>
@@ -1125,34 +1128,34 @@ export default function FullChartViewer({
             {(setup as any).historicalPerformance && (
               <div className="grid grid-cols-3 gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-xs text-muted-foreground mb-1">{fc('winRate')}</div>
                   <p className={`font-mono font-bold ${
                     (setup as any).historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
                   }`}>
                     {(setup as any).historicalPerformance.winRate.toFixed(1)}%
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    ({(setup as any).historicalPerformance.sampleSize} samples)
+                    ({fc('samples', { count: (setup as any).historicalPerformance.sampleSize })})
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Avg ROI</div>
+                  <div className="text-xs text-muted-foreground mb-1">{fc('avgRoi')}</div>
                   <p className={`font-mono font-bold ${
                     (setup as any).historicalPerformance.avgRMultiple >= 0 ? 'text-green-500' : 'text-red-500'
                   }`}>
                     {(setup as any).historicalPerformance.avgRMultiple >= 0 ? '+' : ''}
                     {(setup as any).historicalPerformance.avgRMultiple.toFixed(2)}R
                   </p>
-                  <p className="text-[10px] text-muted-foreground">per trade</p>
+                  <p className="text-[10px] text-muted-foreground">{fc('perTrade')}</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Avg Duration</div>
+                  <div className="text-xs text-muted-foreground mb-1">{fc('avgDuration')}</div>
                   <p className="font-mono font-bold">
                     {(setup as any).historicalPerformance.avgDurationBars 
                       ? `${(setup as any).historicalPerformance.avgDurationBars} bars` 
                       : '—'}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">to outcome</p>
+                  <p className="text-[10px] text-muted-foreground">{fc('toOutcome')}</p>
                 </div>
               </div>
             )}
@@ -1165,12 +1168,12 @@ export default function FullChartViewer({
                 ) : (
                   <Bell className="h-4 w-4 mr-2" />
                 )}
-                Set Alert
+                {fc('setAlert')}
               </Button>
               {onExportPine && (
                 <Button variant="secondary" onClick={() => requireAuth(onExportPine)} className="flex-1">
                   <FileCode className="h-4 w-4 mr-2" />
-                  Generate Script
+                  {fc('generateScript')}
                 </Button>
               )}
               <Button
@@ -1182,7 +1185,7 @@ export default function FullChartViewer({
                 })}
               >
                 <Play className="h-4 w-4 mr-2" />
-                Run Backtest
+                 {fc('runBacktest')}
               </Button>
             </div>
             <div className="flex gap-2">
@@ -1199,7 +1202,7 @@ export default function FullChartViewer({
                   ) : (
                     <Bookmark className="h-4 w-4 mr-2" />
                   )}
-                  Save to Vault
+                  {fc('saveToVault')}
                 </Button>
               )}
               <Popover>
@@ -1215,7 +1218,7 @@ export default function FullChartViewer({
                     ) : (
                       <Share2 className="h-4 w-4 mr-2" />
                     )}
-                    Share
+                     {fc('share')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2" align="center">
@@ -1237,7 +1240,7 @@ export default function FullChartViewer({
                       }}
                     >
                       <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                      Post on X
+                      {fc('postOnX')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -1276,7 +1279,7 @@ export default function FullChartViewer({
                       }}
                     >
                       <Copy className="h-4 w-4 mr-2" />
-                      Copy Link
+                      {fc('copyLink')}
                     </Button>
                   </div>
                 </PopoverContent>
@@ -1291,7 +1294,7 @@ export default function FullChartViewer({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Quality Factors
+                  {fc('qualityFactors')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1304,7 +1307,7 @@ export default function FullChartViewer({
                       </li>
                     ))
                   ) : (
-                    <li className="text-muted-foreground">No quality factors available for this setup.</li>
+                    <li className="text-muted-foreground">{fc('noQualityFactors')}</li>
                   )}
                 </ul>
               </CardContent>
@@ -1315,7 +1318,7 @@ export default function FullChartViewer({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  Do Not Trade If
+                  {fc('doNotTradeIf')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1335,7 +1338,7 @@ export default function FullChartViewer({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  Next Steps
+                   {fc('nextSteps')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -1349,8 +1352,8 @@ export default function FullChartViewer({
                       <History className="h-3.5 w-3.5 text-violet-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Research History</p>
-                      <p className="text-[10px] text-muted-foreground truncate">5-year backtest for {patternName}</p>
+                       <p className="text-xs font-medium">{fc('researchHistory')}</p>
+                       <p className="text-[10px] text-muted-foreground truncate">{fc('backtestFor', { pattern: patternName })}</p>
                     </div>
                   </div>
                 </a>
@@ -1366,8 +1369,8 @@ export default function FullChartViewer({
                       <FileCode className="h-3.5 w-3.5 text-cyan-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Automate with Scripts</p>
-                      <p className="text-[10px] text-muted-foreground truncate">Pine Script & MT4/MT5 export</p>
+                       <p className="text-xs font-medium">{fc('automateWithScripts')}</p>
+                       <p className="text-[10px] text-muted-foreground truncate">{fc('pineScriptExport')}</p>
                     </div>
                   </div>
                 </a>
@@ -1378,25 +1381,25 @@ export default function FullChartViewer({
             <Card className="border-border/50">
               <CardContent className="pt-4 space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Signal Time</span>
+                  <span className="text-muted-foreground">{fc('signalTime')}</span>
                   <span className="font-mono">{new Date(setup.signalTs).toLocaleString()}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Time Stop
+                    {fc('timeStop')}
                   </span>
                   <span className="font-mono">{tradePlan.timeStopBars} bars</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Bracket Engine</span>
+                  <span className="text-muted-foreground">{fc('bracketEngine')}</span>
                   <span className="font-mono">v{tradePlan.bracketLevelsVersion}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Entry Type</span>
+                  <span className="text-muted-foreground">{fc('entryType')}</span>
                   <span className="capitalize">{tradePlan.entryType}</span>
                 </div>
               </CardContent>
