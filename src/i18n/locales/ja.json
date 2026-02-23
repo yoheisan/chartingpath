@@ -228,25 +228,26 @@
     "disclaimer": "過去のパフォーマンスは将来の結果を保証するものではありません。教育目的でのみ使用してください。"
   },
   "footer": {
-    "privacy": "プライバシー",
-    "learning": "学習",
-    "cryptocurrency": "暗号通貨",
-    "learningCenter": "ラーニングセンター",
-    "description": "株式、外国為替、暗号通貨、コモディティのマルチアセットチャートパターン検出。",
-    "commodities": "コモディティ",
-    "forex": "外国為替 (FX)",
-    "terms": "利用規約",
-    "research": "リサーチ",
-    "strategyWorkspace": "ストラテジーワークスペース",
-    "markets": "マーケット",
-    "stockMarket": "株式市場",
+    "about": "概要",
+    "blogArticles": "ブログ＆記事",
     "brandDescription": "株式、外国為替、暗号通貨、商品のためのマルチアセットチャートパターン検出。",
-    "tools": "ツール",
-    "forexFx": "外国為替 (FX)",
+    "commodities": "コモディティ",
     "company": "会社情報",
-    "termsOfService": "利用規約",
-    "privacyPolicy": "プライバシーポリシー",
-    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved."
+    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved.",
+    "cryptocurrency": "暗号通貨",
+    "description": "株式、外国為替、暗号通貨、コモディティのマルチアセットチャートパターン検出。",
+    "faq": "よくある質問",
+    "forex": "外国為替 (FX)",
+    "learning": "学習",
+    "learningCenter": "ラーニングセンター",
+    "markets": "マーケット",
+    "patternQuizzes": "パターンクイズ",
+    "privacy": "プライバシーポリシー",
+    "research": "リサーチ",
+    "stockMarket": "株式市場",
+    "strategyWorkspace": "ストラテジーワークスペース",
+    "terms": "利用規約",
+    "tools": "ツール"
   },
   "pricing": {
     "monthly": "月額",
@@ -1166,10 +1167,5 @@
     "8H": "8時間",
     "1D": "日足",
     "1W": "週足"
-  },
-  "footer": {
-    "terms": "利用規約",
-    "privacy": "プライバシーポリシー",
-    "copyright": "© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved."
   }
 }
