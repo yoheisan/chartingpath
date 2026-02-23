@@ -1223,6 +1223,13 @@
     "volumeConfirmDesc": "Signal bar volume must exceed 20-bar average",
     "volumeConfirmation": "Volume Confirmation",
     "selectAll": "Select All",
+    "categories": {
+      "Reversal": "Reversal",
+      "Continuation": "Continuation",
+      "Triangle": "Triangle",
+      "Bilateral": "Bilateral",
+      "Breakout": "Breakout"
+    },
     "clear": "Clear",
     "save": "Save",
     "copy": "Copy",

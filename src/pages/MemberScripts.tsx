@@ -440,7 +440,7 @@ const MemberScripts = () => {
                               className="text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wider flex items-center gap-2"
                             >
                               <Checkbox checked={allCatSelected} className="h-3 w-3" />
-                              {cat.label}
+                              {t(`scripts.categories.${cat.label}`)}
                             </button>
                             <div className="space-y-1.5 ml-1">
                               {cat.patterns.map(p => (
@@ -450,11 +450,11 @@ const MemberScripts = () => {
                                     onCheckedChange={() => togglePattern(p.id)}
                                     className="h-3.5 w-3.5"
                                   />
-                                  <span className="text-sm flex-1">{p.name}</span>
+                                  <span className="text-sm flex-1">{t(`patternNames.${p.name}`, p.name)}</span>
                                   <Badge variant="outline" className={`text-[10px] px-1.5 ${
                                     p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'
                                   }`}>
-                                    {p.direction}
+                                    {p.direction === 'long' ? t('scripts.long') : t('scripts.short')}
                                   </Badge>
                                 </label>
                               ))}
