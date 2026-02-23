@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 import { PATTERN_DETAILS } from "@/utils/PatternDetails";
 import { useTranslation } from "react-i18next";
+import { translatePatternName } from "@/utils/translatePatternName";
 
 interface QuizQuestion {
   id: string;
@@ -265,7 +266,9 @@ export const DatabaseQuiz = ({
                   `}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{option}</span>
+                    <span className="font-medium">
+                      {currentQuestion.category === 'visual_recognition' ? translatePatternName(option) : option}
+                    </span>
                     {showResult && isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     )}
