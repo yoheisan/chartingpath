@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,11 +53,11 @@ const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
 const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
 
-const QUICK_ACTIONS = [
-  { label: "Find patterns", prompt: "Show me the best quality patterns forming right now across major tech stocks", icon: TrendingUp },
-  { label: "Create alert", prompt: "I want to set up an alert for bull flags on AAPL", icon: Bell },
-  { label: "Generate script", prompt: "Generate a Pine Script strategy for trading ascending triangles on BTCUSD", icon: Code },
-  { label: "Learn patterns", prompt: "Explain how to identify and trade a head and shoulders pattern", icon: BookOpen },
+const QUICK_ACTION_KEYS = [
+  { labelKey: "copilot.findPatterns", prompt: "Show me the best quality patterns forming right now across major tech stocks", icon: TrendingUp },
+  { labelKey: "copilot.createAlert", prompt: "I want to set up an alert for bull flags on AAPL", icon: Bell },
+  { labelKey: "copilot.generateScript", prompt: "Generate a Pine Script strategy for trading ascending triangles on BTCUSD", icon: Code },
+  { labelKey: "copilot.learnPatterns", prompt: "Explain how to identify and trade a head and shoulders pattern", icon: BookOpen },
 ];
 
 export interface TradingCopilotProps {
@@ -74,6 +75,7 @@ export function TradingCopilot({
   pendingAnalysis,
   onContextConsumed
 }: TradingCopilotProps) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
@@ -212,11 +214,11 @@ export function TradingCopilot({
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
         if (resp.status === 429) {
-          toast.error("AI is processing other requests. Please wait 10 seconds and try again.", { duration: 5000 });
+          toast.error(t('copilot.rateLimited'), { duration: 5000 });
           throw new Error("Rate limited");
         }
         if (resp.status === 402) {
-          toast.error("AI credits depleted. Please add credits to continue.");
+          toast.error(t('copilot.creditsDepleted'));
           throw new Error("Credits depleted");
         }
         throw new Error(errorData.error || "Failed to get response");
@@ -293,7 +295,7 @@ export function TradingCopilot({
       console.error("Chat error:", error);
       const isKnownError = error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted");
       if (!isKnownError) {
-        toast.error("Failed to get response. Please try again.");
+        toast.error(t('copilot.errorResponse'));
       }
       setMessages(prev => {
         const last = prev[prev.length - 1];
@@ -301,7 +303,7 @@ export function TradingCopilot({
           return [...prev, {
             id: crypto.randomUUID(),
             role: "assistant" as const,
-            content: isKnownError ? "⚠️ Rate limited — please wait a few seconds and try again." : "⚠️ Something went wrong. Please try again.",
+            content: isKnownError ? t('copilot.rateLimitedMsg') : t('copilot.errorMsg'),
             timestamp: new Date()
           }];
         }
@@ -369,8 +371,8 @@ export function TradingCopilot({
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm">Trading Copilot</h3>
-              <p className="text-xs text-muted-foreground">AI-powered research assistant</p>
+              <h3 className="font-semibold text-sm">{t('copilot.title')}</h3>
+              <p className="text-xs text-muted-foreground">{t('copilot.subtitle')}</p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onToggle}>
@@ -391,18 +393,18 @@ export function TradingCopilot({
                   <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h4 className="font-semibold mb-1">How can I help you trade smarter?</h4>
+                  <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Find patterns, analyze statistics, create alerts, or generate scripts.
+                    {t('copilot.welcomeDesc')}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium px-1">Quick actions</p>
+                  <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
                   <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                    {QUICK_ACTIONS.map((action) => (
-                      <Button key={action.label} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
+                    {QUICK_ACTION_KEYS.map((action) => (
+                      <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
                         <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                        <span className="text-xs">{action.label}</span>
+                        <span className="text-xs">{t(action.labelKey)}</span>
                       </Button>
                     ))}
                   </div>
@@ -417,7 +419,7 @@ export function TradingCopilot({
                         <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <BarChart3 className="h-3.5 w-3.5" />
-                            <span>Chart Analysis</span>
+                            <span>{t('copilot.chartAnalysis')}</span>
                           </div>
                         </div>
                         <ChartAnalysisSummary analysis={message.analysisData} />
@@ -461,7 +463,7 @@ export function TradingCopilot({
               aria-label="Scroll down for more"
             >
               <ChevronDown className="h-5 w-5 animate-bounce" />
-              <span className="text-[10px] font-medium">More below</span>
+              <span className="text-[10px] font-medium">{t('copilot.moreBelow')}</span>
             </button>
           )}
         </div>
@@ -469,13 +471,13 @@ export function TradingCopilot({
         {/* Input */}
         <div className="p-4 border-t bg-background">
           <form onSubmit={handleSubmit} className="flex gap-2">
-            <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder="Ask about patterns, alerts, or scripts..." disabled={isLoading} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+            <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder')} disabled={isLoading} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
             <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </form>
           <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            For educational purposes only. Not financial advice.
+            {t('copilot.disclaimer')}
           </p>
         </div>
       </div>
@@ -487,8 +489,8 @@ export function TradingCopilot({
     return (
       <Drawer open={isExpanded} onOpenChange={(open) => !open && onToggle?.()}>
         <DrawerContent className="max-h-[92vh] flex flex-col">
-          <DrawerTitle className="sr-only">Trading Copilot</DrawerTitle>
-          <DrawerDescription className="sr-only">AI-powered trading research assistant</DrawerDescription>
+          <DrawerTitle className="sr-only">{t('copilot.title')}</DrawerTitle>
+          <DrawerDescription className="sr-only">{t('copilot.subtitle')}</DrawerDescription>
           <div className="flex flex-1 min-h-0 overflow-hidden">
             {copilotBody}
           </div>

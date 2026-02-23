@@ -3687,5 +3687,25 @@
     "theme": "Theme:",
     "signOut": "Sign Out",
     "login": "Login"
+  },
+  "copilot": {
+    "title": "Trading Copilot",
+    "subtitle": "AI-powered research assistant",
+    "welcome": "How can I help you trade smarter?",
+    "welcomeDesc": "Find patterns, analyze statistics, create alerts, or generate scripts.",
+    "quickActions": "Quick actions",
+    "findPatterns": "Find patterns",
+    "createAlert": "Create alert",
+    "generateScript": "Generate script",
+    "learnPatterns": "Learn patterns",
+    "placeholder": "Ask about patterns, alerts, or scripts...",
+    "disclaimer": "For educational purposes only. Not financial advice.",
+    "moreBelow": "More below",
+    "chartAnalysis": "Chart Analysis",
+    "rateLimited": "AI is processing other requests. Please wait 10 seconds and try again.",
+    "creditsDepleted": "AI credits depleted. Please add credits to continue.",
+    "errorResponse": "Failed to get response. Please try again.",
+    "rateLimitedMsg": "⚠️ Rate limited — please wait a few seconds and try again.",
+    "errorMsg": "⚠️ Something went wrong. Please try again."
   }
 }
