@@ -65,6 +65,8 @@ const QUICK_ACTION_KEYS = [
   { labelKey: "copilot.learnPatterns", prompt: "Explain how to identify and trade a head and shoulders pattern", icon: BookOpen },
 ];
 
+const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
+
 export interface TradingCopilotProps {
   isExpanded?: boolean;
   onToggle?: () => void;
@@ -427,9 +429,21 @@ export function TradingCopilot({
                         <span className="text-xs">{t(action.labelKey)}</span>
                       </Button>
                     ))}
+                    </div>
+                    <ContactSupportDialog
+                      trigger={
+                        <Button variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left w-full">
+                          <SUPPORT_ACTION.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
+                          <span className="text-xs">{t(SUPPORT_ACTION.labelKey, 'Contact Support')}</span>
+                        </Button>
+                      }
+                      defaultCategory="other"
+                      defaultSubject=""
+                      defaultDescription=""
+                      source="copilot_quick_action"
+                    />
                   </div>
                 </div>
-              </div>
             ) : (
               <div className="space-y-4">
                 {messages.map((message) => (
