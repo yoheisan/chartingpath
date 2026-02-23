@@ -34,36 +34,44 @@ const FAQ = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("screener");
 
+  // Scoped helpers
+  const s = (key: string) => t(`faq.screener.${key}`);
+  const pl = (key: string) => t(`faq.patternLab.${key}`);
+  const al = (key: string) => t(`faq.alerts.${key}`);
+  const sc = (key: string) => t(`faq.scripts.${key}`);
+  const le = (key: string) => t(`faq.learning.${key}`);
+  const ac = (key: string) => t(`faq.account.${key}`);
+
   const faqData = {
     "screener": {
-      title: "Screener",
+      title: t('faq.tabs.screener'),
       icon: <Activity className="h-5 w-5 text-amber-500" />,
-      description: "Live pattern detection across markets",
+      description: t('faq.tabs.screenerDesc'),
       sections: [
         {
-          category: "Markets & Coverage",
+          category: s('catMarkets'),
           questions: [
             {
-              question: "Which Asian markets does ChartingPath support?",
+              question: s('q_asianMarkets'),
               answer: (
                 <div className="space-y-3">
-                  <p>ChartingPath covers major APAC markets including <strong>Hong Kong (HKEX)</strong>, <strong>Singapore (SGX)</strong>, and <strong>Thailand (SET)</strong>, along with US-listed China ADRs and APAC indices.</p>
+                  <p dangerouslySetInnerHTML={{ __html: s('a_asianMarketsIntro') }} />
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">APAC Stocks (~58 tickers)</h4>
+                      <h4 className="font-semibold text-sm mb-2">{s('a_apacStocks')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• Hong Kong: Tencent, Alibaba HK, HSBC, AIA, Meituan</div>
-                        <div>• Singapore: DBS, OCBC, UOB, SingTel, CapitaLand</div>
-                        <div>• Thailand: PTT, SCB, ADVANC, CPALL, GULF</div>
-                        <div>• China ADRs: BABA, JD, PDD, BIDU, NIO</div>
+                        <div>• {s('a_hongKong')}</div>
+                        <div>• {s('a_singapore')}</div>
+                        <div>• {s('a_thailand')}</div>
+                        <div>• {s('a_chinaAdrs')}</div>
                       </div>
                     </div>
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">Also Covered</h4>
+                      <h4 className="font-semibold text-sm mb-2">{s('a_alsoCovered')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• APAC FX: USD/CNH, USD/SGD, USD/THB, USD/HKD</div>
-                        <div>• Indices: HSI, SSE Composite, Nikkei, KOSPI</div>
-                        <div>• APAC ETFs: FXI, EWJ, EWY, EWT, MCHI</div>
+                        <div>• {s('a_apacFx')}</div>
+                        <div>• {s('a_indices')}</div>
+                        <div>• {s('a_apacEtfs')}</div>
                       </div>
                     </div>
                   </div>
@@ -71,43 +79,43 @@ const FAQ = () => {
               )
             },
             {
-              question: "What exchanges does ChartingPath cover?",
+              question: s('q_exchanges'),
               answer: (
                 <div className="space-y-3">
-                  <p>We cover instruments from major global exchanges across all asset classes:</p>
+                  <p>{s('a_exchangesIntro')}</p>
                   <div className="border rounded-lg p-4">
                     <div className="grid md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <div className="font-medium mb-1">Americas</div>
+                        <div className="font-medium mb-1">{s('a_americas')}</div>
                         <div className="text-xs text-muted-foreground space-y-0.5">
-                          <div>NYSE, NASDAQ</div>
+                          <div>{s('a_americasExchanges')}</div>
                         </div>
                       </div>
                       <div>
-                        <div className="font-medium mb-1">Europe</div>
+                        <div className="font-medium mb-1">{s('a_europe')}</div>
                         <div className="text-xs text-muted-foreground space-y-0.5">
-                          <div>LSE, Euronext, XETRA</div>
+                          <div>{s('a_europeExchanges')}</div>
                         </div>
                       </div>
                       <div>
-                        <div className="font-medium mb-1">Asia-Pacific</div>
+                        <div className="font-medium mb-1">{s('a_asiaPacific')}</div>
                         <div className="text-xs text-muted-foreground space-y-0.5">
-                          <div>HKEX, SGX, SET, TSE, SSE, SZSE</div>
+                          <div>{s('a_asiaPacificExchanges')}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">Plus forex (major & minor pairs), crypto (BTC, ETH, top altcoins), and commodities (Gold, Oil, etc.).</p>
+                  <p className="text-xs text-muted-foreground">{s('a_exchangesPlus')}</p>
                 </div>
               )
             },
             {
-              question: "How fresh is APAC market data?",
+              question: s('q_apacData'),
               answer: (
                 <div className="space-y-3">
-                  <p>All APAC market data is <strong>delayed</strong> (not real-time), consistent with our global data policy. Patterns are scanned every 15 minutes during market hours.</p>
+                  <p dangerouslySetInnerHTML={{ __html: s('a_apacDataIntro') }} />
                   <div className="bg-muted/50 p-4 rounded-lg text-sm">
-                    <p>Data is sourced from EODHD (primary) and Yahoo Finance (fallback). ChartingPath provides derived analytical insights — not raw market data feeds.</p>
+                    <p>{s('a_apacDataSource')}</p>
                   </div>
                 </div>
               )
@@ -115,49 +123,49 @@ const FAQ = () => {
           ]
         },
         {
-          category: "Getting Started",
+          category: s('catGettingStarted'),
           questions: [
             {
-              question: "What is the Screener?",
+              question: s('q_whatIsScreener'),
               answer: (
                 <div className="space-y-3">
-                  <p>The Screener is our free, real-time pattern detection tool that scans 1,100+ instruments across stocks, forex, crypto, and commodities for active chart patterns.</p>
+                  <p>{s('a_screenerIntro')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Key Features:</h4>
+                    <h4 className="font-semibold mb-2">{s('a_keyFeatures')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Real-time pattern detection across multiple markets</li>
-                      <li>• Entry, Stop Loss, and Take Profit levels for each pattern</li>
-                      <li>• Quality scores based on pattern formation</li>
-                      <li>• Trend alignment indicators</li>
-                      <li>• Historical performance stats per pattern type</li>
+                      <li>• {s('a_feature1')}</li>
+                      <li>• {s('a_feature2')}</li>
+                      <li>• {s('a_feature3')}</li>
+                      <li>• {s('a_feature4')}</li>
+                      <li>• {s('a_feature5')}</li>
                     </ul>
                   </div>
-                  <p className="text-sm text-muted-foreground"><strong>Access:</strong> The Screener is completely free and ungated for all users.</p>
+                  <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: s('a_screenerAccess') }} />
                 </div>
               )
             },
             {
-              question: "How do I filter patterns in the Screener?",
+              question: s('q_filterPatterns'),
               answer: (
                 <div className="space-y-3">
-                  <p>Use the filter controls to narrow down patterns by market, timeframe, direction, and quality.</p>
+                  <p>{s('a_filterIntro')}</p>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">Asset Filters</h4>
+                      <h4 className="font-semibold text-sm mb-2">{s('a_assetFilters')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• Stocks (US equities)</div>
-                        <div>• Forex (major & minor pairs)</div>
-                        <div>• Crypto (BTC, ETH, top altcoins)</div>
-                        <div>• Commodities (Gold, Oil, etc.)</div>
+                        <div>• {s('a_assetStocks')}</div>
+                        <div>• {s('a_assetForex')}</div>
+                        <div>• {s('a_assetCrypto')}</div>
+                        <div>• {s('a_assetCommodities')}</div>
                       </div>
                     </div>
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">Pattern Filters</h4>
+                      <h4 className="font-semibold text-sm mb-2">{s('a_patternFilters')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• Timeframe (1H, 4H, Daily, Weekly)</div>
-                        <div>• Direction (Bullish/Bearish)</div>
-                        <div>• Quality (A/B/C grades)</div>
-                        <div>• Pattern type (specific patterns)</div>
+                        <div>• {s('a_filterTimeframe')}</div>
+                        <div>• {s('a_filterDirection')}</div>
+                        <div>• {s('a_filterQuality')}</div>
+                        <div>• {s('a_filterType')}</div>
                       </div>
                     </div>
                   </div>
@@ -165,30 +173,30 @@ const FAQ = () => {
               )
             },
             {
-              question: "What do the pattern quality grades mean?",
+              question: s('q_qualityGrades'),
               answer: (
                 <div className="space-y-4">
-                  <p>Quality grades reflect how well a pattern matches its ideal formation criteria.</p>
+                  <p>{s('a_qualityIntro')}</p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Badge className="bg-bullish text-white">A</Badge>
                       <div>
-                        <strong>High Quality</strong>
-                        <p className="text-xs text-muted-foreground">Clean formation, strong volume confirmation, trend alignment</p>
+                        <strong>{s('a_gradeA')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_gradeADesc')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Badge variant="secondary">B</Badge>
                       <div>
-                        <strong>Medium Quality</strong>
-                        <p className="text-xs text-muted-foreground">Acceptable formation with minor deviations</p>
+                        <strong>{s('a_gradeB')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_gradeBDesc')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Badge variant="outline">C</Badge>
                       <div>
-                        <strong>Lower Quality</strong>
-                        <p className="text-xs text-muted-foreground">Pattern detected but with significant deviations from ideal</p>
+                        <strong>{s('a_gradeC')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_gradeCDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -198,76 +206,68 @@ const FAQ = () => {
           ]
         },
         {
-          category: "How ChartingPath Identifies Patterns",
+          category: s('catMethodology'),
           questions: [
             {
-              question: "What methodology does ChartingPath use for pattern detection?",
+              question: s('q_methodology'),
               answer: (
                 <div className="space-y-4">
-                  <p>ChartingPath uses a <strong>three-layer detection pipeline</strong> based on institutional-grade standards established by Thomas Bulkowski's pattern research.</p>
+                  <p dangerouslySetInnerHTML={{ __html: s('a_methodologyIntro') }} />
                   <div className="space-y-3">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Scan className="h-4 w-4 text-primary" />
-                        <h4 className="font-semibold">Layer 1 — Bulkowski Engine (Structural Detection)</h4>
+                        <h4 className="font-semibold">{s('a_layer1Title')}</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        The engine scans price action using adaptive lookback windows (up to 120 bars) with peak/trough detection to identify structural formations. Each pattern must satisfy strict formation rules before being registered.
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-2">{s('a_layer1Desc')}</p>
                     </div>
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Shield className="h-4 w-4 text-primary" />
-                        <h4 className="font-semibold">Layer 2 — Context Validator (Probabilistic Confirmation)</h4>
+                        <h4 className="font-semibold">{s('a_layer2Title')}</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Every detection passes through a 6-factor weighted validation model analyzing trend alignment (30%), RSI (15%), MACD momentum (15%), ADX strength (15%), volume conviction (15%), and risk calibration (10%). Patterns must score above the confirmation threshold to proceed.
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-2">{s('a_layer2Desc')}</p>
                     </div>
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Layers className="h-4 w-4 text-primary" />
-                        <h4 className="font-semibold">Layer 3 — Multi-Timeframe Confluence (Final Gate)</h4>
+                        <h4 className="font-semibold">{s('a_layer3Title')}</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Confirmed patterns are validated against the next higher timeframe (e.g., 4H pattern → Daily check). The model evaluates HTF trend direction (40%), S/R proximity (25%), HTF momentum via MACD + RSI (20%), and cross-TF volume profile (15%). Patterns trading against strong higher-timeframe opposition are rejected.
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-2">{s('a_layer3Desc')}</p>
                     </div>
                   </div>
-                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
-                    <strong>Result:</strong> Patterns must pass all three layers to appear in the Screener, Chart overlays, and research views. Only <em>fully confirmed</em> patterns are displayed — significantly reducing false positives.
-                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_methodologyResult') }} />
                 </div>
               )
             },
             {
-              question: "How is each pattern identified? (Full definitions)",
+              question: s('q_patternDefinitions'),
               answer: (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Below are the structural rules enforced by ChartingPath's Bulkowski Engine for each of the 15 supported patterns.</p>
+                  <p className="text-sm text-muted-foreground">{s('a_patternDefsIntro')}</p>
                   
-                  {/* Reversal Patterns */}
+                  {/* Bearish Reversal Patterns */}
                   <div>
                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                       <TrendingDown className="h-4 w-4 text-destructive" />
-                      Bearish Reversal Patterns
+                      {s('a_bearishReversal')}
                     </h4>
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Double Top</div>
-                        <p className="text-xs text-muted-foreground mt-1">Two peaks at approximately the same price level (±1.5% tolerance) separated by a trough. Requires a prior uptrend of ≥2%. Confirmed on a break below the neckline (trough level).</p>
+                        <div className="font-medium text-sm">{s('a_doubleTop')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_doubleTopDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Triple Top</div>
-                        <p className="text-xs text-muted-foreground mt-1">Three peaks at similar price levels (±1.5%) with two intervening troughs. Requires a prior uptrend of ≥2%. Confirmed on a break below the lowest trough (neckline).</p>
+                        <div className="font-medium text-sm">{s('a_tripleTop')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_tripleTopDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Head & Shoulders</div>
-                        <p className="text-xs text-muted-foreground mt-1">Three peaks where the middle peak (Head) is higher than both outer peaks (Shoulders). Shoulders must be approximately symmetric (within 30% height tolerance). Requires a prior uptrend of ≥3%. Confirmed on a neckline break.</p>
+                        <div className="font-medium text-sm">{s('a_headShoulders')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_headShouldersDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Rising Wedge</div>
-                        <p className="text-xs text-muted-foreground mt-1">Converging trendlines with both support and resistance sloping upward, with resistance rising at a shallower angle. Requires ≥3 touches on each trendline. Bearish breakdown expected.</p>
+                        <div className="font-medium text-sm">{s('a_risingWedge')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_risingWedgeDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -276,24 +276,24 @@ const FAQ = () => {
                   <div>
                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-emerald-500" />
-                      Bullish Reversal Patterns
+                      {s('a_bullishReversal')}
                     </h4>
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Double Bottom</div>
-                        <p className="text-xs text-muted-foreground mt-1">Two troughs at approximately the same price level (±1.5% tolerance) separated by a peak. Requires a prior downtrend of ≥2%. Confirmed on a break above the neckline (peak level).</p>
+                        <div className="font-medium text-sm">{s('a_doubleBottom')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_doubleBottomDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Triple Bottom</div>
-                        <p className="text-xs text-muted-foreground mt-1">Three troughs at similar price levels (±1.5%) with two intervening peaks. Requires a prior downtrend of ≥2%. Confirmed on a break above the highest peak (neckline).</p>
+                        <div className="font-medium text-sm">{s('a_tripleBottom')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_tripleBottomDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Inverse Head & Shoulders</div>
-                        <p className="text-xs text-muted-foreground mt-1">Three troughs where the middle trough (Head) is lower than both outer troughs (Shoulders). Symmetric shoulder tolerance of 30%. Requires a prior downtrend of ≥3%. Confirmed on a neckline breakout.</p>
+                        <div className="font-medium text-sm">{s('a_inverseHS')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_inverseHSDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Falling Wedge</div>
-                        <p className="text-xs text-muted-foreground mt-1">Converging trendlines with both support and resistance sloping downward, with support falling at a shallower angle. Requires ≥3 touches on each trendline. Bullish breakout expected.</p>
+                        <div className="font-medium text-sm">{s('a_fallingWedge')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_fallingWedgeDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -302,20 +302,20 @@ const FAQ = () => {
                   <div>
                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                       <ArrowUpRight className="h-4 w-4 text-primary" />
-                      Continuation Patterns
+                      {s('a_continuationPatterns')}
                     </h4>
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Bull Flag</div>
-                        <p className="text-xs text-muted-foreground mt-1">A sharp upward move (flagpole, ≥5% gain) followed by a tight, downward-sloping consolidation channel. The flag body should retrace no more than 50% of the pole. ADX &gt; 20 required. Bullish continuation on upside break.</p>
+                        <div className="font-medium text-sm">{s('a_bullFlag')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_bullFlagDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Bear Flag</div>
-                        <p className="text-xs text-muted-foreground mt-1">A sharp downward move (flagpole, ≥5% drop) followed by a tight, upward-sloping consolidation channel. The flag body should retrace no more than 50% of the pole. ADX &gt; 20 required. Bearish continuation on downside break.</p>
+                        <div className="font-medium text-sm">{s('a_bearFlag')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_bearFlagDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Cup & Handle</div>
-                        <p className="text-xs text-muted-foreground mt-1">A rounded bottom (cup) followed by a shallow pullback (handle). The cup must form over at least 7 bars with a prior uptrend of ≥5%. The handle should retrace less than 50% of the cup depth. Bullish breakout above the rim.</p>
+                        <div className="font-medium text-sm">{s('a_cupHandle')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_cupHandleDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -324,16 +324,16 @@ const FAQ = () => {
                   <div>
                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                       <Layers className="h-4 w-4 text-primary" />
-                      Triangle Patterns
+                      {s('a_trianglePatterns')}
                     </h4>
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Ascending Triangle</div>
-                        <p className="text-xs text-muted-foreground mt-1">Flat resistance with rising support. Requires ≥3 touches on each trendline. Higher lows converge toward a horizontal ceiling. Bullish breakout expected above resistance.</p>
+                        <div className="font-medium text-sm">{s('a_ascTriangle')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_ascTriangleDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Descending Triangle</div>
-                        <p className="text-xs text-muted-foreground mt-1">Flat support with declining resistance. Requires ≥3 touches on each trendline. Lower highs converge toward a horizontal floor. Bearish breakdown expected below support.</p>
+                        <div className="font-medium text-sm">{s('a_descTriangle')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_descTriangleDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -342,16 +342,16 @@ const FAQ = () => {
                   <div>
                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                       <ArrowDownRight className="h-4 w-4 text-primary" />
-                      Momentum Breakout Patterns
+                      {s('a_momentumBreakout')}
                     </h4>
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Donchian Breakout (Long)</div>
-                        <p className="text-xs text-muted-foreground mt-1">Price closes above the highest high of the past N bars (Donchian channel). Requires ADX &gt; 20 for trend confirmation. No excessive retracement from recent highs. Bullish momentum signal.</p>
+                        <div className="font-medium text-sm">{s('a_donchianLong')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_donchianLongDesc')}</p>
                       </div>
                       <div className="border rounded-lg p-3">
-                        <div className="font-medium text-sm">Donchian Breakout (Short)</div>
-                        <p className="text-xs text-muted-foreground mt-1">Price closes below the lowest low of the past N bars (Donchian channel). Requires ADX &gt; 20 for trend confirmation. No excessive retracement from recent lows. Bearish momentum signal.</p>
+                        <div className="font-medium text-sm">{s('a_donchianShort')}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{s('a_donchianShortDesc')}</p>
                       </div>
                     </div>
                   </div>
@@ -359,90 +359,90 @@ const FAQ = () => {
               )
             },
             {
-              question: "What is the quality scoring system?",
+              question: s('q_qualityScoring'),
               answer: (
                 <div className="space-y-4">
-                  <p>Each detected pattern receives a quality grade (A through F) based on a <strong>9-factor weighted model</strong>:</p>
+                  <p dangerouslySetInnerHTML={{ __html: s('a_qualityScoringIntro') }} />
                   <div className="border rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                       <div className="space-y-1">
-                        <div className="font-medium">Structural Factors</div>
-                        <div className="text-xs text-muted-foreground">• Prior Trend strength</div>
-                        <div className="text-xs text-muted-foreground">• Structural symmetry</div>
-                        <div className="text-xs text-muted-foreground">• Price action quality</div>
+                        <div className="font-medium">{s('a_structuralFactors')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_priorTrend')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_structuralSymmetry')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_priceActionQuality')}</div>
                       </div>
                       <div className="space-y-1">
-                        <div className="font-medium">Volume & Volatility</div>
-                        <div className="text-xs text-muted-foreground">• Volume confirmation</div>
-                        <div className="text-xs text-muted-foreground">• Relative volume</div>
-                        <div className="text-xs text-muted-foreground">• Volatility regime</div>
+                        <div className="font-medium">{s('a_volumeVolatility')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_volumeConfirmation')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_relativeVolume')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_volatilityRegime')}</div>
                       </div>
                       <div className="space-y-1">
-                        <div className="font-medium">Context Factors</div>
-                        <div className="text-xs text-muted-foreground">• ADX trend strength</div>
-                        <div className="text-xs text-muted-foreground">• Historical win rate</div>
-                        <div className="text-xs text-muted-foreground">• Pattern symmetry</div>
+                        <div className="font-medium">{s('a_contextFactors')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_adxTrend')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_historicalWinRate')}</div>
+                        <div className="text-xs text-muted-foreground">• {s('a_patternSymmetry')}</div>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-2 border rounded-lg">
                       <Badge className="bg-emerald-600 text-white min-w-8 justify-center">A</Badge>
-                      <span className="text-sm">Score 8–10: Institutional quality, strong confluence</span>
+                      <span className="text-sm">{s('a_scoreA')}</span>
                     </div>
                     <div className="flex items-center gap-3 p-2 border rounded-lg">
                       <Badge className="bg-sky-600 text-white min-w-8 justify-center">B</Badge>
-                      <span className="text-sm">Score 6–8: Solid formation with minor deviations</span>
+                      <span className="text-sm">{s('a_scoreB')}</span>
                     </div>
                     <div className="flex items-center gap-3 p-2 border rounded-lg">
                       <Badge variant="secondary" className="min-w-8 justify-center">C</Badge>
-                      <span className="text-sm">Score 4–6: Acceptable but with notable imperfections</span>
+                      <span className="text-sm">{s('a_scoreC')}</span>
                     </div>
                     <div className="flex items-center gap-3 p-2 border rounded-lg">
                       <Badge variant="outline" className="min-w-8 justify-center">D–F</Badge>
-                      <span className="text-sm">Score 0–4: Marginal formation, use with caution</span>
+                      <span className="text-sm">{s('a_scoreDF')}</span>
                     </div>
                   </div>
                 </div>
               )
             },
             {
-              question: "What does the validation pipeline filter out?",
+              question: s('q_validationPipeline'),
               answer: (
                 <div className="space-y-4">
-                  <p>Each detection must survive three sequential layers. Rejection at any layer removes the pattern from all views:</p>
+                  <p>{s('a_validationIntro')}</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Scan className="h-5 w-5 text-primary flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Layer 1 — Bulkowski Engine</strong>
-                        <p className="text-xs text-muted-foreground">Structural geometry must match Bulkowski's formation rules (prior trend, touch counts, symmetry)</p>
+                        <strong className="text-sm">{s('a_valLayer1Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_valLayer1Desc')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Shield className="h-5 w-5 text-primary flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Layer 2 — Context Validator</strong>
-                        <p className="text-xs text-muted-foreground">Composite score ≥ 0.15 required (6-factor: trend, RSI, MACD, ADX, volume, risk). Rejected if ≤ −0.15</p>
+                        <strong className="text-sm">{s('a_valLayer2Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_valLayer2Desc')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
                       <Layers className="h-5 w-5 text-primary flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Layer 3 — MTF Confluence</strong>
-                        <p className="text-xs text-muted-foreground">Higher-timeframe trend, S/R proximity, momentum, and volume must not oppose the pattern direction. Rejected if score ≤ −0.20</p>
+                        <strong className="text-sm">{s('a_valLayer3Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_valLayer3Desc')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
                       <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                       <div>
-                        <strong className="text-sm">Fully Confirmed</strong>
-                        <p className="text-xs text-muted-foreground">Pattern passes all 3 layers → displayed in Screener, Charts, and Research views</p>
+                        <strong className="text-sm">{s('a_fullyConfirmed')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_fullyConfirmedDesc')}</p>
                       </div>
                     </div>
                   </div>
                   <div className="bg-muted/50 p-4 rounded-lg text-sm">
-                    <p>This three-layer pipeline ensures only patterns with structural validity, technical context support, and multi-timeframe alignment reach the user — providing institutional-grade signal quality.</p>
+                    <p>{s('a_validationResult')}</p>
                   </div>
                 </div>
               )
@@ -452,70 +452,68 @@ const FAQ = () => {
       ]
     },
     "pattern-lab": {
-      title: "Pattern Lab",
+      title: t('faq.tabs.patternLab'),
       icon: <FlaskConical className="h-5 w-5 text-violet-500" />,
-      description: "Historical pattern backtesting and research",
+      description: t('faq.tabs.patternLabDesc'),
       sections: [
         {
-          category: "Research Workflow",
+          category: pl('catResearch'),
           questions: [
             {
-              question: "What is Pattern Lab?",
+              question: pl('q_whatIsPatternLab'),
               answer: (
                 <div className="space-y-3">
-                  <p>Pattern Lab is our research tool for backtesting chart patterns on historical data. Validate pattern performance before trading with real money.</p>
+                  <p>{pl('a_patternLabIntro')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Capabilities:</h4>
+                    <h4 className="font-semibold mb-2">{pl('a_capabilities')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Scan historical data for pattern occurrences</li>
-                      <li>• View win rates, average R-multiples, and holding periods</li>
-                      <li>• Filter by timeframe, asset, and pattern type</li>
-                      <li>• Export validated patterns to trading scripts</li>
+                      <li>• {pl('a_cap1')}</li>
+                      <li>• {pl('a_cap2')}</li>
+                      <li>• {pl('a_cap3')}</li>
+                      <li>• {pl('a_cap4')}</li>
                     </ul>
                   </div>
                 </div>
               )
             },
             {
-              question: "How are Pattern Lab credits calculated?",
+              question: pl('q_credits'),
               answer: (
                 <div className="space-y-3">
-                  <p>Credits scale based on the scope of your research query:</p>
+                  <p>{pl('a_creditsIntro')}</p>
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Factors:</h4>
+                    <h4 className="font-semibold mb-2">{pl('a_factors')}</h4>
                     <div className="text-sm space-y-1">
-                      <div>• Number of symbols scanned</div>
-                      <div>• Historical lookback period</div>
-                      <div>• Number of patterns analyzed</div>
-                      <div>• Timeframe granularity</div>
+                      <div>• {pl('a_factor1')}</div>
+                      <div>• {pl('a_factor2')}</div>
+                      <div>• {pl('a_factor3')}</div>
+                      <div>• {pl('a_factor4')}</div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Credits are estimated before you run a project, so you always know the cost upfront.</p>
+                  <p className="text-sm text-muted-foreground">{pl('a_creditsNote')}</p>
                 </div>
               )
             },
             {
-              question: "How reliable are the backtest results?",
+              question: pl('q_reliability'),
               answer: (
                 <div className="space-y-4">
                   <div className="bg-amber-50/50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Important Disclaimer</h4>
-                        <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">
-                          Backtest results are based on historical data and do not guarantee future performance. Real trading involves slippage, spreads, and execution delays not fully captured in backtests.
-                        </p>
+                        <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">{pl('a_disclaimerTitle')}</h4>
+                        <p className="text-amber-700 dark:text-amber-300 text-sm leading-relaxed">{pl('a_disclaimerText')}</p>
                       </div>
                     </div>
                   </div>
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Our Methodology:</h4>
+                    <h4 className="font-semibold mb-2">{pl('a_methodology')}</h4>
                     <div className="text-sm space-y-1">
-                      <div>• Bar-close signal, next-bar-open fill model</div>
-                      <div>• Configurable slippage and commission</div>
-                      <div>• ATR-based dynamic SL/TP calculation</div>
-                      <div>• Outcome tracking for each detected pattern</div>
+                      <div>• {pl('a_method1')}</div>
+                      <div>• {pl('a_method2')}</div>
+                      <div>• {pl('a_method3')}</div>
+                      <div>• {pl('a_method4')}</div>
                     </div>
                   </div>
                 </div>
@@ -526,45 +524,45 @@ const FAQ = () => {
       ]
     },
     "alerts": {
-      title: "Alerts",
+      title: t('faq.tabs.alerts'),
       icon: <Bell className="h-5 w-5 text-emerald-500" />,
-      description: "Pattern detection notifications",
+      description: t('faq.tabs.alertsDesc'),
       sections: [
         {
-          category: "Alert System",
+          category: al('catAlertSystem'),
           questions: [
             {
-              question: "How do pattern alerts work?",
+              question: al('q_howAlerts'),
               answer: (
                 <div className="space-y-3">
-                  <p>Set up alerts for specific patterns on instruments you're watching. When a pattern forms, you'll receive a notification with entry, SL, and TP levels.</p>
+                  <p>{al('a_alertsIntro')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Alert Contents:</h4>
+                    <h4 className="font-semibold mb-2">{al('a_alertContents')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Pattern name and direction</li>
-                      <li>• Entry price with SL/TP brackets</li>
-                      <li>• Quality score and trend alignment</li>
-                      <li>• Historical win rate for that pattern</li>
+                      <li>• {al('a_alert1')}</li>
+                      <li>• {al('a_alert2')}</li>
+                      <li>• {al('a_alert3')}</li>
+                      <li>• {al('a_alert4')}</li>
                     </ul>
                   </div>
                 </div>
               )
             },
             {
-              question: "What are the alert limits per plan?",
+              question: al('q_alertLimits'),
               answer: (
                 <div className="space-y-3">
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Active Alerts by Plan:</h4>
+                    <h4 className="font-semibold mb-2">{al('a_alertLimitsTitle')}</h4>
                     <div className="text-sm space-y-2">
-                      <div className="flex justify-between"><span>Free</span><span>3 alerts</span></div>
-                      <div className="flex justify-between"><span>Starter</span><span>10 alerts</span></div>
-                      <div className="flex justify-between"><span>Pro</span><span>25 alerts</span></div>
-                      <div className="flex justify-between"><span>Pro+</span><span>50 alerts</span></div>
-                      <div className="flex justify-between"><span>Elite</span><span>Unlimited</span></div>
+                      <div className="flex justify-between"><span>{al('a_free')}</span><span>{al('a_freeAlerts')}</span></div>
+                      <div className="flex justify-between"><span>{al('a_starter')}</span><span>{al('a_starterAlerts')}</span></div>
+                      <div className="flex justify-between"><span>{al('a_pro')}</span><span>{al('a_proAlerts')}</span></div>
+                      <div className="flex justify-between"><span>{al('a_proPlus')}</span><span>{al('a_proPlusAlerts')}</span></div>
+                      <div className="flex justify-between"><span>{al('a_elite')}</span><span>{al('a_eliteAlerts')}</span></div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Alerts are delivered via email with full pattern details.</p>
+                  <p className="text-sm text-muted-foreground">{al('a_alertDelivery')}</p>
                 </div>
               )
             }
@@ -573,37 +571,37 @@ const FAQ = () => {
       ]
     },
     "scripts": {
-      title: "Scripts",
+      title: t('faq.tabs.scripts'),
       icon: <FileCode className="h-5 w-5 text-cyan-500" />,
-      description: "Export trading scripts for TradingView and MetaTrader",
+      description: t('faq.tabs.scriptsDesc'),
       sections: [
         {
-          category: "Script Export",
+          category: sc('catScriptExport'),
           questions: [
             {
-              question: "What platforms can I export scripts to?",
+              question: sc('q_platforms'),
               answer: (
                 <div className="space-y-4">
-                  <p>Export pattern-based trading scripts with optimized exits to multiple platforms.</p>
+                  <p>{sc('a_platformsIntro')}</p>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <div className="font-medium">Pine Script v5 (TradingView)</div>
-                        <div className="text-xs text-muted-foreground">All plans</div>
+                        <div className="font-medium">{sc('a_pineScript')}</div>
+                        <div className="text-xs text-muted-foreground">{sc('a_allPlans')}</div>
                       </div>
-                      <Badge variant="default">All Plans</Badge>
+                      <Badge variant="default">{sc('a_allPlans')}</Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <div className="font-medium">MQL4 (MetaTrader 4)</div>
-                        <div className="text-xs text-muted-foreground">Expert Advisors</div>
+                        <div className="font-medium">{sc('a_mql4')}</div>
+                        <div className="text-xs text-muted-foreground">{sc('a_expertAdvisors')}</div>
                       </div>
                       <Badge variant="secondary">Pro+</Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <div className="font-medium">MQL5 (MetaTrader 5)</div>
-                        <div className="text-xs text-muted-foreground">Advanced EAs</div>
+                        <div className="font-medium">{sc('a_mql5')}</div>
+                        <div className="text-xs text-muted-foreground">{sc('a_advancedEAs')}</div>
                       </div>
                       <Badge className="bg-purple-600">Elite</Badge>
                     </div>
@@ -612,49 +610,49 @@ const FAQ = () => {
               )
             },
             {
-              question: "What's included in exported scripts?",
+              question: sc('q_scriptContents'),
               answer: (
                 <div className="space-y-3">
-                  <p>Each exported script includes the complete trade logic derived from Pattern Lab backtests.</p>
+                  <p>{sc('a_scriptContentsIntro')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Script Contents:</h4>
+                    <h4 className="font-semibold mb-2">{sc('a_scriptContentsTitle')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Entry logic based on pattern detection</li>
-                      <li>• Dynamic SL/TP recalculation using ATR</li>
-                      <li>• Risk-based position sizing</li>
-                      <li>• SL breach detection warnings</li>
-                      <li>• Step-by-step deployment guide</li>
+                      <li>• {sc('a_script1')}</li>
+                      <li>• {sc('a_script2')}</li>
+                      <li>• {sc('a_script3')}</li>
+                      <li>• {sc('a_script4')}</li>
+                      <li>• {sc('a_script5')}</li>
                     </ul>
                   </div>
                 </div>
               )
             },
             {
-              question: "How do I deploy a script to TradingView?",
+              question: sc('q_deployScript'),
               answer: (
                 <div className="space-y-4">
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-semibold mb-3">Deployment Steps:</h4>
+                    <h4 className="font-semibold mb-3">{sc('a_deploySteps')}</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-3">
                         <Badge variant="outline">1</Badge>
-                        <span>Open Pine Editor in TradingView (bottom panel)</span>
+                        <span>{sc('a_deploy1')}</span>
                       </div>
                       <div className="flex items-start gap-3">
                         <Badge variant="outline">2</Badge>
-                        <span>Paste the exported script code</span>
+                        <span>{sc('a_deploy2')}</span>
                       </div>
                       <div className="flex items-start gap-3">
                         <Badge variant="outline">3</Badge>
-                        <span>Click "Add to Chart"</span>
+                        <span>{sc('a_deploy3')}</span>
                       </div>
                       <div className="flex items-start gap-3">
                         <Badge variant="outline">4</Badge>
-                        <span>Configure input parameters (Risk %, R:R ratio)</span>
+                        <span>{sc('a_deploy4')}</span>
                       </div>
                       <div className="flex items-start gap-3">
                         <Badge variant="outline">5</Badge>
-                        <span>Set alerts for live notifications</span>
+                        <span>{sc('a_deploy5')}</span>
                       </div>
                     </div>
                   </div>
@@ -666,34 +664,34 @@ const FAQ = () => {
       ]
     },
     "learning": {
-      title: "Learning",
+      title: t('faq.tabs.learning'),
       icon: <BookOpen className="h-5 w-5 text-purple-500" />,
-      description: "Pattern Library, articles, and quizzes",
+      description: t('faq.tabs.learningDesc'),
       sections: [
         {
-          category: "Educational Resources",
+          category: le('catEducational'),
           questions: [
             {
-              question: "What's in the Pattern Library?",
+              question: le('q_patternLibrary'),
               answer: (
                 <div className="space-y-3">
-                  <p>A comprehensive database of chart patterns with formation rules, trading strategies, and historical statistics.</p>
+                  <p>{le('a_patternLibIntro')}</p>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">Pattern Categories</h4>
+                      <h4 className="font-semibold text-sm mb-2">{le('a_patternCategories')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• Reversal patterns (H&S, Double Top/Bottom)</div>
-                        <div>• Continuation patterns (Flags, Triangles)</div>
-                        <div>• Candlestick patterns</div>
+                        <div>• {le('a_cat1')}</div>
+                        <div>• {le('a_cat2')}</div>
+                        <div>• {le('a_cat3')}</div>
                       </div>
                     </div>
                     <div className="border rounded-lg p-3">
-                      <h4 className="font-semibold text-sm mb-2">Each Pattern Includes</h4>
+                      <h4 className="font-semibold text-sm mb-2">{le('a_eachPatternIncludes')}</h4>
                       <div className="text-xs space-y-1">
-                        <div>• Formation criteria</div>
-                        <div>• Entry/exit rules</div>
-                        <div>• Historical success rates</div>
-                        <div>• Real examples</div>
+                        <div>• {le('a_inc1')}</div>
+                        <div>• {le('a_inc2')}</div>
+                        <div>• {le('a_inc3')}</div>
+                        <div>• {le('a_inc4')}</div>
                       </div>
                     </div>
                   </div>
@@ -701,38 +699,36 @@ const FAQ = () => {
               )
             },
             {
-              question: "How does the Pattern Quiz work?",
+              question: le('q_patternQuiz'),
               answer: (
                 <div className="space-y-3">
-                  <p>Test your pattern recognition skills with real chart examples and adaptive difficulty.</p>
+                  <p>{le('a_quizIntro')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Quiz Features:</h4>
+                    <h4 className="font-semibold mb-2">{le('a_quizFeatures')}</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Real market chart segments</li>
-                      <li>• Multiple difficulty levels</li>
-                      <li>• Immediate feedback with explanations</li>
-                      <li>• Progress tracking</li>
+                      <li>• {le('a_quiz1')}</li>
+                      <li>• {le('a_quiz2')}</li>
+                      <li>• {le('a_quiz3')}</li>
+                      <li>• {le('a_quiz4')}</li>
                     </ul>
                   </div>
                 </div>
               )
             },
             {
-              question: "How reliable are the pattern success rates shown?",
+              question: le('q_successRates'),
               answer: (
                 <div className="space-y-4">
                   <div className="bg-amber-50/50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Important Note</h4>
-                        <p className="text-amber-700 dark:text-amber-300 text-sm">
-                          Success rates are based on historical statistical analysis and do not guarantee future results. Market conditions vary significantly.
-                        </p>
+                        <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">{le('a_importantNote')}</h4>
+                        <p className="text-amber-700 dark:text-amber-300 text-sm">{le('a_successRatesDisclaimer')}</p>
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Use success rates as guidance, but always apply proper risk management.</p>
+                  <p className="text-sm text-muted-foreground">{le('a_successRatesAdvice')}</p>
                 </div>
               )
             }
@@ -741,97 +737,81 @@ const FAQ = () => {
       ]
     },
     "account": {
-      title: "Account & Billing",
+      title: t('faq.tabs.account'),
       icon: <Crown className="h-5 w-5 text-yellow-500" />,
-      description: "Subscriptions, billing, and account management",
+      description: t('faq.tabs.accountDesc'),
       sections: [
         {
-          category: "Subscription Plans",
+          category: ac('catSubscription'),
           questions: [
             {
-              question: "What are the subscription tiers?",
+              question: ac('q_tiers'),
               answer: (
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline">FREE</Badge>
-                        <span className="font-semibold">Free</span>
+                        <span className="font-semibold">{ac('a_freeLabel')}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Full Screener access, limited alerts, basic Pattern Library
-                      </div>
+                      <div className="text-sm text-muted-foreground">{ac('a_freeDesc')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="secondary">STARTER</Badge>
-                        <span className="font-semibold">Starter</span>
+                        <span className="font-semibold">{ac('a_starterLabel')}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Pattern Lab access, 10 alerts, Pine Script export
-                      </div>
+                      <div className="text-sm text-muted-foreground">{ac('a_starterDesc')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge>PRO</Badge>
-                        <span className="font-semibold">Pro</span>
+                        <span className="font-semibold">{ac('a_proLabel')}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Extended lookback, 25 alerts, priority support
-                      </div>
+                      <div className="text-sm text-muted-foreground">{ac('a_proDesc')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge className="bg-purple-600">ELITE</Badge>
-                        <span className="font-semibold">Elite</span>
+                        <span className="font-semibold">{ac('a_eliteLabel')}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Unlimited alerts, MQL4/5 export, dedicated support
-                      </div>
+                      <div className="text-sm text-muted-foreground">{ac('a_eliteDesc')}</div>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    <Link to="/projects/pricing" className="text-primary underline">View full pricing details →</Link>
+                    <Link to="/projects/pricing" className="text-primary underline">{ac('a_viewPricing')}</Link>
                   </p>
                 </div>
               )
             },
             {
-              question: "What is your refund policy?",
+              question: ac('q_refund'),
               answer: (
                 <div className="space-y-2 text-muted-foreground">
-                  <p>
-                    Refunds are available for annual plans only and must be requested within 14 calendar days of payment.
-                  </p>
-                  <p>
-                    Monthly plans and upgrades are non-refundable.
-                  </p>
-                  <p className="font-medium text-foreground">
-                    Users who filed chargebacks are not eligible for refunds.
-                  </p>
+                  <p>{ac('a_refund1')}</p>
+                  <p>{ac('a_refund2')}</p>
+                  <p className="font-medium text-foreground">{ac('a_refund3')}</p>
                 </div>
               )
             },
             {
-              question: "What payment methods do you accept?",
+              question: ac('q_payment'),
               answer: (
                 <div className="space-y-2 text-muted-foreground">
-                  <p>We accept payments through Stripe:</p>
+                  <p>{ac('a_paymentIntro')}</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Credit/Debit cards (Visa, MasterCard, Amex)</li>
-                    <li>PayPal</li>
-                    <li>Apple Pay and Google Pay</li>
+                    <li>{ac('a_payment1')}</li>
+                    <li>{ac('a_payment2')}</li>
+                    <li>{ac('a_payment3')}</li>
                   </ul>
                 </div>
               )
             },
             {
-              question: "How do plan upgrades work?",
+              question: ac('q_upgrades'),
               answer: (
                 <div className="text-muted-foreground">
-                  <p>
-                    When you upgrade, we calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly.
-                  </p>
+                  <p>{ac('a_upgradesDesc')}</p>
                 </div>
               )
             }
