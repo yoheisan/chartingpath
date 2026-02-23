@@ -154,11 +154,27 @@ Deno.serve(async (req) => {
     // Ensure all keys exist in translation_keys table (FK requirement)
     if (!skip_key_creation) {
       const allKeys = Object.keys(flatEnglish)
-      const { data: existingKeys } = await supabase
-        .from('translation_keys')
-        .select('key')
       
-      const existingKeySet = new Set((existingKeys || []).map((k: any) => k.key))
+      // Paginate to avoid 1000-row default limit
+      const existingKeySet = new Set<string>()
+      let from = 0
+      const PAGE_SIZE = 1000
+      while (true) {
+        const { data: page, error: pageError } = await supabase
+          .from('translation_keys')
+          .select('key')
+          .range(from, from + PAGE_SIZE - 1)
+        if (pageError) {
+          console.error('Error fetching translation_keys page:', pageError)
+          break
+        }
+        if (!page || page.length === 0) break
+        for (const k of page) existingKeySet.add(k.key)
+        if (page.length < PAGE_SIZE) break
+        from += PAGE_SIZE
+      }
+      console.log(`Found ${existingKeySet.size} existing translation_keys`)
+      
       const missingKeys = allKeys.filter(k => !existingKeySet.has(k))
       
       if (missingKeys.length > 0) {
@@ -177,7 +193,7 @@ Deno.serve(async (req) => {
           })
           const { error: insertKeysError } = await supabase
             .from('translation_keys')
-            .insert(batch)
+            .upsert(batch, { onConflict: 'key', ignoreDuplicates: true })
           if (insertKeysError) {
             console.error(`Error inserting translation_keys batch:`, insertKeysError)
           }
@@ -209,20 +225,29 @@ Deno.serve(async (req) => {
       summary[langCode] = { translated: 0, skipped: 0, stale: 0, errors: 0 }
 
       try {
-        // Get existing translations for this language
-        const { data: existingTranslations, error: fetchError } = await supabase
-          .from('translations')
-          .select('key, value, source_hash, is_manual_override, status')
-          .eq('language_code', langCode)
-
-        if (fetchError) {
-          console.error(`Error fetching ${langCode} translations:`, fetchError)
-          summary[langCode].errors++
-          continue
+        // Get existing translations for this language (paginated to avoid 1000-row limit)
+        const allExistingTranslations: any[] = []
+        let txFrom = 0
+        const TX_PAGE = 1000
+        while (true) {
+          const { data: txPage, error: fetchError } = await supabase
+            .from('translations')
+            .select('key, value, source_hash, is_manual_override, status')
+            .eq('language_code', langCode)
+            .range(txFrom, txFrom + TX_PAGE - 1)
+          if (fetchError) {
+            console.error(`Error fetching ${langCode} translations:`, fetchError)
+            summary[langCode].errors++
+            break
+          }
+          if (!txPage || txPage.length === 0) break
+          allExistingTranslations.push(...txPage)
+          if (txPage.length < TX_PAGE) break
+          txFrom += TX_PAGE
         }
 
         const existingMap = new Map<string, any>()
-        existingTranslations?.forEach(t => existingMap.set(t.key, t))
+        allExistingTranslations.forEach(t => existingMap.set(t.key, t))
 
         // Find missing and stale keys
         const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
