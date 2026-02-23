@@ -14,6 +14,7 @@ import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide
 import { format, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { formatInTimeZone } from "date-fns-tz";
+import { enUS, ja, es, fr, de, pt, zhCN, ko, ru, tr, id as idLocale, it, ar, hi } from "date-fns/locale";
 
 interface EconomicEvent {
   id: string;
@@ -39,49 +40,47 @@ interface UserPreferences {
   telegram_chat_id?: string;
 }
 
-const REGIONS = [
-  // Americas
-  { value: "US", label: "United States" },
-  { value: "CA", label: "Canada" },
-  { value: "BR", label: "Brazil" },
-  { value: "MX", label: "Mexico" },
-  { value: "AR", label: "Argentina" },
-  
-  // Europe
-  { value: "EU", label: "Euro Area" },
-  { value: "UK", label: "United Kingdom" },
-  { value: "DE", label: "Germany" },
-  { value: "FR", label: "France" },
-  { value: "IT", label: "Italy" },
-  { value: "RU", label: "Russia" },
-  { value: "TR", label: "Turkey" },
-  
-  // Asia-Pacific
-  { value: "JP", label: "Japan" },
-  { value: "CN", label: "China" },
-  { value: "KR", label: "South Korea" },
-  { value: "IN", label: "India" },
-  { value: "AU", label: "Australia" },
-  { value: "ID", label: "Indonesia" },
-  { value: "SG", label: "Singapore" },
-  
-  // Middle East & Africa
-  { value: "SA", label: "Saudi Arabia" },
-  { value: "ZA", label: "South Africa" },
+const DATE_LOCALE_MAP: Record<string, any> = {
+  en: enUS, ja, es, fr, de, pt, zh: zhCN, ko, ru, tr, id: idLocale, it, ar, hi,
+};
+
+const REGION_KEYS: { value: string; key: string }[] = [
+  { value: "US", key: "regionUS" },
+  { value: "CA", key: "regionCA" },
+  { value: "BR", key: "regionBR" },
+  { value: "MX", key: "regionMX" },
+  { value: "AR", key: "regionAR" },
+  { value: "EU", key: "regionEU" },
+  { value: "UK", key: "regionUK" },
+  { value: "DE", key: "regionDE" },
+  { value: "FR", key: "regionFR" },
+  { value: "IT", key: "regionIT" },
+  { value: "RU", key: "regionRU" },
+  { value: "TR", key: "regionTR" },
+  { value: "JP", key: "regionJP" },
+  { value: "CN", key: "regionCN" },
+  { value: "KR", key: "regionKR" },
+  { value: "IN", key: "regionIN" },
+  { value: "AU", key: "regionAU" },
+  { value: "ID", key: "regionID" },
+  { value: "SG", key: "regionSG" },
+  { value: "SA", key: "regionSA" },
+  { value: "ZA", key: "regionZA" },
 ];
 
-const INDICATOR_TYPES = [
-  { value: "inflation", label: "Inflation (CPI, PPI)" },
-  { value: "employment", label: "Employment (NFP, Unemployment)" },
-  { value: "gdp", label: "GDP & Growth" },
-  { value: "interest_rate", label: "Interest Rate Decisions" },
-  { value: "manufacturing", label: "Manufacturing (PMI)" },
-  { value: "retail", label: "Retail Sales" },
-  { value: "trade", label: "Trade Balance" },
+const INDICATOR_KEYS: { value: string; key: string }[] = [
+  { value: "inflation", key: "indicatorInflation" },
+  { value: "employment", key: "indicatorEmployment" },
+  { value: "gdp", key: "indicatorGdp" },
+  { value: "interest_rate", key: "indicatorInterestRate" },
+  { value: "manufacturing", key: "indicatorManufacturing" },
+  { value: "retail", key: "indicatorRetail" },
+  { value: "trade", key: "indicatorTrade" },
 ];
 
 const EconomicCalendar = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = DATE_LOCALE_MAP[i18n.language] || enUS;
   const [events, setEvents] = useState<EconomicEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -291,7 +290,8 @@ const EconomicCalendar = () => {
       medium: "default",
       low: "secondary",
     };
-    return <Badge variant={variants[level] || "default"}>{level.toUpperCase()}</Badge>;
+    const labelMap: Record<string, string> = { high: 'high', medium: 'med', low: 'low' };
+    return <Badge variant={variants[level] || "default"}>{t(`economicCalendar.${labelMap[level] || level}`).toUpperCase()}</Badge>;
   };
 
   const formatDateTime = (dateString: string) => {
@@ -334,19 +334,14 @@ const EconomicCalendar = () => {
   };
 
   const getCountryName = (region: string) => {
-    const names: Record<string, string> = {
-      US: "United States",
-      EU: "Eurozone",
-      UK: "United Kingdom",
-      JP: "Japan",
-      CN: "China",
-      AU: "Australia",
-      CA: "Canada",
-      KR: "South Korea",
-      IN: "India",
-      SG: "Singapore",
+    const keyMap: Record<string, string> = {
+      US: "regionUS", EU: "regionEU", UK: "regionUK", JP: "regionJP",
+      CN: "regionCN", AU: "regionAU", CA: "regionCA", KR: "regionKR",
+      IN: "regionIN", SG: "regionSG", DE: "regionDE", FR: "regionFR",
+      IT: "regionIT", BR: "regionBR", MX: "regionMX", AR: "regionAR",
+      RU: "regionRU", TR: "regionTR", ID: "regionID", SA: "regionSA", ZA: "regionZA",
     };
-    return names[region] || region;
+    return keyMap[region] ? t(`economicCalendar.${keyMap[region]}`) : region;
   };
 
   // Group events by day of the week in selected timezone
@@ -355,7 +350,7 @@ const EconomicCalendar = () => {
     
     eventsList.forEach(event => {
       const eventDate = new Date(event.scheduled_time);
-      const dayKey = formatInTimeZone(eventDate, selectedTimezone, 'EEEE, MMMM d, yyyy');
+      const dayKey = formatInTimeZone(eventDate, selectedTimezone, 'EEEE, MMMM d, yyyy', { locale: dateLocale });
       
       if (!grouped[dayKey]) {
         grouped[dayKey] = [];
@@ -475,9 +470,9 @@ const EconomicCalendar = () => {
             <Label className="text-xs font-medium whitespace-nowrap">{t('economicCalendar.importance')}</Label>
             <div className="flex gap-1">
               {[
-                { value: "high", label: "High", variant: "destructive" },
-                { value: "medium", label: "Med", variant: "default" },
-                { value: "low", label: "Low", variant: "secondary" }
+                { value: "high", labelKey: "high", variant: "destructive" },
+                { value: "medium", labelKey: "med", variant: "default" },
+                { value: "low", labelKey: "low", variant: "secondary" }
               ].map((importance) => (
                 <Button
                   key={importance.value}
@@ -492,7 +487,7 @@ const EconomicCalendar = () => {
                     );
                   }}
                 >
-                  {importance.label}
+                  {t(`economicCalendar.${importance.labelKey}`)}
                 </Button>
               ))}
             </div>
@@ -502,7 +497,7 @@ const EconomicCalendar = () => {
           <div className="flex items-start gap-2">
             <Label className="text-xs font-medium whitespace-nowrap pt-1">{t('economicCalendar.countries')}</Label>
             <div className="flex gap-1 flex-wrap max-w-4xl">
-              {REGIONS.map((region) => (
+              {REGION_KEYS.map((region) => (
                 <Button
                   key={region.value}
                   variant={selectedCountries.includes(region.value) ? "default" : "outline"}
@@ -518,7 +513,7 @@ const EconomicCalendar = () => {
                 >
                   <img 
                     src={getCountryFlag(region.value)} 
-                    alt={`${region.label} flag`}
+                    alt={`${t(`economicCalendar.${region.key}`)} flag`}
                     className="w-4 h-3 object-cover rounded"
                   />
                   {region.value}
@@ -575,7 +570,7 @@ const EconomicCalendar = () => {
                         </Badge>
                       </CardTitle>
                       <CardDescription className="text-xs">
-                        {format(thisWeekStart, 'MMM d')} - {format(thisWeekEnd, 'MMM d, yyyy')}
+                        {format(thisWeekStart, 'MMM d', { locale: dateLocale })} - {format(thisWeekEnd, 'MMM d, yyyy', { locale: dateLocale })}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -641,7 +636,7 @@ const EconomicCalendar = () => {
                          {t('economicCalendar.nextWeek')} ({nextWeekEvents.length})
                       </CardTitle>
                       <CardDescription className="text-xs">
-                        {format(nextWeekStart, 'MMM d')} - {format(nextWeekEnd, 'MMM d, yyyy')}
+                        {format(nextWeekStart, 'MMM d', { locale: dateLocale })} - {format(nextWeekEnd, 'MMM d, yyyy', { locale: dateLocale })}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -670,19 +665,19 @@ const EconomicCalendar = () => {
                                     <div className="flex gap-4 text-xs mt-2 ml-7">
                                       {event.actual_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Actual: </span>
+                                          <span className="text-muted-foreground">{t('economicCalendar.actual')} </span>
                                           <span className="font-semibold">{event.actual_value}</span>
                                         </div>
                                       )}
                                       {event.forecast_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Forecast: </span>
+                                          <span className="text-muted-foreground">{t('economicCalendar.forecast')} </span>
                                           <span>{event.forecast_value}</span>
                                         </div>
                                       )}
                                       {event.previous_value && (
                                         <div>
-                                          <span className="text-muted-foreground">Previous: </span>
+                                          <span className="text-muted-foreground">{t('economicCalendar.previous')} </span>
                                           <span>{event.previous_value}</span>
                                         </div>
                                       )}
@@ -740,26 +735,26 @@ const EconomicCalendar = () => {
                                 <div className="flex gap-4 text-xs mt-2 ml-7">
                                   {event.actual_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Actual: </span>
+                                      <span className="text-muted-foreground">{t('economicCalendar.actual')} </span>
                                       <span className="font-semibold">{event.actual_value}</span>
                                     </div>
                                   )}
                                   {event.forecast_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Forecast: </span>
+                                      <span className="text-muted-foreground">{t('economicCalendar.forecast')} </span>
                                       <span>{event.forecast_value}</span>
                                     </div>
                                   )}
                                   {event.previous_value && (
                                     <div>
-                                      <span className="text-muted-foreground">Previous: </span>
+                                      <span className="text-muted-foreground">{t('economicCalendar.previous')} </span>
                                       <span>{event.previous_value}</span>
                                     </div>
                                   )}
                                 </div>
                                 {event.market_impact && (
                                   <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-2 border-yellow-500 p-2 rounded text-xs ml-7 mt-2">
-                                    <span className="font-medium">Impact: </span>
+                                    <span className="font-medium">{t('economicCalendar.impact')} </span>
                                     <span className="text-muted-foreground">{event.market_impact}</span>
                                   </div>
                                 )}
@@ -827,7 +822,7 @@ const EconomicCalendar = () => {
                           <Label htmlFor="telegram-chat-id">{t('economicCalendar.telegramChatId')}</Label>
                           <Input
                             id="telegram-chat-id"
-                            placeholder="Your Telegram Chat ID"
+                            placeholder={t('economicCalendar.telegramChatIdPlaceholder')}
                             value={preferences.telegram_chat_id || ""}
                             onChange={(e) =>
                               setPreferences({ ...preferences, telegram_chat_id: e.target.value })
@@ -854,7 +849,7 @@ const EconomicCalendar = () => {
                       <div className="space-y-3">
                         <Label>{t('economicCalendar.regions')}</Label>
                         <div className="grid grid-cols-2 gap-3">
-                          {REGIONS.map((region) => (
+                          {REGION_KEYS.map((region) => (
                             <div key={region.value} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`region-${region.value}`}
@@ -874,7 +869,7 @@ const EconomicCalendar = () => {
                                 }}
                               />
                               <Label htmlFor={`region-${region.value}`} className="font-normal cursor-pointer">
-                                {region.label}
+                                {t(`economicCalendar.${region.key}`)}
                               </Label>
                             </div>
                           ))}
@@ -885,7 +880,7 @@ const EconomicCalendar = () => {
                       <div className="space-y-3">
                         <Label>{t('economicCalendar.indicatorTypes')}</Label>
                         <div className="grid grid-cols-1 gap-3">
-                          {INDICATOR_TYPES.map((type) => (
+                          {INDICATOR_KEYS.map((type) => (
                             <div key={type.value} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`type-${type.value}`}
@@ -905,7 +900,7 @@ const EconomicCalendar = () => {
                                 }}
                               />
                               <Label htmlFor={`type-${type.value}`} className="font-normal cursor-pointer">
-                                {type.label}
+                                {t(`economicCalendar.${type.key}`)}
                               </Label>
                             </div>
                           ))}
@@ -936,7 +931,7 @@ const EconomicCalendar = () => {
                                 }}
                               />
                               <Label htmlFor={`impact-${level}`} className="font-normal cursor-pointer capitalize">
-                                {level}
+                                {t(`economicCalendar.${level === 'medium' ? 'med' : level}`)}
                               </Label>
                             </div>
                           ))}
