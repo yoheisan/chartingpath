@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -128,6 +129,7 @@ interface ActivePatternsAccordionProps {
 
 function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel }: ActivePatternsAccordionProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const { t } = useTranslation();
 
   return (
     <Card className="border-primary/50">
@@ -138,7 +140,7 @@ function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 <CardTitle className="text-lg">
-                  Active Patterns ({livePatterns.length})
+                  {t('tickerStudy.activePatterns', { count: livePatterns.length })}
                 </CardTitle>
                 <Badge variant="secondary" className="text-xs">
                   {timeframeLabel}
@@ -178,15 +180,15 @@ function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div>
-                        <p className="text-muted-foreground">Entry</p>
+                        <p className="text-muted-foreground">{t('tickerStudy.entry')}</p>
                         <p className="font-medium">${pattern.entry_price.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Target</p>
+                        <p className="text-muted-foreground">{t('tickerStudy.target')}</p>
                         <p className="font-medium text-green-500">${pattern.take_profit_price.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Stop</p>
+                        <p className="text-muted-foreground">{t('tickerStudy.stop')}</p>
                         <p className="font-medium text-red-500">${pattern.stop_loss_price.toFixed(2)}</p>
                       </div>
                     </div>
@@ -204,6 +206,7 @@ function ActivePatternsAccordion({ livePatterns, onSelectPattern, timeframeLabel
 export default function TickerStudy() {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [livePatterns, setLivePatterns] = useState<LivePattern[]>([]);
@@ -238,7 +241,7 @@ export default function TickerStudy() {
   const getYahooInterval = useCallback((tf: string) => {
     const mapping: Record<string, string> = {
       '1h': '1h',
-      '4h': '4h', // Yahoo doesn't support 4h directly, we'll aggregate
+      '4h': '4h',
       '1d': '1d',
       '1wk': '1wk',
     };
@@ -250,12 +253,10 @@ export default function TickerStudy() {
 
     const fetchData = async () => {
       setLoading(true);
-      // Prevent stale chart data from a previous symbol while the new one loads.
       setPriceData([]);
       try {
         const normalized = normalizeSymbol(decodedSymbol);
         
-        // Build symbol variants for querying
         const symbolVariants = [
           decodedSymbol,
           normalized,
@@ -279,7 +280,6 @@ export default function TickerStudy() {
           console.error('Error fetching historical patterns:', historicalError);
         }
         
-        // If no cached patterns exist for this timeframe, run on-demand detection
         if (!historicalData || historicalData.length === 0) {
           console.log(`No cached patterns for ${decodedSymbol} on ${selectedTimeframe}, running on-demand detection...`);
           
@@ -433,7 +433,6 @@ export default function TickerStudy() {
           }
         }
 
-        // Only use DB data if we have enough bars, otherwise fetch fresh from Yahoo
         const hasEnoughData = pricesData && pricesData.length >= minBarsRequired;
 
         if (hasEnoughData) {
@@ -449,7 +448,6 @@ export default function TickerStudy() {
             .reverse();
           setPriceData(bars);
         } else {
-          // Yahoo fallback using DATA_COVERAGE contract limits
           const endDate = new Date();
           const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
           const startStr = startDate.toISOString().slice(0, 10);
@@ -480,7 +478,6 @@ export default function TickerStudy() {
             );
 
             if (yfError) {
-              // Try next candidate
               continue;
             }
 
@@ -490,7 +487,6 @@ export default function TickerStudy() {
               break;
             }
 
-            // Some environments/providers may not return OHLC; fall back to close-only series.
             const idx = (yfData as any)?.index as string[] | undefined;
             const matrix = (yfData as any)?.data as number[][] | undefined;
             if (Array.isArray(idx) && Array.isArray(matrix) && idx.length > 0 && matrix.length > 0) {
@@ -548,7 +544,6 @@ export default function TickerStudy() {
   const filteredHistoricalPatterns = useMemo(() => {
     let results = historicalPatterns;
     
-    // Multi-select pattern filter
     if (selectedPatternTypes.length > 0) {
       results = results.filter(p => selectedPatternTypes.includes(p.pattern_id));
     }
@@ -567,12 +562,10 @@ export default function TickerStudy() {
     const losses = withOutcome.filter(p => p.outcome === 'hit_sl');
     const totalPnl = withOutcome.reduce((sum, p) => sum + (p.outcome_pnl_percent || 0), 0);
     
-    // Calculate profit factor
     const totalWinPnl = wins.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0);
     const totalLossPnl = losses.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0);
     const profitFactor = totalLossPnl > 0 ? totalWinPnl / totalLossPnl : totalWinPnl > 0 ? Infinity : 0;
     
-    // Calculate expectancy (average R-multiple approximation)
     const avgWin = wins.length > 0 ? wins.reduce((sum, p) => sum + (p.outcome_pnl_percent || 0), 0) / wins.length : 0;
     const avgLoss = losses.length > 0 ? losses.reduce((sum, p) => sum + Math.abs(p.outcome_pnl_percent || 0), 0) / losses.length : 0;
     const winRate = withOutcome.length > 0 ? wins.length / withOutcome.length : 0;
@@ -626,12 +619,12 @@ export default function TickerStudy() {
 
   const getOutcomeLabel = (outcome: string | null) => {
     switch (outcome) {
-      case 'hit_tp': return 'Target Hit';
-      case 'hit_sl': return 'Stop Hit';
-      case 'timeout': return 'Timeout';
-      case 'pending': return 'Pending';
-      case 'invalidated': return 'Invalidated';
-      default: return 'Unknown';
+      case 'hit_tp': return t('tickerStudy.targetHit');
+      case 'hit_sl': return t('tickerStudy.stopHit');
+      case 'timeout': return t('tickerStudy.timeout');
+      case 'pending': return t('tickerStudy.pending');
+      case 'invalidated': return t('tickerStudy.invalidated');
+      default: return t('tickerStudy.unknown');
     }
   };
 
@@ -640,9 +633,9 @@ export default function TickerStudy() {
       <div className="container mx-auto py-8 px-4">
         <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Search Ticker</CardTitle>
+            <CardTitle className="text-2xl">{t('tickerStudy.searchTicker')}</CardTitle>
             <p className="text-muted-foreground">
-              Search for any instrument to view its historical pattern occurrences
+              {t('tickerStudy.searchDescription')}
             </p>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -651,7 +644,7 @@ export default function TickerStudy() {
               trigger={
                 <Button size="lg" className="gap-2">
                   <Search className="h-5 w-5" />
-                  Search Instruments
+                  {t('tickerStudy.searchInstruments')}
                 </Button>
               }
             />
@@ -673,7 +666,7 @@ export default function TickerStudy() {
             <InstrumentLogo instrument={displaySymbol} size="lg" showName={false} />
             <div>
               <h1 className="text-2xl font-bold">{displaySymbol}</h1>
-              <p className="text-sm text-muted-foreground">Pattern History & Analysis</p>
+              <p className="text-sm text-muted-foreground">{t('tickerStudy.patternHistoryAnalysis')}</p>
             </div>
           </div>
         </div>
@@ -683,7 +676,7 @@ export default function TickerStudy() {
           trigger={
             <Button variant="outline" className="gap-2">
               <Search className="h-4 w-4" />
-              Change Symbol
+              {t('tickerStudy.changeSymbol')}
             </Button>
           }
         />
@@ -696,7 +689,7 @@ export default function TickerStudy() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                Price Chart ({timeframeLabel}) — {displaySymbol}
+                {t('tickerStudy.priceChart', { timeframe: timeframeLabel, symbol: displaySymbol })}
               </CardTitle>
               <TimeframeSelector
                 value={selectedTimeframe}
@@ -724,7 +717,7 @@ export default function TickerStudy() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                Price Chart ({timeframeLabel})
+                {t('tickerStudy.priceChartLoading', { timeframe: timeframeLabel })}
               </CardTitle>
               <TimeframeSelector
                 value={selectedTimeframe}
@@ -749,18 +742,18 @@ export default function TickerStudy() {
         />
       )}
 
-      {/* Performance Metrics - Right above Historical Patterns for immediate filter feedback */}
+      {/* Performance Metrics */}
       <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary" />
-                Performance Metrics
+                {t('tickerStudy.performanceMetrics')}
               </CardTitle>
               {filteredStats.sampleSize > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Based on {filteredStats.sampleSize} resolved trades
+                  {t('tickerStudy.basedOnTrades', { count: filteredStats.sampleSize })}
                 </p>
               )}
             </div>
@@ -773,8 +766,8 @@ export default function TickerStudy() {
                   <Button variant="outline" size="sm" className="gap-2">
                     <Filter className="h-4 w-4" />
                     {selectedPatternTypes.length === 0 
-                      ? 'All Patterns' 
-                      : `${selectedPatternTypes.length} Selected`}
+                      ? t('tickerStudy.allPatterns') 
+                      : t('tickerStudy.selected', { count: selectedPatternTypes.length })}
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </PopoverTrigger>
@@ -784,7 +777,7 @@ export default function TickerStudy() {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Filter by Pattern</p>
+                      <p className="text-sm font-medium">{t('tickerStudy.filterByPattern')}</p>
                       {selectedPatternTypes.length > 0 && (
                         <Button 
                           variant="ghost" 
@@ -792,7 +785,7 @@ export default function TickerStudy() {
                           className="h-6 px-2 text-xs"
                           onClick={clearPatternFilter}
                         >
-                          Clear all
+                          {t('tickerStudy.clearAll')}
                         </Button>
                       )}
                     </div>
@@ -829,14 +822,14 @@ export default function TickerStudy() {
               {/* Outcome Filter */}
               <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
                 <SelectTrigger className="w-[130px] h-9">
-                  <SelectValue placeholder="All Outcomes" />
+                  <SelectValue placeholder={t('tickerStudy.allOutcomes')} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                  <SelectItem value="all">All Outcomes</SelectItem>
-                  <SelectItem value="hit_tp">Target Hit</SelectItem>
-                  <SelectItem value="hit_sl">Stop Hit</SelectItem>
-                  <SelectItem value="timeout">Timeout</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="all">{t('tickerStudy.allOutcomes')}</SelectItem>
+                  <SelectItem value="hit_tp">{t('tickerStudy.targetHit')}</SelectItem>
+                  <SelectItem value="hit_sl">{t('tickerStudy.stopHit')}</SelectItem>
+                  <SelectItem value="timeout">{t('tickerStudy.timeout')}</SelectItem>
+                  <SelectItem value="pending">{t('tickerStudy.pending')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -863,43 +856,43 @@ export default function TickerStudy() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className="text-2xl font-bold">{filteredStats.totalPatterns}</p>
-              <p className="text-xs text-muted-foreground">Patterns</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.patterns')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className="text-2xl font-bold text-primary">{filteredStats.activePatterns}</p>
-              <p className="text-xs text-muted-foreground">Active Now</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.activeNow')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className={`text-2xl font-bold ${filteredStats.winRate >= 50 ? 'text-green-500' : 'text-amber-500'}`}>
                 {filteredStats.winRate.toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground">Win Rate</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.winRate')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className={`text-2xl font-bold ${filteredStats.avgPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {filteredStats.avgPnl >= 0 ? '+' : ''}{filteredStats.avgPnl.toFixed(2)}%
               </p>
-              <p className="text-xs text-muted-foreground">Avg P&L</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.avgPnl')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className={`text-2xl font-bold ${filteredStats.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {filteredStats.totalPnl >= 0 ? '+' : ''}{filteredStats.totalPnl.toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground">Total P&L</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.totalPnl')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className={`text-2xl font-bold ${filteredStats.profitFactor >= 1 ? 'text-green-500' : 'text-red-500'}`}>
                 {filteredStats.profitFactor.toFixed(2)}
               </p>
-              <p className="text-xs text-muted-foreground">Profit Factor</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.profitFactor')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className="text-2xl font-bold text-green-500">{filteredStats.wins}</p>
-              <p className="text-xs text-muted-foreground">Wins</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.wins')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50">
               <p className="text-2xl font-bold text-red-500">{filteredStats.losses}</p>
-              <p className="text-xs text-muted-foreground">Losses</p>
+              <p className="text-xs text-muted-foreground">{t('tickerStudy.losses')}</p>
             </div>
           </div>
         </CardContent>
@@ -911,13 +904,13 @@ export default function TickerStudy() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              Historical Pattern Occurrences
+              {t('tickerStudy.historicalPatternOccurrences')}
               <Badge variant="secondary" className="text-xs">
                 {timeframeLabel}
               </Badge>
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {filteredHistoricalPatterns.length} patterns found
+              {t('tickerStudy.patternsFound', { count: filteredHistoricalPatterns.length })}
             </p>
           </div>
         </CardHeader>
@@ -933,16 +926,16 @@ export default function TickerStudy() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Pattern</TableHead>
-                    <TableHead className="w-[100px]">Chart</TableHead>
-                    <TableHead className="w-[90px]">Replay</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Entry</TableHead>
-                    <TableHead className="text-right">Target</TableHead>
-                    <TableHead className="text-right">Stop</TableHead>
-                    <TableHead className="text-center">R:R</TableHead>
-                    <TableHead className="text-center">Outcome</TableHead>
-                    <TableHead className="text-right">P&L</TableHead>
+                    <TableHead>{t('tickerStudy.pattern')}</TableHead>
+                    <TableHead className="w-[100px]">{t('tickerStudy.chart')}</TableHead>
+                    <TableHead className="w-[90px]">{t('tickerStudy.replay')}</TableHead>
+                    <TableHead>{t('tickerStudy.date')}</TableHead>
+                    <TableHead className="text-right">{t('tickerStudy.entry')}</TableHead>
+                    <TableHead className="text-right">{t('tickerStudy.target')}</TableHead>
+                    <TableHead className="text-right">{t('tickerStudy.stop')}</TableHead>
+                    <TableHead className="text-center">{t('tickerStudy.rr')}</TableHead>
+                    <TableHead className="text-center">{t('tickerStudy.outcome')}</TableHead>
+                    <TableHead className="text-right">{t('tickerStudy.pnl')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -976,7 +969,7 @@ export default function TickerStudy() {
                           }}
                         >
                           <BarChart3 className="h-4 w-4 mr-1.5" />
-                          Open Chart
+                          {t('tickerStudy.openChart')}
                         </Button>
                       </TableCell>
                       <TableCell className="py-2">
@@ -1034,7 +1027,7 @@ export default function TickerStudy() {
                           }}
                         >
                           <Play className="h-4 w-4 mr-1.5 fill-current" />
-                          Replay
+                          {t('tickerStudy.replay')}
                         </Button>
                       </TableCell>
                       <TableCell>
@@ -1082,11 +1075,11 @@ export default function TickerStudy() {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No Historical Patterns Found</p>
+              <p className="text-lg font-medium">{t('tickerStudy.noHistoricalPatterns')}</p>
               <p className="text-sm">
                 {selectedPatternTypes.length > 0 || outcomeFilter !== 'all' 
-                  ? 'Try adjusting your filters' 
-                  : 'Pattern history will populate as patterns are detected and resolved'}
+                  ? t('tickerStudy.adjustFilters') 
+                  : t('tickerStudy.patternsWillPopulate')}
               </p>
             </div>
           )}
@@ -1095,7 +1088,6 @@ export default function TickerStudy() {
 
       {/* Full Chart Viewer Modal */}
       {selectedPattern && (() => {
-        // Convert pattern to SetupWithVisuals format
         const setup: SetupWithVisuals = {
           instrument: displaySymbol,
           patternId: selectedPattern.pattern_id,
