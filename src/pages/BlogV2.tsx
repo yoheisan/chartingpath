@@ -61,6 +61,12 @@ interface Article {
   view_count: number;
 }
 
+interface ArticleTranslation {
+  article_id: string;
+  title: string;
+  excerpt: string | null;
+}
+
 // Shared fetch function - excludes heavy content field for list view
 const fetchArticles = async (): Promise<Article[]> => {
   const { data, error } = await supabase
@@ -73,22 +79,70 @@ const fetchArticles = async (): Promise<Article[]> => {
   return data || [];
 };
 
+const fetchTranslations = async (langCode: string): Promise<ArticleTranslation[]> => {
+  if (langCode === 'en') return [];
+  const { data, error } = await supabase
+    .from('learning_article_translations')
+    .select('article_id, title, excerpt')
+    .eq('language_code', langCode)
+    .in('status', ['approved', 'auto_translated']);
+
+  if (error) {
+    console.warn('[BlogV2] Translation fetch failed:', error.message);
+    return [];
+  }
+  return data || [];
+};
+
 const BlogV2 = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const l = (key: string) => t(`learn.${key}`);
+  const currentLang = i18n.language?.split('-')[0] || 'en';
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const prefetchArticle = usePrefetchArticle();
 
   // React Query with aggressive cache: show stale data instantly while revalidating
-  const { data: articles = [], isLoading, isFetching } = useQuery({
+  const { data: articles = [], isLoading } = useQuery({
     queryKey: ['learning-articles'],
     queryFn: fetchArticles,
-    staleTime: 60 * 60 * 1000, // 1 hour – treat as fresh for a long time
-    gcTime: 24 * 60 * 60 * 1000, // keep cache for 24h
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always', // still revalidate in background
+    refetchOnMount: 'always',
   });
+
+  // Fetch translations for current language
+  const { data: translations = [] } = useQuery({
+    queryKey: ['learning-article-translations', currentLang],
+    queryFn: () => fetchTranslations(currentLang),
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    enabled: currentLang !== 'en',
+  });
+
+  // Build translation map for O(1) lookups
+  const translationMap = useMemo(() => {
+    const map = new Map<string, ArticleTranslation>();
+    for (const tr of translations) {
+      map.set(tr.article_id, tr);
+    }
+    return map;
+  }, [translations]);
+
+  // Apply translations to articles
+  const localizedArticles = useMemo(() => {
+    if (currentLang === 'en' || translationMap.size === 0) return articles;
+    return articles.map(article => {
+      const tr = translationMap.get(article.id);
+      if (!tr) return article;
+      return {
+        ...article,
+        title: tr.title || article.title,
+        excerpt: tr.excerpt || article.excerpt,
+      };
+    });
+  }, [articles, translationMap, currentLang]);
 
   // Hover-intent prefetch handler with debounce
   const handleHover = useCallback((slug: string) => {
@@ -97,7 +151,7 @@ const BlogV2 = () => {
 
   // Memoized filtering for performance
   const filteredArticles = useMemo(() => {
-    let filtered = articles;
+    let filtered = localizedArticles;
 
     // Filter by category
     if (selectedCategory !== "all") {
@@ -115,11 +169,11 @@ const BlogV2 = () => {
     }
 
     return filtered;
-  }, [articles, searchQuery, selectedCategory]);
+  }, [localizedArticles, searchQuery, selectedCategory]);
 
   const categories = useMemo(() => 
-    ["all", ...Array.from(new Set(articles.map(a => a.category)))],
-    [articles]
+    ["all", ...Array.from(new Set(localizedArticles.map(a => a.category)))],
+    [localizedArticles]
   );
 
   if (isLoading) {
