@@ -176,8 +176,8 @@ const MarketBreadthReport = () => {
       
       // Show progress toast
       toast({
-        title: "Generating Report",
-        description: "Fetching market data and analyzing news... This may take 30-45 seconds.",
+        title: t('marketReport.toastGenerating'),
+        description: t('marketReport.toastGeneratingDesc'),
         variant: "default",
       });
       
@@ -195,8 +195,8 @@ const MarketBreadthReport = () => {
         // Handle payment/credits error
         if (error.message?.includes("credits") || error.message?.includes("Payment required")) {
           toast({
-            title: "OpenAI Credits Required",
-            description: "Please check your OpenAI API key and account credits to generate reports.",
+            title: t('marketReport.toastCreditsRequired'),
+            description: t('marketReport.toastCreditsRequiredDesc'),
             variant: "destructive",
           });
           return;
@@ -205,8 +205,8 @@ const MarketBreadthReport = () => {
         // Handle rate limit error gracefully
         if (error.message?.includes("Rate limit")) {
           toast({
-            title: "Please Wait",
-            description: "You can generate a new report in 30 minutes. Showing cached report.",
+            title: t('marketReport.toastPleaseWait'),
+            description: t('marketReport.toastPleaseWaitDesc'),
             variant: "default",
           });
           return;
@@ -240,8 +240,8 @@ const MarketBreadthReport = () => {
     } catch (error) {
       console.error("Error generating report:", error);
       toast({
-        title: "Error Generating Report",
-        description: error.message || "Failed to generate report. Please try again.",
+        title: t('marketReport.toastErrorGenerating'),
+        description: error.message || t('marketReport.toastErrorGeneratingDesc'),
         variant: "destructive",
       });
     } finally {
@@ -253,8 +253,8 @@ const MarketBreadthReport = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to save email subscription settings.",
+        title: t('marketReport.toastAuthRequired'),
+        description: t('marketReport.toastAuthRequiredDesc'),
         variant: "destructive",
       });
       return;
@@ -262,8 +262,8 @@ const MarketBreadthReport = () => {
 
     if (!subscription.email.trim()) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
+        title: t('marketReport.toastEmailRequired'),
+        description: t('marketReport.toastEmailRequiredDesc'),
         variant: "destructive",
       });
       return;
@@ -271,8 +271,8 @@ const MarketBreadthReport = () => {
 
     if (subscription.markets.length === 0) {
       toast({
-        title: "No Markets Selected",
-        description: "Please select at least one market.",
+        title: t('marketReport.toastNoMarkets'),
+        description: t('marketReport.toastNoMarketsDesc'),
         variant: "destructive",
       });
       return;
@@ -288,14 +288,14 @@ const MarketBreadthReport = () => {
       if (error) throw error;
 
       toast({
-        title: "Subscription Saved",
-        description: "Your email report preferences have been saved.",
+        title: t('marketReport.toastSaved'),
+        description: t('marketReport.toastSavedDesc'),
       });
     } catch (error) {
       console.error("Error saving subscription:", error);
       toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save subscription. Please try again.",
+        title: t('marketReport.toastSaveFailed'),
+        description: error.message || t('marketReport.toastSaveFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -315,8 +315,8 @@ const MarketBreadthReport = () => {
   const handleSendTestEmail = async () => {
     if (!subscription.email.trim()) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address first.",
+        title: t('marketReport.toastEmailRequired'),
+        description: t('marketReport.toastEnterEmailFirst'),
         variant: "destructive",
       });
       return;
@@ -324,8 +324,8 @@ const MarketBreadthReport = () => {
 
     if (!report) {
       toast({
-        title: "No Report Available",
-        description: "Please generate a report first.",
+        title: t('marketReport.toastNoReport'),
+        description: t('marketReport.toastNoReportDesc'),
         variant: "destructive",
       });
       return;
@@ -349,14 +349,14 @@ const MarketBreadthReport = () => {
       if (error) throw error;
 
       toast({
-        title: "Test Email Sent!",
-        description: `Market report sent to ${subscription.email}`,
+        title: t('marketReport.toastTestSent'),
+        description: t('marketReport.toastTestSentDesc', { email: subscription.email }),
       });
     } catch (error) {
       console.error("Error sending test email:", error);
       toast({
-        title: "Send Failed",
-        description: error.message || "Failed to send email. Please try again.",
+        title: t('marketReport.toastSendFailed'),
+        description: error.message || t('marketReport.toastSendFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -431,11 +431,11 @@ const MarketBreadthReport = () => {
                   <CardDescription>
                     {reportMetadata.region ? (
                       <>
-                        {reportMetadata.region} region report
+                        {t('marketReport.regionReport', { region: reportMetadata.region })}
                         {reportMetadata.cache_age_minutes !== undefined && (
-                          <> • Updated {reportMetadata.cache_age_minutes} min ago</>
+                          <> • {t('marketReport.updatedAgo', { minutes: reportMetadata.cache_age_minutes })}</>
                         )}
-                        <> • Auto-refresh enabled</>
+                        <> • {t('marketReport.autoRefreshEnabled')}</>
                       </>
                     ) : (
                       <>{t('marketReport.defaultDesc')}</>
@@ -762,7 +762,7 @@ const MarketBreadthReport = () => {
                         <div>
                           <p className="text-sm font-medium">{t('marketReport.frequency')}</p>
                           <p className="text-sm text-muted-foreground">
-                            {subscription.frequency === "daily" ? "Daily" : "Weekly (Monday)"}
+                            {subscription.frequency === "daily" ? t('marketReport.daily') : t('marketReport.weeklyMonday')}
                           </p>
                         </div>
                       </div>
@@ -796,8 +796,8 @@ const MarketBreadthReport = () => {
                         <div>
                           <p className="text-sm font-medium">{t('marketReport.settings')}</p>
                           <p className="text-sm text-muted-foreground">
-                            {subscription.tone.charAt(0).toUpperCase() + subscription.tone.slice(1)} tone,{" "}
-                            {subscription.time_span === "previous_day" ? "Previous Day" : "Past 5 Sessions"}
+                             {subscription.tone.charAt(0).toUpperCase() + subscription.tone.slice(1)} {t('marketReport.tone')},{" "}
+                             {subscription.time_span === "previous_day" ? t('marketReport.previousDay') : t('marketReport.past5Sessions')}
                           </p>
                         </div>
                       </div>

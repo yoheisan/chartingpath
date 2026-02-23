@@ -465,13 +465,13 @@ const MemberAlerts = () => {
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Failed to Load Alerts</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
-                </div>
-                <Button onClick={handleRetry} className="mt-4">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
+                 <h3 className="font-semibold text-lg">{t('alerts.failedToLoad')}</h3>
+                   <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                 </div>
+                 <Button onClick={handleRetry} className="mt-4">
+                   <RefreshCw className="h-4 w-4 mr-2" />
+                   {t('alerts.retry')}
+                 </Button>
               </div>
             </CardContent>
           </Card>
@@ -516,7 +516,7 @@ const MemberAlerts = () => {
         <div className="flex items-center justify-center gap-2">
           <Badge className="flex items-center gap-1">
             {getPlanIcon(profile?.subscription_plan || 'free')}
-            {planLimits.name} Plan
+            {planLimits.name} {t('alerts.plan')}
           </Badge>
           <span className="text-sm text-muted-foreground">
             ({activeAlerts.length}/{planLimits.max === 999999 ? '∞' : planLimits.max} active alerts)
@@ -604,7 +604,7 @@ const MemberAlerts = () => {
                       className="h-6 px-2 text-xs"
                       onClick={clearPatterns}
                     >
-                      Clear ({selectedPatterns.length})
+                      {t('alerts.clear')} ({selectedPatterns.length})
                       <X className="h-3 w-3 ml-1" />
                     </Button>
                   )}
@@ -690,9 +690,9 @@ const MemberAlerts = () => {
                   <Lock className="h-4 w-4" />
                   <span className="font-medium">{t('alerts.alertLimitReached')}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  You're using {activeAlerts.length}/{planLimits.max} alerts on your {planLimits.name} plan.
-                </p>
+                 <p className="text-sm text-muted-foreground mb-3">
+                   {t('alerts.usingAlerts', { current: activeAlerts.length, max: planLimits.max, plan: planLimits.name })}
+                 </p>
                 <Button asChild size="sm">
                   <Link to="/projects/pricing">
                      <TrendingUp className="h-4 w-4 mr-2" />
@@ -714,7 +714,7 @@ const MemberAlerts = () => {
                 ) : (
                   <>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create {selectedPatterns.length > 1 ? `${selectedPatterns.length} Alerts` : 'Alert'}
+                    {t('alerts.createAlertBtn', { count: selectedPatterns.length })}
                   </>
                 )}
               </Button>
@@ -791,9 +791,9 @@ const MemberAlerts = () => {
                              </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteAlert(alert.id)}>
-                              Delete
+                             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                             <AlertDialogAction onClick={() => deleteAlert(alert.id)}>
+                               {t('common.delete')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
