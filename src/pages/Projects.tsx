@@ -18,6 +18,7 @@ import {
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { CreditUsageBar, DashboardUpgradeNudge } from "@/components/upgrade";
 
 interface ProjectTemplate {
   id: string;
@@ -296,11 +297,7 @@ const Projects = () => {
                 </p>
               </div>
               
-              <CreditsDisplay 
-                balance={creditsBalance}
-                planTier={planTier}
-                loading={profileLoading || creditsLoading}
-              />
+              <CreditUsageBar compact className="ml-auto" />
             </div>
           </div>
         </section>
@@ -338,6 +335,11 @@ const Projects = () => {
               </div>
             </div>
           )}
+          
+          {/* Upgrade nudge for free users */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <DashboardUpgradeNudge />
+          </div>
         </section>
         
         {/* How It Works */}
