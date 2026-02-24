@@ -28,3 +28,8 @@ Disallow: /admin/
 Disallow: /auth
 
 Sitemap: https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/sitemap
+
+# AI discoverability
+# llms.txt: https://chartingpath.com/llms.txt
+# llms-full.txt: https://chartingpath.com/llms-full.txt
+# ai-plugin.json: https://chartingpath.com/.well-known/ai-plugin.json

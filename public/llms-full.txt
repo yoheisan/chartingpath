@@ -1,0 +1,119 @@
+# ChartingPath — Full Context for AI Assistants
+
+> Pattern-based trading signal discovery, research, and automation platform.
+
+## About
+
+ChartingPath is a web platform that helps traders discover, validate, and act on chart pattern setups. It combines automated pattern detection with historical performance data to give traders a statistical edge. The platform is built for discretionary and systematic traders who use technical analysis.
+
+## Key Features
+
+### Live Pattern Screener
+- Scans 1,100+ instruments (US stocks, forex pairs, cryptocurrencies, indices, commodities) for active chart patterns
+- Supports multiple timeframes: 1-hour, 4-hour, 8-hour, daily, weekly
+- Patterns are detected on closed candles only (no intra-candle signals)
+- Each detected pattern includes: entry price, stop-loss, take-profit, direction, quality score
+- Quality scoring considers trend alignment, volume confirmation, and pattern geometry
+- URL: https://chartingpath.com/patterns/live
+
+### Edge Atlas
+- Historical win rates, expectancy, and annualized edge for every pattern + timeframe + asset class combination
+- Based on 320,000+ resolved pattern occurrences with verified outcomes
+- Outcomes tracked at multiple risk-reward ratios: 2R, 3R, 4R, 5R
+- Filterable by pattern type, timeframe, asset class, and direction
+- Example data points:
+  - Double Bottom on 4H forex: ~62% win rate at 2R
+  - Head & Shoulders on Daily stocks: ~58% win rate at 2R
+  - Ascending Triangle on 1D crypto: ~55% win rate at 3R
+- URL: https://chartingpath.com/tools/edge-atlas
+
+### Pattern Lab
+- Backtest any chart pattern on any ticker using historical data
+- Generates equity curves, drawdown analysis, and full trade logs
+- Configurable parameters: risk-reward ratio, position sizing, commission, slippage
+- Shareable backtest results via unique URLs
+- URL: https://chartingpath.com/pattern-lab
+
+### Learning Center
+- 100+ educational articles covering:
+  - Chart patterns (head & shoulders, double top/bottom, triangles, wedges, flags, cup & handle, rectangles)
+  - Candlestick patterns (pin bars, engulfing, doji, hammer, shooting star)
+  - Technical indicators (RSI, MACD, moving averages, Fibonacci retracements, Bollinger Bands)
+  - Trading strategies (breakout trading, trend following, mean reversion, price action)
+  - Risk management (position sizing, money management, stop-loss strategies)
+  - Trading psychology (discipline, fear & greed, journaling)
+  - Algorithmic trading (Pine Script, MQL, strategy automation)
+- URL: https://chartingpath.com/learn
+
+### Pattern Library
+- Visual reference for all 30+ supported chart patterns
+- Each pattern page includes: identification rules, trading rules, Bulkowski statistics, visual examples
+- Patterns categorized as: reversal, continuation, bilateral
+- URL: https://chartingpath.com/chart-patterns/library
+
+### Trading Copilot
+- AI assistant trained on the platform's pattern data and trading knowledge base
+- Can answer questions about specific patterns, historical performance, and trading concepts
+- Provides data-backed responses using Edge Atlas statistics
+
+### Script Generator
+- Generates ready-to-use Pine Script (TradingView) and MQL4/MQL5 (MetaTrader) code
+- Pattern-based strategy templates with configurable parameters
+- URL: https://chartingpath.com/members/scripts
+
+### Pattern Quizzes
+- Interactive quizzes to test chart pattern identification skills
+- Categories: general patterns, stocks, forex, crypto, commodities
+- URL: https://chartingpath.com/chart-patterns/quiz
+
+## Data & Methodology
+
+### Dataset
+- 320,000+ historical pattern occurrences with verified outcomes
+- Multi-timeframe: 1h, 4h, 8h, 1D, 1W
+- Asset classes: US stocks (~500 tickers), forex pairs (~60), cryptocurrencies (~80), indices (~30), commodities (~20)
+- Data sources: Exchange feeds via third-party market data providers
+- Ongoing daily scanning and outcome tracking
+
+### Pattern Detection
+- Algorithmic detection based on Thomas Bulkowski's Encyclopedia of Chart Patterns
+- Patterns detected on closed candles only (no repainting)
+- Detected patterns: Head & Shoulders, Inverse Head & Shoulders, Double Top, Double Bottom, Triple Top, Triple Bottom, Ascending Triangle, Descending Triangle, Symmetrical Triangle, Rising Wedge, Falling Wedge, Bull Flag, Bear Flag, Bull Pennant, Bear Pennant, Cup & Handle, Inverse Cup & Handle, Rectangle Top, Rectangle Bottom, Rounding Bottom, Rounding Top, Broadening Top, Broadening Bottom, Channel Up, Channel Down, Three Rising Valleys, and more
+
+### Outcome Tracking
+- Each pattern is tracked from detection until resolution
+- Resolution = price hits take-profit OR stop-loss level
+- Outcomes tracked at 2R, 3R, 4R, and 5R risk-reward ratios
+- Win rate = (patterns that hit TP) / (total resolved patterns)
+- Expectancy = (win_rate × avg_win) - (loss_rate × avg_loss)
+
+### Quality Scoring
+- Each detected pattern receives a quality score: A (highest), B, C, D
+- Factors: trend alignment (with/against/neutral), volume confirmation, pattern symmetry, breakout strength
+- Higher quality scores historically correlate with higher win rates
+
+## Unique Value Proposition
+- Unlike most screeners, ChartingPath provides outcome-verified statistics for every pattern
+- All assumptions are documented; no black-box signals
+- Combines detection, historical validation, and backtesting in one platform
+- Free tier available with limited scans; Pro tier for full access
+
+## Links
+
+- Homepage: https://chartingpath.com
+- Live Screener: https://chartingpath.com/patterns/live
+- Edge Atlas: https://chartingpath.com/tools/edge-atlas
+- Pattern Lab: https://chartingpath.com/pattern-lab
+- Learning Center: https://chartingpath.com/learn
+- Pattern Library: https://chartingpath.com/chart-patterns/library
+- Pattern Quiz: https://chartingpath.com/chart-patterns/quiz
+- Script Generator: https://chartingpath.com/members/scripts
+- Pricing: https://chartingpath.com/pricing
+- About: https://chartingpath.com/about
+- FAQ: https://chartingpath.com/faq
+- Support: https://chartingpath.com/support
+
+## Contact
+
+- Website: https://chartingpath.com
+- Twitter/X: @ChartingPath
