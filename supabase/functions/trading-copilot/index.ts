@@ -827,7 +827,7 @@ async function logTrainingPair(
       user_id: userId,
       session_id: sessionId,
       prompt: prompt.substring(0, 5000),
-      response: response.substring(0, 5000),
+      response: response.substring(0, 8000),
       tool_calls: toolCalls.map((tc: any) => ({ name: tc.function?.name, args: tc.function?.arguments })),
       tool_results: toolResults.map((tr: any) => {
         try { return { content: JSON.parse(tr.content || '{}') }; } 
@@ -1239,6 +1239,7 @@ serve(async (req) => {
             tools,
             tool_choice: "auto",
             stream: false,
+            max_tokens: 4096,
           }),
         });
 
