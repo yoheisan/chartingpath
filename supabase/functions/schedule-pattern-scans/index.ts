@@ -180,6 +180,28 @@ serve(async (req) => {
       console.log(`[schedule-pattern-scans]   ${tf}: ${summary.patterns} patterns across ${summary.scans} asset types`);
     }
     
+    // Check if any live detections match user alerts → trigger notifications
+    try {
+      console.log('[schedule-pattern-scans] Checking alert matches...');
+      const alertMatchResponse = await fetch(`${supabaseUrl}/functions/v1/check-alert-matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({}),
+      });
+      
+      if (alertMatchResponse.ok) {
+        const matchResult = await alertMatchResponse.json();
+        console.log(`[schedule-pattern-scans] Alert matches: ${matchResult.matched || 0} alerts triggered`);
+      } else {
+        console.warn('[schedule-pattern-scans] Alert match check failed:', alertMatchResponse.status);
+      }
+    } catch (e) {
+      console.warn('[schedule-pattern-scans] Failed to check alert matches:', e);
+    }
+
     // Log scan completion to analytics
     try {
       await supabase.from('analytics_events').insert({
