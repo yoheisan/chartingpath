@@ -1,45 +1,44 @@
 
-# Fix: Increase Copilot Token Limits and Improve Response Completeness
 
-## Problem
-The `trading-copilot` edge function calls the Gemini API **without specifying `max_tokens`**, causing the model to use its default limit which often truncates longer responses (Edge Atlas tables, Pine Scripts, detailed analysis). This is the #1 retention risk identified by Journey Analytics.
+# Add Sort Controls to Copilot Feedback Dashboard
+
+## Overview
+Add a sort dropdown to the existing Copilot Feedback Dashboard so items within each filter tab can be reordered by different criteria.
+
+## Current State
+The dashboard already has three filter tabs (Content Gaps, High Priority, All Feedback) but always sorts by `priority_score` descending then `created_at` descending. There is no user-facing sort control.
 
 ## Changes
 
-### 1. Add `max_tokens` to the Gemini API request
-**File:** `supabase/functions/trading-copilot/index.ts`
+### File: `src/components/admin/CopilotFeedbackDashboard.tsx`
 
-Add `max_tokens: 4096` to the request body at line ~1236. This gives the model room for full markdown tables, complete Pine Script blocks, and detailed analysis without truncation.
+1. **Add a `sortBy` state** with options:
+   - `recent` -- Sort by `created_at` descending (most recent first)
+   - `priority` -- Sort by `priority_score` descending (highest priority first)
+   - `quality` -- Sort by `quality_score` ascending (lowest quality = biggest gaps first)
 
-```text
-body: JSON.stringify({
-  model: "gemini-2.0-flash",
-  messages: convo,
-  tools,
-  tool_choice: "auto",
-  stream: false,
-  max_tokens: 4096,    // <-- NEW
-}),
-```
+2. **Add a Select dropdown** next to the existing filter tabs, using the shadcn `Select` component, labeled "Sort by".
 
-### 2. Increase training-pair response storage limit
-**File:** `supabase/functions/trading-copilot/index.ts` (line ~829)
+3. **Update the `loadFeedback` query** to apply the selected sort order dynamically instead of the hardcoded `priority_score` + `created_at` ordering.
 
-The RLVR logger currently truncates stored responses at 5,000 characters. Increase to 8,000 to capture full responses for quality analysis.
+4. **Default sort**: `recent` so the newest feedback appears first by default.
+
+## UI Layout
 
 ```text
-response: response.substring(0, 8000),  // was 5000
++------------------------------------------+
+| [Content Gaps] [High Priority] [All]     |
+|                          Sort by: [v Recent ▾] |
++------------------------------------------+
+| Feedback cards...                        |
 ```
 
-### 3. Redeploy the edge function
-The `trading-copilot` function will be automatically redeployed after the code change.
+## Technical Details
 
-## Why 4,096 tokens?
-- Gemini 2.0 Flash supports up to 8,192 output tokens
-- 4,096 is enough for a full Edge Atlas table (10 rows), Pine Script (~200 lines), or a detailed chart analysis -- without wasting quota on unnecessarily long responses
-- This covers 95%+ of use cases; truly massive outputs (multi-pattern reports) can be addressed later if needed
+- Sort options mapped to Supabase `.order()` calls:
+  - `recent` -> `.order('created_at', { ascending: false })`
+  - `priority` -> `.order('priority_score', { ascending: false })`
+  - `quality` -> `.order('quality_score', { ascending: true, nullsFirst: false })`
+- The `useEffect` dependency array will include both `filter` and `sortBy` to reload data when either changes.
+- No new files or dependencies needed; uses existing `Select` component from shadcn/ui.
 
-## Impact
-- Directly addresses the "Incomplete Copilot responses" bottleneck
-- No cost increase concern -- Gemini bills by actual tokens generated, not the max limit
-- Immediate improvement visible to all users
