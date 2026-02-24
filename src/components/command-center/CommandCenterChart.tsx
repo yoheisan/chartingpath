@@ -9,8 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search, ToggleLeft, ToggleRight } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
@@ -76,8 +81,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [priceData, setPriceData] = useState<{ current: number; change: number; changePct: number } | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
-  const [selectedPattern, setSelectedPattern] = useState('none');
-  const [patternOccurrences, setPatternOccurrences] = useState<any[]>([]);
+  const [enabledPatterns, setEnabledPatterns] = useState<Set<string>>(new Set());
+  const [patternOccurrences, setPatternOccurrences] = useState<Record<string, any[]>>({});
   const [patternLoading, setPatternLoading] = useState(false);
 
   // Check if user is on a paid plan
@@ -263,72 +268,110 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     fetchChartData();
   }, [fetchChartData]);
 
-  // Fetch historical pattern occurrences when pattern is selected
+  // Toggle a single pattern on/off
+  const togglePattern = useCallback((patternId: string) => {
+    setEnabledPatterns(prev => {
+      const next = new Set(prev);
+      if (next.has(patternId)) {
+        next.delete(patternId);
+      } else {
+        next.add(patternId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Toggle all patterns
+  const toggleAllPatterns = useCallback(() => {
+    setEnabledPatterns(prev => {
+      const allIds = PATTERN_OPTIONS.filter(p => p.value !== 'none').map(p => p.value);
+      if (prev.size === allIds.length) {
+        return new Set(); // turn all off
+      }
+      return new Set(allIds); // turn all on
+    });
+  }, []);
+
+  // Fetch historical pattern occurrences for all enabled patterns
   useEffect(() => {
-    if (!selectedPattern || selectedPattern === 'none') {
-      setPatternOccurrences([]);
+    if (enabledPatterns.size === 0) {
+      setPatternOccurrences({});
       return;
     }
 
     const fetchPatterns = async () => {
       setPatternLoading(true);
       const upperSymbol = symbol.toUpperCase();
-      console.log(`[CommandCenterChart] Fetching patterns: symbol=${upperSymbol}, pattern_id=${selectedPattern}`);
-      try {
-        const { data, error } = await supabase
-          .from('historical_pattern_occurrences')
-          .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
-          .eq('symbol', upperSymbol)
-          .eq('pattern_id', selectedPattern)
-          .order('detected_at', { ascending: true })
-          .limit(100);
+      const results: Record<string, any[]> = {};
 
-        if (error) throw error;
-        console.log(`[CommandCenterChart] Pattern query returned ${data?.length || 0} occurrences`);
-        setPatternOccurrences(data || []);
+      try {
+        // Fetch all enabled patterns in parallel
+        const promises = Array.from(enabledPatterns).map(async (patternId) => {
+          const { data, error } = await supabase
+            .from('historical_pattern_occurrences')
+            .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
+            .eq('symbol', upperSymbol)
+            .eq('pattern_id', patternId)
+            .order('detected_at', { ascending: true })
+            .limit(100);
+
+          if (error) throw error;
+          results[patternId] = data || [];
+        });
+
+        await Promise.all(promises);
+        setPatternOccurrences(results);
       } catch (err) {
         console.error('[CommandCenterChart] pattern fetch error:', err);
-        setPatternOccurrences([]);
+        setPatternOccurrences({});
       } finally {
         setPatternLoading(false);
       }
     };
 
     fetchPatterns();
-  }, [selectedPattern, symbol]);
+  }, [enabledPatterns, symbol]);
 
-  // Generate chart markers from pattern occurrences
-  // Show only structural pivots (T1, T2, NL, etc.) for all occurrences
+  // Generate chart markers from all enabled pattern occurrences
   const chartMarkers: ChartMarker[] = useMemo(() => {
-    if (!selectedPattern || selectedPattern === 'none' || patternOccurrences.length === 0) return [];
+    if (enabledPatterns.size === 0) return [];
     
     const markers: ChartMarker[] = [];
-    const occurrenceColors = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899'];
-    
-    patternOccurrences.forEach((p, idx) => {
-      const color = occurrenceColors[idx % occurrenceColors.length];
-      const vs = p.visual_spec as any;
-      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
-      
-      if (pivots && pivots.length > 0) {
-        pivots.forEach((pivot) => {
-          if (!pivot?.timestamp || !pivot?.type) return;
-          const isHigh = pivot.type === 'high';
-          // Shorten verbose labels; short labels (R1, S1, NL, etc.) pass through as-is
-          const shortLabel = (pivot.label ?? '')
-            .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
-            .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
-            .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
-          markers.push({
-            time: pivot.timestamp,
-            position: isHigh ? 'aboveBar' : 'belowBar',
-            color,
-            shape: isHigh ? 'arrowDown' : 'arrowUp',
-            text: shortLabel || pivot.label,
-          });
-        });
+    const patternColors: Record<string, string> = {};
+    const colorPalette = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899', '#22c55e', '#3b82f6', '#ef4444'];
+    let colorIdx = 0;
+
+    for (const [patternId, occurrences] of Object.entries(patternOccurrences)) {
+      if (!enabledPatterns.has(patternId)) continue;
+      if (!patternColors[patternId]) {
+        patternColors[patternId] = colorPalette[colorIdx % colorPalette.length];
+        colorIdx++;
       }
-    });
+      const color = patternColors[patternId];
+      
+      occurrences.forEach((p: any) => {
+        const vs = p.visual_spec as any;
+        const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+        
+        if (pivots && pivots.length > 0) {
+          pivots.forEach((pivot) => {
+            if (!pivot?.timestamp || !pivot?.type) return;
+            const isHigh = pivot.type === 'high';
+            const shortLabel = (pivot.label ?? '')
+              .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
+              .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
+              .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
+            markers.push({
+              time: pivot.timestamp,
+              position: isHigh ? 'aboveBar' : 'belowBar',
+              color,
+              shape: isHigh ? 'arrowDown' : 'arrowUp',
+              text: shortLabel || pivot.label,
+            });
+          });
+        }
+      });
+    }
     
     // Deduplicate markers by time + text
     const seen = new Set<string>();
@@ -338,7 +381,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [selectedPattern, patternOccurrences]);
+  }, [enabledPatterns, patternOccurrences]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -430,41 +473,73 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             </SelectContent>
           </Select>
 
-          {/* Pattern History Overlay */}
+          {/* Pattern Multi-Toggle */}
           {!isMobile && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="relative">
-                  <Select value={selectedPattern} onValueChange={setSelectedPattern}>
-                    <SelectTrigger className={`w-8 h-8 p-0 justify-center ${selectedPattern && selectedPattern !== 'none' ? 'border-primary text-primary' : ''}`}>
+            <Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={enabledPatterns.size > 0 ? "secondary" : "outline"}
+                      size="icon"
+                      className={`h-7 w-7 sm:h-8 sm:w-8 relative ${enabledPatterns.size > 0 ? 'border-primary text-primary' : ''}`}
+                    >
                       {patternLoading ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <MapPin className="h-3.5 w-3.5" />
                       )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PATTERN_OPTIONS.map((p) => (
-                        <SelectItem key={p.value || 'none'} value={p.value || 'none'}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedPattern && selectedPattern !== 'none' && patternOccurrences.length > 0 && (
-                    <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] bg-primary text-primary-foreground">
-                      {patternOccurrences.length}
-                    </Badge>
-                  )}
+                      {enabledPatterns.size > 0 && (
+                        <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] bg-primary text-primary-foreground">
+                          {enabledPatterns.size}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {enabledPatterns.size > 0 ? `${enabledPatterns.size} pattern types enabled` : 'Toggle pattern overlays'}
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-56 p-2" align="end">
+                <div className="space-y-1">
+                  <Button
+                    variant={enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? "secondary" : "outline"}
+                    size="sm"
+                    className="w-full justify-between text-xs h-7 mb-1"
+                    onClick={toggleAllPatterns}
+                  >
+                    <span className="font-medium">Toggle All</span>
+                    {enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? (
+                      <ToggleRight className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ToggleLeft className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </Button>
+                  <div className="border-t border-border my-1" />
+                  {PATTERN_OPTIONS.filter(p => p.value !== 'none').map((p) => {
+                    const isOn = enabledPatterns.has(p.value);
+                    const count = patternOccurrences[p.value]?.length || 0;
+                    return (
+                      <Button
+                        key={p.value}
+                        variant={isOn ? "secondary" : "ghost"}
+                        size="sm"
+                        className={`w-full justify-between text-xs h-7 ${isOn ? 'border border-primary/30' : ''}`}
+                        onClick={() => togglePattern(p.value)}
+                      >
+                        <span>{p.label}</span>
+                        {isOn && count > 0 && (
+                          <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                            {count}
+                          </Badge>
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {selectedPattern && selectedPattern !== 'none'
-                  ? `${patternOccurrences.length} ${PATTERN_OPTIONS.find(p => p.value === selectedPattern)?.label || ''} occurrences`
-                  : 'Map historical patterns'
-                }
-              </TooltipContent>
-            </Tooltip>
+              </PopoverContent>
+            </Popover>
           )}
 
           <Button
