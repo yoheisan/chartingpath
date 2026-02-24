@@ -10,5 +10,21 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /auth
+
+Sitemap: https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/sitemap
