@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { trackSignupCompleted } from "@/services/analytics";
 import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
 import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -37,6 +38,14 @@ const Auth = () => {
   const [resetCooldown, setResetCooldown] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user: authUser, isAuthLoading } = useAuth();
+
+  // If user is already authenticated, redirect immediately
+  useEffect(() => {
+    if (!isAuthLoading && authUser && !isResetPassword) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthLoading, authUser, isResetPassword, navigate, redirectPath]);
 
   useEffect(() => {
     if (resetCooldown <= 0) return;
@@ -63,145 +72,130 @@ const Auth = () => {
     // password recovery flow — let the onAuthStateChange listener handle it.
     const isOAuthCallback = hasCode && !resetFlag && !hashTypeIsRecovery;
 
-    if (isOAuthCallback) {
-      // Nothing to do here — Supabase's PKCE exchange happens automatically,
-      // and the onAuthStateChange SIGNED_IN event below will redirect the user.
-      return;
-    }
+    // OAuth callback — the useAuth() redirect effect above handles navigation
+    // once PKCE exchange completes. Skip recovery logic but keep onAuthStateChange.
+    if (!isOAuthCallback) {
+      const hasCallbackParams = hasCode || hashTypeIsRecovery || hasImplicitTokens;
 
-    const hasCallbackParams = hasCode || hashTypeIsRecovery || hasImplicitTokens;
-
-    // If we arrived here with reset=true but WITHOUT callback params, it usually means the recovery link
-    // was not successfully verified (different browser/device, in-app email webview, etc.).
-    if (resetFlag && !hasCallbackParams) {
-      setLoading(true);
-      (async () => {
-        const { waitForSupabaseSession } = await import("@/utils/supabaseRecovery");
-        const session = await waitForSupabaseSession(supabase, { attempts: 15, delayMs: 200 });
-
-        if (session) {
-          setRecoveryHint(null);
-          setIsForgotPassword(false);
-          setIsResetPassword(true);
-          return;
-        }
-
-        setIsSignUp(false);
-        setIsResetPassword(false);
-        setIsForgotPassword(true);
-        setRecoveryHint(
-          "We couldn't verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
-        );
-      })().finally(() => setLoading(false));
-      return;
-    }
-
-    const isRecovery = resetFlag || hasCallbackParams;
-
-    if (isRecovery) {
-      // Run the recovery exchange exactly once (StrictMode-safe), then show reset UI.
-      (async () => {
+      // If we arrived here with reset=true but WITHOUT callback params, the recovery link
+      // was not successfully verified (different browser/device, in-app email webview, etc.).
+      if (resetFlag && !hasCallbackParams) {
         setLoading(true);
-
-        try {
-          const url = new URL(window.location.href);
-          const hash = url.hash.startsWith("#") ? url.hash.substring(1) : "";
-          const innerHashParams = new URLSearchParams(hash);
-          const hasImplicitSessionTokens = Boolean(
-            innerHashParams.get("access_token") && innerHashParams.get("refresh_token")
-          );
-
-          const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
-
-          if (!hasPersistentBrowserStorage() && !hasImplicitSessionTokens) {
-            setIsSignUp(false);
-            setIsResetPassword(false);
-            setIsForgotPassword(true);
-            setRecoveryHint(
-              "Your email app/browser is blocking local storage (common in in-app browsers/private mode). Open the reset link in Safari/Chrome, then try again."
-            );
-            toast({
-              title: "Browser storage blocked",
-              description:
-                "This environment blocks local storage (common in in-app browsers/private mode), so password reset links can't be verified here. Please open the link in a standard browser (Safari/Chrome) and try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          const { exchangeRecoverySessionFromUrlOnce, waitForSupabaseSession, cleanRecoveryUrl } =
-            await import("@/utils/supabaseRecovery");
-
-          await exchangeRecoverySessionFromUrlOnce(supabase);
-          cleanRecoveryUrl();
-
-          const session = await waitForSupabaseSession(supabase);
+        (async () => {
+          const { waitForSupabaseSession } = await import("@/utils/supabaseRecovery");
+          const session = await waitForSupabaseSession(supabase, { attempts: 15, delayMs: 200 });
 
           if (session) {
             setRecoveryHint(null);
             setIsForgotPassword(false);
             setIsResetPassword(true);
-          } else {
-            setIsSignUp(false);
-            setIsResetPassword(false);
-            setIsForgotPassword(true);
-            setRecoveryHint(
-              "That reset link is invalid/expired. Request ONE new reset email and open ONLY the newest email link once."
+            return;
+          }
+
+          setIsSignUp(false);
+          setIsResetPassword(false);
+          setIsForgotPassword(true);
+          setRecoveryHint(
+            "We couldn't verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+          );
+        })().finally(() => setLoading(false));
+        // Don't return — still register the listener below
+      }
+
+      const isRecovery = resetFlag || hasCallbackParams;
+
+      if (isRecovery) {
+        // Run the recovery exchange exactly once (StrictMode-safe), then show reset UI.
+        (async () => {
+          setLoading(true);
+
+          try {
+            const url = new URL(window.location.href);
+            const hash = url.hash.startsWith("#") ? url.hash.substring(1) : "";
+            const innerHashParams = new URLSearchParams(hash);
+            const hasImplicitSessionTokens = Boolean(
+              innerHashParams.get("access_token") && innerHashParams.get("refresh_token")
             );
+
+            const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
+
+            if (!hasPersistentBrowserStorage() && !hasImplicitSessionTokens) {
+              setIsSignUp(false);
+              setIsResetPassword(false);
+              setIsForgotPassword(true);
+              setRecoveryHint(
+                "Your email app/browser is blocking local storage (common in in-app browsers/private mode). Open the reset link in Safari/Chrome, then try again."
+              );
+              toast({
+                title: "Browser storage blocked",
+                description:
+                  "This environment blocks local storage (common in in-app browsers/private mode), so password reset links can't be verified here. Please open the link in a standard browser (Safari/Chrome) and try again.",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const { exchangeRecoverySessionFromUrlOnce, waitForSupabaseSession, cleanRecoveryUrl } =
+              await import("@/utils/supabaseRecovery");
+
+            await exchangeRecoverySessionFromUrlOnce(supabase);
+            cleanRecoveryUrl();
+
+            const session = await waitForSupabaseSession(supabase);
+
+            if (session) {
+              setRecoveryHint(null);
+              setIsForgotPassword(false);
+              setIsResetPassword(true);
+            } else {
+              setIsSignUp(false);
+              setIsResetPassword(false);
+              setIsForgotPassword(true);
+              setRecoveryHint(
+                "That reset link is invalid/expired. Request ONE new reset email and open ONLY the newest email link once."
+              );
+              toast({
+                title: "Reset Link Expired",
+                description:
+                  "This password reset link has expired or already been used. Please request a new one, then open ONLY the newest email link once.",
+                variant: "destructive",
+              });
+            }
+          } catch (error: any) {
+            const message =
+              typeof error?.message === "string"
+                ? error.message
+                : "Unable to verify the reset link. Please request a new one.";
+
+            const isPkceVerifierIssue =
+              /code verifier|code_verifier|bad_code_verifier|code challenge does not match|flow state/i.test(
+                message
+              );
+
+            if (isPkceVerifierIssue) {
+              setIsSignUp(false);
+              setIsResetPassword(false);
+              setIsForgotPassword(true);
+              setRecoveryHint(
+                "This link doesn't match a reset request from this browser/device. Please request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+              );
+            }
+
             toast({
-              title: "Reset Link Expired",
-              description:
-                "This password reset link has expired or already been used. Please request a new one, then open ONLY the newest email link once.",
+              title: "Reset Link Error",
+              description: isPkceVerifierIssue
+                ? "This reset link doesn't match the most recent reset request in this browser/device. Request ONE new reset email from the SAME browser/device you will open it on, then open ONLY the newest email link once."
+                : message,
               variant: "destructive",
             });
+          } finally {
+            setLoading(false);
           }
-        } catch (error: any) {
-          const message =
-            typeof error?.message === "string"
-              ? error.message
-              : "Unable to verify the reset link. Please request a new one.";
-
-          const isPkceVerifierIssue =
-            /code verifier|code_verifier|bad_code_verifier|code challenge does not match|flow state/i.test(
-              message
-            );
-
-          if (isPkceVerifierIssue) {
-            setIsSignUp(false);
-            setIsResetPassword(false);
-            setIsForgotPassword(true);
-            setRecoveryHint(
-              "This link doesn't match a reset request from this browser/device. Please request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
-            );
-          }
-
-          toast({
-            title: "Reset Link Error",
-            description: isPkceVerifierIssue
-              ? "This reset link doesn't match the most recent reset request in this browser/device. Request ONE new reset email from the SAME browser/device you will open it on, then open ONLY the newest email link once."
-              : message,
-            variant: "destructive",
-          });
-        } finally {
-          setLoading(false);
-        }
-      })();
-
-      return;
+        })();
+      }
     }
 
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        navigate(redirectPath);
-      }
-    };
-    checkUser();
-
-    // Listen for auth changes (keep callback synchronous to avoid auth deadlocks)
+    // Always register onAuthStateChange to handle OAuth & sign-in events
     const ensureProfileForUser = async (user: any) => {
       const { data: existingProfile } = await supabase
         .from("profiles")
@@ -217,7 +211,6 @@ const Auth = () => {
         });
 
         if (profileError) {
-          // eslint-disable-next-line no-console
           console.error("Profile creation error:", profileError);
         } else {
           trackSignupCompleted();
@@ -230,7 +223,6 @@ const Auth = () => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const user = session.user;
-        // Defer Supabase calls outside the callback.
         setTimeout(() => {
           void ensureProfileForUser(user).finally(() => {
             navigate(redirectPath);
