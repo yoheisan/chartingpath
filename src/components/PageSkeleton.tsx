@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /** Generic page skeleton — gives instant visual structure while the real page loads */
 export const PageSkeleton = () => (
-  <div className="container mx-auto px-6 py-8 max-w-6xl animate-in fade-in duration-200">
+  <div className="container mx-auto px-6 py-8 max-w-6xl min-h-[80vh] animate-in fade-in duration-200">
     {/* Header area */}
     <div className="mb-8 space-y-3">
       <Skeleton className="h-8 w-64" />
