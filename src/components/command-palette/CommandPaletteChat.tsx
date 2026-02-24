@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 
@@ -26,6 +27,7 @@ interface CommandPaletteChatProps {
 }
 
 export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChatProps) {
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +107,7 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
               role: m.role,
               content: m.content,
             })),
+          language: i18n.language,
         }),
       });
 
