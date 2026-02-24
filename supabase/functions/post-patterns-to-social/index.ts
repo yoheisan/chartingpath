@@ -105,20 +105,61 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-async function postToTwitter(text: string): Promise<{ id: string }> {
+// ─── Twitter media upload (v1.1 API) ─────────────────────────────────────────
+
+function uint8ToBase64(data: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < data.length; i += chunkSize) {
+    binary += String.fromCharCode(...data.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function uploadMediaToTwitter(imageData: Uint8Array): Promise<string> {
+  const url = 'https://upload.twitter.com/1.1/media/upload.json';
+  const base64Data = uint8ToBase64(imageData);
+
+  const formData = new FormData();
+  formData.append('media_data', base64Data);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: generateOAuthHeader('POST', url),
+    },
+    body: formData,
+  });
+
+  const body = await res.text();
+  if (!res.ok) {
+    console.warn(`[pattern-poster] Media upload failed ${res.status}: ${body}`);
+    throw new Error(`Twitter media upload ${res.status}: ${body}`);
+  }
+
+  const data = JSON.parse(body);
+  console.log(`[pattern-poster] ✅ Media uploaded: ${data.media_id_string}`);
+  return data.media_id_string;
+}
+
+async function postToTwitter(text: string, mediaId?: string): Promise<{ id: string }> {
   const url = 'https://api.x.com/2/tweets';
+  const payload: any = { text };
+  if (mediaId) {
+    payload.media = { media_ids: [mediaId] };
+  }
+
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: generateOAuthHeader('POST', url),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(payload),
   });
   const body = await res.text();
 
   if (res.status === 429) {
-    // Propagate as a specific error so the caller can stop the loop
     throw new RateLimitError(body);
   }
 
@@ -254,10 +295,13 @@ serve(async (req) => {
         const shareUrl = `https://chartingpath.com/s/${token}`;
         const tweet    = buildTweet(pattern, shareUrl);
 
-        // Generate branded OG share image for the Twitter card
+        // Generate branded share image and upload as Twitter media
+        let mediaId: string | undefined;
         try {
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+          // 1. Generate the share image (now produces PNG)
           const imgRes = await fetch(`${supabaseUrl}/functions/v1/generate-share-image`, {
             method: 'POST',
             headers: {
@@ -266,19 +310,35 @@ serve(async (req) => {
             },
             body: JSON.stringify({ token, pattern_id: pattern.id }),
           });
+
           if (imgRes.ok) {
-            console.log(`[pattern-poster] ✅ Share image generated for ${token}`);
+            const imgData = await imgRes.json();
+            console.log(`[pattern-poster] ✅ Share image generated: ${imgData.format} — ${imgData.url}`);
+
+            // 2. Download the PNG from storage
+            const pngRes = await fetch(imgData.url);
+            if (pngRes.ok) {
+              const pngBuffer = new Uint8Array(await pngRes.arrayBuffer());
+              console.log(`[pattern-poster] Downloaded PNG: ${pngBuffer.length} bytes`);
+
+              // 3. Upload to Twitter as media
+              try {
+                mediaId = await uploadMediaToTwitter(pngBuffer);
+              } catch (mediaErr: any) {
+                console.warn(`[pattern-poster] ⚠️ Media upload failed (will post without image): ${mediaErr.message}`);
+              }
+            }
           } else {
             const errBody = await imgRes.text();
             console.warn(`[pattern-poster] ⚠️ Share image generation failed (non-blocking): ${errBody}`);
           }
         } catch (imgErr: any) {
-          console.warn(`[pattern-poster] ⚠️ Share image generation error (non-blocking): ${imgErr.message}`);
+          console.warn(`[pattern-poster] ⚠️ Share image error (non-blocking): ${imgErr.message}`);
         }
 
-        console.log(`[pattern-poster] Posting: ${pattern.instrument} ${pattern.pattern_name} (${pattern.quality_score})`);
+        console.log(`[pattern-poster] Posting: ${pattern.instrument} ${pattern.pattern_name} (${pattern.quality_score})${mediaId ? ' [with image]' : ''}`);
 
-        const twitterResponse = await postToTwitter(tweet);
+        const twitterResponse = await postToTwitter(tweet, mediaId);
 
         // Record in post_history
         await supabase.from('post_history').insert({

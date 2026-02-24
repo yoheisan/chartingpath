@@ -1,16 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { Resvg, initWasm } from "https://esm.sh/@aspect-build/resvg-wasm@2.6.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/**
- * Generate a branded SVG share image for a pattern detection.
- * Renders a candlestick mini-chart with Entry / SL / TP levels.
- * Uploads to the `share-images` bucket as `{token}.svg`.
- */
+// ─── WASM-based SVG→PNG conversion ──────────────────────────────────────────
+
+let wasmReady = false;
+
+async function ensureWasm(): Promise<void> {
+  if (wasmReady) return;
+  const wasmUrl = "https://unpkg.com/@aspect-build/resvg-wasm@2.6.2/index_bg.wasm";
+  await initWasm(fetch(wasmUrl));
+  wasmReady = true;
+}
+
+async function svgToPng(svg: string): Promise<Uint8Array> {
+  await ensureWasm();
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: 'width', value: 1200 },
+    font: { loadSystemFonts: false },
+  });
+  const rendered = resvg.render();
+  return rendered.asPng();
+}
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Bar {
   open: number;
@@ -46,7 +64,6 @@ function renderCandlestickSVG(opts: {
   const CHART_W = CHART_RIGHT - CHART_LEFT;
   const CHART_H = CHART_BOTTOM - CHART_TOP;
 
-  // Price range from bars + levels
   const allPrices = [
     ...bars.flatMap(b => [b.high, b.low]),
     entry, sl, tp,
@@ -69,7 +86,6 @@ function renderCandlestickSVG(opts: {
   const dirColor = isBullish ? '#22c55e' : '#ef4444';
   const dirEmoji = isBullish ? '▲' : '▼';
 
-  // Candlestick rendering
   let candleSvg = '';
   bars.forEach((bar, i) => {
     const x = CHART_LEFT + i * barSpacing + barSpacing / 2;
@@ -79,13 +95,10 @@ function renderCandlestickSVG(opts: {
     const bodyBot = yForPrice(Math.min(bar.open, bar.close));
     const bodyH = Math.max(bodyBot - bodyTop, 1);
 
-    // Wick
     candleSvg += `<line x1="${x}" y1="${yForPrice(bar.high)}" x2="${x}" y2="${yForPrice(bar.low)}" stroke="${fill}" stroke-width="1.5" opacity="0.8"/>`;
-    // Body
     candleSvg += `<rect x="${x - barWidth / 2}" y="${bodyTop}" width="${barWidth}" height="${bodyH}" fill="${fill}" rx="1"/>`;
   });
 
-  // Price level lines
   const levelLine = (price: number, color: string, label: string, dashArray = '') => {
     const y = yForPrice(price);
     const priceStr = formatPrice(price);
@@ -100,7 +113,6 @@ function renderCandlestickSVG(opts: {
   const slLine = levelLine(sl, '#ef4444', 'SL', '6,4');
   const tpLine = levelLine(tp, '#22c55e', 'TP', '6,4');
 
-  // Zone shading (entry to TP = green zone, entry to SL = red zone)
   const entryY = yForPrice(entry);
   const tpY = yForPrice(tp);
   const slY = yForPrice(sl);
@@ -110,7 +122,6 @@ function renderCandlestickSVG(opts: {
     <rect x="${CHART_LEFT}" y="${Math.min(entryY, slY)}" width="${CHART_W}" height="${Math.abs(slY - entryY)}" fill="#ef4444" opacity="0.06"/>
   `;
 
-  // Format pattern name
   const displayPattern = patternName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const displayInstrument = instrument.replace('-USD', '').replace('=X', '').replace('=F', '');
 
@@ -126,47 +137,33 @@ function renderCandlestickSVG(opts: {
     </linearGradient>
   </defs>
 
-  <!-- Background -->
   <rect width="${W}" height="${H}" fill="url(#bg)" rx="0"/>
-  
-  <!-- Top accent bar -->
   <rect x="0" y="0" width="${W}" height="4" fill="url(#accent)"/>
   
-  <!-- Grid lines -->
   ${Array.from({ length: 5 }, (_, i) => {
     const y = CHART_TOP + (CHART_H / 4) * i;
     return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>`;
   }).join('\n  ')}
 
-  <!-- Header -->
   <text x="40" y="50" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, sans-serif" font-weight="700">${displayPattern}</text>
   <text x="40" y="82" fill="#94a3b8" font-size="18" font-family="system-ui, sans-serif">${displayInstrument} · ${timeframe.toUpperCase()}</text>
   
-  <!-- Direction badge -->
   <rect x="${W - 200}" y="26" width="160" height="36" rx="18" fill="${dirColor}" opacity="0.15"/>
   <text x="${W - 120}" y="50" fill="${dirColor}" font-size="16" font-family="system-ui, sans-serif" font-weight="700" text-anchor="middle">${dirEmoji} ${isBullish ? 'BULLISH' : 'BEARISH'}</text>
 
-  <!-- Grade + R:R badges -->
   <rect x="${W - 200}" y="72" width="70" height="28" rx="14" fill="#3b82f6" opacity="0.2"/>
   <text x="${W - 165}" y="91" fill="#60a5fa" font-size="13" font-family="system-ui, sans-serif" font-weight="600" text-anchor="middle">${grade}</text>
   <rect x="${W - 120}" y="72" width="80" height="28" rx="14" fill="#8b5cf6" opacity="0.2"/>
   <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="system-ui, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
 
-  <!-- Chart area border -->
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
   
-  <!-- Zones -->
   ${zoneSvg}
-
-  <!-- Candles -->
   ${candleSvg}
-
-  <!-- Price levels -->
   ${entryLine}
   ${slLine}
   ${tpLine}
 
-  <!-- Footer -->
   <rect x="0" y="${H - 50}" width="${W}" height="50" fill="#0a0e14" opacity="0.8"/>
   <text x="40" y="${H - 20}" fill="#ff6633" font-size="16" font-family="system-ui, sans-serif" font-weight="700">ChartingPath</text>
   <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="system-ui, sans-serif">chartingpath.com · Live Pattern Detection</text>
@@ -270,12 +267,35 @@ serve(async (req) => {
       rr: Number(detection.risk_reward_ratio).toFixed(1),
     });
 
+    // Convert SVG to PNG for Twitter/social compatibility
+    let fileData: Uint8Array | Blob;
+    let contentType: string;
+    let fileExt: string;
+
+    try {
+      const pngData = await svgToPng(svg);
+      fileData = pngData;
+      contentType = 'image/png';
+      fileExt = 'png';
+      console.log(`[generate-share-image] ✅ SVG→PNG conversion successful (${pngData.length} bytes)`);
+    } catch (convErr: any) {
+      // Fallback to SVG if PNG conversion fails
+      console.warn(`[generate-share-image] ⚠️ PNG conversion failed, falling back to SVG: ${convErr.message}`);
+      fileData = new Blob([svg], { type: 'image/svg+xml' });
+      contentType = 'image/svg+xml';
+      fileExt = 'svg';
+    }
+
     // Upload to storage
-    const filePath = `${shareToken}.svg`;
+    const filePath = `${shareToken}.${fileExt}`;
+    const uploadBlob = fileData instanceof Uint8Array
+      ? new Blob([fileData], { type: contentType })
+      : fileData;
+
     const { error: uploadError } = await supabase.storage
       .from('share-images')
-      .upload(filePath, new Blob([svg], { type: 'image/svg+xml' }), {
-        contentType: 'image/svg+xml',
+      .upload(filePath, uploadBlob, {
+        contentType,
         upsert: true,
       });
 
@@ -289,7 +309,7 @@ serve(async (req) => {
     console.log(`[generate-share-image] ✅ Generated ${filePath} for ${detection.instrument}`);
 
     return new Response(
-      JSON.stringify({ success: true, url: publicUrl, token: shareToken }),
+      JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: fileExt }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
