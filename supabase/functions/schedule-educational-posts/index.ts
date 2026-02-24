@@ -103,7 +103,9 @@ serve(async (req) => {
       }
 
       // Build the scheduled time: tomorrow at the optimal time
-      const scheduledTime = `${tomorrowDate}T${market.optimal_post_time_utc}:00Z`;
+      // optimal_post_time_utc is already HH:MM:SS, so just append Z
+      const timeStr = market.optimal_post_time_utc;
+      const scheduledTime = `${tomorrowDate}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}Z`;
       
       // Build tweet content with hashtags and link
       const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
