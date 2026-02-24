@@ -674,7 +674,9 @@ const StudyChart = memo(({
     // minimumWidth is only a floor — if labels exceed it, the scale grows.
     // We must read after render, find the max, then re-apply.
     const syncPriceScaleWidths = () => {
-      const charts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
+      // Guard: skip if main chart was already destroyed by a re-render
+      if (!chartRef.current) return;
+      const charts = [chartRef.current, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
       if (charts.length <= 1) return;
       const widths = charts.map((c) => {
         try { return c.priceScale('right').width(); } catch { return 0; }
@@ -682,7 +684,7 @@ const StudyChart = memo(({
       const maxW = Math.max(...widths, 60);
       console.log('[StudyChart] Price scale widths:', widths, '→ forcing all to', maxW);
       charts.forEach((c) => {
-        c.priceScale('right').applyOptions({ minimumWidth: maxW });
+        try { c.priceScale('right').applyOptions({ minimumWidth: maxW }); } catch { /* chart disposed */ }
       });
     };
     // Multiple passes: labels may not stabilize immediately
@@ -694,22 +696,25 @@ const StudyChart = memo(({
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || !chartRef.current) return;
+      try {
+        const nextWidth = Math.floor(entry.contentRect.width);
+        const nextHeight = Math.floor(entry.contentRect.height);
 
-      const nextWidth = Math.floor(entry.contentRect.width);
-      const nextHeight = Math.floor(entry.contentRect.height);
-
-      chartRef.current.applyOptions({
-        width: nextWidth,
-        ...(autoHeight
-          ? { height: Math.max(nextHeight || initialHeight, 250) }
-          : {}),
-      });
-      // Resize oscillator charts to the SAME width as main chart
-      rsiChartRef.current?.applyOptions({ width: nextWidth });
-      macdChartRef.current?.applyOptions({ width: nextWidth });
-      chartRef.current.timeScale().fitContent();
-      // Delay sync so labels re-render at new width first
-      setTimeout(syncPriceScaleWidths, 100);
+        chartRef.current.applyOptions({
+          width: nextWidth,
+          ...(autoHeight
+            ? { height: Math.max(nextHeight || initialHeight, 250) }
+            : {}),
+        });
+        // Resize oscillator charts to the SAME width as main chart
+        rsiChartRef.current?.applyOptions({ width: nextWidth });
+        macdChartRef.current?.applyOptions({ width: nextWidth });
+        chartRef.current.timeScale().fitContent();
+        // Delay sync so labels re-render at new width first
+        setTimeout(syncPriceScaleWidths, 100);
+      } catch {
+        // Chart may have been disposed during resize
+      }
     });
 
     resizeObserver.observe(containerRef.current);
