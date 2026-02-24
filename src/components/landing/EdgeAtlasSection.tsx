@@ -278,7 +278,7 @@ export function EdgeAtlasSection() {
   };
 
   return (
-    <section className="py-14 px-6 bg-background border-t border-border/40">
+    <section className="py-14 px-6 bg-background border-t border-border/40 min-h-[600px]">
       <div className="container mx-auto max-w-5xl">
 
         {/* Header */}

@@ -150,7 +150,7 @@ export function PatternScreenerTeaser() {
   );
 
   return (
-    <section className="py-12 px-6 bg-muted/20">
+    <section className="py-12 px-6 bg-muted/20 min-h-[500px]">
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
