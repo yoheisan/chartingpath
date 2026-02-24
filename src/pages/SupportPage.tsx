@@ -25,22 +25,22 @@ const SupportPage = () => {
           <Card className="text-center">
             <CardContent className="pt-6">
               <Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">24h Response</p>
-              <p className="text-xs text-muted-foreground">Typical reply time</p>
+              <p className="text-sm font-medium">{t('support.responseTime', '24h Response')}</p>
+              <p className="text-xs text-muted-foreground">{t('support.responseTimeDesc', 'Typical reply time')}</p>
             </CardContent>
           </Card>
           <Card className="text-center">
             <CardContent className="pt-6">
               <Mail className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Email Support</p>
+              <p className="text-sm font-medium">{t('support.emailSupport', 'Email Support')}</p>
               <p className="text-xs text-muted-foreground">contact@chartingpath.com</p>
             </CardContent>
           </Card>
           <Card className="text-center">
             <CardContent className="pt-6">
               <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm font-medium">Secure</p>
-              <p className="text-xs text-muted-foreground">Encrypted & tracked</p>
+              <p className="text-sm font-medium">{t('support.secure', 'Secure')}</p>
+              <p className="text-xs text-muted-foreground">{t('support.secureDesc', 'Encrypted & tracked')}</p>
             </CardContent>
           </Card>
         </div>
