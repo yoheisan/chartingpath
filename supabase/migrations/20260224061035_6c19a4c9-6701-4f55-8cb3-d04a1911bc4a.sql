@@ -1,0 +1,2 @@
+ALTER TABLE scheduled_posts DROP CONSTRAINT scheduled_posts_post_type_check;
+ALTER TABLE scheduled_posts ADD CONSTRAINT scheduled_posts_post_type_check CHECK (post_type = ANY (ARRAY['market_report', 'content_library', 'custom', 'educational', 'qa_content']));
