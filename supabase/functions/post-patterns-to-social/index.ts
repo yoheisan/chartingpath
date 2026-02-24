@@ -315,17 +315,22 @@ serve(async (req) => {
             const imgData = await imgRes.json();
             console.log(`[pattern-poster] ✅ Share image generated: ${imgData.format} — ${imgData.url}`);
 
-            // 2. Download the PNG from storage
-            const pngRes = await fetch(imgData.url);
-            if (pngRes.ok) {
-              const pngBuffer = new Uint8Array(await pngRes.arrayBuffer());
-              console.log(`[pattern-poster] Downloaded PNG: ${pngBuffer.length} bytes`);
+            // Only upload PNGs — Twitter rejects SVGs
+            if (imgData.format === 'svg') {
+              console.warn(`[pattern-poster] ⚠️ Image is SVG (not PNG) — skipping media upload`);
+            } else {
+              // 2. Download the PNG from storage
+              const pngRes = await fetch(imgData.url);
+              if (pngRes.ok) {
+                const pngBuffer = new Uint8Array(await pngRes.arrayBuffer());
+                console.log(`[pattern-poster] Downloaded PNG: ${pngBuffer.length} bytes`);
 
-              // 3. Upload to Twitter as media
-              try {
-                mediaId = await uploadMediaToTwitter(pngBuffer);
-              } catch (mediaErr: any) {
-                console.warn(`[pattern-poster] ⚠️ Media upload failed (will post without image): ${mediaErr.message}`);
+                // 3. Upload to Twitter as media
+                try {
+                  mediaId = await uploadMediaToTwitter(pngBuffer);
+                } catch (mediaErr: any) {
+                  console.warn(`[pattern-poster] ⚠️ Media upload failed (will post without image): ${mediaErr.message}`);
+                }
               }
             }
           } else {

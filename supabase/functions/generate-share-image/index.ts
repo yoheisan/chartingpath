@@ -1,32 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resvg, initWasm } from "https://esm.sh/@aspect-build/resvg-wasm@2.6.2";
+import { render as svgToPng } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// ─── WASM-based SVG→PNG conversion ──────────────────────────────────────────
-
-let wasmReady = false;
-
-async function ensureWasm(): Promise<void> {
-  if (wasmReady) return;
-  const wasmUrl = "https://unpkg.com/@aspect-build/resvg-wasm@2.6.2/index_bg.wasm";
-  await initWasm(fetch(wasmUrl));
-  wasmReady = true;
-}
-
-async function svgToPng(svg: string): Promise<Uint8Array> {
-  await ensureWasm();
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: 'width', value: 1200 },
-    font: { loadSystemFonts: false },
-  });
-  const rendered = resvg.render();
-  return rendered.asPng();
-}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -279,8 +258,10 @@ serve(async (req) => {
       fileExt = 'png';
       console.log(`[generate-share-image] ✅ SVG→PNG conversion successful (${pngData.length} bytes)`);
     } catch (convErr: any) {
-      // Fallback to SVG if PNG conversion fails
-      console.warn(`[generate-share-image] ⚠️ PNG conversion failed, falling back to SVG: ${convErr.message}`);
+      // Fallback to SVG if PNG conversion fails — log the full error for debugging
+      console.error(`[generate-share-image] ❌ PNG conversion failed: ${convErr.message}\n${convErr.stack}`);
+      console.warn(`[generate-share-image] ⚠️ Falling back to SVG (Twitter will NOT display this)`);
+
       fileData = new Blob([svg], { type: 'image/svg+xml' });
       contentType = 'image/svg+xml';
       fileExt = 'svg';
