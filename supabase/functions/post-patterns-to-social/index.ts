@@ -287,8 +287,10 @@ serve(async (req) => {
     const results = [];
 
     for (const [i, pattern] of toPost.entries()) {
-      // Stagger requests to avoid burst rate limits (5s delay between posts)
-      if (i > 0) await new Promise(r => setTimeout(r, 5000));
+      // Stagger requests to avoid burst rate limits AND CPU compute limits
+      // (resvg WASM PNG conversion is CPU-heavy; 10s ensures the previous
+      //  generate-share-image worker has fully shut down before the next boots)
+      if (i > 0) await new Promise(r => setTimeout(r, 10000));
 
       try {
         const token    = await ensureShareToken(supabase, pattern.id);
