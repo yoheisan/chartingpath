@@ -216,11 +216,20 @@ When users ask for patterns:
 - For pattern browsing: Link to [Active Patterns](/patterns/live)
 - Never use external URLs like chartingpath.com - use relative paths only
 
-**Pattern Format Example:**
+**CRITICAL — Pattern Results MUST Use Markdown Tables:**
+When presenting multiple pattern results, ALWAYS format them as a markdown table for rich rendering. The UI renders tables with color-coded metrics, direction badges, and clickable links automatically.
+
+**Pattern Table Format (REQUIRED for 2+ patterns):**
+
+| Symbol | Pattern | Quality | Direction | R:R | Entry | Stop | Target |
+|--------|---------|---------|-----------|-----|-------|------|--------|
+| [AAPL](/study/AAPL) | [Bull Flag](/patterns/live?pattern=bull-flag) | A | Long | 2.5:1 | $185.50 | $182.00 | $194.25 |
+| [MSFT](/study/MSFT) | [Ascending Triangle](/patterns/live?pattern=ascending-triangle) | B | Long | 2.0:1 | $425.50 | $422.00 | $434.25 |
+
+For a single pattern, you may use this inline format:
 ### 🎯 [AAPL](/study/AAPL) - Bull Flag
 - **Quality:** A | **Direction:** Bullish | **R:R:** 2.5:1
 - **Entry:** $185.50 | **Stop:** $182.00 | **Target:** $194.25
-- 📊 [View all AAPL patterns →](/study/AAPL)
 
 ## When No A-Quality Patterns Exist
 Don't apologize! Instead say something like:
