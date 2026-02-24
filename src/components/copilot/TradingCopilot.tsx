@@ -74,10 +74,10 @@ function incrementGuestMsgCount(): number {
 }
 
 const QUICK_ACTION_KEYS = [
-  { labelKey: "copilot.findPatterns", prompt: "Show me the best quality patterns forming right now across major tech stocks", icon: TrendingUp },
-  { labelKey: "copilot.createAlert", prompt: "I want to set up an alert for bull flags on AAPL", icon: Bell },
-  { labelKey: "copilot.generateScript", prompt: "Generate a Pine Script strategy for trading ascending triangles on BTCUSD", icon: Code },
-  { labelKey: "copilot.learnPatterns", prompt: "Explain how to identify and trade a head and shoulders pattern", icon: BookOpen },
+  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+  { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
+  { labelKey: "copilot.generateScript", promptKey: "copilot.generateScriptPrompt", icon: Code },
+  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
 ];
 
 const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
@@ -458,7 +458,7 @@ export function TradingCopilot({
                   <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
                   <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
                     {QUICK_ACTION_KEYS.map((action) => (
-                      <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(action.prompt)} disabled={isLoading}>
+                      <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
                         <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
                         <span className="text-xs">{t(action.labelKey)}</span>
                       </Button>
