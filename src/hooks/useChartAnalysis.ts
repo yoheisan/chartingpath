@@ -34,14 +34,26 @@ export interface ChartAnalysisResult {
     volumeTrend: string;
   };
   indicators: {
-    rsi: { current: number; interpretation: string };
-    macd: { macd: number; signal: number; histogram: number; interpretation: string };
+    rsi: { current: number; interpretation: string; divergence?: string };
+    macd: { macd: number; signal: number; histogram: number; interpretation: string; divergence?: string };
     bollingerBands: { upper: number; middle: number; lower: number; position: string };
     atr: { value: number; volatilityLevel: string };
     adx?: { adx: number; plusDI: number; minusDI: number; interpretation: string };
     ema20: number;
     ema50: number;
     sma200?: number;
+  };
+  confluence?: {
+    bullishPct: number;
+    bearishPct: number;
+    bullishScore: number;
+    bearishScore: number;
+    totalScore: number;
+  };
+  divergences?: {
+    rsi: string;
+    macd: string;
+    obv: string;
   };
   patterns: {
     name: string;

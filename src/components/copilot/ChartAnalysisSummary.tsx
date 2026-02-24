@@ -23,7 +23,7 @@ interface ChartAnalysisSummaryProps {
 
 export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysisSummaryProps) {
   const { t } = useTranslation();
-  const { priceAnalysis, indicators, volumeAnalysis, patterns, riskAssessment } = analysis;
+  const { priceAnalysis, indicators, volumeAnalysis, patterns, riskAssessment, confluence, divergences } = analysis;
   
   const trendIcon = priceAnalysis.trend === 'bullish' 
     ? <TrendingUp className="h-4 w-4" />
@@ -170,6 +170,57 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           detail={t('chartAnalysisDialog.volatility')}
         />
       </div>
+
+      {/* Divergence Warnings */}
+      {divergences && (divergences.rsi !== 'none' || divergences.macd !== 'none' || divergences.obv !== 'none') && (
+        <div className="space-y-1">
+          {divergences.rsi !== 'none' && (
+            <div className={cn("flex items-center gap-2 text-xs p-2 rounded-md", 
+              divergences.rsi === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
+            )}>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>RSI {divergences.rsi} divergence — potential reversal signal</span>
+            </div>
+          )}
+          {divergences.macd !== 'none' && (
+            <div className={cn("flex items-center gap-2 text-xs p-2 rounded-md",
+              divergences.macd === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
+            )}>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>MACD {divergences.macd} divergence detected</span>
+            </div>
+          )}
+          {divergences.obv !== 'none' && (
+            <div className={cn("flex items-center gap-2 text-xs p-2 rounded-md",
+              divergences.obv === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
+            )}>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>OBV {divergences.obv} divergence — volume not confirming price</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Confluence Bar */}
+      {confluence && confluence.totalScore > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-emerald-500 font-medium">Bull {confluence.bullishPct}%</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Confluence</span>
+            <span className="text-red-500 font-medium">Bear {confluence.bearishPct}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+            <div 
+              className="bg-emerald-500 transition-all duration-500"
+              style={{ width: `${confluence.bullishPct}%` }}
+            />
+            <div 
+              className="bg-red-500 transition-all duration-500"
+              style={{ width: `${confluence.bearishPct}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Volume */}
       <div className="flex items-center gap-2 text-sm">

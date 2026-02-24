@@ -610,6 +610,18 @@ function generateAnalysis(bars: Bar[], symbol: string, timeframe: string): Analy
           : 'Current trend may continue. Trade in direction of trend with proper risk management.'
       }
     },
+    confluence: {
+      bullishPct: Math.round(bullishPct),
+      bearishPct: Math.round(bearishPct),
+      bullishScore,
+      bearishScore,
+      totalScore
+    },
+    divergences: {
+      rsi: rsiDivergence,
+      macd: macdDivergence,
+      obv: volumeAnalysis.obvDivergence
+    },
     riskAssessment: {
       overallRisk,
       volatilityRisk: volatilityLevel,
