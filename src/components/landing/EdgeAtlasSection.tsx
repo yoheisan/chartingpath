@@ -375,7 +375,7 @@ export function EdgeAtlasSection() {
         {/* Table */}
         {loading ? (
           <div className="space-y-3">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-card/40">
                 <Skeleton className="h-5 w-5 rounded" />
                 <Skeleton className="h-4 w-36" />
