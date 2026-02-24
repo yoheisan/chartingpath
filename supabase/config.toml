@@ -224,3 +224,6 @@ verify_jwt = false
 
 [functions.auto-sync-translations]
 verify_jwt = false
+
+[functions.track-login]
+verify_jwt = false
