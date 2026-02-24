@@ -30,6 +30,11 @@ export function useSharePattern() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Failed to generate share link');
 
+      // Generate OG share image (non-blocking — don't wait for it)
+      supabase.functions.invoke('generate-share-image', {
+        body: { token: data.shareToken, pattern_id: dbId },
+      }).catch(() => { /* silent — OG image is best-effort */ });
+
       return `${window.location.origin}/s/${data.shareToken}`;
     } catch (err: any) {
       console.error('[useSharePattern]', err);
