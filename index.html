@@ -22,13 +22,28 @@
   <meta name="twitter:title" content="ChartingPath - Chart Pattern Generator">
   <meta property="og:description" content="Generate accurate chart patterns for trading education. Professional TradingView-style candlestick charts based on Thomas Bulkowski&#39;s Encyclopedia of Chart Patterns.">
   <meta name="twitter:description" content="Generate accurate chart patterns for trading education. Professional TradingView-style candlestick charts based on Thomas Bulkowski&#39;s Encyclopedia of Chart Patterns.">
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E9GBNNMT60"></script>
+    <!-- Google Analytics - deferred to reduce unused JS on initial load -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-E9GBNNMT60');
+      // Load gtag after page becomes interactive
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(function() {
+          var s = document.createElement('script');
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-E9GBNNMT60';
+          document.head.appendChild(s);
+        });
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            var s = document.createElement('script');
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=G-E9GBNNMT60';
+            document.head.appendChild(s);
+          }, 2000);
+        });
+      }
     </script>
   </head>
 
