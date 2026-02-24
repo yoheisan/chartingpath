@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { withTimeout } from '@/utils/withTimeout';
 import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
@@ -15,13 +14,48 @@ import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
 const ASSET_TAB_KEYS: { value: TeaserAssetType; i18nKey: string; universe: number }[] = [
-  { value: 'stocks', i18nKey: 'patternScreenerTeaser.stocks', universe: 90 },
-  { value: 'fx', i18nKey: 'patternScreenerTeaser.forex', universe: 57 },
-  { value: 'crypto', i18nKey: 'patternScreenerTeaser.crypto', universe: 84 },
-  { value: 'commodities', i18nKey: 'patternScreenerTeaser.commodities', universe: 25 },
+  { value: 'stocks', i18nKey: 'patternScreenerTeaser.stocks', universe: 250 },
+  { value: 'fx', i18nKey: 'patternScreenerTeaser.forex', universe: 87 },
+  { value: 'crypto', i18nKey: 'patternScreenerTeaser.crypto', universe: 97 },
+  { value: 'commodities', i18nKey: 'patternScreenerTeaser.commodities', universe: 28 },
 ];
 
-const MAX_TEASER_ITEMS = 10;
+const MAX_TEASER_ITEMS = 12;
+
+/** Map a DB row from live_pattern_detections into a LiveSetup */
+function rowToLiveSetup(row: any): LiveSetup {
+  const histPerf = row.historical_performance as any;
+  return {
+    dbId: row.id,
+    instrument: row.instrument,
+    patternId: row.pattern_id,
+    patternName: row.pattern_name,
+    direction: row.direction as 'long' | 'short',
+    signalTs: row.first_detected_at,
+    quality: {
+      score: row.quality_score || 'C',
+      grade: row.quality_score || 'C',
+      reasons: row.quality_reasons || [],
+    },
+    tradePlan: {
+      entry: row.entry_price,
+      stopLoss: row.stop_loss_price,
+      takeProfit: row.take_profit_price,
+      rr: row.risk_reward_ratio,
+    },
+    currentPrice: row.current_price,
+    prevClose: row.prev_close,
+    changePercent: row.change_percent,
+    trendAlignment: row.trend_alignment,
+    trendIndicators: row.trend_indicators as any,
+    historicalPerformance: histPerf ? {
+      winRate: histPerf.winRate ?? histPerf.win_rate ?? 0,
+      avgRMultiple: histPerf.avgRMultiple ?? histPerf.avg_r_multiple ?? 0,
+      sampleSize: histPerf.sampleSize ?? histPerf.sample_size ?? 0,
+      profitFactor: histPerf.profitFactor ?? histPerf.profit_factor,
+    } : undefined,
+  };
+}
 
 export function PatternScreenerTeaser() {
   const { t } = useTranslation();
@@ -40,23 +74,25 @@ export function PatternScreenerTeaser() {
   useEffect(() => {
     const fetchPatternsForAsset = async (assetType: TeaserAssetType) => {
       try {
-        const { data, error: fnError } = await withTimeout(
-          supabase.functions.invoke('scan-live-patterns', {
-            body: { assetType, timeframe: '1h', forceRefresh: false },
-          }),
-          25000
-        );
+        // Query DB-cached signals directly — no edge function compute needed
+        const { data, error, count } = await supabase
+          .from('live_pattern_detections')
+          .select('*', { count: 'exact' })
+          .eq('asset_type', assetType)
+          .eq('status', 'active')
+          .order('quality_score', { ascending: true })
+          .order('first_detected_at', { ascending: false })
+          .limit(50);
 
-        if (fnError) throw fnError;
-        if (!data?.success) throw new Error(data?.error || 'Failed to fetch patterns');
+        if (error) throw error;
 
-        const allPatterns = data.patterns || [];
+        const allPatterns = (data || []).map(rowToLiveSetup);
 
+        // Deduplicate by instrument|pattern
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');
           return `${baseSymbol}|${p.patternName}`;
         };
-
         const seenPatterns = new Map<string, LiveSetup>();
         for (const pattern of allPatterns) {
           const key = dedupeKey(pattern);
@@ -73,9 +109,7 @@ export function PatternScreenerTeaser() {
           }
         }
 
-        const dedupedPatterns = [...seenPatterns.values()];
-
-        const sorted = dedupedPatterns.sort((a, b) => {
+        const sorted = [...seenPatterns.values()].sort((a, b) => {
           const gradeA = GRADE_ORDER[getPatternGrade(a)] || 3;
           const gradeB = GRADE_ORDER[getPatternGrade(b)] || 3;
           if (gradeA !== gradeB) return gradeA - gradeB;
@@ -83,10 +117,10 @@ export function PatternScreenerTeaser() {
         });
 
         setPatternsByAsset(prev => ({ ...prev, [assetType]: sorted.slice(0, MAX_TEASER_ITEMS) }));
-        setTotalCounts(prev => ({ ...prev, [assetType]: allPatterns.length }));
+        setTotalCounts(prev => ({ ...prev, [assetType]: count || allPatterns.length }));
 
-        if (assetType === 'stocks') {
-          setLastScanned(data.scannedAt || new Date().toISOString());
+        if (assetType === 'stocks' && data?.length) {
+          setLastScanned(data[0].updated_at || new Date().toISOString());
         }
       } catch (err) {
         console.error(`Failed to fetch ${assetType} patterns:`, err);
@@ -95,16 +129,8 @@ export function PatternScreenerTeaser() {
       }
     };
 
-    const fetchWithStagger = async () => {
-      await fetchPatternsForAsset('stocks');
-      const remainingTabs = ASSET_TAB_KEYS.filter(t => t.value !== 'stocks');
-      for (let i = 0; i < remainingTabs.length; i++) {
-        await new Promise(r => setTimeout(r, 200));
-        fetchPatternsForAsset(remainingTabs[i].value);
-      }
-    };
-
-    fetchWithStagger();
+    // Fetch all asset types in parallel — all are lightweight DB reads
+    ASSET_TAB_KEYS.forEach(tab => fetchPatternsForAsset(tab.value));
   }, []);
 
   const currentTotal = totalCounts[activeTab];
