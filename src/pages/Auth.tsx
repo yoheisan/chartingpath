@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Lock, User } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -456,9 +457,37 @@ const Auth = () => {
     }
   };
 
+  // Track auth page view and abandonment
+  const formInteracted = useRef(false);
+  
+  useEffect(() => {
+    const context = searchParams.get("context") || "direct";
+    const pattern = searchParams.get("pattern");
+    const symbol = searchParams.get("symbol");
+    trackEvent("auth_page.viewed", { context, pattern: pattern || undefined, symbol: symbol || undefined });
+    
+    return () => {
+      if (!formInteracted.current) {
+        trackEvent("auth_page.abandoned", { context, had_interaction: false });
+      }
+    };
+  }, []);
+  
+  const handleFormInteraction = () => {
+    if (!formInteracted.current) {
+      formInteracted.current = true;
+      trackEvent("auth_page.form_start", {});
+    }
+  };
+
+  // Contextual messaging from shared links
+  const sharedContext = searchParams.get("context");
+  const sharedPattern = searchParams.get("pattern");
+  const sharedSymbol = searchParams.get("symbol");
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-md">
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -467,7 +496,69 @@ const Auth = () => {
           </Link>
         </div>
 
-        <Card>
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* Left column: Value proposition */}
+          <div className="space-y-6 md:pt-4">
+            {/* Contextual message from shared links */}
+            {sharedContext && sharedPattern && (
+              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                <p className="text-sm font-medium text-foreground">
+                  🔔 Sign up to get alerts when <span className="font-bold text-primary">{decodeURIComponent(sharedPattern)}</span>
+                  {sharedSymbol && <> appears on <span className="font-bold">{decodeURIComponent(sharedSymbol)}</span></>}
+                </p>
+              </div>
+            )}
+            
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Your free trading edge starts here</h2>
+              <p className="text-muted-foreground">
+                Join thousands of instruments tracked daily with pattern recognition powered by 320,000+ historical outcomes.
+              </p>
+            </div>
+
+            {/* Free tier benefits */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Free account includes</h3>
+              {[
+                { icon: FlaskConical, text: "3 backtests per day" },
+                { icon: Zap, text: "Live screener access" },
+                { icon: Bell, text: "Pattern alert setup" },
+                { icon: BarChart3, text: "Edge Atlas rankings" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-md bg-primary/10">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm text-foreground">{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Social proof */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <p className="text-2xl font-bold text-foreground">1,100+</p>
+                <p className="text-xs text-muted-foreground">Instruments tracked</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <p className="text-2xl font-bold text-foreground">320K+</p>
+                <p className="text-xs text-muted-foreground">Pattern outcomes</p>
+              </div>
+            </div>
+
+            {/* Trust signals */}
+            <div className="flex flex-wrap gap-3">
+              {["No credit card required", "Free forever tier", "Cancel anytime"].map((text) => (
+                <div key={text} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right column: Auth form */}
+          <Card>
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
@@ -483,7 +574,7 @@ const Auth = () => {
                 : isForgotPassword 
                   ? "Enter your email to receive password reset instructions"
                   : isSignUp 
-                    ? "Sign up to access chart pattern alerts and member features"
+                    ? "Create your free account in seconds"
                     : "Sign in to your ChartingPath account"
               }
             </CardDescription>
@@ -594,9 +685,10 @@ const Auth = () => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="Enter your email"
+                       placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onFocus={handleFormInteraction}
                         className="pl-10"
                         required
                       />
@@ -707,6 +799,7 @@ const Auth = () => {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

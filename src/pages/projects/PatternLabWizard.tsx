@@ -400,12 +400,15 @@ const PatternLabWizard = () => {
   };
   
   const handleRun = async () => {
-    if (!session) {
+    // Allow first anonymous run — gate on second run or save/export actions
+    const anonRunCount = parseInt(sessionStorage.getItem('anonymous_runs_count') || '0', 10);
+    
+    if (!session && anonRunCount >= 1) {
       setShowAuthDialog(true);
       return;
     }
     
-    if (!isEnabled) {
+    if (!isEnabled && session) {
       toast.error('Pattern Lab requires Plus plan or higher');
       navigate('/pricing');
       return;
@@ -430,14 +433,18 @@ const PatternLabWizard = () => {
     });
     setIsRunning(true);
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      
       const response = await fetch(
         'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
+          headers,
           body: JSON.stringify({
             projectType: 'pattern_lab',
             inputs: {
@@ -456,6 +463,11 @@ const PatternLabWizard = () => {
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to start run');
+      }
+      
+      // Track anonymous usage
+      if (!session) {
+        sessionStorage.setItem('anonymous_runs_count', String(anonRunCount + 1));
       }
       
       toast.success('Pattern Lab backtest started!');

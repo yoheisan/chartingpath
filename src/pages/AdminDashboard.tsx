@@ -13,6 +13,7 @@ import { CopilotFeedbackDashboard } from "@/components/admin/CopilotFeedbackDash
 import { ServiceHealthDashboard } from "@/components/admin/ServiceHealthDashboard";
 import { PipelineHealthDashboard } from "@/components/admin/PipelineHealthDashboard";
 import { LoginAttemptsPanel } from "@/components/admin/LoginAttemptsPanel";
+import { GA4Panel } from "@/components/admin/GA4Panel";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -242,6 +243,14 @@ const AdminDashboard = () => {
             <KeyRound className="h-4 w-4" />
             Login Attempts
           </Button>
+          <Button
+            variant={activeTab === "ga4" ? "default" : "outline"}
+            onClick={() => setActiveTab("ga4")}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Google Analytics
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -274,6 +283,8 @@ const AdminDashboard = () => {
         {activeTab === "pipeline-health" && <PipelineHealthDashboard />}
 
         {activeTab === "login-attempts" && <LoginAttemptsPanel />}
+
+        {activeTab === "ga4" && <GA4Panel />}
       </div>
     </div>
   );

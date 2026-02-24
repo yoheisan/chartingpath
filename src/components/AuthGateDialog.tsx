@@ -26,7 +26,17 @@ export function AuthGateDialog({ open, onOpenChange, featureLabel = "this featur
             Create a free account or sign in to access {featureLabel}.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 mt-4">
+        
+        {/* Benefits list */}
+        <div className="space-y-2 my-3 text-sm">
+          {["3 backtests/day", "Live screener access", "Pattern alerts", "Edge Atlas rankings"].map((b) => (
+            <div key={b} className="flex items-center gap-2 text-muted-foreground">
+              <span className="text-green-500">✓</span> {b}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3">
           <Button asChild size="lg" className="w-full">
             <Link to={`/auth?redirect=${redirectPath}`} onClick={() => onOpenChange(false)}>
               <LogIn className="h-4 w-4 mr-2" />
@@ -41,7 +51,7 @@ export function AuthGateDialog({ open, onOpenChange, featureLabel = "this featur
           </Button>
         </div>
         <p className="text-xs text-muted-foreground text-center mt-2">
-          Free accounts include basic access to alerts, scripts, and backtesting.
+          No credit card required · Free forever tier
         </p>
       </DialogContent>
     </Dialog>
