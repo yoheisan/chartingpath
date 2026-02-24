@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
+import { PageMeta } from "@/components/PageMeta";
+import { ArticleJsonLd } from "@/components/JsonLd";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
 import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
 import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
@@ -1047,17 +1049,7 @@ const DynamicArticle = () => {
   }, [slug, i18n.language]);
 
   // Update page metadata
-  useEffect(() => {
-    if (article) {
-      document.title = article.seo_title || article.title;
-      
-      // Update meta description
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute('content', article.seo_description || article.excerpt);
-      }
-    }
-  }, [article]);
+  // Meta tags are now handled by PageMeta component in the render below
 
   if (loading) {
     return (
@@ -1101,6 +1093,20 @@ const DynamicArticle = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={article.seo_title || article.title}
+        description={article.seo_description || article.excerpt}
+        canonicalPath={`/learn/${article.slug}`}
+        ogType="article"
+        ogImage={article.featured_image_url || undefined}
+      />
+      <ArticleJsonLd
+        headline={article.seo_title || article.title}
+        description={article.seo_description || article.excerpt}
+        datePublished={article.published_at}
+        slug={article.slug}
+        imageUrl={article.featured_image_url || undefined}
+      />
       <div className="container mx-auto px-6 py-12 max-w-4xl">
         {/* Navigation */}
         <Link 

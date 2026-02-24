@@ -1,0 +1,50 @@
+# ChartingPath
+
+> Pattern-based trading signal discovery, research, and automation platform.
+
+## About
+
+ChartingPath is a web platform that helps traders discover, validate, and act on chart pattern setups. It combines automated pattern detection with historical performance data to give traders a statistical edge.
+
+## Key Features
+
+- **Live Pattern Screener**: 1,100+ instruments (stocks, forex, crypto, indices) scanned for active chart patterns across multiple timeframes. Patterns are detected on closed candles with quality scoring.
+- **Edge Atlas**: Historical win rates, expectancy, and annualized edge for every pattern+timeframe+asset combination. Based on 320,000+ resolved pattern occurrences.
+- **Pattern Lab**: Backtest any chart pattern on any ticker with historical data. Includes equity curves, drawdown analysis, and trade logs.
+- **Learning Center**: 100+ educational articles covering chart patterns, candlestick patterns, technical indicators, trading strategies, risk management, and algorithmic trading.
+- **Pattern Library**: Visual reference for all supported chart patterns with identification rules, trading rules, and Bulkowski statistics.
+- **Trading Copilot**: AI assistant trained on the platform's pattern data and trading knowledge base.
+- **Alerts**: Get notified when specific pattern setups appear on your watchlist instruments.
+- **Script Generator**: Export ready-to-use Pine Script and MQL code for pattern-based strategies.
+
+## Data
+
+- 320,000+ historical pattern occurrences with verified outcomes (hit take-profit or hit stop-loss)
+- Multi-timeframe analysis: 1h, 4h, 8h, 1D, 1W
+- Asset classes: US stocks, forex pairs, cryptocurrencies, indices, commodities
+- Patterns based on Thomas Bulkowski's Encyclopedia of Chart Patterns
+- Win rates and expectancy computed per pattern, per timeframe, per asset type
+
+## Methodology
+
+- Patterns are detected algorithmically on closed candles (no intra-candle signals)
+- Each pattern includes entry price, stop-loss, and take-profit levels
+- Historical outcomes are tracked at multiple risk-reward ratios (2R, 3R, 4R, 5R)
+- Quality scoring considers trend alignment, volume confirmation, and pattern geometry
+- All assumptions are documented; no black-box signals
+
+## Links
+
+- Homepage: https://chartingpath.com
+- Live Screener: https://chartingpath.com/patterns/live
+- Edge Atlas: https://chartingpath.com/tools/edge-atlas
+- Pattern Lab: https://chartingpath.com/pattern-lab
+- Learning Center: https://chartingpath.com/learn
+- Pattern Library: https://chartingpath.com/chart-patterns/library
+- Pattern Quiz: https://chartingpath.com/chart-patterns/quiz
+- Pricing: https://chartingpath.com/pricing
+
+## Contact
+
+- Website: https://chartingpath.com
+- Twitter/X: @ChartingPath

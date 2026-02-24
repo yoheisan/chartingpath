@@ -17,6 +17,8 @@ import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTease
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 import { CopilotShowcase } from '@/components/landing/CopilotShowcase';
+import { PageMeta } from '@/components/PageMeta';
+import { WebApplicationJsonLd } from '@/components/JsonLd';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -127,6 +129,12 @@ const Index = () => {
   // Always use activity-first landing regardless of wedge mode
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="ChartingPath – Chart Pattern Screener & Backtesting Platform"
+        description="Discover active chart pattern setups across 1,100+ instruments. Validate with 320K+ historical outcomes. Export Pine Script & MQL strategies."
+        canonicalPath="/"
+      />
+      <WebApplicationJsonLd />
       {/* Hero Section */}
       <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
         {/* Background */}
