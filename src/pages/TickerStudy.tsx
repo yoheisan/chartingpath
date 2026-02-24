@@ -10,7 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, Search, TrendingUp, TrendingDown, Target, Shield, 
   Clock, BarChart3, List, CalendarDays, CheckCircle, XCircle, Timer,
-  ExternalLink, ChevronDown, ChevronUp, Filter, X, ChevronRight, Play
+  ExternalLink, ChevronDown, ChevronUp, Filter, X, ChevronRight, Play,
+  Eye, EyeOff
 } from 'lucide-react';
 import {
   Collapsible,
@@ -42,7 +43,7 @@ import { supabase } from '@/integrations/supabase/client';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
-import StudyChart from '@/components/charts/StudyChart';
+import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { TimeframeSelector, useStudyTimeframes, STUDY_TIMEFRAMES } from '@/components/charts/TimeframeSelector';
@@ -223,6 +224,7 @@ export default function TickerStudy() {
   // Multi-select pattern filter
   const [selectedPatternTypes, setSelectedPatternTypes] = useState<string[]>([]);
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
+  const [showPatternsOnChart, setShowPatternsOnChart] = useState(true);
 
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
@@ -585,6 +587,41 @@ export default function TickerStudy() {
     };
   }, [filteredHistoricalPatterns, livePatterns]);
 
+  // Generate markers for the chart
+  const chartMarkers = useMemo(() => {
+    if (!showPatternsOnChart) return [];
+    
+    const markers: ChartMarker[] = [];
+    
+    // Live patterns
+    livePatterns.forEach(p => {
+      markers.push({
+        time: p.first_detected_at,
+        position: p.direction === 'bullish' ? 'belowBar' : 'aboveBar',
+        color: p.direction === 'bullish' ? '#22c55e' : '#ef4444',
+        shape: p.direction === 'bullish' ? 'arrowUp' : 'arrowDown',
+        text: 'Live',
+      });
+    });
+
+    // Historical patterns (filtered)
+    filteredHistoricalPatterns.forEach(p => {
+      // Use detected_at or pattern_start_date
+      const time = p.detected_at || p.pattern_start_date;
+      if (!time) return;
+
+      markers.push({
+        time: time,
+        position: p.direction === 'bullish' ? 'belowBar' : 'aboveBar',
+        color: p.direction === 'bullish' ? '#22c55e' : '#ef4444',
+        shape: 'circle',
+        text: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
+      });
+    });
+    
+    return markers;
+  }, [showPatternsOnChart, livePatterns, filteredHistoricalPatterns]);
+
   // Unique pattern types for filter
   const patternTypes = useMemo(() => {
     const types = new Set(historicalPatterns.map(p => p.pattern_id));
@@ -691,11 +728,22 @@ export default function TickerStudy() {
                 <BarChart3 className="h-5 w-5" />
                 {t('tickerStudy.priceChart', { timeframe: timeframeLabel, symbol: displaySymbol })}
               </CardTitle>
-              <TimeframeSelector
-                value={selectedTimeframe}
-                onChange={setSelectedTimeframe}
-                size="sm"
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={showPatternsOnChart ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setShowPatternsOnChart(!showPatternsOnChart)}
+                  className="gap-2 h-8"
+                >
+                  {showPatternsOnChart ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Patterns</span>
+                </Button>
+                <TimeframeSelector
+                  value={selectedTimeframe}
+                  onChange={setSelectedTimeframe}
+                  size="sm"
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -705,6 +753,7 @@ export default function TickerStudy() {
               height={350}
               timeframe={selectedTimeframe}
               onSendToCopilot={handleSendToCopilot}
+              chartMarkers={chartMarkers}
             />
           </CardContent>
         </Card>
