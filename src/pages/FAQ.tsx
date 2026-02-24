@@ -448,6 +448,79 @@ const FAQ = () => {
               )
             }
           ]
+        },
+        {
+          category: s('catEvaluation'),
+          questions: [
+            {
+              question: s('q_evaluation'),
+              answer: (
+                <div className="space-y-4">
+                  <p dangerouslySetInnerHTML={{ __html: s('a_evaluationIntro') }} />
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">{s('a_eval1Title')}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{s('a_eval1Desc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingDown className="h-4 w-4 text-destructive" />
+                        <h4 className="font-semibold">{s('a_eval2Title')}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{s('a_eval2Desc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Layers className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">{s('a_eval3Title')}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{s('a_eval3Desc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">{s('a_eval4Title')}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{s('a_eval4Desc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        <h4 className="font-semibold">{s('a_eval5Title')}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{s('a_eval5Desc')}</p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_evaluationNote') }} />
+                </div>
+              )
+            },
+            {
+              question: s('q_knownLimitations'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{s('a_limitationsIntro')}</p>
+                  <div className="space-y-2">
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm" dangerouslySetInnerHTML={{ __html: s('a_limit1') }} />
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm" dangerouslySetInnerHTML={{ __html: s('a_limit2') }} />
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm" dangerouslySetInnerHTML={{ __html: s('a_limit3') }} />
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm" dangerouslySetInnerHTML={{ __html: s('a_limit4') }} />
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
         }
       ]
     },
