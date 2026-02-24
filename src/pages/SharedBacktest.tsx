@@ -333,10 +333,29 @@ const SharedBacktest = () => {
         <Separator className="my-8" />
 
         {/* Footer Disclaimer */}
-        <div className="mt-12 p-4 bg-muted/50 rounded-lg text-center">
+        <div className="mt-12 p-4 bg-muted/50 rounded-lg text-center mb-16">
           <p className="text-xs text-muted-foreground">
             <strong>{t('about.disclaimerTitle')}</strong> {t('sharedBacktest.disclaimer')}
           </p>
+        </div>
+
+        {/* Sticky bottom CTA bar */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-3 md:p-4">
+          <div className="container mx-auto max-w-4xl flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground hidden sm:block">
+              Get alerts for <strong className="text-foreground">{backtest.strategy_name}</strong> on <strong className="text-foreground">{backtest.instrument}</strong>
+            </p>
+            <Button 
+              asChild 
+              size="sm" 
+              className="ml-auto"
+              onClick={() => track('shared_to_auth_click', { share_token: token, context: 'shared_backtest', instrument: backtest.instrument })}
+            >
+              <Link to={`/auth?redirect=/members/alerts&context=shared_backtest&pattern=${encodeURIComponent(backtest.strategy_name)}&symbol=${encodeURIComponent(backtest.instrument)}`}>
+                Create Free Account
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

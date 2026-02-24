@@ -50,7 +50,8 @@ export type AnalyticsEvent =
   | 'pattern_lab.promote_to_automate'
   | 'upgrade_banner_shown'
   | 'upgrade_banner_clicked'
-  | 'upgrade_banner_dismissed';
+  | 'upgrade_banner_dismissed'
+  | 'shared_to_auth_click';
 
 // Event properties types
 export interface PresetLoadedProps {
