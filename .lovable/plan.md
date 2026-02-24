@@ -1,44 +1,149 @@
 
 
-# Add Sort Controls to Copilot Feedback Dashboard
+# SEO and AI Discoverability Strategy
 
 ## Overview
-Add a sort dropdown to the existing Copilot Feedback Dashboard so items within each filter tab can be reordered by different criteria.
-
-## Current State
-The dashboard already has three filter tabs (Content Gaps, High Priority, All Feedback) but always sorts by `priority_score` descending then `created_at` descending. There is no user-facing sort control.
+Implement four high-impact changes to help ChartingPath rank in search engines and get cited by AI assistants (ChatGPT, Perplexity, Claude). Currently the site has no sitemap, no structured data, no `llms.txt`, and limited per-page meta tags.
 
 ## Changes
 
-### File: `src/components/admin/CopilotFeedbackDashboard.tsx`
+### 1. Dynamic Sitemap Edge Function
+Create a `sitemap` edge function that generates `sitemap.xml` on the fly by querying published `learning_articles` and combining with static routes.
 
-1. **Add a `sortBy` state** with options:
-   - `recent` -- Sort by `created_at` descending (most recent first)
-   - `priority` -- Sort by `priority_score` descending (highest priority first)
-   - `quality` -- Sort by `quality_score` ascending (lowest quality = biggest gaps first)
+**File:** `supabase/functions/sitemap/index.ts`
 
-2. **Add a Select dropdown** next to the existing filter tabs, using the shadcn `Select` component, labeled "Sort by".
+- Query `learning_articles` for all published slugs
+- Combine with static routes (`/`, `/learn`, `/patterns/live`, `/chart-patterns/library`, `/chart-patterns/quiz`, `/tools/*`, `/pricing`, `/about`, `/blog/:slug`)
+- Return valid XML sitemap with `<lastmod>` dates from article `published_at`
+- Set `Content-Type: application/xml`
+- No JWT required
 
-3. **Update the `loadFeedback` query** to apply the selected sort order dynamically instead of the hardcoded `priority_score` + `created_at` ordering.
+**File:** `supabase/config.toml` -- add `[functions.sitemap]` with `verify_jwt = false`
 
-4. **Default sort**: `recent` so the newest feedback appears first by default.
+### 2. Update robots.txt
+**File:** `public/robots.txt`
 
-## UI Layout
+- Add `Sitemap: https://chartingpath.com/sitemap.xml` (pointing to edge function URL proxied or direct)
+- Explicitly allow AI crawlers: `GPTBot`, `PerplexityBot`, `ClaudeBot`, `Google-Extended`
+- Block admin routes: `Disallow: /admin/`
 
-```text
-+------------------------------------------+
-| [Content Gaps] [High Priority] [All]     |
-|                          Sort by: [v Recent ▾] |
-+------------------------------------------+
-| Feedback cards...                        |
-```
+### 3. Add llms.txt
+**File:** `public/llms.txt`
+
+Create a structured plain-text file following the emerging `llms.txt` standard that describes ChartingPath to AI crawlers:
+- Platform description and capabilities
+- Key content areas (Edge Atlas, Pattern Screener, Pattern Lab, Learning articles)
+- Unique data assets (320K+ historical pattern occurrences with outcomes)
+- Links to key pages
+
+### 4. JSON-LD Structured Data Component
+**File:** `src/components/JsonLd.tsx`
+
+Create a reusable component that injects JSON-LD `<script>` tags into the page head.
+
+Schemas to implement:
+- **Homepage:** `WebApplication` + `Organization` schema
+- **Blog articles:** `Article` schema with `author`, `datePublished`, `description`
+- **Quiz pages:** `Quiz` / `LearningResource` schema
+
+**Integration points:**
+- `src/pages/Index.tsx` -- add `WebApplication` JSON-LD
+- `src/pages/blog/DynamicArticle.tsx` -- add `Article` JSON-LD using existing `seo_title`, `seo_description`, `published_at` fields
+- `src/pages/blog/DynamicArticle.tsx` -- also enhance existing meta tag injection to include `og:type`, `og:url`, canonical link
+
+### 5. Per-Page Meta Tags Enhancement
+**File:** `src/components/PageMeta.tsx`
+
+Create a lightweight component that dynamically updates `document.title`, meta description, OG tags, and canonical URL. Use it across key pages:
+
+- `Index.tsx` -- homepage meta
+- `DynamicArticle.tsx` -- already partially done, enhance with canonical + og:url
+- `LivePatternsPage` -- screener-specific meta
+- `PatternLibraryPage` -- library-specific meta
 
 ## Technical Details
 
-- Sort options mapped to Supabase `.order()` calls:
-  - `recent` -> `.order('created_at', { ascending: false })`
-  - `priority` -> `.order('priority_score', { ascending: false })`
-  - `quality` -> `.order('quality_score', { ascending: true, nullsFirst: false })`
-- The `useEffect` dependency array will include both `filter` and `sortBy` to reload data when either changes.
-- No new files or dependencies needed; uses existing `Select` component from shadcn/ui.
+### Sitemap Edge Function
+```text
+GET /functions/v1/sitemap -> XML sitemap
+
+Static routes hardcoded + dynamic articles from:
+  SELECT slug, published_at FROM learning_articles WHERE status = 'published'
+
+Response: application/xml with proper XML declaration
+Cache-Control: public, max-age=3600
+```
+
+### robots.txt updates
+```text
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot  
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /auth
+
+Sitemap: https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/sitemap
+```
+
+### JSON-LD example for articles
+```text
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": article.seo_title,
+  "description": article.seo_description,
+  "datePublished": article.published_at,
+  "publisher": { "@type": "Organization", "name": "ChartingPath" },
+  "mainEntityOfPage": canonical URL
+}
+```
+
+### llms.txt structure
+```text
+# ChartingPath
+> Pattern-based trading signal discovery, research, and automation platform.
+
+## Key Features
+- Live Pattern Screener: 1,100+ instruments scanned for active chart patterns
+- Edge Atlas: Historical win rates and expectancy for pattern+timeframe combinations
+- Pattern Lab: Backtest any pattern on any ticker with historical data
+- Learning Center: Educational articles on chart patterns and technical analysis
+
+## Data
+- 320,000+ historical pattern occurrences with verified outcomes
+- Patterns based on Thomas Bulkowski's Encyclopedia of Chart Patterns
+
+## Links
+- Homepage: https://chartingpath.com
+- Screener: https://chartingpath.com/patterns/live
+- Learn: https://chartingpath.com/learn
+- Pattern Library: https://chartingpath.com/chart-patterns/library
+```
+
+## Files Summary
+
+| Action | File |
+|--------|------|
+| Create | `supabase/functions/sitemap/index.ts` |
+| Create | `src/components/JsonLd.tsx` |
+| Create | `src/components/PageMeta.tsx` |
+| Create | `public/llms.txt` |
+| Edit   | `public/robots.txt` |
+| Edit   | `supabase/config.toml` |
+| Edit   | `src/pages/Index.tsx` |
+| Edit   | `src/pages/blog/DynamicArticle.tsx` |
+
+## Impact
+- Sitemap lets Google and Bing discover all article pages (currently invisible to crawlers)
+- JSON-LD enables rich snippets in search results (article cards, knowledge panels)
+- `llms.txt` makes the platform discoverable and citable by AI assistants
+- Per-page meta tags ensure each page has unique, relevant titles and descriptions for search results
 
