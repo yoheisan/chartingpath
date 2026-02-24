@@ -20,6 +20,7 @@ import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch
 import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
+import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
 import { useTranslation } from "react-i18next";
 
 interface UserProfile {
@@ -806,6 +807,13 @@ const MemberAlerts = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alert History Log */}
+      {user && (
+        <div className="mt-8">
+          <AlertHistoryLog userId={user.id} />
+        </div>
+      )}
 
       {/* Notification Settings */}
       <div id="notification-settings" className="mt-8 scroll-mt-6">
