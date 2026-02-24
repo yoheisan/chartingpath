@@ -96,7 +96,7 @@ export function TradingCopilot({
   pendingAnalysis,
   onContextConsumed
 }: TradingCopilotProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
@@ -246,7 +246,8 @@ export function TradingCopilot({
         body: JSON.stringify({
           messages: [...messages, userMsg]
             .filter(m => m.role === "user" || m.content.trim().length > 0)
-            .map(m => ({ role: m.role, content: m.content }))
+            .map(m => ({ role: m.role, content: m.content })),
+          language: i18n.language,
         }),
       });
 

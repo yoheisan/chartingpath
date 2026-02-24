@@ -1174,7 +1174,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, language } = await req.json();
     
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
@@ -1204,7 +1204,12 @@ serve(async (req) => {
       fetchLearnedRules(supabase),
       fetchRAGContext(supabase, messages),
     ]);
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + learnedRulesPrompt;
+    // Inject language instruction if user has a non-English language preference
+    const langCode = (language || "en").toLowerCase();
+    const langInstruction = langCode !== "en"
+      ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
+      : "";
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + learnedRulesPrompt + langInstruction;
     console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
     console.log(`[trading-copilot] Learned rules injected: ${learnedRulesPrompt.length > 0 ? 'yes' : 'none'}`);
 
