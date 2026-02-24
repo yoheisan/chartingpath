@@ -9,6 +9,7 @@ import {
   Sparkles, 
   Send, 
   X, 
+  Home,
   Loader2, 
   TrendingUp,
   Bell,
@@ -418,9 +419,16 @@ export function TradingCopilot({
               <p className="text-xs text-muted-foreground">{t('copilot.subtitle')}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onToggle}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button variant="ghost" size="icon" onClick={handleNewChat} title={t('copilot.home', 'Home')}>
+                <Home className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onToggle}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
