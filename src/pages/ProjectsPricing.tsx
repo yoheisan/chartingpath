@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, TrendingUp, Shield, Target, ArrowRight } from "lucide-react";
+import { Check, Zap, TrendingUp, Shield, Target, ArrowRight, Star, Users, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
@@ -141,6 +141,25 @@ const ProjectsPricing = () => {
             <Badge variant="outline" className="bg-background/50">{p('badges.chartPatterns')}</Badge>
             <Badge variant="outline" className="bg-background/50">{p('badges.research')}</Badge>
           </div>
+
+          {/* Social Proof */}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-primary" />
+                <strong className="text-foreground">2,400+</strong> traders using ChartingPath
+              </span>
+              <span className="hidden sm:flex items-center gap-1.5">
+                <Star className="h-4 w-4 text-amber-500" />
+                <strong className="text-foreground">4.8/5</strong> avg. rating
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span className="text-foreground font-medium">14-day money-back guarantee</span>
+              <span className="text-muted-foreground">· No questions asked</span>
+            </div>
+          </div>
         </div>
 
         {/* Billing Cycle Toggle */}
@@ -169,7 +188,7 @@ const ProjectsPricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-16">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-4">
           {tiers.map((tier) => {
             const displayPrice = billingCycle === 'annual' ? tier.annualMonthlyPrice : tier.monthlyPrice;
             return (
@@ -289,7 +308,13 @@ const ProjectsPricing = () => {
           })}
         </div>
 
-        {/* Credit Explanation */}
+        {/* Money-back guarantee reminder */}
+        <div className="text-center mb-16">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            All paid plans include a <strong className="text-foreground">14-day money-back guarantee</strong>. Cancel anytime, no questions asked.
+          </p>
+        </div>
         <Card className="mb-16 border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
