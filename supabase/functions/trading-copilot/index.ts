@@ -758,7 +758,7 @@ async function fetchLearnedRules(supabase: any): Promise<string> {
   try {
     const { data, error } = await supabase
       .from('copilot_learned_rules')
-      .select('rule_type, trigger_pattern, rule_content')
+      .select('id, rule_type, trigger_pattern, rule_content')
       .eq('is_active', true)
       .order('confidence', { ascending: false })
       .limit(20);
@@ -767,7 +767,7 @@ async function fetchLearnedRules(supabase: any): Promise<string> {
 
     // Increment usage counts (fire-and-forget)
     const ids = data.map((r: any) => r.id);
-    supabase.rpc('increment_learned_rule_usage', { rule_ids: ids }).catch(() => {});
+    try { supabase.rpc('increment_learned_rule_usage', { rule_ids: ids }); } catch {}
 
     const rulesByType: Record<string, string[]> = {};
     for (const rule of data) {
