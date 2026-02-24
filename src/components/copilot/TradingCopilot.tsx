@@ -29,9 +29,11 @@ import { CopilotRichMessage } from "./CopilotRichMessage";
 import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
+import { CopilotAuthGate } from "./CopilotAuthGate";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
 import {
   Drawer,
   DrawerContent,
@@ -57,6 +59,18 @@ interface ToolCall {
 const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
 const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
+
+const GUEST_MSG_KEY = "copilot_guest_msgs";
+const GUEST_MSG_LIMIT = 3;
+
+function getGuestMsgCount(): number {
+  try { return parseInt(sessionStorage.getItem(GUEST_MSG_KEY) || "0", 10); } catch { return 0; }
+}
+function incrementGuestMsgCount(): number {
+  const next = getGuestMsgCount() + 1;
+  try { sessionStorage.setItem(GUEST_MSG_KEY, String(next)); } catch {}
+  return next;
+}
 
 const QUICK_ACTION_KEYS = [
   { labelKey: "copilot.findPatterns", prompt: "Show me the best quality patterns forming right now across major tech stocks", icon: TrendingUp },
@@ -90,6 +104,7 @@ export function TradingCopilot({
   const [showHistory, setShowHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
@@ -109,6 +124,8 @@ export function TradingCopilot({
   } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
+
+  const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
 
   const logFeedback = useCallback(async (responseContent: string, helpful: boolean) => {
     try {
@@ -338,11 +355,14 @@ export function TradingCopilot({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || guestLimitReached) return;
+    if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
     streamChat(input.trim());
   };
 
   const handleQuickAction = (prompt: string) => {
+    if (guestLimitReached) return;
+    if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
     streamChat(prompt);
   };
 
@@ -419,6 +439,11 @@ export function TradingCopilot({
                   <p className="text-sm text-muted-foreground">
                     {t('copilot.welcomeDesc')}
                   </p>
+                  {!isAuthenticated && (
+                    <p className="text-xs text-muted-foreground/70 mt-2">
+                      Try {GUEST_MSG_LIMIT} free messages — sign in for unlimited access
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
@@ -537,18 +562,29 @@ export function TradingCopilot({
           )}
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t bg-background">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder')} disabled={isLoading} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </form>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            {t('copilot.disclaimer')}
-          </p>
-        </div>
+        {/* Input or Auth Gate */}
+        {guestLimitReached ? (
+          <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
+        ) : (
+          <div className="p-4 border-t bg-background">
+            {!isAuthenticated && guestMsgCount > 0 && (
+              <div className="flex justify-center mb-2">
+                <Badge variant="secondary" className="text-[10px] font-normal">
+                  {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free messages remaining
+                </Badge>
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder')} disabled={isLoading} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </form>
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              {t('copilot.disclaimer')}
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
