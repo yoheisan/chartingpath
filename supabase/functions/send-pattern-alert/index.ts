@@ -75,6 +75,23 @@ const patternNames: { [key: string]: string } = {
   'ema_cross_bearish': 'EMA Cross (Bearish)',
   'rsi_divergence_bullish': 'RSI Divergence (Bullish)',
   'rsi_divergence_bearish': 'RSI Divergence (Bearish)',
+  'donchian-breakout-long': 'Donchian Breakout Long',
+  'donchian-breakout-short': 'Donchian Breakout Short',
+  'double-top': 'Double Top',
+  'double-bottom': 'Double Bottom',
+  'ascending-triangle': 'Ascending Triangle',
+  'descending-triangle': 'Descending Triangle',
+  'head-and-shoulders': 'Head & Shoulders',
+  'inverse-head-and-shoulders': 'Inverse Head & Shoulders',
+  'rising-wedge': 'Rising Wedge',
+  'falling-wedge': 'Falling Wedge',
+  'bull-flag': 'Bull Flag',
+  'bear-flag': 'Bear Flag',
+  'cup-and-handle': 'Cup & Handle',
+  'triple-top': 'Triple Top',
+  'triple-bottom': 'Triple Bottom',
+  'symmetrical-triangle': 'Symmetrical Triangle',
+  'inverse-cup-and-handle': 'Inverse Cup & Handle',
 };
 
 // Helper: map ChartingPath symbol to TradingView symbol
