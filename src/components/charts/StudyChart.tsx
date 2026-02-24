@@ -155,7 +155,7 @@ const StudyChart = memo(({
   hideAnalysisToolbar = false,
   chartMarkers,
 }: StudyChartProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const rsiContainerRef = useRef<HTMLDivElement>(null);
   const macdContainerRef = useRef<HTMLDivElement>(null);
@@ -1162,7 +1162,7 @@ const StudyChart = memo(({
         <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
           <DialogContent className="max-w-md max-h-[80vh]">
             <DialogHeader>
-              <DialogTitle className="text-base">Chart Analysis</DialogTitle>
+              <DialogTitle className="text-base">{t('chartAnalysisDialog.title')}</DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh] pr-3">
               {analysis.analysisResult && (
@@ -1175,11 +1175,11 @@ const StudyChart = memo(({
                   setShowAnalysisDialog(false);
                   analysis.sendToCopilot();
                 }}>
-                  Ask Copilot
+                  {t('chartAnalysisDialog.askCopilot')}
                 </Button>
               )}
               <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
-                Close
+                {t('chartAnalysisDialog.close')}
               </Button>
             </div>
           </DialogContent>

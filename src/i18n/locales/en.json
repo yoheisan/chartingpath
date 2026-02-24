@@ -4555,6 +4555,26 @@
     "errorMsg": "⚠️ Something went wrong. Please try again.",
     "contactSupport": "Contact Support"
   },
+  "chartAnalysisDialog": {
+    "title": "Chart Analysis",
+    "askCopilot": "Ask Copilot",
+    "close": "Close",
+    "support": "Support",
+    "resistance": "Resistance",
+    "strength": "strength",
+    "bars": "bars",
+    "risk": "risk",
+    "volume": "Volume",
+    "activePatterns": "Active Patterns",
+    "volatility": "Volatility",
+    "trendStrength": "Trend strength",
+    "bullish": "Bullish",
+    "bearish": "Bearish",
+    "neutral": "Neutral",
+    "increasing": "Increasing",
+    "decreasing": "Decreasing",
+    "stable": "Stable"
+  },
   "serviceNames": {
     "Pattern Lab": "Pattern Lab",
     "Command Center": "Command Center",

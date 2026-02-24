@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
+import { useTranslation } from "react-i18next";
 
 interface ChartAnalysisSummaryProps {
   analysis: ChartAnalysisResult;
@@ -21,6 +22,7 @@ interface ChartAnalysisSummaryProps {
 }
 
 export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysisSummaryProps) {
+  const { t } = useTranslation();
   const { priceAnalysis, indicators, volumeAnalysis, patterns, riskAssessment } = analysis;
   
   const trendIcon = priceAnalysis.trend === 'bullish' 
@@ -48,6 +50,19 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
     return 'neutral';
   };
 
+  const translateTrend = (trend: string) => {
+    if (trend === 'bullish') return t('chartAnalysisDialog.bullish');
+    if (trend === 'bearish') return t('chartAnalysisDialog.bearish');
+    return t('chartAnalysisDialog.neutral');
+  };
+
+  const translateVolumeTrend = (trend: string) => {
+    const lower = trend.toLowerCase();
+    if (lower.includes('increas')) return t('chartAnalysisDialog.increasing');
+    if (lower.includes('decreas')) return t('chartAnalysisDialog.decreasing');
+    return t('chartAnalysisDialog.stable');
+  };
+
   const formatPrice = (price: number) => {
     return price >= 1 ? `$${price.toFixed(2)}` : `$${price.toFixed(4)}`;
   };
@@ -58,7 +73,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
         <div className="flex items-center gap-2">
           <span className={cn("flex items-center gap-1 font-medium", trendColor)}>
             {trendIcon}
-            {priceAnalysis.trend.charAt(0).toUpperCase() + priceAnalysis.trend.slice(1)}
+            {translateTrend(priceAnalysis.trend)}
           </span>
           <span className="text-muted-foreground">·</span>
           <span className={priceAnalysis.priceChangePercent >= 0 ? 'text-emerald-500' : 'text-red-500'}>
@@ -69,7 +84,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           </Badge>
         </div>
         <div className="text-xs text-muted-foreground">
-          RSI {indicators.rsi.current.toFixed(0)} · {indicators.macd.interpretation} · {volumeAnalysis.volumeTrend} volume
+          RSI {indicators.rsi.current.toFixed(0)} · {indicators.macd.interpretation} · {translateVolumeTrend(volumeAnalysis.volumeTrend)} {t('chartAnalysisDialog.volume').toLowerCase()}
         </div>
       </div>
     );
@@ -84,7 +99,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           <Badge variant="secondary" className="text-xs">{analysis.timeframe}</Badge>
         </div>
         <Badge variant="outline" className={cn("text-xs", getRiskColor(riskAssessment.overallRisk))}>
-          {riskAssessment.overallRisk} risk
+          {riskAssessment.overallRisk} {t('chartAnalysisDialog.risk')}
         </Badge>
       </div>
 
@@ -96,11 +111,11 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
               {trendIcon}
             </div>
             <div>
-              <div className={cn("font-medium capitalize", trendColor)}>
-                {priceAnalysis.trend}
+              <div className={cn("font-medium", trendColor)}>
+                {translateTrend(priceAnalysis.trend)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {priceAnalysis.trendStrength} strength
+                {priceAnalysis.trendStrength} {t('chartAnalysisDialog.strength')}
               </div>
             </div>
           </div>
@@ -109,7 +124,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
               {priceAnalysis.priceChangePercent >= 0 ? '+' : ''}{priceAnalysis.priceChangePercent.toFixed(2)}%
             </div>
             <div className="text-xs text-muted-foreground">
-              {analysis.barCount} bars
+              {analysis.barCount} {t('chartAnalysisDialog.bars')}
             </div>
           </div>
         </div>
@@ -117,12 +132,12 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-1.5">
             <Shield className="h-3 w-3 text-emerald-500" />
-            <span className="text-muted-foreground">Support:</span>
+            <span className="text-muted-foreground">{t('chartAnalysisDialog.support')}:</span>
             <span className="font-medium">{formatPrice(priceAnalysis.support)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Target className="h-3 w-3 text-red-500" />
-            <span className="text-muted-foreground">Resistance:</span>
+            <span className="text-muted-foreground">{t('chartAnalysisDialog.resistance')}:</span>
             <span className="font-medium">{formatPrice(priceAnalysis.resistance)}</span>
           </div>
         </div>
@@ -146,21 +161,21 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           label="ADX" 
           value={indicators.adx?.adx.toFixed(0) || 'N/A'}
           status={indicators.adx && indicators.adx.adx > 25 ? 'bullish' : 'neutral'}
-          detail={indicators.adx?.interpretation || 'Trend strength'}
+          detail={indicators.adx?.interpretation || t('chartAnalysisDialog.trendStrength')}
         />
         <IndicatorItem 
           label="ATR" 
           value={indicators.atr.volatilityLevel}
           status="neutral"
-          detail="Volatility"
+          detail={t('chartAnalysisDialog.volatility')}
         />
       </div>
 
       {/* Volume */}
       <div className="flex items-center gap-2 text-sm">
         <BarChart3 className="h-4 w-4 text-muted-foreground" />
-        <span className="text-muted-foreground">Volume:</span>
-        <span className="font-medium capitalize">{volumeAnalysis.volumeTrend}</span>
+        <span className="text-muted-foreground">{t('chartAnalysisDialog.volume')}:</span>
+        <span className="font-medium">{translateVolumeTrend(volumeAnalysis.volumeTrend)}</span>
         <span className="text-muted-foreground">({volumeAnalysis.volumeRatio.toFixed(2)}x avg)</span>
       </div>
 
@@ -168,7 +183,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
       {patterns.length > 0 && (
         <div className="space-y-1.5">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Active Patterns
+            {t('chartAnalysisDialog.activePatterns')}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {patterns.map((p, i) => (
