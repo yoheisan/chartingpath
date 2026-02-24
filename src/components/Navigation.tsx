@@ -98,47 +98,47 @@ const Navigation = () => {
         <WithNotificationBadge count={alertCount} size="sm">
           <Bell className="h-5 w-5 text-emerald-500" />
         </WithNotificationBadge>
-        Alerts
+        {t('navigation.alerts', 'Alerts')}
       </Link>
       
       {/* 4. Scripts - Automate */}
       <Link to="/members/scripts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <FileCode className="h-5 w-5 text-cyan-500" />
-        Scripts
+        {t('navigation.scripts', 'Scripts')}
       </Link>
       
       {/* 5. Learning */}
       <div className="border-t pt-4 mt-2">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Learning</p>
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.learning', 'Learning')}</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/chart-patterns/library" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Library</Link>
-          <Link to="/learn" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Blog & Articles</Link>
-          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
+          <Link to="/chart-patterns/library" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternLibrary', 'Pattern Library')}</Link>
+          <Link to="/learn" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.blogArticles', 'Blog & Articles')}</Link>
+          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternQuiz', 'Pattern Quizzes')}</Link>
         </div>
       </div>
       
       {/* 4. Pricing */}
       <Link to="/projects/pricing" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
-        Pricing
+        {t('navigation.pricing', 'Pricing')}
       </Link>
       
       {/* Account section */}
       <div className="border-t pt-4 mt-2">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Account</p>
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.account', 'Account')}</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Dashboard</Link>
-          <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Settings</Link>
+          <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.dashboard', 'Dashboard')}</Link>
+          <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.settings', 'Settings')}</Link>
         </div>
       </div>
       
       <div className="border-t pt-4">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Tools</p>
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.tools', 'Tools')}</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/tools/pip-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pip Calculator</Link>
-          <Link to="/tools/risk-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Risk Calculator</Link>
-          <Link to="/tools/economic-calendar" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Economic Calendar</Link>
-          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">Pattern Quizzes</Link>
+          <Link to="/tools/pip-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.pipCalculator', 'Pip Calculator')}</Link>
+          <Link to="/tools/risk-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.riskCalculator', 'Risk Calculator')}</Link>
+          <Link to="/tools/economic-calendar" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.economicCalendar', 'Economic Calendar')}</Link>
+          <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternQuiz', 'Pattern Quizzes')}</Link>
         </div>
       </div>
     </div>
