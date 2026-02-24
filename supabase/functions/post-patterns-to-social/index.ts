@@ -223,8 +223,8 @@ serve(async (req) => {
     // ── 3. Filter: not already posted — pick only ONE to avoid rate limits ──
     const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id) && !sessionPostedIds.has(p.id));
 
-    // Pick the single best unposted pattern (first = most recently confirmed)
-    const toPost = unposted.length > 0 ? [unposted[0]] : [];
+    // Pick up to 3 unposted patterns (most recently confirmed)
+    const toPost = unposted.slice(0, 3);
 
     // ── 4. Get the active Twitter account ──────────────────────────────────
     const { data: accounts } = await supabase
@@ -245,7 +245,10 @@ serve(async (req) => {
     // ── 5. Post the single selected pattern ───────────────────────────────
     const results = [];
 
-    for (const pattern of toPost) {
+    for (const [i, pattern] of toPost.entries()) {
+      // Stagger requests to avoid burst rate limits (5s delay between posts)
+      if (i > 0) await new Promise(r => setTimeout(r, 5000));
+
       try {
         const token    = await ensureShareToken(supabase, pattern.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
