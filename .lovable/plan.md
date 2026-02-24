@@ -1,63 +1,76 @@
 
 
-# Bring the Dashboard Forward: Public Preview Mode
+# Trading Copilot: Auth-Gated Onboarding Strategy
+
+## Current State
+
+The Trading Copilot is **completely open** to all users — authenticated or not. Anyone can:
+- Open it via the bottom-right button or Cmd+K
+- Send unlimited messages to the AI
+- Use all quick actions (find setups, backtest queries, script generation)
+
+The only difference for anonymous users is that conversation history is not saved (no sidebar). There is **no usage limit, no auth gate, and no onboarding nudge**.
 
 ## Problem
-The most impressive feature — a TradingView-style command center with live charts, pattern overlays, watchlists, and market overview — is completely invisible until registration. Users have no idea what they're signing up for.
 
-## Strategy
-Apply the same auth-gate pattern used on Screener and Pattern Lab: **show the full dashboard UI to everyone**, but gate write actions (save watchlist, set alerts, enable playback) behind the `AuthGateDialog`.
+This is a missed conversion opportunity. The copilot is one of the platform's most powerful features and a key differentiator. Giving it away with zero friction means:
+- No incentive to register
+- No way to track engagement per user
+- No path from "impressed" to "signed up"
+- Higher compute costs from anonymous abuse
 
-## Implementation Steps
+## Strategy: Free Trial Messages + Auth Gate
 
-### 1. Remove hard auth redirect from MemberDashboard
-- Replace `useRequireAuth()` with `useAuth()` in `MemberDashboard.tsx`
-- Pass `userId` as optional (already typed as `userId?: string` in `CommandCenterLayout`)
-- Show the full layout for anonymous users with no redirect
+Allow anonymous users to **experience the copilot** with a limited number of free messages, then prompt registration to continue. This mirrors the auth-gate pattern already used on Screener, Pattern Lab, and the Dashboard.
 
-### 2. Gate write actions inside CommandCenterLayout
-- Add `useAuthGate` hooks to:
-  - **Save to watchlist** -- prompt sign-in
-  - **Create alert** from dashboard -- prompt sign-in
-  - **Trade playback** -- prompt sign-in
-  - **Dashboard settings persistence** -- silently skip for anon users
-- Read-only features remain fully open: chart viewing, pattern overlay display, market overview, pattern study
+### How It Works
 
-### 3. Add a subtle auth nudge banner
-- When `!user`, show a slim top banner inside the dashboard: *"Sign in to save your watchlist and create alerts"* with a CTA button
-- Dismissible, non-blocking
+1. **3 free messages** for anonymous users (tracked in `sessionStorage`)
+2. After 3 messages, the input area is replaced with a sign-in CTA using the existing `AuthGateDialog`
+3. Authenticated users get **unlimited messages** (or plan-based limits later)
+4. The welcome screen stays fully visible — quick actions, branding, everything
 
-### 4. Update routing and navigation
-- Remove `/members/dashboard` from any auth-required route guards
-- Keep the route path unchanged (no URL break)
-- Add "Dashboard" as a visible nav item for all users (currently only shows for authenticated users in the navigation/account menu)
-- Update `FULLSCREEN_ROUTES` handling in `Layout.tsx` -- no changes needed, it already works by path
+## What Changes
 
-### 5. Landing page connection
-- Add a "Preview Dashboard" CTA or action card on the landing page linking to `/members/dashboard`
-- This gives new visitors a direct path to see the most powerful feature
+### 1. `src/components/copilot/TradingCopilot.tsx`
+- Track anonymous message count in `sessionStorage` (key: `copilot_guest_msgs`)
+- After the free message limit, disable the input and show an inline auth gate prompt
+- Import and render `AuthGateDialog` when the limit is reached
+- Add a subtle counter badge: "2 of 3 free messages remaining"
 
-## What Stays Gated
-| Feature | Anonymous | Authenticated |
-|---------|-----------|---------------|
-| View chart + patterns | Yes | Yes |
-| Market overview panel | Yes | Yes |
-| Pattern study / details | Yes | Yes |
-| Save watchlist | AuthGate | Yes |
-| Create alert | AuthGate | Yes |
-| Trade playback | AuthGate | Yes |
-| Dashboard settings save | Skip silently | Yes |
+### 2. `src/components/copilot/CopilotAuthGate.tsx` (new file)
+- A small inline component shown below the chat when the guest limit is hit
+- Shows: lock icon, "Sign in to continue chatting" message, Sign In / Create Account buttons
+- Uses the same `AuthGateDialog` pattern for consistency
+- Dismissible but re-appears on next message attempt
+
+### 3. Welcome screen enhancement
+- Add a subtle note under the welcome message for anonymous users: "Try 3 free messages -- sign in for unlimited access"
+- No changes for authenticated users
+
+## What Stays the Same
+
+| Aspect | Behavior |
+|--------|----------|
+| Cmd+K shortcut | Works for everyone |
+| Opening the copilot | Works for everyone |
+| Quick action buttons | Visible to everyone (count toward free limit) |
+| Conversation history | Only for authenticated users (no change) |
+| Chart analysis context | Works for everyone within free limit |
 
 ## Technical Details
 
-### Files to modify:
-- `src/pages/MemberDashboard.tsx` -- remove `useRequireAuth`, use `useAuth` instead
-- `src/components/command-center/CommandCenterLayout.tsx` -- wrap write actions with `useAuthGate`, add auth nudge banner when no user
-- `src/components/command-center/WatchlistPanel.tsx` -- gate save/edit with `useAuthGate`
-- `src/components/command-center/AlertsHistoryPanel.tsx` -- gate alert creation with `useAuthGate`
-- `src/components/Navigation.tsx` -- expose Dashboard link to all users
-- `src/pages/Index.tsx` -- add Dashboard action card or CTA
+### Session tracking (no database needed)
+```text
+sessionStorage key: "copilot_guest_msgs"
+value: number (incremented on each send)
+reset: on sign-in (naturally cleared by auth state change)
+```
 
-### No new dependencies, no new DB queries, no compute impact
-This is purely a frontend visibility change. All data queries already work without a user ID (charts, patterns, market overview use public data). Only user-specific persistence (watchlists, alerts, settings) requires auth.
+### Files to modify:
+- `src/components/copilot/TradingCopilot.tsx` -- add guest message counter logic + inline gate
+- `src/components/copilot/CopilotAuthGate.tsx` -- new inline auth prompt component
+
+### No backend changes
+The edge function already accepts unauthenticated requests. The gate is purely frontend, keeping it simple and fast to ship. Rate limiting at the edge function level can be added later if needed.
 
