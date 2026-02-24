@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTradingCopilotContext } from './TradingCopilotContext';
 import { trackEvent } from '@/lib/analytics';
 import ReactMarkdown from 'react-markdown';
@@ -207,7 +208,7 @@ function enrichTextWithLinks(text: string): React.ReactNode[] {
 
 // ─── Action buttons extracted from message context ───
 interface ActionButton {
-  label: string;
+  labelKey: string;
   icon: React.ReactNode;
   to: string;
 }
@@ -243,21 +244,21 @@ function extractActionButtons(content: string): ActionButton[] {
   // Only add relevant buttons
   if (firstTicker || firstPattern) {
     buttons.push({
-      label: 'Validate in Pattern Lab',
+      labelKey: 'copilot.actions.validatePatternLab',
       icon: <FlaskConical className="h-3.5 w-3.5" />,
       to: `/projects/pattern-lab/new?${labParams.toString()}`,
     });
   }
   if (firstPattern) {
     buttons.push({
-      label: 'Find Active Signals',
+      labelKey: 'copilot.actions.findActiveSignals',
       icon: <Activity className="h-3.5 w-3.5" />,
       to: `/patterns/live?${screenerParams.toString()}`,
     });
   }
   if (firstTicker || firstPattern) {
     buttons.push({
-      label: 'Export Script',
+      labelKey: 'copilot.actions.exportScript',
       icon: <FileCode className="h-3.5 w-3.5" />,
       to: `/members/scripts?${scriptParams.toString()}`,
     });
@@ -396,10 +397,11 @@ function StatCards({ metrics }: { metrics: StatMetric[] }) {
 }
 
 function ActionButtons({ buttons }: { buttons: ActionButton[] }) {
+  const { t } = useTranslation();
   const copilotContext = useTradingCopilotContext();
   const handleClick = useCallback((btn: ActionButton) => {
     trackEvent('copilot.action_click', {
-      label: btn.label,
+      label: btn.labelKey,
       destination: btn.to,
     });
     copilotContext.close();
@@ -413,7 +415,7 @@ function ActionButtons({ buttons }: { buttons: ActionButton[] }) {
         <Link key={i} to={btn.to} onClick={() => handleClick(btn)}>
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
             {btn.icon}
-            {btn.label}
+            {t(btn.labelKey)}
             <ExternalLink className="h-3 w-3 opacity-50" />
           </Button>
         </Link>
