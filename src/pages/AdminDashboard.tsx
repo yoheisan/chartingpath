@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database, KeyRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import { InternalDocs } from "@/components/admin/InternalDocs";
 import { CopilotFeedbackDashboard } from "@/components/admin/CopilotFeedbackDashboard";
 import { ServiceHealthDashboard } from "@/components/admin/ServiceHealthDashboard";
 import { PipelineHealthDashboard } from "@/components/admin/PipelineHealthDashboard";
+import { LoginAttemptsPanel } from "@/components/admin/LoginAttemptsPanel";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -233,6 +234,14 @@ const AdminDashboard = () => {
             <Database className="h-4 w-4" />
             Pipeline Health
           </Button>
+          <Button
+            variant={activeTab === "login-attempts" ? "default" : "outline"}
+            onClick={() => setActiveTab("login-attempts")}
+            className="flex items-center gap-2"
+          >
+            <KeyRound className="h-4 w-4" />
+            Login Attempts
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -263,6 +272,8 @@ const AdminDashboard = () => {
         {activeTab === "service-health" && <ServiceHealthDashboard />}
 
         {activeTab === "pipeline-health" && <PipelineHealthDashboard />}
+
+        {activeTab === "login-attempts" && <LoginAttemptsPanel />}
       </div>
     </div>
   );

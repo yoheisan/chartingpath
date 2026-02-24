@@ -12,6 +12,18 @@ import { trackSignupCompleted } from "@/services/analytics";
 import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
 import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase as sbClient } from "@/integrations/supabase/client";
+
+// Fire-and-forget login attempt tracker
+const trackLoginAttempt = (payload: {
+  email?: string;
+  success: boolean;
+  method: string;
+  error_message?: string;
+  user_id?: string;
+}) => {
+  sbClient.functions.invoke("track-login", { body: payload }).catch(() => {});
+};
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -223,6 +235,11 @@ const Auth = () => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const user = session.user;
+        // Track OAuth / auto sign-in (password logins tracked separately)
+        const provider = user.app_metadata?.provider;
+        if (provider && provider !== "email") {
+          trackLoginAttempt({ email: user.email, success: true, method: provider, user_id: user.id });
+        }
         setTimeout(() => {
           void ensureProfileForUser(user).finally(() => {
             navigate(redirectPath);
@@ -409,12 +426,17 @@ const Auth = () => {
           description: "Please check your email to verify your account",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          trackLoginAttempt({ email, success: false, method: "password", error_message: error.message });
+          throw error;
+        }
+
+        trackLoginAttempt({ email, success: true, method: "password", user_id: data.user?.id });
 
         toast({
           title: "Welcome Back",

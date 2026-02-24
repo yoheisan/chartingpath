@@ -2143,6 +2143,51 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          method: string
+          region: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       market_report_subscriptions: {
         Row: {
           created_at: string
