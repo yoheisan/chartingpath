@@ -251,6 +251,28 @@ serve(async (req) => {
         const shareUrl = `https://chartingpath.com/s/${token}`;
         const tweet    = buildTweet(pattern, shareUrl);
 
+        // Generate branded OG share image for the Twitter card
+        try {
+          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+          const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+          const imgRes = await fetch(`${supabaseUrl}/functions/v1/generate-share-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({ token, pattern_id: pattern.id }),
+          });
+          if (imgRes.ok) {
+            console.log(`[pattern-poster] ✅ Share image generated for ${token}`);
+          } else {
+            const errBody = await imgRes.text();
+            console.warn(`[pattern-poster] ⚠️ Share image generation failed (non-blocking): ${errBody}`);
+          }
+        } catch (imgErr: any) {
+          console.warn(`[pattern-poster] ⚠️ Share image generation error (non-blocking): ${imgErr.message}`);
+        }
+
         console.log(`[pattern-poster] Posting: ${pattern.instrument} ${pattern.pattern_name} (${pattern.quality_score})`);
 
         const twitterResponse = await postToTwitter(tweet);
