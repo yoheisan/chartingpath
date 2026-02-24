@@ -1,15 +1,22 @@
 
 
-# Trading Copilot: Auth-Gated Onboarding Strategy — IMPLEMENTED ✅
+# Redeploy `post-patterns-to-social` Edge Function
 
-## What Was Done
+## Problem
+The `post-patterns-to-social` cron job is firing every 30 minutes, but no pattern alerts have been posted today. The function appears to be failing silently -- no entries in `post_history` and no meaningful logs from the function itself.
 
-1. **Guest message limit**: Anonymous users get 3 free messages per session (tracked via `sessionStorage` key `copilot_guest_msgs`)
-2. **CopilotAuthGate component**: Inline sign-in/register CTA replaces the input area when the limit is reached
-3. **Remaining messages badge**: Shows "X of 3 free messages remaining" after the first message
-4. **Welcome screen note**: Anonymous users see "Try 3 free messages — sign in for unlimited access"
-5. **Authenticated users**: Unlimited access, no changes
+## Solution
+Redeploy the edge function to clear any stale state or boot failure. The code itself is sound -- no changes needed, just a fresh deployment.
 
-## Files Changed
-- `src/components/copilot/TradingCopilot.tsx` — guest counter logic, conditional input/auth gate rendering
-- `src/components/copilot/CopilotAuthGate.tsx` — new inline auth prompt component
+## Steps
+
+1. **Redeploy** the `post-patterns-to-social` edge function as-is (no code changes)
+2. **Verify** by checking the edge function logs after the next cron invocation (within 30 minutes) to confirm it boots and processes patterns
+3. **Confirm** a new entry appears in `post_history` with `post_type = 'pattern_alert'`
+
+## Expected Outcome
+The next cron trigger will invoke a freshly deployed function, which will:
+- Pick the best unposted Grade A/B pattern
+- Tweet it via the X API (now on pay-per-use, so no 429 errors)
+- Record the post in `post_history`
+
