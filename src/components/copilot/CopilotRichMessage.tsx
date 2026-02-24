@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { useTradingCopilotContext } from './TradingCopilotContext';
 import { trackEvent } from '@/lib/analytics';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
@@ -395,12 +396,14 @@ function StatCards({ metrics }: { metrics: StatMetric[] }) {
 }
 
 function ActionButtons({ buttons }: { buttons: ActionButton[] }) {
+  const copilotContext = useTradingCopilotContext();
   const handleClick = useCallback((btn: ActionButton) => {
     trackEvent('copilot.action_click', {
       label: btn.label,
       destination: btn.to,
     });
-  }, []);
+    copilotContext.close();
+  }, [copilotContext]);
 
   if (buttons.length === 0) return null;
 
