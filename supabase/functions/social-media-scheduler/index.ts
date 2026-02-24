@@ -20,15 +20,31 @@ serve(async (req) => {
     const now = new Date();
     console.log('Running social media scheduler at:', now.toISOString());
 
-    // Find posts scheduled for now (within 60 minute window to catch missed posts)
-    const sixtyMinutesAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    // Step 1: Mark posts older than 48 hours as 'missed' to prevent infinite backlog
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const { data: staleMarked, error: staleError } = await supabaseClient
+      .from('scheduled_posts')
+      .update({ status: 'failed', error_message: 'Missed: post was not processed within 48h of scheduled time' })
+      .eq('status', 'scheduled')
+      .lt('scheduled_time', fortyEightHoursAgo.toISOString())
+      .select('id');
+    
+    if (staleMarked && staleMarked.length > 0) {
+      console.log(`Marked ${staleMarked.length} stale posts as missed`);
+    }
+    if (staleError) {
+      console.warn('Error marking stale posts:', staleError.message);
+    }
+
+    // Step 2: Find posts due now (within 24h window to catch posts missed by previous runs)
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
 
     const { data: duePost, error: fetchError } = await supabaseClient
       .from('scheduled_posts')
       .select('*')
       .eq('status', 'scheduled')
-      .gte('scheduled_time', sixtyMinutesAgo.toISOString())
+      .gte('scheduled_time', twentyFourHoursAgo.toISOString())
       .lte('scheduled_time', fiveMinutesFromNow.toISOString())
       .order('scheduled_time', { ascending: true })
       .limit(1);
@@ -41,7 +57,7 @@ serve(async (req) => {
     if (!duePost || duePost.length === 0) {
       console.log('No posts due at this time');
       return new Response(
-        JSON.stringify({ message: 'No posts due' }),
+        JSON.stringify({ message: 'No posts due', staleCleaned: staleMarked?.length || 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -175,10 +191,13 @@ serve(async (req) => {
 
     if (postError) {
       console.error('Error posting to social media:', postError);
-      // Mark as failed
+      // Mark as failed with error details
       await supabaseClient
         .from('scheduled_posts')
-        .update({ status: 'failed' })
+        .update({ 
+          status: 'failed',
+          error_message: postError?.message || JSON.stringify(postError) || 'Unknown post-to-social-media error'
+        })
         .eq('id', post.id);
       
       throw postError;
