@@ -4531,7 +4531,8 @@
     "creditsDepleted": "AI credits depleted. Please add credits to continue.",
     "errorResponse": "Failed to get response. Please try again.",
     "rateLimitedMsg": "⚠️ Rate limited — please wait a few seconds and try again.",
-    "errorMsg": "⚠️ Something went wrong. Please try again."
+    "errorMsg": "⚠️ Something went wrong. Please try again.",
+    "contactSupport": "Contact Support"
   },
   "serviceNames": {
     "Pattern Lab": "Pattern Lab",
