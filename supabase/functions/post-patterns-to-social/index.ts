@@ -105,19 +105,34 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-async function postToTwitter(text: string): Promise<{ id: string }> {
+async function postToTwitter(text: string, retries = 3): Promise<{ id: string }> {
   const url = 'https://api.x.com/2/tweets';
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: generateOAuthHeader('POST', url),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text }),
-  });
-  const body = await res.text();
-  if (!res.ok) throw new Error(`Twitter ${res.status}: ${body}`);
-  return JSON.parse(body).data;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: generateOAuthHeader('POST', url),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+    const body = await res.text();
+
+    if (res.status === 429) {
+      // Parse retry-after or use exponential backoff
+      const retryAfter = res.headers.get('retry-after');
+      const waitMs = retryAfter
+        ? parseInt(retryAfter, 10) * 1000
+        : Math.min(30000, 5000 * Math.pow(2, attempt)); // 5s, 10s, 20s
+      console.warn(`[pattern-poster] 429 rate-limited, waiting ${waitMs / 1000}s (attempt ${attempt + 1}/${retries})`);
+      await new Promise(r => setTimeout(r, waitMs));
+      continue;
+    }
+
+    if (!res.ok) throw new Error(`Twitter ${res.status}: ${body}`);
+    return JSON.parse(body).data;
+  }
+  throw new Error('Twitter 429: rate limit exceeded after retries');
 }
 
 // ─── Ensure share token ──────────────────────────────────────────────────────
@@ -287,7 +302,7 @@ serve(async (req) => {
         console.log(`[pattern-poster] ✅ Posted ${pattern.instrument} — tweet ${twitterResponse?.id}`);
 
         // Stagger to avoid rate limit burst
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 8000)); // 8s stagger to avoid 429s
 
       } catch (err: any) {
         console.error(`[pattern-poster] ❌ Failed to post ${pattern.instrument}:`, err.message);
