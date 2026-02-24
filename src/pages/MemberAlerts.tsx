@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
@@ -59,6 +60,9 @@ const MemberAlerts = () => {
   const [timeframe, setTimeframe] = useState(wedgeConfig.wedgeEnabled ? "1h" : "");
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
   const [deliveryMethods, setDeliveryMethods] = useState<string[]>(['email', 'push']);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [lastCreatedSymbol, setLastCreatedSymbol] = useState("");
+  const [lastCreatedPatterns, setLastCreatedPatterns] = useState<string[]>([]);
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -271,10 +275,17 @@ const MemberAlerts = () => {
       });
 
       const alertCount = result.alerts?.length || selectedPatterns.length;
+      const createdSymbol = symbol.toUpperCase();
+      const createdPatterns = [...selectedPatterns];
+      
       toast({
         title: alertCount > 1 ? t('alerts.alertsCreated') : t('alerts.alertCreated'),
-        description: t('alerts.alertCreatedDesc', { count: alertCount, symbol: symbol.toUpperCase() }),
+        description: t('alerts.alertCreatedDesc', { count: alertCount, symbol: createdSymbol }),
       });
+
+      setLastCreatedSymbol(createdSymbol);
+      setLastCreatedPatterns(createdPatterns);
+      setShowSuccessDialog(true);
 
       clearPlaybookContext();
       setSymbol("");
@@ -864,6 +875,65 @@ const MemberAlerts = () => {
            <strong>{t('common.disclaimer')}</strong> {t('alerts.disclaimer')}
         </p>
       </div>
+      {/* Alert Created Success Dialog with Scripts CTA */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <CheckCircle2 className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">{t('alerts.alertCreated', 'Alert Created!')}</DialogTitle>
+            <DialogDescription className="text-center">
+              {t('alerts.successDialogDesc', {
+                symbol: lastCreatedSymbol,
+                count: lastCreatedPatterns.length,
+                defaultValue: `Monitoring ${lastCreatedPatterns.length} pattern(s) on ${lastCreatedSymbol}. You'll be notified when they trigger.`
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Automation CTA */}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Code className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{t('alerts.automateTitle', 'Automate This Strategy')}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t('alerts.automateDesc', 'Turn repeat alerts into fully automated trading scripts. Deploy on TradingView or MT4/MT5 — no coding required.')}
+            </p>
+            <ul className="space-y-1.5">
+              {[
+                t('alerts.automBenefit1', 'Execute trades instantly when patterns trigger'),
+                t('alerts.automBenefit2', 'Built-in risk management & position sizing'),
+                t('alerts.automBenefit3', 'Pine Script v6, MQL4 & MQL5 export'),
+              ].map((b, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Repeat className="h-3 w-3 text-primary flex-shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+            <Button
+              asChild
+              className="w-full"
+              size="sm"
+            >
+              <Link to={`/members/scripts?symbol=${lastCreatedSymbol}&pattern=${lastCreatedPatterns[0] || ''}&timeframe=${timeframe}`}>
+                <Code className="h-3.5 w-3.5 mr-2" />
+                {t('alerts.generateScript', 'Generate Trading Script')}
+                <ArrowRight className="h-3.5 w-3.5 ml-2" />
+              </Link>
+            </Button>
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button variant="ghost" size="sm" onClick={() => setShowSuccessDialog(false)}>
+              {t('common.dismiss', 'Dismiss')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="alerts" />
     </div>
   );
