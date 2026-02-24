@@ -25,6 +25,9 @@ import { cn } from '@/lib/utils';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
+import { DashboardAuthNudge } from './DashboardAuthNudge';
 import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
@@ -87,8 +90,15 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
-  // Persisted dashboard settings
-  const { settings, updateSettings } = useDashboardSettings();
+  // Auth gate for write actions
+  const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate('dashboard features');
+
+  // Persisted dashboard settings — skip writes for anonymous users
+  const { settings, updateSettings: _updateSettings } = useDashboardSettings();
+  const updateSettings = useCallback((updates: Parameters<typeof _updateSettings>[0]) => {
+    if (!userId) return; // silently skip for anon
+    _updateSettings(updates);
+  }, [userId, _updateSettings]);
   
   const [selectedSymbol, setSelectedSymbol] = useState<string>(
     initialPlaybackPattern?.symbol || initialSymbol || settings.selectedSymbol
@@ -447,20 +457,19 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   }, [selectedSetup]);
 
   const handleCreateAlert = useCallback(async () => {
-    if (!selectedSetup || !userId) {
-      toast.error(t('commandCenter.signInToCreateAlerts'));
-      return;
-    }
-    setIsCreatingAlert(true);
-    try {
-      // Simplified alert creation - just notify for now
-      toast.success(t('commandCenter.alertCreated', { instrument: selectedSetup.instrument }));
-    } catch (err) {
-      toast.error(t('commandCenter.failedToLoadPatternDetails'));
-    } finally {
-      setIsCreatingAlert(false);
-    }
-  }, [selectedSetup, userId]);
+    if (!selectedSetup) return;
+    requireAuth(() => {
+      if (!userId) return;
+      setIsCreatingAlert(true);
+      try {
+        toast.success(t('commandCenter.alertCreated', { instrument: selectedSetup.instrument }));
+      } catch (err) {
+        toast.error(t('commandCenter.failedToLoadPatternDetails'));
+      } finally {
+        setIsCreatingAlert(false);
+      }
+    });
+  }, [selectedSetup, userId, requireAuth]);
 
   // Panel resize handlers
   const handleHorizontalResize = useCallback((sizes: number[]) => {
@@ -529,7 +538,14 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full flex">
+    <div className="h-[calc(100vh-4rem)] w-full flex flex-col">
+      {/* Auth nudge for anonymous users */}
+      {!userId && <DashboardAuthNudge />}
+      
+      {/* Auth gate dialog */}
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="dashboard features" />
+      
+      <div className="flex-1 min-h-0 flex">
       {/* Main Content Area - Chart + Tab Bar + Content */}
       <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
@@ -699,6 +715,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
          onCreateAlert={handleCreateAlert}
         isCreatingAlert={isCreatingAlert}
       />
+    </div>
     </div>
   );
 }

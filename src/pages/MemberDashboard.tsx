@@ -1,4 +1,4 @@
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { CommandCenterLayout } from "@/components/command-center";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,12 +21,12 @@ interface PlaybackPatternState {
 }
 
 const MemberDashboard = () => {
-  const { user, loading: authLoading } = useRequireAuth();
+  const { user, isAuthLoading } = useAuth();
   const location = useLocation();
   const routeState = location.state as PlaybackPatternState | null;
 
-  // Loading state - auth check
-  if (authLoading) {
+  // Show skeleton only while auth state is resolving
+  if (isAuthLoading) {
     return (
       <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="space-y-4 text-center">
@@ -37,14 +37,10 @@ const MemberDashboard = () => {
     );
   }
 
-  // If still no user after auth check, the hook will redirect
-  if (!user) {
-    return null;
-  }
-
+  // Render for both authenticated and anonymous users
   return (
     <CommandCenterLayout 
-      userId={user.id} 
+      userId={user?.id} 
       initialPlaybackPattern={routeState?.playbackPattern}
       initialSymbol={routeState?.initialSymbol}
     />
