@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, ArrowRight, TrendingUp, Bell, Shield, Activity,
-  Search, FlaskConical, Code, BookOpen
+  Search, FlaskConical, Code, BookOpen, BarChart3
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -60,6 +60,16 @@ const Index = () => {
 
   // Activity cards configuration - now with i18n
   const activityCards = [
+    {
+      title: t('landing.dashboard', 'Trading Dashboard'),
+      description: t('landing.dashboardDesc', 'Full command center with live charts, pattern overlays, watchlists, and market overview.'),
+      bullets: [t('landing.dashboardBullet1', 'TradingView-style charts'), t('landing.dashboardBullet2', 'Pattern overlay & study'), t('landing.dashboardBullet3', 'Market overview panel')],
+      ctaText: t('landing.openDashboard', 'Open Dashboard'),
+      ctaLink: "/members/dashboard",
+      icon: BarChart3,
+      bestFor: t('landing.bestForDashboard', 'Full workspace'),
+      slug: "dashboard",
+    },
     {
       title: t('landing.scanMarket', 'Scan the Market'),
       description: t('landing.scanMarketDesc', 'Discover active pattern setups across 1,100+ instruments in real-time.'),

@@ -167,6 +167,12 @@ const Navigation = () => {
             </div>
             
             <nav className="hidden md:flex items-center gap-4 ml-8">
+            {/* 0. Dashboard - Command Center */}
+            <Link to="/members/dashboard" className={navLinkClass('/members/dashboard')}>
+              <BarChart3 className="h-4 w-4 text-blue-500" />
+              {t('navigation.dashboard', 'Dashboard')}
+            </Link>
+            
             {/* 1. Screener - Discover signals */}
             <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
               <Activity className="h-4 w-4 text-amber-500" />
