@@ -53,23 +53,29 @@ const Auth = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-    const hasCallbackParams =
-      urlParams.get("code") !== null ||
-      hashParams.get("type") === "recovery" ||
-      hashParams.get("access_token") !== null ||
-      hashParams.get("refresh_token") !== null;
-
     const resetFlag = urlParams.get("reset") === "true" || urlParams.get("type") === "recovery";
+    const hashTypeIsRecovery = hashParams.get("type") === "recovery";
+    const hasImplicitTokens = hashParams.get("access_token") !== null || hashParams.get("refresh_token") !== null;
+    const hasCode = urlParams.get("code") !== null;
+
+    // KEY FIX: An OAuth callback (Google, etc.) returns with a `code` param
+    // but WITHOUT reset/recovery indicators. We must NOT treat this as a
+    // password recovery flow — let the onAuthStateChange listener handle it.
+    const isOAuthCallback = hasCode && !resetFlag && !hashTypeIsRecovery;
+
+    if (isOAuthCallback) {
+      // Nothing to do here — Supabase's PKCE exchange happens automatically,
+      // and the onAuthStateChange SIGNED_IN event below will redirect the user.
+      return;
+    }
+
+    const hasCallbackParams = hasCode || hashTypeIsRecovery || hasImplicitTokens;
 
     // If we arrived here with reset=true but WITHOUT callback params, it usually means the recovery link
     // was not successfully verified (different browser/device, in-app email webview, etc.).
-    // HOWEVER: in React StrictMode (dev), effects run twice and we may have already exchanged
-    // the session and cleaned the URL in the first pass.
     if (resetFlag && !hasCallbackParams) {
       setLoading(true);
       (async () => {
-        // In StrictMode, the first effect pass may have already exchanged tokens and cleaned the URL.
-        // Wait briefly for Supabase to hydrate the session before declaring the link "unverified".
         const { waitForSupabaseSession } = await import("@/utils/supabaseRecovery");
         const session = await waitForSupabaseSession(supabase, { attempts: 15, delayMs: 200 });
 
@@ -84,7 +90,7 @@ const Auth = () => {
         setIsResetPassword(false);
         setIsForgotPassword(true);
         setRecoveryHint(
-          "We couldn’t verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+          "We couldn't verify the reset link in this browser. Request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
         );
       })().finally(() => setLoading(false));
       return;
@@ -100,16 +106,13 @@ const Auth = () => {
         try {
           const url = new URL(window.location.href);
           const hash = url.hash.startsWith("#") ? url.hash.substring(1) : "";
-          const hashParams = new URLSearchParams(hash);
+          const innerHashParams = new URLSearchParams(hash);
           const hasImplicitSessionTokens = Boolean(
-            hashParams.get("access_token") && hashParams.get("refresh_token")
+            innerHashParams.get("access_token") && innerHashParams.get("refresh_token")
           );
 
           const { hasPersistentBrowserStorage } = await import("@/utils/safeStorage");
 
-          // If we landed here with a PKCE `code`, we need persistent storage for the `code_verifier`.
-          // If we landed here with implicit tokens in the URL hash, we can proceed even if storage
-          // is blocked (we can still set the session in memory for this page load).
           if (!hasPersistentBrowserStorage() && !hasImplicitSessionTokens) {
             setIsSignUp(false);
             setIsResetPassword(false);
@@ -120,7 +123,7 @@ const Auth = () => {
             toast({
               title: "Browser storage blocked",
               description:
-                "This environment blocks local storage (common in in-app browsers/private mode), so password reset links can’t be verified here. Please open the link in a standard browser (Safari/Chrome) and try again.",
+                "This environment blocks local storage (common in in-app browsers/private mode), so password reset links can't be verified here. Please open the link in a standard browser (Safari/Chrome) and try again.",
               variant: "destructive",
             });
             return;
@@ -139,7 +142,6 @@ const Auth = () => {
             setIsForgotPassword(false);
             setIsResetPassword(true);
           } else {
-            // Link was invalid/expired/used (or consumed by a mail security scanner).
             setIsSignUp(false);
             setIsResetPassword(false);
             setIsForgotPassword(true);
@@ -169,7 +171,7 @@ const Auth = () => {
             setIsResetPassword(false);
             setIsForgotPassword(true);
             setRecoveryHint(
-              "This link doesn’t match a reset request from this browser/device. Please request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
+              "This link doesn't match a reset request from this browser/device. Please request ONE new reset email from the same browser/device you will open it on, then open ONLY the newest email link once."
             );
           }
 
@@ -388,8 +390,6 @@ const Auth = () => {
           email,
           password,
           options: {
-            // Route-confirmation links back through /auth (resilient deep-link path),
-            // then redirect inside the app.
             emailRedirectTo: `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(
               "/members/trading"
             )}`,
@@ -399,7 +399,6 @@ const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
@@ -686,20 +685,10 @@ const Auth = () => {
                       setIsSignUp(!isSignUp);
                       setIsForgotPassword(false);
                     }}
-                    className="text-primary hover:underline"
                   >
-                    {isSignUp ? "Sign In" : "Sign Up"}
+                    {isSignUp ? "Sign In" : "Create Account"}
                   </Button>
                 </div>
-
-                {isSignUp && (
-                  <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground text-center">
-                      By creating an account, you agree to our Terms of Service and Privacy Policy.
-                      Chart pattern alerts are available for Pro and Elite subscribers only.
-                    </p>
-                  </div>
-                )}
               </>
             )}
           </CardContent>
