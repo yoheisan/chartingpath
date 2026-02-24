@@ -11,9 +11,11 @@ import {
   MessageSquare, 
   TrendingUp,
   Loader2,
-  Filter
+  Filter,
+  ArrowUpDown
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface FeedbackItem {
   id: string;
@@ -33,10 +35,11 @@ export function CopilotFeedbackDashboard() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'gaps' | 'high-priority'>('gaps');
+  const [sortBy, setSortBy] = useState<'recent' | 'priority' | 'quality'>('recent');
 
   useEffect(() => {
     loadFeedback();
-  }, [filter]);
+  }, [filter, sortBy]);
 
   const loadFeedback = async () => {
     setLoading(true);
@@ -44,9 +47,16 @@ export function CopilotFeedbackDashboard() {
       let query = supabase
         .from('copilot_feedback')
         .select('*')
-        .order('priority_score', { ascending: false })
-        .order('created_at', { ascending: false })
         .limit(100);
+
+      // Apply sort
+      if (sortBy === 'recent') {
+        query = query.order('created_at', { ascending: false });
+      } else if (sortBy === 'priority') {
+        query = query.order('priority_score', { ascending: false });
+      } else if (sortBy === 'quality') {
+        query = query.order('quality_score', { ascending: true, nullsFirst: false });
+      }
 
       if (filter === 'gaps') {
         query = query.eq('content_gap_identified', true).eq('resolved', false);
@@ -148,14 +158,30 @@ export function CopilotFeedbackDashboard() {
 
       {/* Filter Tabs */}
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-        <TabsList>
-          <TabsTrigger value="gaps" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Content Gaps
-          </TabsTrigger>
-          <TabsTrigger value="high-priority">High Priority</TabsTrigger>
-          <TabsTrigger value="all">All Feedback</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <TabsList>
+            <TabsTrigger value="gaps" className="gap-2">
+              <Filter className="w-4 h-4" />
+              Content Gaps
+            </TabsTrigger>
+            <TabsTrigger value="high-priority">High Priority</TabsTrigger>
+            <TabsTrigger value="all">All Feedback</TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most Recent</SelectItem>
+                <SelectItem value="priority">High Priority</SelectItem>
+                <SelectItem value="quality">Lowest Quality</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <TabsContent value={filter} className="mt-4">
           {loading ? (
