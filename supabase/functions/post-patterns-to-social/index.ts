@@ -153,15 +153,7 @@ serve(async (req) => {
     const nowUtc  = new Date();
     const hourUtc = nowUtc.getUTCHours();
 
-    // Respect the seeding window (05:00–11:59 UTC) — same gate as scan-live-patterns
-    if (hourUtc >= 5 && hourUtc < 12) {
-      console.log(`[pattern-poster] Seeding window active (${hourUtc}:xx UTC) — skipping`);
-      return new Response(
-        JSON.stringify({ skipped: true, reason: 'seeding_window', utc_hour: hourUtc }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Pattern poster is read-only and lightweight — no seeding window guard needed
     const session = getCurrentSession(hourUtc);
     console.log(`[pattern-poster] Running at ${nowUtc.toISOString()} — session: ${session}`);
 
