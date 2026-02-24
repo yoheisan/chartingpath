@@ -105,34 +105,32 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-async function postToTwitter(text: string, retries = 3): Promise<{ id: string }> {
+async function postToTwitter(text: string): Promise<{ id: string }> {
   const url = 'https://api.x.com/2/tweets';
-  for (let attempt = 0; attempt < retries; attempt++) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: generateOAuthHeader('POST', url),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
-    const body = await res.text();
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: generateOAuthHeader('POST', url),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  const body = await res.text();
 
-    if (res.status === 429) {
-      // Parse retry-after or use exponential backoff
-      const retryAfter = res.headers.get('retry-after');
-      const waitMs = retryAfter
-        ? parseInt(retryAfter, 10) * 1000
-        : Math.min(30000, 5000 * Math.pow(2, attempt)); // 5s, 10s, 20s
-      console.warn(`[pattern-poster] 429 rate-limited, waiting ${waitMs / 1000}s (attempt ${attempt + 1}/${retries})`);
-      await new Promise(r => setTimeout(r, waitMs));
-      continue;
-    }
-
-    if (!res.ok) throw new Error(`Twitter ${res.status}: ${body}`);
-    return JSON.parse(body).data;
+  if (res.status === 429) {
+    // Propagate as a specific error so the caller can stop the loop
+    throw new RateLimitError(body);
   }
-  throw new Error('Twitter 429: rate limit exceeded after retries');
+
+  if (!res.ok) throw new Error(`Twitter ${res.status}: ${body}`);
+  return JSON.parse(body).data;
+}
+
+class RateLimitError extends Error {
+  constructor(body: string) {
+    super(`Twitter 429: ${body}`);
+    this.name = 'RateLimitError';
+  }
 }
 
 // ─── Ensure share token ──────────────────────────────────────────────────────
@@ -222,22 +220,11 @@ serve(async (req) => {
       });
     }
 
-    // ── 3. Filter: not already posted, one per asset class per session ─────
-    const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id));
+    // ── 3. Filter: not already posted — pick only ONE to avoid rate limits ──
+    const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id) && !sessionPostedIds.has(p.id));
 
-    // Pick the best (first encountered) unposted pattern per asset class
-    const assetClassPicked = new Set<string>();
-    const toPost: any[] = [];
-
-    for (const pattern of unposted) {
-      const ac = (pattern.asset_type ?? '').toLowerCase();
-      if (!assetClassPicked.has(ac)) {
-        // Check if this asset class was already posted in this session
-        // We'll resolve this properly by checking DB at query time above
-        assetClassPicked.add(ac);
-        toPost.push(pattern);
-      }
-    }
+    // Pick the single best unposted pattern (first = most recently confirmed)
+    const toPost = unposted.length > 0 ? [unposted[0]] : [];
 
     // ── 4. Get the active Twitter account ──────────────────────────────────
     const { data: accounts } = await supabase
@@ -255,27 +242,11 @@ serve(async (req) => {
       });
     }
 
-    // ── 5. Post each selected pattern ──────────────────────────────────────
+    // ── 5. Post the single selected pattern ───────────────────────────────
     const results = [];
 
     for (const pattern of toPost) {
       try {
-        // Skip if this asset class already has a post this session (re-check against DB)
-        const { count } = await supabase
-          .from('post_history')
-          .select('id', { count: 'exact', head: true })
-          .eq('post_type', 'pattern_alert')
-          .eq('session_window', session)
-          .gte('posted_at', sessionStart.toISOString())
-          .like('content', `%${pattern.asset_type}%`); // crude but fast
-
-        // Actually track via metadata in pattern_id entries — use simpler per-pattern check
-        const alreadyPostedThisSession = sessionPostedIds.has(pattern.id);
-        if (alreadyPostedThisSession) {
-          console.log(`[pattern-poster] ${pattern.instrument} already posted this session, skipping`);
-          continue;
-        }
-
         const token    = await ensureShareToken(supabase, pattern.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
         const tweet    = buildTweet(pattern, shareUrl);
@@ -301,10 +272,12 @@ serve(async (req) => {
         results.push({ pattern_id: pattern.id, instrument: pattern.instrument, tweet_id: twitterResponse?.id });
         console.log(`[pattern-poster] ✅ Posted ${pattern.instrument} — tweet ${twitterResponse?.id}`);
 
-        // Stagger to avoid rate limit burst
-        await new Promise(r => setTimeout(r, 8000)); // 8s stagger to avoid 429s
-
       } catch (err: any) {
+        if (err.name === 'RateLimitError') {
+          console.warn(`[pattern-poster] ⏳ Rate limited — will retry next invocation (in 30m)`);
+          results.push({ pattern_id: pattern.id, instrument: pattern.instrument, error: 'rate_limited' });
+          break;
+        }
         console.error(`[pattern-poster] ❌ Failed to post ${pattern.instrument}:`, err.message);
         results.push({ pattern_id: pattern.id, instrument: pattern.instrument, error: err.message });
       }
