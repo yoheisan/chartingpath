@@ -141,6 +141,18 @@ export const TranslationManagement = () => {
   const loadCoverageStats = async (showToast = false) => {
     setCoverageLoading(true);
     try {
+      // When manually refreshing, sync en.json keys into translation_keys table first
+      // so the total count reflects the latest source file
+      if (showToast) {
+        await supabase.functions.invoke('sync-translations', {
+          body: {
+            en_content: enTranslations,
+            target_languages: [],
+            prepare_keys_only: true
+          }
+        });
+      }
+
       const { data, error } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'get_coverage_stats' }
       });
@@ -155,7 +167,7 @@ export const TranslationManagement = () => {
       }
       setCoverageData(fullCoverage);
       if (showToast) {
-        toast({ title: 'Coverage stats refreshed', description: `${data.total_keys || 0} total keys loaded` });
+        toast({ title: 'Coverage stats refreshed', description: `${data.total_keys || 0} total keys synced from source` });
       }
     } catch (error) {
       console.error('Error loading coverage stats:', error);
