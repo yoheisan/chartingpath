@@ -1206,10 +1206,11 @@ serve(async (req) => {
     ]);
     // Inject language instruction if user has a non-English language preference
     const langCode = (language || "en").toLowerCase();
+    console.log(`[trading-copilot] Language requested: ${langCode}`);
     const langInstruction = langCode !== "en"
       ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
       : "";
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + learnedRulesPrompt + langInstruction;
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + langInstruction + learnedRulesPrompt;
     console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
     console.log(`[trading-copilot] Learned rules injected: ${learnedRulesPrompt.length > 0 ? 'yes' : 'none'}`);
 
