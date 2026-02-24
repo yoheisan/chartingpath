@@ -2956,7 +2956,13 @@
     "errorResponse": "応答の取得に失敗しました。再度お試しください。",
     "rateLimitedMsg": "⚠️ レート制限中 — 数秒待ってから再度お試しください。",
     "errorMsg": "⚠️ エラーが発生しました。再度お試しください。",
-    "contactSupport": "サポートに連絡"
+    "contactSupport": "サポートに連絡",
+    "home": "ホーム",
+    "actions": {
+      "validatePatternLab": "Pattern Labで検証",
+      "findActiveSignals": "アクティブシグナルを探す",
+      "exportScript": "スクリプトをエクスポート"
+    }
   },
   "terms": {
     "pageTitle": "📑 利用規約",

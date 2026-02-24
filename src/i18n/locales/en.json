@@ -4553,7 +4553,13 @@
     "errorResponse": "Failed to get response. Please try again.",
     "rateLimitedMsg": "⚠️ Rate limited — please wait a few seconds and try again.",
     "errorMsg": "⚠️ Something went wrong. Please try again.",
-    "contactSupport": "Contact Support"
+    "contactSupport": "Contact Support",
+    "home": "Home",
+    "actions": {
+      "validatePatternLab": "Validate in Pattern Lab",
+      "findActiveSignals": "Find Active Signals",
+      "exportScript": "Export Script"
+    }
   },
   "chartAnalysisDialog": {
     "title": "Chart Analysis",
