@@ -3,8 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   AlertTriangle, TrendingUp, Lightbulb, CheckCircle, 
-  ArrowRight, Zap, Target, Clock 
+  ArrowRight, Zap, Target, Clock, Copy 
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { AIInsight } from '@/services/journeyAnalyticsService';
 
 interface AIInsightsPanelProps {
@@ -153,6 +154,19 @@ export function AIInsightsPanel({ insights }: AIInsightsPanelProps) {
                         <span>Affects: <strong>{insight.affectedMetric}</strong></span>
                         <span>Potential: <strong className="text-green-500">{insight.potentialLift}</strong></span>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 text-xs"
+                        onClick={() => {
+                          const prompt = `Please implement this improvement from Journey Analytics:\n\n**Title**: ${insight.title}\n**Description**: ${insight.description}\n\n**Suggested Actions**:\n${insight.suggestedActions.map(a => `- ${a}`).join('\n')}\n\n**Context**:\n- Impact: ${insight.impact}\n- Effort: ${insight.effort}\n- Affected Metric: ${insight.affectedMetric}\n- Potential Lift: ${insight.potentialLift}`;
+                          navigator.clipboard.writeText(prompt);
+                          toast.success('Prompt copied! Paste it into Lovable to implement.');
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy Prompt for Lovable
+                      </Button>
                     </div>
                   </div>
                 </div>
