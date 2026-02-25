@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -141,12 +141,24 @@ export default function EdgeAtlasPatternPage() {
     setTickers(prev => [...prev].sort((a, b) => b[col] - a[col]));
   };
 
+  const edgeAtlasBackUrl = `/edge-atlas/${encodeURIComponent(patternId!)}?timeframe=${timeframe}&assetType=${assetType}&patternName=${encodeURIComponent(patternName)}`;
+
   const handleLiveSignals = (symbol: string) => {
-    navigate(`/patterns/live?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&assetType=${assetType}`);
+    navigate(`/patterns/live?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&assetType=${assetType}`, {
+      state: { backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
+    });
   };
 
   const handleValidate = (symbol: string) => {
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&instrument=${encodeURIComponent(symbol)}`);
+    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&instrument=${encodeURIComponent(symbol)}`, {
+      state: { backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
+    });
+  };
+
+  const handleStudyChart = (symbol: string) => {
+    navigate(`/members/dashboard`, {
+      state: { initialSymbol: symbol, backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
+    });
   };
 
   const SortBtn = ({ col, label }: { col: typeof sortBy; label: string }) => (
@@ -256,12 +268,12 @@ export default function EdgeAtlasPatternPage() {
                     <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}</span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <Link 
-                          to={`/study/${encodeURIComponent(tk.symbol)}`}
-                          className="font-semibold text-sm font-mono hover:text-primary transition-colors underline-offset-2 hover:underline"
+                        <button 
+                          onClick={() => handleStudyChart(tk.symbol)}
+                          className="font-semibold text-sm font-mono hover:text-primary transition-colors underline-offset-2 hover:underline text-left"
                         >
                           {tk.symbol.replace('=X', '').replace('^', '')}
-                        </Link>
+                        </button>
                         {isLowSample && <span className="text-[10px] text-yellow-500">⚠️</span>}
                       </div>
                       <div className="flex items-center gap-2 sm:hidden text-xs text-muted-foreground mt-0.5">
@@ -309,28 +321,27 @@ export default function EdgeAtlasPatternPage() {
 
                   {/* CTAs */}
                   <div className="hidden sm:flex items-center gap-2 justify-end">
+                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleValidate(tk.symbol)}>
+                      <FlaskConical className="h-3 w-3" /> {t('edgeAtlas.validate')}
+                    </Button>
                     {(() => {
                       const liveCount = liveCountMap[tk.symbol] || 0;
                       return (
                         <Button
                           size="sm"
                           variant={liveCount > 0 ? 'default' : 'outline'}
-                          className={`text-xs h-8 gap-1.5 ${liveCount > 0 ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' : ''}`}
+                          className={`text-xs h-8 gap-1.5 ${liveCount > 0 ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' : 'text-muted-foreground'}`}
                           onClick={() => handleLiveSignals(tk.symbol)}
+                          disabled={liveCount === 0}
                         >
                           <Zap className={`h-3 w-3 ${liveCount > 0 ? 'text-primary' : ''}`} />
-                           {t('edgeAtlas.live')}
-                          {liveCount > 0 && (
-                            <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px] font-bold bg-primary/20 text-primary">
-                              {liveCount}
-                            </Badge>
-                          )}
+                          {t('edgeAtlas.live')}
+                          <span className={`text-[10px] font-bold ${liveCount > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {liveCount}
+                          </span>
                         </Button>
                       );
                     })()}
-                    <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleValidate(tk.symbol)}>
-                      <FlaskConical className="h-3 w-3" /> {t('edgeAtlas.validate')}
-                    </Button>
                   </div>
                 </div>
               );
