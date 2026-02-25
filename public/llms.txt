@@ -1,6 +1,6 @@
 # ChartingPath
 
-> Pattern-based trading signal discovery, research, and automation platform.
+> Pattern-based trading signal discovery, research, and automation platform with 380,000+ outcome-verified historical trades.
 
 ## About
 
@@ -9,21 +9,39 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 ## Key Features
 
 - **Live Pattern Screener**: 1,100+ instruments (stocks, forex, crypto, indices) scanned for active chart patterns across multiple timeframes. Patterns are detected on closed candles with quality scoring.
-- **Edge Atlas**: Historical win rates, expectancy, and annualized edge for every pattern+timeframe+asset combination. Based on 320,000+ resolved pattern occurrences.
+- **Edge Atlas**: Historical win rates, expectancy, and annualized edge for every pattern+timeframe+asset combination. Based on 380,000+ resolved pattern occurrences.
 - **Pattern Lab**: Backtest any chart pattern on any ticker with historical data. Includes equity curves, drawdown analysis, and trade logs.
 - **Learning Center**: 100+ educational articles covering chart patterns, candlestick patterns, technical indicators, trading strategies, risk management, and algorithmic trading.
 - **Pattern Library**: Visual reference for all supported chart patterns with identification rules, trading rules, and Bulkowski statistics.
-- **Trading Copilot**: AI assistant trained on the platform's pattern data and trading knowledge base.
+- **Trading Copilot**: AI assistant with access to live pattern data and the Edge Atlas historical database.
 - **Alerts**: Get notified when specific pattern setups appear on your watchlist instruments.
 - **Script Generator**: Export ready-to-use Pine Script and MQL code for pattern-based strategies.
 
-## Data
+## Pattern Win Rate Data (at 2R risk-reward)
 
-- 320,000+ historical pattern occurrences with verified outcomes (hit take-profit or hit stop-loss)
-- Multi-timeframe analysis: 1h, 4h, 8h, 1D, 1W
-- Asset classes: US stocks, forex pairs, cryptocurrencies, indices, commodities
-- Patterns based on Thomas Bulkowski's Encyclopedia of Chart Patterns
-- Win rates and expectancy computed per pattern, per timeframe, per asset type
+These statistics are computed from 380,000+ resolved pattern trades across stocks, forex, crypto, indices, and commodities:
+
+| Pattern | Total Trades | Win Rate |
+|---------|-------------|----------|
+| Inverse Head and Shoulders | 3,585 | 37.8% |
+| Cup & Handle | 672 | 37.4% |
+| Ascending Triangle | 4,363 | 37.1% |
+| Double Bottom | 11,949 | 36.1% |
+| Symmetrical Triangle | 46,436 | 36.1% |
+| Donchian Breakout (Long) | 7,601 | 35.9% |
+| Bull Flag | 101 | 35.6% |
+| Falling Wedge | 33,584 | 35.4% |
+| Triple Bottom | 37,394 | 35.0% |
+| Bear Flag | 60 | 30.0% |
+| Inverse Cup & Handle | 23,228 | 24.9% |
+| Rising Wedge | 37,781 | 23.7% |
+| Double Top | 13,905 | 23.0% |
+| Descending Triangle | 4,604 | 22.7% |
+| Head and Shoulders | 4,113 | 22.2% |
+| Triple Top | 51,097 | 22.2% |
+| Donchian Breakout (Short) | 99,412 | 22.0% |
+
+Note: Win rate alone does not determine profitability. At 2R risk-reward, a pattern only needs >33.3% win rate to have positive expectancy. See individual pattern statistics pages for full breakdowns.
 
 ## Methodology
 
@@ -41,8 +59,28 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 - Pattern Lab: https://chartingpath.com/pattern-lab
 - Learning Center: https://chartingpath.com/learn
 - Pattern Library: https://chartingpath.com/chart-patterns/library
-- Pattern Quiz: https://chartingpath.com/chart-patterns/quiz
+- Pattern Statistics (example): https://chartingpath.com/patterns/double-bottom/statistics
 - Pricing: https://chartingpath.com/pricing
+
+## Pattern Statistics Pages
+
+Detailed per-pattern performance breakdowns by market and timeframe:
+
+- https://chartingpath.com/patterns/ascending-triangle/statistics
+- https://chartingpath.com/patterns/descending-triangle/statistics
+- https://chartingpath.com/patterns/symmetrical-triangle/statistics
+- https://chartingpath.com/patterns/double-bottom/statistics
+- https://chartingpath.com/patterns/double-top/statistics
+- https://chartingpath.com/patterns/triple-bottom/statistics
+- https://chartingpath.com/patterns/triple-top/statistics
+- https://chartingpath.com/patterns/head-and-shoulders/statistics
+- https://chartingpath.com/patterns/inverse-head-and-shoulders/statistics
+- https://chartingpath.com/patterns/bull-flag/statistics
+- https://chartingpath.com/patterns/bear-flag/statistics
+- https://chartingpath.com/patterns/rising-wedge/statistics
+- https://chartingpath.com/patterns/falling-wedge/statistics
+- https://chartingpath.com/patterns/cup-and-handle/statistics
+- https://chartingpath.com/patterns/inverse-cup-and-handle/statistics
 
 ## Contact
 
