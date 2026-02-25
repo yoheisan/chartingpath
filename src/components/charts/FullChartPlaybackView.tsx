@@ -27,7 +27,6 @@ import {
   getVolumeColor,
   INDICATOR_COLORS,
   PIVOT_COLORS,
-  PATTERN_SHAPE_COLOR,
   getOverlayColor,
   normalizeBarsForConsistentColoring,
   calculateOptimalPriceMargins,
@@ -373,33 +372,6 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               });
             }
           });
-        }
-
-        // === Pattern Shape Overlay (blue zigzag connecting pivots visible so far) ===
-        if (visualSpec?.pivots && visualSpec.pivots.length >= 2) {
-          const pivotLineData = visualSpec.pivots
-            .map((pivot) => {
-              let pivotTime = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-              if (!timeSet.has(pivotTime) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < playback.visibleBars.length) {
-                pivotTime = Math.floor(new Date(playback.visibleBars[pivot.index].t).getTime() / 1000);
-              }
-              if (!timeSet.has(pivotTime)) return null;
-              return { time: pivotTime as Time, value: pivot.price };
-            })
-            .filter(Boolean) as { time: Time; value: number }[];
-
-          pivotLineData.sort((a, b) => (a.time as number) - (b.time as number));
-
-          if (pivotLineData.length >= 2) {
-            const shapeSeries = chart.addSeries(LineSeries, {
-              color: PATTERN_SHAPE_COLOR,
-              lineWidth: 2,
-              priceLineVisible: false,
-              lastValueVisible: false,
-              crosshairMarkerVisible: false,
-            });
-            shapeSeries.setData(pivotLineData);
-          }
         }
 
         // Pattern identification marker (if no pivots, show a simple zone marker)

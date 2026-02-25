@@ -82,7 +82,6 @@ import {
   getOverlayColor,
   INDICATOR_COLORS,
   PIVOT_COLORS,
-  PATTERN_SHAPE_COLOR,
   normalizeBarsForConsistentColoring,
   calculateOptimalPriceMargins,
   calculatePricePrecision,
@@ -542,33 +541,6 @@ export default function FullChartViewer({
               text: pivot.label || (isHigh ? 'H' : 'L'),
             });
           });
-        }
-
-        // === Pattern Shape Overlay (blue zigzag line connecting pivots) ===
-        if (visualSpec.pivots && visualSpec.pivots.length >= 2) {
-          const pivotLineData = visualSpec.pivots
-            .map((pivot) => {
-              let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-              if (!timeSet.has(t) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
-                t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
-              }
-              if (!timeSet.has(t)) return null;
-              return { time: t as Time, value: pivot.price };
-            })
-            .filter(Boolean) as { time: Time; value: number }[];
-
-          pivotLineData.sort((a, b) => (a.time as number) - (b.time as number));
-
-          if (pivotLineData.length >= 2) {
-            const shapeSeries = chart.addSeries(LineSeries, {
-              color: PATTERN_SHAPE_COLOR,
-              lineWidth: 2,
-              priceLineVisible: false,
-              lastValueVisible: false,
-              crosshairMarkerVisible: false,
-            });
-            shapeSeries.setData(pivotLineData);
-          }
         }
 
         // Add Entry Point marker on the last (signal) bar

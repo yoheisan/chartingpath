@@ -1,42 +1,77 @@
 
 
-# Pattern Shape Overlay (Blue Zigzag Line)
+# GA4 Integration via OAuth2 Refresh Token
 
-## What You'll See
+## Problem
+Google Cloud organization policy blocks service account key creation. We need an alternative authentication method for the GA4 edge function.
 
-For a Head & Shoulders pattern, the blue line will trace:
+## Solution
+Replace the service account JWT flow with an OAuth2 refresh token flow. This uses your personal Google account authorization instead of a service account key.
+
+## How It Works
 
 ```text
-    Left Shoulder ------- Head ------- Right Shoulder
-         \               / \               /
-          \             /   \             /
-           \           /     \           /
-            ----------        -----------
-                    Neckline
+One-time setup (you do manually):
+  Google OAuth Consent Screen
+    -> Authorize with your Google account
+    -> Get authorization code
+    -> Exchange for refresh_token
+    -> Store refresh_token as Supabase secret
+
+Every API call (edge function does automatically):
+  refresh_token -> Google token endpoint -> access_token -> GA4 Data API
 ```
 
-The 4 pivot points (Left Shoulder, Head, Right Shoulder, Neckline) are already detected and stored. We just need to draw a line connecting them.
+## Setup Steps (you do once)
 
-## Changes
+1. Go to Google Cloud Console (can use any account that has access to the GA4 property)
+2. Create OAuth2 credentials (type: Web Application) with redirect URI set to `https://developers.google.com/oauthplayground`
+3. Go to Google OAuth Playground (https://developers.google.com/oauthplayground)
+4. Configure it to use your own OAuth credentials (Settings gear icon)
+5. Authorize the scope: `https://www.googleapis.com/auth/analytics.readonly`
+6. Exchange the authorization code for tokens
+7. Copy the `refresh_token` value
+8. Add three Supabase secrets:
+   - `GA4_OAUTH_CLIENT_ID` -- from step 2
+   - `GA4_OAUTH_CLIENT_SECRET` -- from step 2  
+   - `GA4_OAUTH_REFRESH_TOKEN` -- from step 6
 
-### 1. `src/components/charts/chartConstants.ts`
-Add one constant:
-- `PATTERN_SHAPE_COLOR: '#3b82f6'` (blue)
+## Code Changes
 
-### 2. `src/components/charts/FullChartViewer.tsx`
-After the existing pivot arrow markers section, add a `LineSeries` that:
-- Takes `visualSpec.pivots` array
-- Maps each pivot to `{ time, value: pivot.price }` (using the same time-snapping logic already used for pivot markers)
-- Renders as a blue line (width 2, no price label)
-- Pivots are sorted by time before rendering
+### 1. Update Edge Function: `supabase/functions/ga4-report/index.ts`
 
-### 3. `src/components/charts/FullChartPlaybackView.tsx`
-Same change — add a blue `LineSeries` connecting pivots during playback mode. Only show pivots that are within the currently visible bars (so the shape builds progressively during playback).
+Replace the service account JWT authentication block with a simpler OAuth2 refresh token flow:
 
-### 4. No backend changes needed
-The H&S detector already returns pivot data with labels (`Left Shoulder`, `Head`, `Right Shoulder`, `Neckline`). All 17 pattern detectors return pivots in the same format. The blue line will work for every pattern type automatically.
+- Remove: JWT creation, private key import, crypto signing (lines ~85-135)
+- Remove: `GA4_SERVICE_ACCOUNT_JSON` secret requirement
+- Add: Read `GA4_OAUTH_CLIENT_ID`, `GA4_OAUTH_CLIENT_SECRET`, `GA4_OAUTH_REFRESH_TOKEN` from env
+- Add: POST to `https://oauth2.googleapis.com/token` with `grant_type=refresh_token` to get an access_token
+- Keep: All existing GA4 Data API queries unchanged (pages, sources, devices)
+- Update: Setup-required error message to reference the new secrets
 
-## Technical Notes
-- The `LineSeries` uses the main price scale (same as candles), so no extra pane is needed
-- Existing arrow markers with labels are kept — the line just connects the dots visually
-- For playback mode, pivots are filtered to only show those within `visibleBars` so the shape reveals progressively
+### 2. Update Frontend: `src/components/admin/GA4Panel.tsx`
+
+- Update the setup instructions in the `setupRequired` block to reference the new OAuth2 secrets instead of `GA4_SERVICE_ACCOUNT_JSON`
+- Add step-by-step instructions for the OAuth Playground flow
+- Update the Supabase secrets link
+
+## Technical Details
+
+The token exchange request is straightforward:
+
+```text
+POST https://oauth2.googleapis.com/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=...&client_secret=...&refresh_token=...&grant_type=refresh_token
+```
+
+Response contains `access_token` which is used identically to the current flow for GA4 API calls. No other code changes needed -- the rest of the edge function (API queries, response formatting) stays the same.
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `supabase/functions/ga4-report/index.ts` | Replace service account auth with OAuth2 refresh token |
+| `src/components/admin/GA4Panel.tsx` | Update setup instructions for OAuth2 flow |
+
