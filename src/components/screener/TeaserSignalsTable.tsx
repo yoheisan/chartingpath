@@ -5,8 +5,9 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
-import { getTradingViewAffiliateUrl, getInstrumentCategory } from '@/utils/tradingViewLinks';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical } from 'lucide-react';
+import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useTranslation } from 'react-i18next';
 import {
@@ -24,11 +25,22 @@ import type { LiveSetup } from '@/types/screener';
 
 interface TeaserSignalsTableProps {
   patterns: LiveSetup[];
+  onOpenChart?: (setup: LiveSetup) => void;
 }
 
-export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
+export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const handleScreen = (e: React.MouseEvent, setup: LiveSetup) => {
+    e.stopPropagation();
+    navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}&pattern=${encodeURIComponent(setup.patternId)}`);
+  };
+
+  const handleValidate = (e: React.MouseEvent, setup: LiveSetup) => {
+    e.stopPropagation();
+    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(setup.patternId)}&instrument=${encodeURIComponent(setup.instrument)}&mode=validate`);
+  };
 
   return (
     <Table>
@@ -40,6 +52,7 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
           <TableHead className="whitespace-nowrap">{t('teaserSignals.signal')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.age')}</TableHead>
+          <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.actions', 'Actions')}</TableHead>
           <TableHead className="w-10"></TableHead>
         </TableRow>
       </TableHeader>
@@ -53,7 +66,7 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
             <TableRow
               key={`${setup.instrument}-${setup.patternId}-${idx}`}
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}&openPattern=${setup.dbId || ''}`)}
+              onClick={() => onOpenChart?.(setup)}
             >
               <TableCell>
                 <InstrumentLogo instrument={setup.instrument} />
@@ -95,6 +108,30 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
               </TableCell>
               <TableCell className="text-right text-muted-foreground text-sm">
                 {signalAge}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                    onClick={(e) => handleScreen(e, setup)}
+                    title={t('teaserSignals.screen', 'Screen')}
+                  >
+                    <Search className="h-3 w-3" />
+                    <span className="hidden sm:inline">{t('teaserSignals.screen', 'Screen')}</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                    onClick={(e) => handleValidate(e, setup)}
+                    title={t('teaserSignals.validate', 'Validate')}
+                  >
+                    <FlaskConical className="h-3 w-3" />
+                    <span className="hidden sm:inline">{t('teaserSignals.validate', 'Validate')}</span>
+                  </Button>
+                </div>
               </TableCell>
               <TableCell className="text-center">
                 <a

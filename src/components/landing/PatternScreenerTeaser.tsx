@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,9 @@ import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
+import FullChartViewer from '@/components/charts/FullChartViewer';
+import type { SetupWithVisuals, PatternQuality, VisualSpec } from '@/types/VisualSpec';
+import { toast } from 'sonner';
 
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
@@ -22,6 +25,12 @@ const ASSET_TAB_KEYS: { value: TeaserAssetType; i18nKey: string; universe: numbe
 ];
 
 const MAX_TEASER_ITEMS = 12;
+
+interface PatternDetailsResponse {
+  success: boolean;
+  pattern?: any;
+  error?: string;
+}
 
 /** Map a DB row from live_pattern_detections into a LiveSetup */
 function rowToLiveSetup(row: any): LiveSetup {
@@ -58,6 +67,88 @@ function rowToLiveSetup(row: any): LiveSetup {
   };
 }
 
+/** Build a minimal VisualSpec fallback when full data hasn't loaded yet */
+function buildFallbackVisualSpec(setup: LiveSetup): VisualSpec {
+  const entry = setup.tradePlan.entry;
+  return {
+    version: '2.0.0',
+    symbol: setup.instrument,
+    timeframe: '4h',
+    patternId: setup.patternId,
+    signalTs: setup.signalTs,
+    window: { startTs: setup.signalTs, endTs: setup.signalTs },
+    yDomain: { min: Math.min(entry, setup.tradePlan.stopLoss) * 0.99, max: Math.max(entry, setup.tradePlan.takeProfit) * 1.01 },
+    overlays: [],
+  };
+}
+
+/** Convert LiveSetup → SetupWithVisuals for the FullChartViewer */
+function toSetupWithVisuals(setup: LiveSetup): SetupWithVisuals {
+  const visualSpec = setup.visualSpec || buildFallbackVisualSpec(setup);
+  return {
+    dbId: setup.dbId,
+    instrument: setup.instrument,
+    patternId: setup.patternId,
+    patternName: setup.patternName,
+    direction: setup.direction,
+    signalTs: setup.signalTs,
+    quality: setup.quality as PatternQuality,
+    tradePlan: {
+      entryType: setup.tradePlan.entryType || 'bar_close',
+      entry: setup.tradePlan.entry,
+      stopLoss: setup.tradePlan.stopLoss,
+      takeProfit: setup.tradePlan.takeProfit,
+      rr: setup.tradePlan.rr,
+      stopDistance: setup.tradePlan.stopDistance || Math.abs(setup.tradePlan.entry - setup.tradePlan.stopLoss),
+      tpDistance: setup.tradePlan.tpDistance || Math.abs(setup.tradePlan.takeProfit - setup.tradePlan.entry),
+      timeStopBars: setup.tradePlan.timeStopBars || 100,
+      bracketLevelsVersion: setup.tradePlan.bracketLevelsVersion || '1.0.0',
+      priceRounding: setup.tradePlan.priceRounding || { priceDecimals: 2, rrDecimals: 1 },
+    },
+    bars: Array.isArray(setup.bars) ? setup.bars : [],
+    visualSpec,
+  };
+}
+
+/** Map API detail response back to LiveSetup */
+function mapApiResponseToLiveSetup(pattern: any): LiveSetup {
+  return {
+    dbId: pattern.id,
+    instrument: pattern.instrument,
+    patternId: pattern.pattern_id || pattern.patternId,
+    patternName: pattern.pattern_name || pattern.patternName,
+    direction: pattern.direction,
+    signalTs: pattern.first_detected_at || pattern.signalTs,
+    quality: pattern.quality || {
+      score: pattern.quality_score || 'C',
+      grade: pattern.quality_score || 'C',
+      reasons: pattern.quality_reasons || [],
+    },
+    tradePlan: pattern.trade_plan || pattern.tradePlan || {
+      entry: pattern.entry_price,
+      stopLoss: pattern.stop_loss_price,
+      takeProfit: pattern.take_profit_price,
+      rr: pattern.risk_reward_ratio,
+    },
+    bars: pattern.bars,
+    visualSpec: pattern.visual_spec || pattern.visualSpec,
+    currentPrice: pattern.current_price || pattern.currentPrice,
+    trendAlignment: pattern.trend_alignment || pattern.trendAlignment,
+    trendIndicators: pattern.trend_indicators || pattern.trendIndicators,
+    historicalPerformance: pattern.historical_performance || pattern.historicalPerformance,
+  };
+}
+
+/** Timeout wrapper */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 export function PatternScreenerTeaser() {
   const { t } = useTranslation();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<TeaserAssetType, LiveSetup[]>>({
@@ -72,10 +163,15 @@ export function PatternScreenerTeaser() {
   const [activeTab, setActiveTab] = useState<TeaserAssetType>('stocks');
   const [lastScanned, setLastScanned] = useState<string | null>(null);
 
+  // Chart viewer state
+  const [chartOpen, setChartOpen] = useState(false);
+  const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
+  const [loadingChartDetails, setLoadingChartDetails] = useState(false);
+  const chartDetailsRequestIdRef = useRef(0);
+
   useEffect(() => {
     const fetchPatternsForAsset = async (assetType: TeaserAssetType) => {
       try {
-        // Query DB-cached signals directly — no edge function compute needed
         const { data, error, count } = await supabase
           .from('live_pattern_detections')
           .select('*', { count: 'exact' })
@@ -89,7 +185,6 @@ export function PatternScreenerTeaser() {
 
         const allPatterns = (data || []).map(rowToLiveSetup);
 
-        // Deduplicate by instrument|pattern
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');
           return `${baseSymbol}|${p.patternName}`;
@@ -130,8 +225,66 @@ export function PatternScreenerTeaser() {
       }
     };
 
-    // Fetch all asset types in parallel — all are lightweight DB reads
     ASSET_TAB_KEYS.forEach(tab => fetchPatternsForAsset(tab.value));
+  }, []);
+
+  /** Open chart viewer for a setup — lazy-load full bars/VisualSpec */
+  const handleOpenChart = useCallback(async (setup: LiveSetup) => {
+    const requestId = ++chartDetailsRequestIdRef.current;
+
+    trackEvent('teaser.open_chart', { instrument: setup.instrument, patternId: setup.patternId });
+
+    setChartOpen(true);
+    setLoadingChartDetails(true);
+    setSelectedSetup(toSetupWithVisuals(setup));
+
+    try {
+      const hasBars = Array.isArray(setup.bars) && setup.bars.length > 0;
+      if (hasBars) return;
+
+      if (!setup.dbId) {
+        console.warn('[TeaserChart] Missing dbId; cannot load detailed chart data');
+        return;
+      }
+
+      const timeouts = [25_000, 45_000] as const;
+      let lastErr: any = null;
+
+      for (let i = 0; i < timeouts.length; i++) {
+        try {
+          const res = await withTimeout(
+            supabase.functions.invoke<PatternDetailsResponse>('get-live-pattern-details', {
+              body: { id: setup.dbId },
+            }),
+            timeouts[i],
+            'get-live-pattern-details'
+          );
+
+          if (res.error) throw res.error;
+          if (!res.data?.success || !res.data.pattern) {
+            throw new Error(res.data?.error || 'Failed to load pattern details');
+          }
+
+          if (chartDetailsRequestIdRef.current !== requestId) return;
+
+          setSelectedSetup(toSetupWithVisuals(mapApiResponseToLiveSetup(res.data.pattern)));
+          return;
+        } catch (err: any) {
+          lastErr = err;
+          if (i < timeouts.length - 1) {
+            await new Promise(r => setTimeout(r, 750));
+          }
+        }
+      }
+
+      throw lastErr;
+    } catch (err: any) {
+      console.error('[TeaserChart] Failed to load chart details:', err?.message || err);
+    } finally {
+      if (chartDetailsRequestIdRef.current === requestId) {
+        setLoadingChartDetails(false);
+      }
+    }
   }, []);
 
   const currentTotal = totalCounts[activeTab];
@@ -152,7 +305,7 @@ export function PatternScreenerTeaser() {
 
   return (
     <section className="py-12 px-6 bg-muted/20 min-h-[500px]">
-      <div className="container mx-auto max-w-4xl">
+      <div className="container mx-auto max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
@@ -199,7 +352,10 @@ export function PatternScreenerTeaser() {
                 <LoadingSkeleton />
               ) : patternsByAsset[tab.value].length > 0 ? (
                 <div className="rounded-lg border bg-card overflow-hidden">
-                  <TeaserSignalsTable patterns={patternsByAsset[tab.value]} />
+                  <TeaserSignalsTable
+                    patterns={patternsByAsset[tab.value]}
+                    onOpenChart={handleOpenChart}
+                  />
                 </div>
               ) : (
                 <div className="rounded-lg border bg-card p-8 text-center">
@@ -226,6 +382,18 @@ export function PatternScreenerTeaser() {
           </p>
         </div>
       </div>
+
+      {/* Inline Chart Viewer Dialog */}
+      <FullChartViewer
+        open={chartOpen}
+        onOpenChange={setChartOpen}
+        setup={selectedSetup}
+        loading={loadingChartDetails}
+        onCreateAlert={() => {
+          toast.info(t('patternScreenerTeaser.signUpForAlerts', 'Sign up to create alerts'));
+        }}
+        isCreatingAlert={false}
+      />
     </section>
   );
 }
