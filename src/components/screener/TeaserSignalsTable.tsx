@@ -5,7 +5,8 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { getTradingViewAffiliateUrl, getInstrumentCategory } from '@/utils/tradingViewLinks';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useTranslation } from 'react-i18next';
 import {
@@ -39,6 +40,7 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
           <TableHead className="whitespace-nowrap">{t('teaserSignals.signal')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.age')}</TableHead>
+          <TableHead className="w-10"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -93,6 +95,18 @@ export function TeaserSignalsTable({ patterns }: TeaserSignalsTableProps) {
               </TableCell>
               <TableCell className="text-right text-muted-foreground text-sm">
                 {signalAge}
+              </TableCell>
+              <TableCell className="text-center">
+                <a
+                  href={getTradingViewAffiliateUrl(setup.instrument)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  title="Open in TradingView"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
               </TableCell>
             </TableRow>
           );

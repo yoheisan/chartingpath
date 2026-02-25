@@ -211,3 +211,34 @@ export function openTradingView(
   const url = getTradingViewUrl(symbol, instrumentCategory, interval);
   window.open(url, '_blank', 'noopener,noreferrer');
 }
+
+/**
+ * Determines instrument category from a symbol string.
+ * Handles Yahoo Finance formats (=F, =X, BTC-USD) and plain tickers.
+ */
+export function getInstrumentCategory(symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' {
+  const upper = symbol.toUpperCase();
+  if (upper.endsWith('=F')) return 'commodities';
+  if (upper.endsWith('=X')) return 'forex';
+  const cryptoBases = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'LINK', 'MATIC', 'LTC', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 'INJ', 'SUI', 'SEI', 'BNB', 'SHIB', 'TRX', 'TON'];
+  if (cryptoBases.some(base => upper.startsWith(base + '-') || upper.startsWith(base + 'USD'))) return 'crypto';
+  if (upper.endsWith('USDT') || upper.endsWith('BTC')) return 'crypto';
+  if (upper.length === 6 && upper.includes('USD')) return 'forex';
+  return 'stocks';
+}
+
+/** TradingView affiliate ID */
+export const TRADINGVIEW_AFFILIATE_ID = '3433';
+
+/**
+ * Returns a TradingView URL with affiliate tracking appended.
+ */
+export function getTradingViewAffiliateUrl(
+  symbol: string,
+  instrumentCategory?: 'crypto' | 'stocks' | 'forex' | 'commodities',
+  interval: string = '1d'
+): string {
+  const category = instrumentCategory || getInstrumentCategory(symbol);
+  const url = getTradingViewUrl(symbol, category, interval);
+  return `${url}&aff_id=${TRADINGVIEW_AFFILIATE_ID}`;
+}
