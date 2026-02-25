@@ -261,11 +261,11 @@ serve(async (req) => {
       });
     }
 
-    // ── 3. Filter: not already posted — pick only ONE to avoid rate limits ──
+    // ── 3. Filter: not already posted — pick only ONE to avoid timeouts ──
     const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id) && !sessionPostedIds.has(p.id));
 
-    // Pick up to 3 unposted patterns (most recently confirmed)
-    const toPost = unposted.slice(0, 3);
+    // Post exactly 1 pattern per invocation (runs every 30 min — plenty of throughput)
+    const toPost = unposted.slice(0, 1);
 
     // ── 4. Get the active Twitter account ──────────────────────────────────
     const { data: accounts } = await supabase
@@ -287,11 +287,6 @@ serve(async (req) => {
     const results = [];
 
     for (const [i, pattern] of toPost.entries()) {
-      // Stagger requests to avoid burst rate limits AND CPU compute limits
-      // (resvg WASM PNG conversion is CPU-heavy; 10s ensures the previous
-      //  generate-share-image worker has fully shut down before the next boots)
-      if (i > 0) await new Promise(r => setTimeout(r, 10000));
-
       try {
         const token    = await ensureShareToken(supabase, pattern.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
@@ -303,7 +298,10 @@ serve(async (req) => {
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-          // 1. Generate the share image (now produces PNG)
+          // 1. Generate the share image (with 8s timeout to avoid function timeout)
+          const imgController = new AbortController();
+          const imgTimeout = setTimeout(() => imgController.abort(), 8000);
+
           const imgRes = await fetch(`${supabaseUrl}/functions/v1/generate-share-image`, {
             method: 'POST',
             headers: {
@@ -311,7 +309,10 @@ serve(async (req) => {
               'Authorization': `Bearer ${serviceKey}`,
             },
             body: JSON.stringify({ token, pattern_id: pattern.id }),
+            signal: imgController.signal,
           });
+
+          clearTimeout(imgTimeout);
 
           if (imgRes.ok) {
             const imgData = await imgRes.json();
