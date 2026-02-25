@@ -160,6 +160,9 @@ export const INDICATOR_COLORS = {
   macdHistogramDown: 'rgba(239, 68, 68, 0.5)', // Red
 } as const;
 
+// === PATTERN SHAPE LINE ===
+export const PATTERN_SHAPE_COLOR = '#3b82f6'; // Blue zigzag connecting pivots
+
 // === OVERLAY/PRICE LINE COLORS ===
 export const OVERLAY_COLORS = {
   primary: '#3b82f6',    // Entry
