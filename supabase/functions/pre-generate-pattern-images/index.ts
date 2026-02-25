@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_IMAGES_PER_RUN = 5;
+const ALLOWED_GRADES = ['A', 'B'];
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Bar {
@@ -15,7 +18,13 @@ interface Bar {
   close: number;
 }
 
-// ─── SVG Rendering ──────────────────────────────────────────────────────────
+// ─── SVG Rendering (same as generate-share-image) ───────────────────────────
+
+function formatPrice(price: number): string {
+  if (price >= 1000) return price.toFixed(2);
+  if (price >= 1) return price.toPrecision(5);
+  return price.toPrecision(4);
+}
 
 function renderCandlestickSVG(opts: {
   bars: Bar[];
@@ -85,11 +94,6 @@ function renderCandlestickSVG(opts: {
   const tpY = yForPrice(tp);
   const slY = yForPrice(sl);
 
-  const zoneSvg = `
-    <rect x="${CHART_LEFT}" y="${Math.min(entryY, tpY)}" width="${CHART_W}" height="${Math.abs(tpY - entryY)}" fill="#22c55e" opacity="0.06"/>
-    <rect x="${CHART_LEFT}" y="${Math.min(entryY, slY)}" width="${CHART_W}" height="${Math.abs(slY - entryY)}" fill="#ef4444" opacity="0.06"/>
-  `;
-
   const displayPattern = patternName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const displayInstrument = instrument.replace('-USD', '').replace('=X', '').replace('=F', '');
 
@@ -119,7 +123,8 @@ function renderCandlestickSVG(opts: {
   <rect x="${W - 120}" y="72" width="80" height="28" rx="14" fill="#8b5cf6" opacity="0.2"/>
   <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="system-ui, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
-  ${zoneSvg}
+  <rect x="${CHART_LEFT}" y="${Math.min(entryY, tpY)}" width="${CHART_W}" height="${Math.abs(tpY - entryY)}" fill="#22c55e" opacity="0.06"/>
+  <rect x="${CHART_LEFT}" y="${Math.min(entryY, slY)}" width="${CHART_W}" height="${Math.abs(slY - entryY)}" fill="#ef4444" opacity="0.06"/>
   ${candleSvg}
   ${levelLine(entry, '#3b82f6', 'ENTRY', '')}
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
@@ -129,12 +134,6 @@ function renderCandlestickSVG(opts: {
   <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="system-ui, sans-serif">chartingpath.com · Live Pattern Detection</text>
   <text x="${W - 40}" y="${H - 20}" fill="#475569" font-size="12" font-family="monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
-}
-
-function formatPrice(price: number): string {
-  if (price >= 1000) return price.toFixed(2);
-  if (price >= 1) return price.toPrecision(5);
-  return price.toPrecision(4);
 }
 
 function parseBars(detection: any): Bar[] {
@@ -149,9 +148,7 @@ function parseBars(detection: any): Bar[] {
         close: Number(b.close ?? b.c ?? 0),
       }));
     }
-  } catch {
-    console.warn('[generate-share-image] Could not parse bars');
-  }
+  } catch { /* ignore */ }
 
   if (bars.length < 3) {
     const mid = detection.entry_price;
@@ -177,85 +174,94 @@ serve(async (req) => {
   );
 
   try {
-    const { token, pattern_id } = await req.json();
-
-    if (!token && !pattern_id) {
-      return new Response(JSON.stringify({ error: 'token or pattern_id required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    let query = supabase.from('live_pattern_detections').select('*');
-    if (token) {
-      query = query.eq('share_token', token);
-    } else {
-      query = query.eq('id', pattern_id);
-    }
-
-    const { data: detection, error } = await query.single();
-    if (error || !detection) {
-      return new Response(JSON.stringify({ error: 'Detection not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const shareToken = detection.share_token || token;
-    if (!shareToken) {
-      return new Response(JSON.stringify({ error: 'No share token' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const bars = parseBars(detection);
-
-    const svg = renderCandlestickSVG({
-      bars,
-      entry: detection.entry_price,
-      sl: detection.stop_loss_price,
-      tp: detection.take_profit_price,
-      direction: detection.direction,
-      patternName: detection.pattern_name,
-      instrument: detection.instrument,
-      timeframe: detection.timeframe,
-      grade: detection.quality_score?.toUpperCase() ?? '?',
-      rr: Number(detection.risk_reward_ratio).toFixed(1),
-    });
-
-    // Store as pure SVG — no WASM/resvg dependency
-    const filePath = `${shareToken}.svg`;
-    const uploadBlob = new Blob([svg], { type: 'image/svg+xml' });
-
-    const { error: uploadError } = await supabase.storage
-      .from('share-images')
-      .upload(filePath, uploadBlob, {
-        contentType: 'image/svg+xml',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('[generate-share-image] Upload error:', uploadError);
-      throw uploadError;
-    }
-
-    const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${filePath}`;
-
-    // Update detection with image URL
-    await supabase
+    // Find A/B grade active detections without a share image
+    const { data: detections, error: fetchErr } = await supabase
       .from('live_pattern_detections')
-      .update({ share_image_url: publicUrl })
-      .eq('id', detection.id);
+      .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, bars, share_token, share_image_url')
+      .in('quality_score', ALLOWED_GRADES)
+      .in('status', ['active', 'pending'])
+      .is('share_image_url', null)
+      .order('last_confirmed_at', { ascending: false })
+      .limit(MAX_IMAGES_PER_RUN);
 
-    console.log(`[generate-share-image] ✅ Generated SVG ${filePath} for ${detection.instrument}`);
+    if (fetchErr) throw fetchErr;
+
+    if (!detections || detections.length === 0) {
+      console.log('[pre-gen-images] No detections need images');
+      return new Response(JSON.stringify({ generated: 0, reason: 'all_images_exist' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`[pre-gen-images] Processing ${detections.length} detections`);
+    const results: any[] = [];
+
+    for (const detection of detections) {
+      try {
+        // Ensure share token
+        let shareToken = detection.share_token;
+        if (!shareToken) {
+          shareToken = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+          await supabase
+            .from('live_pattern_detections')
+            .update({ share_token: shareToken })
+            .eq('id', detection.id);
+        }
+
+        const bars = parseBars(detection);
+
+        const svg = renderCandlestickSVG({
+          bars,
+          entry: detection.entry_price,
+          sl: detection.stop_loss_price,
+          tp: detection.take_profit_price,
+          direction: detection.direction,
+          patternName: detection.pattern_name,
+          instrument: detection.instrument,
+          timeframe: detection.timeframe,
+          grade: detection.quality_score?.toUpperCase() ?? '?',
+          rr: Number(detection.risk_reward_ratio).toFixed(1),
+        });
+
+        // Upload SVG
+        const filePath = `${shareToken}.svg`;
+        const uploadBlob = new Blob([svg], { type: 'image/svg+xml' });
+
+        const { error: uploadError } = await supabase.storage
+          .from('share-images')
+          .upload(filePath, uploadBlob, {
+            contentType: 'image/svg+xml',
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${filePath}`;
+
+        // Update detection with image URL
+        await supabase
+          .from('live_pattern_detections')
+          .update({ share_image_url: publicUrl })
+          .eq('id', detection.id);
+
+        results.push({ id: detection.id, instrument: detection.instrument, status: 'ok' });
+        console.log(`[pre-gen-images] ✅ ${detection.instrument} → ${filePath}`);
+
+      } catch (err: any) {
+        console.error(`[pre-gen-images] ❌ ${detection.instrument}: ${err.message}`);
+        results.push({ id: detection.id, instrument: detection.instrument, status: 'error', error: err.message });
+      }
+    }
+
+    const generated = results.filter(r => r.status === 'ok').length;
+    console.log(`[pre-gen-images] Done — ${generated}/${detections.length} generated`);
 
     return new Response(
-      JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'svg' }),
+      JSON.stringify({ generated, total: detections.length, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
-    console.error('[generate-share-image] Error:', err.message);
+    console.error('[pre-gen-images] Fatal:', err.message);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

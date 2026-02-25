@@ -2064,6 +2064,7 @@ export type Database = {
           quality_reasons: string[] | null
           quality_score: string | null
           risk_reward_ratio: number
+          share_image_url: string | null
           share_token: string | null
           status: string
           stop_loss_price: number
@@ -2096,6 +2097,7 @@ export type Database = {
           quality_reasons?: string[] | null
           quality_score?: string | null
           risk_reward_ratio: number
+          share_image_url?: string | null
           share_token?: string | null
           status?: string
           stop_loss_price: number
@@ -2128,6 +2130,7 @@ export type Database = {
           quality_reasons?: string[] | null
           quality_score?: string | null
           risk_reward_ratio?: number
+          share_image_url?: string | null
           share_token?: string | null
           status?: string
           stop_loss_price?: number
@@ -3555,6 +3558,33 @@ export type Database = {
           id?: string
           is_active?: boolean
           platform?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_post_budget: {
+        Row: {
+          id: string
+          max_posts: number
+          platform: string
+          post_count: number
+          post_date: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          max_posts?: number
+          platform: string
+          post_count?: number
+          post_date?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          max_posts?: number
+          platform?: string
+          post_count?: number
+          post_date?: string
           updated_at?: string
         }
         Relationships: []
