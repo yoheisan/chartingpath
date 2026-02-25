@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -256,7 +256,12 @@ export default function EdgeAtlasPatternPage() {
                     <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}</span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm font-mono">{tk.symbol.replace('=X', '').replace('^', '')}</span>
+                        <Link 
+                          to={`/study/${encodeURIComponent(tk.symbol)}`}
+                          className="font-semibold text-sm font-mono hover:text-primary transition-colors underline-offset-2 hover:underline"
+                        >
+                          {tk.symbol.replace('=X', '').replace('^', '')}
+                        </Link>
                         {isLowSample && <span className="text-[10px] text-yellow-500">⚠️</span>}
                       </div>
                       <div className="flex items-center gap-2 sm:hidden text-xs text-muted-foreground mt-0.5">
