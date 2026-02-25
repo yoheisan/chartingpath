@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, FlaskConical, TrendingUp, FileCode, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from '@/lib/analytics';
 
 export const HowItWorks = () => {
   const { t } = useTranslation();
@@ -55,7 +56,7 @@ export const HowItWorks = () => {
 
         <div className="grid md:grid-cols-4 gap-4">
           {stages.map((item, idx) => (
-            <Link key={item.stage} to={item.link} className="block group">
+            <Link key={item.stage} to={item.link} className="block group" onClick={() => trackEvent('landing.cta_click', { button: `how_it_works_step_${item.stage}`, label: item.title })}>
               <Card className="text-center h-full hover:border-primary/50 transition-all duration-300 relative overflow-hidden">
                 <CardContent className="p-5">
                   <div className={`absolute top-0 left-0 w-8 h-8 bg-gradient-to-br ${item.color} flex items-center justify-center text-white text-xs font-bold rounded-br-lg`}>

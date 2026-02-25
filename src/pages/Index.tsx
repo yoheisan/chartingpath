@@ -10,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
+import { trackEvent } from '@/lib/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
@@ -48,11 +49,13 @@ const Index = () => {
 
   const handleScreenerClick = () => {
     track('pricing_clicked', { source: 'landing_cta_screener' });
+    trackEvent('landing.cta_click', { button: 'hero_open_screener' });
     navigate('/patterns/live');
   };
 
   const handleAlertClick = () => {
     track('pricing_clicked', { source: 'landing_cta_create_alert' });
+    trackEvent('landing.cta_click', { button: 'hero_create_alert' });
     if (isAuthenticated) {
       navigate('/members/alerts');
     } else {
