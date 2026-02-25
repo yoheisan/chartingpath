@@ -12,6 +12,7 @@ import { PageMeta } from "@/components/PageMeta";
 import { ArticleJsonLd } from "@/components/JsonLd";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
 import { getStrategyIndicators, hasStrategyIndicators, StrategyIndicatorConfig } from "@/utils/strategyIndicatorMapping";
+import { injectPatternLinks } from "@/utils/patternAutoLinker";
 import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
 import { getStrategyPrimer, hasStrategyPrimer } from "@/utils/strategyPrimerMapping";
 import { CompressedBar } from "@/types/VisualSpec";
@@ -567,9 +568,15 @@ function renderSection(section: ParsedSection, index: number) {
               ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 mb-4">{children}</ol>,
               li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
               h3: ({ children }) => <h3 className="text-xl font-semibold mt-6 mb-3">{children}</h3>,
+              a: ({ href, children }) => {
+                if (href?.startsWith('/')) {
+                  return <Link to={href} className="text-primary hover:underline">{children}</Link>;
+                }
+                return <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>;
+              },
             }}
           >
-            {section.content}
+            {injectPatternLinks(section.content)}
           </ReactMarkdown>
         </section>
       );
