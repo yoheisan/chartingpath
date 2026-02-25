@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowRight, TrendingUp, TrendingDown, Zap, RefreshCw, 
-  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info, Lock, Crown, List
+  ChevronUp, ChevronDown, ArrowUpDown, Clock, Info, Lock, Crown, List, ExternalLink
 } from 'lucide-react';
+import { getTradingViewAffiliateUrl, getInstrumentCategory } from '@/utils/tradingViewLinks';
 import {
   Tooltip,
   TooltipContent,
@@ -733,8 +734,8 @@ export default function PatternScreenerTable() {
             <TableHead className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableHead>
             <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
             <TableHead className="text-right"><Skeleton className="h-4 w-10 ml-auto" /></TableHead>
-            <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
-            <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
+             <TableHead className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableHead>
+             <TableHead className="w-10"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1089,6 +1090,7 @@ export default function PatternScreenerTable() {
                         <SortIcon columnKey="signal" />
                       </div>
                     </TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1096,7 +1098,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={8} className="py-2">
+                        <TableCell colSpan={9} className="py-2">
                           <span className="font-semibold text-sm">{t(`patternNames.${patternName}`, patternName)}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -1187,6 +1189,18 @@ export default function PatternScreenerTable() {
                               }`}>
                               {signalAge}
                               </span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <a
+                                href={getTradingViewAffiliateUrl(setup.instrument)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                title="Open in TradingView"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
                             </TableCell>
                           </TableRow>
                         );

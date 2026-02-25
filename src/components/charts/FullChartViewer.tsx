@@ -63,7 +63,7 @@ import {
 import { SetupWithVisuals } from '@/types/VisualSpec';
 import { translatePatternName } from '@/utils/translatePatternName';
 import { DISCLAIMERS } from '@/constants/disclaimers';
-import { getTradingViewUrl } from '@/utils/tradingViewLinks';
+import { getTradingViewUrl, getInstrumentCategory as getInstrumentCategoryUtil } from '@/utils/tradingViewLinks';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
@@ -709,21 +709,7 @@ export default function FullChartViewer({
   const qualityGrade: string | undefined =
     (quality as any)?.grade ?? (typeof (quality as any)?.score === 'string' ? (quality as any).score : undefined);
 
-  // Determine instrument category for TradingView link
-  const getInstrumentCategory = (symbol: string): 'crypto' | 'stocks' | 'forex' | 'commodities' => {
-    const upper = symbol.toUpperCase();
-    // Yahoo-format commodities (e.g., GC=F, CL=F, SI=F)
-    if (upper.endsWith('=F')) return 'commodities';
-    // Yahoo-format forex (e.g., EURUSD=X)
-    if (upper.endsWith('=X')) return 'forex';
-    // Yahoo-format crypto (e.g., BTC-USD, ETH-USD)
-    const cryptoBases = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'LINK', 'MATIC', 'LTC', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 'INJ', 'SUI', 'SEI', 'BNB', 'SHIB', 'TRX', 'TON'];
-    if (cryptoBases.some(base => upper.startsWith(base + '-') || upper.startsWith(base + 'USD'))) return 'crypto';
-    if (upper.endsWith('USDT') || upper.endsWith('BTC')) return 'crypto';
-    // Forex pairs (6 chars like EURUSD)
-    if (upper.length === 6 && upper.includes('USD')) return 'forex';
-    return 'stocks';
-  };
+  const getInstrumentCategory = getInstrumentCategoryUtil;
 
   const instrumentCategory = getInstrumentCategory(instrument);
   const tradingViewUrl = getTradingViewUrl(instrument, instrumentCategory, visualSpec?.timeframe || '1d');
