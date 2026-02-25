@@ -56,7 +56,7 @@ serve(async (req) => {
       const report = newReport.report;
       
       // Continue with report generation using the new report
-      const link = linkBackUrl || 'https://chartingpath.com/tools/market-breadth';
+      const link = 'chartingpath.com';
 
       const teaserPrompt = reportType === 'pre_market'
         ? `Create a compelling PRE-MARKET social media post (max 240 characters) from this market report. 
@@ -124,7 +124,7 @@ serve(async (req) => {
 
     console.log('Using market report for teaser generation, report length:', latestReport.report.length);
 
-    const link = linkBackUrl || 'https://chartingpath.com/tools/market-breadth';
+    const link = 'chartingpath.com';
 
     // Generate social media teaser based on report type
     const teaserPrompt = reportType === 'pre_market'

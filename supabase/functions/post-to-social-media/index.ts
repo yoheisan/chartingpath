@@ -175,7 +175,7 @@ serve(async (req) => {
       const reportConfig = post.report_config || {};
       const reportType = reportConfig.timeSpan || 'post_market';
       const timezone = post.timezone || 'America/New_York';
-      const linkUrl = link_back_url || 'https://chartingpath.com/tools/market-breadth';
+      const linkUrl = 'chartingpath.com';
 
       try {
         const { data: teaserData, error: teaserError } = await supabaseClient.functions.invoke(

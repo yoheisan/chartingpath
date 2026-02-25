@@ -148,7 +148,7 @@ async function processPost(supabaseClient: any, post: any, now: Date) {
             timezone,
             markets: reportConfig.markets || ['stocks', 'forex', 'crypto', 'commodities'],
             tone: reportConfig.tone || 'professional',
-            linkBackUrl: post.link_back_url || 'https://chartingpath.com/tools/market-breadth'
+            linkBackUrl: 'chartingpath.com'
           }
         }
       );
@@ -164,8 +164,8 @@ async function processPost(supabaseClient: any, post: any, now: Date) {
       const marketName = timezone.includes('Tokyo') ? 'Tokyo' :
                         timezone.includes('London') ? 'London' : 'US';
       const timeLabel = reportType === 'pre_market' ? 'Pre-Market' : 'Post-Market';
-      const linkUrl = post.link_back_url || 'https://chartingpath.com/tools/market-breadth';
-      content = `📊 ${marketName} ${timeLabel} Analysis\n\nKey market insights and trading levels to watch!\n\n🚀 Full Report + Free Starter Scripts → ${linkUrl}`;
+      const linkUrl = 'chartingpath.com';
+      content = `📊 ${marketName} ${timeLabel} Analysis\n\nKey market insights and trading levels to watch!\n\n🚀 Full Report + Free Scripts at ${linkUrl}`;
     }
   }
   // Q&A content from library
