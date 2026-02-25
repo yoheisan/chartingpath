@@ -19,6 +19,16 @@ const STATIC_ROUTES = [
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
 ];
 
+// Pattern statistics pages — high-value SEO landing pages
+const PATTERN_IDS = [
+  'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
+  'double-bottom', 'double-top', 'triple-bottom', 'triple-top',
+  'head-and-shoulders', 'inverse-head-and-shoulders',
+  'bull-flag', 'bear-flag', 'rising-wedge', 'falling-wedge',
+  'cup-and-handle', 'inverse-cup-and-handle',
+  'donchian-breakout-long', 'donchian-breakout-short',
+];
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +64,17 @@ Deno.serve(async (req) => {
     <lastmod>${today}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>
+  </url>
+`;
+    }
+
+    // Pattern statistics pages
+    for (const pid of PATTERN_IDS) {
+      xml += `  <url>
+    <loc>${BASE_URL}/patterns/${pid}/statistics</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 `;
     }
