@@ -264,7 +264,7 @@ serve(async (req) => {
     // ── 3. Filter: not already posted — pick only ONE to avoid timeouts ──
     const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id) && !sessionPostedIds.has(p.id));
 
-    // Post exactly 1 pattern per invocation (runs every 30 min — plenty of throughput)
+    // Post exactly 1 pattern per invocation (runs every 60 min to avoid rate limits)
     const toPost = unposted.slice(0, 1);
 
     // ── 4. Get the active Twitter account ──────────────────────────────────
@@ -292,57 +292,11 @@ serve(async (req) => {
         const shareUrl = `https://chartingpath.com/s/${token}`;
         const tweet    = buildTweet(pattern, shareUrl);
 
-        // Generate branded share image and upload as Twitter media
-        let mediaId: string | undefined;
-        try {
-          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-          const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-          // 1. Generate the share image (with 8s timeout to avoid function timeout)
-          const imgController = new AbortController();
-          const imgTimeout = setTimeout(() => imgController.abort(), 8000);
-
-          const imgRes = await fetch(`${supabaseUrl}/functions/v1/generate-share-image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({ token, pattern_id: pattern.id }),
-            signal: imgController.signal,
-          });
-
-          clearTimeout(imgTimeout);
-
-          if (imgRes.ok) {
-            const imgData = await imgRes.json();
-            console.log(`[pattern-poster] ✅ Share image generated: ${imgData.format} — ${imgData.url}`);
-
-            // Only upload PNGs — Twitter rejects SVGs
-            if (imgData.format === 'svg') {
-              console.warn(`[pattern-poster] ⚠️ Image is SVG (not PNG) — skipping media upload`);
-            } else {
-              // 2. Download the PNG from storage
-              const pngRes = await fetch(imgData.url);
-              if (pngRes.ok) {
-                const pngBuffer = new Uint8Array(await pngRes.arrayBuffer());
-                console.log(`[pattern-poster] Downloaded PNG: ${pngBuffer.length} bytes`);
-
-                // 3. Upload to Twitter as media
-                try {
-                  mediaId = await uploadMediaToTwitter(pngBuffer);
-                } catch (mediaErr: any) {
-                  console.warn(`[pattern-poster] ⚠️ Media upload failed (will post without image): ${mediaErr.message}`);
-                }
-              }
-            }
-          } else {
-            const errBody = await imgRes.text();
-            console.warn(`[pattern-poster] ⚠️ Share image generation failed (non-blocking): ${errBody}`);
-          }
-        } catch (imgErr: any) {
-          console.warn(`[pattern-poster] ⚠️ Share image error (non-blocking): ${imgErr.message}`);
-        }
+        // Skip image generation entirely — post text-only tweets
+        // Image gen via resvg-wasm hits WORKER_LIMIT on Edge Functions
+        // This avoids the compute crash and keeps the posting pipeline running
+        const mediaId: string | undefined = undefined;
+        console.log(`[pattern-poster] Posting text-only (image gen disabled to avoid WORKER_LIMIT)`);
 
         console.log(`[pattern-poster] Posting: ${pattern.instrument} ${pattern.pattern_name} (${pattern.quality_score})${mediaId ? ' [with image]' : ''}`);
 
