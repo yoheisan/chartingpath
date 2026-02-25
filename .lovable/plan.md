@@ -1,77 +1,36 @@
 
-
-# GA4 Integration via OAuth2 Refresh Token
+# Fix X (Twitter) Link Preview Cards
 
 ## Problem
-Google Cloud organization policy blocks service account key creation. We need an alternative authentication method for the GA4 edge function.
+Tweets include a link to `chartingpath.com/s/{token}`. Twitter's crawler hits the `og-share` edge function which serves `og:image` pointing to `share-images/{token}.png` -- but that PNG was never generated (image gen is disabled due to WORKER_LIMIT). Twitter falls back to crawling the page and showing a generic, low-quality site screenshot.
 
 ## Solution
-Replace the service account JWT flow with an OAuth2 refresh token flow. This uses your personal Google account authorization instead of a service account key.
+Two-part fix: a branded fallback OG image + an option to remove the card entirely for cleaner text-only posts.
 
-## How It Works
+### Part 1: Static Branded Fallback OG Image
+- Design and upload a static 1200x630 branded "ChartingPath - Live Pattern Alert" image to the `share-images` Supabase storage bucket as `default-og.png`
+- Update `supabase/functions/og-share/index.ts` to check if the pattern-specific PNG exists in storage; if not, use the fallback URL
+- This way every link preview shows a clean, professional branded card instead of a blurry screenshot
 
-```text
-One-time setup (you do manually):
-  Google OAuth Consent Screen
-    -> Authorize with your Google account
-    -> Get authorization code
-    -> Exchange for refresh_token
-    -> Store refresh_token as Supabase secret
+### Part 2: Update og-share to include pattern details in the card
+- The OG title and description are already dynamic (instrument, entry, SL, TP) -- these will display nicely alongside the branded fallback image
+- Ensure `twitter:card` stays as `summary_large_image` for maximum visibility
 
-Every API call (edge function does automatically):
-  refresh_token -> Google token endpoint -> access_token -> GA4 Data API
-```
+### Part 3: Consider removing the link from pattern tweets
+- Alternative: remove the `chartingpath.com/s/{token}` URL from the tweet text entirely so Twitter shows NO card -- pure text posts are cleaner and get better engagement
+- Keep the share URL only in `post_history` for tracking, not in the tweet itself
+- This is the simplest approach and avoids the OG image problem altogether
 
-## Setup Steps (you do once)
+## Technical Changes
 
-1. Go to Google Cloud Console (can use any account that has access to the GA4 property)
-2. Create OAuth2 credentials (type: Web Application) with redirect URI set to `https://developers.google.com/oauthplayground`
-3. Go to Google OAuth Playground (https://developers.google.com/oauthplayground)
-4. Configure it to use your own OAuth credentials (Settings gear icon)
-5. Authorize the scope: `https://www.googleapis.com/auth/analytics.readonly`
-6. Exchange the authorization code for tokens
-7. Copy the `refresh_token` value
-8. Add three Supabase secrets:
-   - `GA4_OAUTH_CLIENT_ID` -- from step 2
-   - `GA4_OAUTH_CLIENT_SECRET` -- from step 2  
-   - `GA4_OAUTH_REFRESH_TOKEN` -- from step 6
+### Option A (Recommended): Remove link from tweets, pure text
+- **`supabase/functions/post-patterns-to-social/index.ts`**: In `buildTweet()`, remove the share URL line. Replace with a CTA like "Free alerts at chartingpath.com" (no `/s/token` path, so no card generated). Twitter won't generate a link preview for bare domain mentions without `https://`.
+- Redeploy the function
 
-## Code Changes
+### Option B: Keep link, fix the card image
+- Upload a static `default-og.png` (1200x630) to `share-images` bucket
+- **`supabase/functions/og-share/index.ts`**: Before setting `ogImageUrl`, check if `{token}.png` exists in storage via a HEAD request; if 404, fall back to `default-og.png`
+- Redeploy the function
 
-### 1. Update Edge Function: `supabase/functions/ga4-report/index.ts`
-
-Replace the service account JWT authentication block with a simpler OAuth2 refresh token flow:
-
-- Remove: JWT creation, private key import, crypto signing (lines ~85-135)
-- Remove: `GA4_SERVICE_ACCOUNT_JSON` secret requirement
-- Add: Read `GA4_OAUTH_CLIENT_ID`, `GA4_OAUTH_CLIENT_SECRET`, `GA4_OAUTH_REFRESH_TOKEN` from env
-- Add: POST to `https://oauth2.googleapis.com/token` with `grant_type=refresh_token` to get an access_token
-- Keep: All existing GA4 Data API queries unchanged (pages, sources, devices)
-- Update: Setup-required error message to reference the new secrets
-
-### 2. Update Frontend: `src/components/admin/GA4Panel.tsx`
-
-- Update the setup instructions in the `setupRequired` block to reference the new OAuth2 secrets instead of `GA4_SERVICE_ACCOUNT_JSON`
-- Add step-by-step instructions for the OAuth Playground flow
-- Update the Supabase secrets link
-
-## Technical Details
-
-The token exchange request is straightforward:
-
-```text
-POST https://oauth2.googleapis.com/token
-Content-Type: application/x-www-form-urlencoded
-
-client_id=...&client_secret=...&refresh_token=...&grant_type=refresh_token
-```
-
-Response contains `access_token` which is used identically to the current flow for GA4 API calls. No other code changes needed -- the rest of the edge function (API queries, response formatting) stays the same.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `supabase/functions/ga4-report/index.ts` | Replace service account auth with OAuth2 refresh token |
-| `src/components/admin/GA4Panel.tsx` | Update setup instructions for OAuth2 flow |
-
+### Recommendation
+Go with **Option A** -- remove the direct share link from tweet text and replace with a plain domain mention. This gives cleaner text-only posts, better engagement (Twitter deprioritizes tweets with external links), and sidesteps the image problem entirely. The share URL is still recorded in `post_history` for analytics.
