@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   ArrowLeft, RefreshCw, BarChart3, Zap, AlertTriangle, 
-  TrendingUp, Users, Activity, Brain, Shield, Target, Globe
+  TrendingUp, Users, Activity, Brain, Shield, Target, Globe, MousePointerClick
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ import { KPIEmailSubscription } from '@/components/admin/KPIEmailSubscription';
 import { LoopCompletionCard } from '@/components/admin/LoopCompletionCard';
 import { UnmetNeedsSpotlight, type UnmetNeed } from '@/components/admin/UnmetNeedsSpotlight';
 import { RegionalAnalysis, type RegionalInsight, type CopilotInsights, type JourneySummary } from '@/components/admin/RegionalAnalysis';
+import { LandingEngagementCard } from '@/components/admin/LandingEngagementCard';
 
 type TimeWindow = '7d' | '30d' | '90d';
 
@@ -320,6 +321,10 @@ const AIJourneyAnalytics = () => {
                   <Shield className="h-4 w-4" />
                   Email Reports
                 </TabsTrigger>
+                <TabsTrigger value="landing" className="flex items-center gap-2">
+                  <MousePointerClick className="h-4 w-4" />
+                  Landing
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="unmet-needs">
@@ -374,6 +379,10 @@ const AIJourneyAnalytics = () => {
 
               <TabsContent value="email">
                 <KPIEmailSubscription />
+              </TabsContent>
+
+              <TabsContent value="landing">
+                <LandingEngagementCard days={timeWindow === '7d' ? 7 : timeWindow === '30d' ? 30 : 90} />
               </TabsContent>
             </Tabs>
 
