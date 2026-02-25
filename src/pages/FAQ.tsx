@@ -521,6 +521,82 @@ const FAQ = () => {
               )
             }
           ]
+        },
+        {
+          category: t('faq.screener.catTransparency', 'Performance Transparency'),
+          questions: [
+            {
+              question: t('faq.screener.q_whyMostPatternsLose', 'Why do most patterns show negative returns at 2:1 R:R?'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{t('faq.screener.a_whyLoseIntro', 'Pattern detection identifies structural formations — it does not guarantee profitable outcomes. At a fixed 2:1 risk-reward ratio, the baseline win rate required to break even is 33.3%. Our data across 484,000+ historical detections shows that most patterns fall slightly below this threshold.')}</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">{t('faq.screener.a_whyLoseTitle', 'Historical Win Rates at 2:1 R:R (484K+ samples)')}</h4>
+                    <div className="text-sm space-y-1">
+                      <div>• {t('faq.screener.a_whyLoseBullish', 'Bullish patterns (Falling Wedge, Double Bottom, Inverse H&S): 35–38% win rate')}</div>
+                      <div>• {t('faq.screener.a_whyLoseBearish', 'Bearish patterns (Rising Wedge, Double Top, H&S): 22–24% win rate')}</div>
+                      <div>• {t('faq.screener.a_whyLoseBreakeven', 'Breakeven threshold at 2:1 R:R: 33.3%')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                    <p><strong>{t('faq.screener.a_whyLoseKey', 'Key insight:')}</strong> {t('faq.screener.a_whyLoseKeyDesc', "The platform's value is not in guaranteeing every signal wins — it's in filtering the universe of possible trades to the statistically strongest setups, and providing the tools (Pattern Lab, Edge Atlas) to identify which specific pattern×instrument×timeframe combinations have positive expectancy.")}</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: t('faq.screener.q_whatGradesMean', 'What do quality grades actually mean?'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{t('faq.screener.a_gradesMeanIntro', 'Grades reflect structural quality — how well-formed a pattern is based on 9 technical factors. They measure detection confidence, not trade outcome probability.')}</p>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">{t('faq.screener.a_gradesMeanDims', 'Two Independent Dimensions')}</h4>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-1">
+                          <div className="font-medium">{t('faq.screener.a_detectionQuality', 'Detection Quality (Grades)')}</div>
+                          <div className="text-xs text-muted-foreground">{t('faq.screener.a_detectionQualityDesc', '"Is this a well-formed pattern?" Evaluates trend alignment, symmetry, volume, ADX, and structure.')}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-medium">{t('faq.screener.a_edgeQuality', 'Edge Quality (Edge Atlas)')}</div>
+                          <div className="text-xs text-muted-foreground">{t('faq.screener.a_edgeQualityDesc', '"Does this pattern×instrument×timeframe actually make money?" Based on historical outcome data with sample sizes.')}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                      <p><strong>{t('faq.screener.a_gradesCaveat', 'Important:')}</strong> {t('faq.screener.a_gradesCaveatDesc', 'A well-formed pattern on a low-edge instrument is still a poor trade. Always check the Edge Atlas or Pattern Lab to validate the statistical edge before acting on any signal, regardless of its grade.')}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: t('faq.screener.q_howToReadStats', 'How should I read win rates and sample sizes?'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{t('faq.screener.a_readStatsIntro', 'Every win rate shown on the platform is accompanied by a sample size (n=X). This is critical context that most trading platforms omit.')}</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">{t('faq.screener.a_readStatsSample', 'Sample Size Confidence Levels')}</h4>
+                    <div className="text-sm space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">n &lt; 30</Badge>
+                        <span className="text-muted-foreground text-xs">{t('faq.screener.a_sampleLow', 'Low confidence — treat as directional indicator only')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">n = 30–100</Badge>
+                        <span className="text-muted-foreground text-xs">{t('faq.screener.a_sampleMedium', 'Moderate confidence — patterns are emerging')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-primary text-primary-foreground text-xs">n &gt; 100</Badge>
+                        <span className="text-muted-foreground text-xs">{t('faq.screener.a_sampleHigh', 'High confidence — statistically meaningful')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.screener.a_readStatsNote', 'Win rates without sample sizes are misleading. A "70% win rate" based on 10 trades is far less reliable than a "35% win rate" based on 5,000 trades. We always show both numbers so you can make informed decisions.')}</p>
+                </div>
+              )
+            }
+          ]
         }
       ]
     },
