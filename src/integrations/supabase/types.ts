@@ -3346,6 +3346,7 @@ export type Database = {
           recurrence_pattern: string | null
           recurrence_rule: string | null
           report_config: Json | null
+          retry_count: number
           scheduled_time: string
           status: string
           timezone: string
@@ -3368,6 +3369,7 @@ export type Database = {
           recurrence_pattern?: string | null
           recurrence_rule?: string | null
           report_config?: Json | null
+          retry_count?: number
           scheduled_time: string
           status?: string
           timezone?: string
@@ -3390,6 +3392,7 @@ export type Database = {
           recurrence_pattern?: string | null
           recurrence_rule?: string | null
           report_config?: Json | null
+          retry_count?: number
           scheduled_time?: string
           status?: string
           timezone?: string
