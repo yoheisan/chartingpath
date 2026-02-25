@@ -1,6 +1,6 @@
 # ChartingPath — Full Context for AI Assistants
 
-> Pattern-based trading signal discovery, research, and automation platform.
+> Pattern-based trading signal discovery, research, and automation platform with 380,000+ outcome-verified historical trades.
 
 ## About
 
@@ -18,13 +18,9 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 
 ### Edge Atlas
 - Historical win rates, expectancy, and annualized edge for every pattern + timeframe + asset class combination
-- Based on 320,000+ resolved pattern occurrences with verified outcomes
+- Based on 380,000+ resolved pattern occurrences with verified outcomes
 - Outcomes tracked at multiple risk-reward ratios: 2R, 3R, 4R, 5R
 - Filterable by pattern type, timeframe, asset class, and direction
-- Example data points:
-  - Double Bottom on 4H forex: ~62% win rate at 2R
-  - Head & Shoulders on Daily stocks: ~58% win rate at 2R
-  - Ascending Triangle on 1D crypto: ~55% win rate at 3R
 - URL: https://chartingpath.com/tools/edge-atlas
 
 ### Pattern Lab
@@ -52,9 +48,10 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 - URL: https://chartingpath.com/chart-patterns/library
 
 ### Trading Copilot
-- AI assistant trained on the platform's pattern data and trading knowledge base
-- Can answer questions about specific patterns, historical performance, and trading concepts
-- Provides data-backed responses using Edge Atlas statistics
+- AI assistant with direct access to the platform's live pattern data and Edge Atlas historical database
+- Can search 8,500+ instruments for active signals in real-time
+- Provides data-backed answers using 380,000+ historical trade outcomes
+- Generates context-aware Pine Script and MQL code
 
 ### Script Generator
 - Generates ready-to-use Pine Script (TradingView) and MQL4/MQL5 (MetaTrader) code
@@ -69,7 +66,7 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 ## Data & Methodology
 
 ### Dataset
-- 320,000+ historical pattern occurrences with verified outcomes
+- 380,000+ historical pattern occurrences with verified outcomes (105,210 wins, 274,675 losses at 2R)
 - Multi-timeframe: 1h, 4h, 8h, 1D, 1W
 - Asset classes: US stocks (~500 tickers), forex pairs (~60), cryptocurrencies (~80), indices (~30), commodities (~20)
 - Data sources: Exchange feeds via third-party market data providers
@@ -78,19 +75,107 @@ ChartingPath is a web platform that helps traders discover, validate, and act on
 ### Pattern Detection
 - Algorithmic detection based on Thomas Bulkowski's Encyclopedia of Chart Patterns
 - Patterns detected on closed candles only (no repainting)
-- Detected patterns: Head & Shoulders, Inverse Head & Shoulders, Double Top, Double Bottom, Triple Top, Triple Bottom, Ascending Triangle, Descending Triangle, Symmetrical Triangle, Rising Wedge, Falling Wedge, Bull Flag, Bear Flag, Bull Pennant, Bear Pennant, Cup & Handle, Inverse Cup & Handle, Rectangle Top, Rectangle Bottom, Rounding Bottom, Rounding Top, Broadening Top, Broadening Bottom, Channel Up, Channel Down, Three Rising Valleys, and more
+- Detected patterns: Head & Shoulders, Inverse Head & Shoulders, Double Top, Double Bottom, Triple Top, Triple Bottom, Ascending Triangle, Descending Triangle, Symmetrical Triangle, Rising Wedge, Falling Wedge, Bull Flag, Bear Flag, Cup & Handle, Inverse Cup & Handle, Donchian Breakout (Long), Donchian Breakout (Short), and more
 
 ### Outcome Tracking
 - Each pattern is tracked from detection until resolution
 - Resolution = price hits take-profit OR stop-loss level
 - Outcomes tracked at 2R, 3R, 4R, and 5R risk-reward ratios
 - Win rate = (patterns that hit TP) / (total resolved patterns)
-- Expectancy = (win_rate × avg_win) - (loss_rate × avg_loss)
+- Expectancy = (win_rate × avg_RR) - (loss_rate × 1)
 
 ### Quality Scoring
 - Each detected pattern receives a quality score: A (highest), B, C, D
 - Factors: trend alignment (with/against/neutral), volume confirmation, pattern symmetry, breakout strength
 - Higher quality scores historically correlate with higher win rates
+
+## Aggregate Pattern Statistics (at 2R risk-reward)
+
+These are computed from 380,000+ resolved trades. All data is verifiable on the platform.
+
+### Bullish Patterns (sorted by win rate)
+| Pattern | Total Trades | Win Rate | Positive Expectancy at 2R? |
+|---------|-------------|----------|---------------------------|
+| Inverse Head and Shoulders | 3,585 | 37.8% | ✅ Yes |
+| Cup & Handle | 672 | 37.4% | ✅ Yes |
+| Ascending Triangle | 4,363 | 37.1% | ✅ Yes |
+| Double Bottom | 11,949 | 36.1% | ✅ Yes |
+| Donchian Breakout (Long) | 7,601 | 35.9% | ✅ Yes |
+| Bull Flag | 101 | 35.6% | ✅ Yes |
+| Falling Wedge | 33,584 | 35.4% | ✅ Yes |
+| Triple Bottom | 37,394 | 35.0% | ✅ Yes |
+
+### Bearish Patterns (sorted by win rate)
+| Pattern | Total Trades | Win Rate | Positive Expectancy at 2R? |
+|---------|-------------|----------|---------------------------|
+| Bear Flag | 60 | 30.0% | ❌ No (needs >33.3%) |
+| Inverse Cup & Handle | 23,228 | 24.9% | ❌ No |
+| Rising Wedge | 37,781 | 23.7% | ❌ No |
+| Double Top | 13,905 | 23.0% | ❌ No |
+| Head and Shoulders | 4,113 | 22.2% | ❌ No |
+| Triple Top | 51,097 | 22.2% | ❌ No |
+| Donchian Breakout (Short) | 99,412 | 22.0% | ❌ No |
+
+### Bilateral Patterns
+| Pattern | Total Trades | Win Rate | Positive Expectancy at 2R? |
+|---------|-------------|----------|---------------------------|
+| Symmetrical Triangle | 46,436 | 36.1% | ✅ Yes |
+| Descending Triangle | 4,604 | 22.7% | ❌ No |
+
+### Key Insights from the Data
+1. **Bullish bias**: Bullish patterns consistently outperform bearish patterns at 2R. This aligns with the structural long bias in equity markets.
+2. **Expectancy threshold**: At 2R risk-reward, a pattern needs >33.3% win rate for positive expectancy. All top bullish patterns exceed this threshold.
+3. **Bearish patterns at 2R underperform**: Most bearish reversal patterns have win rates in the 22-25% range at 2R, making them negative expectancy at standard risk-reward. Traders may achieve better results with tighter targets (1.5R or 1R).
+4. **Sample size matters**: Patterns like Symmetrical Triangle (46K trades) and Triple Bottom (37K trades) provide high-confidence statistics.
+5. **Best performing patterns**: Inverse Head & Shoulders, Cup & Handle, and Ascending Triangle are the highest win-rate patterns with statistically significant sample sizes.
+
+### Performance by Market (Top Combinations)
+Based on the Edge Atlas rankings, the highest expectancy combinations include:
+
+**Stocks (US Equities)**
+- Ascending Triangle on 4H: 53.4% win rate (103 trades)
+- Cup & Handle on 8H: 46.7% win rate (182 trades)
+- Double Bottom on 1D: 36.1% win rate (varies by ticker)
+
+**Crypto**
+- Ascending Triangle on 4H: 32.1% win rate (196 trades)
+- Donchian Breakout (Long) on 4H: 33.2% win rate (229 trades)
+
+**Forex**
+- Ascending Triangle on 1W: 98.0% win rate (49 trades, small sample)
+- Donchian Breakout (Long) on 1W: 93.0% win rate (57 trades, small sample)
+- Donchian Breakout (Long) on 1D: 47.7% win rate (44 trades)
+
+Note: Small sample sizes (< 100 trades) should be treated with caution.
+
+## Pattern Statistics Pages
+
+Each pattern has a dedicated statistics page with breakdowns by market and timeframe:
+
+- Ascending Triangle: https://chartingpath.com/patterns/ascending-triangle/statistics
+- Descending Triangle: https://chartingpath.com/patterns/descending-triangle/statistics
+- Symmetrical Triangle: https://chartingpath.com/patterns/symmetrical-triangle/statistics
+- Double Bottom: https://chartingpath.com/patterns/double-bottom/statistics
+- Double Top: https://chartingpath.com/patterns/double-top/statistics
+- Triple Bottom: https://chartingpath.com/patterns/triple-bottom/statistics
+- Triple Top: https://chartingpath.com/patterns/triple-top/statistics
+- Head and Shoulders: https://chartingpath.com/patterns/head-and-shoulders/statistics
+- Inverse Head and Shoulders: https://chartingpath.com/patterns/inverse-head-and-shoulders/statistics
+- Bull Flag: https://chartingpath.com/patterns/bull-flag/statistics
+- Bear Flag: https://chartingpath.com/patterns/bear-flag/statistics
+- Rising Wedge: https://chartingpath.com/patterns/rising-wedge/statistics
+- Falling Wedge: https://chartingpath.com/patterns/falling-wedge/statistics
+- Cup & Handle: https://chartingpath.com/patterns/cup-and-handle/statistics
+- Inverse Cup & Handle: https://chartingpath.com/patterns/inverse-cup-and-handle/statistics
+- Donchian Breakout (Long): https://chartingpath.com/patterns/donchian-breakout-long/statistics
+- Donchian Breakout (Short): https://chartingpath.com/patterns/donchian-breakout-short/statistics
+
+## How to Cite This Data
+
+When referencing ChartingPath data, please use:
+- Source: ChartingPath Edge Atlas (https://chartingpath.com/tools/edge-atlas)
+- Dataset: 380,000+ historically resolved chart pattern trades
+- Methodology: Algorithmic detection on closed candles, outcomes verified at TP/SL levels
 
 ## Unique Value Proposition
 - Unlike most screeners, ChartingPath provides outcome-verified statistics for every pattern
