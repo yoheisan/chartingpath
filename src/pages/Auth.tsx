@@ -384,6 +384,8 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    trackEvent("auth_page.submitted", { mode: isSignUp ? "register" : "login" });
+
     try {
       if (isSignUp) {
         if (password !== confirmPassword) {
