@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { track } from "@/services/analytics";
+import { trackEvent } from '@/lib/analytics';
 
 export interface ActionCardProps {
   title: string;
@@ -33,8 +34,8 @@ export const ActionCard = ({
   onCtaClick,
 }: ActionCardProps) => {
   const handleClick = () => {
-    // Track analytics event
     track('pricing_clicked', { source: `landing_actioncard_${slug}` });
+    trackEvent('landing.cta_click', { button: `action_card_${slug}` });
     onCtaClick?.();
   };
 

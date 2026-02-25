@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from '@/lib/analytics';
 
 const demoResults = [
   { symbol: "BTC/USD", quality: "A", direction: "Bullish", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
@@ -179,7 +180,7 @@ export const CopilotShowcase = () => {
           {/* CTA */}
           <div className="text-center mt-8 space-y-3">
             <Button asChild size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
-              <Link to="/features/trading-copilot">
+              <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
                 {t('copilotShowcase.learnMore')}
                 <ArrowRight className="h-4 w-4" />
               </Link>

@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Trophy, FlaskConical, Info, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { trackEvent } from '@/lib/analytics';
 import {
   Tooltip,
   TooltipContent,
@@ -257,15 +258,18 @@ export function EdgeAtlasSection() {
   };
 
   const handlePatternClick = (r: EdgeRanking) => {
+    trackEvent('landing.cta_click', { button: 'edge_atlas_pattern', pattern: r.pattern_name, timeframe: r.timeframe });
     navigate(`/edge-atlas/${encodeURIComponent(r.pattern_id)}?timeframe=${r.timeframe}&assetType=${activeTab}&patternName=${encodeURIComponent(r.pattern_name)}`);
   };
 
   const handleFindSignals = (r: EdgeRanking) => {
+    trackEvent('landing.cta_click', { button: 'edge_atlas_find_signals', pattern: r.pattern_name, timeframe: r.timeframe });
     const screenerId = PATTERN_ID_TO_SCREENER[r.pattern_id] || r.pattern_id;
     navigate(`/patterns/live?pattern=${encodeURIComponent(screenerId)}&timeframe=${r.timeframe}&assetType=${activeTab}`);
   };
 
   const handleBacktest = (r: EdgeRanking) => {
+    trackEvent('landing.cta_click', { button: 'edge_atlas_validate', pattern: r.pattern_name, timeframe: r.timeframe });
     navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
   };
 

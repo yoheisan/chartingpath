@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
@@ -211,7 +212,7 @@ export function PatternScreenerTeaser() {
 
         {/* CTA */}
         <div className="text-center">
-          <Link to="/patterns/live">
+          <Link to="/patterns/live" onClick={() => trackEvent('landing.cta_click', { button: 'screener_teaser_view_all', asset_type: activeTab, total: currentTotal })}>
             <Button size="lg" className="px-8">
               {currentTotal > MAX_TEASER_ITEMS
                 ? t('patternScreenerTeaser.viewAllSignals', { count: currentTotal, label: activeTabConfig ? t(activeTabConfig.i18nKey) : '' })

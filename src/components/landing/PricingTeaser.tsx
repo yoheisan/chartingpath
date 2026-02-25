@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { track } from "@/services/analytics";
+import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from "react-i18next";
 
 export const PricingTeaser = () => {
@@ -44,6 +45,7 @@ export const PricingTeaser = () => {
 
   const handlePricingClick = () => {
     track('pricing_viewed', { source: 'landing_pricing_teaser' });
+    trackEvent('landing.cta_click', { button: 'pricing_teaser_see_full' });
   };
 
   return (
