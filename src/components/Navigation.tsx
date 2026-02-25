@@ -268,6 +268,12 @@ const Navigation = () => {
                         {t('navigation.economicCalendar', 'Economic Calendar')}
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/tools/market-breadth" className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" />
+                        {t('navigation.marketBreadth', 'Market Breadth')}
+                      </Link>
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                   
                   <DropdownMenuSeparator />
