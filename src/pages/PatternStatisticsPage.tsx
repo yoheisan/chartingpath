@@ -174,7 +174,7 @@ export default function PatternStatisticsPage() {
   const pageTitle = `${info.name} Statistics — Win Rate, Expectancy & Historical Data`;
   const pageDesc = `${info.name} pattern performance across ${aggregates?.total_trades?.toLocaleString() || '320,000+'} historical trades. See win rates, expectancy, and the best markets to trade this pattern.`;
 
-  // JSON-LD structured data
+  // JSON-LD structured data (Article + FAQ)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -184,10 +184,44 @@ export default function PatternStatisticsPage() {
     publisher: { '@type': 'Organization', name: 'ChartingPath', url: 'https://chartingpath.com' },
   };
 
+  const faqJsonLd = aggregates ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `What is the win rate of a ${info.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Based on ${aggregates.total_trades.toLocaleString()} historically resolved trades, the ${info.name} pattern has a win rate of ${aggregates.win_rate_pct}% at a 2:1 risk-reward ratio. The best performing market for this pattern is ${ASSET_LABEL[aggregates.best_asset] || aggregates.best_asset} on the ${TF_LABEL[aggregates.best_timeframe] || aggregates.best_timeframe} timeframe.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Is the ${info.name} pattern profitable?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: aggregates.expectancy_r > 0
+            ? `Yes. The ${info.name} has a positive expectancy of ${aggregates.expectancy_r.toFixed(3)}R per trade at 2:1 risk-reward, based on ${aggregates.total_trades.toLocaleString()} historical trades. This means for every unit of risk, you can expect to gain ${aggregates.expectancy_r.toFixed(3)} units on average over many trades.`
+            : `At a 2:1 risk-reward ratio, the ${info.name} has a negative expectancy of ${aggregates.expectancy_r.toFixed(3)}R based on ${aggregates.total_trades.toLocaleString()} trades. Traders may achieve better results with a tighter take-profit target or by filtering for higher quality setups.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `How long does a ${info.name} pattern take to resolve?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `On average, a ${info.name} pattern resolves in ${aggregates.avg_bars} bars from the breakout point. The exact duration depends on the timeframe — for example, ${aggregates.avg_bars} bars on a daily chart means approximately ${Math.round(aggregates.avg_bars)} trading days.`,
+        },
+      },
+    ],
+  } : null;
+
   return (
     <div className="min-h-screen bg-background">
       <PageMeta title={pageTitle} description={pageDesc} canonicalPath={`/patterns/${patternId}/statistics`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
 
       <div className="container mx-auto max-w-5xl px-6 py-10">
         {/* Breadcrumb */}
