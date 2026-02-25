@@ -50,7 +50,7 @@ function directionEmoji(direction: string): string {
 }
 
 // ─── Build tweet text ────────────────────────────────────────────────────────
-function buildTweet(pattern: any, shareUrl: string): string {
+function buildTweet(pattern: any): string {
   const emoji       = ASSET_EMOJI[pattern.asset_type?.toLowerCase()] ?? '📉';
   const dir         = directionEmoji(pattern.direction);
   const patternName = formatPatternName(pattern.pattern_name);
@@ -65,7 +65,7 @@ function buildTweet(pattern: any, shareUrl: string): string {
     `${emoji} ${dir} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
     `Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
-    `🔗 Full setup → ${shareUrl}`
+    `Free alerts at chartingpath.com`
   ).slice(0, 280); // Twitter hard limit
 }
 
@@ -290,7 +290,7 @@ serve(async (req) => {
       try {
         const token    = await ensureShareToken(supabase, pattern.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
-        const tweet    = buildTweet(pattern, shareUrl);
+        const tweet    = buildTweet(pattern);
 
         // Skip image generation entirely — post text-only tweets
         // Image gen via resvg-wasm hits WORKER_LIMIT on Edge Functions

@@ -67,7 +67,18 @@ serve(async (req) => {
     const dirLabel = data.direction === 'long' ? '↑ Long' : '↓ Short';
     const title = `${data.pattern_name} on ${displaySymbol} — ${dirLabel}`;
     const description = `Entry: ${data.entry_price} | SL: ${data.stop_loss_price} | TP: ${data.take_profit_price} | R:R 1:${data.risk_reward_ratio?.toFixed(1)} | Quality: ${data.quality_score || 'N/A'}`;
-    const ogImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
+    
+    // Check if pattern-specific image exists, otherwise use branded fallback
+    const patternImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
+    let ogImageUrl = patternImageUrl;
+    try {
+      const headRes = await fetch(patternImageUrl, { method: 'HEAD' });
+      if (!headRes.ok) {
+        ogImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+      }
+    } catch {
+      ogImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+    }
 
     const html = `<!DOCTYPE html>
 <html lang="en">
