@@ -226,6 +226,8 @@ const PatternLabWizard = () => {
     timeframe?: string;
     lookbackYears?: number;
     riskPerTrade?: number;
+    backUrl?: string;
+    backLabel?: string;
   } | null;
 
   // Mode selection — null = show picker, otherwise proceed to form
@@ -486,6 +488,15 @@ const PatternLabWizard = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
+          {prefilledState?.backUrl && (
+            <button
+              onClick={() => navigate(prefilledState.backUrl!)}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {prefilledState.backLabel || 'Back'}
+            </button>
+          )}
           <div className="flex items-center gap-3 mb-4">
             <Link to="/projects/pattern-lab/audit">
               <Button variant="outline" size="sm">
