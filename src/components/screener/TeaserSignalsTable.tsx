@@ -96,12 +96,19 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
               </TableCell>
               <TableCell className="text-right">
                 {winRate != null ? (
-                  <span className={cn(
-                    'font-mono font-medium',
-                    winRate >= 50 ? 'text-green-500' : winRate >= 40 ? 'text-yellow-500' : 'text-muted-foreground'
-                  )}>
-                    {winRate.toFixed(0)}%
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className={cn(
+                      'font-mono font-medium',
+                      winRate >= 50 ? 'text-green-500' : winRate >= 40 ? 'text-yellow-500' : 'text-muted-foreground'
+                    )}>
+                      {winRate.toFixed(0)}%
+                    </span>
+                    {setup.historicalPerformance?.sampleSize != null && (
+                      <span className="text-[10px] text-muted-foreground/70 font-mono">
+                        n={setup.historicalPerformance.sampleSize}
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
