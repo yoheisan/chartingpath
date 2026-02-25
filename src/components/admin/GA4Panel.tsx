@@ -85,12 +85,17 @@ export function GA4Panel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            To connect GA4, you need to add two Supabase secrets:
+            To connect GA4 via OAuth2, add these Supabase secrets:
           </p>
           <ol className="list-decimal list-inside text-sm space-y-2 text-muted-foreground">
-            <li><strong>GA4_SERVICE_ACCOUNT_JSON</strong> — A Google Cloud service account JSON key with Analytics read access</li>
-            <li><strong>GA4_PROPERTY_ID</strong> — Your GA4 property ID (numeric, found in Admin → Property Settings)</li>
+            <li><strong>GA4_OAUTH_CLIENT_ID</strong> — OAuth2 Client ID from Google Cloud Console</li>
+            <li><strong>GA4_OAUTH_CLIENT_SECRET</strong> — OAuth2 Client Secret</li>
+            <li><strong>GA4_OAUTH_REFRESH_TOKEN</strong> — Refresh token from OAuth Playground</li>
+            <li><strong>GA4_PROPERTY_ID</strong> — Your GA4 property ID (numeric)</li>
           </ol>
+          <p className="text-xs text-muted-foreground mt-2">
+            Use <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="underline">Google OAuth Playground</a> with scope <code className="bg-muted px-1 rounded">https://www.googleapis.com/auth/analytics.readonly</code> to get the refresh token.
+          </p>
           <Button variant="outline" asChild>
             <a href="https://supabase.com/dashboard/project/dgznlsckoamseqcpzfqm/settings/functions" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
