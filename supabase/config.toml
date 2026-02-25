@@ -231,6 +231,9 @@ verify_jwt = false
 [functions.generate-share-image]
 verify_jwt = false
 
+[functions.pre-generate-pattern-images]
+verify_jwt = false
+
 [functions.sitemap]
 verify_jwt = false
 
