@@ -154,12 +154,102 @@ const tools = [
         required: []
       }
     }
+  },
+  // ===== NEW TOOLS: Full Data Integration =====
+  {
+    type: "function",
+    function: {
+      name: "get_economic_events",
+      description: "Get upcoming and recent economic calendar events (GDP, CPI, NFP, interest rates, etc.). Use when users ask about economic data, macro events, news impact, or when assessing risk for a trade near major announcements.",
+      parameters: {
+        type: "object",
+        properties: {
+          region: { type: "string", description: "Filter by region/country: US, EU, GB, JP, CN, AU, CA, CH. Leave empty for all." },
+          importance: { type: "string", enum: ["high", "medium", "low"], description: "Minimum impact level. Default 'high'." },
+          days_ahead: { type: "number", description: "Number of days ahead to look. Default 3." },
+          days_back: { type: "number", description: "Number of days back to include. Default 1." }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_market_report",
+      description: "Get the latest AI-generated daily market report covering stocks, forex, crypto, and commodities. Use when users ask 'what happened in the market today', 'market summary', or 'daily recap'.",
+      parameters: {
+        type: "object",
+        properties: {
+          timezone: { type: "string", description: "User timezone like 'America/New_York'. Auto-detected if omitted." }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_price_data",
+      description: "Get recent OHLC price data for any symbol. Use when users ask about current price, recent price action, percentage moves, or when you need actual price levels to support analysis. Supports stocks, forex, crypto, indices, and commodities.",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Instrument symbol like AAPL, BTCUSD, EURUSD, ^GSPC, GC=F." },
+          interval: { type: "string", enum: ["1h", "4h", "1d", "1wk"], description: "Bar interval. Default '1d'." },
+          days: { type: "number", description: "Number of days of data. Default 30. Max 365." }
+        },
+        required: ["symbol"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_user_backtests",
+      description: "Get the authenticated user's recent backtest results. Use when users ask about their backtests, strategy performance, or want to compare their results with Edge Atlas data. Requires login.",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Filter by instrument symbol." },
+          pattern: { type: "string", description: "Filter by strategy/pattern name." },
+          limit: { type: "number", description: "Max results. Default 5." }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_user_alerts",
+      description: "Get the authenticated user's pattern alerts. Use when users ask about their alerts, what they're monitoring, or want to review their active watchlist alerts. Requires login.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["active", "triggered", "all"], description: "Alert status filter. Default 'active'." },
+          limit: { type: "number", description: "Max results. Default 10." }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_paper_portfolio",
+      description: "Get the authenticated user's paper trading portfolio including balance, P&L, and recent trades. Use when users ask about their portfolio, paper trades, or want portfolio-aware recommendations. Requires login.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
   }
 ];
 
 // Use relative URLs so links work in preview and production
 const getBaseUrl = () => {
-  // Will be resolved by the frontend
   return "";
 };
 
@@ -174,7 +264,33 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
 - **get_market_breadth**: Get current market internals (advance/decline ratio, sentiment).
 - **analyze_chart_context**: When users send chart context with technical indicators and price data, analyze it and provide trading scenarios.
-- **query_edge_atlas**: Search 320,000+ backtested trades for the best-performing pattern/timeframe combinations. Filters include asset class, timeframe, min annualized return, min win rate, direction, FX segment (majors/crosses), and more. Use this whenever users ask about performance, returns, best patterns, edge rankings, or "what works".
+- **query_edge_atlas**: Search 320,000+ backtested trades for the best-performing pattern/timeframe combinations.
+- **get_economic_events**: Get upcoming and recent high-impact economic events (GDP, CPI, NFP, interest rate decisions). Use to assess macro risk for trades.
+- **get_market_report**: Get the latest AI-generated daily market summary covering stocks, forex, crypto, and commodities.
+- **get_price_data**: Get recent OHLC price data for any symbol. Use to discuss actual price levels, recent moves, and percentage changes.
+- **get_user_backtests**: Get the user's personal backtest results to compare with Edge Atlas averages.
+- **get_user_alerts**: Get the user's active pattern alerts to reference what they're monitoring.
+- **get_paper_portfolio**: Get the user's paper trading portfolio (balance, P&L, open trades) for portfolio-aware recommendations.
+
+## Combined Analysis Strategy
+When answering broad questions, PROACTIVELY combine multiple tools for richer insights:
+
+**\"What does the market look like today?\" / \"Market overview\":**
+→ Call get_market_report + get_market_breadth + get_economic_events together
+
+**\"Is it a good time to trade X?\" / \"Should I go long on EURUSD?\":**
+→ Call search_patterns (for X) + get_price_data (for X) + get_economic_events (relevant region) + query_edge_atlas (for the pattern found)
+
+**\"What should I trade?\" / \"Best setups right now\":**
+→ Call search_patterns (quality A/B) + query_edge_atlas (top setups) + get_economic_events (high impact) + get_market_breadth
+
+**\"How did my backtest do?\" / \"Compare my results\":**
+→ Call get_user_backtests + query_edge_atlas (same pattern/timeframe for comparison)
+
+**\"Show my portfolio\" / \"How's my portfolio doing?\":**
+→ Call get_paper_portfolio + search_patterns (for symbols in portfolio) + get_economic_events
+
+**When user is authenticated**, proactively reference their alerts, backtests, and portfolio when relevant to the conversation.
 
 ## Your Personality
 - Be warm, helpful, and conversational—not robotic
@@ -237,11 +353,11 @@ Don't apologize! Instead say something like:
 
 ## Pine Script Output
 When generate_pine_script returns, you MUST:
-1. Include the FULL code in a \`\`\`pine code block
+1. Include the FULL code in a ```pine code block
 2. Add the setup instructions after
 
 ## Formatting Icons
-📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish
+📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish | 📅 economic events | 📰 market report | 💼 portfolio
 
 ## Edge Atlas Results Format
 
@@ -275,9 +391,21 @@ After the table:
 - Link to [Live Setups](/patterns/live) to find currently active instances
 - Mention sample size and statistical confidence
 
+## Economic Events Format
+When presenting economic events, use a table:
+
+| Time (UTC) | Event | Country | Impact | Forecast | Previous | Actual |
+|-----------|-------|---------|--------|----------|----------|--------|
+| 14:30 | Non-Farm Payrolls | 🇺🇸 US | 🔴 High | 180K | 175K | — |
+
+Highlight events that could impact the user's current or prospective trades.
+
 ⚠️ Always end with: "This is for educational purposes only—not financial advice."`;
 
-// Tool execution functions
+// ============================================
+// TOOL EXECUTION FUNCTIONS
+// ============================================
+
 async function executeSearchPatterns(supabase: any, args: any) {
   let query = supabase
     .from('live_pattern_detections')
@@ -330,7 +458,6 @@ async function executeSearchPatterns(supabase: any, args: any) {
       currentPrice: p.current_price,
       changePercent: p.change_percent,
       detectedAt: p.first_detected_at,
-      // Use relative URL that works in-app: /study/:symbol
       studyUrl: `/study/${encodeURIComponent(p.instrument)}`,
       patternsListUrl: `/patterns/live`
     })) || []
@@ -355,7 +482,6 @@ async function executeGetPatternStats(supabase: any, args: any) {
   const { data, error } = await query.limit(10);
 
   if (error || !data?.length) {
-    // Fallback to pattern_hit_rates
     const { data: hitRates } = await supabase
       .from('pattern_hit_rates')
       .select('*')
@@ -453,7 +579,6 @@ function executeGeneratePineScript(args: any) {
   const rr = args.risk_reward || 2;
   const includeAlerts = args.include_alerts !== false;
   
-  // Generate pattern-specific detection logic
   const patternKey = patternName.toLowerCase();
   
   let detectionLogic = "";
@@ -462,7 +587,6 @@ function executeGeneratePineScript(args: any) {
   if (patternKey.includes("ascending triangle")) {
     patternDescription = "Ascending Triangle";
     detectionLogic = `// Ascending Triangle Detection
-// Flat resistance with rising support (higher lows)
 resistanceLevel = ta.highest(high, lookback)
 isFlat = math.abs(resistanceLevel - resistanceLevel[5]) / resistanceLevel < 0.01
 higherLows = low > low[5] and low[5] > low[10]
@@ -470,7 +594,6 @@ ascTriangle = isFlat and higherLows and close > ta.sma(close, 20)`;
   } else if (patternKey.includes("bull flag")) {
     patternDescription = "Bull Flag";
     detectionLogic = `// Bull Flag Detection
-// Strong pole followed by consolidation
 poleHigh = ta.highest(high, 5)[5]
 poleLow = ta.lowest(low, 5)[5]
 poleSize = (poleHigh - poleLow) / poleLow * 100
@@ -512,8 +635,8 @@ patternDetected = close > trend and momentum > 50`;
 
   const alertCode = includeAlerts ? `
 // === ALERTS ===
-alertcondition(longCondition, title="Long Entry", message="${patternDescription} Long on ${symbol}")
-alertcondition(shortCondition, title="Short Entry", message="${patternDescription} Short on ${symbol}")
+alertcondition(longCondition, title="${patternDescription} Long Entry", message="${patternDescription} Long on ${symbol}")
+alertcondition(shortCondition, title="${patternDescription} Short Entry", message="${patternDescription} Short on ${symbol}")
 alertcondition(strategy.position_size[1] != 0 and strategy.position_size == 0, title="Position Closed", message="Position closed on ${symbol}")` : "";
 
   const script = `//@version=5
@@ -588,8 +711,6 @@ if barstate.islast
   };
 }
 
-// === NEW TOOLS ===
-
 async function executeFindArticle(supabase: any, args: any) {
   const query = args.query?.toLowerCase() || '';
   const category = args.category;
@@ -602,12 +723,10 @@ async function executeFindArticle(supabase: any, args: any) {
     .order('view_count', { ascending: false })
     .limit(limit);
 
-  // Category filter
   if (category) {
     dbQuery = dbQuery.ilike('category', `%${category}%`);
   }
 
-  // Text search across title, tags, and excerpt
   if (query) {
     dbQuery = dbQuery.or(`title.ilike.%${query}%,excerpt.ilike.%${query}%,tags.cs.{${query}}`);
   }
@@ -620,7 +739,6 @@ async function executeFindArticle(supabase: any, args: any) {
   }
 
   if (!data?.length) {
-    // Fallback: try broader search
     const { data: fallbackData } = await supabase
       .from('learning_articles')
       .select('id, title, slug, category, subcategory, excerpt, reading_time_minutes')
@@ -669,7 +787,6 @@ async function executeAddToWatchlist(supabase: any, args: any, userId: string | 
     };
   }
 
-  // Check if already in watchlist
   const { data: existing } = await supabase
     .from('user_watchlist')
     .select('id')
@@ -686,7 +803,6 @@ async function executeAddToWatchlist(supabase: any, args: any, userId: string | 
     };
   }
 
-  // Add to watchlist
   const { error } = await supabase
     .from('user_watchlist')
     .insert({ user_id: userId, symbol });
@@ -705,7 +821,6 @@ async function executeAddToWatchlist(supabase: any, args: any, userId: string | 
 }
 
 async function executeGetMarketBreadth() {
-  // Call the existing market breadth edge function
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -749,313 +864,9 @@ async function executeGetMarketBreadth() {
   }
 }
 
-// ============================================
-// DYNAMIC PROMPT PATCHING — Self-Improvement Layer
-// Fetches learned rules from copilot_learned_rules table
-// ============================================
-
-async function fetchLearnedRules(supabase: any): Promise<string> {
-  try {
-    const { data, error } = await supabase
-      .from('copilot_learned_rules')
-      .select('id, rule_type, trigger_pattern, rule_content')
-      .eq('is_active', true)
-      .order('confidence', { ascending: false })
-      .limit(20);
-
-    if (error || !data?.length) return '';
-
-    // Increment usage counts (fire-and-forget)
-    const ids = data.map((r: any) => r.id);
-    try { supabase.rpc('increment_learned_rule_usage', { rule_ids: ids }); } catch {}
-
-    const rulesByType: Record<string, string[]> = {};
-    for (const rule of data) {
-      if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
-      rulesByType[rule.rule_type].push(`• [${rule.trigger_pattern}] ${rule.rule_content}`);
-    }
-
-    const sections = Object.entries(rulesByType).map(([type, rules]) => 
-      `### ${type.toUpperCase()} RULES\n${rules.join('\n')}`
-    );
-
-    return `\n\n## LEARNED RULES (Auto-Generated from Feedback Loop)\nThese rules were extracted from past interactions. Follow them precisely.\n\n${sections.join('\n\n')}`;
-  } catch (err) {
-    console.error('[LearnedRules] Failed to fetch:', err);
-    return '';
-  }
-}
-
-// ============================================
-// RLVR TRAINING PAIR LOGGER
-// Logs prompt-response-outcome for future DPO fine-tuning
-// ============================================
-
-async function logTrainingPair(
-  supabase: any,
-  userId: string | null,
-  sessionId: string | null,
-  prompt: string,
-  response: string,
-  toolCalls: any[],
-  toolResults: any[]
-) {
-  try {
-    // Compute basic reward signals
-    const hasResults = toolResults.some((r: any) => {
-      try {
-        const parsed = JSON.parse(r.content || '{}');
-        return (parsed.count > 0 || parsed.results?.length > 0 || parsed.patterns?.length > 0);
-      } catch { return false; }
-    });
-
-    const outcomeSignals = {
-      tool_returned_data: hasResults,
-      tool_call_count: toolCalls.length,
-      response_length: response.length,
-      has_markdown_table: response.includes('|---'),
-      has_links: response.includes('](/'),
-      timestamp: new Date().toISOString(),
-    };
-
-    // Simple reward: +1 if tools returned data and response is substantial
-    const rewardScore = (hasResults ? 0.5 : -0.5) + 
-      (response.length > 200 ? 0.3 : 0) + 
-      (response.includes('](/') ? 0.2 : 0);
-
-    await supabase.from('copilot_training_pairs').insert({
-      user_id: userId,
-      session_id: sessionId,
-      prompt: prompt.substring(0, 5000),
-      response: response.substring(0, 8000),
-      tool_calls: toolCalls.map((tc: any) => ({ name: tc.function?.name, args: tc.function?.arguments })),
-      tool_results: toolResults.map((tr: any) => {
-        try { return { content: JSON.parse(tr.content || '{}') }; } 
-        catch { return { content: tr.content?.substring(0, 500) }; }
-      }),
-      outcome_signals: outcomeSignals,
-      reward_score: rewardScore,
-      dpo_eligible: Math.abs(rewardScore) > 0.5, // Strong signal = eligible for DPO
-    });
-  } catch (err) {
-    // Never block the response for logging
-    console.error('[RLVR] Failed to log training pair:', err);
-  }
-}
-
-// ============================================
-// RAG CONTEXT RETRIEVAL
-// Fetches relevant ChartingPath data based on user query
-// ============================================
-
-interface RAGContext {
-  relevantPatternStats: any[];
-  activePatterns: any[];
-  relevantArticles: any[];
-  marketContext: string | null;
-}
-
-// Extract keywords for RAG retrieval
-function extractQueryKeywords(messages: any[]): { symbols: string[], patterns: string[], topics: string[] } {
-  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
-  const text = lastUserMessage.toLowerCase();
-  
-  // Common pattern names
-  const patternKeywords = [
-    'bull flag', 'bear flag', 'head and shoulders', 'inverse head and shoulders',
-    'double top', 'double bottom', 'triple top', 'triple bottom',
-    'ascending triangle', 'descending triangle', 'symmetrical triangle',
-    'cup and handle', 'wedge', 'falling wedge', 'rising wedge',
-    'channel', 'rectangle', 'pennant', 'flag'
-  ];
-  
-  // Common trading topics
-  const topicKeywords = [
-    'entry', 'exit', 'stop loss', 'take profit', 'risk', 'reward',
-    'win rate', 'statistics', 'backtest', 'strategy', 'trend',
-    'breakout', 'reversal', 'continuation', 'momentum', 'volume'
-  ];
-  
-  // Extract symbols (uppercase 2-5 letter words or common crypto pairs)
-  const symbolRegex = /\b([A-Z]{2,5}(?:USD|USDT|BTC|ETH)?)\b/g;
-  const symbols = [...new Set((lastUserMessage.match(symbolRegex) || []))];
-  
-  // Extract patterns mentioned
-  const patterns = patternKeywords.filter(p => text.includes(p));
-  
-  // Extract topics mentioned
-  const topics = topicKeywords.filter(t => text.includes(t));
-  
-  return { symbols, patterns, topics };
-}
-
-// Fetch relevant context from ChartingPath database
-async function fetchRAGContext(supabase: any, messages: any[]): Promise<RAGContext> {
-  const keywords = extractQueryKeywords(messages);
-  console.log('[RAG] Extracted keywords:', keywords);
-  
-  const context: RAGContext = {
-    relevantPatternStats: [],
-    activePatterns: [],
-    relevantArticles: [],
-    marketContext: null
-  };
-  
-  try {
-    // Parallel fetch for performance
-    const fetchPromises: Promise<void>[] = [];
-    
-    // 1. Fetch relevant pattern statistics
-    if (keywords.patterns.length > 0 || keywords.symbols.length > 0) {
-      fetchPromises.push((async () => {
-        let query = supabase
-          .from('pattern_hit_rates')
-          .select('pattern_name, timeframe, win_rate, total_signals, avg_r_multiple, expectancy, profit_factor, direction')
-          .limit(10);
-        
-        if (keywords.patterns.length > 0) {
-          // Search for any of the mentioned patterns
-          const patternFilter = keywords.patterns.map(p => `pattern_name.ilike.%${p}%`).join(',');
-          query = query.or(patternFilter);
-        }
-        
-        const { data } = await query;
-        if (data?.length) {
-          context.relevantPatternStats = data;
-          console.log(`[RAG] Found ${data.length} pattern stats`);
-        }
-      })());
-    }
-    
-    // 2. Fetch active patterns for mentioned symbols
-    if (keywords.symbols.length > 0) {
-      fetchPromises.push((async () => {
-        const { data } = await supabase
-          .from('live_pattern_detections')
-          .select('instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, timeframe')
-          .eq('status', 'active')
-          .in('instrument', keywords.symbols)
-          .limit(5);
-        
-        if (data?.length) {
-          context.activePatterns = data;
-          console.log(`[RAG] Found ${data.length} active patterns for symbols`);
-        }
-      })());
-    }
-    
-    // 3. Fetch relevant learning articles
-    if (keywords.patterns.length > 0 || keywords.topics.length > 0) {
-      fetchPromises.push((async () => {
-        let query = supabase
-          .from('learning_articles')
-          .select('title, slug, excerpt, category')
-          .eq('status', 'published')
-          .limit(3);
-        
-        const searchTerms = [...keywords.patterns, ...keywords.topics.slice(0, 2)];
-        if (searchTerms.length > 0) {
-          const searchFilter = searchTerms.map(t => `title.ilike.%${t}%`).join(',');
-          query = query.or(searchFilter);
-        }
-        
-        const { data } = await query;
-        if (data?.length) {
-          context.relevantArticles = data;
-          console.log(`[RAG] Found ${data.length} relevant articles`);
-        }
-      })());
-    }
-    
-    // 4. Fetch recent market overview if asking about market conditions
-    const text = messages.filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
-    if (text.includes('market') || text.includes('today') || text.includes('overview')) {
-      fetchPromises.push((async () => {
-        const { data } = await supabase
-          .from('historical_overview_tactical')
-          .select('market_overview, market_drivers')
-          .order('asof_date', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (data) {
-          context.marketContext = `Market Overview: ${data.market_overview?.substring(0, 500) || ''}`;
-          console.log('[RAG] Found market context');
-        }
-      })());
-    }
-    
-    await Promise.all(fetchPromises);
-    
-  } catch (error) {
-    console.error('[RAG] Error fetching context:', error);
-    // Continue without RAG context on error
-  }
-  
-  return context;
-}
-
-// Build enhanced system prompt with RAG context
-function buildEnhancedSystemPrompt(basePrompt: string, ragContext: RAGContext): string {
-  const contextSections: string[] = [];
-  
-  if (ragContext.relevantPatternStats.length > 0) {
-    const statsText = ragContext.relevantPatternStats.map(s => 
-      `• ${s.pattern_name} (${s.timeframe}): Win Rate ${(s.win_rate * 100).toFixed(1)}%, ` +
-      `Expectancy ${s.expectancy?.toFixed(2) || 'N/A'}, Profit Factor ${s.profit_factor?.toFixed(2) || 'N/A'}, ` +
-      `Sample: ${s.total_signals} trades`
-    ).join('\n');
-    
-    contextSections.push(`## ChartingPath Pattern Statistics (Real Data)\n${statsText}`);
-  }
-  
-  if (ragContext.activePatterns.length > 0) {
-    const patternsText = ragContext.activePatterns.map(p => 
-      `• ${p.instrument}: ${p.pattern_name} (${p.direction}, Quality: ${p.quality_score}, R:R ${p.risk_reward_ratio?.toFixed(1) || 'N/A'})`
-    ).join('\n');
-    
-    contextSections.push(`## Active Patterns on Mentioned Symbols\n${patternsText}`);
-  }
-  
-  if (ragContext.relevantArticles.length > 0) {
-    const articlesText = ragContext.relevantArticles.map(a => 
-      `• "${a.title}" (/learn/${a.slug}) - ${a.excerpt?.substring(0, 100) || a.category}...`
-    ).join('\n');
-    
-    contextSections.push(`## Relevant ChartingPath Articles\nRecommend these to users:\n${articlesText}`);
-  }
-  
-  if (ragContext.marketContext) {
-    contextSections.push(`## Current Market Context\n${ragContext.marketContext}`);
-  }
-  
-  if (contextSections.length === 0) {
-    return basePrompt;
-  }
-  
-  const ragSection = `
-## IMPORTANT: ChartingPath Proprietary Data
-Use this real data from our platform to inform your responses. Quote these statistics when relevant - they're based on actual verified trade outcomes.
-
-${contextSections.join('\n\n')}
-
-When answering, prioritize this proprietary data over generic knowledge. Cite specific win rates and statistics from above.
-`;
-  
-  return basePrompt + '\n' + ragSection;
-}
-
-// ============================================
-// TOOL EXECUTION
-// ============================================
-
-// Analyze chart context (when user sends chart data)
 function executeAnalyzeChartContext(args: any, messages: any[]) {
-  // The chart context is embedded in the user's message
-  // Extract and summarize it for the AI to provide insights
   const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
   
-  // Parse embedded context if present
   const contextMatch = lastUserMessage.match(/\*\*Price Analysis:\*\*[\s\S]*?(?=Based on this analysis|$)/);
   
   if (contextMatch) {
@@ -1086,7 +897,6 @@ const FX_CROSSES = [
 async function executeQueryEdgeAtlas(supabase: any, args: any) {
   console.log('[trading-copilot] Querying Edge Atlas with filters:', args);
   
-  // Determine FX symbols filter
   let fxSymbols: string[] | null = null;
   if (args.asset_type === 'fx' && args.fx_segment) {
     fxSymbols = args.fx_segment === 'majors' ? FX_MAJORS : FX_CROSSES;
@@ -1141,6 +951,660 @@ async function executeQueryEdgeAtlas(supabase: any, args: any) {
   };
 }
 
+// ===== NEW TOOL EXECUTION FUNCTIONS =====
+
+async function executeGetEconomicEvents(supabase: any, args: any) {
+  console.log('[trading-copilot] Fetching economic events:', args);
+
+  const now = new Date();
+  const daysBack = args.days_back ?? 1;
+  const daysAhead = args.days_ahead ?? 3;
+
+  const fromDate = new Date(now);
+  fromDate.setDate(fromDate.getDate() - daysBack);
+  const toDate = new Date(now);
+  toDate.setDate(toDate.getDate() + daysAhead);
+
+  let query = supabase
+    .from('economic_events')
+    .select('id, event_name, country_code, region, impact_level, indicator_type, scheduled_time, forecast_value, previous_value, actual_value, released, market_impact')
+    .gte('scheduled_time', fromDate.toISOString())
+    .lte('scheduled_time', toDate.toISOString())
+    .order('scheduled_time', { ascending: true })
+    .limit(30);
+
+  if (args.region) {
+    query = query.ilike('country_code', args.region);
+  }
+  if (args.importance) {
+    query = query.eq('impact_level', args.importance);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[trading-copilot] Economic events error:', error);
+    return { error: 'Failed to fetch economic events', events: [] };
+  }
+
+  return {
+    count: data?.length || 0,
+    events: (data || []).map((e: any) => ({
+      name: e.event_name,
+      country: e.country_code,
+      region: e.region,
+      impact: e.impact_level,
+      type: e.indicator_type,
+      scheduledTime: e.scheduled_time,
+      forecast: e.forecast_value,
+      previous: e.previous_value,
+      actual: e.actual_value,
+      released: e.released,
+      marketImpact: e.market_impact,
+    })),
+    calendarUrl: '/economic-calendar'
+  };
+}
+
+async function executeGetMarketReport(supabase: any, args: any) {
+  console.log('[trading-copilot] Fetching market report');
+
+  const { data, error } = await supabase
+    .from('cached_market_reports')
+    .select('report, generated_at, markets, time_span, timezone')
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    console.error('[trading-copilot] Market report error:', error);
+    return {
+      error: 'No market report available at this time.',
+      suggestion: 'You can view the market report on the Dashboard.',
+      dashboardUrl: '/dashboard'
+    };
+  }
+
+  return {
+    report: data.report,
+    generatedAt: data.generated_at,
+    markets: data.markets,
+    timeSpan: data.time_span,
+    timezone: data.timezone,
+    dashboardUrl: '/dashboard'
+  };
+}
+
+async function executeGetPriceData(args: any) {
+  console.log('[trading-copilot] Fetching price data for:', args.symbol);
+
+  const symbol = args.symbol;
+  const interval = args.interval || '1d';
+  const days = Math.min(args.days || 30, 365);
+
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+  // Try EODHD first, then Yahoo fallback
+  let bars: any[] = [];
+
+  try {
+    const eodhResp = await fetch(`${supabaseUrl}/functions/v1/fetch-eodhd`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        symbol,
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        interval,
+        includeOhlc: true,
+      })
+    });
+
+    if (eodhResp.ok) {
+      const eodhData = await eodhResp.json();
+      if (eodhData?.bars?.length > 0) {
+        bars = eodhData.bars;
+        console.log(`[trading-copilot] EODHD returned ${bars.length} bars for ${symbol}`);
+      }
+    }
+  } catch (e) {
+    console.warn('[trading-copilot] EODHD price fetch failed:', e);
+  }
+
+  // Fallback to Yahoo
+  if (bars.length === 0) {
+    try {
+      const yahooResp = await fetch(`${supabaseUrl}/functions/v1/fetch-yahoo-finance`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          symbol,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          interval,
+          includeOhlc: true,
+        })
+      });
+
+      if (yahooResp.ok) {
+        const yahooData = await yahooResp.json();
+        if (yahooData?.bars?.length > 0) {
+          bars = yahooData.bars;
+          console.log(`[trading-copilot] Yahoo returned ${bars.length} bars for ${symbol}`);
+        }
+      }
+    } catch (e) {
+      console.warn('[trading-copilot] Yahoo price fetch failed:', e);
+    }
+  }
+
+  if (bars.length === 0) {
+    return { error: `No price data available for ${symbol}.`, bars: [] };
+  }
+
+  // Compute summary stats
+  const latest = bars[bars.length - 1];
+  const first = bars[0];
+  const high = Math.max(...bars.map((b: any) => b.h));
+  const low = Math.min(...bars.map((b: any) => b.l));
+  const changePercent = ((latest.c - first.o) / first.o * 100);
+
+  return {
+    symbol,
+    interval,
+    barCount: bars.length,
+    latestBar: {
+      date: latest.t,
+      open: latest.o,
+      high: latest.h,
+      low: latest.l,
+      close: latest.c,
+      volume: latest.v,
+    },
+    periodSummary: {
+      periodHigh: high,
+      periodLow: low,
+      changePercent: Math.round(changePercent * 100) / 100,
+      startPrice: first.o,
+      endPrice: latest.c,
+    },
+    // Include last 10 bars for detailed analysis
+    recentBars: bars.slice(-10).map((b: any) => ({
+      date: b.t?.split('T')[0] || b.t,
+      o: b.o,
+      h: b.h,
+      l: b.l,
+      c: b.c,
+      v: b.v,
+    })),
+    studyUrl: `/study/${encodeURIComponent(symbol)}`
+  };
+}
+
+async function executeGetUserBacktests(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to view your backtests.',
+      suggestion: 'Log in to access your personal backtest results.',
+      backtests: []
+    };
+  }
+
+  console.log('[trading-copilot] Fetching user backtests for:', userId);
+
+  let query = supabase
+    .from('backtest_runs')
+    .select('id, strategy_name, instrument, timeframe, from_date, to_date, total_trades, win_rate, net_pnl, max_drawdown, sharpe_ratio, profit_factor, expectancy, avg_rr, status, created_at')
+    .eq('user_id', userId)
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false })
+    .limit(args.limit || 5);
+
+  if (args.symbol) {
+    query = query.ilike('instrument', `%${args.symbol}%`);
+  }
+  if (args.pattern) {
+    query = query.ilike('strategy_name', `%${args.pattern}%`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[trading-copilot] User backtests error:', error);
+    return { error: 'Failed to fetch backtests', backtests: [] };
+  }
+
+  return {
+    count: data?.length || 0,
+    backtests: (data || []).map((bt: any) => ({
+      id: bt.id,
+      strategy: bt.strategy_name,
+      instrument: bt.instrument,
+      timeframe: bt.timeframe,
+      period: `${bt.from_date} to ${bt.to_date}`,
+      totalTrades: bt.total_trades,
+      winRate: bt.win_rate,
+      netPnl: bt.net_pnl,
+      maxDrawdown: bt.max_drawdown,
+      sharpeRatio: bt.sharpe_ratio,
+      profitFactor: bt.profit_factor,
+      expectancy: bt.expectancy,
+      avgRR: bt.avg_rr,
+      createdAt: bt.created_at,
+    })),
+    backtestUrl: '/pattern-lab'
+  };
+}
+
+async function executeGetUserAlerts(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to view your alerts.',
+      suggestion: 'Log in to access your pattern alerts.',
+      alerts: []
+    };
+  }
+
+  console.log('[trading-copilot] Fetching user alerts for:', userId);
+
+  let query = supabase
+    .from('alerts')
+    .select('id, symbol, pattern, timeframe, status, created_at, updated_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(args.limit || 10);
+
+  if (args.status && args.status !== 'all') {
+    query = query.eq('status', args.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[trading-copilot] User alerts error:', error);
+    return { error: 'Failed to fetch alerts', alerts: [] };
+  }
+
+  // Also get recent triggered alerts from alerts_log
+  const { data: recentTriggers } = await supabase
+    .from('alerts_log')
+    .select('alert_id, triggered_at, entry_price, pattern_data')
+    .in('alert_id', (data || []).map((a: any) => a.id))
+    .order('triggered_at', { ascending: false })
+    .limit(5);
+
+  return {
+    count: data?.length || 0,
+    alerts: (data || []).map((a: any) => {
+      const trigger = recentTriggers?.find((t: any) => t.alert_id === a.id);
+      return {
+        id: a.id,
+        symbol: a.symbol,
+        pattern: a.pattern,
+        timeframe: a.timeframe,
+        status: a.status,
+        createdAt: a.created_at,
+        lastTriggered: trigger?.triggered_at || null,
+        entryPrice: trigger?.entry_price || null,
+        studyUrl: `/study/${encodeURIComponent(a.symbol)}`,
+      };
+    }),
+    alertsUrl: '/dashboard'
+  };
+}
+
+async function executeGetPaperPortfolio(supabase: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to view your portfolio.',
+      suggestion: 'Log in to access your paper trading portfolio.',
+    };
+  }
+
+  console.log('[trading-copilot] Fetching paper portfolio for:', userId);
+
+  // Get portfolio summary
+  const { data: portfolio, error: portfolioError } = await supabase
+    .from('paper_portfolios')
+    .select('initial_balance, current_balance, total_pnl, updated_at')
+    .eq('user_id', userId)
+    .single();
+
+  // Get recent trades
+  const { data: trades, error: tradesError } = await supabase
+    .from('paper_trades')
+    .select('id, symbol, direction, entry_price, exit_price, quantity, pnl, status, pattern_name, timeframe, opened_at, closed_at')
+    .eq('user_id', userId)
+    .order('opened_at', { ascending: false })
+    .limit(10);
+
+  if (portfolioError && tradesError) {
+    return {
+      error: 'No paper portfolio found. Start paper trading to see your portfolio here.',
+      portfolioUrl: '/paper-trading'
+    };
+  }
+
+  const openTrades = (trades || []).filter((t: any) => t.status === 'open');
+  const closedTrades = (trades || []).filter((t: any) => t.status === 'closed');
+
+  return {
+    portfolio: portfolio ? {
+      initialBalance: portfolio.initial_balance,
+      currentBalance: portfolio.current_balance,
+      totalPnl: portfolio.total_pnl,
+      returnPercent: portfolio.initial_balance > 0
+        ? Math.round(((portfolio.current_balance - portfolio.initial_balance) / portfolio.initial_balance) * 10000) / 100
+        : 0,
+      lastUpdated: portfolio.updated_at,
+    } : null,
+    openTrades: openTrades.map((t: any) => ({
+      symbol: t.symbol,
+      direction: t.direction,
+      entryPrice: t.entry_price,
+      quantity: t.quantity,
+      pattern: t.pattern_name,
+      timeframe: t.timeframe,
+      openedAt: t.opened_at,
+      studyUrl: `/study/${encodeURIComponent(t.symbol)}`,
+    })),
+    recentClosedTrades: closedTrades.slice(0, 5).map((t: any) => ({
+      symbol: t.symbol,
+      direction: t.direction,
+      entryPrice: t.entry_price,
+      exitPrice: t.exit_price,
+      pnl: t.pnl,
+      pattern: t.pattern_name,
+      closedAt: t.closed_at,
+    })),
+    portfolioUrl: '/paper-trading'
+  };
+}
+
+// ============================================
+// DYNAMIC PROMPT PATCHING — Self-Improvement Layer
+// ============================================
+
+async function fetchLearnedRules(supabase: any): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('copilot_learned_rules')
+      .select('id, rule_type, trigger_pattern, rule_content')
+      .eq('is_active', true)
+      .order('confidence', { ascending: false })
+      .limit(20);
+
+    if (error || !data?.length) return '';
+
+    const ids = data.map((r: any) => r.id);
+    try { supabase.rpc('increment_learned_rule_usage', { rule_ids: ids }); } catch {}
+
+    const rulesByType: Record<string, string[]> = {};
+    for (const rule of data) {
+      if (!rulesByType[rule.rule_type]) rulesByType[rule.rule_type] = [];
+      rulesByType[rule.rule_type].push(`• [${rule.trigger_pattern}] ${rule.rule_content}`);
+    }
+
+    const sections = Object.entries(rulesByType).map(([type, rules]) => 
+      `### ${type.toUpperCase()} RULES\n${rules.join('\n')}`
+    );
+
+    return `\n\n## LEARNED RULES (Auto-Generated from Feedback Loop)\nThese rules were extracted from past interactions. Follow them precisely.\n\n${sections.join('\n\n')}`;
+  } catch (err) {
+    console.error('[LearnedRules] Failed to fetch:', err);
+    return '';
+  }
+}
+
+// ============================================
+// RLVR TRAINING PAIR LOGGER
+// ============================================
+
+async function logTrainingPair(
+  supabase: any,
+  userId: string | null,
+  sessionId: string | null,
+  prompt: string,
+  response: string,
+  toolCalls: any[],
+  toolResults: any[]
+) {
+  try {
+    const hasResults = toolResults.some((r: any) => {
+      try {
+        const parsed = JSON.parse(r.content || '{}');
+        return (parsed.count > 0 || parsed.results?.length > 0 || parsed.patterns?.length > 0);
+      } catch { return false; }
+    });
+
+    const outcomeSignals = {
+      tool_returned_data: hasResults,
+      tool_call_count: toolCalls.length,
+      response_length: response.length,
+      has_markdown_table: response.includes('|---'),
+      has_links: response.includes('](/'),
+      timestamp: new Date().toISOString(),
+    };
+
+    const rewardScore = (hasResults ? 0.5 : -0.5) + 
+      (response.length > 200 ? 0.3 : 0) + 
+      (response.includes('](/') ? 0.2 : 0);
+
+    await supabase.from('copilot_training_pairs').insert({
+      user_id: userId,
+      session_id: sessionId,
+      prompt: prompt.substring(0, 5000),
+      response: response.substring(0, 8000),
+      tool_calls: toolCalls.map((tc: any) => ({ name: tc.function?.name, args: tc.function?.arguments })),
+      tool_results: toolResults.map((tr: any) => {
+        try { return { content: JSON.parse(tr.content || '{}') }; } 
+        catch { return { content: tr.content?.substring(0, 500) }; }
+      }),
+      outcome_signals: outcomeSignals,
+      reward_score: rewardScore,
+      dpo_eligible: Math.abs(rewardScore) > 0.5,
+    });
+  } catch (err) {
+    console.error('[RLVR] Failed to log training pair:', err);
+  }
+}
+
+// ============================================
+// RAG CONTEXT RETRIEVAL
+// ============================================
+
+interface RAGContext {
+  relevantPatternStats: any[];
+  activePatterns: any[];
+  relevantArticles: any[];
+  marketContext: string | null;
+}
+
+function extractQueryKeywords(messages: any[]): { symbols: string[], patterns: string[], topics: string[] } {
+  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+  const text = lastUserMessage.toLowerCase();
+  
+  const patternKeywords = [
+    'bull flag', 'bear flag', 'head and shoulders', 'inverse head and shoulders',
+    'double top', 'double bottom', 'triple top', 'triple bottom',
+    'ascending triangle', 'descending triangle', 'symmetrical triangle',
+    'cup and handle', 'wedge', 'falling wedge', 'rising wedge',
+    'channel', 'rectangle', 'pennant', 'flag'
+  ];
+  
+  const topicKeywords = [
+    'entry', 'exit', 'stop loss', 'take profit', 'risk', 'reward',
+    'win rate', 'statistics', 'backtest', 'strategy', 'trend',
+    'breakout', 'reversal', 'continuation', 'momentum', 'volume'
+  ];
+  
+  const symbolRegex = /\b([A-Z]{2,5}(?:USD|USDT|BTC|ETH)?)\b/g;
+  const symbols = [...new Set((lastUserMessage.match(symbolRegex) || []))];
+  
+  const patterns = patternKeywords.filter(p => text.includes(p));
+  const topics = topicKeywords.filter(t => text.includes(t));
+  
+  return { symbols, patterns, topics };
+}
+
+async function fetchRAGContext(supabase: any, messages: any[]): Promise<RAGContext> {
+  const keywords = extractQueryKeywords(messages);
+  console.log('[RAG] Extracted keywords:', keywords);
+  
+  const context: RAGContext = {
+    relevantPatternStats: [],
+    activePatterns: [],
+    relevantArticles: [],
+    marketContext: null
+  };
+  
+  try {
+    const fetchPromises: Promise<void>[] = [];
+    
+    if (keywords.patterns.length > 0 || keywords.symbols.length > 0) {
+      fetchPromises.push((async () => {
+        let query = supabase
+          .from('pattern_hit_rates')
+          .select('pattern_name, timeframe, win_rate, total_signals, avg_r_multiple, expectancy, profit_factor, direction')
+          .limit(10);
+        
+        if (keywords.patterns.length > 0) {
+          const patternFilter = keywords.patterns.map(p => `pattern_name.ilike.%${p}%`).join(',');
+          query = query.or(patternFilter);
+        }
+        
+        const { data } = await query;
+        if (data?.length) {
+          context.relevantPatternStats = data;
+        }
+      })());
+    }
+    
+    if (keywords.symbols.length > 0) {
+      fetchPromises.push((async () => {
+        const { data } = await supabase
+          .from('live_pattern_detections')
+          .select('instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, timeframe')
+          .eq('status', 'active')
+          .in('instrument', keywords.symbols)
+          .limit(5);
+        
+        if (data?.length) {
+          context.activePatterns = data;
+        }
+      })());
+    }
+    
+    if (keywords.patterns.length > 0 || keywords.topics.length > 0) {
+      fetchPromises.push((async () => {
+        let query = supabase
+          .from('learning_articles')
+          .select('title, slug, excerpt, category')
+          .eq('status', 'published')
+          .limit(3);
+        
+        const searchTerms = [...keywords.patterns, ...keywords.topics.slice(0, 2)];
+        if (searchTerms.length > 0) {
+          const searchFilter = searchTerms.map(t => `title.ilike.%${t}%`).join(',');
+          query = query.or(searchFilter);
+        }
+        
+        const { data } = await query;
+        if (data?.length) {
+          context.relevantArticles = data;
+        }
+      })());
+    }
+    
+    const text = messages.filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
+    if (text.includes('market') || text.includes('today') || text.includes('overview')) {
+      fetchPromises.push((async () => {
+        const { data } = await supabase
+          .from('historical_overview_tactical')
+          .select('market_overview, market_drivers')
+          .order('asof_date', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          context.marketContext = `Market Overview: ${data.market_overview?.substring(0, 500) || ''}`;
+        }
+      })());
+    }
+    
+    await Promise.all(fetchPromises);
+    
+  } catch (error) {
+    console.error('[RAG] Error fetching context:', error);
+  }
+  
+  return context;
+}
+
+function buildEnhancedSystemPrompt(basePrompt: string, ragContext: RAGContext): string {
+  const contextSections: string[] = [];
+  
+  if (ragContext.relevantPatternStats.length > 0) {
+    const statsText = ragContext.relevantPatternStats.map(s => 
+      `• ${s.pattern_name} (${s.timeframe}): Win Rate ${(s.win_rate * 100).toFixed(1)}%, ` +
+      `Expectancy ${s.expectancy?.toFixed(2) || 'N/A'}, Profit Factor ${s.profit_factor?.toFixed(2) || 'N/A'}, ` +
+      `Sample: ${s.total_signals} trades`
+    ).join('\n');
+    
+    contextSections.push(`## ChartingPath Pattern Statistics (Real Data)\n${statsText}`);
+  }
+  
+  if (ragContext.activePatterns.length > 0) {
+    const patternsText = ragContext.activePatterns.map(p => 
+      `• ${p.instrument}: ${p.pattern_name} (${p.direction}, Quality: ${p.quality_score}, R:R ${p.risk_reward_ratio?.toFixed(1) || 'N/A'})`
+    ).join('\n');
+    
+    contextSections.push(`## Active Patterns on Mentioned Symbols\n${patternsText}`);
+  }
+  
+  if (ragContext.relevantArticles.length > 0) {
+    const articlesText = ragContext.relevantArticles.map(a => 
+      `• "${a.title}" (/learn/${a.slug}) - ${a.excerpt?.substring(0, 100) || a.category}...`
+    ).join('\n');
+    
+    contextSections.push(`## Relevant ChartingPath Articles\nRecommend these to users:\n${articlesText}`);
+  }
+  
+  if (ragContext.marketContext) {
+    contextSections.push(`## Current Market Context\n${ragContext.marketContext}`);
+  }
+  
+  if (contextSections.length === 0) {
+    return basePrompt;
+  }
+  
+  const ragSection = `
+## IMPORTANT: ChartingPath Proprietary Data
+Use this real data from our platform to inform your responses. Quote these statistics when relevant - they're based on actual verified trade outcomes.
+
+${contextSections.join('\n\n')}
+
+When answering, prioritize this proprietary data over generic knowledge. Cite specific win rates and statistics from above.
+`;
+  
+  return basePrompt + '\n' + ragSection;
+}
+
+// ============================================
+// TOOL EXECUTION DISPATCHER
+// ============================================
+
 async function executeTool(toolName: string, args: any, supabase: any, userId: string | null, messages?: any[]) {
   console.log(`[trading-copilot] Executing tool: ${toolName}`, args);
   
@@ -1163,10 +1627,27 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return executeAnalyzeChartContext(args, messages || []);
     case 'query_edge_atlas':
       return await executeQueryEdgeAtlas(supabase, args);
+    // ===== NEW TOOLS =====
+    case 'get_economic_events':
+      return await executeGetEconomicEvents(supabase, args);
+    case 'get_market_report':
+      return await executeGetMarketReport(supabase, args);
+    case 'get_price_data':
+      return await executeGetPriceData(args);
+    case 'get_user_backtests':
+      return await executeGetUserBacktests(supabase, args, userId);
+    case 'get_user_alerts':
+      return await executeGetUserAlerts(supabase, args, userId);
+    case 'get_paper_portfolio':
+      return await executeGetPaperPortfolio(supabase, userId);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
 }
+
+// ============================================
+// MAIN HANDLER
+// ============================================
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -1204,7 +1685,6 @@ serve(async (req) => {
       fetchLearnedRules(supabase),
       fetchRAGContext(supabase, messages),
     ]);
-    // Inject language instruction if user has a non-English language preference
     const langCode = (language || "en").toLowerCase();
     console.log(`[trading-copilot] Language requested: ${langCode}`);
     const langInstruction = langCode !== "en"
@@ -1218,16 +1698,13 @@ serve(async (req) => {
     const allToolCalls: any[] = [];
     const allToolResults: any[] = [];
 
-    // Tool-call loop (non-stream) to guarantee we return assistant content.
     let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
 
-    // Increase to 5 rounds to allow broader searches when initial queries return empty
     const MAX_TOOL_ROUNDS = 5;
 
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[trading-copilot] AI round ${round}`);
 
-      // Retry logic with exponential backoff for rate limits (2 attempts to fail fast)
       let aiResp: Response | null = null;
       let lastError: string = '';
       const MAX_RETRY_ATTEMPTS = 2;
@@ -1250,14 +1727,12 @@ serve(async (req) => {
         });
 
         if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
-          // Rate limited - short wait before single retry (3s)
           const waitTime = 3000;
           console.log(`[trading-copilot] Rate limited, retrying in ${waitTime}ms (attempt ${attempt}/${MAX_RETRY_ATTEMPTS})`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
         
-        // Break on success or non-retryable error
         break;
       }
 
@@ -1283,12 +1758,10 @@ serve(async (req) => {
       const responseText = await aiResp.text();
       let assistantMessage: any = null;
 
-      // Try JSON first
       try {
         const result = JSON.parse(responseText);
         assistantMessage = result.choices?.[0]?.message;
       } catch {
-        // Fallback: parse SSE-ish bodies if returned
         const lines = responseText.split("\n");
         for (const line of lines) {
           if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
@@ -1326,7 +1799,6 @@ serve(async (req) => {
           })
         );
 
-        // Track for RLVR logging
         allToolCalls.push(...assistantMessage.tool_calls);
         allToolResults.push(...toolResults);
 
@@ -1340,7 +1812,12 @@ serve(async (req) => {
       const userPrompt = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
       logTrainingPair(supabase, userId, null, userPrompt, content, allToolCalls, allToolResults);
 
-      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
+      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}
+
+data: [DONE]
+
+
+`;
 
       return new Response(sseData, {
         headers: {
@@ -1351,7 +1828,6 @@ serve(async (req) => {
       });
     }
 
-    // Provide a helpful fallback instead of a robotic error
     const fallback = `I searched our pattern database but didn't find results matching your exact criteria. Here's what you can try:
 
 🔍 **Broaden your search:**
@@ -1365,7 +1841,12 @@ serve(async (req) => {
 - Generate a Pine Script strategy
 
 What would you like to explore?`;
-    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}\n\ndata: [DONE]\n\n`;
+    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}
+
+data: [DONE]
+
+
+`;
 
     return new Response(sseData, {
       headers: {
