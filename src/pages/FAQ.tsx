@@ -25,7 +25,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Layers,
-  Scan
+  Scan,
+  Bot
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -41,6 +42,7 @@ const FAQ = () => {
   const sc = (key: string) => t(`faq.scripts.${key}`);
   const le = (key: string) => t(`faq.learning.${key}`);
   const ac = (key: string) => t(`faq.account.${key}`);
+  const cp = (key: string) => t(`faq.copilot.${key}`, key);
 
   const faqData = {
     "screener": {
