@@ -353,7 +353,7 @@ Don't apologize! Instead say something like:
 
 ## Pine Script Output
 When generate_pine_script returns, you MUST:
-1. Include the FULL code in a ```pine code block
+1. Include the FULL code in a \`\`\`pine code block
 2. Add the setup instructions after
 
 ## Formatting Icons
