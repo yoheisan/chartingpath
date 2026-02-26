@@ -359,6 +359,26 @@ async function fetchPatternSymbolStats(
     }
     
     console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at timeframe=${timeframe}, rrTier=${rrTier}`);
+    
+    // Cross-timeframe fallback: for pairs with no stats at the requested timeframe,
+    // try the closest available timeframe so users still see win rates.
+    const pairsWithoutStats = toFetch.filter(pair => {
+      const key = getStatsKey(pair.patternId, pair.symbol, timeframe, rrTier);
+      return !statsMap.has(key);
+    });
+    
+    if (pairsWithoutStats.length > 0) {
+      console.info(`[fetchPatternSymbolStats] ${pairsWithoutStats.length} pairs missing stats at ${timeframe}, trying cross-timeframe fallback`);
+      const fallbackStats = await fetchCrossTimeframeFallback(supabase, pairsWithoutStats, timeframe, rrTier);
+      for (const [key, stats] of fallbackStats) {
+        statsMap.set(key, stats);
+        patternSymbolStatsCache.set(key, { stats, ts: now });
+      }
+      if (fallbackStats.size > 0) {
+        console.info(`[fetchPatternSymbolStats] Cross-timeframe fallback enriched ${fallbackStats.size} additional pairs`);
+      }
+    }
+    
     return statsMap;
   } catch (err: any) {
     console.error('[fetchPatternSymbolStats] Exception:', err.message);
@@ -366,6 +386,131 @@ async function fetchPatternSymbolStats(
   }
 }
 
+
+// Timeframe proximity order for cross-timeframe fallback.
+// When exact timeframe has no data, try the closest alternative.
+const TIMEFRAME_FALLBACK_ORDER: Record<string, string[]> = {
+  '1h':  ['4h', '8h', '1d'],
+  '4h':  ['8h', '1h', '1d'],
+  '8h':  ['4h', '1d', '1h'],
+  '1d':  ['8h', '4h', '1wk'],
+  '1wk': ['1d', '8h'],
+};
+
+async function fetchCrossTimeframeFallback(
+  supabase: any,
+  pairs: Array<{ patternId: string; symbol: string }>,
+  originalTimeframe: string,
+  rrTier: RRTier = DEFAULT_RR_TIER
+): Promise<Map<string, PatternStats>> {
+  const result = new Map<string, PatternStats>();
+  const fallbackTimeframes = TIMEFRAME_FALLBACK_ORDER[originalTimeframe];
+  if (!pairs.length) return result;
+
+  const uniquePatternIds = [...new Set(pairs.map(p => p.patternId))];
+  const uniqueSymbols = [...new Set(pairs.map(p => normalizeSymbolForStats(p.symbol)))];
+  const outcomeCol = rrTier === 2 ? 'outcome' : `outcome_rr${rrTier}`;
+  const pnlCol = rrTier === 2 ? 'outcome_pnl_percent' : `outcome_pnl_percent_rr${rrTier}`;
+
+  // Phase 1: Try per-symbol stats at alternative timeframes
+  if (fallbackTimeframes?.length) {
+    for (const tf of fallbackTimeframes) {
+      const remainingPairs = pairs.filter(p => !result.has(getStatsKey(p.patternId, p.symbol, originalTimeframe, rrTier)));
+      if (!remainingPairs.length) break;
+
+      try {
+        const { data, error } = await supabase
+          .from('historical_pattern_occurrences')
+          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}`)
+          .in('pattern_id', uniquePatternIds)
+          .in('symbol', uniqueSymbols)
+          .eq('timeframe', tf)
+          .not(outcomeCol, 'is', null)
+          .limit(2000);
+
+        if (error || !data?.length) continue;
+
+        const grouped = new Map<string, { wins: number; total: number; pnlSum: number }>();
+        for (const row of data) {
+          const outcome = row[outcomeCol];
+          if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
+          const k = `${row.pattern_id}|${row.symbol}`;
+          if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0 });
+          const e = grouped.get(k)!;
+          e.total++;
+          if (outcome === 'hit_tp') e.wins++;
+          e.pnlSum += row[pnlCol] ?? 0;
+        }
+
+        for (const [baseKey, e] of grouped) {
+          if (e.total < MIN_SAMPLE_SIZE) continue;
+          const [patternId, symbol] = baseKey.split('|');
+          const originalKey = getStatsKey(patternId, symbol, originalTimeframe, rrTier);
+          if (result.has(originalKey)) continue;
+          result.set(originalKey, {
+            winRate: Math.round((e.wins / e.total) * 1000) / 10,
+            avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
+            sampleSize: e.total,
+            avgDurationBars: 0,
+            accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
+          });
+        }
+        console.info(`[crossTimeframeFallback] Per-symbol at ${tf}: running total ${result.size} pairs`);
+      } catch (err: any) {
+        console.warn(`[crossTimeframeFallback] Error querying ${tf}: ${err.message}`);
+      }
+    }
+  }
+
+  // Phase 2: Pattern-level aggregate fallback for remaining pairs.
+  // When no per-symbol data exists at any timeframe, use the pattern's global win rate across all symbols.
+  const stillMissing = pairs.filter(p => !result.has(getStatsKey(p.patternId, p.symbol, originalTimeframe, rrTier)));
+  if (stillMissing.length > 0) {
+    const missingPatternIds = [...new Set(stillMissing.map(p => p.patternId))];
+    console.info(`[crossTimeframeFallback] Phase 2: ${stillMissing.length} pairs still missing, trying pattern-level aggregate for ${missingPatternIds.length} patterns`);
+    
+    try {
+      // Query aggregate stats across ALL symbols for these patterns (prefer same timeframe, then any)
+      const { data, error } = await supabase
+        .from('historical_pattern_occurrences')
+        .select(`pattern_id, ${outcomeCol}, ${pnlCol}`)
+        .in('pattern_id', missingPatternIds)
+        .not(outcomeCol, 'is', null)
+        .limit(5000);
+
+      if (!error && data?.length) {
+        const patternAgg = new Map<string, { wins: number; total: number; pnlSum: number }>();
+        for (const row of data) {
+          const outcome = row[outcomeCol];
+          if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
+          if (!patternAgg.has(row.pattern_id)) patternAgg.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0 });
+          const e = patternAgg.get(row.pattern_id)!;
+          e.total++;
+          if (outcome === 'hit_tp') e.wins++;
+          e.pnlSum += row[pnlCol] ?? 0;
+        }
+
+        for (const pair of stillMissing) {
+          const agg = patternAgg.get(pair.patternId);
+          if (!agg || agg.total < MIN_SAMPLE_SIZE) continue;
+          const key = getStatsKey(pair.patternId, pair.symbol, originalTimeframe, rrTier);
+          result.set(key, {
+            winRate: Math.round((agg.wins / agg.total) * 1000) / 10,
+            avgRMultiple: Math.round((agg.pnlSum / agg.total / 100) * 100) / 100,
+            sampleSize: agg.total,
+            avgDurationBars: 0,
+            accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
+          });
+        }
+        console.info(`[crossTimeframeFallback] Pattern-level aggregate: total ${result.size} pairs enriched`);
+      }
+    } catch (err: any) {
+      console.warn(`[crossTimeframeFallback] Pattern aggregate error: ${err.message}`);
+    }
+  }
+
+  return result;
+}
 
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
