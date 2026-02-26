@@ -359,6 +359,26 @@ async function fetchPatternSymbolStats(
     }
     
     console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at timeframe=${timeframe}, rrTier=${rrTier}`);
+    
+    // Cross-timeframe fallback: for pairs with no stats at the requested timeframe,
+    // try the closest available timeframe so users still see win rates.
+    const pairsWithoutStats = toFetch.filter(pair => {
+      const key = getStatsKey(pair.patternId, pair.symbol, timeframe, rrTier);
+      return !statsMap.has(key);
+    });
+    
+    if (pairsWithoutStats.length > 0) {
+      console.info(`[fetchPatternSymbolStats] ${pairsWithoutStats.length} pairs missing stats at ${timeframe}, trying cross-timeframe fallback`);
+      const fallbackStats = await fetchCrossTimeframeFallback(supabase, pairsWithoutStats, timeframe, rrTier);
+      for (const [key, stats] of fallbackStats) {
+        statsMap.set(key, stats);
+        patternSymbolStatsCache.set(key, { stats, ts: now });
+      }
+      if (fallbackStats.size > 0) {
+        console.info(`[fetchPatternSymbolStats] Cross-timeframe fallback enriched ${fallbackStats.size} additional pairs`);
+      }
+    }
+    
     return statsMap;
   } catch (err: any) {
     console.error('[fetchPatternSymbolStats] Exception:', err.message);
