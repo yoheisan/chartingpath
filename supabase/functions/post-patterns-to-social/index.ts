@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 15; // Safe limit for X Basic tier (~17/day allowed)
+const MAX_DAILY_POSTS = 25; // Increased to cover US session gaps
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
