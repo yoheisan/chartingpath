@@ -387,7 +387,91 @@ async function fetchPatternSymbolStats(
 }
 
 
-async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+// Timeframe proximity order for cross-timeframe fallback.
+// When exact timeframe has no data, try the closest alternative.
+const TIMEFRAME_FALLBACK_ORDER: Record<string, string[]> = {
+  '1h':  ['4h', '8h', '1d'],
+  '4h':  ['8h', '1h', '1d'],
+  '8h':  ['4h', '1d', '1h'],
+  '1d':  ['8h', '4h', '1wk'],
+  '1wk': ['1d', '8h'],
+};
+
+async function fetchCrossTimeframeFallback(
+  supabase: any,
+  pairs: Array<{ patternId: string; symbol: string }>,
+  originalTimeframe: string,
+  rrTier: RRTier = DEFAULT_RR_TIER
+): Promise<Map<string, PatternStats>> {
+  const result = new Map<string, PatternStats>();
+  const fallbackTimeframes = TIMEFRAME_FALLBACK_ORDER[originalTimeframe];
+  if (!fallbackTimeframes?.length || !pairs.length) return result;
+
+  const uniquePatternIds = [...new Set(pairs.map(p => p.patternId))];
+  const uniqueSymbols = [...new Set(pairs.map(p => normalizeSymbolForStats(p.symbol)))];
+  const outcomeCol = rrTier === 2 ? 'outcome' : `outcome_rr${rrTier}`;
+  const pnlCol = rrTier === 2 ? 'outcome_pnl_percent' : `outcome_pnl_percent_rr${rrTier}`;
+  const barsCol = rrTier === 2 ? 'bars_to_outcome' : `bars_to_outcome_rr${rrTier}`;
+
+  // Try each fallback timeframe in priority order, stop when we have enough data
+  for (const tf of fallbackTimeframes) {
+    const remainingPairs = pairs.filter(p => {
+      const key = getStatsKey(p.patternId, p.symbol, originalTimeframe, rrTier);
+      return !result.has(key);
+    });
+    if (!remainingPairs.length) break;
+
+    try {
+      const { data, error } = await supabase
+        .from('historical_pattern_occurrences')
+        .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}`)
+        .in('pattern_id', uniquePatternIds)
+        .in('symbol', uniqueSymbols)
+        .eq('timeframe', tf)
+        .not(outcomeCol, 'is', null)
+        .limit(2000);
+
+      if (error || !data?.length) continue;
+
+      // Group by pattern_id|symbol
+      const grouped = new Map<string, { wins: number; total: number; pnlSum: number }>();
+      for (const row of data) {
+        const outcome = row[outcomeCol];
+        if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
+        const k = `${row.pattern_id}|${row.symbol}`;
+        if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0 });
+        const e = grouped.get(k)!;
+        e.total++;
+        if (outcome === 'hit_tp') e.wins++;
+        e.pnlSum += row[pnlCol] ?? 0;
+      }
+
+      for (const [baseKey, e] of grouped) {
+        if (e.total < MIN_SAMPLE_SIZE) continue;
+        const [patternId, symbol] = baseKey.split('|');
+        const originalKey = getStatsKey(patternId, symbol, originalTimeframe, rrTier);
+        if (result.has(originalKey)) continue;
+
+        const stats: PatternStats = {
+          winRate: Math.round((e.wins / e.total) * 1000) / 10,
+          avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
+          sampleSize: e.total,
+          avgDurationBars: 0,
+          accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
+        };
+        result.set(originalKey, stats);
+      }
+
+      console.info(`[crossTimeframeFallback] Timeframe ${tf}: found stats for ${result.size} pairs`);
+    } catch (err: any) {
+      console.warn(`[crossTimeframeFallback] Error querying ${tf}: ${err.message}`);
+    }
+  }
+
+  return result;
+}
+
+
   try {
     // Yahoo supports: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo - 15m is native, 4h needs 1h aggregation
     const yahooInterval = interval === '4h' ? '1h' : interval;
