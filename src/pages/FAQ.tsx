@@ -25,7 +25,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Layers,
-  Scan
+  Scan,
+  Bot
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -41,6 +42,7 @@ const FAQ = () => {
   const sc = (key: string) => t(`faq.scripts.${key}`);
   const le = (key: string) => t(`faq.learning.${key}`);
   const ac = (key: string) => t(`faq.account.${key}`);
+  const cp = (key: string) => t(`faq.copilot.${key}`, key);
 
   const faqData = {
     "screener": {
@@ -967,6 +969,182 @@ const FAQ = () => {
           ]
         }
       ]
+    },
+    "copilot": {
+      title: t('faq.tabs.copilot', 'Trading Copilot'),
+      icon: <Bot className="h-5 w-5 text-primary" />,
+      description: t('faq.tabs.copilotDesc', 'AI-powered assistant that connects all platform data for instant analysis'),
+      sections: [
+        {
+          category: cp('catHowItWorks'),
+          questions: [
+            {
+              question: cp('q_whatIsCopilot'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{cp('a_whatIsCopilotIntro')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">{cp('a_keyCapabilities')}</h4>
+                    <ul className="space-y-1 text-sm">
+                      <li>• {cp('a_cap1')}</li>
+                      <li>• {cp('a_cap2')}</li>
+                      <li>• {cp('a_cap3')}</li>
+                      <li>• {cp('a_cap4')}</li>
+                      <li>• {cp('a_cap5')}</li>
+                    </ul>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{cp('a_howToOpen')}</p>
+                </div>
+              )
+            },
+            {
+              question: cp('q_whatDataAccess'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{cp('a_dataAccessIntro')}</p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">{cp('a_marketData')}</h4>
+                      <div className="text-xs space-y-1">
+                        <div>• {cp('a_livePatterns')}</div>
+                        <div>• {cp('a_edgeAtlas')}</div>
+                        <div>• {cp('a_marketBreadth')}</div>
+                        <div>• {cp('a_economicCalendar')}</div>
+                        <div>• {cp('a_marketReports')}</div>
+                        <div>• {cp('a_priceData')}</div>
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <h4 className="font-semibold text-sm mb-2">{cp('a_personalData')}</h4>
+                      <div className="text-xs space-y-1">
+                        <div>• {cp('a_userBacktests')}</div>
+                        <div>• {cp('a_userAlerts')}</div>
+                        <div>• {cp('a_paperPortfolio')}</div>
+                        <div>• {cp('a_chartContext')}</div>
+                        <div>• {cp('a_watchlist')}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{cp('a_dataAccessNote')}</p>
+                </div>
+              )
+            },
+            {
+              question: cp('q_combinedAnalysis'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{cp('a_combinedIntro')}</p>
+                  <div className="space-y-2">
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm"><strong>{cp('a_exampleMarket')}</strong></p>
+                      <p className="text-xs text-muted-foreground">{cp('a_exampleMarketDesc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm"><strong>{cp('a_exampleInstrument')}</strong></p>
+                      <p className="text-xs text-muted-foreground">{cp('a_exampleInstrumentDesc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <p className="text-sm"><strong>{cp('a_examplePortfolio')}</strong></p>
+                      <p className="text-xs text-muted-foreground">{cp('a_examplePortfolioDesc')}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: cp('catDifference'),
+          questions: [
+            {
+              question: cp('q_vsChatGPT'),
+              answer: (
+                <div className="space-y-4">
+                  <p>{cp('a_vsChatGPTIntro')}</p>
+                  <div className="border rounded-lg p-4">
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-1">
+                        <div className="font-medium flex items-center gap-2"><Bot className="h-4 w-4 text-primary" />{cp('a_copilotColumn')}</div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>✓ {cp('a_copilotAdv1')}</div>
+                          <div>✓ {cp('a_copilotAdv2')}</div>
+                          <div>✓ {cp('a_copilotAdv3')}</div>
+                          <div>✓ {cp('a_copilotAdv4')}</div>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-medium text-muted-foreground">{cp('a_genericColumn')}</div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>✗ {cp('a_genericDis1')}</div>
+                          <div>✗ {cp('a_genericDis2')}</div>
+                          <div>✗ {cp('a_genericDis3')}</div>
+                          <div>✗ {cp('a_genericDis4')}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: cp('q_pineScript'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{cp('a_pineScriptIntro')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm">
+                    <p>{cp('a_pineScriptExample')}</p>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: cp('catPrivacy'),
+          questions: [
+            {
+              question: cp('q_dataPrivacy'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{cp('a_privacyIntro')}</p>
+                  <div className="border rounded-lg p-4">
+                    <div className="text-sm space-y-2">
+                      <div className="flex items-start gap-2">
+                        <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{cp('a_privacy1')}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{cp('a_privacy2')}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{cp('a_privacy3')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: cp('q_availability'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{cp('a_availabilityIntro')}</p>
+                  <div className="border rounded-lg p-4">
+                    <div className="text-sm space-y-2">
+                      <div className="flex justify-between"><span>{cp('a_freeTier')}</span><span>{cp('a_freeLimit')}</span></div>
+                      <div className="flex justify-between"><span>{cp('a_starterTier')}</span><span>{cp('a_starterLimit')}</span></div>
+                      <div className="flex justify-between"><span>{cp('a_proTier')}</span><span>{cp('a_proLimit')}</span></div>
+                      <div className="flex justify-between"><span>{cp('a_eliteTier')}</span><span>{cp('a_eliteLimit')}</span></div>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
     }
   };
 
@@ -1015,7 +1193,7 @@ const FAQ = () => {
 
         {/* FAQ Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-8">
+          <TabsList className="grid w-full grid-cols-7 mb-8">
             {Object.entries(faqData).map(([key, data]) => (
               <TabsTrigger key={key} value={key} className="flex items-center gap-2">
                 {data.icon}
