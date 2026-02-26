@@ -1019,7 +1019,7 @@ export const InternalDocs = () => {
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-21 · Version 2.3
+        Last updated: 2026-02-26 · Version 2.4
       </p>
     </div>
   );
