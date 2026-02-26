@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, ArrowRight, TrendingUp, Bell, Shield, Activity,
   Search, FlaskConical, Code, BookOpen, BarChart3
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
@@ -20,6 +19,8 @@ import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 import { CopilotShowcase } from '@/components/landing/CopilotShowcase';
 import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
+import { MetricStrip } from '@/components/landing/MetricStrip';
+import { useSectionTracking } from '@/hooks/useSectionTracking';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,7 +28,15 @@ const Index = () => {
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
 
-  // Prime articles cache on homepage load for instant /learn navigation
+  // Section tracking refs
+  const heroRef = useSectionTracking('hero');
+  const howItWorksRef = useSectionTracking('how_it_works');
+  const screenerRef = useSectionTracking('screener_teaser');
+  const edgeAtlasRef = useSectionTracking('edge_atlas');
+  const actionsRef = useSectionTracking('action_cards');
+  const copilotRef = useSectionTracking('copilot');
+  const pricingRef = useSectionTracking('pricing');
+
   useEffect(() => {
     prefetchArticles();
   }, [prefetchArticles]);
@@ -63,7 +72,6 @@ const Index = () => {
     }
   };
 
-  // Activity cards configuration - now with i18n
   const activityCards = [
     {
       title: t('landing.dashboard', 'Trading Dashboard'),
@@ -129,17 +137,17 @@ const Index = () => {
     },
   ];
 
-  // Always use activity-first landing regardless of wedge mode
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
         title="ChartingPath – Chart Pattern Screener & Backtesting Platform"
-        description="Discover active chart pattern setups across 1,100+ instruments. Validate with 320K+ historical outcomes. Export Pine Script & MQL strategies."
+        description="Find chart pattern setups before they break out. Scan 1,100+ instruments, validate with 320K+ historical trades, and export Pine Script strategies."
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
+
       {/* Hero Section */}
-      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-background via-card to-background">
           <div className="absolute inset-0 opacity-15"
@@ -159,18 +167,18 @@ const Index = () => {
         
         {/* Content */}
         <div className="relative z-10 container mx-auto max-w-4xl text-center px-6">
-          {/* H1 - Primary headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
-            <span className="text-foreground">{t('hero.headline1', 'Discover signals.')}</span>
+            <span className="text-foreground">
+              {t('hero.headline1', 'Find Chart Pattern Setups')}
+            </span>
             <br />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {t('hero.headline2', 'Research. Execute. Automate.')}
+              {t('hero.headline2', 'Before They Break Out')}
             </span>
           </h1>
           
-          {/* Subheadline */}
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitle', 'Find pattern-based setups, validate with historical data, and export trading scripts—all in one platform.')}
+            {t('hero.subtitle', 'Scan 1,100+ instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.')}
           </p>
           
           {/* CTAs */}
@@ -211,17 +219,29 @@ const Index = () => {
               <span>{t('hero.trustRepeatability', 'Built for repeatability')}</span>
             </div>
           </div>
+
+          {/* Metric Strip */}
+          <MetricStrip />
         </div>
       </section>
 
-      {/* Edge Atlas — Proven patterns ranked by historical edge */}
-      <EdgeAtlasSection />
+      {/* How It Works — moved to position 2 */}
+      <div ref={howItWorksRef}>
+        <HowItWorks />
+      </div>
 
-      {/* Pattern Screener Table - TradingView-style */}
-      <PatternScreenerTeaser />
+      {/* Pattern Screener Table */}
+      <div ref={screenerRef}>
+        <PatternScreenerTeaser />
+      </div>
 
-      {/* Choose Your Action Section */}
-      <section className="py-16 px-6 bg-muted/30">
+      {/* Edge Atlas */}
+      <div ref={edgeAtlasRef}>
+        <EdgeAtlasSection />
+      </div>
+
+      {/* Choose Your Action */}
+      <section ref={actionsRef} className="py-16 px-6 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-3">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
@@ -240,14 +260,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* AI Copilot Moat Showcase */}
-      <CopilotShowcase />
-
-      {/* How It Works */}
-      <HowItWorks />
+      {/* AI Copilot */}
+      <div ref={copilotRef}>
+        <CopilotShowcase />
+      </div>
 
       {/* Pricing Teaser */}
-      <PricingTeaser />
+      <div ref={pricingRef}>
+        <PricingTeaser />
+      </div>
 
       {/* Disclaimer */}
       <section className="py-8 px-6 border-t">
