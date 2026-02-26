@@ -4493,6 +4493,7 @@ export type Database = {
     }
     Functions: {
       acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }
+      activate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
       calculate_prorata_amount: {
         Args: {
           billing_cycle_days?: number
@@ -4531,6 +4532,7 @@ export type Database = {
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
       cleanup_old_health_checks: { Args: never; Returns: undefined }
+      deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
       estimate_project_credits: {
         Args: {
           p_instruments_count: number
@@ -4568,6 +4570,40 @@ export type Database = {
         }[]
       }
       get_backtester_v2_usage: { Args: { p_user_id: string }; Returns: number }
+      get_cron_job_by_id: {
+        Args: { p_jobid: number }
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          schedule: string
+        }[]
+      }
+      get_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          edge_function: string
+          jobid: number
+          jobname: string
+          partition: string
+          schedule: string
+          timeframes: string
+        }[]
+      }
+      get_cron_run_details: {
+        Args: never
+        Returns: {
+          end_time: string
+          jobid: number
+          jobname: string
+          return_message: string
+          start_time: string
+          status: string
+        }[]
+      }
       get_edge_atlas_rankings: {
         Args: { p_asset_type: string; p_limit?: number; p_min_trades?: number }
         Returns: {
@@ -4716,6 +4752,11 @@ export type Database = {
         Args: { p_worker_name: string }
         Returns: undefined
       }
+      reschedule_cron_job: {
+        Args: { p_jobid: number; p_schedule: string }
+        Returns: undefined
+      }
+      run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
       set_user_language: {
         Args: {
           p_detected_country?: string

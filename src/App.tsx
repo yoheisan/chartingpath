@@ -105,6 +105,7 @@ const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
 const OutcomeAnalytics = lazy(() => import("./pages/admin/OutcomeAnalytics"));
 const PatternHealthMonitor = lazy(() => import("./pages/admin/PatternHealthMonitor"));
+const CronJobMonitor = lazy(() => import("./pages/admin/CronJobMonitor"));
 
 const App = () => (
   <TooltipProvider>
@@ -202,6 +203,7 @@ const App = () => (
           <Route path="/admin/outcome-analytics" element={withSuspense(<OutcomeAnalytics />)} />
           <Route path="/admin/pattern-health" element={withSuspense(<PatternHealthMonitor />)} />
           <Route path="/admin/social-cms" element={withSuspense(<SocialMediaCMS />)} />
+          <Route path="/admin/cron-monitor" element={withSuspense(<CronJobMonitor />)} />
           <Route path="/strategy/:strategyId" element={withSuspense(<StrategyDetail />)} />
           <Route path="/terms" element={withSuspense(<Terms />)} />
           <Route path="/privacy" element={withSuspense(<Privacy />)} />
