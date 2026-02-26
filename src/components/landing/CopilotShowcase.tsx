@@ -179,12 +179,20 @@ export const CopilotShowcase = () => {
 
           {/* CTA */}
           <div className="text-center mt-8 space-y-3">
-            <Button asChild size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
-              <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
-                {t('copilotShowcase.learnMore')}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button asChild size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                <Link to="/patterns/live" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_try_now' })}>
+                  {t('copilotShowcase.tryNow', 'Try Copilot Now')}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2">
+                <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
+                  {t('copilotShowcase.learnMore')}
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.pressToTry') }} />
           </div>
         </div>

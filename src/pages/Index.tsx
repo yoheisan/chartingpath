@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, ArrowRight, TrendingUp, Bell, Shield, Activity,
-  Search, FlaskConical, Code, BookOpen, BarChart3
+  Search, FlaskConical, Code, BookOpen, BarChart3, Bot
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -82,7 +82,7 @@ const Index = () => {
     {
       title: t('landing.scanMarket', 'Scan the Market'),
       description: t('landing.scanMarketDesc', 'Discover active pattern setups across 1,100+ instruments in real-time.'),
-      bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBullet3', 'Filter by asset class')],
+      bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBulletCopilot', '💡 Ask Copilot to find setups')],
       ctaText: t('landing.openScreener', 'Open Screener'),
       ctaLink: "/patterns/live",
       icon: Activity,
@@ -92,7 +92,7 @@ const Index = () => {
     {
       title: t('landing.researchBacktest', 'Research & Backtest'),
       description: t('landing.researchDesc', 'Validate any pattern on any ticker with historical performance data.'),
-      bullets: [t('landing.researchBullet1', 'Win rates & expectancy'), t('landing.researchBullet2', 'Visual Proof charts'), t('landing.researchBullet3', 'Custom timeframes')],
+      bullets: [t('landing.researchBullet1', 'Win rates & expectancy'), t('landing.researchBullet2', 'Visual Proof charts'), t('landing.researchBulletCopilot', '💡 Ask Copilot to validate')],
       ctaText: t('landing.openPatternLab', 'Open Pattern Lab'),
       ctaLink: "/pattern-lab",
       icon: Search,
@@ -113,7 +113,7 @@ const Index = () => {
     {
       title: t('landing.exportScripts', 'Export Scripts'),
       description: t('landing.exportScriptsDesc', 'Download ready-to-use Pine Script and MQL code for your strategies.'),
-      bullets: [t('landing.scriptsBullet1', 'Pine Script & MQL'), t('landing.scriptsBullet2', 'Customizable templates'), t('landing.scriptsBullet3', 'Subscriber access')],
+      bullets: [t('landing.scriptsBullet1', 'Pine Script & MQL'), t('landing.scriptsBullet2', 'Customizable templates'), t('landing.scriptsBulletCopilot', '💡 Generate via Copilot ⌘K')],
       ctaText: t('landing.browseScripts', 'Browse Scripts'),
       ctaLink: "/members/scripts",
       icon: Code,
@@ -216,6 +216,12 @@ const Index = () => {
             </div>
           </div>
 
+          {/* Copilot hint */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground/70 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+            <Bot className="h-3.5 w-3.5" />
+            <span>{t('hero.copilotHint', 'Powered by AI Trading Copilot — press ⌘K anywhere')}</span>
+          </div>
+
           {/* Metric Strip */}
           <MetricStrip />
         </div>
@@ -224,6 +230,11 @@ const Index = () => {
       {/* How It Works — moved to position 2 */}
       <div ref={howItWorksRef}>
         <HowItWorks />
+      </div>
+
+      {/* AI Copilot — moved up for visibility */}
+      <div ref={copilotRef}>
+        <CopilotShowcase />
       </div>
 
       {/* Pattern Screener Table */}
@@ -255,11 +266,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* AI Copilot */}
-      <div ref={copilotRef}>
-        <CopilotShowcase />
-      </div>
 
       {/* Pricing Teaser */}
       <div ref={pricingRef}>
