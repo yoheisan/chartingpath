@@ -198,15 +198,24 @@ async function checkAndIncrementBudget(supabase: any, platform: string): Promise
   return true;
 }
 
-// ─── Download pre-generated image ───────────────────────────────────────────
+// ─── Download pre-generated image (SVG → PNG via weserv.nl proxy) ───────────
 
 async function downloadImageAsBytes(url: string): Promise<Uint8Array | null> {
   try {
-    const res = await fetch(url);
+    // Twitter rejects SVG — convert via free weserv.nl image proxy
+    let fetchUrl = url;
+    if (url.endsWith('.svg') || url.includes('image/svg')) {
+      fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&output=png&w=1200&h=630&fit=contain&bg=0f1419`;
+      console.log(`[pattern-poster] Converting SVG→PNG via weserv.nl`);
+    }
+
+    const res = await fetch(fetchUrl);
     if (!res.ok) {
       console.warn(`[pattern-poster] Image download failed: ${res.status}`);
       return null;
     }
+    const contentType = res.headers.get('content-type') || '';
+    console.log(`[pattern-poster] Image downloaded: ${contentType}, ${res.headers.get('content-length')} bytes`);
     const buffer = await res.arrayBuffer();
     return new Uint8Array(buffer);
   } catch (err: any) {
