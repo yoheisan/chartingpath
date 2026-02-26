@@ -15,6 +15,12 @@ interface Bar {
   close: number;
 }
 
+interface Pivot {
+  index: number;
+  price: number;
+  type: 'high' | 'low';
+}
+
 // ─── SVG Rendering ──────────────────────────────────────────────────────────
 
 function renderCandlestickSVG(opts: {
@@ -28,8 +34,9 @@ function renderCandlestickSVG(opts: {
   timeframe: string;
   grade: string;
   rr: string;
+  pivots?: Pivot[];
 }): string {
-  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr } = opts;
+  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots } = opts;
 
   const W = 1200;
   const H = 630;
@@ -54,14 +61,54 @@ function renderCandlestickSVG(opts: {
   const barCount = bars.length;
   const barWidth = Math.min(Math.max(CHART_W / barCount * 0.6, 3), 16);
   const barSpacing = CHART_W / barCount;
+  const xForBar = (i: number) => CHART_LEFT + i * barSpacing + barSpacing / 2;
 
   const isBullish = direction?.toLowerCase() === 'bullish' || direction === 'long';
   const dirColor = isBullish ? '#22c55e' : '#ef4444';
   const dirEmoji = isBullish ? '▲' : '▼';
 
+  // ── Pattern zone highlight + ZigZag overlay ──
+  let patternOverlaySvg = '';
+  if (pivots && pivots.length >= 2) {
+    const validPivots = pivots.filter(p => p.index >= 0 && p.index < barCount);
+    if (validPivots.length >= 2) {
+      const firstIdx = validPivots[0].index;
+      const lastIdx = validPivots[validPivots.length - 1].index;
+      const zoneX = xForBar(firstIdx) - barSpacing / 2;
+      const zoneW = xForBar(lastIdx) - zoneX + barSpacing / 2;
+
+      // Pattern zone background
+      patternOverlaySvg += `<rect x="${zoneX}" y="${CHART_TOP}" width="${zoneW}" height="${CHART_H}" fill="#38bdf8" opacity="0.06" rx="4"/>`;
+      // "PATTERN" label
+      patternOverlaySvg += `<text x="${zoneX + zoneW / 2}" y="${CHART_TOP + 16}" text-anchor="middle" fill="#38bdf8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" opacity="0.5">PATTERN</text>`;
+
+      // ZigZag polyline
+      const points = validPivots.map(p => `${xForBar(p.index).toFixed(1)},${yForPrice(p.price).toFixed(1)}`).join(' ');
+      patternOverlaySvg += `<polyline points="${points}" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round" opacity="0.7"/>`;
+
+      // Pivot dots
+      for (const p of validPivots) {
+        const cx = xForBar(p.index);
+        const cy = yForPrice(p.price);
+        patternOverlaySvg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4" fill="#38bdf8" opacity="0.8"/>`;
+        patternOverlaySvg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.4"/>`;
+      }
+    }
+  }
+
+  // ── Signal arrow at last bar ──
+  const lastBarX = xForBar(barCount - 1);
+  const arrowColor = isBullish ? '#22c55e' : '#ef4444';
+  const arrowY = isBullish ? yForPrice(bars[barCount - 1]?.low ?? entry) + 18 : yForPrice(bars[barCount - 1]?.high ?? entry) - 18;
+  const arrowPath = isBullish
+    ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
+    : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
+  const signalArrowSvg = `<path d="${arrowPath}" fill="${arrowColor}" opacity="0.9"/>`;
+
+  // ── Candlesticks ──
   let candleSvg = '';
   bars.forEach((bar, i) => {
-    const x = CHART_LEFT + i * barSpacing + barSpacing / 2;
+    const x = xForBar(i);
     const isGreen = bar.close >= bar.open;
     const fill = isGreen ? '#22c55e' : '#ef4444';
     const bodyTop = yForPrice(Math.max(bar.open, bar.close));
@@ -120,7 +167,9 @@ function renderCandlestickSVG(opts: {
   <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
   ${zoneSvg}
+  ${patternOverlaySvg}
   ${candleSvg}
+  ${signalArrowSvg}
   ${levelLine(entry, '#3b82f6', 'ENTRY', '')}
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
   ${levelLine(tp, '#22c55e', 'TP', '6,4')}
@@ -164,6 +213,24 @@ function parseBars(detection: any): Bar[] {
     });
   }
   return bars;
+}
+
+function parsePivots(detection: any): Pivot[] {
+  try {
+    const spec = typeof detection.visual_spec === 'string' ? JSON.parse(detection.visual_spec) : detection.visual_spec;
+    if (spec?.pivots && Array.isArray(spec.pivots)) {
+      return spec.pivots
+        .filter((p: any) => typeof p.index === 'number' && typeof p.price === 'number')
+        .map((p: any) => ({
+          index: Number(p.index),
+          price: Number(p.price),
+          type: (p.type === 'high' || p.type === 'low') ? p.type : 'high',
+        }));
+    }
+  } catch {
+    console.warn('[generate-share-image] Could not parse pivots from visual_spec');
+  }
+  return [];
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -210,6 +277,7 @@ serve(async (req) => {
     }
 
     const bars = parseBars(detection);
+    const pivots = parsePivots(detection);
 
     const svg = renderCandlestickSVG({
       bars,
@@ -222,6 +290,7 @@ serve(async (req) => {
       timeframe: detection.timeframe,
       grade: detection.quality_score?.toUpperCase() ?? '?',
       rr: Number(detection.risk_reward_ratio).toFixed(1),
+      pivots,
     });
 
     // Store as pure SVG — no WASM/resvg dependency
@@ -248,7 +317,7 @@ serve(async (req) => {
       .update({ share_image_url: publicUrl })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] ✅ Generated SVG ${filePath} for ${detection.instrument}`);
+    console.log(`[generate-share-image] ✅ Generated SVG ${filePath} for ${detection.instrument} (${pivots.length} pivots)`);
 
     return new Response(
       JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'svg' }),
