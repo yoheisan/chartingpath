@@ -172,6 +172,13 @@ async function checkAndIncrementBudget(supabase: any, platform: string): Promise
     .select()
     .single();
 
+  // Ensure max_posts is always synced to current constant
+  await supabase
+    .from('social_post_budget')
+    .update({ max_posts: MAX_DAILY_POSTS })
+    .eq('platform', platform)
+    .eq('post_date', today);
+
   // Re-fetch to get actual count (upsert with ignoreDuplicates won't return existing row reliably)
   const { data: budget } = await supabase
     .from('social_post_budget')
