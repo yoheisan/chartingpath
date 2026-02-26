@@ -1,0 +1,1 @@
+UPDATE live_pattern_detections SET share_image_url = NULL WHERE share_image_url IS NOT NULL AND status IN ('active', 'pending') AND quality_score IN ('A', 'B');

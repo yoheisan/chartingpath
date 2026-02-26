@@ -205,7 +205,7 @@ async function downloadImageAsBytes(url: string): Promise<Uint8Array | null> {
     // Twitter rejects SVG — convert via free weserv.nl image proxy
     let fetchUrl = url;
     if (url.endsWith('.svg') || url.includes('image/svg')) {
-      fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&output=png&w=1200&h=630&fit=contain&bg=0f1419`;
+      fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&output=png&w=1200`;
       console.log(`[pattern-poster] Converting SVG→PNG via weserv.nl`);
     }
 
