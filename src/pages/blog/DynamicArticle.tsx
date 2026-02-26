@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState, Suspense, lazy, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, Tag, Target, Shield, TrendingUp, AlertTriangle, Users, BarChart3, Lightbulb, CheckCircle, XCircle, LineChart, Activity, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPageView, trackPageLeave } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { PageMeta } from "@/components/PageMeta";
@@ -1055,7 +1056,17 @@ const DynamicArticle = () => {
     fetchArticle();
   }, [slug, i18n.language]);
 
-  // Update page metadata
+  // Track page view and leave for dwell time measurement
+  useEffect(() => {
+    if (!slug) return;
+    const path = `/blog/${slug}`;
+    const start = Date.now();
+    trackPageView(path);
+    return () => {
+      trackPageLeave(path, Date.now() - start);
+    };
+  }, [slug]);
+
   // Meta tags are now handled by PageMeta component in the render below
 
   if (loading) {
@@ -1465,18 +1476,24 @@ const DynamicArticle = () => {
             </div>
           )}
 
-          {/* CTA */}
+          {/* CTA — contextual links to screener and Pattern Lab */}
           <div className="mt-12 p-6 bg-muted/30 rounded-lg">
             <h3 className="text-xl font-bold mb-4">{t('learn.readyToApply')}</h3>
             <p className="text-muted-foreground mb-4">
               {t('learn.readyToApplyDesc')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/screener" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+              <Link 
+                to="/patterns/live"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
                 {t('learn.findSetups')}
               </Link>
-              <Link to="/learn" className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors">
-                {t('learn.exploreMore')}
+              <Link 
+                to="/projects/pattern-lab/new?mode=validate"
+                className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+              >
+                {t('patternLabWizard.validateSignal', 'Backtest a Pattern')}
               </Link>
             </div>
           </div>

@@ -254,13 +254,27 @@ const SharedBacktest = () => {
           </Card>
         </div>
 
-        {/* Primary CTAs - Conversion focused: ONLY Create Alert, Open TradingView, Share */}
+        {/* Primary CTAs - Conversion focused */}
         <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-center">
               {t('sharedBacktest.tradeStrategy')}
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                asChild
+                size="lg"
+                variant="outline"
+                className="gap-2 flex-1 max-w-xs"
+              >
+                <Link 
+                  to={`/projects/pattern-lab/new?symbol=${encodeURIComponent(backtest.instrument)}&pattern=${encodeURIComponent(backtest.strategy_name)}&timeframe=${encodeURIComponent(backtest.timeframe)}`}
+                  onClick={() => track('shared_backtest_run_clicked', { share_token: token, instrument: backtest.instrument, timeframe: backtest.timeframe })}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Try This Backtest Yourself
+                </Link>
+              </Button>
               <Button 
                 onClick={handleCreateAlert}
                 size="lg"
@@ -343,18 +357,29 @@ const SharedBacktest = () => {
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-3 md:p-4">
           <div className="container mx-auto max-w-4xl flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground hidden sm:block">
-              Get alerts for <strong className="text-foreground">{backtest.strategy_name}</strong> on <strong className="text-foreground">{backtest.instrument}</strong>
+              Validate <strong className="text-foreground">{backtest.strategy_name}</strong> on <strong className="text-foreground">{backtest.instrument}</strong> yourself
             </p>
-            <Button 
-              asChild 
-              size="sm" 
-              className="ml-auto"
-              onClick={() => track('shared_to_auth_click', { share_token: token, context: 'shared_backtest', instrument: backtest.instrument })}
-            >
-              <Link to={`/auth?redirect=/members/alerts&context=shared_backtest&pattern=${encodeURIComponent(backtest.strategy_name)}&symbol=${encodeURIComponent(backtest.instrument)}`}>
-                Create Free Account
-              </Link>
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              <Button 
+                asChild 
+                size="sm" 
+                variant="outline"
+                onClick={() => track('shared_backtest_run_clicked', { share_token: token, context: 'sticky_bar', instrument: backtest.instrument })}
+              >
+                <Link to={`/projects/pattern-lab/new?symbol=${encodeURIComponent(backtest.instrument)}&pattern=${encodeURIComponent(backtest.strategy_name)}&timeframe=${encodeURIComponent(backtest.timeframe)}`}>
+                  Try Free Backtest
+                </Link>
+              </Button>
+              <Button 
+                asChild 
+                size="sm"
+                onClick={() => track('shared_to_auth_click', { share_token: token, context: 'shared_backtest', instrument: backtest.instrument })}
+              >
+                <Link to={`/auth?redirect=/members/alerts&context=shared_backtest&pattern=${encodeURIComponent(backtest.strategy_name)}&symbol=${encodeURIComponent(backtest.instrument)}`}>
+                  Create Free Account
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
