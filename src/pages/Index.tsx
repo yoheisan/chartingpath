@@ -58,18 +58,14 @@ const Index = () => {
 
   const handleScreenerClick = () => {
     track('pricing_clicked', { source: 'landing_cta_screener' });
-    trackEvent('landing.cta_click', { button: 'hero_open_screener' });
+    trackEvent('landing.cta_click', { button: 'hero_see_setups' });
     navigate('/patterns/live');
   };
 
-  const handleAlertClick = () => {
-    track('pricing_clicked', { source: 'landing_cta_create_alert' });
-    trackEvent('landing.cta_click', { button: 'hero_create_alert' });
-    if (isAuthenticated) {
-      navigate('/members/alerts');
-    } else {
-      navigate('/auth?redirect=/members/alerts');
-    }
+  const handleBacktestClick = () => {
+    track('pricing_clicked', { source: 'landing_cta_backtest' });
+    trackEvent('landing.cta_click', { button: 'hero_try_backtest' });
+    navigate('/pattern-lab');
   };
 
   const activityCards = [
@@ -188,19 +184,19 @@ const Index = () => {
               onClick={handleScreenerClick}
               className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
             >
-              <Activity className="h-5 w-5 mr-2" />
-              {t('hero.cta', 'Open Screener')}
+              <TrendingUp className="h-5 w-5 mr-2" />
+              {t('hero.cta', "See Today's Setups")}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             
             <Button 
               size="lg" 
               variant="outline"
-              onClick={handleAlertClick}
+              onClick={handleBacktestClick}
               className="px-8 py-6 text-lg"
             >
-              <Bell className="h-5 w-5 mr-2" />
-              {t('hero.ctaSecondary', 'Create your first alert')}
+              <FlaskConical className="h-5 w-5 mr-2" />
+              {t('hero.ctaSecondary', 'Try a Free Backtest')}
             </Button>
           </div>
           
