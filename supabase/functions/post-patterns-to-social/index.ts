@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 15; // Safe limit for X Basic tier (~17/day allowed)
+const MAX_DAILY_POSTS = 25; // Increased to cover US session gaps
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
@@ -171,6 +171,13 @@ async function checkAndIncrementBudget(supabase: any, platform: string): Promise
     )
     .select()
     .single();
+
+  // Ensure max_posts is always synced to current constant
+  await supabase
+    .from('social_post_budget')
+    .update({ max_posts: MAX_DAILY_POSTS })
+    .eq('platform', platform)
+    .eq('post_date', today);
 
   // Re-fetch to get actual count (upsert with ignoreDuplicates won't return existing row reliably)
   const { data: budget } = await supabase
