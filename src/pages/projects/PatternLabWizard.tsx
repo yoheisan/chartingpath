@@ -541,6 +541,41 @@ const PatternLabWizard = () => {
         {/* Mode Picker — shown when no mode selected yet */}
         {!mode && (
           <div className="mb-8">
+            {/* Quick Start Examples — when no URL params, show one-click backtests */}
+            {!urlInstrument && !urlPattern && (
+              <div className="mb-8">
+                <p className="text-sm font-medium text-muted-foreground mb-3">{t('patternLabWizard.quickStart', 'Quick Start — try a backtest in one click')}</p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {[
+                    { instrument: 'AAPL', pattern: 'double-bottom', timeframe: '1d', label: 'Double Bottom on AAPL', emoji: '🍎' },
+                    { instrument: 'BTC-USD', pattern: 'head-and-shoulders', timeframe: '4h', label: 'H&S on Bitcoin', emoji: '₿' },
+                    { instrument: 'EURUSD=X', pattern: 'falling-wedge', timeframe: '1d', label: 'Falling Wedge on EUR/USD', emoji: '💱' },
+                  ].map((example) => (
+                    <button
+                      key={example.label}
+                      onClick={() => {
+                        trackEvent('pattern_lab.quick_start', { instrument: example.instrument, pattern: example.pattern });
+                        setSelectedInstruments([example.instrument]);
+                        setSelectedPatterns([example.pattern]);
+                        setTimeframe(example.timeframe);
+                        setMode('validate');
+                        setParamsOpen(false);
+                        setPatternsOpen(false);
+                      }}
+                      className="group text-left p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
+                    >
+                      <div className="text-lg mb-1">{example.emoji}</div>
+                      <p className="text-sm font-medium">{example.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Daily • 3 year lookback</p>
+                      <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Run backtest <ArrowRight className="h-3 w-3" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-muted-foreground mb-4 text-center">{t('patternLabWizard.modePrompt')}</p>
             <div className="grid sm:grid-cols-2 gap-4">
               {/* Validate Signal */}

@@ -903,9 +903,35 @@ export default function LivePatternsPage() {
   // Progressive loading: Show UI shell immediately, data loads in place
   const showSkeletonCards = loading && patterns.length === 0;
 
+  // First-visit welcome banner
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem('screener_visited');
+  });
+  
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('screener_visited', '1');
+  };
+
   return (
     <div className="container mx-auto px-6 py-12 max-w-6xl">
-      {/* Header */}
+      {/* First-visit guidance banner */}
+      {showWelcome && !loading && patterns.length > 0 && (
+        <div className="mb-6 p-4 rounded-lg border border-primary/30 bg-primary/5 relative">
+          <button 
+            onClick={dismissWelcome}
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm"
+          >
+            ✕
+          </button>
+          <h3 className="font-semibold text-sm mb-1">👋 Welcome to the Live Pattern Screener</h3>
+          <p className="text-sm text-muted-foreground">
+            These are real chart patterns detected right now across {totalInUniverse || instrumentsScanned} instruments. 
+            <strong className="text-foreground"> Click any row</strong> to see the pattern on a chart. 
+            Look for <strong className="text-foreground">Grade A or B</strong> setups for the highest-quality signals.
+          </p>
+        </div>
+      )}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Badge variant="outline" className="text-primary border-primary/50 animate-pulse">
