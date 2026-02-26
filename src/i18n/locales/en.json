@@ -718,8 +718,8 @@
     "tools": "Tools"
   },
   "hero": {
-    "cta": "Open Screener",
-    "ctaSecondary": "Create your first alert",
+    "cta": "See Today's Setups",
+    "ctaSecondary": "Try a Free Backtest",
     "disclaimer": "Past performance does not guarantee future results. Educational use only.",
     "free_text": "$0 forever, no credit card needed",
     "headline1": "Discover signals.",
