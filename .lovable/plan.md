@@ -1,77 +1,83 @@
 
-# Re-enabling Ticker-Specific Image Posts on X (Twitter)
 
-## Current State
+# Landing Page Restructure to Reduce 89% Bounce Rate
 
-The `post-patterns-to-social` function currently posts **text-only tweets** because image generation via `resvg_wasm` (SVG-to-PNG conversion) crashes Supabase Edge Functions with a `WORKER_LIMIT` error. The result is generic, low-engagement posts with no visual chart.
+## Problem
 
-Two bottlenecks exist:
-1. **Image generation timeout** -- `resvg_wasm` exceeds Edge Function compute limits (~50MB WASM + rendering)
-2. **Twitter rate limits** -- Free/Basic tier X API allows ~17 tweets/24h (1,500/month); currently posting 1 per 60 min (max ~24/day), which is close to or at the limit
+Visitors land on a page with a vague headline ("Discover signals. Research. Execute. Automate.") followed immediately by two dense data tables (Edge Atlas rankings + Live Screener). A first-time visitor has no idea what chart patterns are, why they matter, or what this product does -- so they leave.
 
-## Solution: Pre-generate Images in a Batch Job
+## Root Causes
 
-Instead of generating images at tweet-time (which crashes), we split into two phases:
+1. **Hero says nothing specific** -- no concrete value proposition, no numbers, no outcome
+2. **No visual proof** -- no screenshot, animation, or demo showing the product in action
+3. **Data tables too early** -- Edge Atlas and Screener Teaser are powerful for returning users but meaningless to newcomers
+4. **"How It Works" is buried** -- it's the 6th section, after most visitors have already bounced
+5. **No social proof** -- no user counts, no testimonials, no trust signals beyond generic checkmarks
+6. **Too many sections** -- 8 sections competing for attention; cognitive overload
 
-### Phase 1: Background Image Pre-Generation (new cron job)
+## Proposed New Section Order
 
-Create a new edge function `pre-generate-pattern-images` that runs on a schedule (e.g., every 2 hours during off-peak) and:
+```text
+1. Hero (rewritten -- specific value prop + product screenshot/mockup)
+2. How It Works (moved UP -- explains the workflow in 10 seconds)
+3. Live Screener Teaser (proof the product works -- live data)
+4. Edge Atlas (data credibility -- "backed by 320K+ trades")
+5. Action Cards (choose your path)
+6. Copilot Showcase (differentiator)
+7. Pricing Teaser
+8. Disclaimer
+```
 
-1. Queries all A/B grade `live_pattern_detections` that do NOT yet have a share image in the `share-images` storage bucket
-2. Generates images **one at a time** with a simpler, lighter approach -- pure SVG uploaded directly (Twitter's media upload API accepts PNG, so we use an external PNG conversion service or a simpler Canvas approach)
-3. Stores the image URL back on the detection row (new column `share_image_url`)
-4. Processes max 3-5 images per run to stay within compute budget
+## Detailed Changes
 
-**Key change**: Replace `resvg_wasm` with a call to an external lightweight PNG renderer, OR simply upload the SVG to storage and use a pre-rendered static fallback card when SVG-to-PNG fails. The most reliable approach is to use the Supabase `og-image` pattern: render a simple branded template as pure SVG (no WASM), store it, and reference it.
+### 1. Rewrite Hero Copy (Index.tsx)
 
-### Phase 2: Update `post-patterns-to-social` to Use Pre-Generated Images
+**Current**: "Discover signals. Research. Execute. Automate."
+**New**: "Find Chart Pattern Setups Before They Break Out" with a subheadline like "Scan 1,100+ instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target -- in seconds."
 
-Modify the existing poster to:
+- Replace abstract verbs with a concrete outcome
+- Add a key metric strip below CTAs: "1,100+ instruments | 17 patterns | 320K+ backtested trades | Updated every hour"
+- Keep existing CTAs (Open Screener + Create Alert)
 
-1. Check if `share_image_url` exists on the detection
-2. If yes, download the image bytes and upload to Twitter via the existing `uploadMediaToTwitter` v1.1 endpoint (already implemented but disabled)
-3. If no image exists, fall back to text-only (current behavior)
-4. This makes tweet-time execution fast and lightweight -- no image generation, just a fetch + upload
+### 2. Move "How It Works" to Position 2 (Index.tsx)
 
-### Phase 3: Rate Limit Budget Management
+Simply reorder the JSX -- move `<HowItWorks />` from after CopilotShowcase to immediately after the Hero. No component changes needed.
 
-Add a daily tweet budget tracker to prevent hitting X API limits:
+### 3. Add a Metric Strip Component (new: MetricStrip.tsx)
 
-1. New DB table `social_post_budget` tracking daily post counts per platform
-2. Before posting, check: `daily_count < MAX_DAILY_POSTS` (set to 15 for safety on Basic tier)
-3. Prioritize posts: pattern alerts get 10 slots, market reports get 4, educational gets 1
-4. The `post-patterns-to-social` function already posts 1 per run -- reduce cron frequency to every 90 min (max ~16/day total across all post types)
+A simple horizontal bar with 4 key numbers:
+- "1,100+ Instruments Scanned"
+- "17 Pattern Types"
+- "320K+ Historical Trades"
+- "Updated Every Hour"
 
-## Database Changes
+Placed inside the Hero section below the trust signals. Animated count-up on scroll into view.
 
-1. Add `share_image_url` column to `live_pattern_detections` (nullable text)
-2. Create `social_post_budget` table:
-   - `id`, `platform` (text), `post_date` (date), `post_count` (int), `max_posts` (int), `updated_at`
-   - Unique constraint on (platform, post_date)
+### 4. Reorder Sections in Index.tsx
+
+Move the section rendering order to match the new flow. No changes to individual section components -- just reordering JSX elements.
+
+### 5. Add Scroll-Depth Analytics
+
+Track how far users scroll to validate whether the new order improves engagement. Add a simple `IntersectionObserver` hook that fires `trackEvent('landing.section_viewed', { section: 'how_it_works' })` when each section enters the viewport.
 
 ## Files to Create/Modify
 
-| File | Action | Purpose |
+| File | Action | Details |
 |------|--------|---------|
-| `supabase/functions/pre-generate-pattern-images/index.ts` | Create | Batch image pre-generation (runs every 2h) |
-| `supabase/functions/post-patterns-to-social/index.ts` | Modify | Re-enable image attachment using pre-generated URLs; add budget check |
-| `supabase/functions/generate-share-image/index.ts` | Modify | Remove `resvg_wasm`, output pure SVG stored as `.svg` (used for OG tags), add a simpler PNG path using Canvas API or skip PNG entirely |
-| `supabase/config.toml` | Modify | Add config for new function |
-| DB migration | Execute | Add `share_image_url` column + `social_post_budget` table |
+| `src/pages/Index.tsx` | Modify | Rewrite hero copy, reorder sections, add metric strip |
+| `src/components/landing/MetricStrip.tsx` | Create | New component with 4 animated key metrics |
+| `src/hooks/useSectionTracking.ts` | Create | IntersectionObserver hook for scroll-depth analytics |
 
-## Image Generation Strategy (avoiding WORKER_LIMIT)
+## What This Does NOT Change
 
-Instead of `resvg_wasm`, the pre-generator will:
-1. Build the SVG string (already working -- `renderCandlestickSVG`)
-2. Upload the SVG to `share-images` bucket
-3. For Twitter media upload: fetch the SVG, convert using Deno's built-in `OffscreenCanvas` (available in Deno Deploy) or simply upload as-is since Twitter's media endpoint processes images server-side
-4. If Twitter rejects SVG: use a simple branded static PNG template as fallback (pre-uploaded default card with ticker/pattern text overlay via SVG text elements converted via a minimal approach)
+- No changes to EdgeAtlasSection, PatternScreenerTeaser, ActionCard, CopilotShowcase, HowItWorks, or PricingTeaser components
+- No backend changes
+- No new dependencies
 
-**Pragmatic fallback**: If pure SVG works for Twitter media upload (it processes images), use that. If not, generate a simple branded card with just text (ticker, pattern, grade, R:R) -- no candlestick chart -- which is still far more engaging than plain text tweets.
+## Success Metrics
 
-## Expected Outcome
+- Bounce rate drops from 89% to below 70% within 2 weeks
+- Scroll depth: >50% of visitors see the Screener Teaser section
+- Screener CTA clicks increase (tracked via existing `landing.cta_click` events)
 
-- Tweets include branded chart images (or at minimum, branded text cards)
-- No compute crashes -- image gen happens in a separate, throttled batch job
-- Rate limits respected via daily budget tracking
-- 10-15 pattern alert tweets per day with images, distributed across trading sessions
