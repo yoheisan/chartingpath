@@ -86,7 +86,7 @@ function renderCandlestickSVG(opts: {
     return `
       <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-width="1.5" stroke-dasharray="${dashArray}" opacity="0.7"/>
       <rect x="${CHART_RIGHT + 4}" y="${y - 12}" width="${W - CHART_RIGHT - 10}" height="24" rx="4" fill="${color}" opacity="0.9"/>
-      <text x="${CHART_RIGHT + 10}" y="${y + 4}" fill="white" font-size="11" font-family="monospace" font-weight="600">${label} ${priceStr}</text>
+      <text x="${CHART_RIGHT + 10}" y="${y + 4}" fill="white" font-size="11" font-family="Courier, monospace" font-weight="600">${label} ${priceStr}</text>
     `;
   };
 
@@ -114,14 +114,14 @@ function renderCandlestickSVG(opts: {
     const y = CHART_TOP + (CHART_H / 4) * i;
     return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>`;
   }).join('\n  ')}
-  <text x="40" y="50" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, sans-serif" font-weight="700">${displayPattern}</text>
-  <text x="40" y="82" fill="#94a3b8" font-size="18" font-family="system-ui, sans-serif">${displayInstrument} · ${timeframe.toUpperCase()}</text>
+  <text x="40" y="50" fill="#ffffff" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">${displayPattern}</text>
+  <text x="40" y="82" fill="#94a3b8" font-size="18" font-family="Arial, Helvetica, sans-serif">${displayInstrument} · ${timeframe.toUpperCase()}</text>
   <rect x="${W - 200}" y="26" width="160" height="36" rx="18" fill="${dirColor}" opacity="0.15"/>
-  <text x="${W - 120}" y="50" fill="${dirColor}" font-size="16" font-family="system-ui, sans-serif" font-weight="700" text-anchor="middle">${dirEmoji} ${isBullish ? 'BULLISH' : 'BEARISH'}</text>
+  <text x="${W - 120}" y="50" fill="${dirColor}" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">${dirEmoji} ${isBullish ? 'BULLISH' : 'BEARISH'}</text>
   <rect x="${W - 200}" y="72" width="70" height="28" rx="14" fill="#3b82f6" opacity="0.2"/>
-  <text x="${W - 165}" y="91" fill="#60a5fa" font-size="13" font-family="system-ui, sans-serif" font-weight="600" text-anchor="middle">${grade}</text>
+  <text x="${W - 165}" y="91" fill="#60a5fa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">${grade}</text>
   <rect x="${W - 120}" y="72" width="80" height="28" rx="14" fill="#8b5cf6" opacity="0.2"/>
-  <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="system-ui, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
+  <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
   <rect x="${CHART_LEFT}" y="${Math.min(entryY, tpY)}" width="${CHART_W}" height="${Math.abs(tpY - entryY)}" fill="#22c55e" opacity="0.06"/>
   <rect x="${CHART_LEFT}" y="${Math.min(entryY, slY)}" width="${CHART_W}" height="${Math.abs(slY - entryY)}" fill="#ef4444" opacity="0.06"/>
@@ -130,9 +130,9 @@ function renderCandlestickSVG(opts: {
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
   ${levelLine(tp, '#22c55e', 'TP', '6,4')}
   <rect x="0" y="${H - 50}" width="${W}" height="50" fill="#0a0e14" opacity="0.8"/>
-  <text x="40" y="${H - 20}" fill="#ff6633" font-size="16" font-family="system-ui, sans-serif" font-weight="700">ChartingPath</text>
-  <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="system-ui, sans-serif">chartingpath.com · Live Pattern Detection</text>
-  <text x="${W - 40}" y="${H - 20}" fill="#475569" font-size="12" font-family="monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
+  <text x="40" y="${H - 20}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
+  <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
+  <text x="${W - 40}" y="${H - 20}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
 }
 
