@@ -525,10 +525,83 @@ const CopilotAITab = () => (
   <div className="space-y-4">
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Copilot Self-Improvement Architecture</CardTitle>
-        <CardDescription>Three-phase autonomous learning loop for competitive moat. Last updated: 2026-02-21.</CardDescription>
+        <CardTitle className="text-base">Copilot Full Integration & Self-Improvement Architecture</CardTitle>
+        <CardDescription>15 active tools across 6 data domains. Combined analysis strategy. Last updated: 2026-02-26.</CardDescription>
       </CardHeader>
       <CardContent>
+        <SectionHeader icon={Database} title="Tool Inventory — 15 Active Tools" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Tool", "Data Source", "Auth Required", "Domain"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["search_patterns", "live_pattern_detections", "No", "Market"],
+                ["query_edge_atlas", "historical_pattern_occurrences", "No", "Market"],
+                ["get_market_breadth", "fetch-market-breadth fn", "No", "Market"],
+                ["get_economic_events", "economic_events table", "No", "Macro"],
+                ["get_market_report", "cached_market_reports", "No", "Macro"],
+                ["get_price_data", "fetch-eodhd / yahoo fallback", "No", "Market"],
+                ["analyze_chart_context", "Passed from UI", "No", "Context"],
+                ["explain_pattern", "Hardcoded + articles", "No", "Education"],
+                ["find_article", "learning_articles", "No", "Education"],
+                ["generate_pine_script", "AI-generated", "No", "Automation"],
+                ["manage_watchlist", "User watchlist", "Yes", "Personal"],
+                ["get_user_backtests", "backtest_result_cache", "Yes", "Personal"],
+                ["get_user_alerts", "alerts table", "Yes", "Personal"],
+                ["get_paper_portfolio", "paper_portfolios + paper_trades", "Yes", "Personal"],
+                ["get_user_watchlist", "User watchlist read", "Yes", "Personal"],
+              ].map(([tool, source, auth, domain]) => (
+                <tr key={tool}>
+                  <td className="px-3 py-2 border-b font-mono text-xs text-primary">{tool}</td>
+                  <td className="px-3 py-2 border-b text-xs">{source}</td>
+                  <td className="px-3 py-2 border-b text-xs">{auth}</td>
+                  <td className="px-3 py-2 border-b text-xs">
+                    <Badge variant="outline" className="text-[10px]">{domain}</Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Activity} title="Combined Analysis Strategy" />
+        <p className="text-sm text-muted-foreground mb-3">
+          The system prompt instructs the copilot to proactively chain multiple tools for compound questions.
+          This is the primary differentiator vs. generic AI — multimodal analysis across proprietary data.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Query Type", "Tools Chained", "Example"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Broad market overview", "get_market_report + get_market_breadth + get_economic_events", '"What does the market look like today?"'],
+                ["Instrument analysis", "search_patterns + get_price_data + get_economic_events + query_edge_atlas", '"Is it a good time to go long EURUSD?"'],
+                ["Trade ideas", "query_edge_atlas + search_patterns + get_economic_events", '"What should I trade this week?"'],
+                ["Portfolio review", "get_paper_portfolio + search_patterns + get_user_alerts", '"How is my portfolio positioned?"'],
+                ["Backtest comparison", "get_user_backtests + query_edge_atlas", '"How does my AAPL backtest compare to the Edge Atlas?"'],
+              ].map(([type, tools, example]) => (
+                <tr key={type}>
+                  <td className="px-3 py-2 border-b text-xs font-medium">{type}</td>
+                  <td className="px-3 py-2 border-b font-mono text-[10px]">{tools}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground italic">{example}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
         <SectionHeader icon={Cpu} title="Phase 1 — Dynamic Prompt Patching (ACTIVE)" />
         <p className="text-sm text-muted-foreground mb-3">
           Corrective rules are stored in <code className="text-xs bg-muted px-1 rounded">copilot_learned_rules</code> and injected into the system prompt at runtime.
@@ -561,7 +634,7 @@ const CopilotAITab = () => (
           </table>
         </div>
 
-        <SectionHeader icon={Activity} title="Phase 2 — RLVR Reward Pipeline (ACTIVE)" />
+        <SectionHeader icon={TrendingUp} title="Phase 2 — RLVR Reward Pipeline (ACTIVE)" />
         <p className="text-sm text-muted-foreground mb-3">
           Every copilot interaction is auto-scored and logged to <code className="text-xs bg-muted px-1 rounded">copilot_training_pairs</code>.
           Reward signals are computed from objective technical outcomes, not subjective user ratings.
@@ -592,7 +665,7 @@ const CopilotAITab = () => (
           </table>
         </div>
 
-        <SectionHeader icon={TrendingUp} title="Phase 3 — DPO Fine-Tuning (PLANNED)" />
+        <SectionHeader icon={GitBranch} title="Phase 3 — DPO Fine-Tuning (PLANNED)" />
         <p className="text-sm text-muted-foreground mb-3">
           Once ~5,000 preference pairs are collected (dpo_eligible = true), the dataset can be used for Direct Preference Optimization
           on an open-weight model (Llama 3, Gemma 2). This creates a model uniquely trained on ChartingPath's proprietary data structures.
@@ -611,10 +684,13 @@ const CopilotAITab = () => (
 [trading-copilot] ──► Fetch copilot_learned_rules (active rules)
   │                       └──► Inject into system prompt dynamically
   │
-  ├──► RAG Context (pattern stats, articles, market data)
+  ├──► 15 Tools: patterns, edge atlas, breadth, economic events,
+  │    market reports, price data, backtests, alerts, portfolio,
+  │    chart context, watchlist, articles, pine script, explain
   │
   ▼
 [Gemini 2.0 Flash] ──► Tool Calls ──► Tool Results
+  │                       └──► Combined Analysis (multi-tool chaining)
   │
   ▼
 Response to User
