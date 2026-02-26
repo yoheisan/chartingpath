@@ -471,7 +471,7 @@ async function fetchCrossTimeframeFallback(
   return result;
 }
 
-
+async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
     // Yahoo supports: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo - 15m is native, 4h needs 1h aggregation
     const yahooInterval = interval === '4h' ? '1h' : interval;
