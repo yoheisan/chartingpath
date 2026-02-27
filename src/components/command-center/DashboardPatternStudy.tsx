@@ -183,7 +183,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, user]);
 
   // Performance stats
   const stats = useMemo(() => {
