@@ -418,14 +418,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </Tooltip>
 
           {/* Timeframe Selector */}
-          <Select value={timeframe} onValueChange={onTimeframeChange}>
+          <Select value={timeframe} onValueChange={(val) => {
+            const tf = TIMEFRAMES.find(t => t.value === val);
+            if (tf?.requiresAuth && !userId) {
+              requireAuth(() => onTimeframeChange(val));
+            } else {
+              onTimeframeChange(val);
+            }
+          }}>
             <SelectTrigger className="w-16 sm:w-20 h-7 sm:h-8 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {TIMEFRAMES.map((tf) => (
                 <SelectItem key={tf.value} value={tf.value}>
-                  {tf.label}
+                  <span className="flex items-center gap-1">
+                    {tf.label}
+                    {tf.requiresAuth && !userId && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -501,6 +511,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         )}
       </div>
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="intraday charts" />
     </div>
   );
 });
