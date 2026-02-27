@@ -98,8 +98,8 @@ export function getSymbolVariants(symbol: string): string[] {
   // For unknown symbols, try common suffixes
   const variants = [symbol];
   
-  // Try crypto format
-  if (!symbol.includes('-') && !symbol.includes('=')) {
+  // Try crypto format — but NOT for indices (^) or known non-crypto symbols
+  if (!symbol.includes('-') && !symbol.includes('=') && !symbol.startsWith('^')) {
     const base = symbol.replace(/USD$/, '');
     if (base.length >= 2 && base.length <= 10) {
       variants.push(`${base}-USD`);

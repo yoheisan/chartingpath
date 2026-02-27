@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { AUTH_REQUIRED_TIMEFRAMES } from './CommandCenterChart';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,6 +92,7 @@ export function DashboardPatternStudy({
 }: DashboardPatternStudyProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [activePatterns, setActivePatterns] = useState<ActivePattern[]>([]);
@@ -97,8 +100,15 @@ export function DashboardPatternStudy({
 
   const timeframeLabel = timeframe.toUpperCase();
 
-  // Fetch data
+  // Fetch data — skip for auth-gated timeframes when not logged in
   useEffect(() => {
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !user) {
+      setLoading(false);
+      setHistoricalPatterns([]);
+      setActivePatterns([]);
+      return;
+    }
+
     let cancelled = false;
     async function fetchData() {
       setLoading(true);
@@ -173,7 +183,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, user]);
 
   // Performance stats
   const stats = useMemo(() => {

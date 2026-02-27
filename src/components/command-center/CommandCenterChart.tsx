@@ -34,6 +34,9 @@ interface CommandCenterChartProps {
   onWatchlistChange?: () => void;
 }
 
+/** Timeframes that require authentication to access */
+export const AUTH_REQUIRED_TIMEFRAMES = new Set(['15m', '1h']);
+
 const TIMEFRAMES = [
   { value: '15m', label: '15m', requiresAuth: true },
   { value: '1h', label: '1H', requiresAuth: true },
@@ -156,7 +159,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     }
   };
 
+  // Whether current timeframe is gated and user is not authenticated
+  const isTimeframeGated = AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId;
+
   const fetchChartData = useCallback(async () => {
+    // Don't fetch data for auth-gated timeframes
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
+      setLoading(false);
+      setError(null);
+      setBars([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -225,7 +239,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     } finally {
       setLoading(false);
     }
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, userId]);
 
   const updatePriceData = (chartBars: CompressedBar[]) => {
     if (chartBars.length < 2) return;
@@ -248,6 +262,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   // Auto-fetch active live patterns + recent historical for this symbol/timeframe
   useEffect(() => {
+    // Skip pattern fetch for auth-gated timeframes
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
+      setAutoPatterns([]);
+      return;
+    }
+
     const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
       try {
@@ -283,7 +303,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
 
     fetchAutoPatterns();
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, userId]);
 
   // Generate chart markers from auto-detected patterns
   const chartMarkers: ChartMarker[] = useMemo(() => {
@@ -476,7 +496,28 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       {/* Chart Content */}
       <div className="flex-1 min-h-0">
-        {loading ? (
+        {isTimeframeGated ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center space-y-4 max-w-sm mx-auto">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-foreground">Sign in to access {timeframe} charts</p>
+                <p className="text-sm text-muted-foreground">
+                  Intraday timeframes (15m, 1H) are available to registered users. Create a free account to unlock them.
+                </p>
+              </div>
+              <Button 
+                variant="default" 
+                onClick={() => setShowAuthDialog(true)}
+                className="mt-2"
+              >
+                Sign in to unlock
+              </Button>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-4">
               <Skeleton className="h-8 w-32 mx-auto" />
