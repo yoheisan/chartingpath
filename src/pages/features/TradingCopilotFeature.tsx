@@ -326,12 +326,14 @@ const TradingCopilotFeature = () => {
             <p className="text-muted-foreground mb-8">
               {t('tradingCopilot.pressCmd')} <kbd className="px-1.5 py-0.5 rounded border bg-muted text-sm font-mono">{t('tradingCopilot.cmdKey')}</kbd> {t('tradingCopilot.anywhereInPlatform')}
             </p>
-            <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" asChild>
-              <Link to="/">
-                <Bot className="h-5 w-5" />
-                {t('tradingCopilot.goToDashboard')}
-                <ArrowRight className="h-5 w-5" />
-              </Link>
+            <Button
+              size="lg"
+              className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg"
+              onClick={() => copilot?.open()}
+            >
+              <Bot className="h-5 w-5" />
+              {t('tradingCopilot.openCopilot', 'Open Copilot')}
+              <ArrowRight className="h-5 w-5" />
             </Button>
           </div>
         </section>
