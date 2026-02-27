@@ -190,7 +190,26 @@ export const DynamicPatternChart = ({
       }
     });
 
-    // Draw pattern annotations
+    // Draw pattern annotations with label collision avoidance
+    const placedLabels: { x: number; y: number; w: number; h: number }[] = [];
+    
+    const findNonOverlappingY = (cx: number, cy: number, labelW: number, labelH: number): number => {
+      const padding = 4;
+      let bestY = cy;
+      let attempts = 0;
+      while (attempts < 10) {
+        const overlaps = placedLabels.some(placed => 
+          Math.abs(cx - placed.x) < (labelW + placed.w) / 2 + padding &&
+          Math.abs(bestY - placed.y) < (labelH + placed.h) / 2 + padding
+        );
+        if (!overlaps) break;
+        bestY -= (labelH + padding);
+        attempts++;
+      }
+      placedLabels.push({ x: cx, y: bestY, w: labelW, h: labelH });
+      return bestY;
+    };
+
     annotations.forEach(annotation => {
       ctx.strokeStyle = annotation.color;
       ctx.fillStyle = annotation.color;
@@ -210,14 +229,17 @@ export const DynamicPatternChart = ({
           ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
           ctx.textAlign = "center";
           const textMetrics = ctx.measureText(annotation.label);
-          const textWidth = textMetrics.width;
-          const textHeight = 14;
+          const textWidth = textMetrics.width + 8;
+          const textHeight = 18;
+          
+          const labelY = findNonOverlappingY(x, y - 25, textWidth, textHeight);
           
           ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.fillRect(x - textWidth/2 - 4, y - 25 - textHeight/2, textWidth + 8, textHeight + 4);
+          drawRoundedRect(x - textWidth/2, labelY - textHeight/2, textWidth, textHeight, 4);
+          ctx.fill();
           
           ctx.fillStyle = annotation.color;
-          ctx.fillText(annotation.label, x, y - 20);
+          ctx.fillText(annotation.label, x, labelY + 4);
         }
       } else if (annotation.points.length >= 2) {
         ctx.beginPath();
@@ -231,11 +253,22 @@ export const DynamicPatternChart = ({
         ctx.stroke();
         
         if (annotation.label) {
-          ctx.fillStyle = annotation.color;
           ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
-          ctx.textAlign = "left";
           const lastPoint = annotation.points[annotation.points.length - 1];
-          ctx.fillText(annotation.label, indexToX(lastPoint.x) + 10, priceToY(lastPoint.y) - 5);
+          const lx = indexToX(lastPoint.x) + 10;
+          const ly = priceToY(lastPoint.y) - 5;
+          const tw = ctx.measureText(annotation.label).width + 8;
+          const th = 16;
+          
+          const labelY = findNonOverlappingY(lx + tw/2, ly, tw, th);
+          
+          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+          drawRoundedRect(lx - 4, labelY - th/2, tw, th, 3);
+          ctx.fill();
+          
+          ctx.fillStyle = annotation.color;
+          ctx.textAlign = "left";
+          ctx.fillText(annotation.label, lx, labelY + 4);
         }
       }
       
